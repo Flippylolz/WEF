@@ -54,7 +54,7 @@ invalidation:
 
 # E1-T1: Initialize repository safety
 
-> Promoted after explicit owner approval of E1 spike revision 2. This task remains `draft`; no repository initialization, files, commits, pushes, or pull request are authorized until implementation-plan approval.
+> Promoted after explicit owner approval of E1 spike revision 2 and implementation-plan revision 3. The repository-safety work is `in_progress` in its open stacked pull request and remains unmerged.
 
 ## Outcome
 
@@ -134,7 +134,7 @@ Push the minimal README `main`, open the docs PR, then open the stacked E1-T1 PR
 - [x] `spike_gate` references owner-approved spike revision 2 and is `satisfied`.
 - [x] `implementation_gate` references owner-approved implementation-plan revision 3 and is `satisfied`.
 - [x] The empty dependency set is verified and `dependency_gate` is `satisfied`.
-- [ ] Scope and acceptance criteria match the approved implementation plan.
+- [x] Scope and acceptance criteria match the approved implementation plan.
 
 ## Start checklist
 

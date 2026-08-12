@@ -242,6 +242,7 @@ Typographical, formatting, and link-only corrections that do not change meaning 
 
 ## Templates and completion
 
+- [Autonomous decision log](AUTONOMOUS_DECISIONS.md)
 - [Spike template](templates/SPIKE.md)
 - [Proposed-task template](templates/PROPOSED_TASK.md)
 - [Promoted task template](templates/TASK.md)

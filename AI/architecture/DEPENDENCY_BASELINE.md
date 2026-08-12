@@ -6,10 +6,10 @@ The complete architecture/dependency research, dependency inventory, proof scope
 
 ## Current status
 
-- Epic: [E0 — Architecture and dependency spike](../epics/E0-architecture-dependency-spike/README.md), currently `ready` but dependency-blocked by E1-T1.
+- Epic: [E0 — Architecture and dependency spike](../epics/E0-architecture-dependency-spike/README.md), currently `in_progress` through an ADR-018 stack above E1-T1.
 - Spike artifact: revision 2, explicitly owner-approved and research-only. The revision includes repository, container bootstrap, Makefile, root README, task-ownership, and branch boundaries.
 - Implementation plan: [revision 3 owner-approved](../epics/E0-architecture-dependency-spike/IMPLEMENTATION_PLAN.md), allowing ordered stacked implementation under ADR-018 without relaxing merge/completion gates.
-- Promoted proof task: [E0-T2](../epics/E0-architecture-dependency-spike/tasks/E0-T2-execute-and-lock-the-architecture-proof.md), still `draft` and non-actionable until implementation-plan approval, dependency, state, and branch gates are satisfied.
+- Promoted proof task: [E0-T2](../epics/E0-architecture-dependency-spike/tasks/E0-T2-execute-and-lock-the-architecture-proof.md), still `draft` until E0-T1 opens its PR and its dependency/state/branch evidence is updated. The implementation-plan gate is already satisfied.
 - Governing lifecycle: [approval-gated workflow](../workflow/README.md).
 
 ## Accepted ADR baseline

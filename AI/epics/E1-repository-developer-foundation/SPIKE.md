@@ -88,8 +88,8 @@ For the requested repository bootstrap:
 
 ### E1-T1 repository safety and initial branch
 
-- Initialize the local repository directly on the unborn branch `chore/E1-T1-repository-safety`, then configure `git@github.com:Flippylolz/WEF.git` as `origin`. Use SSH for Git fetches/pushes and do not make an ordinary direct feature commit to `main`.
-- The first prepared commit boundary contains the existing approved documentation plus E1-T1's `.gitignore`, `.dockerignore`, safe `.env.example`, and concise root `README.md`.
+- Bootstrap the empty remote with only a minimal root README on `main`, then configure `git@github.com:Flippylolz/WEF.git` as `origin`. Use SSH for Git fetches/pushes; this one-time base-ref bootstrap is not an ordinary direct feature commit.
+- Carry the pre-existing approved `AI/` documentation on `docs/ai-documentation-foundation`, then create `chore/E1-T1-repository-safety` from that branch. E1-T1's commit boundary contains only `.gitignore`, `.dockerignore`, safe `.env.example`, and the full root `README.md`.
 - `.gitignore` excludes `est-test/`, `est-test.tar.gz`, archives, media, environment/secrets, Telegram sessions, local databases, caches, coverage, build output, generated sensitive reports, and editor/OS noise. It does not ignore dependency lockfiles or `contracts/openapi/v1.json`.
 - `.dockerignore` protects any root build context from Git metadata, source data/media, secrets, local databases, caches, and unrelated outputs. It is verified against the actual workspace before a build.
 - The root README links `AI/README.md`, states that the repository is pre-implementation, documents prerequisites and source-data exclusions, and does not advertise commands or services that do not exist.

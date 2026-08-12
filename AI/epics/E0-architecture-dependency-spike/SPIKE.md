@@ -32,7 +32,7 @@ invalidation:
 - Priority: P0, first architecture/dependency research activity; only repository safety/bootstrap may precede the proposed post-approval implementation proof.
 - Proposed E0-T2 branch: `spike/backend-architecture-dependencies`; this research artifact does not authorize creating or using it.
 - Research output: recommended architecture boundaries, dependency responsibilities, and a proposed contract-proof scope. Manifests, lockfiles, and proof code remain future implementation outputs.
-- Gate: this research is awaiting explicit owner approval. Approval permits task promotion and implementation planning only; no product or proof implementation starts until the implementation plan is separately approved.
+- Gate: spike revision 2 and implementation-plan revision 3 are owner-approved. Promoted tasks may proceed only through their own state, dependency, branch, review, and completion gates.
 
 ## Question
 
@@ -443,6 +443,13 @@ Historical JSON or Telegram adapter
 
 Exact versions would be pinned only in future committed lockfiles and updated by reviewed automation. This research selects responsibilities, not unverified version numbers.
 
+Category labels are deliberate:
+
+- **Adopt** means the dependency responsibility is accepted; E0-T2 still verifies version, license, compatibility, and advisories.
+- **Evaluate in E0-T2** means both the candidate and its stated project-owned or simpler fallback are acceptable until measured proof selects one.
+- **Defer** means the dependency is accepted only for a later approved epic and is absent from the vertical-proof runtime.
+- **Reject for MVP** means the dependency is excluded and the stated accepted stack/project-owned replacement is used instead.
+
 Current documentation checks on 2026-08-12:
 
 - OpenAPI TypeScript documents schema-to-TypeScript generation and typed `openapi-fetch` clients, including Next.js server-side use.
@@ -453,7 +460,7 @@ Current documentation checks on 2026-08-12:
 - Current official Docker documentation confirms named multi-stage Dockerfile stages, strict `.dockerignore`-controlled build contexts, digest-pin policies, and BuildKit secret/cache mounts rather than persistent credentials in `ARG`, `ENV`, or image layers.
 - Current Compose v2 documentation confirms long-syntax read-only mounts, named volumes, health checks with `depends_on.condition: service_healthy`, optional profiles, and project-name isolation without explicit `container_name` values.
 
-### Backend production: adopt
+### Backend production: adopt unless marked evaluate/defer
 
 - Python: current stable supported line would be selected/pinned during approved E0-T2 implementation.
 - `fastapi`: HTTP routing, dependency hooks, OpenAPI.
@@ -463,7 +470,7 @@ Current documentation checks on 2026-08-12:
 - `asyncpg`: PostgreSQL async driver.
 - `alembic`: schema migrations.
 - `geoalchemy2`: PostGIS type/function integration.
-- `fastapi-users[sqlalchemy]`: evaluated username/password/session foundation behind the identity module; replace with focused project code if the spike finds adaptation excessive.
+- **Evaluate in E0-T2:** `fastapi-users[sqlalchemy]` as a username/password/session foundation behind the identity module; replace it with focused project-owned identity/session code if adapting email-oriented defaults is more complex or less secure.
 - `pwdlib[argon2]`: password hashing through the auth integration.
 - `starlette-admin`: owner-only server-rendered user/session/reset/reveal-audit console.
 - `cryptography`: authenticated contact encryption/key rotation primitives.
@@ -473,15 +480,15 @@ Current documentation checks on 2026-08-12:
 - `structlog`: structured event logging without source/contact payloads.
 - `phonenumbers`: phone recognition/normalization/masking support; project policy decides what is revealable.
 - `pillow`: image metadata and derivatives.
-- `telethon`: future Epic 8 Telegram adapter only.
+- **Defer to Epic 8:** `telethon` for the future Telegram adapter; historical/synthetic ingestion does not install or import it.
 
-### Backend test/quality: adopt
+### Backend test/quality: adopt unless marked evaluate
 
 - `pytest`.
 - `pytest-asyncio`.
 - `httpx` test client support.
-- `testcontainers[postgres]` or CI PostGIS service for real integration tests; decide based on Docker-in-Docker reliability in the spike proof.
-- `factory-boy` or lightweight project factories; choose one, not both.
+- **Evaluate in E0-T2:** `testcontainers[postgres]` versus a CI PostGIS service for real integration tests; use the service directly if Docker-in-Docker is unreliable.
+- **Evaluate in E0-T2:** `factory-boy` versus lightweight project factories; use project factories when the dependency does not remove meaningful fixture complexity.
 - `hypothesis` for parser/range/value-object properties where it adds coverage.
 - `ruff` for formatting and linting.
 - `mypy` in strict mode for project code.
@@ -489,7 +496,7 @@ Current documentation checks on 2026-08-12:
 - `coverage` with branch coverage.
 - `pip-audit` for Python dependency advisories.
 
-### Frontend production: adopt
+### Frontend production: adopt unless marked evaluate
 
 - `next`, `react`, `react-dom`.
 - `typescript` strict mode.
@@ -498,7 +505,7 @@ Current documentation checks on 2026-08-12:
 - `@tanstack/react-query`.
 - `openapi-fetch`.
 - `next-intl`.
-- `nuqs` for typed URL filter state if its proof remains simpler than direct `URLSearchParams`; otherwise omit it.
+- **Evaluate in E0-T2:** `nuqs` for typed URL filter state; omit it and use direct `URLSearchParams` if the proof is not simpler.
 - `react-hook-form` and `zod` for auth/form interaction validation.
 - `tailwindcss`.
 - Radix primitives only for controls actually used.
@@ -534,8 +541,8 @@ The requested starter repository setup is valid only as the following ordered, i
 
 1. E1-T1 owns Git initialization, the canonical remote, root `.gitignore` and `.dockerignore`, a safe `.env.example`, and a concise root `README.md` linking this documentation. These safety controls must exist before any generated scaffold or Docker build context.
 2. E0-T2 owns the approved synthetic architecture proof, runtime/dependency manifests and lockfiles, and measured Docker builds needed to validate the selected boundaries. It must not add a generic placeholder service that will be discarded.
-3. E1-T2 turns the accepted proof into the minimal FastAPI and Next.js application scaffolds and their development/production Dockerfile targets.
-4. E1-T3 adds the local Compose topology only after the application commands and health endpoints exist. Compose then wires `web`, `api`, PostGIS, optional Caddy, and an on-demand importer without inventing substitute commands.
+3. E1-T2 turns the accepted proof into the minimal FastAPI and Next.js application scaffolds and their development/production Dockerfile targets. It introduces root Make targets only for real install/format/lint/type-check/test/contract/build commands that now exist.
+4. E1-T3 adds the local Compose topology only after the application commands and health endpoints exist. Compose then wires `web`, `api`, PostGIS, optional Caddy, and an on-demand importer without inventing substitute commands, and extends the Makefile with real Compose/operator targets.
 
 Each task uses its own branch and commit/PR boundary. The canonical M1 dependency order remains E1-T1 before E0-T2, E0-T2 before E1-T2, and E1-T2 before E1-T3.
 
@@ -566,7 +573,7 @@ These are project policy and should not be delegated to generic dependencies:
 - Unit-of-work and narrow repository ports.
 - API presenter mapping.
 
-### Explicitly defer or reject for MVP
+### Explicitly reject for MVP
 
 - Django/DRF: duplicates the accepted FastAPI stack.
 - A separate Node backend or Next.js business API.
@@ -583,6 +590,19 @@ These are project policy and should not be delegated to generic dependencies:
 - Redux/Zustand.
 - Microservices/Kubernetes/service mesh.
 - Heavy self-hosted geocoder on the shared NUC.
+
+Replacement paths for rejected groups:
+
+| Rejected group | Accepted replacement |
+|---|---|
+| Django/DRF, separate Node backend, or Next.js business API | FastAPI backend-centric modular monolith and generated REST/OpenAPI contracts |
+| Redis sessions/cache/rate limiting and background-job frameworks | PostgreSQL-backed sessions/idempotency, bounded in-process controls, and explicit operator/import commands until a measured scale trigger |
+| Elasticsearch/OpenSearch and GraphQL | PostGIS/SQL projections exposed by the versioned REST API |
+| Third-party DI, generic repository/service frameworks, full CQRS/event sourcing, or an event bus | Explicit composition, narrow inward-owned ports, interactors/query services, and unit-of-work boundaries |
+| FastAPI Admin or unrestricted generic admin CRUD | Starlette Admin with project-owned authentication, authorization, CSRF/session controls, and narrow owner actions |
+| Redux/Zustand | URL state plus TanStack Query server state and local component state |
+| Microservices/Kubernetes/service mesh | One Docker Compose deployment with independently testable package boundaries |
+| Heavy self-hosted geocoder | Managed free-tier provider behind the geocoder port, persistent cache, and manual review workflow |
 
 ## Dependency acceptance criteria
 

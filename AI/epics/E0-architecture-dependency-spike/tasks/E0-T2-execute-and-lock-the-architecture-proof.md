@@ -54,7 +54,7 @@ invalidation:
 
 # E0-T2: Execute and lock the architecture proof
 
-> Promoted after explicit owner approval of E0 spike revision 2. This task remains `draft`; code is prohibited until the implementation plan is approved, E0-T1 and E1-T1 are done, and this task becomes `ready` then `in_progress` on its dedicated branch.
+> Promoted after explicit owner approval of E0 spike revision 2 and implementation-plan revision 3. This task remains `draft` until the E0-T1 pull request provides direct stack ancestry, dependency evidence is updated, and the task becomes `ready` then `in_progress` on its dedicated branch. Under ADR-018, dependencies may remain `stacked` while implementation proceeds, but they must be `done` before this task completes or merges.
 
 ## Outcome
 

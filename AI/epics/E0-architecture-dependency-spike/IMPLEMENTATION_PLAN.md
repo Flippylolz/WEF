@@ -126,7 +126,7 @@ Return to this plan when the approved spike remains valid but task scope, order,
 - [x] Modules, contracts, tests, migrations, risks, rollout, and rollback are explicit.
 - [x] No deferred decision blocks this E0 scope.
 - [x] No proposed task appears as an executable sequence; E0 candidates were moved to `tasks/`.
-- [x] No production or disposable proof code is authorized by this draft.
+- [x] This approved plan authorizes only its promoted task sequence; it does not bypass any task state, dependency, branch, review, or completion gate.
 - [x] Revision 3 received explicit owner approval through the owner's continue-stacking directive.
 
 ## Owner decision
