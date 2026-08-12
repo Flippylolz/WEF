@@ -33,14 +33,14 @@ dependency_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T21:25:00Z"
   evidence:
-    - "E1-T1 | branch chore/E1-T1-repository-safety | PR https://github.com/Flippylolz/WEF/pull/2 | head 8be707a"
+    - "E1-T1 | branch chore/E1-T1-repository-safety | roll-up PR https://github.com/Flippylolz/WEF/pull/4 | head 0c2e242"
 branch:
   required: true
   name: docs/E0-T1-architecture-review
   task_id: E0-T1
   one_task_only: true
   created_at: "2026-08-12T21:25:00Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/5"
 completion:
   completed_by: null
   completed_at: null

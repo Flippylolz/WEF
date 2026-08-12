@@ -7,8 +7,8 @@ This append-only log records blockers that could not be safely resolved autonomo
 ### B-001: Stacked PRs are not merged
 
 - Impact: code, CI, and deployment workflows prepared in descendant branches are not active on `main`; main-only autodeploy cannot run.
-- Current state: [PR #1](https://github.com/Flippylolz/WEF/pull/1) and descendants are intentionally open.
-- Needed from owner: review/merge the stack base-first, or explicitly authorize autonomous merges.
+- Current state: PRs #1–#3 were merged, but #2 and #3 targeted parent branches after those parents had already merged. [Roll-up PR #4](https://github.com/Flippylolz/WEF/pull/4) now safely propagates their changes to `main`; [E0-T1 PR #5](https://github.com/Flippylolz/WEF/pull/5) is its descendant.
+- Needed from owner: review/merge PR #4, then continue merging/retargeting descendants base-first, or explicitly authorize autonomous merges.
 - Safe workaround: continue preparing/testing descendants against their parent branches under ADR-018.
 
 ### B-002: Production HTTPS/authentication gate
