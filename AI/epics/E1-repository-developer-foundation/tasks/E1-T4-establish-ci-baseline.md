@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E1-T4
 epic: E1
 title: "Establish CI baseline"
-status: draft
+status: in_progress
 revision: 1
 priority: P0
 size: M
@@ -29,16 +29,17 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:07:21Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-12T22:15:44Z"
+  evidence:
+    - "E1-T2 | branch feature/E1-T2-application-scaffold | PR https://github.com/Flippylolz/WEF/pull/7 | head 127f00c"
 branch:
   required: true
-  name: null
+  name: ci/E1-T4-baseline
   task_id: E1-T4
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-12T22:15:44Z"
   pull_request: null
 completion:
   completed_by: null
@@ -90,14 +91,14 @@ CI only. Revert the workflow commit to roll back; never disable checks silently 
 ## Ready checklist
 
 - [x] Promotion and approval artifacts are recorded.
-- [ ] E1-T2 direct ancestor PR/head is recorded by a `stacked` dependency gate.
+- [x] E1-T2 direct ancestor PR/head is recorded by a `stacked` dependency gate.
 - [x] Scope and acceptance match implementation-plan revision 4.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated branch is created and recorded.
-- [ ] Branch/PR contain E1-T4 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated branch `ci/E1-T4-baseline` is created and recorded.
+- [x] Branch contains E1-T4 only; its PR opens after checks pass.
 
 ## Done checklist
 
