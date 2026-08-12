@@ -41,7 +41,7 @@ branch:
   task_id: E0-T2
   one_task_only: true
   created_at: "2026-08-12T21:37:55Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/6"
 completion:
   completed_by: null
   completed_at: null
@@ -121,7 +121,7 @@ The measured dependency conclusions and full command results are recorded in the
 - Supply chain: uv/pnpm frozen locks pass; pip-audit and production pnpm audit report no known vulnerabilities; direct dependency licenses and replacement paths are recorded.
 - Images: digest-pinned backend and web builds pass. Runtime users are `wef` and `node`; backend development tools and frontend source/contracts/documentation generators are absent.
 - Safety: only synthetic fixtures and the disposable local PostGIS container were used. No real export, media, credential, Telegram session, or production service was read.
-- CI: `.github/workflows/e0-architecture-proof.yml` reproduces backend/PostGIS, architecture, contract, frontend, advisory, and image checks. Its GitHub run remains pending until this branch opens a pull request.
+- CI: `.github/workflows/e0-architecture-proof.yml` reproduces backend/PostGIS, architecture, contract, frontend, advisory, and image checks in [PR #6](https://github.com/Flippylolz/WEF/pull/6).
 
 ## Rollout and rollback
 
