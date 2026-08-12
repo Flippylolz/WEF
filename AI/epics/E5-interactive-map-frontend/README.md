@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E5
 title: "Interactive map frontend"
-status: draft
+status: approved
 milestones: [M1, M3]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,10 @@ a responsive, accessible map/list/detail experience over dated offers.
 
 ## Approval state
 
-- Epic workspace status: `draft`.
-- [Spike](SPIKE.md): `draft`, revision 1, owner approval pending, research only, no code.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `draft`, revision 1, blocked with no approved spike revision and no executable task sequence.
-- Every file in `proposed-tasks/` is non-actionable. No implementation, scaffold, migration, infrastructure change, generated executable artifact, or proof code is approved.
-- No `tasks/` directory exists; it may be created only when an approved candidate is promoted after spike approval.
+- Epic workspace status: `approved` for the synthetic M1 map/filter boundary.
+- [Spike](SPIKE.md): `approved`, revision 2.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing E5-T1 then E5-T2.
+- E5-T1/T2 are promoted/`draft` pending backend stack ancestry; E5-T3 through E5-T5 remain proposed.
 
 ## Milestones
 
@@ -43,10 +42,13 @@ a responsive, accessible map/list/detail experience over dated offers.
 - [ADR-007](../../decisions/adr/ADR-007-mounted-media-storage-interface.md)
 - [ADR-012](../../decisions/adr/ADR-012-backend-centric-modular-monolith.md)
 
+## Promoted tasks
+
+- [E5-T1: Build map shell and grouped pin interaction](tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — `draft`, P0/L, M1
+- [E5-T2: Add URL-backed filters and viewport querying](tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md) — `draft`, P0/L, M1
+
 ## Proposed tasks
 
-- [E5-T1: Build map shell and grouped pin interaction](proposed-tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — `proposed`, P0/L, M1
-- [E5-T2: Add URL-backed filters and viewport querying](proposed-tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md) — `proposed`, P0/L, M1
 - [E5-T3: Build offer detail and media gallery](proposed-tasks/E5-T3-build-offer-detail-and-media-gallery.md) — `proposed`, P0/L, M3
 - [E5-T4: Complete responsive list/map accessibility](proposed-tasks/E5-T4-complete-responsive-list-map-accessibility.md) — `proposed`, P1/L, M3
 - [E5-T5: Performance and production UX pass](proposed-tasks/E5-T5-performance-and-production-ux-pass.md) — `proposed`, P1/M, M3
@@ -54,7 +56,7 @@ a responsive, accessible map/list/detail experience over dated offers.
 ## Cross-epic dependencies
 
 - Incoming: E5-T1 depends on E1-T2.
-- Incoming: E5-T1 depends on E4-T1.
+- Incoming: E5-T1 depends on E4-T2 for the clickable dated-result panel.
 - Incoming: E5-T2 depends on E4-T2.
 - Incoming: E5-T3 depends on E4-T3.
 - Incoming: E5-T5 depends on E4-T4.

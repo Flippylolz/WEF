@@ -85,3 +85,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: a service attached only to an internal Docker Desktop network did not receive a usable host forwarding path. Giving only Caddy a second edge network preserves database/application isolation while making the intended same-origin route reachable. The bounded probe verifies source safety without prematurely implementing E2 ingestion or reading file contents.
 - Evidence: E1-T3 runtime checks reached the page and `/api/v1/health/live` through Caddy, found no API/database host bindings, proved PostGIS/media volume persistence across container recreation, and completed the read-only importer probe.
 - Reversal: replace the local edge network or importer command in a later approved task without changing persisted database/media volumes.
+
+## AD-011: Deliver the browser-visible synthetic map before historical ingestion
+
+- Time: 2026-08-12.
+- Prompt avoided: implement the complete parser/persistence/geocoder chain before any visible MVP or use a deterministic canonical seed to complete the public map/filter path first.
+- Selected approach: M1 now migrates/seeds invented Warsaw locations/offers explicitly, then stacks grouped map/facet/location-result APIs and the MapLibre URL-filter UI. E2 historical parsing, idempotent source persistence, provider geocoding, media, auth/contacts, and real data remain separately gated.
+- Rationale: the owner said local data and Telegram are later and asked for the best overnight MVP. A synthetic canonical seed exercises migrations, PostGIS, backend filter authority, generated contracts, browser interaction, Docker, and deployment without risking private source data or provider credentials.
+- Safety limit: synthetic coordinates are fixed fixture facts and clearly labeled; this exception never authorizes a real address to bypass geocoding/review. The seed is explicit and refuses production.
+- Reversal: implement the still-proposed E2/E3 ingestion tasks, replace seeded rows through reviewed idempotent persistence, and retire the seed command without changing public E4/E5 contracts.

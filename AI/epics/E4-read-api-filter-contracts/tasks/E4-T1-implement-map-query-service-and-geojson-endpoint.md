@@ -1,0 +1,128 @@
+---
+schema: ai-workflow/task@1
+id: E4-T1
+epic: E4
+title: "Implement map query service and GeoJSON endpoint"
+status: draft
+revision: 2
+priority: P0
+size: L
+milestone: M1
+dependencies: [E3-T1]
+requirement_ids: [P-001, P-003]
+decision_ids: [ADR-002, ADR-003, ADR-005, ADR-012, ADR-013]
+deferred_decision_ids: []
+promotion:
+  source: ../proposed-tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md
+  promoted_by: "Cursor Agent (owner-authorized)"
+  promoted_at: "2026-08-12T22:34:40Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 2
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-12T22:34:40Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 2
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-12T22:34:40Z"
+dependency_gate:
+  status: blocked
+  verified_by: null
+  verified_at: null
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E4-T1
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
+---
+
+# E4-T1: Implement map query service and GeoJSON endpoint
+
+## Outcome
+
+Expose one backend-authoritative grouped Warsaw map query with complete M1 filter semantics through deterministic GeoJSON and generated OpenAPI types.
+
+## Scope
+
+- Add immutable application filter/query DTOs and validation for bbox, price, area, rooms, districts, market/content types, and publication range.
+- Add a query-service port and SQLAlchemy/PostGIS adapter that filters visible offers and groups accepted in-scope locations.
+- Return matching/total counts, display metadata, coordinate precision/confidence, latest matching publication timestamp, and comparable price/area summaries.
+- Add a pure Pydantic GeoJSON presenter and `GET /api/v1/map/locations`.
+- Add normalized filter/data-version ETag and conditional `304`.
+- Replace the public E0 `/estates` proof endpoint after the map contract and generated client pass.
+
+## Out of scope
+
+- Facets, location/offer collections, details, media, source text/links, auth, contacts, real geocoding, and frontend rendering.
+
+## Affected modules and contracts
+
+- New map/catalog application/domain/interface/infrastructure modules, composition root, FastAPI routes, OpenAPI contract, generated frontend types, and integration/contract tests.
+- [HTTP API](../../../contracts/HTTP_API.md) and [OpenAPI](../../../contracts/OPENAPI.md).
+
+## Implementation notes
+
+- Different filter groups use AND; repeated values within a group use OR.
+- Stored ranges intersect requested ranges inclusively; null does not match an active filter.
+- Only `visibility=visible`, `review_status=accepted`, in-scope, non-null points appear.
+- Coordinates serialize as `[longitude, latitude]`; no ORM entity leaves infrastructure.
+- Route invokes one query service and presenter; business/filter logic does not enter FastAPI or frontend code.
+- Real records cannot rely on the synthetic-fixture exception; accepted geocoding remains a later gate.
+
+## Acceptance criteria
+
+- [ ] Required Warsaw-safe bbox and every M1 filter are validated; unknown/malformed/unsafe queries return stable safe errors.
+- [ ] Grouped GeoJSON matches the documented contract and includes only locations with at least one matching visible offer.
+- [ ] Inclusive range, null, AND/OR, date, visibility, scope, review-state, and coordinate-order behavior have PostGIS integration tests.
+- [ ] Matching and total counts differ correctly when filters exclude related offers.
+- [ ] ETag is deterministic for normalized equivalent filters and `If-None-Match` returns `304`.
+- [ ] OpenAPI, generated TypeScript, lint/docs, and compatibility checks pass.
+- [ ] Representative synthetic query is within the 500 ms local integration budget and its plan is inspectable.
+- [ ] No raw payload, contact, path, provider response, full source text, or unverified link enters the response.
+
+## Test plan
+
+- Unit: filter value validation/normalization and presenter serialization.
+- Integration: real PostGIS grouped/filter queries and indexes.
+- Contract: OpenAPI/generation/compatibility plus response snapshots.
+- End-to-end: seeded M1 endpoint through local Caddy.
+- Security/performance: oversized bbox/query rejection, no sensitive fields, representative timing/query plan.
+
+## Rollout and rollback
+
+Deploy only after E3-T1 migration/seed compatibility. The endpoint is additive until the proof route is removed in this task. Roll back the application only to a schema-compatible release; no data migration or destructive rollback is introduced here.
+
+## Ready checklist
+
+- [x] This file is authoritative under `tasks/`; the proposed source is removed.
+- [x] Promotion, spike revision 2, and plan revision 2 are recorded.
+- [ ] E3-T1 is `done` or is a direct ancestor PR recorded as `stacked`.
+- [x] Scope and acceptance match the approved plan.
+
+## Start checklist
+
+- [ ] Status passes through `ready`.
+- [ ] Dedicated E4-T1 branch is created and recorded.
+- [ ] Branch/PR contain E4-T1 only.
+
+## Done checklist
+
+- [ ] Acceptance criteria pass.
+- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [ ] Completion actor, time, pull request, and evidence are recorded.

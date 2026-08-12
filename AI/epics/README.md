@@ -18,14 +18,14 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E0 — Architecture and dependency spike](E0-architecture-dependency-spike/README.md) — `in_progress`; spike revision 2/plan revision 3 approved, E0-T1 and E0-T2 in progress in the ordered stack; milestones M1.
 - [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `in_progress`; spike revision 2/plan revision 4 approved; E1-T1/E1-T2/E1-T4/E1-T3 in progress, 2 proposed, 1 cancelled; milestones M1.
 - [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `draft`; 5 tasks (5 proposed); milestones M1, M2.
-- [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `draft`; 5 tasks (5 proposed); milestones M1, M2.
-- [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `draft`; 4 tasks (4 proposed); milestones M1, M2.
-- [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `draft`; 5 tasks (5 proposed); milestones M1, M3.
+- [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `approved`; spike/plan revision 2; E3-T1 promoted ready, 4 proposed; milestones M1, M2.
+- [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `approved`; spike/plan revision 2; E4-T1/T2 promoted draft, 2 proposed; milestones M1, M2.
+- [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `approved`; spike/plan revision 2; E5-T1/T2 promoted draft, 3 proposed; milestones M1, M3.
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `draft`; 7 tasks (7 proposed); milestones M3.
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `draft`; 7 tasks (6 proposed, 1 deferred); milestones M3.
 - [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; 5 tasks (5 proposed); milestones M4.
 
-E1-T1, E0-T1, and E0-T2 are `in_progress` in ordered stack layers. Reviews and CI still gate base-first merge/completion, but they do not pause preparation of approved descendants. E2–E8 remain `draft`. E1-T5 remains `cancelled`, E7-T5 remains `deferred`, and every unpromoted active task is `proposed`.
+E1/E0 implementation remains in ordered stack layers. E3–E5 M1 spike/plans are approved; E3-T1 is ready and E4/E5 promoted tasks remain dependency-blocked until their parent PRs exist. E2 and E6–E8 remain draft. Reviews and CI still gate base-first merge/completion.
 
 ## Global lifecycle
 
@@ -51,18 +51,15 @@ After the relevant epic gates are approved:
 4. E1-T2 — web/backend scaffolds from the accepted proof.
 5. E1-T4 — establish the full CI baseline before product feature work.
 6. E1-T3 — local Docker/PostGIS stack.
-7. E2-T1 — source adapter plus small fixtures.
-8. E2-T2 — minimal known-template extraction.
-9. E3-T1 — core source/location/offer schema.
-10. E3-T2 — idempotent fixture persistence.
-11. E3-T3 — normalized locations using a deterministic cached/no-network provider.
-12. E4-T1 — one filtered grouped-GeoJSON endpoint.
-13. E5-T1 — grouped map pin and date panel.
-14. E5-T2 — URL-backed price, room, and content-type filters.
-15. E1-T6 — enable Dependabot update pull requests without auto-merge.
-16. E1-T7 — add the scheduled owner-label/check/bot-commit merge controller.
+7. E3-T1 — M1 location/offer schema, migrations, and explicit deterministic seed.
+8. E4-T1 — filtered grouped-GeoJSON endpoint.
+9. E4-T2 — canonical facets and selected-location dated offers.
+10. E5-T1 — grouped map/list selection and dated result panel.
+11. E5-T2 — all URL-backed M1 filters and debounced viewport querying.
+12. E1-T6 — enable Dependabot update pull requests without auto-merge.
+13. E1-T7 — add the scheduled owner-label/check/bot-commit merge controller.
 
-M1 deliberately excludes the complete export, network geocoding, full media copy, production deployment, and Telegram credentials. E1-T5 is cancelled because GitHub-enforced branch protection is out of scope; procedural branch/PR/CI rules remain mandatory.
+M1 deliberately excludes historical parsing/import, the complete export, network geocoding, media, auth/contacts, production deployment, and Telegram credentials. Those remain separate tasks/milestones. E1-T5 is cancelled because GitHub-enforced branch protection is out of scope; procedural branch/PR/CI rules remain mandatory.
 
 ## Task dependency and traceability registry
 
@@ -90,21 +87,21 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E2-T5](E2-historical-export-parser-audit/proposed-tasks/E2-T5-audit-the-complete-export.md): task dependencies `E2-T4`; M2; requirements `P-007`; decisions `ADR-006`.
 ### E3
 
-- [E3-T1](E3-database-geocoding-media/proposed-tasks/E3-T1-create-schema-and-migrations.md): task dependencies `E1-T3`; M1; requirements `P-001, P-002, P-006, P-007, P-008`; decisions `ADR-003, ADR-005, ADR-006, ADR-007, ADR-011, ADR-016`.
+- [E3-T1](E3-database-geocoding-media/tasks/E3-T1-create-schema-and-migrations.md): promoted/ready revision 2; stacked dependency `E1-T3`; M1; requirements `P-001, P-002, P-007`; decisions `ADR-003, ADR-005, ADR-012`.
 - [E3-T2](E3-database-geocoding-media/proposed-tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md): task dependencies `E2-T2, E3-T1`; M1; requirements `P-002, P-006, P-007`; decisions `ADR-005, ADR-006, ADR-012`.
 - [E3-T3](E3-database-geocoding-media/proposed-tasks/E3-T3-implement-geocoder-abstraction-and-cache.md): task dependencies `E3-T1, E2-T2`; deferred gates D-002; M1; requirements `P-001, P-007`; decisions `ADR-005, ADR-012`.
 - [E3-T4](E3-database-geocoding-media/proposed-tasks/E3-T4-implement-media-storage-and-derivatives.md): task dependencies `E2-T3, E3-T1`; M2; requirements `P-005, P-007`; decisions `ADR-007`.
 - [E3-T5](E3-database-geocoding-media/proposed-tasks/E3-T5-import-and-review-the-complete-dataset.md): task dependencies `E2-T5, E3-T2, E3-T3, E3-T4`; M2; requirements `P-001, P-002, P-005, P-007`; decisions `ADR-003, ADR-005, ADR-006, ADR-007`.
 ### E4
 
-- [E4-T1](E4-read-api-filter-contracts/proposed-tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md): task dependencies `E3-T1, E3-T3`; M1; requirements `P-001, P-003`; decisions `ADR-002, ADR-003, ADR-005, ADR-012, ADR-013`.
-- [E4-T2](E4-read-api-filter-contracts/proposed-tasks/E4-T2-implement-facets-and-location-offer-collection.md): task dependencies `E4-T1`; M2; requirements `P-001, P-002, P-003`; decisions `ADR-002, ADR-003, ADR-012, ADR-013`.
+- [E4-T1](E4-read-api-filter-contracts/tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md): promoted/draft revision 2; task dependency `E3-T1`; M1; requirements `P-001, P-003`; decisions `ADR-002, ADR-003, ADR-005, ADR-012, ADR-013`.
+- [E4-T2](E4-read-api-filter-contracts/tasks/E4-T2-implement-facets-and-location-offer-collection.md): promoted/draft revision 2; task dependency `E4-T1`; M1; requirements `P-001, P-002, P-003`; decisions `ADR-002, ADR-003, ADR-012, ADR-013`.
 - [E4-T3](E4-read-api-filter-contracts/proposed-tasks/E4-T3-implement-offer-detail.md): task dependencies `E3-T4, E4-T2`; M2; requirements `P-002, P-005, P-006, P-007, P-008`; decisions `ADR-003, ADR-007, ADR-011, ADR-012, ADR-013, ADR-016`.
 - [E4-T4](E4-read-api-filter-contracts/proposed-tasks/E4-T4-harden-api-behavior-and-performance.md): task dependencies `E4-T1, E4-T2, E4-T3, E3-T5`; M2; requirements `P-001, P-002, P-003`; decisions `ADR-012, ADR-013`.
 ### E5
 
-- [E5-T1](E5-interactive-map-frontend/proposed-tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md): task dependencies `E1-T2, E4-T1`; M1; requirements `P-001, P-004, P-007`; decisions `ADR-002, ADR-004, ADR-012`.
-- [E5-T2](E5-interactive-map-frontend/proposed-tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md): task dependencies `E5-T1, E4-T2`; M1; requirements `P-001, P-003, P-004`; decisions `ADR-002, ADR-003, ADR-012`.
+- [E5-T1](E5-interactive-map-frontend/tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md): promoted/draft revision 2; task dependencies `E1-T2, E4-T2`; M1; requirements `P-001, P-004, P-007`; decisions `ADR-002, ADR-004, ADR-012`.
+- [E5-T2](E5-interactive-map-frontend/tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md): promoted/draft revision 2; task dependencies `E5-T1, E4-T2`; M1; requirements `P-001, P-003, P-004`; decisions `ADR-002, ADR-003, ADR-012`.
 - [E5-T3](E5-interactive-map-frontend/proposed-tasks/E5-T3-build-offer-detail-and-media-gallery.md): task dependencies `E4-T3, E5-T1`; M3; requirements `P-002, P-005, P-006, P-007`; decisions `ADR-003, ADR-004, ADR-007, ADR-012`.
 - [E5-T4](E5-interactive-map-frontend/proposed-tasks/E5-T4-complete-responsive-list-map-accessibility.md): task dependencies `E5-T2, E5-T3`; M3; requirements `P-001, P-002, P-003, P-004, P-005`; decisions `ADR-002, ADR-004, ADR-012`.
 - [E5-T5](E5-interactive-map-frontend/proposed-tasks/E5-T5-performance-and-production-ux-pass.md): task dependencies `E5-T4, E4-T4`; M3; requirements `P-001, P-004, P-005`; decisions `ADR-004, ADR-007, ADR-012`.

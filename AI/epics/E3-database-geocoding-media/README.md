@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E3
 title: "Database, geocoding, and media pipeline"
-status: draft
+status: approved
 milestones: [M1, M2]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,10 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 
 ## Approval state
 
-- Epic workspace status: `draft`.
-- [Spike](SPIKE.md): `draft`, revision 1, owner approval pending, research only, no code.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `draft`, revision 1, blocked with no approved spike revision and no executable task sequence.
-- Every file in `proposed-tasks/` is non-actionable. No implementation, scaffold, migration, infrastructure change, generated executable artifact, or proof code is approved.
-- No `tasks/` directory exists; it may be created only when an approved candidate is promoted after spike approval.
+- Epic workspace status: `approved` for the synthetic M1 boundary.
+- [Spike](SPIKE.md): `approved`, revision 2.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing promoted E3-T1 only.
+- E3-T1 is promoted/`ready`; E3-T2 through E3-T5 remain non-actionable under `proposed-tasks/`.
 
 ## Milestones
 
@@ -46,9 +45,12 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 - [ADR-016](../../decisions/adr/ADR-016-pseudonymous-accounts-owner-console.md)
 - [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md)
 
+## Promoted task
+
+- [E3-T1: Create M1 schema, migrations, and deterministic seed](tasks/E3-T1-create-schema-and-migrations.md) — `ready`, P0/L, M1
+
 ## Proposed tasks
 
-- [E3-T1: Create schema and migrations](proposed-tasks/E3-T1-create-schema-and-migrations.md) — `proposed`, P0/L, M1
 - [E3-T2: Implement idempotent persistence and reprocessing](proposed-tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md) — `proposed`, P0/L, M1
 - [E3-T3: Implement geocoder abstraction and cache](proposed-tasks/E3-T3-implement-geocoder-abstraction-and-cache.md) — `proposed`, P0/L, M1
 - [E3-T4: Implement media storage and derivatives](proposed-tasks/E3-T4-implement-media-storage-and-derivatives.md) — `proposed`, P0/L, M2
@@ -61,8 +63,7 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 - Incoming: E3-T3 depends on E2-T2.
 - Incoming: E3-T4 depends on E2-T3.
 - Incoming: E3-T5 depends on E2-T5.
-- Outgoing: E4-T1 depends on E3-T1.
-- Outgoing: E4-T1 depends on E3-T3.
+- Outgoing: synthetic M1 E4-T1 depends on E3-T1; publishing non-fixture coordinates still requires E3-T3.
 - Outgoing: E4-T3 depends on E3-T4.
 - Outgoing: E4-T4 depends on E3-T5.
 - Outgoing: E6-T2 depends on E3-T4.

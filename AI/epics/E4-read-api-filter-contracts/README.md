@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E4
 title: "Read API and filter contracts"
-status: draft
+status: approved
 milestones: [M1, M2]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,10 @@ stable, efficient public endpoints that implement filter semantics once.
 
 ## Approval state
 
-- Epic workspace status: `draft`.
-- [Spike](SPIKE.md): `draft`, revision 1, owner approval pending, research only, no code.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `draft`, revision 1, blocked with no approved spike revision and no executable task sequence.
-- Every file in `proposed-tasks/` is non-actionable. No implementation, scaffold, migration, infrastructure change, generated executable artifact, or proof code is approved.
-- No `tasks/` directory exists; it may be created only when an approved candidate is promoted after spike approval.
+- Epic workspace status: `approved` for the synthetic M1 map contract.
+- [Spike](SPIKE.md): `approved`, revision 2.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing E4-T1 then E4-T2.
+- E4-T1/T2 are promoted/`draft` pending stack ancestry; E4-T3/T4 remain proposed.
 
 ## Milestones
 
@@ -46,20 +45,22 @@ stable, efficient public endpoints that implement filter semantics once.
 - [ADR-013](../../decisions/adr/ADR-013-committed-openapi-offline-docs.md)
 - [ADR-016](../../decisions/adr/ADR-016-pseudonymous-accounts-owner-console.md)
 
+## Promoted task
+
+- [E4-T1: Implement map query service and GeoJSON endpoint](tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md) — `draft`, P0/L, M1
+- [E4-T2: Implement facets and location offer collection](tasks/E4-T2-implement-facets-and-location-offer-collection.md) — `draft`, P0/M, M1
+
 ## Proposed tasks
 
-- [E4-T1: Implement map query service and GeoJSON endpoint](proposed-tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md) — `proposed`, P0/L, M1
-- [E4-T2: Implement facets and location offer collection](proposed-tasks/E4-T2-implement-facets-and-location-offer-collection.md) — `proposed`, P0/M, M2
 - [E4-T3: Implement offer detail](proposed-tasks/E4-T3-implement-offer-detail.md) — `proposed`, P0/M, M2
 - [E4-T4: Harden API behavior and performance](proposed-tasks/E4-T4-harden-api-behavior-and-performance.md) — `proposed`, P1/M, M2
 
 ## Cross-epic dependencies
 
-- Incoming: E4-T1 depends on E3-T1.
-- Incoming: E4-T1 depends on E3-T3.
+- Incoming: synthetic M1 E4-T1 depends on E3-T1; non-fixture publication remains gated by E3-T3.
 - Incoming: E4-T3 depends on E3-T4.
 - Incoming: E4-T4 depends on E3-T5.
-- Outgoing: E5-T1 depends on E4-T1.
+- Outgoing: E5-T1 depends on E4-T2 for map plus selected-location results.
 - Outgoing: E5-T2 depends on E4-T2.
 - Outgoing: E5-T3 depends on E4-T3.
 - Outgoing: E5-T5 depends on E4-T4.

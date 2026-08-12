@@ -30,7 +30,7 @@ The complete export is parsed with reconciled reports, locations are geocoded/re
 - [E3-T5: Import and review the complete dataset](../epics/E3-database-geocoding-media/proposed-tasks/E3-T5-import-and-review-the-complete-dataset.md) — `proposed`
 ### [E4: Read API and filter contracts](../epics/E4-read-api-filter-contracts/README.md)
 
-- [E4-T2: Implement facets and location offer collection](../epics/E4-read-api-filter-contracts/proposed-tasks/E4-T2-implement-facets-and-location-offer-collection.md) — `proposed`
+- [E4-T2: Implement facets and location offer collection](../epics/E4-read-api-filter-contracts/tasks/E4-T2-implement-facets-and-location-offer-collection.md) — promoted for M1, still reused by M2
 - [E4-T3: Implement offer detail](../epics/E4-read-api-filter-contracts/proposed-tasks/E4-T3-implement-offer-detail.md) — `proposed`
 - [E4-T4: Harden API behavior and performance](../epics/E4-read-api-filter-contracts/proposed-tasks/E4-T4-harden-api-behavior-and-performance.md) — `proposed`
 

@@ -17,19 +17,20 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 GIT = shutil.which("git")
 
 
-def tracked_markdown_files() -> tuple[Path, ...]:
-    """Return tracked Markdown files in deterministic order."""
+def repository_markdown_files() -> tuple[Path, ...]:
+    """Return existing tracked and untracked Markdown files deterministically."""
     if GIT is None:
         msg = "git is required to enumerate tracked Markdown files"
         raise RuntimeError(msg)
     result = subprocess.run(  # noqa: S603 - executable resolved from trusted PATH
-        [GIT, "ls-files", "--", "*.md"],
+        [GIT, "ls-files", "--cached", "--others", "--exclude-standard", "--", "*.md"],
         check=True,
         cwd=REPOSITORY_ROOT,
         capture_output=True,
         text=True,
     )
-    return tuple(REPOSITORY_ROOT / line for line in result.stdout.splitlines() if line)
+    candidates = (REPOSITORY_ROOT / line for line in result.stdout.splitlines() if line)
+    return tuple(path for path in candidates if path.is_file())
 
 
 def target_path(source: Path, raw_target: str) -> Path | None:
@@ -51,7 +52,7 @@ def target_path(source: Path, raw_target: str) -> Path | None:
 def main() -> int:
     """Print missing local targets and return a non-zero status when found."""
     missing: list[str] = []
-    for source in tracked_markdown_files():
+    for source in repository_markdown_files():
         text = source.read_text(encoding="utf-8")
         for match in LINK_PATTERN.finditer(text):
             raw_target = match.group(1)
@@ -65,7 +66,7 @@ def main() -> int:
         print("\n".join(f"- {item}" for item in missing))
         return 1
 
-    print("All tracked relative Markdown link targets exist.")
+    print("All repository relative Markdown link targets exist.")
     return 0
 
 
