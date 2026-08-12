@@ -42,9 +42,9 @@ This append-only log records blockers that could not be safely resolved autonomo
 ### B-006: First proof workflow receives GitHub `startup_failure`
 
 - Impact: PR #6 has no successful hosted check even though the same workflow parses locally and every underlying command passes.
-- Current state: GitHub runs `31645554630` and predecessors fail before creating jobs with `path: BuildFailed`; repository Actions are enabled/all actions allowed. `actionlint` and `act -l` both accept the workflow.
-- Needed from owner: none yet; E1-T4 owns reducing/bisecting the hosted workflow and establishing stable check names.
-- Safe workaround: retain the local PostGIS, architecture, contract, frontend, advisory, and image evidence; do not mark E0-T2 complete/merge until a hosted workflow passes or GitHub reports a definitive account/platform blocker.
+- Current state: GitHub runs `31645554630` and predecessors fail before creating jobs with `path: BuildFailed`; repository Actions are enabled/all actions allowed. A separate one-job `echo` workflow also produced startup failure `31646260433`, while `actionlint` and `act -l` accept both files. This rules out application commands and strongly indicates a repository/account hosted-runner startup or quota/billing condition.
+- Needed from owner: inspect the Actions run/billing UI. The current GitHub token cannot read billing because it lacks the `user` scope; no auth escalation was attempted overnight.
+- Safe workaround: retain local PostGIS, architecture, contract, frontend, advisory, image, workflow-parser, and negative-gate evidence; do not mark hosted-CI acceptance complete or merge dependent production work until a hosted workflow passes.
 
 ## Resolved during overnight work
 

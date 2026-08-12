@@ -73,9 +73,9 @@ Generalize the E0 proof workflow into stable synthetic repository checks and com
 ## Acceptance criteria
 
 - [ ] Representative lint, test, architecture, contract, documentation-link, or image failures block stable CI jobs.
-- [ ] Stale/breaking OpenAPI or generated frontend mismatch blocks CI.
+- [x] Stale/breaking OpenAPI or generated frontend mismatch is rejected by the exact CI commands.
 - [ ] OpenAPI JSON, generated TypeScript declarations, and static HTML are available in a commit-addressed artifact.
-- [ ] CI uses synthetic fixtures and no source/production credentials.
+- [x] CI uses synthetic fixtures and no source/production credentials.
 - [ ] Workflow/action syntax passes local lint and GitHub checks.
 
 ## Test plan
@@ -83,6 +83,18 @@ Generalize the E0 proof workflow into stable synthetic repository checks and com
 - Run action/workflow lint and every job locally where practical.
 - Use temporary deliberate architecture/contract/docs drift probes and prove non-zero checks before cleanup.
 - Inspect PR check names, logs, and artifact contents.
+
+## Verification evidence
+
+- `.github/workflows/ci.yml` defines stable `Backend`, `Frontend and contract`, `Repository safety`, and `Runtime images` jobs with read-only repository permissions.
+- `actionlint` and `act -l` accept the final workflow and enumerate all four jobs.
+- All underlying Make/backend/frontend/contract/advisory/image commands passed locally; the real PostGIS integration passed in E0-T2.
+- `scripts/prove_contract_drift.py` temporarily changes OpenAPI, verifies generated currentness fails, restores exact bytes, and proves the clean check recovers.
+- oasdiff 1.28.0 rejects a temporary removal of `GET /api/v1/estates`; the normal compatibility command passes against the available base.
+- Import Linter rejects/cleans its deliberate domain framework violation. `scripts/check_markdown_links.py` validates every tracked relative Markdown target.
+- Runtime checks build digest-pinned non-root images and inspect users plus absence of development/source/contract content.
+- The artifact definition includes committed OpenAPI JSON, generated TypeScript, and standalone HTML under a commit-SHA name.
+- GitHub Actions remains externally blocked: both the original workflow and a separate one-job `echo` parser smoke fail before job creation with `startup_failure`. See [B-006](../../../operations/BLOCKERS.md). Hosted check/artifact acceptance remains open.
 
 ## Rollout and rollback
 

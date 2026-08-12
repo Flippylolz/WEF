@@ -1,0 +1,173 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    services:
+      postgis:
+        image: "postgis/postgis:17-3.5@sha256:0a23a2b5e4fbd9b4c6980d20ee80dd6b63dec52669379c75a506db58a4116708"
+        env:
+          POSTGRES_DB: wef_proof
+          POSTGRES_PASSWORD: proof
+          POSTGRES_USER: wef
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U wef -d wef_proof"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://wef:proof@127.0.0.1:5432/wef_proof
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.0.0
+        with:
+          enable-cache: true
+          python-version: 3.13.2
+      - name: Install locked dependencies
+        run: uv sync --project apps/backend --frozen
+      - name: Format and lint
+        run: |
+          uv --directory apps/backend run ruff format --check .
+          uv --directory apps/backend run ruff check .
+      - name: Type check
+        run: uv --directory apps/backend run mypy
+      - name: Architecture contracts
+        run: |
+          cd apps/backend
+          PYTHONPATH=src uv run lint-imports --config ../../.importlinter
+          uv run python scripts/prove_architecture_violation.py
+      - name: Tests with PostGIS
+        run: >-
+          uv --directory apps/backend run pytest
+          --cov=wef_backend
+          --cov-branch
+          --cov-report=term-missing
+      - name: Deterministic OpenAPI
+        run: |
+          uv --directory apps/backend run wef-export-openapi
+          git diff --exit-code -- contracts/openapi/v1.json
+      - name: Dependency audit
+        run: uv --directory apps/backend run pip-audit
+
+  frontend:
+    name: Frontend and contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22.22.2
+      - name: Enable locked pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.21.0 --activate
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Format, lint, type, and test
+        run: |
+          pnpm --filter web format:check
+          pnpm --filter web lint
+          pnpm --filter web typecheck
+          pnpm --filter web test
+      - name: Contract and static documentation
+        run: |
+          pnpm --filter web contract:check
+          pnpm --filter web contract:lint
+          pnpm --filter web contract:docs
+          python3 scripts/prove_contract_drift.py
+      - name: OpenAPI compatibility
+        shell: bash
+        run: |
+          mkdir -p tmp
+          if [[ -n "${GITHUB_BASE_REF}" ]] &&
+             git show "origin/${GITHUB_BASE_REF}:contracts/openapi/v1.json" > tmp/openapi-base.json 2>/dev/null; then
+            true
+          else
+            cp contracts/openapi/v1.json tmp/openapi-base.json
+          fi
+          docker run --rm \
+            -v "${PWD}:/work" \
+            tufin/oasdiff:v1.28.0@sha256:86830f988eaafcf589acb2794ee5ab78e3300ded071d6517bf085469300cbf36 \
+            breaking /work/tmp/openapi-base.json /work/contracts/openapi/v1.json
+      - name: Breaking OpenAPI negative probe
+        shell: bash
+        run: |
+          python3 -c 'import json; p="contracts/openapi/v1.json"; d=json.load(open(p)); del d["paths"]["/api/v1/estates"]; json.dump(d, open("tmp/openapi-breaking-probe.json", "w"))'
+          status=0
+          docker run --rm \
+            -v "${PWD}:/work" \
+            tufin/oasdiff:v1.28.0@sha256:86830f988eaafcf589acb2794ee5ab78e3300ded071d6517bf085469300cbf36 \
+            breaking /work/contracts/openapi/v1.json /work/tmp/openapi-breaking-probe.json || status=$?
+          if [[ "${status}" -eq 0 ]]; then
+            echo "oasdiff accepted a deliberately removed endpoint"
+            exit 1
+          fi
+          rm tmp/openapi-breaking-probe.json
+          echo "oasdiff rejected the deliberate endpoint removal"
+      - name: Production build and advisory audit
+        run: |
+          pnpm --filter web build
+          pnpm audit --prod --audit-level high
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: api-contract-${{ github.sha }}
+          path: |
+            contracts/openapi/v1.json
+            apps/web/src/generated/api.ts
+            tmp/openapi-v1.html
+          if-no-files-found: error
+
+  repository:
+    name: Repository safety
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.0.0
+        with:
+          enable-cache: true
+          python-version: 3.13.2
+      - name: Quality probe scripts
+        run: |
+          uv sync --project apps/backend --frozen
+          uv --directory apps/backend run ruff format --check ../../scripts
+          uv --directory apps/backend run ruff check ../../scripts
+          uv --directory apps/backend run mypy --strict ../../scripts
+      - name: Relative Markdown links
+        run: python3 scripts/check_markdown_links.py
+      - name: Source and secret exclusions
+        shell: bash
+        run: |
+          test ! -e est-test
+          test ! -e est-test.tar.gz
+          test ! -e .env
+          ! git ls-files | grep -E '(^|/)(est-test|media|secrets)(/|$)|\.session(-journal)?$|\.pem$|\.key$'
+
+  images:
+    name: Runtime images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Build runtime images
+        run: make build
+      - name: Inspect runtime users and contents
+        run: |
+          test "$(docker image inspect wef-backend:local --format '{{.Config.User}}')" = "wef"
+          test "$(docker image inspect wef-web:local --format '{{.Config.User}}')" = "node"
+          docker run --rm --entrypoint sh wef-backend:local -c \
+            '! command -v uv && ! command -v pytest && ! command -v mypy && ! command -v ruff'
+          docker run --rm --entrypoint sh wef-web:local -c \
+            'test ! -e /app/contracts && test ! -e /app/apps/web/src'
