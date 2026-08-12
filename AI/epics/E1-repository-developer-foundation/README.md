@@ -1,0 +1,74 @@
+---
+schema: ai-workflow/epic@1
+id: E1
+title: "Repository and developer foundation"
+status: ready
+milestones: [M1]
+owner: owner
+spike: SPIKE.md
+implementation_plan: IMPLEMENTATION_PLAN.md
+---
+
+# E1: Repository and developer foundation
+
+## Outcome
+
+a reproducible monorepo that cannot accidentally commit or package the source archive/media.
+
+## Approval state
+
+- Epic workspace status: `ready`; spike revision 2 and implementation-plan revision 3 are owner-approved.
+- [Spike](SPIKE.md): `approved`, revision 2, explicitly approved by the owner, research only, no code. It defines separate ownership and branches for repository safety, application Dockerfiles/Make targets, and local Compose.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, containing only promoted E1-T1 revision 3 and the selected README/docs/stacked-PR bootstrap.
+- E1-T1 is promoted and `ready`; every remaining file in `proposed-tasks/` is non-actionable.
+- E1-T1 authorizes only the repository-safety files, Git initialization, scoped commits, push, and PR in its approved plan. Scaffold, Dockerfile, Compose, Makefile, CI, migration, and proof work remain unauthorized.
+
+## Milestones
+
+[M1](../../milestones/M1-vertical-proof.md)
+
+## Governing domain documents
+
+- [Architecture](../../architecture/README.md)
+- [Governance](../../governance/README.md)
+- [Operations](../../operations/README.md)
+- [Decisions](../../decisions/README.md)
+
+## Governing decisions and deferred gates
+
+- [ADR-001](../../decisions/adr/ADR-001-split-python-api-typescript-web.md)
+- [ADR-005](../../decisions/adr/ADR-005-postgresql-postgis.md)
+- [ADR-008](../../decisions/adr/ADR-008-single-server-immutable-deployments.md)
+- [ADR-009](../../decisions/adr/ADR-009-feature-branch-development.md)
+- [ADR-010](../../decisions/adr/ADR-010-isolate-wef-shared-nuc.md)
+- [ADR-012](../../decisions/adr/ADR-012-backend-centric-modular-monolith.md)
+- [ADR-013](../../decisions/adr/ADR-013-committed-openapi-offline-docs.md)
+- [ADR-017](../../decisions/adr/ADR-017-no-enforced-branch-protection.md)
+- [D-007](../../decisions/deferred/D-007-github-protection-eligibility.md)
+
+## Proposed tasks
+
+- [E1-T1: Initialize repository safety](tasks/E1-T1-initialize-repository-safety.md) — promoted, `ready`, P0/S, M1
+- [E1-T2: Scaffold web and backend applications](proposed-tasks/E1-T2-scaffold-web-and-backend-applications.md) — `proposed`, P0/M, M1
+- [E1-T3: Add local Docker Compose](proposed-tasks/E1-T3-add-local-docker-compose.md) — `proposed`, P0/M, M1
+- [E1-T4: Establish CI baseline](proposed-tasks/E1-T4-establish-ci-baseline.md) — `proposed`, P0/M, M1
+- [E1-T5: Configure protected-main governance](proposed-tasks/E1-T5-configure-protected-main-governance.md) — `cancelled`, P0/M, M1
+- [E1-T6: Configure Dependabot update pull requests](proposed-tasks/E1-T6-configure-dependabot-update-pull-requests.md) — `proposed`, P0/M, M1
+- [E1-T7: Implement scheduled Dependabot merge controller](proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — `proposed`, P0/M, M1
+
+## Cross-epic dependencies
+
+- Incoming: E1-T2 depends on E0-T2.
+- Outgoing: E0-T1 and E0-T2 depend on E1-T1.
+- Outgoing: E2-T1 depends on E1-T2.
+- Outgoing: E3-T1 depends on E1-T3.
+- Outgoing: E5-T1 depends on E1-T2.
+- Outgoing: E6-T4 depends on E1-T2.
+- Outgoing: E7-T1 depends on E1-T3.
+- Outgoing: E7-T3 depends on E1-T4.
+
+The exact normalized dependency and traceability registry is maintained in the [epics index](../README.md). Each workflow candidate is authoritative only in the single linked `proposed-tasks/` file above; its `legacy-roadmap:*` source value records non-path provenance.
+
+## Lifecycle
+
+Follow the [approval-gated workflow](../../workflow/README.md), [proposed-task schema](../../workflow/templates/PROPOSED_TASK.md), [implementation-plan schema](../../workflow/templates/IMPLEMENTATION_PLAN.md), and [definition of done](../../workflow/DEFINITION_OF_DONE.md). Priority, roadmap order, or epic selection never bypasses owner approvals, promotion, completed dependencies, or one-branch-per-task gates.
