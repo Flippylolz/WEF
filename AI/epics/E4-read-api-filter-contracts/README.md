@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E4
 title: "Read API and filter contracts"
-status: approved
+status: in_progress
 milestones: [M1, M2]
 owner: owner
 spike: SPIKE.md
@@ -17,10 +17,10 @@ stable, efficient public endpoints that implement filter semantics once.
 
 ## Approval state
 
-- Epic workspace status: `approved` for the synthetic M1 map contract.
+- Epic workspace status: `in_progress` for the synthetic M1 map contract.
 - [Spike](SPIKE.md): `approved`, revision 2.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing E4-T1 then E4-T2.
-- E4-T1/T2 are promoted/`draft` pending stack ancestry; E4-T3/T4 remain proposed.
+- E4-T1 is `in_progress`; E4-T2 remains promoted/`draft` pending E4-T1 ancestry; E4-T3/T4 remain proposed.
 
 ## Milestones
 
@@ -47,7 +47,7 @@ stable, efficient public endpoints that implement filter semantics once.
 
 ## Promoted task
 
-- [E4-T1: Implement map query service and GeoJSON endpoint](tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md) — `draft`, P0/L, M1
+- [E4-T1: Implement map query service and GeoJSON endpoint](tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md) — `in_progress`, P0/L, M1
 - [E4-T2: Implement facets and location offer collection](tasks/E4-T2-implement-facets-and-location-offer-collection.md) — `draft`, P0/M, M1
 
 ## Proposed tasks

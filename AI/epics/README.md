@@ -19,7 +19,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `in_progress`; spike revision 2/plan revision 4 approved; E1-T1/E1-T2/E1-T4/E1-T3 in progress, 2 proposed, 1 cancelled; milestones M1.
 - [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `draft`; 5 tasks (5 proposed); milestones M1, M2.
 - [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `in_progress`; spike/plan revision 2; E3-T1 in progress, 4 proposed; milestones M1, M2.
-- [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `approved`; spike/plan revision 2; E4-T1/T2 promoted draft, 2 proposed; milestones M1, M2.
+- [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `in_progress`; spike/plan revision 2; E4-T1 in progress/E4-T2 promoted draft, 2 proposed; milestones M1, M2.
 - [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `approved`; spike/plan revision 2; E5-T1/T2 promoted draft, 3 proposed; milestones M1, M3.
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `draft`; 7 tasks (7 proposed); milestones M3.
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `draft`; 7 tasks (6 proposed, 1 deferred); milestones M3.
@@ -94,7 +94,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E3-T5](E3-database-geocoding-media/proposed-tasks/E3-T5-import-and-review-the-complete-dataset.md): task dependencies `E2-T5, E3-T2, E3-T3, E3-T4`; M2; requirements `P-001, P-002, P-005, P-007`; decisions `ADR-003, ADR-005, ADR-006, ADR-007`.
 ### E4
 
-- [E4-T1](E4-read-api-filter-contracts/tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md): promoted/draft revision 2; task dependency `E3-T1`; M1; requirements `P-001, P-003`; decisions `ADR-002, ADR-003, ADR-005, ADR-012, ADR-013`.
+- [E4-T1](E4-read-api-filter-contracts/tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md): promoted/in-progress revision 2; stacked dependency `E3-T1`; M1; requirements `P-001, P-003`; decisions `ADR-002, ADR-003, ADR-005, ADR-012, ADR-013`.
 - [E4-T2](E4-read-api-filter-contracts/tasks/E4-T2-implement-facets-and-location-offer-collection.md): promoted/draft revision 2; task dependency `E4-T1`; M1; requirements `P-001, P-002, P-003`; decisions `ADR-002, ADR-003, ADR-012, ADR-013`.
 - [E4-T3](E4-read-api-filter-contracts/proposed-tasks/E4-T3-implement-offer-detail.md): task dependencies `E3-T4, E4-T2`; M2; requirements `P-002, P-005, P-006, P-007, P-008`; decisions `ADR-003, ADR-007, ADR-011, ADR-012, ADR-013, ADR-016`.
 - [E4-T4](E4-read-api-filter-contracts/proposed-tasks/E4-T4-harden-api-behavior-and-performance.md): task dependencies `E4-T1, E4-T2, E4-T3, E3-T5`; M2; requirements `P-001, P-002, P-003`; decisions `ADR-012, ADR-013`.

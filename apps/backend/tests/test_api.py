@@ -2,13 +2,23 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
+from decimal import Decimal
+from uuid import UUID
 
 from fastapi import FastAPI, status
 from httpx import ASGITransport, AsyncClient
 
-from tests.fakes import FakeEstateQuery, always_ready, close_nothing, never_ready
+from tests.fakes import (
+    FakeEstateQuery,
+    FakeMapQuery,
+    always_ready,
+    close_nothing,
+    never_ready,
+)
 from wef_backend.app import create_http_app
 from wef_backend.composition import AppServices, ReadyCheck
+from wef_backend.features.catalog.application import MapLocationRecord, QueryMapLocations
 from wef_backend.features.estates.application import EstateRecord, ListEstates
 from wef_backend.features.estates.domain import Availability, GeoPoint
 
@@ -17,6 +27,7 @@ def create_test_app(ready_check: ReadyCheck = always_ready) -> FastAPI:
     """Build an isolated app with no database resources."""
     services = AppServices(
         list_estates=ListEstates(FakeEstateQuery(records=())),
+        query_map=QueryMapLocations(FakeMapQuery()),
         is_ready=ready_check,
         close=close_nothing,
     )
@@ -82,6 +93,81 @@ async def test_health_endpoints_reflect_composed_readiness() -> None:
     assert ready_response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
+async def test_map_endpoint_presents_etag_and_conditional_response() -> None:
+    """Present grouped backend decisions and honor conditional requests."""
+    app = create_test_app()
+    app.state.query_map = QueryMapLocations(
+        FakeMapQuery(
+            records=(
+                MapLocationRecord(
+                    id=UUID("10000000-0000-4000-8000-000000000001"),
+                    longitude=21.0122,
+                    latitude=52.2297,
+                    display_name="Synthetic Śródmieście",
+                    display_address="Synthetic address",
+                    district="Śródmieście",
+                    precision="building",
+                    confidence=Decimal("0.97"),
+                    matching_offer_count=1,
+                    total_offer_count=2,
+                    latest_published_at=datetime(2026, 8, 1, tzinfo=UTC),
+                    price_min_minor=600_000_00,
+                    price_max_minor=650_000_00,
+                    area_min_sqm=Decimal("40.0"),
+                    area_max_sqm=Decimal("45.0"),
+                ),
+            ),
+        ),
+    )
+
+    async with api_client(app) as client:
+        response = await client.get(
+            "/api/v1/map/locations",
+            params={"bbox": "20.9,52.1,21.2,52.4"},
+        )
+        conditional = await client.get(
+            "/api/v1/map/locations",
+            params={"bbox": "20.9,52.1,21.2,52.4"},
+            headers={"If-None-Match": response.headers["etag"]},
+        )
+
+    payload = response.json()
+    assert response.status_code == status.HTTP_200_OK
+    assert response.headers["etag"].startswith('W/"')
+    assert response.headers["x-request-id"] == payload["meta"]["request_id"]
+    assert payload["features"][0]["geometry"]["coordinates"] == [21.0122, 52.2297]
+    assert payload["features"][0]["properties"]["confidence"] == "high"
+    assert payload["features"][0]["properties"]["matching_offer_count"] == 1
+    assert payload["features"][0]["properties"]["total_offer_count"] == 2
+    assert conditional.status_code == status.HTTP_304_NOT_MODIFIED
+    assert conditional.content == b""
+
+
+async def test_map_endpoint_rejects_unknown_and_unsafe_queries_safely() -> None:
+    """Reject unbounded/unknown inputs without reflecting their values."""
+    app = create_test_app()
+
+    async with api_client(app) as client:
+        unknown = await client.get(
+            "/api/v1/map/locations",
+            params={
+                "bbox": "20.9,52.1,21.2,52.4",
+                "raw_payload": "do-not-reflect-this",
+            },
+        )
+        unsafe = await client.get(
+            "/api/v1/map/locations",
+            params={"bbox": "-180,-90,180,90"},
+        )
+
+    assert unknown.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert unknown.headers["content-type"].startswith("application/problem+json")
+    assert "do-not-reflect-this" not in unknown.text
+    assert unknown.json()["code"] == "invalid_query"
+    assert unsafe.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert unsafe.json()["detail"] == "bbox must remain within the Warsaw query boundary"
+
+
 async def test_runtime_docs_routes_are_absent_but_offline_schema_works() -> None:
     """Disable HTTP documentation while retaining direct schema generation."""
     app = create_http_app()
@@ -93,3 +179,4 @@ async def test_runtime_docs_routes_are_absent_but_offline_schema_works() -> None
     schema = app.openapi()
 
     assert schema["paths"]["/api/v1/estates"]["get"]["operationId"] == "listEstates"
+    assert schema["paths"]["/api/v1/map/locations"]["get"]["operationId"] == ("queryMapLocations")

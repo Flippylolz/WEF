@@ -29,7 +29,7 @@ Returns a GeoJSON `FeatureCollection` of visible locations with at least one mat
 Query parameters:
 
 - `bbox`: required `min_lng,min_lat,max_lng,max_lat`, constrained to a safe maximum area.
-- `price_min`, `price_max`: minor-unit integers paired with `currency=PLN` in the MVP.
+- `price_min`, `price_max`: PLN minor-unit integers in the MVP.
 - `area_min`, `area_max`: decimal square metres.
 - `rooms`: repeated integer values.
 - `district`: repeated canonical district slugs.
@@ -46,7 +46,6 @@ Each feature contains:
 - Matching offer count and total related offer count.
 - Latest matching publication date.
 - Matching price/area summary where comparable.
-- Optional thumbnail URL.
 
 It does not contain full source text or full media arrays.
 
@@ -62,14 +61,26 @@ Example shape:
       "geometry": {"type": "Point", "coordinates": [21.0122, 52.2297]},
       "properties": {
         "display_name": "Example development",
+        "display_address": "Example address, Warszawa",
         "district": "srodmiescie",
+        "coordinate_precision": "building",
+        "confidence": "high",
         "matching_offer_count": 2,
         "total_offer_count": 3,
-        "latest_published_at": "2026-08-01T10:00:00Z"
+        "latest_published_at": "2026-08-01T10:00:00Z",
+        "price_min_minor": 80000000,
+        "price_max_minor": 125000000,
+        "area_min_sqm": "35.00",
+        "area_max_sqm": "71.50",
+        "currency": "PLN"
       }
     }
   ],
-  "meta": {"request_id": "request-uuid"}
+  "meta": {
+    "request_id": "request-uuid",
+    "feature_count": 1,
+    "matching_offer_count": 2
+  }
 }
 ```
 

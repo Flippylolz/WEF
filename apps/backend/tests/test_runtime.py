@@ -17,6 +17,7 @@ from wef_backend.features.catalog.application import (
     SeedOffer,
     SeedResult,
 )
+from wef_backend.features.estates.infrastructure import RetiredEstateQueryAdapter
 from wef_backend.openapi_export import export_openapi
 from wef_backend.settings import Settings, load_settings
 
@@ -28,6 +29,11 @@ async def test_database_resources_are_lazy() -> None:
     assert database.session_factory.kw["expire_on_commit"] is False
 
     await database.engine.dispose()
+
+
+async def test_retired_estate_adapter_avoids_obsolete_persistence() -> None:
+    """Keep the deprecated additive route inert during frontend migration."""
+    assert await RetiredEstateQueryAdapter().list_estate_records() == ()
 
 
 async def test_runtime_app_composes_without_connecting() -> None:
@@ -55,7 +61,7 @@ def test_openapi_export_is_deterministic(tmp_path: Path) -> None:
     export_openapi(destination)
 
     assert destination.read_text(encoding="utf-8") == first_export
-    assert json.loads(first_export)["info"]["title"] == "WEF synthetic backend proof"
+    assert json.loads(first_export)["info"]["title"] == "Warsaw Estate Finder API"
 
 
 def test_serve_uses_uvicorn_application_factory(

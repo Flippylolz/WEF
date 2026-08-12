@@ -4,7 +4,7 @@ Warsaw Estate Platform (WEF) will turn a Telegram real-estate export into a filt
 
 ## Current status
 
-The repository contains the synthetic E0 architecture proof and an isolated local Compose topology: a layered FastAPI/PostGIS query, committed OpenAPI contract, generated thin Next.js client, tests, non-root application images, persistent development volumes, and a same-origin Caddy edge. It is not yet the product MVP: historical ingestion, the production schema, MapLibre UI, authentication, and deployment remain task-gated follow-up work.
+The repository contains a forward-migrated synthetic M1 PostGIS catalog and backend-authoritative grouped GeoJSON map query, plus committed/generated API contracts, tests, non-root application images, persistent development volumes, and a same-origin Caddy edge. It is not yet the browser MVP: MapLibre rendering, contextual facets/results, historical ingestion, authentication, and deployment remain task-gated follow-up work.
 
 Start with:
 
@@ -47,6 +47,7 @@ make compose-config
 make up
 make seed-m1
 curl --fail http://127.0.0.1:3100/api/v1/health/live
+curl --fail 'http://127.0.0.1:3100/api/v1/map/locations?bbox=20.7%2C52.0%2C21.4%2C52.4'
 make down
 ```
 

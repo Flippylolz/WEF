@@ -39,6 +39,14 @@ layers =
     wef_backend.features.catalog.application
     wef_backend.features.catalog.domain
 
+[importlinter:contract:catalog-interface-layers]
+name = Catalog interface depends inward
+type = layers
+layers =
+    wef_backend.features.catalog.interface
+    wef_backend.features.catalog.application
+    wef_backend.features.catalog.domain
+
 [importlinter:contract:catalog-core-framework-independence]
 name = Catalog core is framework independent
 type = forbidden

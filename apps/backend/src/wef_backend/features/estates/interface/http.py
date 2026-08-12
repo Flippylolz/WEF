@@ -15,7 +15,8 @@ router = APIRouter(prefix="/api/v1/estates", tags=["estates"])
 @router.get(
     "",
     operation_id="listEstates",
-    summary="List synthetic estates",
+    summary="Deprecated E0 synthetic estate proof",
+    deprecated=True,
 )
 async def list_estates(request: Request) -> EstatesResponse:
     """Run the application query obtained from explicit app state."""

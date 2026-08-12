@@ -12,7 +12,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List synthetic estates
+         * Deprecated E0 synthetic estate proof
+         * @deprecated
          * @description Run the application query obtained from explicit app state.
          */
         get: operations["listEstates"];
@@ -64,6 +65,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/map/locations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Query grouped map locations
+         * @description Return grouped accepted locations for the normalized filter query.
+         */
+        get: operations["queryMapLocations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -74,6 +95,18 @@ export interface components {
          * @enum {string}
          */
         Availability: "available" | "reserved";
+        /**
+         * ConfidenceIndicator
+         * @description Coarse public representation of internal coordinate confidence.
+         * @enum {string}
+         */
+        ConfidenceIndicator: "low" | "medium" | "high";
+        /**
+         * ContentType
+         * @description Public offer granularity.
+         * @enum {string}
+         */
+        ContentType: "development" | "unit";
         /**
          * CoordinatesResponse
          * @description WGS84 coordinates exposed by the API.
@@ -116,6 +149,145 @@ export interface components {
              * @enum {string}
              */
             status: "live" | "ready";
+        };
+        /**
+         * LocationMapFeature
+         * @description One accepted grouped location feature.
+         */
+        LocationMapFeature: {
+            geometry: components["schemas"]["PointGeometry"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            properties: components["schemas"]["LocationMapProperties"];
+            /**
+             * Type
+             * @default Feature
+             * @constant
+             */
+            type: "Feature";
+        };
+        /**
+         * LocationMapProperties
+         * @description Backend-owned grouped location display data.
+         */
+        LocationMapProperties: {
+            /** Area Max Sqm */
+            area_max_sqm?: string | null;
+            /** Area Min Sqm */
+            area_min_sqm?: string | null;
+            confidence: components["schemas"]["ConfidenceIndicator"];
+            /** Coordinate Precision */
+            coordinate_precision: string;
+            /**
+             * Currency
+             * @default PLN
+             * @constant
+             */
+            currency: "PLN";
+            /** Display Address */
+            display_address: string;
+            /** Display Name */
+            display_name: string;
+            /** District */
+            district: string | null;
+            /**
+             * Latest Published At
+             * Format: date-time
+             */
+            latest_published_at: string;
+            /** Matching Offer Count */
+            matching_offer_count: number;
+            /** Price Max Minor */
+            price_max_minor?: number | null;
+            /** Price Min Minor */
+            price_min_minor?: number | null;
+            /** Total Offer Count */
+            total_offer_count: number;
+        };
+        /**
+         * LocationMapResponse
+         * @description GeoJSON FeatureCollection with stable WEF metadata.
+         */
+        LocationMapResponse: {
+            /** Features */
+            features: components["schemas"]["LocationMapFeature"][];
+            meta: components["schemas"]["MapResponseMeta"];
+            /**
+             * Type
+             * @default FeatureCollection
+             * @constant
+             */
+            type: "FeatureCollection";
+        };
+        /**
+         * MapResponseMeta
+         * @description Bounded response metadata safe for public clients.
+         */
+        MapResponseMeta: {
+            /** Feature Count */
+            feature_count: number;
+            /** Matching Offer Count */
+            matching_offer_count: number;
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+        };
+        /**
+         * MarketType
+         * @description Source market classification.
+         * @enum {string}
+         */
+        MarketType: "primary" | "secondary" | "unknown";
+        /**
+         * PointGeometry
+         * @description GeoJSON Point geometry in longitude/latitude order.
+         */
+        PointGeometry: {
+            /** Coordinates */
+            coordinates: [
+                number,
+                number
+            ];
+            /**
+             * Type
+             * @default Point
+             * @constant
+             */
+            type: "Point";
+        };
+        /**
+         * ProblemResponse
+         * @description Stable public error envelope without rejected values.
+         */
+        ProblemResponse: {
+            /** Code */
+            code: string;
+            /** Detail */
+            detail: string;
+            /** Instance */
+            instance: string;
+            /**
+             * Kind
+             * @default validation_error
+             * @constant
+             */
+            kind: "validation_error";
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /** Status */
+            status: number;
+            /** Title */
+            title: string;
+            /** Type */
+            type: string;
         };
     };
     responses: never;
@@ -190,6 +362,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    queryMapLocations: {
+        parameters: {
+            query: {
+                area_max?: number | string | null;
+                area_min?: number | string | null;
+                bbox: string;
+                content_type?: components["schemas"]["ContentType"][];
+                district?: string[];
+                market_type?: components["schemas"]["MarketType"][];
+                price_max?: number | null;
+                price_min?: number | null;
+                published_from?: string | null;
+                published_to?: string | null;
+                rooms?: number[];
+            };
+            header?: {
+                "if-none-match"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocationMapResponse"];
+                };
+            };
+            /** @description The filtered projection has not changed. */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The query is malformed, contradictory, or unsafe. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
             };
         };
     };

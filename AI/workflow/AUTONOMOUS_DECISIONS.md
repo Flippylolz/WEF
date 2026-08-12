@@ -94,3 +94,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: the owner said local data and Telegram are later and asked for the best overnight MVP. A synthetic canonical seed exercises migrations, PostGIS, backend filter authority, generated contracts, browser interaction, Docker, and deployment without risking private source data or provider credentials.
 - Safety limit: synthetic coordinates are fixed fixture facts and clearly labeled; this exception never authorizes a real address to bypass geocoding/review. The seed is explicit and refuses production.
 - Reversal: implement the still-proposed E2/E3 ingestion tasks, replace seeded rows through reviewed idempotent persistence, and retire the seed command without changing public E4/E5 contracts.
+
+## AD-012: Retire E0 persistence without a breaking contract deletion
+
+- Time: 2026-08-12.
+- Prompt avoided: delete `/api/v1/estates` immediately and fail additive compatibility checks, or let the old runtime keep querying an intentionally unmigrated proof table.
+- Selected approach: make the grouped catalog map the active persistence path, mark `/api/v1/estates` deprecated, and route that compatibility endpoint to an inert empty adapter. E5 removes the old frontend consumer; endpoint deletion remains a separately reviewed compatibility change.
+- Rationale: the E0 table is deliberately excluded from Alembic, so continuing to query it produced noisy runtime failures. Preserving the deprecated response shape keeps the current stack additive while stopping obsolete database access.
+- Safety limit: no canonical location/offer is translated into the misleading E0 availability model.
+- Reversal: remove the deprecated endpoint after all generated-client/frontend consumers migrate, or temporarily restore its isolated proof adapter only in a dedicated architecture test.

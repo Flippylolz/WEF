@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E4-T1
 epic: E4
 title: "Implement map query service and GeoJSON endpoint"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: L
@@ -29,16 +29,17 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:34:40Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-12T22:56:40Z"
+  evidence:
+    - "E3-T1 dependency | branch feature/E3-T1-m1-schema-seed | PR https://github.com/Flippylolz/WEF/pull/11 | head 8d29bf1"
 branch:
   required: true
-  name: null
+  name: feature/E4-T1-map-geojson
   task_id: E4-T1
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-12T22:56:40Z"
   pull_request: null
 completion:
   completed_by: null
@@ -65,7 +66,7 @@ Expose one backend-authoritative grouped Warsaw map query with complete M1 filte
 - Return matching/total counts, display metadata, coordinate precision/confidence, latest matching publication timestamp, and comparable price/area summaries.
 - Add a pure Pydantic GeoJSON presenter and `GET /api/v1/map/locations`.
 - Add normalized filter/data-version ETag and conditional `304`.
-- Replace the public E0 `/estates` proof endpoint after the map contract and generated client pass.
+- Retire E0 proof persistence after the map contract passes; keep `/estates` inert/deprecated until its frontend consumer is removed.
 
 ## Out of scope
 
@@ -87,14 +88,14 @@ Expose one backend-authoritative grouped Warsaw map query with complete M1 filte
 
 ## Acceptance criteria
 
-- [ ] Required Warsaw-safe bbox and every M1 filter are validated; unknown/malformed/unsafe queries return stable safe errors.
-- [ ] Grouped GeoJSON matches the documented contract and includes only locations with at least one matching visible offer.
-- [ ] Inclusive range, null, AND/OR, date, visibility, scope, review-state, and coordinate-order behavior have PostGIS integration tests.
-- [ ] Matching and total counts differ correctly when filters exclude related offers.
-- [ ] ETag is deterministic for normalized equivalent filters and `If-None-Match` returns `304`.
-- [ ] OpenAPI, generated TypeScript, lint/docs, and compatibility checks pass.
-- [ ] Representative synthetic query is within the 500 ms local integration budget and its plan is inspectable.
-- [ ] No raw payload, contact, path, provider response, full source text, or unverified link enters the response.
+- [x] Required Warsaw-safe bbox and every M1 filter are validated; unknown/malformed/unsafe queries return stable safe errors.
+- [x] Grouped GeoJSON matches the documented contract and includes only locations with at least one matching visible offer.
+- [x] Inclusive range, null, AND/OR, date, visibility, scope, review-state, and coordinate-order behavior have PostGIS integration tests.
+- [x] Matching and total counts differ correctly when filters exclude related offers.
+- [x] ETag is deterministic for normalized equivalent filters and `If-None-Match` returns `304`.
+- [x] OpenAPI, generated TypeScript, lint/docs, and compatibility checks pass.
+- [x] Representative synthetic query is within the 500 ms local integration budget and its plan is inspectable.
+- [x] No raw payload, contact, path, provider response, full source text, or unverified link enters the response.
 
 ## Test plan
 
@@ -106,23 +107,31 @@ Expose one backend-authoritative grouped Warsaw map query with complete M1 filte
 
 ## Rollout and rollback
 
-Deploy only after E3-T1 migration/seed compatibility. The endpoint is additive until the proof route is removed in this task. Roll back the application only to a schema-compatible release; no data migration or destructive rollback is introduced here.
+Deploy only after E3-T1 migration/seed compatibility. The map endpoint is additive; the proof route remains inert/deprecated under AD-012 until its consumer is removed. Roll back the application only to a schema-compatible release; no data migration or destructive rollback is introduced here.
 
 ## Ready checklist
 
 - [x] This file is authoritative under `tasks/`; the proposed source is removed.
 - [x] Promotion, spike revision 2, and plan revision 2 are recorded.
-- [ ] E3-T1 is `done` or is a direct ancestor PR recorded as `stacked`.
+- [x] E3-T1 is a direct ancestor PR recorded as `stacked`.
 - [x] Scope and acceptance match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passes through `ready`.
-- [ ] Dedicated E4-T1 branch is created and recorded.
-- [ ] Branch/PR contain E4-T1 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated `feature/E4-T1-map-geojson` branch is created and recorded.
+- [x] Branch contains E4-T1 only; its PR opens after verification.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
+- [x] Acceptance criteria pass.
 - [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.
+
+## Verification evidence
+
+- Static/unit: Ruff, six import-linter contracts, mypy strict, 38 backend tests passed/3 explicit integration skips at 90.17% coverage, and frontend lint/type/tests pass.
+- PostGIS: migration plus grouped-query integrations pass against the Compose database, covering all M1 filters, inclusive/null semantics, AND/OR groups, gating, point order, count differences, and a warmed query under 500 ms with `EXPLAIN`.
+- Contract: deterministic OpenAPI, generated TypeScript, Redocly lint/static HTML, drift negative probe, and oasdiff against the stacked base pass.
+- Runtime: production API image and migration gate are healthy through Caddy; the seed returns four features/five matches, conditional ETag returns 304, and the deprecated E0 route returns an inert empty response without obsolete table access.
+- Safety: strict unknown-query rejection uses bounded problem JSON; response schema contains no source payload, contacts, local paths, provider data, full text, or links.

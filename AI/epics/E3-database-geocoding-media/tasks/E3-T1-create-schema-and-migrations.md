@@ -94,7 +94,7 @@ Replace disposable proof persistence with a forward-migrated M1 `Location`/`Offe
 - [x] The explicit synthetic seed converges to the same IDs/rows on replay without production/source data.
 - [x] Local Compose starts through a migration gate and runs the seed only through an explicit operator command.
 - [x] Readiness returns 503 when the database migration revision is incompatible.
-- [x] The disposable proof table is absent from Alembic metadata/migrations; E4-T1 owns route/model removal after its replacement contract passes.
+- [x] The disposable proof table is absent from Alembic metadata/migrations; E4-T1 retires runtime access and deprecates its route under AD-012.
 
 ## Test plan
 
