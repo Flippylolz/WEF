@@ -35,10 +35,10 @@ The responsive map experience is production-deployed from GitHub with persistent
 - [E6-T7: Implement owner administration console](../epics/E6-quality-security-operations/proposed-tasks/E6-T7-implement-owner-administration-console.md) — `proposed`
 ### [E7: Docker/GitHub production delivery](../epics/E7-production-delivery/README.md)
 
-- [E7-T1: Build production Compose topology](../epics/E7-production-delivery/proposed-tasks/E7-T1-build-production-compose-topology.md) — `proposed`
-- [E7-T2: Provision and verify supplied server](../epics/E7-production-delivery/proposed-tasks/E7-T2-provision-and-verify-supplied-server.md) — `proposed`
-- [E7-T3: Implement GitHub image and deployment workflows](../epics/E7-production-delivery/proposed-tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `proposed`
-- [E7-T4: Implement health verification and rollback](../epics/E7-production-delivery/proposed-tasks/E7-T4-implement-health-verification-and-rollback.md) — `proposed`
+- [E7-T1: Build production Compose topology](../epics/E7-production-delivery/tasks/E7-T1-build-production-compose-topology.md) — promoted, `draft`
+- [E7-T2: Provision and verify supplied server](../epics/E7-production-delivery/tasks/E7-T2-provision-and-verify-supplied-server.md) — promoted, `draft`
+- [E7-T3: Implement GitHub image and deployment workflows](../epics/E7-production-delivery/tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — promoted, `draft`
+- [E7-T4: Implement health verification and rollback](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) — promoted, `draft`
 - [E7-T5: Future backup and restore capability](../epics/E7-production-delivery/proposed-tasks/E7-T5-future-backup-and-restore-capability.md) — `deferred`
 - [E7-T6: Transfer and import the historical dataset](../epics/E7-production-delivery/proposed-tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `proposed`
 - [E7-T7: Enable production registration and contact reveal](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`

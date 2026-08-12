@@ -103,3 +103,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: the E0 table is deliberately excluded from Alembic, so continuing to query it produced noisy runtime failures. Preserving the deprecated response shape keeps the current stack additive while stopping obsolete database access.
 - Safety limit: no canonical location/offer is translated into the misleading E0 availability model.
 - Reversal: remove the deprecated endpoint after all generated-client/frontend consumers migrate, or temporarily restore its isolated proof adapter only in a dedicated architecture test.
+
+## AD-013: Rehearse anonymous production before the sensitive public launch
+
+- Time: 2026-08-12.
+- Prompt avoided: wait for unfinished auth/contact/security scope before testing production delivery, or deploy only the anonymous synthetic read path now.
+- Selected approach: [ADR-019](../decisions/adr/ADR-019-anonymous-http-production-rehearsal.md) permits an interim HTTP rehearsal on port 3100 with synthetic data and no credentials, registration, sessions, contact reveal, historical source, or Telegram.
+- Rationale: this proves isolated persistence, immutable images, GitHub configuration transfer, same-origin routing, health checks, and application rollback without exposing sensitive functionality.
+- Safety limit: the rehearsal is not M3/public-launch completion; B-006 remains an operational autodeploy blocker until GitHub can start hosted jobs, and E7-T7 HTTPS remains mandatory for sensitive features.
+- Reversal: stop only the `wef-production` project and retain its persistent paths, or remove `/home/nuc/wef` only after explicit owner authorization.

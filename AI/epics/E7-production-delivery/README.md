@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E7
 title: "Docker/GitHub production delivery"
-status: draft
+status: approved
 milestones: [M3]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,10 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 
 ## Approval state
 
-- Epic workspace status: `draft`.
-- [Spike](SPIKE.md): `draft`, revision 1, owner approval pending, research only, no code.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `draft`, revision 1, blocked with no approved spike revision and no executable task sequence.
-- Every file in `proposed-tasks/` is non-actionable. No implementation, scaffold, migration, infrastructure change, generated executable artifact, or proof code is approved.
-- No `tasks/` directory exists; it may be created only when an approved candidate is promoted after spike approval.
+- Epic workspace status: `approved` for the anonymous synthetic production rehearsal.
+- [Spike](SPIKE.md): `approved`, revision 2.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing E7-T1 through E7-T4.
+- E7-T1 through E7-T4 are promoted/`draft`; E7-T5 remains deferred and E7-T6/T7 remain proposed.
 
 ## Milestones
 
@@ -49,24 +48,27 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - [ADR-015](../../decisions/adr/ADR-015-defer-backups.md)
 - [ADR-016](../../decisions/adr/ADR-016-pseudonymous-accounts-owner-console.md)
 - [ADR-017](../../decisions/adr/ADR-017-no-enforced-branch-protection.md)
+- [ADR-018](../../decisions/adr/ADR-018-ordered-stacked-pull-requests.md)
+- [ADR-019](../../decisions/adr/ADR-019-anonymous-http-production-rehearsal.md)
 - [D-001](../../decisions/deferred/D-001-production-server-domain.md)
 - [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md)
 
-## Proposed tasks
+## Promoted tasks
 
-- [E7-T1: Build production Compose topology](proposed-tasks/E7-T1-build-production-compose-topology.md) — `proposed`, P1/L, M3
-- [E7-T2: Provision and verify supplied server](proposed-tasks/E7-T2-provision-and-verify-supplied-server.md) — `proposed`, P1/M, M3
-- [E7-T3: Implement GitHub image and deployment workflows](proposed-tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `proposed`, P1/L, M3
-- [E7-T4: Implement health verification and rollback](proposed-tasks/E7-T4-implement-health-verification-and-rollback.md) — `proposed`, P1/M, M3
+- [E7-T1: Build production Compose topology](tasks/E7-T1-build-production-compose-topology.md) — `draft`, P0/L, M3
+- [E7-T2: Provision and verify supplied server](tasks/E7-T2-provision-and-verify-supplied-server.md) — `draft`, P0/M, M3
+- [E7-T3: Implement GitHub image and deployment workflows](tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `draft`, P0/L, M3
+- [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — `draft`, P0/M, M3
+
+## Deferred/proposed tasks
+
 - [E7-T5: Future backup and restore capability](proposed-tasks/E7-T5-future-backup-and-restore-capability.md) — `deferred`, P2/L, M3
 - [E7-T6: Transfer and import the historical dataset](proposed-tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `proposed`, P1/L, M3
 - [E7-T7: Enable production registration and contact reveal](proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`, P1/M, M3
 
 ## Cross-epic dependencies
 
-- Incoming: E7-T1 depends on E1-T3.
-- Incoming: E7-T1 depends on E6-T2.
-- Incoming: E7-T1 depends on E6-T3.
+- Incoming: E7-T1 depends on E1-T3 and the E5-T1 anonymous browser MVP.
 - Incoming: E7-T3 depends on E1-T4.
 - Incoming: E7-T6 depends on E3-T5.
 - Incoming: E7-T7 depends on E6-T4.

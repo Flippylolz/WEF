@@ -143,7 +143,7 @@ Complete inspected details and the transfer runbook are in the [production serve
 - GitHub-enforced `main` protection is out of scope under [ADR-017](../decisions/adr/ADR-017-no-enforced-branch-protection.md); follow branch/PR/CI rules procedurally and do not claim technical enforcement.
 - Use GitHub Actions variables for non-secret configuration and Actions secrets for sensitive configuration without depending on paid environment protection.
 - Every successful merge/push to `main` automatically builds and publishes a release candidate.
-- Keep `AUTO_DEPLOY_ENABLED=false` until [E7-T4](../epics/E7-production-delivery/proposed-tasks/E7-T4-implement-health-verification-and-rollback.md) demonstrates health-gated rollback. Use `workflow_dispatch` for the rehearsal; then set the variable to `true`.
+- Keep `AUTO_DEPLOY_ENABLED=false` until [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) demonstrates health-gated rollback. Use `workflow_dispatch` for the rehearsal; then set the variable to `true`.
 - Grant each job minimum `permissions`.
 - Pin third-party Actions to full commit SHAs; use Dependabot/Renovate to propose controlled updates.
 - Enable secret scanning and dependency alerts.
@@ -192,7 +192,7 @@ On a successful push to `main`:
 19. Wait for API readiness and test the public web, API, map shell, and a media URL.
 20. Mark the release successful and retain redacted deployment logs.
 
-The same workflow supports `workflow_dispatch` with an explicit tested SHA for the [E7-T4](../epics/E7-production-delivery/proposed-tasks/E7-T4-implement-health-verification-and-rollback.md) rehearsal and owner-authorized emergency deployment.
+The same workflow supports `workflow_dispatch` with an explicit tested SHA for the [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) rehearsal and owner-authorized emergency deployment.
 
 Do not prune the previous release's images until a newer deployment has also succeeded and retention permits removal.
 
