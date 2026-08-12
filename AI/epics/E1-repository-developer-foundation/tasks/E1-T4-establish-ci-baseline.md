@@ -40,7 +40,7 @@ branch:
   task_id: E1-T4
   one_task_only: true
   created_at: "2026-08-12T22:15:44Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/8"
 completion:
   completed_by: null
   completed_at: null
