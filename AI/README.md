@@ -26,6 +26,7 @@ The documentation migration is complete. Canonical content lives in the domain d
 - Production configuration: GitHub Actions variables and secrets are the deploy configuration source of truth. Complete validated configuration is transferred atomically on every deploy; no production `.env` is committed.
 - Reliability scope: application data persists on the NUC, but backups and restore drills are deferred. Persistence is not backup, and the accepted single-host data-loss risk must not be presented as a recovery guarantee.
 - Repository governance: feature branches, pull requests, and CI checks are mandatory procedurally. GitHub-enforced branch protection is unavailable/out of scope under the accepted account-plan constraint.
+- Delivery sequencing: approved dependent tasks may continue in ordered stacked pull requests without waiting for upstream review/merge; child tasks cannot be completed or merged before their dependencies.
 - Authentication and administration: pseudonymous username/password accounts, database-backed secure sessions, and an owner-only user/audit console; no owner credential is committed or hardcoded.
 - Live Telegram integration: a later Telethon worker uses the same canonical ingestion pipeline as the historical export.
 

@@ -4,13 +4,13 @@ id: E0-T2
 epic: E0
 title: "Execute and lock the architecture proof"
 status: draft
-revision: 1
+revision: 2
 priority: P0
 size: M
 milestone: M1
 dependencies: [E0-T1, E1-T1]
 requirement_ids: []
-decision_ids: [ADR-001, ADR-005, ADR-012, ADR-013]
+decision_ids: [ADR-001, ADR-005, ADR-012, ADR-013, ADR-018]
 deferred_decision_ids: []
 promotion:
   source: ../proposed-tasks/E0-T2-execute-and-lock-the-architecture-proof.md
@@ -25,7 +25,7 @@ spike_gate:
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 2
+  approved_revision: 3
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T21:03:00Z"
 dependency_gate:
@@ -117,7 +117,7 @@ There is no production rollout. The proof becomes the scaffold baseline for E1-T
 - [x] The file is authoritative under `tasks/`; the proposed definition is removed during this promotion.
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references owner-approved spike revision 2 and is `satisfied`.
-- [x] `implementation_gate` references owner-approved implementation-plan revision 2 and is `satisfied`.
+- [x] `implementation_gate` references owner-approved implementation-plan revision 3 and is `satisfied`.
 - [ ] E0-T1 and E1-T1 are `done`, with dependency evidence recorded.
 - [ ] Scope and acceptance criteria match the approved plan.
 

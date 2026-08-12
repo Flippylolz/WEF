@@ -18,6 +18,7 @@ This registry is the highest-precedence documentation domain. Each linked archit
 - [ADR-015 — Defer backups and accept single-host data-loss risk](adr/ADR-015-defer-backups.md)
 - [ADR-016 — Username/password accounts and owner-only admin console](adr/ADR-016-pseudonymous-accounts-owner-console.md)
 - [ADR-017 — Operate without enforced GitHub branch protection](adr/ADR-017-no-enforced-branch-protection.md)
+- [ADR-018 — Allow ordered stacked pull request implementation](adr/ADR-018-ordered-stacked-pull-requests.md)
 
 ## Partially superseded
 

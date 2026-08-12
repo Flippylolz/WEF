@@ -21,7 +21,7 @@ A synthetic/redacted fixture enters through the historical adapter, known record
 
 ### [E0: Architecture and dependency spike](../epics/E0-architecture-dependency-spike/README.md)
 
-- [E0-T1: Review architecture and dependency proposal](../epics/E0-architecture-dependency-spike/tasks/E0-T1-review-architecture-and-dependency-proposal.md) — promoted, `draft`
+- [E0-T1: Review architecture and dependency proposal](../epics/E0-architecture-dependency-spike/tasks/E0-T1-review-architecture-and-dependency-proposal.md) — `ready`, stacked on E1-T1
 - [E0-T2: Execute and lock the architecture proof](../epics/E0-architecture-dependency-spike/tasks/E0-T2-execute-and-lock-the-architecture-proof.md) — promoted, `draft`
 ### [E1: Repository and developer foundation](../epics/E1-repository-developer-foundation/README.md)
 

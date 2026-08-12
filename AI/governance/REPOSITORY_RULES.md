@@ -34,13 +34,27 @@ Examples:
 
 Rules:
 
-- Branch from the latest `main`.
+- Branch from the latest `main` when the task has no open dependency. Under [ADR-018](../decisions/adr/ADR-018-ordered-stacked-pull-requests.md), a dependent task branches from its immediate upstream task branch and targets that branch until the parent merges.
 - Keep a branch scoped to one task/feature.
 - Rebase or update from `main` before merge when required checks are strict.
 - Merge through a pull request; do not push ordinary work directly to `main`.
 - Use squash merge so one reviewed feature becomes one main-branch commit.
 - Delete merged branches automatically.
 - Never force-push `main`.
+
+## Ordered stacked pull requests
+
+Do not pause approved implementation merely because an upstream pull request awaits review:
+
+1. Verify the dependent task's spike and implementation-plan approvals.
+2. Record a `stacked` dependency gate with each upstream task, branch, pull request, and head commit.
+3. Branch from the immediate upstream task branch.
+4. Open the child pull request against that branch so the diff contains only the child task.
+5. Continue the stack in dependency order; never combine two task scopes in one branch.
+6. When a parent merges, retarget/rebase its direct child to the parent's new base and rerun required checks.
+7. Merge from the bottom/base of the stack upward. A child cannot be completed or merged while any dependency is not `done`.
+
+Reviews and CI remain required before merge. Stacking changes wait time, not acceptance or completion standards.
 
 ## `hotfix/` exception
 

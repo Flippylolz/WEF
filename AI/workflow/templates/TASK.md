@@ -98,7 +98,7 @@ State migration order, feature/operational activation, health checks, rollback b
 - [ ] Promotion source, promoter, and timestamp are recorded.
 - [ ] `spike_gate` references the owner-approved current spike revision and is `satisfied`.
 - [ ] `implementation_gate` references the owner-approved current implementation-plan revision, which contains this task ID/current revision, and is `satisfied`.
-- [ ] Every dependency is `done`, every deferred gate is resolved, and `dependency_gate` is `satisfied`.
+- [ ] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is an ancestor PR recorded by `dependency_gate: stacked`; every deferred gate is resolved.
 - [ ] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
@@ -114,4 +114,4 @@ State migration order, feature/operational activation, health checks, rollback b
 - [ ] The global [definition of done](../DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.
 
-Gate `status` values are exactly `blocked`, `satisfied`, or `invalidated`. Task state values and transition rules are defined in the [workflow](../README.md).
+Gate `status` values are exactly `blocked`, `stacked`, `satisfied`, or `invalidated`; only a dependency gate may be `stacked`. A stacked task cannot be completed or merged until dependencies are `done` and the gate becomes `satisfied`. Task state values and transition rules are defined in the [workflow](../README.md).
