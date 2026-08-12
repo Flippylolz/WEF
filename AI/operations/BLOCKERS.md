@@ -39,6 +39,13 @@ This append-only log records blockers that could not be safely resolved autonomo
 - Needed from owner: none unless account/repository eligibility changes.
 - Safe workaround: one-task PRs, stable CI checks, base-first stack merging, and main-SHA deploy verification.
 
+### B-006: First proof workflow receives GitHub `startup_failure`
+
+- Impact: PR #6 has no successful hosted check even though the same workflow parses locally and every underlying command passes.
+- Current state: GitHub runs `31645554630` and predecessors fail before creating jobs with `path: BuildFailed`; repository Actions are enabled/all actions allowed. `actionlint` and `act -l` both accept the workflow.
+- Needed from owner: none yet; E1-T4 owns reducing/bisecting the hosted workflow and establishing stable check names.
+- Safe workaround: retain the local PostGIS, architecture, contract, frontend, advisory, and image evidence; do not mark E0-T2 complete/merge until a hosted workflow passes or GitHub reports a definitive account/platform blocker.
+
 ## Resolved during overnight work
 
 ### R-001: HTTPS Git authentication failed

@@ -52,7 +52,7 @@ The following definition preserves the original E7-T1 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E1-T3](../../E1-repository-developer-foundation/proposed-tasks/E1-T3-add-local-docker-compose.md), [E6-T2](../../E6-quality-security-operations/proposed-tasks/E6-T2-perform-privacy-and-security-hardening.md), [E6-T3](../../E6-quality-security-operations/proposed-tasks/E6-T3-add-operational-diagnostics.md)
+- Task dependencies: [E1-T3](../../E1-repository-developer-foundation/tasks/E1-T3-add-local-docker-compose.md), [E6-T2](../../E6-quality-security-operations/proposed-tasks/E6-T2-perform-privacy-and-security-hardening.md), [E6-T3](../../E6-quality-security-operations/proposed-tasks/E6-T3-add-operational-diagnostics.md)
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Decision registry](../../../decisions/README.md), [Operations](../../../operations/README.md), [Governance](../../../governance/README.md), [Security](../../../security/README.md), [Data](../../../data/README.md).
 

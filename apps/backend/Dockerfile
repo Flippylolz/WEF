@@ -5,7 +5,7 @@ ARG UV_IMAGE=ghcr.io/astral-sh/uv:0.12.3@sha256:2d890623d310b57771ce840f0da5eed5
 
 FROM ${UV_IMAGE} AS uv
 
-FROM ${PYTHON_IMAGE} AS builder
+FROM ${PYTHON_IMAGE} AS build
 
 COPY --from=uv /uv /usr/local/bin/uv
 
@@ -23,20 +23,37 @@ COPY apps/backend/src ./src
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-editable
 
+FROM build AS development
+
+ENV PATH="/build/.venv/bin:${PATH}" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    WEF_HOST=0.0.0.0
+
+COPY apps/backend/scripts ./scripts
+COPY apps/backend/tests ./tests
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen
+
+EXPOSE 8000
+
+CMD ["uv", "run", "uvicorn", "wef_backend.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
 
 FROM ${PYTHON_IMAGE} AS runtime
 
 RUN groupadd --system --gid 10001 wef \
     && useradd --system --uid 10001 --gid wef --home-dir /nonexistent wef
 
-ENV PATH="/app/.venv/bin:${PATH}" \
+ENV PATH="/build/.venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     WEF_HOST=0.0.0.0
 
 WORKDIR /app
 
-COPY --from=builder --chown=wef:wef /build/.venv /app/.venv
+COPY --from=build --chown=wef:wef /build/.venv /build/.venv
 
 USER wef
 

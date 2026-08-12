@@ -17,11 +17,11 @@ a reproducible monorepo that cannot accidentally commit or package the source ar
 
 ## Approval state
 
-- Epic workspace status: `in_progress`; E1-T1 is running on its approved dedicated branch.
+- Epic workspace status: `in_progress`; E1-T1, E0 descendants, and E1-T2 proceed through recorded ordered stack ancestry.
 - [Spike](SPIKE.md): `approved`, revision 2, explicitly approved by the owner, research only, no code. It defines separate ownership and branches for repository safety, application Dockerfiles/Make targets, and local Compose.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, containing only promoted E1-T1 revision 3 and the selected README/docs/stacked-PR bootstrap.
-- E1-T1 is promoted and `in_progress` on `chore/E1-T1-repository-safety`; every remaining file in `proposed-tasks/` is non-actionable.
-- E1-T1 authorizes only the repository-safety files, Git initialization, scoped commits, push, and PR in its approved plan. Scaffold, Dockerfile, Compose, Makefile, CI, migration, and proof work remain unauthorized.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 4, containing E1-T1, E1-T2, E1-T4, and E1-T3 in ordered stack sequence.
+- E1-T2 is promoted and `in_progress` on `feature/E1-T2-application-scaffold`; E1-T4 and E1-T3 are promoted/draft for later stack layers.
+- E1-T5 remains cancelled; E1-T6 and E1-T7 remain non-actionable under `proposed-tasks/`.
 
 ## Milestones
 
@@ -46,12 +46,12 @@ a reproducible monorepo that cannot accidentally commit or package the source ar
 - [ADR-017](../../decisions/adr/ADR-017-no-enforced-branch-protection.md)
 - [D-007](../../decisions/deferred/D-007-github-protection-eligibility.md)
 
-## Proposed tasks
+## Tasks
 
 - [E1-T1: Initialize repository safety](tasks/E1-T1-initialize-repository-safety.md) — promoted, `in_progress`, P0/S, M1
-- [E1-T2: Scaffold web and backend applications](proposed-tasks/E1-T2-scaffold-web-and-backend-applications.md) — `proposed`, P0/M, M1
-- [E1-T3: Add local Docker Compose](proposed-tasks/E1-T3-add-local-docker-compose.md) — `proposed`, P0/M, M1
-- [E1-T4: Establish CI baseline](proposed-tasks/E1-T4-establish-ci-baseline.md) — `proposed`, P0/M, M1
+- [E1-T2: Scaffold web and backend applications](tasks/E1-T2-scaffold-web-and-backend-applications.md) — promoted, `in_progress`, P0/M, M1
+- [E1-T4: Establish CI baseline](tasks/E1-T4-establish-ci-baseline.md) — promoted, `draft`, P0/M, M1
+- [E1-T3: Add local Docker Compose](tasks/E1-T3-add-local-docker-compose.md) — promoted, `draft`, P0/M, M1
 - [E1-T5: Configure protected-main governance](proposed-tasks/E1-T5-configure-protected-main-governance.md) — `cancelled`, P0/M, M1
 - [E1-T6: Configure Dependabot update pull requests](proposed-tasks/E1-T6-configure-dependabot-update-pull-requests.md) — `proposed`, P0/M, M1
 - [E1-T7: Implement scheduled Dependabot merge controller](proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — `proposed`, P0/M, M1
@@ -67,7 +67,7 @@ a reproducible monorepo that cannot accidentally commit or package the source ar
 - Outgoing: E7-T1 depends on E1-T3.
 - Outgoing: E7-T3 depends on E1-T4.
 
-The exact normalized dependency and traceability registry is maintained in the [epics index](../README.md). Each workflow candidate is authoritative only in the single linked `proposed-tasks/` file above; its `legacy-roadmap:*` source value records non-path provenance.
+The exact normalized dependency and traceability registry is maintained in the [epics index](../README.md). Promoted tasks are authoritative under `tasks/`; remaining candidates are authoritative only in their linked `proposed-tasks/` files.
 
 ## Lifecycle
 

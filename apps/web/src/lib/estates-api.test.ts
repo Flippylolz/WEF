@@ -31,9 +31,7 @@ describe("fetchEstates", () => {
 
     const request = fetchMock.mock.calls[0]?.[0];
     expect(request).toBeInstanceOf(Request);
-    expect(request?.url).toBe(
-      "http://api.example.test/api/v1/estates",
-    );
+    expect(request?.url).toBe("http://api.example.test/api/v1/estates");
     expect(request?.method).toBe("GET");
     expect(result).toEqual({
       state: "ready",

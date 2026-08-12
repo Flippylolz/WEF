@@ -53,7 +53,7 @@ The following definition preserves the original E5-T1 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E1-T2](../../E1-repository-developer-foundation/proposed-tasks/E1-T2-scaffold-web-and-backend-applications.md), [E4-T1](../../E4-read-api-filter-contracts/proposed-tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md)
+- Task dependencies: [E1-T2](../../E1-repository-developer-foundation/tasks/E1-T2-scaffold-web-and-backend-applications.md), [E4-T1](../../E4-read-api-filter-contracts/proposed-tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md)
 - Milestone: [M1](../../../milestones/M1-vertical-proof.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Product](../../../product/README.md), [Contracts](../../../contracts/README.md), [Architecture](../../../architecture/README.md), [Security](../../../security/README.md).
 

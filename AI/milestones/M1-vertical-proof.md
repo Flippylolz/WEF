@@ -26,9 +26,9 @@ A synthetic/redacted fixture enters through the historical adapter, known record
 ### [E1: Repository and developer foundation](../epics/E1-repository-developer-foundation/README.md)
 
 - [E1-T1: Initialize repository safety](../epics/E1-repository-developer-foundation/tasks/E1-T1-initialize-repository-safety.md) — `in_progress`
-- [E1-T2: Scaffold web and backend applications](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T2-scaffold-web-and-backend-applications.md) — `proposed`
-- [E1-T3: Add local Docker Compose](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T3-add-local-docker-compose.md) — `proposed`
-- [E1-T4: Establish CI baseline](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T4-establish-ci-baseline.md) — `proposed`
+- [E1-T2: Scaffold web and backend applications](../epics/E1-repository-developer-foundation/tasks/E1-T2-scaffold-web-and-backend-applications.md) — `in_progress`, stacked on E0-T2
+- [E1-T4: Establish CI baseline](../epics/E1-repository-developer-foundation/tasks/E1-T4-establish-ci-baseline.md) — promoted, `draft`
+- [E1-T3: Add local Docker Compose](../epics/E1-repository-developer-foundation/tasks/E1-T3-add-local-docker-compose.md) — promoted, `draft`
 - [E1-T5: Configure protected-main governance](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T5-configure-protected-main-governance.md) — `cancelled`
 - [E1-T6: Configure Dependabot update pull requests](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T6-configure-dependabot-update-pull-requests.md) — `proposed`
 - [E1-T7: Implement scheduled Dependabot merge controller](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — `proposed`

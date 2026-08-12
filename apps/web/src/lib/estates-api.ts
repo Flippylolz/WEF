@@ -5,8 +5,7 @@ import type { components, paths } from "@/generated/api";
 export type EstateResponse = components["schemas"]["EstateResponse"];
 
 export type EstatesRequestResult =
-  | { state: "ready"; items: EstateResponse[] }
-  | { state: "error" };
+  { state: "ready"; items: EstateResponse[] } | { state: "error" };
 
 type Fetcher = (request: Request) => Promise<Response>;
 

@@ -51,7 +51,7 @@ The following definition preserves the original E3-T1 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E1-T3](../../E1-repository-developer-foundation/proposed-tasks/E1-T3-add-local-docker-compose.md)
+- Task dependencies: [E1-T3](../../E1-repository-developer-foundation/tasks/E1-T3-add-local-docker-compose.md)
 - Milestone: [M1](../../../milestones/M1-vertical-proof.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Data](../../../data/README.md), [Contracts](../../../contracts/README.md), [Ingestion](../../../ingestion/README.md), [Security](../../../security/README.md).
 

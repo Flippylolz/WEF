@@ -56,7 +56,7 @@ The following definition preserves the original E7-T3 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E1-T4](../../E1-repository-developer-foundation/proposed-tasks/E1-T4-establish-ci-baseline.md), [E7-T1](E7-T1-build-production-compose-topology.md), [E7-T2](E7-T2-provision-and-verify-supplied-server.md)
+- Task dependencies: [E1-T4](../../E1-repository-developer-foundation/tasks/E1-T4-establish-ci-baseline.md), [E7-T1](E7-T1-build-production-compose-topology.md), [E7-T2](E7-T2-provision-and-verify-supplied-server.md)
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Decision registry](../../../decisions/README.md), [Operations](../../../operations/README.md), [Governance](../../../governance/README.md), [Security](../../../security/README.md), [Data](../../../data/README.md).
 

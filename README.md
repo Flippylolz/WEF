@@ -29,16 +29,14 @@ The backend is authoritative for business behavior. The frontend primarily rende
 Prerequisites are Python 3.13.2, Node.js 22.22.2, uv, Corepack/pnpm, and Docker. Versions are recorded in `.tool-versions` and lockfiles.
 
 ```shell
-uv sync --project apps/backend --frozen
-uv run --project apps/backend pytest
-pnpm install --frozen-lockfile
-pnpm --filter web contract:check
-pnpm --filter web test
-docker build -f apps/backend/Dockerfile -t wef-backend:e0-proof .
-docker build -f apps/web/Dockerfile -t wef-web:e0-proof .
+make install
+make format-check lint typecheck test contract-check
+make build
 ```
 
 The real PostGIS test runs only with an explicit disposable `TEST_DATABASE_URL`. Static API documentation is generated as an artifact and is not served by the production API.
+
+`make help` lists the exact command façade. The Makefile delegates to uv, pnpm, and Docker; it does not select environments or contain application logic.
 
 ## Repository safety
 
