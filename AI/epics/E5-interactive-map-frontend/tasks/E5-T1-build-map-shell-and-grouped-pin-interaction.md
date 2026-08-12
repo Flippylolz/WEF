@@ -41,7 +41,7 @@ branch:
   task_id: E5-T1
   one_task_only: true
   created_at: "2026-08-12T23:21:56Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/14"
 completion:
   completed_by: null
   completed_at: null
@@ -134,3 +134,4 @@ Additive UI over E4 endpoints. A map/style failure degrades to list/results. Rol
 - Runtime: the production web image is healthy behind Caddy at `127.0.0.1:3100`; server HTML contains the product heading, explicit synthetic notice, and accessible loading state, while the configured OpenFreeMap style endpoint responds successfully.
 - Responsive/accessibility: semantic buttons/list/regions, visible focus, screen-reader count text, and CSS breakpoints at 56 rem/36 rem keep a 360 px single-column fallback without body overflow.
 - Data boundary: UI imports generated map/facet/offer response types and formats returned values; it does not infer availability, visibility, grouping, confidence, or matching.
+- Review: [stacked PR #14](https://github.com/Flippylolz/WEF/pull/14), based on E4-T2 PR #13; completion remains open until hosted CI B-006 and base-first merge gates pass.
