@@ -1,0 +1,156 @@
+name: wef-local
+
+x-backend-build: &backend-build
+  context: ..
+  dockerfile: apps/backend/Dockerfile
+  target: runtime
+
+services:
+  db:
+    image: postgis/postgis:17-3.5@sha256:0a23a2b5e4fbd9b4c6980d20ee80dd6b63dec52669379c75a506db58a4116708
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-wef}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wef-local-only}
+      POSTGRES_USER: ${POSTGRES_USER:-wef}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\"",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - application
+
+  media-init:
+    image: wef-backend:local
+    build: *backend-build
+    user: "0:0"
+    command: ["sh", "-c", "chown 10001:10001 /media"]
+    network_mode: none
+    restart: "no"
+    volumes:
+      - media_data:/media
+
+  api:
+    image: wef-backend:local
+    build: *backend-build
+    environment:
+      WEF_DATABASE_URL: ${WEF_DATABASE_URL:-postgresql+asyncpg://wef:wef-local-only@db:5432/wef}
+      WEF_ENV: development
+      WEF_LOG_LEVEL: ${WEF_LOG_LEVEL:-info}
+    depends_on:
+      db:
+        condition: service_healthy
+      media-init:
+        condition: service_completed_successfully
+    volumes:
+      - media_data:/app/media
+    expose:
+      - "8000"
+    networks:
+      - application
+
+  web:
+    image: wef-web:local
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      target: runtime
+    environment:
+      WEF_API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    expose:
+      - "3000"
+    networks:
+      - application
+
+  edge:
+    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${WEF_PUBLIC_PORT:-3100}:8080"
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /config
+      - /data
+      - /tmp
+    volumes:
+      - ./Caddyfile.local:/etc/caddy/Caddyfile:ro
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--spider",
+          "http://127.0.0.1:8080/api/v1/health/live",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - application
+      - edge
+
+  importer:
+    profiles:
+      - operator
+    image: wef-backend:local
+    build: *backend-build
+    command: ["wef-importer-dry-run"]
+    environment:
+      WEF_SOURCE_PATH: /source
+    depends_on:
+      media-init:
+        condition: service_completed_successfully
+    volumes:
+      - type: bind
+        source: ${WEF_SOURCE_DIR:-../est-test}
+        target: /source
+        read_only: true
+        bind:
+          create_host_path: false
+      - media_data:/app/media
+    networks:
+      - application
+
+networks:
+  application:
+    internal: true
+  edge:
+
+volumes:
+  db_data:
+  media_data:

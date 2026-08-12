@@ -4,7 +4,7 @@ Warsaw Estate Platform (WEF) will turn a Telegram real-estate export into a filt
 
 ## Current status
 
-The repository contains the synthetic E0 architecture proof: a layered FastAPI/PostGIS query, committed OpenAPI contract, generated thin Next.js client, tests, and non-root Docker images. It is not yet the product MVP: historical ingestion, the production schema, MapLibre UI, authentication, Docker Compose, and deployment remain task-gated follow-up work.
+The repository contains the synthetic E0 architecture proof and an isolated local Compose topology: a layered FastAPI/PostGIS query, committed OpenAPI contract, generated thin Next.js client, tests, non-root application images, persistent development volumes, and a same-origin Caddy edge. It is not yet the product MVP: historical ingestion, the production schema, MapLibre UI, authentication, and deployment remain task-gated follow-up work.
 
 Start with:
 
@@ -37,6 +37,21 @@ make build
 The real PostGIS test runs only with an explicit disposable `TEST_DATABASE_URL`. Static API documentation is generated as an artifact and is not served by the production API.
 
 `make help` lists the exact command façade. The Makefile delegates to uv, pnpm, and Docker; it does not select environments or contain application logic.
+
+## Local Docker Compose
+
+Docker with Compose v2 is the only prerequisite for the isolated local stack. Optional overrides can be copied from `.env.example` to an ignored `.env`.
+
+```shell
+make compose-config
+make up
+curl --fail http://127.0.0.1:3100/api/v1/health/live
+make down
+```
+
+Only Caddy publishes a host port, bound to loopback on `3100` by default. The API, web process, PostGIS, and operator container remain on an internal network. `make down` preserves the named database and media volumes.
+
+`make importer-dry-run` starts the operator profile and confirms that `WEF_SOURCE_DIR` is mounted read-only. It reports only a file count and does not read file contents, parse listings, contact Telegram, or persist imports.
 
 ## Repository safety
 

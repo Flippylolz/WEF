@@ -16,7 +16,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 ## Linked epic registry
 
 - [E0 — Architecture and dependency spike](E0-architecture-dependency-spike/README.md) — `in_progress`; spike revision 2/plan revision 3 approved, E0-T1 and E0-T2 in progress in the ordered stack; milestones M1.
-- [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `in_progress`; spike revision 2/plan revision 4 approved; E1-T1/E1-T2/E1-T4 in progress, E1-T3 promoted draft, 2 proposed, 1 cancelled; milestones M1.
+- [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `in_progress`; spike revision 2/plan revision 4 approved; E1-T1/E1-T2/E1-T4/E1-T3 in progress, 2 proposed, 1 cancelled; milestones M1.
 - [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `draft`; 5 tasks (5 proposed); milestones M1, M2.
 - [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `draft`; 5 tasks (5 proposed); milestones M1, M2.
 - [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `draft`; 4 tasks (4 proposed); milestones M1, M2.
@@ -77,7 +77,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E1-T1](E1-repository-developer-foundation/tasks/E1-T1-initialize-repository-safety.md): promoted/in-progress; task dependencies `none`; M1; requirements `none`; decisions `ADR-009, ADR-017`.
 - [E1-T2](E1-repository-developer-foundation/tasks/E1-T2-scaffold-web-and-backend-applications.md): promoted/in-progress revision 2; stacked dependency `E0-T2`; M1; requirements `none`; decisions `ADR-001, ADR-012, ADR-018`.
 - [E1-T4](E1-repository-developer-foundation/tasks/E1-T4-establish-ci-baseline.md): promoted/in-progress revision 1; stacked dependency `E1-T2`; M1; requirements `none`; decisions `ADR-009, ADR-012, ADR-013, ADR-017, ADR-018`.
-- [E1-T3](E1-repository-developer-foundation/tasks/E1-T3-add-local-docker-compose.md): promoted/draft revision 2; task dependency `E1-T2`; M1; requirements `none`; decisions `ADR-005, ADR-008, ADR-010, ADR-018`.
+- [E1-T3](E1-repository-developer-foundation/tasks/E1-T3-add-local-docker-compose.md): promoted/in-progress revision 2; stacked dependency `E1-T2`; M1; requirements `none`; decisions `ADR-005, ADR-008, ADR-010, ADR-018`.
 - [E1-T5](E1-repository-developer-foundation/proposed-tasks/E1-T5-configure-protected-main-governance.md): task dependencies `none`; deferred gates D-007; M1; requirements `none`; decisions `ADR-009, ADR-017`.
 - [E1-T6](E1-repository-developer-foundation/proposed-tasks/E1-T6-configure-dependabot-update-pull-requests.md): task dependencies `E1-T1, E1-T4`; M1; requirements `none`; decisions `ADR-017`.
 - [E1-T7](E1-repository-developer-foundation/proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md): task dependencies `E1-T4, E1-T6`; M1; requirements `none`; decisions `ADR-017`.

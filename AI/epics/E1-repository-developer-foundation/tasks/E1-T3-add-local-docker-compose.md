@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E1-T3
 epic: E1
 title: "Add local Docker Compose"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: M
@@ -29,16 +29,18 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:07:21Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-12T22:22:02Z"
+  evidence:
+    - "E1-T2 dependency | branch feature/E1-T2-application-scaffold | PR https://github.com/Flippylolz/WEF/pull/7 | head 127f00c"
+    - "Direct parent/sequencing only: E1-T4 | branch ci/E1-T4-baseline | PR https://github.com/Flippylolz/WEF/pull/8 | head 0016b7b"
 branch:
   required: true
-  name: null
+  name: feature/E1-T3-local-compose
   task_id: E1-T3
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-12T22:22:02Z"
   pull_request: null
 completion:
   completed_by: null
@@ -60,8 +62,8 @@ Provide an isolated local PostGIS/API/web topology with persistent database stat
 
 ## Scope
 
-- Add `infra/compose.yaml` with PostGIS, API, web, optional Caddy edge, and on-demand importer.
-- Use project-scoped resources, one internal network, named database/media volumes, health conditions, and no `container_name`.
+- Add `infra/compose.yaml` with PostGIS, API, web, Caddy edge, and a profile-gated on-demand importer.
+- Use project-scoped resources, an internal application network plus an edge-only network for Caddy, named database/media volumes, health conditions, and no `container_name`.
 - Publish only the configurable edge port in same-origin mode; direct debug ports require explicit profiles/overrides.
 - Extend Make with real Compose build/up/down/logs/config and importer dry-run targets.
 
@@ -71,11 +73,11 @@ Provide an isolated local PostGIS/API/web topology with persistent database stat
 
 ## Acceptance criteria
 
-- [ ] `docker compose config` resolves from safe explicit local values without a production secret.
-- [ ] Same-origin web/API starts through the edge and only the intended edge port is published.
-- [ ] PostGIS/API/web health gates pass; database state survives service recreation.
-- [ ] Source export is absent from public services and read-only in explicit importer runs.
-- [ ] Compose uses no conflicting `container_name` or non-WEF host resource.
+- [x] `docker compose config` resolves from safe explicit local values without a production secret.
+- [x] Same-origin web/API starts through the edge and only `127.0.0.1:${WEF_PUBLIC_PORT:-3100}` is published.
+- [x] PostGIS/API/web/edge health gates pass; database and media state survive service recreation.
+- [x] Source export is absent from public services and read-only in explicit importer runs.
+- [x] Compose uses no conflicting `container_name` or non-WEF host resource.
 
 ## Test plan
 
@@ -90,17 +92,27 @@ Local Docker only. `down` removes WEF containers/network while preserving named 
 ## Ready checklist
 
 - [x] Promotion and approval artifacts are recorded.
-- [ ] E1-T2 ancestor evidence is recorded by a valid dependency gate.
+- [x] E1-T2 ancestor evidence is recorded by a valid `stacked` dependency gate.
 - [x] Scope and acceptance match implementation-plan revision 4.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated branch is created and recorded.
-- [ ] Branch/PR contain E1-T3 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated branch `feature/E1-T3-local-compose` is created and recorded.
+- [x] Branch contains E1-T3 only; its PR opens after verification.
+
+## Verification evidence
+
+- Static/contract suite: 20 backend tests passed, one explicit PostGIS integration test skipped without `TEST_DATABASE_URL`, 95.17% branch coverage; frontend lint/type/tests, OpenAPI generation/lint/static docs, architecture contracts, Markdown links, and Compose config passed.
+- Runtime: local PostGIS, API, web, and Caddy services reached healthy state from a clean image build.
+- Same origin: `/` and `/api/v1/health/live` succeeded through `127.0.0.1:3100`.
+- Isolation: API/web/PostGIS had no host port bindings; Caddy alone bound `127.0.0.1:3100`.
+- Persistence: temporary database and media markers survived ordinary owning-container recreation and were removed after verification.
+- Importer safety: the operator profile ran `wef-importer-dry-run` from `wef-backend:local`, observed a read-only `/source`, and emitted bounded JSON without reading source contents.
+- Operational decision: [AD-010](../../../workflow/AUTONOMOUS_DECISIONS.md#ad-010-use-a-two-network-local-edge-topology-and-a-bounded-importer-probe).
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
+- [x] Acceptance criteria pass.
 - [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.

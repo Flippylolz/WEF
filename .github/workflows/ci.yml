@@ -148,6 +148,8 @@ jobs:
           uv --directory apps/backend run mypy --strict ../../scripts
       - name: Relative Markdown links
         run: python3 scripts/check_markdown_links.py
+      - name: Local Compose model
+        run: docker compose --file infra/compose.yaml --profile operator config --quiet
       - name: Source and secret exclusions
         shell: bash
         run: |

@@ -17,6 +17,7 @@ dependencies = [
 [project.scripts]
 wef-backend = "wef_backend.cli:serve"
 wef-export-openapi = "wef_backend.openapi_export:main"
+wef-importer-dry-run = "wef_backend.operator:main"
 
 [build-system]
 requires = ["hatchling"]

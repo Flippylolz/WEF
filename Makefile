@@ -3,11 +3,12 @@ SHELL := /bin/sh
 UV := uv
 PNPM := pnpm
 DOCKER := docker
+COMPOSE := $(DOCKER) compose --file infra/compose.yaml
 BACKEND := $(UV) --directory apps/backend run
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install format format-check lint typecheck test contract-generate contract-check build build-development
+.PHONY: help install format format-check lint typecheck test contract-generate contract-check build build-development compose-config up down ps logs importer-dry-run
 
 help: ## List supported commands.
 	@printf '%s\n' \
@@ -20,7 +21,13 @@ help: ## List supported commands.
 		'make contract-generate  Export OpenAPI and generated TypeScript' \
 		'make contract-check     Verify OpenAPI, generated types, and static docs' \
 		'make build              Build production runtime images' \
-		'make build-development  Build development images'
+		'make build-development  Build development images' \
+		'make compose-config     Validate the local Compose model' \
+		'make up                 Build and start the healthy local stack' \
+		'make down               Stop containers while preserving data' \
+		'make ps                 Show local service status' \
+		'make logs               Follow recent local service logs' \
+		'make importer-dry-run   Verify the read-only source mount'
 
 install: ## Install frozen dependencies.
 	$(UV) sync --project apps/backend --frozen
@@ -65,3 +72,21 @@ build: ## Build non-root runtime images.
 build-development: ## Build development images.
 	$(DOCKER) build --file apps/backend/Dockerfile --target development --tag wef-backend:development .
 	$(DOCKER) build --file apps/web/Dockerfile --target development --tag wef-web:development .
+
+compose-config: ## Validate the fully rendered local Compose model.
+	$(COMPOSE) --profile operator config --quiet
+
+up: ## Build and start the healthy local stack.
+	$(COMPOSE) up --build --detach --wait
+
+down: ## Stop local containers without deleting persistent volumes.
+	$(COMPOSE) down
+
+ps: ## Show local Compose service status.
+	$(COMPOSE) ps
+
+logs: ## Follow recent local service logs.
+	$(COMPOSE) logs --follow --tail=200
+
+importer-dry-run: ## Verify that the configured source export is read-only.
+	$(COMPOSE) --profile operator run --rm importer
