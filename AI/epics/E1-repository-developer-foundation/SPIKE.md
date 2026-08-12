@@ -88,7 +88,7 @@ For the requested repository bootstrap:
 
 ### E1-T1 repository safety and initial branch
 
-- Initialize the local repository directly on the unborn branch `chore/E1-T1-repository-safety`, then configure `https://github.com/Flippylolz/WEF` as `origin`. Do not make an ordinary direct feature commit to `main`.
+- Initialize the local repository directly on the unborn branch `chore/E1-T1-repository-safety`, then configure `git@github.com:Flippylolz/WEF.git` as `origin`. Use SSH for Git fetches/pushes and do not make an ordinary direct feature commit to `main`.
 - The first prepared commit boundary contains the existing approved documentation plus E1-T1's `.gitignore`, `.dockerignore`, safe `.env.example`, and concise root `README.md`.
 - `.gitignore` excludes `est-test/`, `est-test.tar.gz`, archives, media, environment/secrets, Telegram sessions, local databases, caches, coverage, build output, generated sensitive reports, and editor/OS noise. It does not ignore dependency lockfiles or `contracts/openapi/v1.json`.
 - `.dockerignore` protects any root build context from Git metadata, source data/media, secrets, local databases, caches, and unrelated outputs. It is verified against the actual workspace before a build.

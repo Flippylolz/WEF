@@ -209,7 +209,7 @@ This is a compensating control, not equivalent to protected branches: GitHub can
 Work allowed now:
 
 1. Initialize the local repository with the existing `AI/` documentation and safety ignore files.
-2. Add `origin` as `https://github.com/Flippylolz/WEF`.
+2. Add `origin` as `git@github.com:Flippylolz/WEF.git`; SSH is the preferred Git transport.
 3. Create and push the initial `main`.
 4. Add CI workflows and follow branch/pull-request rules manually.
 5. Enable squash merge, auto-delete branches, vulnerability alerts, and Dependabot version/security updates.

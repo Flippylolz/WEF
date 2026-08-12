@@ -62,7 +62,7 @@ Create a safe Git/GitHub baseline in which pre-existing planning documentation h
 
 ## Scope
 
-- Initialize Git and configure `https://github.com/Flippylolz/WEF` as `origin`.
+- Initialize Git and configure `git@github.com:Flippylolz/WEF.git` as `origin`; use SSH for fetches and pushes.
 - Create a minimal root-README commit on `main`, required because GitHub needs a base ref and empty commits are prohibited.
 - Commit the pre-existing `AI/` documentation on `docs/ai-documentation-foundation` and open its PR to `main`.
 - Create `chore/E1-T1-repository-safety` from the documentation branch.
