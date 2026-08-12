@@ -20,7 +20,8 @@ implementation starts from a reviewed backend-centric modular-monolith proof and
 - Epic workspace status: `in_progress`; E0-T1 is running as an ordered stack layer above E1-T1 and the workflow-policy PR.
 - [Spike](SPIKE.md): `approved`, revision 2, explicitly approved by the owner, research only, no code. Revision 2 adds explicit repository, Dockerfile, Compose, Makefile, root README, task-ownership, and branch boundaries.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, with E0-T1 and E0-T2 as the only sequence entries and ADR-018 stacked sequencing.
-- E0-T1 is `in_progress` with E1-T1 recorded as its open ancestor PR. E0-T2 remains `draft` until E0-T1 opens its direct child PR.
+- [Proof report](PROOF_REPORT.md): measured E0-T2 dependency, architecture, OpenAPI, test, advisory, and image evidence.
+- E0-T1 is `in_progress` with E1-T1 recorded as its open ancestor PR. E0-T2 is `in_progress` as E0-T1's direct stack child.
 
 ## Milestones
 
@@ -43,7 +44,7 @@ implementation starts from a reviewed backend-centric modular-monolith proof and
 ## Promoted tasks
 
 - [E0-T1: Review architecture and dependency proposal](tasks/E0-T1-review-architecture-and-dependency-proposal.md) — `in_progress`, revision 2, P0/M, M1; stacked on E1-T1.
-- [E0-T2: Execute and lock the architecture proof](tasks/E0-T2-execute-and-lock-the-architecture-proof.md) — `draft`, revision 2, P0/M, M1; next stack layer after E0-T1 opens its PR.
+- [E0-T2: Execute and lock the architecture proof](tasks/E0-T2-execute-and-lock-the-architecture-proof.md) — `in_progress`, revision 2, P0/M, M1; stacked on E0-T1.
 
 ## Cross-epic dependencies
 

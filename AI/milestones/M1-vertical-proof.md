@@ -22,7 +22,7 @@ A synthetic/redacted fixture enters through the historical adapter, known record
 ### [E0: Architecture and dependency spike](../epics/E0-architecture-dependency-spike/README.md)
 
 - [E0-T1: Review architecture and dependency proposal](../epics/E0-architecture-dependency-spike/tasks/E0-T1-review-architecture-and-dependency-proposal.md) — `in_progress`, stacked on E1-T1
-- [E0-T2: Execute and lock the architecture proof](../epics/E0-architecture-dependency-spike/tasks/E0-T2-execute-and-lock-the-architecture-proof.md) — promoted, `draft`
+- [E0-T2: Execute and lock the architecture proof](../epics/E0-architecture-dependency-spike/tasks/E0-T2-execute-and-lock-the-architecture-proof.md) — `in_progress`, stacked on E0-T1
 ### [E1: Repository and developer foundation](../epics/E1-repository-developer-foundation/README.md)
 
 - [E1-T1: Initialize repository safety](../epics/E1-repository-developer-foundation/tasks/E1-T1-initialize-repository-safety.md) — `in_progress`

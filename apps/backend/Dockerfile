@@ -1,0 +1,48 @@
+# syntax=docker/dockerfile:1.7
+
+ARG PYTHON_IMAGE=python:3.13.2-slim-bookworm@sha256:6b3223eb4d93718828223966ad316909c39813dee3ee9395204940500792b740
+ARG UV_IMAGE=ghcr.io/astral-sh/uv:0.12.3@sha256:2d890623d310b57771ce840f0da5eed5fc6d657da05ffaa45d82797b53fa3abc
+
+FROM ${UV_IMAGE} AS uv
+
+FROM ${PYTHON_IMAGE} AS builder
+
+COPY --from=uv /uv /usr/local/bin/uv
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never
+
+WORKDIR /build
+
+COPY apps/backend/pyproject.toml apps/backend/uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
+
+COPY apps/backend/src ./src
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-editable
+
+
+FROM ${PYTHON_IMAGE} AS runtime
+
+RUN groupadd --system --gid 10001 wef \
+    && useradd --system --uid 10001 --gid wef --home-dir /nonexistent wef
+
+ENV PATH="/app/.venv/bin:${PATH}" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    WEF_HOST=0.0.0.0
+
+WORKDIR /app
+
+COPY --from=builder --chown=wef:wef /build/.venv /app/.venv
+
+USER wef
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live', timeout=2)"]
+
+CMD ["wef-backend"]

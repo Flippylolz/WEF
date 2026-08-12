@@ -1,0 +1,14 @@
+{
+  "home": {
+    "title": "Synthetic estates",
+    "subtitle": "A thin view of estate data provided by the backend.",
+    "empty": "No estates were returned.",
+    "error": "Estate data is unavailable right now."
+  },
+  "estates": {
+    "availability": {
+      "available": "Available",
+      "reserved": "Reserved"
+    }
+  }
+}
