@@ -3,14 +3,14 @@ schema: ai-workflow/task@1
 id: E0-T1
 epic: E0
 title: "Review architecture and dependency proposal"
-status: draft
-revision: 1
+status: ready
+revision: 2
 priority: P0
 size: M
 milestone: M1
 dependencies: [E1-T1]
 requirement_ids: []
-decision_ids: [ADR-012]
+decision_ids: [ADR-012, ADR-018]
 deferred_decision_ids: []
 promotion:
   source: ../proposed-tasks/E0-T1-review-architecture-and-dependency-proposal.md
@@ -25,14 +25,15 @@ spike_gate:
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 2
+  approved_revision: 3
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T21:03:00Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-12T21:25:00Z"
+  evidence:
+    - "E1-T1 | branch chore/E1-T1-repository-safety | PR https://github.com/Flippylolz/WEF/pull/2 | head 8be707a"
 branch:
   required: true
   name: null
@@ -85,7 +86,7 @@ No runtime module, public API, or persisted contract changes are expected.
 
 This is a documentation/review task. The owner-approved spike is the baseline; this task records review evidence and consistency checks rather than silently changing that baseline.
 
-E1-T1 must initialize the safe repository and dedicated-branch capability before this task starts. This bootstrap dependency resolves the otherwise impossible requirement to put the first pre-repository review task on its own branch.
+E1-T1 initialized the safe repository and has an open ancestor pull request. Under ADR-018, this task may start from that branch without waiting for review/merge, but cannot be completed or merged until E1-T1 is `done` and this dependency gate becomes `satisfied`.
 
 ## Acceptance criteria
 
@@ -110,9 +111,9 @@ There is no runtime rollout. A material correction increments the spike or imple
 - [x] The file is authoritative under `tasks/`; the proposed definition is removed during this promotion.
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references owner-approved spike revision 2 and is `satisfied`.
-- [x] `implementation_gate` references owner-approved implementation-plan revision 2 and is `satisfied`.
-- [ ] E1-T1 is `done`, with dependency evidence recorded.
-- [ ] Scope and acceptance criteria match the approved plan.
+- [x] `implementation_gate` references owner-approved implementation-plan revision 3 and is `satisfied`.
+- [x] E1-T1's open ancestor branch/PR/head are recorded by a `stacked` dependency gate.
+- [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 

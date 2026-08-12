@@ -19,8 +19,8 @@ implementation starts from a reviewed backend-centric modular-monolith proof and
 
 - Epic workspace status: `ready`; both approval artifacts are current, but tasks remain dependency-blocked by E1-T1.
 - [Spike](SPIKE.md): `approved`, revision 2, explicitly approved by the owner, research only, no code. Revision 2 adds explicit repository, Dockerfile, Compose, Makefile, root README, task-ownership, and branch boundaries.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, with E0-T1 and E0-T2 as the only sequence entries.
-- E0-T1 and E0-T2 were moved to `tasks/` after spike approval and have satisfied approval gates, but remain `draft` until E1-T1 and their remaining task gates pass.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, with E0-T1 and E0-T2 as the only sequence entries and ADR-018 stacked sequencing.
+- E0-T1 is `ready` with E1-T1 recorded as its open ancestor PR. E0-T2 remains `draft` until E0-T1 opens its direct child PR.
 
 ## Milestones
 
@@ -42,8 +42,8 @@ implementation starts from a reviewed backend-centric modular-monolith proof and
 
 ## Promoted tasks
 
-- [E0-T1: Review architecture and dependency proposal](tasks/E0-T1-review-architecture-and-dependency-proposal.md) — `draft`, P0/M, M1; blocked by E1-T1 and implementation-plan approval.
-- [E0-T2: Execute and lock the architecture proof](tasks/E0-T2-execute-and-lock-the-architecture-proof.md) — `draft`, P0/M, M1; blocked by E0-T1, E1-T1, and implementation-plan approval.
+- [E0-T1: Review architecture and dependency proposal](tasks/E0-T1-review-architecture-and-dependency-proposal.md) — `ready`, revision 2, P0/M, M1; stacked on E1-T1.
+- [E0-T2: Execute and lock the architecture proof](tasks/E0-T2-execute-and-lock-the-architecture-proof.md) — `draft`, revision 2, P0/M, M1; next stack layer after E0-T1 opens its PR.
 
 ## Cross-epic dependencies
 

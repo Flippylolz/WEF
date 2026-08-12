@@ -10,7 +10,7 @@ size: S
 milestone: M1
 dependencies: []
 requirement_ids: []
-decision_ids: [ADR-009, ADR-017]
+decision_ids: [ADR-009, ADR-017, ADR-018]
 deferred_decision_ids: []
 promotion:
   source: ../proposed-tasks/E1-T1-initialize-repository-safety.md
