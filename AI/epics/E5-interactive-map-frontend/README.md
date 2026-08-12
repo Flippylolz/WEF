@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E5
 title: "Interactive map frontend"
-status: approved
+status: in_progress
 milestones: [M1, M3]
 owner: owner
 spike: SPIKE.md
@@ -17,10 +17,10 @@ a responsive, accessible map/list/detail experience over dated offers.
 
 ## Approval state
 
-- Epic workspace status: `approved` for the synthetic M1 map/filter boundary.
+- Epic workspace status: `in_progress` for the synthetic M1 map/filter boundary.
 - [Spike](SPIKE.md): `approved`, revision 2.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing E5-T1 then E5-T2.
-- E5-T1/T2 are promoted/`draft` pending backend stack ancestry; E5-T3 through E5-T5 remain proposed.
+- E5-T1 is `in_progress`; E5-T2 remains promoted/`draft` pending E5-T1 ancestry; E5-T3 through E5-T5 remain proposed.
 
 ## Milestones
 
@@ -44,7 +44,7 @@ a responsive, accessible map/list/detail experience over dated offers.
 
 ## Promoted tasks
 
-- [E5-T1: Build map shell and grouped pin interaction](tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — `draft`, P0/L, M1
+- [E5-T1: Build map shell and grouped pin interaction](tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — `in_progress`, P0/L, M1
 - [E5-T2: Add URL-backed filters and viewport querying](tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md) — `draft`, P0/L, M1
 
 ## Proposed tasks

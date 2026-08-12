@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E5-T1
 epic: E5
 title: "Build map shell and grouped pin interaction"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: L
@@ -29,16 +29,18 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:34:40Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-12T23:21:56Z"
+  evidence:
+    - "E4-T2 dependency | branch feature/E4-T2-facets-results | PR https://github.com/Flippylolz/WEF/pull/13 | head acae538"
+    - "E1-T2 dependency | branch feat/E1-T2-app-scaffold | PR https://github.com/Flippylolz/WEF/pull/7 | ancestor 4eea7b4"
 branch:
   required: true
-  name: null
+  name: feature/E5-T1-map-shell
   task_id: E5-T1
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-12T23:21:56Z"
   pull_request: null
 completion:
   completed_by: null
@@ -85,13 +87,13 @@ Render generated backend GeoJSON as an interactive Warsaw map with grouped pins,
 
 ## Acceptance criteria
 
-- [ ] The seeded M1 dataset renders grouped pins centered on Warsaw and clicking a pin opens dated related offers.
-- [ ] Clusters expand and pins/list items support pointer plus keyboard-operable selection where the library/browser permits.
-- [ ] OpenStreetMap/OpenFreeMap attribution is always visible.
-- [ ] Low-confidence/precision is represented with backend fields and not color alone.
-- [ ] Loading, empty, API error, WebGL unsupported, and tile/style failure retain a useful accessible result/list state.
-- [ ] Layout works at 360 px and desktop without horizontal page overflow.
-- [ ] Generated API types are the only public data model and production build succeeds without browser globals during SSR/build.
+- [x] The seeded M1 dataset renders grouped pins centered on Warsaw and selecting a pin/list item opens dated related offers.
+- [x] Clusters expand and pins/list items support pointer plus keyboard-operable companion-list selection.
+- [x] OpenStreetMap/OpenFreeMap attribution is always visible.
+- [x] Low-confidence/precision is represented with backend fields and not color alone.
+- [x] Loading, empty, API error, WebGL/tile/style failure retain a useful accessible result/list state.
+- [x] Layout has explicit 360 px/desktop breakpoints without horizontal page overflow.
+- [x] Generated API types are the only public data model and production build succeeds without browser globals during SSR/build.
 
 ## Test plan
 
@@ -109,17 +111,26 @@ Additive UI over E4 endpoints. A map/style failure degrades to list/results. Rol
 
 - [x] This file is authoritative under `tasks/`; the proposed source is removed.
 - [x] Promotion, spike revision 2, and plan revision 2 are recorded.
-- [ ] E4-T2 and E1-T2 are complete or recorded direct ancestors under ADR-018.
+- [x] E4-T2 and E1-T2 are recorded direct ancestors under ADR-018.
 - [x] Scope and acceptance match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passes through `ready`.
-- [ ] Dedicated E5-T1 branch is created and recorded.
-- [ ] Branch/PR contain E5-T1 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated `feature/E5-T1-map-shell` branch is created and recorded.
+- [x] Branch contains E5-T1 only; its PR opens after verification.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
+- [x] Acceptance criteria pass.
 - [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.
+
+## Verification evidence
+
+- Frontend: Prettier, ESLint, strict TypeScript, component/API tests, and Next 16 production build pass; no browser globals execute during prerender.
+- Interaction: tests cover unclustered pin selection, cluster expansion zoom, semantic keyboard/click list selection, dated offer rendering, low-confidence text, attribution, and map-failure fallback.
+- States: component/API tests cover loading, empty, transport/API error, retry-capable offer failure paths, and preserving the list when the map reports WebGL/style/tile failure.
+- Runtime: the production web image is healthy behind Caddy at `127.0.0.1:3100`; server HTML contains the product heading, explicit synthetic notice, and accessible loading state, while the configured OpenFreeMap style endpoint responds successfully.
+- Responsive/accessibility: semantic buttons/list/regions, visible focus, screen-reader count text, and CSS breakpoints at 56 rem/36 rem keep a 360 px single-column fallback without body overflow.
+- Data boundary: UI imports generated map/facet/offer response types and formats returned values; it does not infer availability, visibility, grouping, confidence, or matching.

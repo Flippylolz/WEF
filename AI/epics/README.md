@@ -20,7 +20,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `draft`; 5 tasks (5 proposed); milestones M1, M2.
 - [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `in_progress`; spike/plan revision 2; E3-T1 in progress, 4 proposed; milestones M1, M2.
 - [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `in_progress`; spike/plan revision 2; E4-T1/T2 in progress, 2 proposed; milestones M1, M2.
-- [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `approved`; spike/plan revision 2; E5-T1/T2 promoted draft, 3 proposed; milestones M1, M3.
+- [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `in_progress`; spike/plan revision 2; E5-T1 in progress/E5-T2 promoted draft, 3 proposed; milestones M1, M3.
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `draft`; 7 tasks (7 proposed); milestones M3.
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `draft`; 7 tasks (6 proposed, 1 deferred); milestones M3.
 - [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; 5 tasks (5 proposed); milestones M4.
@@ -100,7 +100,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E4-T4](E4-read-api-filter-contracts/proposed-tasks/E4-T4-harden-api-behavior-and-performance.md): task dependencies `E4-T1, E4-T2, E4-T3, E3-T5`; M2; requirements `P-001, P-002, P-003`; decisions `ADR-012, ADR-013`.
 ### E5
 
-- [E5-T1](E5-interactive-map-frontend/tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md): promoted/draft revision 2; task dependencies `E1-T2, E4-T2`; M1; requirements `P-001, P-004, P-007`; decisions `ADR-002, ADR-004, ADR-012`.
+- [E5-T1](E5-interactive-map-frontend/tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md): promoted/in-progress revision 2; stacked dependencies `E1-T2, E4-T2`; M1; requirements `P-001, P-004, P-007`; decisions `ADR-002, ADR-004, ADR-012`.
 - [E5-T2](E5-interactive-map-frontend/tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md): promoted/draft revision 2; task dependencies `E5-T1, E4-T2`; M1; requirements `P-001, P-003, P-004`; decisions `ADR-002, ADR-003, ADR-012`.
 - [E5-T3](E5-interactive-map-frontend/proposed-tasks/E5-T3-build-offer-detail-and-media-gallery.md): task dependencies `E4-T3, E5-T1`; M3; requirements `P-002, P-005, P-006, P-007`; decisions `ADR-003, ADR-004, ADR-007, ADR-012`.
 - [E5-T4](E5-interactive-map-frontend/proposed-tasks/E5-T4-complete-responsive-list-map-accessibility.md): task dependencies `E5-T2, E5-T3`; M3; requirements `P-001, P-002, P-003, P-004, P-005`; decisions `ADR-002, ADR-004, ADR-012`.
