@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T2
 epic: E7
 title: "Provision and verify supplied server"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: M
@@ -29,16 +29,17 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T23:35:00Z"
 dependency_gate:
-  status: pending
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-13T00:00:00Z"
+  evidence:
+    - "E7-T1 dependency | branch feature/E7-T1-production-compose | PR https://github.com/Flippylolz/WEF/pull/16 | direct parent 394329c"
 branch:
   required: true
-  name: null
+  name: chore/E7-T2-provision-server
   task_id: E7-T2
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-13T00:00:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -96,13 +97,13 @@ Stop only the `wef-production` project if started. Preserve PostgreSQL/media by 
 - [x] This file is authoritative under `tasks/`; its proposed source is removed.
 - [x] Promotion and approved spike revision 2 are recorded.
 - [x] D-001 is resolved for the anonymous rehearsal by ADR-019.
-- [ ] Approved implementation-plan revision 2 and E7-T1 ancestry are recorded.
+- [x] Approved implementation-plan revision 2 and E7-T1 ancestry are recorded.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated branch is created and recorded.
-- [ ] Branch contains E7-T2 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated branch is created and recorded.
+- [x] Branch contains E7-T2 only.
 
 ## Done checklist
 

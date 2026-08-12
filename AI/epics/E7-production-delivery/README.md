@@ -20,7 +20,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - Epic workspace status: `in_progress` for the anonymous synthetic production rehearsal.
 - [Spike](SPIKE.md): `approved`, revision 2.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing E7-T1 through E7-T4.
-- E7-T1 is `in_progress`; E7-T2 through E7-T4 are promoted/`draft`; E7-T5 remains deferred and E7-T6/T7 remain proposed.
+- E7-T1/E7-T2 are `in_progress`; E7-T3/E7-T4 are promoted/`draft`; E7-T5 remains deferred and E7-T6/T7 remain proposed.
 
 ## Milestones
 
@@ -56,7 +56,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 ## Promoted tasks
 
 - [E7-T1: Build production Compose topology](tasks/E7-T1-build-production-compose-topology.md) — `in_progress`, P0/L, M3
-- [E7-T2: Provision and verify supplied server](tasks/E7-T2-provision-and-verify-supplied-server.md) — `draft`, P0/M, M3
+- [E7-T2: Provision and verify supplied server](tasks/E7-T2-provision-and-verify-supplied-server.md) — `in_progress`, P0/M, M3
 - [E7-T3: Implement GitHub image and deployment workflows](tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `draft`, P0/L, M3
 - [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — `draft`, P0/M, M3
 

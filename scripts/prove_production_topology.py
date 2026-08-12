@@ -10,6 +10,11 @@ import tempfile
 from pathlib import Path
 from typing import Any, cast
 
+from scripts.deploy.compare_server_inventory import (
+    EXPECTED_WEF_PATHS,
+    InventoryMismatchError,
+    compare,
+)
 from scripts.deploy.release_state import ReleaseState, read_state, write_state
 from scripts.deploy.validate_release import (
     ReleaseConfigurationError,
@@ -198,6 +203,53 @@ def assert_atomic_release_state() -> None:
         assert path.stat().st_mode & 0o777 == 0o600
 
 
+def assert_inventory_non_interference_gate() -> None:
+    """Prove exact existing-resource equality and WEF path checks."""
+    before: dict[str, Any] = {
+        "schema": "wef-server-inventory@1",
+        "hostname": "example",
+        "uid": 1000,
+        "compose_projects": [{"Name": "existing", "Status": "running(1)"}],
+        "containers": [
+            {
+                "name": "existing-app",
+                "id": "stable",
+                "image_id": "image",
+                "state": "running",
+            },
+        ],
+        "listeners": ["tcp 0.0.0.0:3000"],
+        "existing_http": {"3000": 200, "8080": 200},
+        "wef_paths": [],
+    }
+    after = {
+        **before,
+        "wef_paths": [
+            {
+                "path": path,
+                "kind": "directory",
+                "mode": mode,
+                "uid": 1000,
+                "gid": 1000,
+            }
+            for path, mode in EXPECTED_WEF_PATHS.items()
+        ],
+    }
+    compare(before, after)
+
+    changed = {
+        **after,
+        "containers": [{**before["containers"][0], "id": "restarted"}],
+    }
+    try:
+        compare(before, changed)
+    except InventoryMismatchError:
+        pass
+    else:
+        msg = "existing-container mutation unexpectedly passed inventory comparison"
+        raise AssertionError(msg)
+
+
 def main() -> int:
     """Run the production topology proof."""
     environment = release_environment()
@@ -206,6 +258,7 @@ def main() -> int:
     assert_negative_configuration_gate()
     assert_script_safety()
     assert_atomic_release_state()
+    assert_inventory_non_interference_gate()
     print("Production topology and deployment safety invariants pass.")
     return 0
 
