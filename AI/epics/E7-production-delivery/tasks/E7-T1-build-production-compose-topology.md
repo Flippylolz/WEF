@@ -42,7 +42,7 @@ branch:
   task_id: E7-T1
   one_task_only: true
   created_at: "2026-08-12T23:38:00Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/16"
 completion:
   completed_by: null
   completed_at: null
@@ -122,3 +122,4 @@ This task ships inert repository artifacts only. Revert the task commit to remov
 - Real runtime: `make production-runtime-proof` uses a unique temporary Compose project/path and local non-root images, migrates/seeds the explicit production rehearsal, serves the root/health/map/facets/offers contract through Caddy, tears every container/network down, recreates the stack without reseeding, and proves bind-mounted catalog persistence.
 - Non-interference: the existing `wef-local` API/web/PostGIS/Caddy remained healthy on loopback 3100; the temporary production-proof project left no containers or files.
 - Seed boundary: production remains denied by default; only the profile-gated seed service plus `WEF_ALLOW_SYNTHETIC_SEED=true` can insert the clearly synthetic fixture.
+- Review: [stacked PR #16](https://github.com/Flippylolz/WEF/pull/16), based on E7 planning PR #15; completion remains open until hosted CI B-006 and base-first merge gates pass.
