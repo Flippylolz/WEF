@@ -116,7 +116,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E6-T7](E6-quality-security-operations/proposed-tasks/E6-T7-implement-owner-administration-console.md): task dependencies `E6-T4, E6-T5`; M3; requirements `P-008`; decisions `ADR-011, ADR-012, ADR-016`.
 ### E7
 
-- [E7-T1](E7-production-delivery/tasks/E7-T1-build-production-compose-topology.md): promoted `draft`; task dependencies `E1-T3, E5-T1`; M3; requirements `none`; decisions `ADR-005, ADR-008, ADR-010, ADR-014, ADR-015, ADR-019`.
+- [E7-T1](E7-production-delivery/tasks/E7-T1-build-production-compose-topology.md): `in_progress`, stacked on `E1-T3, E5-T1`; M3; requirements `none`; decisions `ADR-005, ADR-008, ADR-010, ADR-014, ADR-015, ADR-019`.
 - [E7-T2](E7-production-delivery/tasks/E7-T2-provision-and-verify-supplied-server.md): promoted `draft`; task dependency `E7-T1`; resolved deferred gate D-001; M3; requirements `none`; decisions `ADR-008, ADR-010, ADR-014, ADR-015, ADR-019`.
 - [E7-T3](E7-production-delivery/tasks/E7-T3-implement-github-image-and-deployment-workflows.md): promoted `draft`; task dependencies `E1-T4, E7-T1, E7-T2`; M3; requirements `none`; decisions `ADR-008, ADR-009, ADR-010, ADR-013, ADR-014, ADR-017, ADR-019`.
 - [E7-T4](E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md): promoted `draft`; task dependency `E7-T3`; M3; requirements `none`; decisions `ADR-008, ADR-010, ADR-014, ADR-015, ADR-019`.

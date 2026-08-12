@@ -53,17 +53,25 @@ make down
 
 Only Caddy publishes a host port, bound to loopback on `3100` by default. The API, web process, PostGIS, and operator container remain on an internal network. `make down` preserves the named database and media volumes.
 
-`make up` applies forward Alembic migrations before API startup. `make seed-m1` explicitly converges a small invented Warsaw fixture for map/API verification; the command refuses `WEF_ENV=production` and never reads the local export.
+`make up` applies forward Alembic migrations before API startup. `make seed-m1` explicitly converges a small invented Warsaw fixture for map/API verification; production requires a separate explicit rehearsal opt-in and the command never reads the local export.
 
 Open `http://127.0.0.1:3100/` after seeding. The public map style defaults to keyless OpenFreeMap and can be replaced at image-build time with `NEXT_PUBLIC_MAP_STYLE_URL`; OpenFreeMap/OpenStreetMap attribution remains visible in the map shell.
 
 `make importer-dry-run` starts the operator profile and confirms that `WEF_SOURCE_DIR` is mounted read-only. It reports only a file count and does not read file contents, parse listings, contact Telegram, or persist imports.
 
+The inert production model is separate from local Compose:
+
+```shell
+make production-proof
+```
+
+That command renders the digest-only `wef-production` topology, validates Caddy, rejects mutable/default release configuration, checks internal networks/single-edge-port/resource boundaries, and statically rejects global cleanup or schema-downgrade commands. It does not connect to or mutate the production host.
+
 ## Repository safety
 
 The local `est-test/` export, `est-test.tar.gz`, media, environment files, Telegram sessions, local databases, and generated sensitive reports must never be committed or copied into Docker build contexts.
 
-Use `.env.example` only as a list of safe local-development names. Production configuration is transferred from GitHub Actions during deployment and is never committed.
+Use `.env.example` only as a list of names and non-runnable placeholders. Complete production configuration is transferred from GitHub Actions during deployment and is never committed.
 
 ## Contribution workflow
 

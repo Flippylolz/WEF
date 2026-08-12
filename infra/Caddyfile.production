@@ -1,0 +1,37 @@
+{
+	auto_https off
+	admin off
+}
+
+:8080 {
+	encode zstd gzip
+
+	header {
+		-Server
+		Content-Security-Policy "default-src 'self'; connect-src 'self' https://tiles.openfreemap.org https://*.openfreemap.org; font-src 'self' data:; img-src 'self' data: blob: https://tiles.openfreemap.org https://*.openfreemap.org; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		X-WEF-Release "{env.WEF_RELEASE_SHA}"
+	}
+
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	@hiddenMedia path_regexp hidden (^|/)\.
+	handle @hiddenMedia {
+		respond 404
+	}
+
+	handle_path /media/* {
+		root * /srv/media
+		file_server {
+			hide .*
+		}
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

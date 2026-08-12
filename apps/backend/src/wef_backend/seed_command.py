@@ -20,6 +20,7 @@ async def seed() -> None:
         service = SeedM1Catalog(
             SQLAlchemyCatalogSeedAdapter(database.session_factory),
             environment=settings.env,
+            allow_production=settings.allow_synthetic_seed,
         )
         result = await service(*m1_fixture())
         sys.stdout.write(json.dumps(asdict(result), sort_keys=True) + "\n")

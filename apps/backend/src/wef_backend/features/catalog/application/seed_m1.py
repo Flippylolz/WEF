@@ -87,18 +87,25 @@ class CatalogSeedPort(Protocol):
 class SeedM1Catalog:
     """Guard and persist the explicit M1 synthetic fixture."""
 
-    def __init__(self, seed_port: CatalogSeedPort, *, environment: str) -> None:
+    def __init__(
+        self,
+        seed_port: CatalogSeedPort,
+        *,
+        environment: str,
+        allow_production: bool = False,
+    ) -> None:
         """Store the persistence port and runtime safety boundary."""
         self._seed_port = seed_port
         self._environment = environment
+        self._allow_production = allow_production
 
     async def __call__(
         self,
         locations: Sequence[SeedLocation],
         offers: Sequence[SeedOffer],
     ) -> SeedResult:
-        """Reject production and converge the supplied synthetic records."""
-        if self._environment == "production":
+        """Reject production without explicit rehearsal opt-in and converge records."""
+        if self._environment == "production" and not self._allow_production:
             message = "Synthetic M1 seed is disabled in production"
             raise ProductionSeedError(message)
         return await self._seed_port.upsert_seed(locations, offers)

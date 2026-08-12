@@ -149,7 +149,9 @@ jobs:
       - name: Relative Markdown links
         run: python3 scripts/check_markdown_links.py
       - name: Local Compose model
-        run: docker compose --file infra/compose.yaml --profile operator config --quiet
+        run: |
+          docker compose --file infra/compose.yaml --profile operator config --quiet
+          make production-proof
       - name: Source and secret exclusions
         shell: bash
         run: |
@@ -173,3 +175,5 @@ jobs:
             '! command -v uv && ! command -v pytest && ! command -v mypy && ! command -v ruff'
           docker run --rm --entrypoint sh wef-web:local -c \
             'test ! -e /app/contracts && test ! -e /app/apps/web/src'
+      - name: Production topology runtime
+        run: make production-runtime-proof

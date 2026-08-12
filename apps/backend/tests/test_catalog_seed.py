@@ -101,6 +101,20 @@ async def test_seed_service_rejects_production_before_persistence() -> None:
     assert port.calls == 0
 
 
+async def test_seed_service_requires_explicit_production_rehearsal_opt_in() -> None:
+    """A production fixture is allowed only through the narrow explicit flag."""
+    port = FakeSeedPort()
+
+    result = await SeedM1Catalog(
+        port,
+        environment="production",
+        allow_production=True,
+    )(*m1_fixture())
+
+    assert result == SeedResult(locations=4, offers=5)
+    assert port.calls == 1
+
+
 def test_m1_fixture_is_stable_and_explicitly_synthetic() -> None:
     """Repeated fixture construction preserves IDs and synthetic labeling."""
     first = m1_fixture()

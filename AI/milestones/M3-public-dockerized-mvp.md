@@ -1,7 +1,7 @@
 ---
 id: M3
 title: "Public Dockerized MVP"
-status: planned
+status: in_progress
 ---
 
 # M3: Public Dockerized MVP
@@ -35,7 +35,7 @@ The responsive map experience is production-deployed from GitHub with persistent
 - [E6-T7: Implement owner administration console](../epics/E6-quality-security-operations/proposed-tasks/E6-T7-implement-owner-administration-console.md) — `proposed`
 ### [E7: Docker/GitHub production delivery](../epics/E7-production-delivery/README.md)
 
-- [E7-T1: Build production Compose topology](../epics/E7-production-delivery/tasks/E7-T1-build-production-compose-topology.md) — promoted, `draft`
+- [E7-T1: Build production Compose topology](../epics/E7-production-delivery/tasks/E7-T1-build-production-compose-topology.md) — `in_progress`, stacked on E5-T1/E1-T3
 - [E7-T2: Provision and verify supplied server](../epics/E7-production-delivery/tasks/E7-T2-provision-and-verify-supplied-server.md) — promoted, `draft`
 - [E7-T3: Implement GitHub image and deployment workflows](../epics/E7-production-delivery/tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — promoted, `draft`
 - [E7-T4: Implement health verification and rollback](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) — promoted, `draft`
@@ -55,4 +55,4 @@ Cancelled and deferred candidates remain linked for traceability but are not com
 
 ## Status rule
 
-`planned` records the current outcome checkpoint only; it grants no implementation permission. Change this milestone to `done` only when all required exit evidence and task completion records exist under the [workflow](../workflow/README.md).
+`in_progress` records the approved anonymous production-rehearsal sequence only; it grants no permission for still-proposed public-launch tasks. Change this milestone to `done` only when all required exit evidence and task completion records exist under the [workflow](../workflow/README.md).

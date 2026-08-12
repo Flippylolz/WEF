@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     env: Literal["development", "test", "production"] = "development"
     alembic_config: Path = Path("alembic.ini")
     source_path: Path = Path("/source")
+    allow_synthetic_seed: bool = False
 
 
 def load_settings() -> Settings:
