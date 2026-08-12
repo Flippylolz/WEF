@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E1
 title: "Repository and developer foundation"
-status: ready
+status: in_progress
 milestones: [M1]
 owner: owner
 spike: SPIKE.md
@@ -17,10 +17,10 @@ a reproducible monorepo that cannot accidentally commit or package the source ar
 
 ## Approval state
 
-- Epic workspace status: `ready`; spike revision 2 and implementation-plan revision 3 are owner-approved.
+- Epic workspace status: `in_progress`; E1-T1 is running on its approved dedicated branch.
 - [Spike](SPIKE.md): `approved`, revision 2, explicitly approved by the owner, research only, no code. It defines separate ownership and branches for repository safety, application Dockerfiles/Make targets, and local Compose.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, containing only promoted E1-T1 revision 3 and the selected README/docs/stacked-PR bootstrap.
-- E1-T1 is promoted and `ready`; every remaining file in `proposed-tasks/` is non-actionable.
+- E1-T1 is promoted and `in_progress` on `chore/E1-T1-repository-safety`; every remaining file in `proposed-tasks/` is non-actionable.
 - E1-T1 authorizes only the repository-safety files, Git initialization, scoped commits, push, and PR in its approved plan. Scaffold, Dockerfile, Compose, Makefile, CI, migration, and proof work remain unauthorized.
 
 ## Milestones
@@ -48,7 +48,7 @@ a reproducible monorepo that cannot accidentally commit or package the source ar
 
 ## Proposed tasks
 
-- [E1-T1: Initialize repository safety](tasks/E1-T1-initialize-repository-safety.md) — promoted, `ready`, P0/S, M1
+- [E1-T1: Initialize repository safety](tasks/E1-T1-initialize-repository-safety.md) — promoted, `in_progress`, P0/S, M1
 - [E1-T2: Scaffold web and backend applications](proposed-tasks/E1-T2-scaffold-web-and-backend-applications.md) — `proposed`, P0/M, M1
 - [E1-T3: Add local Docker Compose](proposed-tasks/E1-T3-add-local-docker-compose.md) — `proposed`, P0/M, M1
 - [E1-T4: Establish CI baseline](proposed-tasks/E1-T4-establish-ci-baseline.md) — `proposed`, P0/M, M1

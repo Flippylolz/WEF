@@ -16,7 +16,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 ## Linked epic registry
 
 - [E0 — Architecture and dependency spike](E0-architecture-dependency-spike/README.md) — `ready`; spike/plan revision 2 approved, 2 promoted/draft dependency-blocked tasks; milestones M1.
-- [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `ready`; spike revision 2/plan revision 3 approved; E1-T1 revision 3 promoted/ready, 5 proposed, 1 cancelled; milestones M1.
+- [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `in_progress`; spike revision 2/plan revision 3 approved; E1-T1 revision 3 in progress, 5 proposed, 1 cancelled; milestones M1.
 - [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `draft`; 5 tasks (5 proposed); milestones M1, M2.
 - [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `draft`; 5 tasks (5 proposed); milestones M1, M2.
 - [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `draft`; 4 tasks (4 proposed); milestones M1, M2.
@@ -25,7 +25,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `draft`; 7 tasks (6 proposed, 1 deferred); milestones M3.
 - [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; 5 tasks (5 proposed); milestones M4.
 
-Only E1-T1 implementation is currently authorized and `ready`. E0 is also `ready` at the epic-approval level, but its tasks remain blocked until E1-T1 is done. E1 spike revision 2 and implementation-plan revision 3 are approved; E1-T1 revision 3 is promoted/ready. E2–E8 remain `draft`. E1-T5 remains `cancelled`, E7-T5 remains `deferred`, and every unpromoted active task is `proposed`.
+Only E1-T1 implementation is currently authorized and `in_progress`. E0 is `ready` at the epic-approval level, but its tasks remain blocked until E1-T1 is done. E1 spike revision 2 and implementation-plan revision 3 are approved; E1-T1 revision 3 runs on its dedicated branch. E2–E8 remain `draft`. E1-T5 remains `cancelled`, E7-T5 remains `deferred`, and every unpromoted active task is `proposed`.
 
 ## Global lifecycle
 
@@ -74,7 +74,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E0-T2](E0-architecture-dependency-spike/tasks/E0-T2-execute-and-lock-the-architecture-proof.md): promoted/draft; task dependencies `E0-T1, E1-T1`; M1; requirements `none`; decisions `ADR-001, ADR-005, ADR-012, ADR-013`.
 ### E1
 
-- [E1-T1](E1-repository-developer-foundation/tasks/E1-T1-initialize-repository-safety.md): promoted/ready; task dependencies `none`; M1; requirements `none`; decisions `ADR-009, ADR-017`.
+- [E1-T1](E1-repository-developer-foundation/tasks/E1-T1-initialize-repository-safety.md): promoted/in-progress; task dependencies `none`; M1; requirements `none`; decisions `ADR-009, ADR-017`.
 - [E1-T2](E1-repository-developer-foundation/proposed-tasks/E1-T2-scaffold-web-and-backend-applications.md): task dependencies `E0-T2`; M1; requirements `none`; decisions `ADR-001, ADR-012`.
 - [E1-T3](E1-repository-developer-foundation/proposed-tasks/E1-T3-add-local-docker-compose.md): task dependencies `E1-T2`; M1; requirements `none`; decisions `ADR-005, ADR-008, ADR-010`.
 - [E1-T4](E1-repository-developer-foundation/proposed-tasks/E1-T4-establish-ci-baseline.md): task dependencies `E1-T2`; M1; requirements `none`; decisions `ADR-009, ADR-012, ADR-013, ADR-017`.

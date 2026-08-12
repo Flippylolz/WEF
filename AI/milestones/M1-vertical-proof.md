@@ -25,7 +25,7 @@ A synthetic/redacted fixture enters through the historical adapter, known record
 - [E0-T2: Execute and lock the architecture proof](../epics/E0-architecture-dependency-spike/tasks/E0-T2-execute-and-lock-the-architecture-proof.md) — promoted, `draft`
 ### [E1: Repository and developer foundation](../epics/E1-repository-developer-foundation/README.md)
 
-- [E1-T1: Initialize repository safety](../epics/E1-repository-developer-foundation/tasks/E1-T1-initialize-repository-safety.md) — promoted, `draft`
+- [E1-T1: Initialize repository safety](../epics/E1-repository-developer-foundation/tasks/E1-T1-initialize-repository-safety.md) — `in_progress`
 - [E1-T2: Scaffold web and backend applications](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T2-scaffold-web-and-backend-applications.md) — `proposed`
 - [E1-T3: Add local Docker Compose](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T3-add-local-docker-compose.md) — `proposed`
 - [E1-T4: Establish CI baseline](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T4-establish-ci-baseline.md) — `proposed`

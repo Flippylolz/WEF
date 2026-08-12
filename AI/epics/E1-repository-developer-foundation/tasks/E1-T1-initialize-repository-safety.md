@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E1-T1
 epic: E1
 title: "Initialize repository safety"
-status: ready
+status: in_progress
 revision: 3
 priority: P0
 size: S
@@ -35,10 +35,10 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: chore/E1-T1-repository-safety
   task_id: E1-T1
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-12T21:21:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -130,10 +130,10 @@ Push the minimal README `main`, open the docs PR, then open the stacked E1-T1 PR
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] The dedicated branch is `chore/E1-T1-repository-safety`.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] The dedicated branch is `chore/E1-T1-repository-safety`.
+- [x] The branch is stacked from the documentation foundation and contains E1-T1 only.
+- [x] `branch.name` and `branch.created_at` were recorded when setting `in_progress`.
 
 ## Done checklist
 
