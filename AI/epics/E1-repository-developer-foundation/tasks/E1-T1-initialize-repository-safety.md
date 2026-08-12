@@ -39,7 +39,7 @@ branch:
   task_id: E1-T1
   one_task_only: true
   created_at: "2026-08-12T21:21:00Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/2"
 completion:
   completed_by: null
   completed_at: null
@@ -95,17 +95,17 @@ No application, public API, persisted data, or runtime contract changes.
 
 ## Acceptance criteria
 
-- [ ] `origin` is exactly `https://github.com/Flippylolz/WEF`.
-- [ ] The only direct bootstrap content on `main` is the minimal root README.
-- [ ] Existing `AI/**` documentation is committed on `docs/ai-documentation-foundation` with a PR to `main`.
-- [ ] The E1-T1 commit is on `chore/E1-T1-repository-safety`, branched from the docs branch.
-- [ ] Git status/add candidates contain no raw export, archive, media, Telegram session, environment secret, local database, or sensitive generated report.
-- [ ] Docker build-context checks cannot include the export/archive or secrets.
-- [ ] Lockfiles and `contracts/openapi/v1.json` remain committable.
-- [ ] The root README links `AI/README.md` and does not claim unimplemented commands/services.
-- [ ] `.env.example` contains no production value or credential.
-- [ ] The task branch is pushed and its stacked PR targets `docs/ai-documentation-foundation`; its diff contains only E1-T1 root files.
-- [ ] Neither PR is merged without a separate instruction.
+- [x] The canonical repository is `Flippylolz/WEF`, and Git pushes use SSH.
+- [x] The only direct bootstrap content on `main` is the minimal root README.
+- [x] Existing `AI/**` documentation is committed on `docs/ai-documentation-foundation` with [PR #1](https://github.com/Flippylolz/WEF/pull/1) to `main`.
+- [x] The E1-T1 commit is on `chore/E1-T1-repository-safety`, branched from the docs branch.
+- [x] Git status/add candidates contain no raw export, archive, media, Telegram session, environment secret, local database, or sensitive generated report.
+- [x] Docker build-context rules exclude the export/archive and secrets.
+- [x] Lockfiles and `contracts/openapi/v1.json` remain committable.
+- [x] The root README links `AI/README.md` and does not claim unimplemented commands/services.
+- [x] `.env.example` contains no production value or credential.
+- [x] The task branch is pushed and [PR #2](https://github.com/Flippylolz/WEF/pull/2) targets `docs/ai-documentation-foundation`; its diff contains only E1-T1 changes.
+- [x] Neither PR was merged.
 
 ## Test plan
 
@@ -114,6 +114,14 @@ No application, public API, persisted data, or runtime contract changes.
 - Docker context: inspect future context candidates using `.dockerignore` semantics without building an application image.
 - Documentation: validate Markdown links and lints.
 - GitHub: verify both PRs' base/head and changed-file lists, including isolation of the stacked E1-T1 diff.
+
+## Verification evidence
+
+- Bootstrap commit: `a8eda7b` on `main`.
+- Documentation commit: `87dec75` on `docs/ai-documentation-foundation`; [PR #1](https://github.com/Flippylolz/WEF/pull/1).
+- E1-T1 safety commit: `c7f7410` on `chore/E1-T1-repository-safety`; [PR #2](https://github.com/Flippylolz/WEF/pull/2).
+- `git check-ignore` matched representative export, archive, environment, session, database, report, and dependency-cache paths.
+- IDE lints reported no errors for changed documentation.
 
 ## Rollout and rollback
 
