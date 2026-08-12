@@ -7,7 +7,14 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from wef_backend.features.catalog.application import ConfidenceIndicator, MapQueryResult
+from wef_backend.features.catalog.application import (
+    ConfidenceIndicator,
+    FacetSnapshot,
+    LocationOfferPage,
+    MapQueryResult,
+    OfferDataConfidence,
+)
+from wef_backend.features.catalog.domain import ContentType, MarketType
 
 
 class PointGeometry(BaseModel):
@@ -70,6 +77,57 @@ class LocationMapResponse(BaseModel):
     meta: MapResponseMeta
 
 
+class FilterFacetsResponse(BaseModel):
+    """Canonical visible options and dataset bounds."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    districts: tuple[str, ...]
+    rooms: tuple[int, ...]
+    market_types: tuple[MarketType, ...]
+    content_types: tuple[ContentType, ...]
+    price_min_minor: int | None
+    price_max_minor: int | None
+    area_min_sqm: Decimal | None
+    area_max_sqm: Decimal | None
+    published_from: datetime | None
+    published_to: datetime | None
+
+
+class OfferSummaryResponse(BaseModel):
+    """Dated selected-location offer summary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    content_type: ContentType
+    market_type: MarketType
+    display_name: str
+    data_confidence: OfferDataConfidence
+    published_at: datetime
+    currency: str | None
+    price_min_minor: int | None = Field(default=None, ge=0)
+    price_max_minor: int | None = Field(default=None, ge=0)
+    area_min_sqm: Decimal | None = Field(default=None, gt=0)
+    area_max_sqm: Decimal | None = Field(default=None, gt=0)
+    rooms_min: int | None = Field(default=None, ge=0)
+    rooms_max: int | None = Field(default=None, ge=0)
+    floor_label: str | None
+    delivery_label: str | None
+    matches_filters: bool
+
+
+class LocationOfferPageResponse(BaseModel):
+    """Selected-location items with explicit match/history context."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: tuple[OfferSummaryResponse, ...]
+    matching_count: int = Field(ge=0)
+    total_count: int = Field(ge=0)
+    next_cursor: str | None
+
+
 def present_location_map(
     result: MapQueryResult,
     *,
@@ -108,4 +166,52 @@ def present_location_map(
                 feature.properties.matching_offer_count for feature in features
             ),
         ),
+    )
+
+
+def present_facets(snapshot: FacetSnapshot) -> FilterFacetsResponse:
+    """Present canonical facet values without deriving options in clients."""
+    return FilterFacetsResponse(
+        districts=snapshot.districts,
+        rooms=snapshot.rooms,
+        market_types=snapshot.market_types,
+        content_types=snapshot.content_types,
+        price_min_minor=snapshot.price_min_minor,
+        price_max_minor=snapshot.price_max_minor,
+        area_min_sqm=snapshot.area_min_sqm,
+        area_max_sqm=snapshot.area_max_sqm,
+        published_from=snapshot.published_from,
+        published_to=snapshot.published_to,
+    )
+
+
+def present_location_offer_page(
+    page: LocationOfferPage,
+) -> LocationOfferPageResponse:
+    """Present backend-decorated offers and explicit counts."""
+    return LocationOfferPageResponse(
+        items=tuple(
+            OfferSummaryResponse(
+                id=item.id,
+                content_type=item.content_type,
+                market_type=item.market_type,
+                display_name=item.display_name,
+                data_confidence=item.data_confidence,
+                published_at=item.published_at,
+                currency=item.currency,
+                price_min_minor=item.price_min_minor,
+                price_max_minor=item.price_max_minor,
+                area_min_sqm=item.area_min_sqm,
+                area_max_sqm=item.area_max_sqm,
+                rooms_min=item.rooms_min,
+                rooms_max=item.rooms_max,
+                floor_label=item.floor_label,
+                delivery_label=item.delivery_label,
+                matches_filters=item.matches_filters,
+            )
+            for item in page.items
+        ),
+        matching_count=page.matching_count,
+        total_count=page.total_count,
+        next_cursor=page.next_cursor,
     )

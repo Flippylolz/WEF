@@ -38,7 +38,7 @@ A deterministic synthetic fixture is migrated/seeded into canonical PostGIS loca
 ### [E4: Read API and filter contracts](../epics/E4-read-api-filter-contracts/README.md)
 
 - [E4-T1: Implement map query service and GeoJSON endpoint](../epics/E4-read-api-filter-contracts/tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md) — `in_progress`, stacked on E3-T1
-- [E4-T2: Implement facets and location offer collection](../epics/E4-read-api-filter-contracts/tasks/E4-T2-implement-facets-and-location-offer-collection.md) — promoted, `draft`, blocked until E4-T1 ancestry
+- [E4-T2: Implement facets and location offer collection](../epics/E4-read-api-filter-contracts/tasks/E4-T2-implement-facets-and-location-offer-collection.md) — `in_progress`, stacked on E4-T1
 ### [E5: Interactive map frontend](../epics/E5-interactive-map-frontend/README.md)
 
 - [E5-T1: Build map shell and grouped pin interaction](../epics/E5-interactive-map-frontend/tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — promoted, `draft`, blocked until E4-T2 ancestry

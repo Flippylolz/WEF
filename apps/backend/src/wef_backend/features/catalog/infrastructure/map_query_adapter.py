@@ -30,7 +30,7 @@ class SQLAlchemyMapQueryAdapter(MapQueryPort):
 
     async def query_map(self, filters: MapFilters) -> MapQuerySnapshot:
         """Return accepted in-scope points with matching and total counts."""
-        conditions = self._conditions(filters)
+        conditions = self.filter_conditions(filters)
         total_offer = aliased(OfferRow)
         total_offer_count = (
             select(func.count(total_offer.id))
@@ -104,7 +104,7 @@ class SQLAlchemyMapQueryAdapter(MapQueryPort):
         )
 
     @staticmethod
-    def _conditions(filters: MapFilters) -> tuple[ColumnElement[bool], ...]:
+    def filter_conditions(filters: MapFilters) -> tuple[ColumnElement[bool], ...]:
         """Build one SQL predicate set for all M1 filter groups."""
         required: tuple[ColumnElement[bool], ...] = (
             LocationRow.review_status == LocationReviewStatus.ACCEPTED.value,

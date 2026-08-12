@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E4-T2
 epic: E4
 title: "Implement facets and location offer collection"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: M
@@ -29,16 +29,17 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:34:40Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-12T23:12:03Z"
+  evidence:
+    - "E4-T1 dependency | branch feature/E4-T1-map-geojson | PR https://github.com/Flippylolz/WEF/pull/12 | head d32ee31"
 branch:
   required: true
-  name: null
+  name: feature/E4-T2-facets-results
   task_id: E4-T2
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-12T23:12:03Z"
   pull_request: null
 completion:
   completed_by: null
@@ -78,18 +79,18 @@ Expose canonical M1 filter options and deterministic dated offers for a selected
 ## Implementation notes
 
 - Facet values and range bounds come from backend data/contracts; frontend does not derive domain options from visible pins.
-- Cursor order is `published_at DESC, id DESC` and cursor payload is opaque/versioned.
+- Cursor order is `matches_filters DESC, published_at DESC, id DESC` so matching offers lead explicit history; the cursor payload is opaque/versioned.
 - Map and collection invoke the same normalized filter object and range/null semantics.
 - Unknown UUIDs return a safe not-found response without leaking hidden records.
 
 ## Acceptance criteria
 
-- [ ] Facet values are canonical, stable, generated from visible/in-scope M1 data, and contract-tested.
-- [ ] Selected-location summaries return matching offers first with published date and backend display/confidence values.
-- [ ] Cursor pagination has no duplicate/omitted rows under timestamp ties and rejects invalid cursors safely.
-- [ ] `include_non_matching` is explicit and matching/total counts remain accurate.
-- [ ] Map, facet, and collection endpoints share tested filter semantics.
-- [ ] OpenAPI/generated-client/docs/compatibility and sensitive-field allowlist checks pass.
+- [x] Facet values are canonical, stable, generated from visible/in-scope M1 data, and contract-tested.
+- [x] Selected-location summaries return matching offers first with published date and backend display/confidence values.
+- [x] Cursor pagination has no duplicate/omitted rows under timestamp ties and rejects invalid cursors safely.
+- [x] `include_non_matching` is explicit and matching/total counts remain accurate.
+- [x] Map, facet, and collection endpoints share tested filter semantics.
+- [x] OpenAPI/generated-client/docs/compatibility and sensitive-field allowlist checks pass.
 
 ## Test plan
 
@@ -107,17 +108,25 @@ Additive endpoints over the E3 schema and E4-T1 policy. Roll back only the appli
 
 - [x] This file is authoritative under `tasks/`; the proposed source is removed.
 - [x] Promotion, spike revision 2, and plan revision 2 are recorded.
-- [ ] E4-T1 is `done` or a direct ancestor PR recorded as `stacked`.
+- [x] E4-T1 is a direct ancestor PR recorded as `stacked`.
 - [x] Scope and acceptance match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passes through `ready`.
-- [ ] Dedicated E4-T2 branch is created and recorded.
-- [ ] Branch/PR contain E4-T2 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated `feature/E4-T2-facets-results` branch is created and recorded.
+- [x] Branch contains E4-T2 only; its PR opens after verification.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
+- [x] Acceptance criteria pass.
 - [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.
+
+## Verification evidence
+
+- Static/unit: Ruff, six import-linter contracts, mypy strict, 43 backend tests passed/4 explicit integration skips at 90.06% coverage, and frontend lint/type/tests pass.
+- PostGIS: three integration tests pass for map filters, canonical visible facets, explicit match/history counts, matches-first ordering, opaque pagination across timestamp ties, migrations, and seed replay.
+- Contract: deterministic OpenAPI/TypeScript generation, Redocly lint/static docs, deliberate drift rejection, and oasdiff against E4-T1 report no breaking changes.
+- Runtime: Caddy-served facets return four canonical districts; a center-location primary filter pages one matching then one non-matching offer without duplicates, and an unknown public UUID returns the bounded 404 envelope.
+- Safety: offer summaries contain only structured allowlisted fields; source text/link, media, contacts, payloads, local paths, and provider data remain absent.

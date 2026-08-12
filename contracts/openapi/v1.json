@@ -100,6 +100,124 @@
         "title": "EstatesResponse",
         "type": "object"
       },
+      "FilterFacetsResponse": {
+        "additionalProperties": false,
+        "description": "Canonical visible options and dataset bounds.",
+        "properties": {
+          "area_max_sqm": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Max Sqm"
+          },
+          "area_min_sqm": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Min Sqm"
+          },
+          "content_types": {
+            "items": {
+              "$ref": "#/components/schemas/ContentType"
+            },
+            "title": "Content Types",
+            "type": "array"
+          },
+          "districts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Districts",
+            "type": "array"
+          },
+          "market_types": {
+            "items": {
+              "$ref": "#/components/schemas/MarketType"
+            },
+            "title": "Market Types",
+            "type": "array"
+          },
+          "price_max_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Max Minor"
+          },
+          "price_min_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Min Minor"
+          },
+          "published_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published From"
+          },
+          "published_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published To"
+          },
+          "rooms": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Rooms",
+            "type": "array"
+          }
+        },
+        "required": [
+          "districts",
+          "rooms",
+          "market_types",
+          "content_types",
+          "price_min_minor",
+          "price_max_minor",
+          "area_min_sqm",
+          "area_max_sqm",
+          "published_from",
+          "published_to"
+        ],
+        "title": "FilterFacetsResponse",
+        "type": "object"
+      },
       "HealthResponse": {
         "additionalProperties": false,
         "description": "Machine-readable health response.",
@@ -290,6 +408,48 @@
         "title": "LocationMapResponse",
         "type": "object"
       },
+      "LocationOfferPageResponse": {
+        "additionalProperties": false,
+        "description": "Selected-location items with explicit match/history context.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OfferSummaryResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "matching_count": {
+            "minimum": 0.0,
+            "title": "Matching Count",
+            "type": "integer"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "total_count": {
+            "minimum": 0.0,
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "matching_count",
+          "total_count",
+          "next_cursor"
+        ],
+        "title": "LocationOfferPageResponse",
+        "type": "object"
+      },
       "MapResponseMeta": {
         "additionalProperties": false,
         "description": "Bounded response metadata safe for public clients.",
@@ -327,6 +487,219 @@
         ],
         "title": "MarketType",
         "type": "string"
+      },
+      "NotFoundProblemResponse": {
+        "additionalProperties": false,
+        "description": "Stable not-found envelope shared by absent and hidden resources.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "instance": {
+            "title": "Instance",
+            "type": "string"
+          },
+          "kind": {
+            "const": "not_found",
+            "default": "not_found",
+            "title": "Kind",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "request_id",
+          "detail",
+          "instance"
+        ],
+        "title": "NotFoundProblemResponse",
+        "type": "object"
+      },
+      "OfferDataConfidence": {
+        "description": "Coarse completeness indicator for offer summaries.",
+        "enum": [
+          "partial",
+          "complete"
+        ],
+        "title": "OfferDataConfidence",
+        "type": "string"
+      },
+      "OfferSummaryResponse": {
+        "additionalProperties": false,
+        "description": "Dated selected-location offer summary.",
+        "properties": {
+          "area_max_sqm": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Max Sqm"
+          },
+          "area_min_sqm": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Min Sqm"
+          },
+          "content_type": {
+            "$ref": "#/components/schemas/ContentType"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "data_confidence": {
+            "$ref": "#/components/schemas/OfferDataConfidence"
+          },
+          "delivery_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Label"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "floor_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Floor Label"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "market_type": {
+            "$ref": "#/components/schemas/MarketType"
+          },
+          "matches_filters": {
+            "title": "Matches Filters",
+            "type": "boolean"
+          },
+          "price_max_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Max Minor"
+          },
+          "price_min_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Min Minor"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "rooms_max": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rooms Max"
+          },
+          "rooms_min": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rooms Min"
+          }
+        },
+        "required": [
+          "id",
+          "content_type",
+          "market_type",
+          "display_name",
+          "data_confidence",
+          "published_at",
+          "currency",
+          "floor_label",
+          "delivery_label",
+          "matches_filters"
+        ],
+        "title": "OfferSummaryResponse",
+        "type": "object"
       },
       "PointGeometry": {
         "additionalProperties": false,
@@ -442,6 +815,28 @@
         ]
       }
     },
+    "/api/v1/filter-facets": {
+      "get": {
+        "description": "Return canonical options and visible dataset bounds.",
+        "operationId": "getFilterFacets",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilterFacetsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get canonical visible filter facets",
+        "tags": [
+          "filters"
+        ]
+      }
+    },
     "/api/v1/health/live": {
       "get": {
         "description": "Report that the event loop can serve requests.",
@@ -486,6 +881,280 @@
         "summary": "Check database readiness",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/locations/{location_id}/offers": {
+      "get": {
+        "description": "Return matching offers first and optional non-matching history.",
+        "operationId": "listLocationOffers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "location_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Location Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bbox",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 7,
+              "title": "Bbox",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "price_min",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1000000000,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Price Min"
+            }
+          },
+          {
+            "in": "query",
+            "name": "price_max",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1000000000,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Price Max"
+            }
+          },
+          {
+            "in": "query",
+            "name": "area_min",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 100000.0,
+                  "type": "number"
+                },
+                {
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Area Min"
+            }
+          },
+          {
+            "in": "query",
+            "name": "area_max",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 100000.0,
+                  "type": "number"
+                },
+                {
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Area Max"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rooms",
+            "required": false,
+            "schema": {
+              "items": {
+                "maximum": 20,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "maxItems": 10,
+              "title": "Rooms",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "district",
+            "required": false,
+            "schema": {
+              "items": {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 20,
+              "title": "District",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "market_type",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/MarketType"
+              },
+              "maxItems": 5,
+              "title": "Market Type",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "content_type",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/ContentType"
+              },
+              "maxItems": 5,
+              "title": "Content Type",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "published_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Published From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "published_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Published To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_non_matching",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Non Matching",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationOfferPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundProblemResponse"
+                }
+              }
+            },
+            "description": "The location is absent or not public."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "The filters or cursor are invalid."
+          }
+        },
+        "summary": "List dated offers for a selected location",
+        "tags": [
+          "locations"
         ]
       }
     },

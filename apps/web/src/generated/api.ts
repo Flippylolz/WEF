@@ -25,6 +25,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/filter-facets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get canonical visible filter facets
+         * @description Return canonical options and visible dataset bounds.
+         */
+        get: operations["getFilterFacets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/live": {
         parameters: {
             query?: never;
@@ -57,6 +77,26 @@ export interface paths {
          * @description Report readiness only when the composed database check succeeds.
          */
         get: operations["getReadiness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/locations/{location_id}/offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List dated offers for a selected location
+         * @description Return matching offers first and optional non-matching history.
+         */
+        get: operations["listLocationOffers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -138,6 +178,32 @@ export interface components {
         EstatesResponse: {
             /** Items */
             items: components["schemas"]["EstateResponse"][];
+        };
+        /**
+         * FilterFacetsResponse
+         * @description Canonical visible options and dataset bounds.
+         */
+        FilterFacetsResponse: {
+            /** Area Max Sqm */
+            area_max_sqm: string | null;
+            /** Area Min Sqm */
+            area_min_sqm: string | null;
+            /** Content Types */
+            content_types: components["schemas"]["ContentType"][];
+            /** Districts */
+            districts: string[];
+            /** Market Types */
+            market_types: components["schemas"]["MarketType"][];
+            /** Price Max Minor */
+            price_max_minor: number | null;
+            /** Price Min Minor */
+            price_min_minor: number | null;
+            /** Published From */
+            published_from: string | null;
+            /** Published To */
+            published_to: string | null;
+            /** Rooms */
+            rooms: number[];
         };
         /**
          * HealthResponse
@@ -223,6 +289,20 @@ export interface components {
             type: "FeatureCollection";
         };
         /**
+         * LocationOfferPageResponse
+         * @description Selected-location items with explicit match/history context.
+         */
+        LocationOfferPageResponse: {
+            /** Items */
+            items: components["schemas"]["OfferSummaryResponse"][];
+            /** Matching Count */
+            matching_count: number;
+            /** Next Cursor */
+            next_cursor: string | null;
+            /** Total Count */
+            total_count: number;
+        };
+        /**
          * MapResponseMeta
          * @description Bounded response metadata safe for public clients.
          */
@@ -243,6 +323,82 @@ export interface components {
          * @enum {string}
          */
         MarketType: "primary" | "secondary" | "unknown";
+        /**
+         * NotFoundProblemResponse
+         * @description Stable not-found envelope shared by absent and hidden resources.
+         */
+        NotFoundProblemResponse: {
+            /** Code */
+            code: string;
+            /** Detail */
+            detail: string;
+            /** Instance */
+            instance: string;
+            /**
+             * Kind
+             * @default not_found
+             * @constant
+             */
+            kind: "not_found";
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /** Status */
+            status: number;
+            /** Title */
+            title: string;
+            /** Type */
+            type: string;
+        };
+        /**
+         * OfferDataConfidence
+         * @description Coarse completeness indicator for offer summaries.
+         * @enum {string}
+         */
+        OfferDataConfidence: "partial" | "complete";
+        /**
+         * OfferSummaryResponse
+         * @description Dated selected-location offer summary.
+         */
+        OfferSummaryResponse: {
+            /** Area Max Sqm */
+            area_max_sqm?: string | null;
+            /** Area Min Sqm */
+            area_min_sqm?: string | null;
+            content_type: components["schemas"]["ContentType"];
+            /** Currency */
+            currency: string | null;
+            data_confidence: components["schemas"]["OfferDataConfidence"];
+            /** Delivery Label */
+            delivery_label: string | null;
+            /** Display Name */
+            display_name: string;
+            /** Floor Label */
+            floor_label: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            market_type: components["schemas"]["MarketType"];
+            /** Matches Filters */
+            matches_filters: boolean;
+            /** Price Max Minor */
+            price_max_minor?: number | null;
+            /** Price Min Minor */
+            price_min_minor?: number | null;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Rooms Max */
+            rooms_max?: number | null;
+            /** Rooms Min */
+            rooms_min?: number | null;
+        };
         /**
          * PointGeometry
          * @description GeoJSON Point geometry in longitude/latitude order.
@@ -318,6 +474,26 @@ export interface operations {
             };
         };
     };
+    getFilterFacets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FilterFacetsResponse"];
+                };
+            };
+        };
+    };
     getLiveness: {
         parameters: {
             query?: never;
@@ -362,6 +538,61 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    listLocationOffers: {
+        parameters: {
+            query: {
+                area_max?: number | string | null;
+                area_min?: number | string | null;
+                bbox: string;
+                content_type?: components["schemas"]["ContentType"][];
+                cursor?: string | null;
+                district?: string[];
+                include_non_matching?: boolean;
+                limit?: number;
+                market_type?: components["schemas"]["MarketType"][];
+                price_max?: number | null;
+                price_min?: number | null;
+                published_from?: string | null;
+                published_to?: string | null;
+                rooms?: number[];
+            };
+            header?: never;
+            path: {
+                location_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocationOfferPageResponse"];
+                };
+            };
+            /** @description The location is absent or not public. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotFoundProblemResponse"];
+                };
+            };
+            /** @description The filters or cursor are invalid. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
             };
         };
     };

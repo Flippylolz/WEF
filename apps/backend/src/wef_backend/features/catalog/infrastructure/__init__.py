@@ -1,5 +1,8 @@
 """Catalog persistence mappings and adapters."""
 
+from wef_backend.features.catalog.infrastructure.browse_adapter import (
+    SQLAlchemyCatalogBrowseAdapter,
+)
 from wef_backend.features.catalog.infrastructure.map_query_adapter import (
     SQLAlchemyMapQueryAdapter,
 )
@@ -16,6 +19,7 @@ __all__ = [
     "CatalogBase",
     "LocationRow",
     "OfferRow",
+    "SQLAlchemyCatalogBrowseAdapter",
     "SQLAlchemyCatalogSeedAdapter",
     "SQLAlchemyMapQueryAdapter",
 ]

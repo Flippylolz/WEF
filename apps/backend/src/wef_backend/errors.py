@@ -23,8 +23,27 @@ class ProblemResponse(BaseModel):
     kind: Literal["validation_error"] = "validation_error"
 
 
+class NotFoundProblemResponse(BaseModel):
+    """Stable not-found envelope shared by absent and hidden resources."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: str
+    title: str
+    status: int
+    code: str
+    request_id: UUID
+    detail: str
+    instance: str
+    kind: Literal["not_found"] = "not_found"
+
+
 class QueryValidationError(ValueError):
     """Application-level invalid query combination."""
+
+
+class ResourceNotFoundError(LookupError):
+    """Raised when a public resource is absent or not visible."""
 
 
 def problem_response(
@@ -68,3 +87,24 @@ async def query_validation_handler(
 ) -> JSONResponse:
     """Present bounded application filter validation."""
     return problem_response(request=request, detail=str(error))
+
+
+async def resource_not_found_handler(
+    request: Request,
+    _: Exception,
+) -> JSONResponse:
+    """Return the same response for absent and non-public resources."""
+    problem = NotFoundProblemResponse(
+        type="https://wef.invalid/problems/not-found",
+        title="Resource not found",
+        status=404,
+        code="not_found",
+        request_id=request.state.request_id,
+        detail="The requested resource was not found.",
+        instance=request.url.path,
+    )
+    return JSONResponse(
+        status_code=404,
+        content=problem.model_dump(mode="json"),
+        media_type="application/problem+json",
+    )

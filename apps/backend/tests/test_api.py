@@ -10,24 +10,37 @@ from fastapi import FastAPI, status
 from httpx import ASGITransport, AsyncClient
 
 from tests.fakes import (
+    FakeCatalogBrowse,
     FakeEstateQuery,
     FakeMapQuery,
     always_ready,
     close_nothing,
+    empty_facet_snapshot,
     never_ready,
 )
 from wef_backend.app import create_http_app
 from wef_backend.composition import AppServices, ReadyCheck
-from wef_backend.features.catalog.application import MapLocationRecord, QueryMapLocations
+from wef_backend.features.catalog.application import (
+    BrowseLocationOffers,
+    FacetSnapshot,
+    MapLocationRecord,
+    OfferBrowseRecord,
+    QueryFacets,
+    QueryMapLocations,
+)
+from wef_backend.features.catalog.domain import ContentType, MarketType
 from wef_backend.features.estates.application import EstateRecord, ListEstates
 from wef_backend.features.estates.domain import Availability, GeoPoint
 
 
 def create_test_app(ready_check: ReadyCheck = always_ready) -> FastAPI:
     """Build an isolated app with no database resources."""
+    browse = FakeCatalogBrowse(facets=empty_facet_snapshot())
     services = AppServices(
         list_estates=ListEstates(FakeEstateQuery(records=())),
         query_map=QueryMapLocations(FakeMapQuery()),
+        query_facets=QueryFacets(browse),
+        browse_location_offers=BrowseLocationOffers(browse),
         is_ready=ready_check,
         close=close_nothing,
     )
@@ -168,6 +181,94 @@ async def test_map_endpoint_rejects_unknown_and_unsafe_queries_safely() -> None:
     assert unsafe.json()["detail"] == "bbox must remain within the Warsaw query boundary"
 
 
+async def test_facets_and_selected_location_offer_contracts() -> None:
+    """Expose backend-owned options and dated offer display decisions."""
+    app = create_test_app()
+    facets = FacetSnapshot(
+        districts=("srodmiescie", "wola"),
+        rooms=(1, 2, 3),
+        market_types=(MarketType.PRIMARY, MarketType.SECONDARY),
+        content_types=(ContentType.DEVELOPMENT, ContentType.UNIT),
+        price_min_minor=69_000_000,
+        price_max_minor=149_000_000,
+        area_min_sqm=Decimal("29.50"),
+        area_max_sqm=Decimal("72.00"),
+        published_from=datetime(2026, 6, 30, tzinfo=UTC),
+        published_to=datetime(2026, 8, 5, tzinfo=UTC),
+    )
+    records = (
+        OfferBrowseRecord(
+            id=UUID("20000000-0000-4000-8000-000000000001"),
+            content_type=ContentType.DEVELOPMENT,
+            market_type=MarketType.PRIMARY,
+            published_at=datetime(2026, 8, 1, tzinfo=UTC),
+            currency="PLN",
+            price_min_minor=80_000_000,
+            price_max_minor=125_000_000,
+            area_min_sqm=Decimal("35.00"),
+            area_max_sqm=Decimal("71.50"),
+            rooms_min=1,
+            rooms_max=3,
+            floor_label=None,
+            delivery_label="Synthetic delivery",
+            matches_filters=True,
+        ),
+    )
+    browse = FakeCatalogBrowse(
+        facets=facets,
+        records=records,
+        matching_count=1,
+        total_count=2,
+    )
+    app.state.query_facets = QueryFacets(browse)
+    app.state.browse_location_offers = BrowseLocationOffers(browse)
+
+    async with api_client(app) as client:
+        facet_response = await client.get("/api/v1/filter-facets")
+        offer_response = await client.get(
+            "/api/v1/locations/10000000-0000-4000-8000-000000000001/offers",
+            params={"bbox": "20.9,52.1,21.2,52.4"},
+        )
+
+    assert facet_response.status_code == status.HTTP_200_OK
+    assert facet_response.json()["districts"] == ["srodmiescie", "wola"]
+    payload = offer_response.json()
+    assert offer_response.status_code == status.HTTP_200_OK
+    assert payload["matching_count"] == 1
+    assert payload["total_count"] == 2
+    assert payload["items"][0]["display_name"] == "development · primary"
+    assert payload["items"][0]["data_confidence"] == "complete"
+    assert "source_text" not in offer_response.text
+
+
+async def test_selected_location_hides_absence_and_rejects_bad_cursor() -> None:
+    """Use safe indistinguishable not-found and validation problems."""
+    app = create_test_app()
+    missing = FakeCatalogBrowse(
+        facets=empty_facet_snapshot(),
+        location_exists=False,
+    )
+    app.state.browse_location_offers = BrowseLocationOffers(missing)
+
+    async with api_client(app) as client:
+        not_found = await client.get(
+            "/api/v1/locations/10000000-0000-4000-8000-000000000099/offers",
+            params={"bbox": "20.9,52.1,21.2,52.4"},
+        )
+        bad_cursor = await client.get(
+            "/api/v1/locations/10000000-0000-4000-8000-000000000099/offers",
+            params={
+                "bbox": "20.9,52.1,21.2,52.4",
+                "cursor": "not-valid!",
+            },
+        )
+
+    assert not_found.status_code == status.HTTP_404_NOT_FOUND
+    assert not_found.json()["code"] == "not_found"
+    assert bad_cursor.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert bad_cursor.json()["detail"] == "cursor is invalid"
+
+
 async def test_runtime_docs_routes_are_absent_but_offline_schema_works() -> None:
     """Disable HTTP documentation while retaining direct schema generation."""
     app = create_http_app()
@@ -180,3 +281,8 @@ async def test_runtime_docs_routes_are_absent_but_offline_schema_works() -> None
 
     assert schema["paths"]["/api/v1/estates"]["get"]["operationId"] == "listEstates"
     assert schema["paths"]["/api/v1/map/locations"]["get"]["operationId"] == ("queryMapLocations")
+    assert schema["paths"]["/api/v1/filter-facets"]["get"]["operationId"] == ("getFilterFacets")
+    assert (
+        schema["paths"]["/api/v1/locations/{location_id}/offers"]["get"]["operationId"]
+        == "listLocationOffers"
+    )

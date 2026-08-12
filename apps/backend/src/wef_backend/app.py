@@ -10,8 +10,14 @@ from fastapi.exceptions import RequestValidationError
 from wef_backend.composition import AppServices, build_services
 from wef_backend.errors import (
     QueryValidationError,
+    ResourceNotFoundError,
     query_validation_handler,
     request_validation_handler,
+    resource_not_found_handler,
+)
+from wef_backend.features.catalog.interface import (
+    facets_router,
+    locations_router,
 )
 from wef_backend.features.catalog.interface import router as catalog_router
 from wef_backend.features.estates.interface import router as estates_router
@@ -37,9 +43,12 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     )
     app.include_router(health_router)
     app.include_router(catalog_router)
+    app.include_router(facets_router)
+    app.include_router(locations_router)
     app.include_router(estates_router)
     app.add_exception_handler(RequestValidationError, request_validation_handler)
     app.add_exception_handler(QueryValidationError, query_validation_handler)
+    app.add_exception_handler(ResourceNotFoundError, resource_not_found_handler)
 
     @app.middleware("http")
     async def attach_request_identity(
@@ -55,6 +64,8 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     if services is not None:
         app.state.list_estates = services.list_estates
         app.state.query_map = services.query_map
+        app.state.query_facets = services.query_facets
+        app.state.browse_location_offers = services.browse_location_offers
         app.state.is_ready = services.is_ready
 
     return app

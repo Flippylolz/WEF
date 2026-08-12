@@ -98,7 +98,9 @@ Returns location/development metadata and aggregate counts. It does not automati
 
 Returns cursor-paginated offer summaries.
 
-It accepts the same offer filters as the map endpoint and an `include_non_matching=false` flag. The UI can request matching offers first, then deliberately request all related history.
+It accepts the same offer filters as the map endpoint and an `include_non_matching=false` flag. The UI can request matching offers first, then deliberately request all related history. Pages use the stable order `matches_filters DESC, published_at DESC, id DESC` and an opaque versioned cursor.
+
+Each summary contains only dated structured offer fields, a backend-owned display name and coarse completeness indicator, and an explicit `matches_filters` value. The collection returns matching and total visible counts; it excludes source text/links, media, contacts, raw payloads, and provider data.
 
 ### `GET /api/v1/offers/{offer_id}`
 

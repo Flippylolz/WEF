@@ -3,20 +3,31 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Header, Query, Request, Response
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from wef_backend.errors import ProblemResponse, QueryValidationError
+from wef_backend.errors import (
+    NotFoundProblemResponse,
+    ProblemResponse,
+    QueryValidationError,
+    ResourceNotFoundError,
+)
 from wef_backend.features.catalog.application import (
     BoundingBox,
+    CursorError,
     MapFilterError,
     MapFilters,
 )
 from wef_backend.features.catalog.domain import ContentType, MarketType
 from wef_backend.features.catalog.interface.presenter import (
+    FilterFacetsResponse,
     LocationMapResponse,
+    LocationOfferPageResponse,
+    present_facets,
     present_location_map,
+    present_location_offer_page,
 )
 
 RoomValue = Annotated[int, Field(ge=0, le=20)]
@@ -63,7 +74,17 @@ class MapQueryParams(BaseModel):
             raise QueryValidationError(str(error)) from error
 
 
+class LocationOfferQueryParams(MapQueryParams):
+    """Shared filters plus explicit history and cursor controls."""
+
+    include_non_matching: bool = False
+    cursor: str | None = Field(default=None, max_length=512)
+    limit: int = Field(default=20, ge=1, le=50)
+
+
 router = APIRouter(prefix="/api/v1/map", tags=["map"])
+facets_router = APIRouter(prefix="/api/v1", tags=["filters"])
+locations_router = APIRouter(prefix="/api/v1/locations", tags=["locations"])
 
 
 @router.get(
@@ -104,3 +125,49 @@ def _etag_matches(if_none_match: str | None, etag: str) -> bool:
         return False
     values = {item.strip() for item in if_none_match.split(",")[:20]}
     return "*" in values or etag in values
+
+
+@facets_router.get(
+    "/filter-facets",
+    operation_id="getFilterFacets",
+    summary="Get canonical visible filter facets",
+)
+async def get_filter_facets(request: Request) -> FilterFacetsResponse:
+    """Return canonical options and visible dataset bounds."""
+    return present_facets(await request.app.state.query_facets())
+
+
+@locations_router.get(
+    "/{location_id}/offers",
+    operation_id="listLocationOffers",
+    summary="List dated offers for a selected location",
+    responses={
+        404: {
+            "model": NotFoundProblemResponse,
+            "description": "The location is absent or not public.",
+        },
+        422: {
+            "model": ProblemResponse,
+            "description": "The filters or cursor are invalid.",
+        },
+    },
+)
+async def list_location_offers(
+    location_id: UUID,
+    request: Request,
+    query: Annotated[LocationOfferQueryParams, Query()],
+) -> LocationOfferPageResponse:
+    """Return matching offers first and optional non-matching history."""
+    try:
+        page = await request.app.state.browse_location_offers(
+            location_id=location_id,
+            filters=query.to_filters(),
+            include_non_matching=query.include_non_matching,
+            cursor=query.cursor,
+            limit=query.limit,
+        )
+    except CursorError as error:
+        raise QueryValidationError(str(error)) from error
+    if not page.location_exists:
+        raise ResourceNotFoundError
+    return present_location_offer_page(page)

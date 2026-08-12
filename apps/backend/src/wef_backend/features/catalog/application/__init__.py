@@ -1,5 +1,20 @@
 """Catalog application services and inward-owned ports."""
 
+from wef_backend.features.catalog.application.browse_catalog import (
+    BrowseLocationOffers,
+    CursorCodec,
+    CursorError,
+    FacetQueryPort,
+    FacetSnapshot,
+    LocationOfferPage,
+    LocationOfferQueryPort,
+    OfferBrowseRecord,
+    OfferBrowseSnapshot,
+    OfferCursor,
+    OfferDataConfidence,
+    OfferSummaryDTO,
+    QueryFacets,
+)
 from wef_backend.features.catalog.application.map_query import (
     BoundingBox,
     ConfidenceIndicator,
@@ -23,8 +38,15 @@ from wef_backend.features.catalog.application.seed_m1 import (
 
 __all__ = [
     "BoundingBox",
+    "BrowseLocationOffers",
     "CatalogSeedPort",
     "ConfidenceIndicator",
+    "CursorCodec",
+    "CursorError",
+    "FacetQueryPort",
+    "FacetSnapshot",
+    "LocationOfferPage",
+    "LocationOfferQueryPort",
     "MapFilterError",
     "MapFilters",
     "MapLocationDTO",
@@ -32,7 +54,13 @@ __all__ = [
     "MapQueryPort",
     "MapQueryResult",
     "MapQuerySnapshot",
+    "OfferBrowseRecord",
+    "OfferBrowseSnapshot",
+    "OfferCursor",
+    "OfferDataConfidence",
+    "OfferSummaryDTO",
     "ProductionSeedError",
+    "QueryFacets",
     "QueryMapLocations",
     "SeedLocation",
     "SeedM1Catalog",
