@@ -34,7 +34,7 @@ A deterministic synthetic fixture is migrated/seeded into canonical PostGIS loca
 - [E1-T7: Implement scheduled Dependabot merge controller](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — `proposed`
 ### [E3: Database, geocoding, and media pipeline](../epics/E3-database-geocoding-media/README.md)
 
-- [E3-T1: Create M1 schema, migrations, and deterministic seed](../epics/E3-database-geocoding-media/tasks/E3-T1-create-schema-and-migrations.md) — `ready`, stacked on E1-T3
+- [E3-T1: Create M1 schema, migrations, and deterministic seed](../epics/E3-database-geocoding-media/tasks/E3-T1-create-schema-and-migrations.md) — `in_progress`, stacked on E1-T3
 ### [E4: Read API and filter contracts](../epics/E4-read-api-filter-contracts/README.md)
 
 - [E4-T1: Implement map query service and GeoJSON endpoint](../epics/E4-read-api-filter-contracts/tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md) — promoted, `draft`, blocked until E3-T1 ancestry

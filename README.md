@@ -45,11 +45,14 @@ Docker with Compose v2 is the only prerequisite for the isolated local stack. Op
 ```shell
 make compose-config
 make up
+make seed-m1
 curl --fail http://127.0.0.1:3100/api/v1/health/live
 make down
 ```
 
 Only Caddy publishes a host port, bound to loopback on `3100` by default. The API, web process, PostGIS, and operator container remain on an internal network. `make down` preserves the named database and media volumes.
+
+`make up` applies forward Alembic migrations before API startup. `make seed-m1` explicitly converges a small invented Warsaw fixture for map/API verification; the command refuses `WEF_ENV=production` and never reads the local export.
 
 `make importer-dry-run` starts the operator profile and confirms that `WEF_SOURCE_DIR` is mounted read-only. It reports only a file count and does not read file contents, parse listings, contact Telegram, or persist imports.
 

@@ -10,6 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from wef_backend.database import create_database_resources
 from wef_backend.features.estates.application import ListEstates
 from wef_backend.features.estates.infrastructure import SQLAlchemyEstateQueryAdapter
+from wef_backend.migration import EXPECTED_DATABASE_REVISION
 from wef_backend.settings import Settings, load_settings
 
 ReadyCheck = Callable[[], Awaitable[bool]]
@@ -36,9 +37,18 @@ def build_services(settings: Settings | None = None) -> AppServices:
     async def database_is_ready() -> bool:
         try:
             async with database.session_factory() as session:
-                await session.execute(text("SELECT 1"))
+                revision = await session.scalar(
+                    text("SELECT version_num FROM alembic_version"),
+                )
         except SQLAlchemyError as error:
             logger.warning("database_not_ready", error=str(error))
+            return False
+        if revision != EXPECTED_DATABASE_REVISION:
+            logger.warning(
+                "database_revision_mismatch",
+                expected=EXPECTED_DATABASE_REVISION,
+                actual=revision,
+            )
             return False
         return True
 

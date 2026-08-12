@@ -38,6 +38,20 @@ services:
     volumes:
       - media_data:/media
 
+  migrate:
+    image: wef-backend:local
+    build: *backend-build
+    command: ["wef-migrate"]
+    environment:
+      WEF_DATABASE_URL: ${WEF_DATABASE_URL:-postgresql+asyncpg://wef:wef-local-only@db:5432/wef}
+      WEF_ENV: development
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - application
+
   api:
     image: wef-backend:local
     build: *backend-build
@@ -49,6 +63,8 @@ services:
       db:
         condition: service_healthy
       media-init:
+        condition: service_completed_successfully
+      migrate:
         condition: service_completed_successfully
     volumes:
       - media_data:/app/media
@@ -143,6 +159,21 @@ services:
         bind:
           create_host_path: false
       - media_data:/app/media
+    networks:
+      - application
+
+  seed:
+    profiles:
+      - operator
+    image: wef-backend:local
+    build: *backend-build
+    command: ["wef-seed-m1"]
+    environment:
+      WEF_DATABASE_URL: ${WEF_DATABASE_URL:-postgresql+asyncpg://wef:wef-local-only@db:5432/wef}
+      WEF_ENV: development
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     networks:
       - application
 

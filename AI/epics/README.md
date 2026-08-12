@@ -18,7 +18,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E0 — Architecture and dependency spike](E0-architecture-dependency-spike/README.md) — `in_progress`; spike revision 2/plan revision 3 approved, E0-T1 and E0-T2 in progress in the ordered stack; milestones M1.
 - [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `in_progress`; spike revision 2/plan revision 4 approved; E1-T1/E1-T2/E1-T4/E1-T3 in progress, 2 proposed, 1 cancelled; milestones M1.
 - [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `draft`; 5 tasks (5 proposed); milestones M1, M2.
-- [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `approved`; spike/plan revision 2; E3-T1 promoted ready, 4 proposed; milestones M1, M2.
+- [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `in_progress`; spike/plan revision 2; E3-T1 in progress, 4 proposed; milestones M1, M2.
 - [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `approved`; spike/plan revision 2; E4-T1/T2 promoted draft, 2 proposed; milestones M1, M2.
 - [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `approved`; spike/plan revision 2; E5-T1/T2 promoted draft, 3 proposed; milestones M1, M3.
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `draft`; 7 tasks (7 proposed); milestones M3.
@@ -87,7 +87,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E2-T5](E2-historical-export-parser-audit/proposed-tasks/E2-T5-audit-the-complete-export.md): task dependencies `E2-T4`; M2; requirements `P-007`; decisions `ADR-006`.
 ### E3
 
-- [E3-T1](E3-database-geocoding-media/tasks/E3-T1-create-schema-and-migrations.md): promoted/ready revision 2; stacked dependency `E1-T3`; M1; requirements `P-001, P-002, P-007`; decisions `ADR-003, ADR-005, ADR-012`.
+- [E3-T1](E3-database-geocoding-media/tasks/E3-T1-create-schema-and-migrations.md): promoted/in-progress revision 2; stacked dependency `E1-T3`; M1; requirements `P-001, P-002, P-007`; decisions `ADR-003, ADR-005, ADR-012`.
 - [E3-T2](E3-database-geocoding-media/proposed-tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md): task dependencies `E2-T2, E3-T1`; M1; requirements `P-002, P-006, P-007`; decisions `ADR-005, ADR-006, ADR-012`.
 - [E3-T3](E3-database-geocoding-media/proposed-tasks/E3-T3-implement-geocoder-abstraction-and-cache.md): task dependencies `E3-T1, E2-T2`; deferred gates D-002; M1; requirements `P-001, P-007`; decisions `ADR-005, ADR-012`.
 - [E3-T4](E3-database-geocoding-media/proposed-tasks/E3-T4-implement-media-storage-and-derivatives.md): task dependencies `E2-T3, E3-T1`; M2; requirements `P-005, P-007`; decisions `ADR-007`.

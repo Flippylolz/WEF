@@ -18,6 +18,8 @@ dependencies = [
 wef-backend = "wef_backend.cli:serve"
 wef-export-openapi = "wef_backend.openapi_export:main"
 wef-importer-dry-run = "wef_backend.operator:main"
+wef-migrate = "wef_backend.migration:migrate"
+wef-seed-m1 = "wef_backend.seed_command:main"
 
 [build-system]
 requires = ["hatchling"]

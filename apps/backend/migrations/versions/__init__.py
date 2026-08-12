@@ -1,0 +1,1 @@
+"""Forward catalog migration revisions."""

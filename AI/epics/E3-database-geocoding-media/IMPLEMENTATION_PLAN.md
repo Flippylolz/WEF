@@ -31,7 +31,7 @@ invalidation:
 
 ## Scope and outcome
 
-Deliver a clean-install/upgradeable PostGIS schema for canonical locations and dated offers plus an explicit idempotent synthetic seed. This replaces the disposable E0 table and makes downstream grouped-map/API/UI tasks independently testable without real source data or network calls.
+Deliver a clean-install/upgradeable PostGIS schema for canonical locations and dated offers plus an explicit idempotent synthetic seed. It becomes the E4 replacement source while the unmigrated E0 proof mapping remains temporarily isolated until E4-T1 removes its route/model.
 
 ## Ordered task sequence
 
@@ -45,7 +45,7 @@ Deliver a clean-install/upgradeable PostGIS schema for canonical locations and d
 
 ## Cross-task architecture
 
-Infrastructure owns SQLAlchemy/Alembic mappings. Application/domain code owns enum/range/seed input semantics. Composition wires sessions; interfaces do not import ORM rows. E4 consumes narrow query ports rather than ORM entities. E0 proof persistence is removed after the replacement path passes.
+Infrastructure owns SQLAlchemy/Alembic mappings. Application/domain code owns enum/range/seed input semantics. Composition wires sessions; interfaces do not import ORM rows. E4 consumes narrow query ports rather than ORM entities and removes E0 proof persistence only after its replacement path passes.
 
 ## Data and migrations
 
@@ -72,7 +72,7 @@ Local Compose gates API startup on successful migration. Production migration in
 
 ## Risks and mitigations
 
-- **Competing proof model:** remove it in the same task after replacement tests pass.
+- **Temporary proof model:** exclude it from Alembic and remove it in E4-T1 with replacement contract tests.
 - **Synthetic data mistaken for inventory:** stable synthetic labels and explicit operator-only command.
 - **Migration blocks API:** readiness checks revision compatibility and Compose logs one-shot migration failure.
 - **Future schema growth:** use additive forward revisions; do not prematurely add auth/media/source tables.

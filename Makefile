@@ -8,7 +8,7 @@ BACKEND := $(UV) --directory apps/backend run
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install format format-check lint typecheck test contract-generate contract-check build build-development compose-config up down ps logs importer-dry-run
+.PHONY: help install format format-check lint typecheck test contract-generate contract-check build build-development compose-config up down ps logs importer-dry-run seed-m1
 
 help: ## List supported commands.
 	@printf '%s\n' \
@@ -27,7 +27,8 @@ help: ## List supported commands.
 		'make down               Stop containers while preserving data' \
 		'make ps                 Show local service status' \
 		'make logs               Follow recent local service logs' \
-		'make importer-dry-run   Verify the read-only source mount'
+		'make importer-dry-run   Verify the read-only source mount' \
+		'make seed-m1            Converge the invented local M1 fixture'
 
 install: ## Install frozen dependencies.
 	$(UV) sync --project apps/backend --frozen
@@ -90,3 +91,6 @@ logs: ## Follow recent local service logs.
 
 importer-dry-run: ## Verify that the configured source export is read-only.
 	$(COMPOSE) --profile operator run --rm importer
+
+seed-m1: ## Converge the invented local M1 fixture after migrations.
+	$(COMPOSE) --profile operator run --rm seed

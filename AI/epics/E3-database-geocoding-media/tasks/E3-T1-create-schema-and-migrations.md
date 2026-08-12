@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E3-T1
 epic: E3
 title: "Create M1 schema, migrations, and deterministic seed"
-status: ready
+status: in_progress
 revision: 2
 priority: P0
 size: L
@@ -36,10 +36,10 @@ dependency_gate:
     - "E1-T3 dependency | branch feature/E1-T3-local-compose | PR https://github.com/Flippylolz/WEF/pull/9 | head 1fbc639"
 branch:
   required: true
-  name: null
+  name: feature/E3-T1-m1-schema-seed
   task_id: E3-T1
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-12T22:44:16Z"
   pull_request: null
 completion:
   completed_by: null
@@ -67,7 +67,7 @@ Replace disposable proof persistence with a forward-migrated M1 `Location`/`Offe
 - Add GiST/B-tree indexes required by the first grouped-map query.
 - Add an explicit backend command that upserts a small, clearly synthetic Warsaw fixture with fixed accepted coordinates.
 - Update local Compose to run migrations as a one-shot health gate and expose seed as an operator-profile command.
-- Remove the disposable `e0_proof_estates` mapping after replacement tests pass.
+- Keep the disposable E0 route/mapping isolated and unmigrated until E4-T1 replaces its public contract, then remove it in E4-T1.
 
 ## Out of scope
 
@@ -88,13 +88,13 @@ Replace disposable proof persistence with a forward-migrated M1 `Location`/`Offe
 
 ## Acceptance criteria
 
-- [ ] Alembic upgrades an empty PostGIS database to head and a second upgrade is a no-op.
-- [ ] Location coordinates use `geometry(Point,4326)` with a GiST index and GeoJSON longitude/latitude order is testable.
-- [ ] Offer visibility/publication/range constraints and query indexes exist; no real-world availability boolean exists.
-- [ ] The explicit synthetic seed converges to the same IDs/rows on replay without production/source data.
-- [ ] Local Compose starts through a migration gate and can run the seed only through an explicit operator command.
-- [ ] Readiness fails when the database migration revision is incompatible.
-- [ ] The disposable proof table/model is removed without leaving competing persistence.
+- [x] Alembic upgrades an empty PostGIS database to head and a second upgrade is a no-op.
+- [x] Location coordinates use `geometry(Point,4326)` with a GiST index and longitude/latitude order is integration-tested.
+- [x] Offer visibility/publication/range constraints and query indexes exist; no real-world availability boolean exists.
+- [x] The explicit synthetic seed converges to the same IDs/rows on replay without production/source data.
+- [x] Local Compose starts through a migration gate and runs the seed only through an explicit operator command.
+- [x] Readiness returns 503 when the database migration revision is incompatible.
+- [x] The disposable proof table is absent from Alembic metadata/migrations; E4-T1 owns route/model removal after its replacement contract passes.
 
 ## Test plan
 
@@ -119,11 +119,19 @@ Apply the forward migration before starting the new API. Before merge, discard o
 ## Start checklist
 
 - [x] Status passed through `draft` to `ready`.
-- [ ] Dedicated E3-T1 branch is created and recorded.
-- [ ] Branch/PR contain E3-T1 only.
+- [x] Dedicated `feature/E3-T1-m1-schema-seed` branch is created and recorded.
+- [x] Branch contains E3-T1 only; its PR opens after verification.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
+- [x] Acceptance criteria pass.
 - [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.
+
+## Verification evidence
+
+- Static/unit: Ruff, import-linter (five contracts), mypy strict, 28 backend tests passed/2 explicit integration skips with 96.28% coverage, frontend checks, OpenAPI contract/docs, Markdown links, and Compose config pass.
+- Migration integration: disposable PostGIS upgrade/re-upgrade, revision head, 13 named check constraints, GiST index, forbidden availability-column check, point order, prior proof-table isolation, and readiness pass.
+- Runtime: local Compose built production images, applied migration before API, reached healthy/ready through Caddy, and rejected a deliberately mismatched revision.
+- Seed: two explicit runs converged to four locations/five offers; production environment exited non-zero before persistence; no source/provider/media/contact data was used.
+- Rollback boundary: no automatic downgrade/reset/destructive volume target exists.

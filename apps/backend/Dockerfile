@@ -20,6 +20,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-project
 
 COPY apps/backend/src ./src
+COPY apps/backend/alembic.ini ./alembic.ini
+COPY apps/backend/migrations ./migrations
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-editable
 
@@ -54,6 +56,8 @@ ENV PATH="/build/.venv/bin:${PATH}" \
 WORKDIR /app
 
 COPY --from=build --chown=wef:wef /build/.venv /build/.venv
+COPY --from=build --chown=wef:wef /build/alembic.ini /app/alembic.ini
+COPY --from=build --chown=wef:wef /build/migrations /app/migrations
 
 USER wef
 
