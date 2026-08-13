@@ -41,6 +41,13 @@ def assert_workflow_boundaries() -> None:
     assert "force_rollback_rehearsal" in source
     assert "WEF_FORCE_ROLLBACK_REHEARSAL=1" in source
     assert '"$deploy_status" -eq 42' in source
+    assert "PUBLIC_PORT: ${{ vars.WEF_PUBLIC_PORT }}" in source
+    assert re.search(
+        r'deploy_command\+=\(\s*"\$release_dir/scripts/deploy/deploy\.sh"'
+        r'\s*/home/nuc/wef\s*"\$release_dir"\s*"\$config_file"'
+        r'\s*"\$RELEASE_SHA"\s*"\$PUBLIC_PORT"\s*\)',
+        source,
+    )
     assert "sha256sum --check SHA256SUMS" in source
     assert "StrictHostKeyChecking=yes" in source
     assert all(

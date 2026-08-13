@@ -346,6 +346,7 @@ jobs:
           DEPLOY_USER: ${{ vars.DEPLOY_USER }}
           GHCR_TOKEN: ${{ github.token }}
           FORCE_ROLLBACK_REHEARSAL: ${{ needs.resolve.outputs.force_rollback_rehearsal }}
+          PUBLIC_PORT: ${{ vars.WEF_PUBLIC_PORT }}
           RELEASE_SHA: ${{ needs.resolve.outputs.release_sha }}
           SEED_REHEARSAL: ${{ needs.resolve.outputs.seed_rehearsal }}
           SSH_PORT: ${{ vars.DEPLOY_SSH_PORT }}
@@ -354,6 +355,7 @@ jobs:
           set -euo pipefail
           [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
           [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$PUBLIC_PORT" =~ ^[0-9]{4,5}$ ]]
           [[ "$SSH_PORT" =~ ^[0-9]{1,5}$ ]]
           [[ "$GITHUB_ACTOR" =~ ^[A-Za-z0-9-]+$ ]]
           test -n "$DEPLOY_SSH_KEY"
@@ -472,7 +474,14 @@ jobs:
           if [[ "$FORCE_ROLLBACK_REHEARSAL" == 'true' ]]; then
             deploy_command+=("WEF_FORCE_ROLLBACK_REHEARSAL=1")
           fi
-          deploy_command+=("$release_dir/scripts/deploy/deploy.sh")
+          deploy_command+=(
+            "$release_dir/scripts/deploy/deploy.sh"
+            /home/nuc/wef
+            "$release_dir"
+            "$config_file"
+            "$RELEASE_SHA"
+            "$PUBLIC_PORT"
+          )
           set +e
           # shellcheck disable=SC2029
           ssh "${ssh_options[@]}" "$target" "${deploy_command[@]}"
