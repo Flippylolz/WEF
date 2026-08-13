@@ -53,7 +53,7 @@ The following definition preserves the original E5-T3 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E4-T3](../../E4-read-api-filter-contracts/proposed-tasks/E4-T3-implement-offer-detail.md), [E5-T1](E5-T1-build-map-shell-and-grouped-pin-interaction.md)
+- Task dependencies: [E4-T3](../../E4-read-api-filter-contracts/proposed-tasks/E4-T3-implement-offer-detail.md), [E5-T1](../tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md)
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Product](../../../product/README.md), [Contracts](../../../contracts/README.md), [Architecture](../../../architecture/README.md), [Security](../../../security/README.md).
 

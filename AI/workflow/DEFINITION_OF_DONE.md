@@ -9,7 +9,7 @@ Before any code was written:
 - The epic spike was explicitly owner-approved for the revision recorded by `spike_gate`.
 - The task had been promoted from `proposed-tasks/` to `tasks/`.
 - The epic implementation plan was explicitly owner-approved for the revision recorded by `implementation_gate`.
-- Every task dependency was `done` and recorded by the satisfied dependency gate.
+- At task start, every dependency was either `done` or recorded as an open ancestor pull request by a valid `stacked` dependency gate.
 - The task moved through `ready` before `in_progress`.
 - One dedicated branch containing the task ID was created for this task alone.
 
@@ -47,6 +47,7 @@ If this evidence is absent, the task cannot be declared done; restore the workfl
 
 ## Completion record
 
+- Before completion, every dependency is `done` and `dependency_gate.status` has transitioned from `stacked` to `satisfied`.
 - Required reviews and CI checks pass on the dedicated task pull request.
 - The pull request links the task and records test, migration, deployment, and rollback evidence.
 - `completion.completed_by`, `completion.completed_at`, `completion.pull_request`, and `completion.evidence` are populated.

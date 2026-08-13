@@ -49,12 +49,13 @@ The following definition preserves the original E3-T4 roadmap entry:
 ## Scope and approval boundary
 
 - Preserve the roadmap work and acceptance criteria above for refinement against the owner-approved spike.
+- The Caddy wording above is legacy-roadmap provenance, not the current public-edge choice. Media remains edge-agnostic and is served read-only through Nginx after E7-T8, with interim Caddy compatibility only while the rehearsal stack exists.
 - Do not treat this file, its priority, its branch note, or its roadmap ordering as permission to implement.
 - Production code, scaffolds, migrations, infrastructure changes, and disposable proof code remain out of scope until promotion and current implementation-plan approval.
 
 ## Dependencies and traceability
 
-- Task dependencies: [E2-T3](../../E2-historical-export-parser-audit/proposed-tasks/E2-T3-implement-media-grouping.md), [E3-T1](E3-T1-create-schema-and-migrations.md)
+- Task dependencies: [E2-T3](../../E2-historical-export-parser-audit/proposed-tasks/E2-T3-implement-media-grouping.md), [E3-T1](../tasks/E3-T1-create-schema-and-migrations.md)
 - Milestone: [M2](../../../milestones/M2-historical-dataset-ready.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Data](../../../data/README.md), [Contracts](../../../contracts/README.md), [Ingestion](../../../ingestion/README.md), [Security](../../../security/README.md).
 

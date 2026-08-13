@@ -119,7 +119,9 @@ Privileged UFW/router configuration still needs an interactive, non-logged admin
 - Host/provider firewall allowance.
 - Whether the initial endpoint may use plain HTTP or must use HTTPS.
 
-Public launch should use HTTPS. A high non-standard HTTPS port or DNS challenge requires additional Caddy/DuckDNS design; plain `http://...:3100` should be treated as an interim deployment, not the final security posture.
+Public launch should use HTTPS. A high non-standard HTTPS port or DNS challenge requires additional shared-ingress/DuckDNS design; plain `http://...:3100` should be treated as an interim deployment, not the final security posture.
+
+[ADR-020](../decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md) now selects Nginx as the target public web server with Certbot/Let's Encrypt auto-renewal for both WEF and the AI Forecast frontend currently on port 3000. This does not change the observed/current listeners above. [E7-T8](../epics/E7-production-delivery/proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md) must first confirm two hostnames and 80/443 forwarding, then perform an inventoried, health-checked, reversible cutover; until then Caddy/3100 and AI Forecast/3000 remain current facts.
 
 ## Deployment paths
 
@@ -134,9 +136,37 @@ Public launch should use HTTPS. A high non-standard HTTPS port or DNS challenge 
 - `/home/nuc/wef/imports/extracted/` — read-only extracted source mounted into importer jobs.
 - `/home/nuc/wef/caddy-data/` — Caddy state when used.
 
-Directories should be owned by `nuc`, default mode `0750`; secret files use `0600`. Container UID/GID ownership must be handled deliberately, especially PostgreSQL.
+Directories should be owned by `nuc`, default mode `0750`; secret files use `0600`. The inactive PostgreSQL root starts as `nuc:0700`; immediately before database startup, the bounded no-network `db-permissions` service changes that root only to the pinned PostGIS UID/GID `999:999`. Caddy runs as the NUC's UID/GID `1000:1000` and retains ownership of its data root. No sudo or recursively broad permission is used.
 
 GitHub Actions variables/secrets are the deployment configuration source of truth. Each release transfers complete config to temporary files, validates it, and atomically activates it; transfer files are deleted and values never enter Git/logs/images.
+
+### E7-T2 preparation evidence
+
+On 2026-08-13 UTC, strict known-host/batch SSH prepared only the WEF boundary:
+
+- Created `/home/nuc/wef` and its release, media, import, Caddy, state, and log directories as owner `nuc` with mode `0750`.
+- Created `secrets`, `secrets/releases`, and `postgres` with mode `0700`.
+- Transferred the inert E7-T1 manifests/scripts for commit `394329cb6a1a00f97c9a8533336667d1c072d2ac` to its versioned release directory with mode `0640`/`0750`.
+- Validated complete-config and Compose rendering with a temporary non-default fixture, then removed the fixture. No active environment, current/previous release state, application image, container, network, or database was created.
+- Recorded approximately 941 GB free disk and 6.35 GiB available memory after preparation; 3100/TCP remained unbound.
+- Automated before/after comparison proved the existing three Compose projects, five container/image identities, health/state/port bindings, watched listeners, and HTTP checks on 3000/8080 were unchanged.
+- No source export, media payload, credential, session, or sudo password was transferred.
+
+External 3100/router verification was deliberately not attempted because no immutable WEF images or edge listener exist while B-006 is active. E7-T4 performs that check only during the bounded release/rollback rehearsal.
+
+### E7-T3 deployment-identity preparation evidence
+
+On 2026-08-13 UTC:
+
+- Created the GitHub `production` environment and repository variables for host/user/ports, database identity, bind/log settings, and `AUTO_DEPLOY_ENABLED=false`.
+- Stored only three environment secrets: a generated production database password, the strict known-host material, and a new dedicated Ed25519 deployment private key. Values were piped directly to GitHub and were not printed or written into the repository.
+- Appended the corresponding public key to `nuc`'s `authorized_keys` without removing or changing existing keys, set the existing SSH file modes defensively, and proved batch login with that dedicated identity.
+- Kept GHCR authentication ephemeral: the workflow uses its job-scoped package-read token during the remote pull and logs out in its exit trap; no registry token is stored on the host.
+- Did not create a production config/release, start a container, bind port 3100, touch existing Compose projects, or enable automatic SSH. Hosted execution remains blocked by B-006, and E7-T4 owns the first bounded activation.
+
+### E7-T4 bind-permission proof
+
+On 2026-08-13 UTC, a temporary directory under `/home/nuc/wef/state` proved the pinned PostGIS UID 999 cannot write a native `nuc:0700` bind, while the exact no-network/read-only-root initializer with only `CHOWN` and `DAC_OVERRIDE` changes that one root to `999:999` and makes it writable. The trap changed the temporary directory back to `nuc`, removed it, and left the real inactive `/home/nuc/wef/postgres` at `nuc:0700`. Pulling the public pinned PostGIS image started no service and changed no active project.
 
 ## Local dataset transfer
 

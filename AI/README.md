@@ -21,11 +21,12 @@ The documentation migration is complete. Canonical content lives in the domain d
 - API contract: deterministic FastAPI OpenAPI committed in the repository and emitted as CI JSON, generated types, and static HTML artifacts; Swagger, OpenAPI, and ReDoc routes are disabled in production.
 - Map renderer: MapLibre GL JS with OpenFreeMap as the initial basemap.
 - Database: PostgreSQL with PostGIS.
-- Runtime: Docker Compose on one server, with Caddy at the edge.
+- Runtime: Docker Compose on one server. The current anonymous rehearsal uses Caddy; the accepted public-launch target is a shared Nginx TLS edge with Certbot/Let's Encrypt renewal for WEF and AI Forecast.
 - Delivery: GitHub Actions, GitHub Container Registry, and SSH deployment.
 - Production configuration: GitHub Actions variables and secrets are the deploy configuration source of truth. Complete validated configuration is transferred atomically on every deploy; no production `.env` is committed.
 - Reliability scope: application data persists on the NUC, but backups and restore drills are deferred. Persistence is not backup, and the accepted single-host data-loss risk must not be presented as a recovery guarantee.
 - Repository governance: feature branches, pull requests, and CI checks are mandatory procedurally. GitHub-enforced branch protection is unavailable/out of scope under the accepted account-plan constraint.
+- Delivery sequencing: approved dependent tasks may continue in ordered stacked pull requests without waiting for upstream review/merge; child tasks cannot be completed or merged before their dependencies.
 - Authentication and administration: pseudonymous username/password accounts, database-backed secure sessions, and an owner-only user/audit console; no owner credential is committed or hardcoded.
 - Live Telegram integration: a later Telethon worker uses the same canonical ingestion pipeline as the historical export.
 
@@ -54,7 +55,7 @@ Work proceeds in this order:
 4. Refine proposed tasks and promote approved candidates inside that epic.
 5. Complete the epic implementation plan.
 6. Record explicit owner approval of the current implementation-plan revision.
-7. Implement code task by task, using one branch per task and only after every dependency is done.
+7. Implement code task by task using one branch/PR per task, after dependencies are done or recorded as direct ordered stack ancestors under ADR-018.
 
 No production code or disposable proof code is allowed before implementation-plan approval. Files under `proposed-tasks/` are non-actionable.
 

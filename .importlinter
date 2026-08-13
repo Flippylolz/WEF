@@ -1,0 +1,61 @@
+[importlinter]
+root_package = wef_backend
+include_external_packages = True
+
+[importlinter:contract:estates-interface-layers]
+name = Estates interface depends inward
+type = layers
+layers =
+    wef_backend.features.estates.interface
+    wef_backend.features.estates.application
+    wef_backend.features.estates.domain
+
+[importlinter:contract:estates-infrastructure-layers]
+name = Estates infrastructure implements inward contracts
+type = layers
+layers =
+    wef_backend.features.estates.infrastructure
+    wef_backend.features.estates.application
+    wef_backend.features.estates.domain
+
+[importlinter:contract:estates-core-framework-independence]
+name = Estates core is framework independent
+type = forbidden
+source_modules =
+    wef_backend.features.estates.domain
+    wef_backend.features.estates.application
+forbidden_modules =
+    fastapi
+    geoalchemy2
+    pydantic
+    pydantic_settings
+    sqlalchemy
+
+[importlinter:contract:catalog-infrastructure-layers]
+name = Catalog infrastructure implements inward contracts
+type = layers
+layers =
+    wef_backend.features.catalog.infrastructure
+    wef_backend.features.catalog.application
+    wef_backend.features.catalog.domain
+
+[importlinter:contract:catalog-interface-layers]
+name = Catalog interface depends inward
+type = layers
+layers =
+    wef_backend.features.catalog.interface
+    wef_backend.features.catalog.application
+    wef_backend.features.catalog.domain
+
+[importlinter:contract:catalog-core-framework-independence]
+name = Catalog core is framework independent
+type = forbidden
+source_modules =
+    wef_backend.features.catalog.domain
+    wef_backend.features.catalog.application
+forbidden_modules =
+    fastapi
+    geoalchemy2
+    pydantic
+    pydantic_settings
+    sqlalchemy

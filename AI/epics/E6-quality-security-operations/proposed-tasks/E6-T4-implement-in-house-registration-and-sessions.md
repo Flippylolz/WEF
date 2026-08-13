@@ -54,7 +54,7 @@ The following definition preserves the original E6-T4 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E1-T2](../../E1-repository-developer-foundation/proposed-tasks/E1-T2-scaffold-web-and-backend-applications.md), [E3-T1](../../E3-database-geocoding-media/proposed-tasks/E3-T1-create-schema-and-migrations.md)
+- Task dependencies: [E1-T2](../../E1-repository-developer-foundation/tasks/E1-T2-scaffold-web-and-backend-applications.md), [E3-T1](../../E3-database-geocoding-media/tasks/E3-T1-create-schema-and-migrations.md)
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Product](../../../product/README.md), [Security](../../../security/README.md), [Operations](../../../operations/README.md), [Governance](../../../governance/README.md), [Contracts](../../../contracts/README.md).
 
