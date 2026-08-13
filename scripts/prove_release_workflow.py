@@ -42,6 +42,7 @@ def assert_workflow_boundaries() -> None:
     assert "WEF_FORCE_ROLLBACK_REHEARSAL=1" in source
     assert '"$deploy_status" -eq 42' in source
     assert "PUBLIC_PORT: ${{ vars.WEF_PUBLIC_PORT }}" in source
+    assert "WEF_RELEASE_SHA=${{ needs.resolve.outputs.release_sha }}" in source
     assert re.search(
         r'deploy_command\+=\(\s*"\$release_dir/scripts/deploy/deploy\.sh"'
         r'\s*/home/nuc/wef\s*"\$release_dir"\s*"\$config_file"'

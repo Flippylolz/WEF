@@ -133,6 +133,7 @@ services:
     image: ${WEF_WEB_IMAGE:?WEF_WEB_IMAGE digest is required}
     environment:
       WEF_API_URL: http://api:8000
+      WEF_RELEASE_SHA: ${WEF_RELEASE_SHA:?WEF_RELEASE_SHA is required}
     <<: *application-security
     restart: unless-stopped
     stop_grace_period: 15s

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
+
+import { VersionFooter } from "@/components/version-footer";
 
 import "./globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -14,11 +17,16 @@ type RootLayoutProps = {
   children: ReactNode;
 };
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  await connection();
+
   return (
     <html lang="en">
       <body>
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <div className="app-content">
+          <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        </div>
+        <VersionFooter />
       </body>
     </html>
   );

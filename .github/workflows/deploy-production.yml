@@ -259,6 +259,8 @@ jobs:
           target: runtime
           push: true
           tags: ${{ steps.images.outputs.web }}:${{ needs.resolve.outputs.release_sha }}
+          build-args: |
+            WEF_RELEASE_SHA=${{ needs.resolve.outputs.release_sha }}
           labels: |
             org.opencontainers.image.revision=${{ needs.resolve.outputs.release_sha }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}

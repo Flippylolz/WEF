@@ -85,7 +85,9 @@ case "$url" in
     printf '%s\\n' '{"version":8,"sources":{"openmaptiles":{}},"layers":[{}]}' > "$output"
     ;;
   */)
-    printf '%s\\n' '<h1>Find a place in Warsaw</h1><p>synthetic MVP fixtures</p>' > "$output"
+    page='<h1>Find a place in Warsaw</h1><p>synthetic MVP fixtures</p>'
+    page="${page}<footer>version: <code>${WEF_RELEASE_SHA}</code></footer>"
+    printf '%s\\n' "$page" > "$output"
     ;;
   *) printf '%s\\n' '{}' > "$output" ;;
 esac

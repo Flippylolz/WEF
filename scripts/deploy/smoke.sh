@@ -31,6 +31,8 @@ headers = Path(sys.argv[2]).read_text(encoding="utf-8").lower()
 release_sha = sys.argv[3]
 assert "Find a place in Warsaw" in html
 assert "synthetic MVP fixtures" in html
+assert "version:" in html
+assert release_sha in html
 assert f"x-wef-release: {release_sha}".lower() in headers
 PY
 
