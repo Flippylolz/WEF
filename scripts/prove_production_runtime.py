@@ -38,6 +38,28 @@ def run(
     )
 
 
+def start_application(
+    compose: list[str],
+    *,
+    environment: dict[str, str],
+) -> None:
+    """Start the application and expose bounded edge diagnostics on failure."""
+    try:
+        run(
+            [*compose, "up", "--detach", "--wait", "api", "web", "edge"],
+            environment=environment,
+        )
+    except subprocess.CalledProcessError:
+        subprocess.run(  # noqa: S603 - trusted docker command
+            [*compose, "logs", "--no-color", "--tail", "50", "edge"],
+            check=False,
+            cwd=REPOSITORY_ROOT,
+            env=environment,
+            text=True,
+        )
+        raise
+
+
 def main() -> int:
     """Start, seed, recreate, and re-smoke the isolated production model."""
     docker = shutil.which("docker")
@@ -102,6 +124,10 @@ def main() -> int:
         environment = os.environ.copy()
 
         try:
+            run(
+                [*compose, "--profile", "operator", "run", "--rm", "db-permissions"],
+                environment=environment,
+            )
             run([*compose, "up", "--detach", "--wait", "db"], environment=environment)
             run(
                 [*compose, "--profile", "operator", "run", "--rm", "migrate"],
@@ -111,10 +137,7 @@ def main() -> int:
                 [*compose, "--profile", "rehearsal", "run", "--rm", "seed"],
                 environment=environment,
             )
-            run(
-                [*compose, "up", "--detach", "--wait", "api", "web", "edge"],
-                environment=environment,
-            )
+            start_application(compose, environment=environment)
             run(
                 [
                     shell,
@@ -127,15 +150,16 @@ def main() -> int:
             )
 
             run([*compose, "down", "--remove-orphans"], environment=environment)
+            run(
+                [*compose, "--profile", "operator", "run", "--rm", "db-permissions"],
+                environment=environment,
+            )
             run([*compose, "up", "--detach", "--wait", "db"], environment=environment)
             run(
                 [*compose, "--profile", "operator", "run", "--rm", "migrate"],
                 environment=environment,
             )
-            run(
-                [*compose, "up", "--detach", "--wait", "api", "web", "edge"],
-                environment=environment,
-            )
+            start_application(compose, environment=environment)
             run(
                 [
                     shell,
@@ -149,6 +173,23 @@ def main() -> int:
         finally:
             subprocess.run(  # noqa: S603 - trusted docker command
                 [*compose, "down", "--remove-orphans"],
+                check=False,
+                cwd=REPOSITORY_ROOT,
+                env=environment,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(  # noqa: S603 - trusted bounded ownership reset
+                [
+                    *compose,
+                    "--profile",
+                    "operator",
+                    "run",
+                    "--rm",
+                    "db-permissions",
+                    f"{os.getuid()}:{os.getgid()}",
+                    "/var/lib/postgresql/data",
+                ],
                 check=False,
                 cwd=REPOSITORY_ROOT,
                 env=environment,

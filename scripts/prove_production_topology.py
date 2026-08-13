@@ -109,12 +109,29 @@ def assert_topology(model: dict[str, Any]) -> None:
     """Assert ports, images, paths, networks, resources, and service hardening."""
     assert model["name"] == "wef-production"
     services = cast("dict[str, dict[str, Any]]", model["services"])
-    assert set(services) == {"api", "db", "edge", "migrate", "seed", "web"}
+    assert set(services) == {
+        "api",
+        "db",
+        "db-permissions",
+        "edge",
+        "migrate",
+        "seed",
+        "web",
+    }
     assert all("build" not in service for service in services.values())
     assert services["api"]["image"] == BACKEND_IMAGE
     assert services["migrate"]["image"] == BACKEND_IMAGE
     assert services["seed"]["image"] == BACKEND_IMAGE
     assert services["web"]["image"] == WEB_IMAGE
+    permissions = services["db-permissions"]
+    assert permissions["image"] == services["db"]["image"]
+    assert permissions["profiles"] == ["operator"]
+    assert permissions["user"] == "0:0"
+    assert permissions["entrypoint"] == ["chown"]
+    assert permissions["command"] == ["999:999", "/var/lib/postgresql/data"]
+    assert permissions["cap_drop"] == ["ALL"]
+    assert set(permissions["cap_add"]) == {"CHOWN", "DAC_OVERRIDE"}
+    assert permissions["network_mode"] == "none"
 
     published = [
         (name, port) for name, service in services.items() for port in service.get("ports", [])
@@ -128,6 +145,9 @@ def assert_topology(model: dict[str, Any]) -> None:
     assert networks["application"]["internal"] is True
     assert services["db"]["networks"] == {"application": None}
     assert set(services["edge"]["networks"]) == {"application", "edge"}
+    assert services["edge"]["user"] == "1000:1000"
+    assert services["edge"]["cap_drop"] == ["ALL"]
+    assert services["edge"]["cap_add"] == ["NET_BIND_SERVICE"]
 
     for name in ("api", "migrate", "seed", "web"):
         service = services[name]

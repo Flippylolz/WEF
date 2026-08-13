@@ -134,7 +134,7 @@ Public launch should use HTTPS. A high non-standard HTTPS port or DNS challenge 
 - `/home/nuc/wef/imports/extracted/` — read-only extracted source mounted into importer jobs.
 - `/home/nuc/wef/caddy-data/` — Caddy state when used.
 
-Directories should be owned by `nuc`, default mode `0750`; secret files use `0600`. Container UID/GID ownership must be handled deliberately, especially PostgreSQL.
+Directories should be owned by `nuc`, default mode `0750`; secret files use `0600`. The inactive PostgreSQL root starts as `nuc:0700`; immediately before database startup, the bounded no-network `db-permissions` service changes that root only to the pinned PostGIS UID/GID `999:999`. Caddy runs as the NUC's UID/GID `1000:1000` and retains ownership of its data root. No sudo or recursively broad permission is used.
 
 GitHub Actions variables/secrets are the deployment configuration source of truth. Each release transfers complete config to temporary files, validates it, and atomically activates it; transfer files are deleted and values never enter Git/logs/images.
 
@@ -161,6 +161,10 @@ On 2026-08-13 UTC:
 - Appended the corresponding public key to `nuc`'s `authorized_keys` without removing or changing existing keys, set the existing SSH file modes defensively, and proved batch login with that dedicated identity.
 - Kept GHCR authentication ephemeral: the workflow uses its job-scoped package-read token during the remote pull and logs out in its exit trap; no registry token is stored on the host.
 - Did not create a production config/release, start a container, bind port 3100, touch existing Compose projects, or enable automatic SSH. Hosted execution remains blocked by B-006, and E7-T4 owns the first bounded activation.
+
+### E7-T4 bind-permission proof
+
+On 2026-08-13 UTC, a temporary directory under `/home/nuc/wef/state` proved the pinned PostGIS UID 999 cannot write a native `nuc:0700` bind, while the exact no-network/read-only-root initializer with only `CHOWN` and `DAC_OVERRIDE` changes that one root to `999:999` and makes it writable. The trap changed the temporary directory back to `nuc`, removed it, and left the real inactive `/home/nuc/wef/postgres` at `nuc:0700`. Pulling the public pinned PostGIS image started no service and changed no active project.
 
 ## Local dataset transfer
 

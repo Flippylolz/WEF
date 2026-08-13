@@ -26,6 +26,7 @@ elif [ "${WEF_DEPLOY_TEST_MODE:-0}" != "1" ]; then
   fail "image pull can be skipped only in deployment test mode"
 fi
 
+production_compose --profile operator run --rm db-permissions
 production_compose up --detach --wait db
 if ! production_compose --profile operator run --rm migrate; then
   fail "forward migration failed; existing application release was not replaced"
@@ -44,10 +45,24 @@ if [ -f "$current_state" ]; then
   had_previous=1
 fi
 
+candidate_healthy=0
 if production_compose up --detach --wait api web edge &&
   "$SCRIPT_DIR/smoke.sh" \
     "http://127.0.0.1:$WEF_PUBLIC_PORT" \
-    "$WEF_RELEASE_SHA"; then
+    "$WEF_RELEASE_SHA" \
+    "https://tiles.openfreemap.org/styles/liberty"; then
+  candidate_healthy=1
+fi
+
+forced_failure=0
+if [ "$candidate_healthy" -eq 1 ] &&
+  [ "${WEF_FORCE_ROLLBACK_REHEARSAL:-0}" = "1" ]; then
+  printf 'Forcing the reviewed rollback rehearsal after successful smoke.\n' >&2
+  candidate_healthy=0
+  forced_failure=1
+fi
+
+if [ "$candidate_healthy" -eq 1 ]; then
   python3 "$SCRIPT_DIR/release_state.py" write \
     "$current_state" \
     "$WEF_RELEASE_DIR" \
@@ -63,14 +78,37 @@ if production_compose up --detach --wait api web edge &&
 fi
 
 printf 'Candidate release failed health verification.\n' >&2
+recorded_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 if [ "$had_previous" -eq 1 ]; then
+  restored_sha=$(
+    python3 "$SCRIPT_DIR/release_state.py" get "$previous_state" release_sha
+  )
   if "$SCRIPT_DIR/rollback.sh" "$WEF_ROOT" "$previous_state"; then
+    python3 "$SCRIPT_DIR/release_state.py" failure \
+      "$WEF_ROOT/state/last-failure.json" \
+      "$WEF_RELEASE_SHA" \
+      health_verification \
+      "$recorded_at" \
+      "$restored_sha"
     printf 'Previous WEF application release restored.\n' >&2
+    if [ "$forced_failure" -eq 1 ]; then
+      exit 42
+    fi
   else
+    python3 "$SCRIPT_DIR/release_state.py" failure \
+      "$WEF_ROOT/state/last-failure.json" \
+      "$WEF_RELEASE_SHA" \
+      health_verification \
+      "$recorded_at"
     printf 'deployment error: automatic application rollback failed\n' >&2
   fi
 else
   production_compose stop edge web api || true
+  python3 "$SCRIPT_DIR/release_state.py" failure \
+    "$WEF_ROOT/state/last-failure.json" \
+    "$WEF_RELEASE_SHA" \
+    health_verification \
+    "$recorded_at"
   printf 'No previous release exists; unhealthy WEF application services were stopped.\n' >&2
 fi
 exit 1

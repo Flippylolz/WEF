@@ -94,6 +94,8 @@ Persistent paths:
 
 Application containers must not rely on writable container layers. Writable temporary paths use explicit temporary filesystems or project-owned volumes. Do not add explicit generic `container_name` values; Compose's `wef-production` prefix prevents collisions.
 
+Before the first PostGIS start, a profile-gated one-shot service changes only the precreated WEF PostgreSQL bind root to the pinned image's UID/GID `999:999`. It runs with no network, a read-only root filesystem, and only `CHOWN`/`DAC_OVERRIDE`; this avoids sudo or broad host permissions. Inventory accepts the PostgreSQL root as either the inactive `nuc` owner or active UID 999 and rejects other WEF path ownership. Caddy runs as host UID/GID `1000:1000` on unprivileged internal port 8080, drops all default capabilities, and adds back only `NET_BIND_SERVICE` because the pinned binary carries that file capability; its WEF-owned data bind remains writable without another root initializer.
+
 ## Routing and TLS
 
 Caddy:
@@ -199,7 +201,7 @@ On a successful push to `main`:
 19. Wait for API readiness and test the public web, API, map shell, and a media URL.
 20. Mark the release successful and retain redacted deployment logs.
 
-The same workflow supports `workflow_dispatch` with an explicit tested SHA for the [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) rehearsal and owner-authorized emergency deployment.
+The same workflow supports `workflow_dispatch` with an explicit tested SHA for the [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) rehearsal and owner-authorized emergency deployment. Its explicit rollback-rehearsal input requires a different active SHA, lets the candidate pass real smoke, then injects a reviewed health-gate failure. Exit `42` counts as rehearsal success only after previous-release smoke, failure-state recording, and non-interference verification pass.
 
 Do not prune the previous release's images until a newer deployment has also succeeded and retention permits removal.
 
@@ -238,6 +240,7 @@ Deployment succeeds only when:
 - A browser smoke check initializes MapLibre and loads the configured style/tile origin without Content Security Policy violations.
 - A known test media asset is retrievable with the expected content type.
 - The release SHA in web/API responses or diagnostics matches the manifest.
+- The configured public MapLibre style document is reachable and has valid version/source/layer structure.
 
 Health scripts use fixed, non-sensitive test data.
 
@@ -250,7 +253,7 @@ Application rollback:
 3. Apply the previous Compose release manifest.
 4. Restart web/API/worker as needed.
 5. Verify the same health suite.
-6. Record the failed and restored releases.
+6. Record the failed and restored releases in mode-0600 `last-failure.json`, including only candidate/restored SHA, reason, and UTC timestamp.
 
 Database rules:
 

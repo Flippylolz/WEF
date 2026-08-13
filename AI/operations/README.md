@@ -6,6 +6,7 @@ This domain owns deployment behavior, production-host constraints, configuration
 
 - [Deployment](DEPLOYMENT.md) — local/production environments, images, Compose/Caddy topology, CI/CD, configuration, health checks, rollback, and readiness.
 - [Production server](SERVER.md) — inspected host capacity, workloads, ports, paths, permissions, persistence, transfer, and non-interference checks.
+- [Rollback rehearsal](ROLLBACK_REHEARSAL.md) — healthy activation, reviewed failure injection, restoration evidence, and enable/abort gates.
 - [Blocker log](BLOCKERS.md) — unresolved overnight blockers, owner inputs, safe workarounds, and resolved constraints.
 
 ## Non-negotiable constraints
