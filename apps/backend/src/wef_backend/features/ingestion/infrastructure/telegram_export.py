@@ -296,6 +296,11 @@ class TelegramExportScan:
         return self._state is _ScanState.COMPLETE
 
     @property
+    def source(self) -> SourceMetadata:
+        """Return validated preflight metadata before or after scanning."""
+        return self._metadata
+
+    @property
     def summary(self) -> ScanSummary:
         """Return final metadata or reject incomplete/failed access."""
         if self._summary is None or not self.is_complete:

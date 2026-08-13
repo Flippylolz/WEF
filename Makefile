@@ -29,7 +29,7 @@ help: ## List supported commands.
 		'make down               Stop containers while preserving data' \
 		'make ps                 Show local service status' \
 		'make logs               Follow recent local service logs' \
-		'make importer-dry-run   Verify the read-only source mount' \
+		'make importer-dry-run   Run the read-only historical parser report' \
 		'make seed-m1            Converge the invented local M1 fixture'
 
 install: ## Install frozen dependencies.
@@ -106,7 +106,7 @@ ps: ## Show local Compose service status.
 logs: ## Follow recent local service logs.
 	$(COMPOSE) logs --follow --tail=200
 
-importer-dry-run: ## Verify that the configured source export is read-only.
+importer-dry-run: ## Run the historical parser and write aggregate dry-run reports.
 	$(COMPOSE) --profile operator run --rm importer
 
 seed-m1: ## Converge the invented local M1 fixture after migrations.

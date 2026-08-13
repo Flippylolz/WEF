@@ -1,5 +1,9 @@
 """Ingestion source ports and lifecycle contracts."""
 
+from wef_backend.features.ingestion.application.dry_run import (
+    REPORT_VERSION,
+    run_dry_run,
+)
 from wef_backend.features.ingestion.application.extraction import (
     CANDIDATE_THRESHOLD,
     PARSER_VERSION,
@@ -25,6 +29,7 @@ __all__ = [
     "CANDIDATE_THRESHOLD",
     "GROUPING_VERSION",
     "PARSER_VERSION",
+    "REPORT_VERSION",
     "TIME_BURST_SECONDS",
     "ChannelExpectation",
     "HistoricalSourcePort",
@@ -36,4 +41,5 @@ __all__ = [
     "detect_candidate",
     "extract_listing",
     "group_media",
+    "run_dry_run",
 ]
