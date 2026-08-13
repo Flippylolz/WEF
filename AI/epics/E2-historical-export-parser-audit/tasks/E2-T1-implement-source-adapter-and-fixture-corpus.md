@@ -40,7 +40,7 @@ branch:
   task_id: E2-T1
   one_task_only: true
   created_at: "2026-08-13T18:25:01Z"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/33
 completion:
   completed_by: null
   completed_at: null
@@ -140,7 +140,7 @@ The adapter is inert library code with no persistence or network side effect. Be
 
 - [x] Status passed through `ready`.
 - [x] Dedicated branch `feature/E2-T1-telegram-export-adapter` was created from the latest `main`.
-- [x] Branch contains E2-T1 only and branch metadata was recorded at task start.
+- [x] Branch and PR contain E2-T1 only; branch/PR metadata is recorded.
 
 ## Done checklist
 
