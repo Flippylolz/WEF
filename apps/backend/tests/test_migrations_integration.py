@@ -28,7 +28,7 @@ pytestmark = [
 
 
 async def test_clean_upgrade_and_seed_replay_converge() -> None:
-    """Upgrade twice and replay the fixture without duplicate rows."""
+    """Upgrade legacy data and replay the fixture without duplicate rows."""
     assert TEST_DATABASE_URL is not None
     settings = Settings(
         env="test",
@@ -49,12 +49,31 @@ async def test_clean_upgrade_and_seed_replay_converge() -> None:
             )
 
         await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
-        await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
-
         service = SeedM1Catalog(
             SQLAlchemyCatalogSeedAdapter(database.session_factory),
             environment="test",
         )
+        await service(locations, offers)
+        await asyncio.to_thread(
+            command.downgrade,
+            alembic_config(settings),
+            "20260812_0001",
+        )
+        await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
+        async with database.session_factory() as session:
+            migrated_addon_prices = (
+                await session.execute(
+                    text(
+                        "SELECT parking_price_min_minor, storage_price_min_minor "
+                        "FROM offers WHERE id = :offer_id",
+                    ),
+                    {"offer_id": offer_ids[0]},
+                )
+            ).one()
+        assert tuple(migrated_addon_prices) == (4_500_000, 1_200_000)
+
+        await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
+
         assert await service(locations, offers) == await service(locations, offers)
 
         async with database.session_factory() as session:
@@ -75,6 +94,17 @@ async def test_clean_upgrade_and_seed_replay_converge() -> None:
                         "SELECT ST_X(point), ST_Y(point) FROM locations WHERE id = :location_id",
                     ),
                     {"location_id": location_ids[0]},
+                )
+            ).one()
+            addon_prices = (
+                await session.execute(
+                    text(
+                        "SELECT parking_price_min_minor, parking_price_max_minor, "
+                        "storage_price_min_minor, storage_price_max_minor, "
+                        "storage_included_in_price "
+                        "FROM offers WHERE id = :offer_id",
+                    ),
+                    {"offer_id": offer_ids[2]},
                 )
             ).one()
             forbidden_columns = await session.scalar(
@@ -107,9 +137,10 @@ async def test_clean_upgrade_and_seed_replay_converge() -> None:
         assert location_count == 4
         assert offer_count == 5
         assert tuple(float(value) for value in point) == pytest.approx((21.0122, 52.2297))
+        assert tuple(addon_prices) == (3_000_000, 3_000_000, None, None, True)
         assert forbidden_columns == 0
         assert gist_index == 1
-        assert check_constraints == 13
+        assert check_constraints == 17
         assert proof_table is True
         services = build_services(settings)
         assert await services.is_ready() is True

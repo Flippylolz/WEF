@@ -29,10 +29,9 @@ from pathlib import Path
 html = Path(sys.argv[1]).read_text(encoding="utf-8")
 headers = Path(sys.argv[2]).read_text(encoding="utf-8").lower()
 release_sha = sys.argv[3]
-assert "Find a place in Warsaw" in html
+assert "Apartments and houses for sale in Warsaw" in html
 assert "synthetic MVP fixtures" in html
-assert "version:" in html
-assert release_sha in html
+assert f"version: <code>{release_sha[:7]}</code>" in html
 assert f"x-wef-release: {release_sha}".lower() in headers
 PY
 
@@ -71,6 +70,25 @@ assert payload["meta"]["feature_count"] >= 1
 assert len(payload["features"]) == payload["meta"]["feature_count"]
 PY
 
+printf 'Smoke: Warsaw district boundaries...\n'
+curl_safe --fail --silent --show-error \
+  --output "$tmp_dir/districts.json" \
+  "$base_url/data/warsaw-districts.geojson"
+python3 - "$tmp_dir/districts.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+districts = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert districts["type"] == "FeatureCollection"
+assert len(districts["features"]) == 18
+assert all(
+    feature["geometry"]["type"] in {"Polygon", "MultiPolygon"}
+    and feature["properties"]["name"]
+    for feature in districts["features"]
+)
+PY
+
 printf 'Smoke: filter facets...\n'
 curl_safe --fail --silent --show-error \
   --output "$tmp_dir/facets.json" \
@@ -92,6 +110,8 @@ assert facets["districts"]
 assert facets["rooms"]
 assert offers["total_count"] >= offers["matching_count"] >= 1
 assert offers["items"]
+assert offers["items"][0]["parking_price_min_minor"] is not None
+assert offers["items"][0]["storage_price_min_minor"] is not None
 assert "source_text" not in offers_path.read_text(encoding="utf-8")
 PY
 

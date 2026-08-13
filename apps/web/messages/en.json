@@ -1,13 +1,14 @@
 {
   "home": {
-    "title": "Find a place in Warsaw",
-    "subtitle": "Explore grouped, dated offers on an interactive map. All current records are clearly synthetic MVP fixtures."
+    "title": "Apartments and houses for sale in Warsaw",
+    "subtitle": "Browse dated apartment and house offers across Warsaw. All current records are clearly synthetic MVP fixtures."
   },
   "map": {
     "loading": "Loading Warsaw locations…",
     "error": "Map data is unavailable right now.",
     "empty": "No locations match this view.",
     "explorerLabel": "Warsaw estate explorer",
+    "mapLoading": "Loading interactive map…",
     "mapUnavailable": "The interactive map could not load.",
     "listStillAvailable": "Use the location list to continue browsing.",
     "locationsLabel": "Warsaw locations and offers",
@@ -23,6 +24,10 @@
     "offersEmpty": "No visible offers were returned for this location.",
     "retry": "Try again",
     "selectedEyebrow": "Selected location",
+    "apartmentPrice": "Apartment",
+    "parkingPrice": "Parking",
+    "storagePrice": "Storage",
+    "includedInApartmentPrice": "Included in apartment price",
     "partialData": "Some structured values were not provided."
   }
 }

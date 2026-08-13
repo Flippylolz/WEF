@@ -205,6 +205,12 @@ async def test_facets_and_selected_location_offer_contracts() -> None:
             currency="PLN",
             price_min_minor=80_000_000,
             price_max_minor=125_000_000,
+            parking_price_min_minor=4_500_000,
+            parking_price_max_minor=4_500_000,
+            parking_included_in_price=False,
+            storage_price_min_minor=None,
+            storage_price_max_minor=None,
+            storage_included_in_price=True,
             area_min_sqm=Decimal("35.00"),
             area_max_sqm=Decimal("71.50"),
             rooms_min=1,
@@ -238,6 +244,9 @@ async def test_facets_and_selected_location_offer_contracts() -> None:
     assert payload["total_count"] == 2
     assert payload["items"][0]["display_name"] == "development · primary"
     assert payload["items"][0]["data_confidence"] == "complete"
+    assert payload["items"][0]["parking_price_min_minor"] == 4_500_000
+    assert payload["items"][0]["parking_price_max_minor"] == 4_500_000
+    assert payload["items"][0]["storage_included_in_price"] is True
     assert "source_text" not in offer_response.text
 
 

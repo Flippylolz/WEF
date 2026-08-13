@@ -118,6 +118,7 @@ export function MapExplorer() {
           <WarsawMap
             data={catalog.map}
             selectedId={selectedId}
+            loadingLabel={t("mapLoading")}
             onSelect={(id) => void selectLocation(id)}
             onFailure={() => setMapFailed(true)}
           />
@@ -252,12 +253,34 @@ function OfferPanel({ feature, offers, onRetry }: OfferPanelProps) {
                 }).format(new Date(offer.published_at))}
               </time>
             </div>
-            <p>
-              {formatPrice(
-                offer.price_min_minor ?? null,
-                offer.price_max_minor ?? null,
-              )}
-              {" · "}
+            <dl className="offer-prices">
+              <PriceRow
+                label={t("apartmentPrice")}
+                value={formatPrice(
+                  offer.price_min_minor ?? null,
+                  offer.price_max_minor ?? null,
+                )}
+              />
+              <PriceRow
+                label={t("parkingPrice")}
+                value={formatAdditionalPrice(
+                  offer.parking_price_min_minor ?? null,
+                  offer.parking_price_max_minor ?? null,
+                  offer.parking_included_in_price ?? false,
+                  t("includedInApartmentPrice"),
+                )}
+              />
+              <PriceRow
+                label={t("storagePrice")}
+                value={formatAdditionalPrice(
+                  offer.storage_price_min_minor ?? null,
+                  offer.storage_price_max_minor ?? null,
+                  offer.storage_included_in_price ?? false,
+                  t("includedInApartmentPrice"),
+                )}
+              />
+            </dl>
+            <p className="offer-area">
               {formatArea(
                 offer.area_min_sqm ?? null,
                 offer.area_max_sqm ?? null,
@@ -273,6 +296,21 @@ function OfferPanel({ feature, offers, onRetry }: OfferPanelProps) {
   );
 }
 
+type PriceRowProps = {
+  label: string;
+  value: string | null;
+};
+
+function PriceRow({ label, value }: PriceRowProps) {
+  if (value === null) return null;
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
+
 function formatPrice(min: number | null, max: number | null) {
   if (min === null || max === null) return "Price not provided";
   const formatter = new Intl.NumberFormat("en-GB", {
@@ -283,6 +321,17 @@ function formatPrice(min: number | null, max: number | null) {
   return min === max
     ? formatter.format(min / 100)
     : `${formatter.format(min / 100)}–${formatter.format(max / 100)}`;
+}
+
+function formatAdditionalPrice(
+  min: number | null,
+  max: number | null,
+  included: boolean,
+  includedLabel: string,
+) {
+  if (included) return includedLabel;
+  if (min === null || max === null) return null;
+  return formatPrice(min, max);
 }
 
 function formatArea(min: string | null, max: string | null) {

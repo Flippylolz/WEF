@@ -2,6 +2,7 @@
 
 import type { FeatureCollection, Point } from "geojson";
 import type { GeoJSONSource } from "maplibre-gl";
+import { useEffect, useRef, useState } from "react";
 import {
   AttributionControl,
   Layer,
@@ -17,6 +18,46 @@ import type { LocationMap } from "@/lib/catalog-api";
 const MAP_STYLE =
   process.env.NEXT_PUBLIC_MAP_STYLE_URL?.trim() ||
   "https://tiles.openfreemap.org/styles/liberty";
+const DISTRICT_BOUNDARIES = "/data/warsaw-districts.geojson";
+const MAP_LOAD_TIMEOUT_MS = 15_000;
+
+const districtFillLayer: LayerProps = {
+  id: "warsaw-district-fills",
+  type: "fill" as const,
+  source: "warsaw-districts",
+  paint: {
+    "fill-color": "#2b7d58",
+    "fill-opacity": 0.08,
+  },
+};
+
+const districtLineLayer: LayerProps = {
+  id: "warsaw-district-lines",
+  type: "line" as const,
+  source: "warsaw-districts",
+  paint: {
+    "line-color": "#154f3b",
+    "line-opacity": 0.9,
+    "line-width": ["interpolate", ["linear"], ["zoom"], 9, 1.5, 13, 3],
+  },
+};
+
+const districtLabelLayer: LayerProps = {
+  id: "warsaw-district-labels",
+  type: "symbol" as const,
+  source: "warsaw-districts",
+  minzoom: 9,
+  layout: {
+    "text-field": ["get", "name"],
+    "text-size": ["interpolate", ["linear"], ["zoom"], 9, 10, 12, 13],
+    "text-letter-spacing": 0.05,
+  },
+  paint: {
+    "text-color": "#154f3b",
+    "text-halo-color": "rgba(255, 255, 255, 0.92)",
+    "text-halo-width": 1.5,
+  },
+};
 
 const clusterLayer: LayerProps = {
   id: "location-clusters",
@@ -72,6 +113,7 @@ const locationLayer: LayerProps = {
 type WarsawMapProps = {
   data: LocationMap;
   selectedId: string | null;
+  loadingLabel: string;
   onSelect: (locationId: string) => void;
   onFailure: () => void;
 };
@@ -79,10 +121,25 @@ type WarsawMapProps = {
 export function WarsawMap({
   data,
   selectedId,
+  loadingLabel,
   onSelect,
   onFailure,
 }: WarsawMapProps) {
   const geojson = data as FeatureCollection<Point>;
+  const [mapReady, setMapReady] = useState(false);
+  const mapLoaded = useRef(false);
+  const failureHandler = useRef(onFailure);
+
+  useEffect(() => {
+    failureHandler.current = onFailure;
+  }, [onFailure]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      if (!mapLoaded.current) failureHandler.current();
+    }, MAP_LOAD_TIMEOUT_MS);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   async function handleClick(event: MapLayerMouseEvent) {
     const feature = event.features?.[0];
@@ -109,6 +166,11 @@ export function WarsawMap({
 
   return (
     <div className="map-canvas" aria-label="Interactive map of Warsaw">
+      {!mapReady ? (
+        <div className="map-loading" role="status">
+          {loadingLabel}
+        </div>
+      ) : null}
       <Map
         initialViewState={{
           longitude: 21.0122,
@@ -118,7 +180,10 @@ export function WarsawMap({
         mapStyle={MAP_STYLE}
         interactiveLayerIds={["location-clusters", "locations-unclustered"]}
         onClick={(event) => void handleClick(event)}
-        onError={onFailure}
+        onLoad={() => {
+          mapLoaded.current = true;
+          setMapReady(true);
+        }}
         cursor="pointer"
         attributionControl={false}
       >
@@ -127,6 +192,11 @@ export function WarsawMap({
           position="bottom-right"
           customAttribution="© OpenFreeMap · © OpenStreetMap contributors"
         />
+        <Source id="warsaw-districts" type="geojson" data={DISTRICT_BOUNDARIES}>
+          <Layer {...districtFillLayer} />
+          <Layer {...districtLineLayer} />
+          <Layer {...districtLabelLayer} />
+        </Source>
         <Source
           id="locations"
           type="geojson"

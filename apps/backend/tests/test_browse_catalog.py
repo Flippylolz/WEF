@@ -104,6 +104,12 @@ def offer_record(index: int, *, complete: bool = True) -> OfferBrowseRecord:
         currency="PLN" if complete else None,
         price_min_minor=100_000_000 if complete else None,
         price_max_minor=100_000_000 if complete else None,
+        parking_price_min_minor=5_000_000 if complete else None,
+        parking_price_max_minor=5_000_000 if complete else None,
+        parking_included_in_price=False,
+        storage_price_min_minor=None,
+        storage_price_max_minor=None,
+        storage_included_in_price=complete,
         area_min_sqm=Decimal("40.00") if complete else None,
         area_max_sqm=Decimal("40.00") if complete else None,
         rooms_min=2 if complete else None,
@@ -173,6 +179,8 @@ async def test_browse_decorates_and_paginates_without_exposing_source_data() -> 
 
     assert [item.id for item in page.items] == [records[0].id, records[1].id]
     assert page.items[0].data_confidence == "complete"
+    assert page.items[0].parking_price_min_minor == 5_000_000
+    assert page.items[0].storage_included_in_price is True
     assert page.items[1].data_confidence == "partial"
     assert page.next_cursor is not None
     decoded = CursorCodec.decode(page.next_cursor)

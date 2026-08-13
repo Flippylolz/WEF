@@ -19,7 +19,8 @@ Each offer summary should show fields only when they were parsed with sufficient
 - Source publication date and time.
 - Offer type: development-level or individual unit.
 - Primary or secondary market.
-- Price or price range in the source currency.
+- Apartment price or price range in the source currency.
+- Parking and storage prices when parsed, including an explicit included-in-price state.
 - Area or area range in square metres.
 - Room count.
 - Floor.
@@ -55,6 +56,7 @@ Filter semantics:
 ### P-004: Map/list coordination
 
 - Desktop shows a map and an accompanying results panel.
+- Warsaw's 18 districts have clear labeled boundaries below the offer pins.
 - Mobile prioritizes the map and opens results as a bottom sheet, with a control to switch to a full list.
 - Hovering or focusing a result highlights its pin where pointer/keyboard behavior supports it.
 - Changing the viewport refreshes results for that bounding box after a short debounce.

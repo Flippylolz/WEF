@@ -632,6 +632,35 @@
             "title": "Matches Filters",
             "type": "boolean"
           },
+          "parking_included_in_price": {
+            "default": false,
+            "title": "Parking Included In Price",
+            "type": "boolean"
+          },
+          "parking_price_max_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parking Price Max Minor"
+          },
+          "parking_price_min_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parking Price Min Minor"
+          },
           "price_max_minor": {
             "anyOf": [
               {
@@ -684,6 +713,35 @@
               }
             ],
             "title": "Rooms Min"
+          },
+          "storage_included_in_price": {
+            "default": false,
+            "title": "Storage Included In Price",
+            "type": "boolean"
+          },
+          "storage_price_max_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Price Max Minor"
+          },
+          "storage_price_min_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Price Min Minor"
           }
         },
         "required": [

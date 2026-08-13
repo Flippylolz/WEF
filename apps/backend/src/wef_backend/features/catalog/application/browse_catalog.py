@@ -137,6 +137,12 @@ class OfferBrowseRecord:
     currency: str | None
     price_min_minor: int | None
     price_max_minor: int | None
+    parking_price_min_minor: int | None
+    parking_price_max_minor: int | None
+    parking_included_in_price: bool
+    storage_price_min_minor: int | None
+    storage_price_max_minor: int | None
+    storage_included_in_price: bool
     area_min_sqm: Decimal | None
     area_max_sqm: Decimal | None
     rooms_min: int | None
@@ -190,6 +196,12 @@ class OfferSummaryDTO:
     currency: str | None
     price_min_minor: int | None
     price_max_minor: int | None
+    parking_price_min_minor: int | None
+    parking_price_max_minor: int | None
+    parking_included_in_price: bool
+    storage_price_min_minor: int | None
+    storage_price_max_minor: int | None
+    storage_included_in_price: bool
     area_min_sqm: Decimal | None
     area_max_sqm: Decimal | None
     rooms_min: int | None
@@ -280,6 +292,12 @@ class BrowseLocationOffers:
             currency=record.currency,
             price_min_minor=record.price_min_minor,
             price_max_minor=record.price_max_minor,
+            parking_price_min_minor=record.parking_price_min_minor,
+            parking_price_max_minor=record.parking_price_max_minor,
+            parking_included_in_price=record.parking_included_in_price,
+            storage_price_min_minor=record.storage_price_min_minor,
+            storage_price_max_minor=record.storage_price_max_minor,
+            storage_included_in_price=record.storage_included_in_price,
             area_min_sqm=record.area_min_sqm,
             area_max_sqm=record.area_max_sqm,
             rooms_min=record.rooms_min,

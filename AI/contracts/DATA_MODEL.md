@@ -131,7 +131,11 @@ Required fields:
 - `published_at`: publication timestamp of the source message selected as the offer's primary public representation.
 - `latest_source_at`: latest related source/revision timestamp, used for lineage/freshness diagnostics rather than the public publication-date filter.
 - `currency`: nullable ISO 4217 code.
-- `price_min_minor`, `price_max_minor`: nullable.
+- `price_min_minor`, `price_max_minor`: nullable apartment price/range.
+- `parking_price_min_minor`, `parking_price_max_minor`: nullable parking price/range.
+- `parking_included_in_price`: true only when the source says parking is included.
+- `storage_price_min_minor`, `storage_price_max_minor`: nullable storage price/range.
+- `storage_included_in_price`: true only when the source says storage is included.
 - `area_min_sqm`, `area_max_sqm`: nullable.
 - `rooms_min`, `rooms_max`: nullable.
 - `floor_label`: nullable source-compatible normalized text.
@@ -147,6 +151,8 @@ Rules:
 - No `available`, `active`, or `sold` boolean exists in the MVP.
 - A scalar parsed value is stored as equal min/max values.
 - Unknown bounds remain null; they are not stored as zero.
+- Parking and storage amounts remain distinct from the apartment price.
+- An included add-on has null amount bounds and its explicit included flag set.
 - `published_at` is always visible in the public offer representation.
 - A fingerprint supports duplicate suggestions; it is not a unique constraint.
 

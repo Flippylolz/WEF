@@ -62,6 +62,12 @@ class SeedOffer:
     delivery_label: str | None
     source_text_excerpt: str
     canonical_fingerprint: str
+    parking_price_min_minor: int | None = None
+    parking_price_max_minor: int | None = None
+    parking_included_in_price: bool = False
+    storage_price_min_minor: int | None = None
+    storage_price_max_minor: int | None = None
+    storage_included_in_price: bool = False
 
 
 @dataclass(frozen=True, slots=True)

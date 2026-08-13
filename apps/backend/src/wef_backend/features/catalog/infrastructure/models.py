@@ -113,6 +113,34 @@ class OfferRow(CatalogBase):
             name="ck_offers_price_min_nonnegative",
         ),
         CheckConstraint(
+            "(parking_price_min_minor IS NULL AND parking_price_max_minor IS NULL) "
+            "OR (parking_price_min_minor IS NOT NULL "
+            "AND parking_price_max_minor IS NOT NULL "
+            "AND parking_price_min_minor >= 0 "
+            "AND parking_price_min_minor <= parking_price_max_minor)",
+            name="ck_offers_parking_price_range",
+        ),
+        CheckConstraint(
+            "NOT parking_included_in_price "
+            "OR (parking_price_min_minor IS NULL "
+            "AND parking_price_max_minor IS NULL)",
+            name="ck_offers_parking_included_without_amount",
+        ),
+        CheckConstraint(
+            "(storage_price_min_minor IS NULL AND storage_price_max_minor IS NULL) "
+            "OR (storage_price_min_minor IS NOT NULL "
+            "AND storage_price_max_minor IS NOT NULL "
+            "AND storage_price_min_minor >= 0 "
+            "AND storage_price_min_minor <= storage_price_max_minor)",
+            name="ck_offers_storage_price_range",
+        ),
+        CheckConstraint(
+            "NOT storage_included_in_price "
+            "OR (storage_price_min_minor IS NULL "
+            "AND storage_price_max_minor IS NULL)",
+            name="ck_offers_storage_included_without_amount",
+        ),
+        CheckConstraint(
             "area_min_sqm IS NULL OR area_min_sqm > 0",
             name="ck_offers_area_min_positive",
         ),
@@ -138,6 +166,12 @@ class OfferRow(CatalogBase):
     currency: Mapped[str | None] = mapped_column(String(3))
     price_min_minor: Mapped[int | None] = mapped_column(BigInteger)
     price_max_minor: Mapped[int | None] = mapped_column(BigInteger)
+    parking_price_min_minor: Mapped[int | None] = mapped_column(BigInteger)
+    parking_price_max_minor: Mapped[int | None] = mapped_column(BigInteger)
+    parking_included_in_price: Mapped[bool] = mapped_column(default=False)
+    storage_price_min_minor: Mapped[int | None] = mapped_column(BigInteger)
+    storage_price_max_minor: Mapped[int | None] = mapped_column(BigInteger)
+    storage_included_in_price: Mapped[bool] = mapped_column(default=False)
     area_min_sqm: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
     area_max_sqm: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
     rooms_min: Mapped[int | None] = mapped_column(SmallInteger)
