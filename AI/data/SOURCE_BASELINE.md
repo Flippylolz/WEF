@@ -63,6 +63,7 @@ Common parseable fields include:
 - Floor.
 - Delivery quarter/year.
 - Parking price.
+- Storage-compartment price or an included-in-apartment-price statement.
 - Development name.
 - Contact mention or phone number.
 - Google Maps URL.

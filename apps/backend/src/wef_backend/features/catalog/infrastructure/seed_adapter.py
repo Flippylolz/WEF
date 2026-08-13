@@ -68,6 +68,12 @@ class SQLAlchemyCatalogSeedAdapter(CatalogSeedPort):
                 "currency": item.currency,
                 "price_min_minor": item.price_min_minor,
                 "price_max_minor": item.price_max_minor,
+                "parking_price_min_minor": item.parking_price_min_minor,
+                "parking_price_max_minor": item.parking_price_max_minor,
+                "parking_included_in_price": item.parking_included_in_price,
+                "storage_price_min_minor": item.storage_price_min_minor,
+                "storage_price_max_minor": item.storage_price_max_minor,
+                "storage_included_in_price": item.storage_included_in_price,
                 "area_min_sqm": item.area_min_sqm,
                 "area_max_sqm": item.area_max_sqm,
                 "rooms_min": item.rooms_min,
@@ -119,6 +125,16 @@ class SQLAlchemyCatalogSeedAdapter(CatalogSeedPort):
                         "currency": offer_insert.excluded.currency,
                         "price_min_minor": offer_insert.excluded.price_min_minor,
                         "price_max_minor": offer_insert.excluded.price_max_minor,
+                        "parking_price_min_minor": (offer_insert.excluded.parking_price_min_minor),
+                        "parking_price_max_minor": (offer_insert.excluded.parking_price_max_minor),
+                        "parking_included_in_price": (
+                            offer_insert.excluded.parking_included_in_price
+                        ),
+                        "storage_price_min_minor": (offer_insert.excluded.storage_price_min_minor),
+                        "storage_price_max_minor": (offer_insert.excluded.storage_price_max_minor),
+                        "storage_included_in_price": (
+                            offer_insert.excluded.storage_included_in_price
+                        ),
                         "area_min_sqm": offer_insert.excluded.area_min_sqm,
                         "area_max_sqm": offer_insert.excluded.area_max_sqm,
                         "rooms_min": offer_insert.excluded.rooms_min,

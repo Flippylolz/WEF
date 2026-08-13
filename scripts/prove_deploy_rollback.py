@@ -79,7 +79,38 @@ case "$url" in
     printf '%s\\n' '{"districts":["wola"],"rooms":[2]}' > "$output"
     ;;
   */api/v1/locations/*/offers*)
-    printf '%s\\n' '{"matching_count":1,"total_count":1,"items":[{}]}' > "$output"
+    python3 - "$output" <<'PY'
+import json
+import sys
+
+payload = {
+    "matching_count": 1,
+    "total_count": 1,
+    "items": [
+        {
+            "parking_price_min_minor": 1,
+            "storage_price_min_minor": 1,
+        },
+    ],
+}
+with open(sys.argv[1], "w", encoding="utf-8") as output_file:
+    json.dump(payload, output_file)
+PY
+    ;;
+  */data/warsaw-districts.geojson)
+    python3 - "$output" <<'PY'
+import json
+import sys
+
+feature = {
+    "type": "Feature",
+    "geometry": {"type": "Polygon", "coordinates": []},
+    "properties": {"name": "Synthetic district"},
+}
+payload = {"type": "FeatureCollection", "features": [feature] * 18}
+with open(sys.argv[1], "w", encoding="utf-8") as output_file:
+    json.dump(payload, output_file)
+PY
     ;;
   https://tiles.openfreemap.org/styles/liberty)
     printf '%s\\n' '{"version":8,"sources":{"openmaptiles":{}},"layers":[{}]}' > "$output"

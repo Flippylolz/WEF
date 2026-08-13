@@ -79,6 +79,12 @@ const offerPage: catalogApi.LocationOfferPage = {
       currency: "PLN",
       price_min_minor: 80_000_000,
       price_max_minor: 125_000_000,
+      parking_price_min_minor: 4_500_000,
+      parking_price_max_minor: 4_500_000,
+      parking_included_in_price: false,
+      storage_price_min_minor: null,
+      storage_price_max_minor: null,
+      storage_included_in_price: true,
       area_min_sqm: "35.00",
       area_max_sqm: "71.50",
       rooms_min: 1,
@@ -128,6 +134,10 @@ describe("MapExplorer", () => {
     expect(
       await screen.findByText("development · primary"),
     ).toBeInTheDocument();
+    expect(screen.getByText("apartmentPrice")).toBeInTheDocument();
+    expect(screen.getByText("parkingPrice")).toBeInTheDocument();
+    expect(screen.getByText("storagePrice")).toBeInTheDocument();
+    expect(screen.getByText("includedInApartmentPrice")).toBeInTheDocument();
     expect(catalogApi.fetchLocationOffers).toHaveBeenCalledWith(
       "10000000-0000-4000-8000-000000000001",
     );

@@ -108,6 +108,12 @@ class OfferSummaryResponse(BaseModel):
     currency: str | None
     price_min_minor: int | None = Field(default=None, ge=0)
     price_max_minor: int | None = Field(default=None, ge=0)
+    parking_price_min_minor: int | None = Field(default=None, ge=0)
+    parking_price_max_minor: int | None = Field(default=None, ge=0)
+    parking_included_in_price: bool = False
+    storage_price_min_minor: int | None = Field(default=None, ge=0)
+    storage_price_max_minor: int | None = Field(default=None, ge=0)
+    storage_included_in_price: bool = False
     area_min_sqm: Decimal | None = Field(default=None, gt=0)
     area_max_sqm: Decimal | None = Field(default=None, gt=0)
     rooms_min: int | None = Field(default=None, ge=0)
@@ -201,6 +207,12 @@ def present_location_offer_page(
                 currency=item.currency,
                 price_min_minor=item.price_min_minor,
                 price_max_minor=item.price_max_minor,
+                parking_price_min_minor=item.parking_price_min_minor,
+                parking_price_max_minor=item.parking_price_max_minor,
+                parking_included_in_price=item.parking_included_in_price,
+                storage_price_min_minor=item.storage_price_min_minor,
+                storage_price_max_minor=item.storage_price_max_minor,
+                storage_included_in_price=item.storage_included_in_price,
                 area_min_sqm=item.area_min_sqm,
                 area_max_sqm=item.area_max_sqm,
                 rooms_min=item.rooms_min,

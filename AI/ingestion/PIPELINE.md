@@ -92,7 +92,8 @@ Initial extractor families:
 - Market and content type.
 - Location/address and district.
 - Development name.
-- Price/range and currency.
+- Apartment price/range and currency.
+- Parking and storage price/range, plus explicit included-in-price statements.
 - Area/range in square metres.
 - Room count/range.
 - Floor.

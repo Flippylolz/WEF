@@ -28,7 +28,7 @@ pytestmark = [
 
 
 async def test_clean_upgrade_and_seed_replay_converge() -> None:
-    """Upgrade twice and replay the fixture without duplicate rows."""
+    """Upgrade legacy data and replay the fixture without duplicate rows."""
     assert TEST_DATABASE_URL is not None
     settings = Settings(
         env="test",
@@ -48,7 +48,60 @@ async def test_clean_upgrade_and_seed_replay_converge() -> None:
                 ),
             )
 
+        await asyncio.to_thread(
+            command.upgrade,
+            alembic_config(settings),
+            "20260812_0001",
+        )
+        async with database.engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "INSERT INTO locations ("
+                    "id, display_name, display_address, normalized_address, "
+                    "normalized_address_hash, district, precision, confidence, "
+                    "review_status, out_of_scope"
+                    ") VALUES ("
+                    ":location_id, 'Legacy synthetic location', "
+                    "'Legacy synthetic address', 'legacy synthetic address', "
+                    "'legacy-synthetic-hash', 'wola', 'unknown', 0, "
+                    "'needs_review', false"
+                    ")",
+                ),
+                {"location_id": location_ids[0]},
+            )
+            await connection.execute(
+                text(
+                    "INSERT INTO offers ("
+                    "id, location_id, content_type, market_type, visibility, "
+                    "published_at, latest_source_at, currency, "
+                    "price_min_minor, price_max_minor, source_text_excerpt, "
+                    "source_text_public_masked, canonical_fingerprint, parser_version"
+                    ") VALUES ("
+                    ":offer_id, :location_id, 'development', 'primary', 'visible', "
+                    "CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'PLN', "
+                    "80000000, 125000000, 'Legacy synthetic offer', "
+                    "'Legacy synthetic offer', 'legacy-synthetic-offer', "
+                    "'synthetic-m1-v1'"
+                    ")",
+                ),
+                {
+                    "offer_id": offer_ids[0],
+                    "location_id": location_ids[0],
+                },
+            )
         await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
+        async with database.session_factory() as session:
+            migrated_addon_prices = (
+                await session.execute(
+                    text(
+                        "SELECT parking_price_min_minor, storage_price_min_minor "
+                        "FROM offers WHERE id = :offer_id",
+                    ),
+                    {"offer_id": offer_ids[0]},
+                )
+            ).one()
+        assert tuple(migrated_addon_prices) == (4_500_000, 1_200_000)
+
         await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
 
         service = SeedM1Catalog(
@@ -75,6 +128,17 @@ async def test_clean_upgrade_and_seed_replay_converge() -> None:
                         "SELECT ST_X(point), ST_Y(point) FROM locations WHERE id = :location_id",
                     ),
                     {"location_id": location_ids[0]},
+                )
+            ).one()
+            addon_prices = (
+                await session.execute(
+                    text(
+                        "SELECT parking_price_min_minor, parking_price_max_minor, "
+                        "storage_price_min_minor, storage_price_max_minor, "
+                        "storage_included_in_price "
+                        "FROM offers WHERE id = :offer_id",
+                    ),
+                    {"offer_id": offer_ids[2]},
                 )
             ).one()
             forbidden_columns = await session.scalar(
@@ -107,9 +171,10 @@ async def test_clean_upgrade_and_seed_replay_converge() -> None:
         assert location_count == 4
         assert offer_count == 5
         assert tuple(float(value) for value in point) == pytest.approx((21.0122, 52.2297))
+        assert tuple(addon_prices) == (3_000_000, 3_000_000, None, None, True)
         assert forbidden_columns == 0
         assert gist_index == 1
-        assert check_constraints == 13
+        assert check_constraints == 17
         assert proof_table is True
         services = build_services(settings)
         assert await services.is_ready() is True

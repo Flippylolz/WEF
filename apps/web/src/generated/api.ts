@@ -385,6 +385,15 @@ export interface components {
             market_type: components["schemas"]["MarketType"];
             /** Matches Filters */
             matches_filters: boolean;
+            /**
+             * Parking Included In Price
+             * @default false
+             */
+            parking_included_in_price: boolean;
+            /** Parking Price Max Minor */
+            parking_price_max_minor?: number | null;
+            /** Parking Price Min Minor */
+            parking_price_min_minor?: number | null;
             /** Price Max Minor */
             price_max_minor?: number | null;
             /** Price Min Minor */
@@ -398,6 +407,15 @@ export interface components {
             rooms_max?: number | null;
             /** Rooms Min */
             rooms_min?: number | null;
+            /**
+             * Storage Included In Price
+             * @default false
+             */
+            storage_included_in_price: boolean;
+            /** Storage Price Max Minor */
+            storage_price_max_minor?: number | null;
+            /** Storage Price Min Minor */
+            storage_price_min_minor?: number | null;
         };
         /**
          * PointGeometry

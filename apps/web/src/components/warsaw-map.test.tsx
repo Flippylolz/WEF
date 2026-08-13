@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -18,11 +18,16 @@ vi.mock("react-map-gl/maplibre", () => ({
   Map: ({
     children,
     onClick,
+    onLoad,
   }: {
     children: ReactNode;
     onClick: (event: object) => void;
+    onLoad: () => void;
   }) => (
     <div>
+      <button type="button" onClick={onLoad}>
+        simulated-map-load
+      </button>
       <button
         type="button"
         onClick={() =>
@@ -40,7 +45,22 @@ vi.mock("react-map-gl/maplibre", () => ({
       {children}
     </div>
   ),
-  Source: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Source: ({
+    children,
+    data,
+    id,
+  }: {
+    children: ReactNode;
+    data: object | string;
+    id: string;
+  }) => (
+    <div
+      data-testid={`source-${id}`}
+      data-source-url={typeof data === "string" ? data : undefined}
+    >
+      {children}
+    </div>
+  ),
   Layer: () => null,
   NavigationControl: () => null,
   AttributionControl: ({
@@ -64,6 +84,7 @@ describe("WarsawMap", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   it("selects an unclustered backend feature and shows attribution", async () => {
@@ -78,11 +99,19 @@ describe("WarsawMap", () => {
       <WarsawMap
         data={mapData}
         selectedId={null}
+        loadingLabel="Loading interactive map"
         onSelect={onSelect}
         onFailure={vi.fn()}
       />,
     );
 
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Loading interactive map",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     await user.click(
       screen.getByRole("button", { name: "simulated-map-click" }),
     );
@@ -93,6 +122,10 @@ describe("WarsawMap", () => {
     expect(
       screen.getByText("© OpenFreeMap · © OpenStreetMap contributors"),
     ).toBeInTheDocument();
+    expect(screen.getByTestId("source-warsaw-districts")).toHaveAttribute(
+      "data-source-url",
+      "/data/warsaw-districts.geojson",
+    );
   });
 
   it("expands a cluster instead of selecting a location", async () => {
@@ -107,6 +140,7 @@ describe("WarsawMap", () => {
       <WarsawMap
         data={mapData}
         selectedId={null}
+        loadingLabel="Loading interactive map"
         onSelect={onSelect}
         onFailure={vi.fn()}
       />,
@@ -122,5 +156,25 @@ describe("WarsawMap", () => {
       zoom: 13,
     });
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("reports failure only after the map load timeout", () => {
+    vi.useFakeTimers();
+    const onFailure = vi.fn();
+
+    render(
+      <WarsawMap
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={onFailure}
+      />,
+    );
+
+    act(() => vi.advanceTimersByTime(14_999));
+    expect(onFailure).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
+    expect(onFailure).toHaveBeenCalledOnce();
   });
 });
