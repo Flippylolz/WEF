@@ -3,7 +3,7 @@ schema: ai-workflow/spike@1
 epic: E2
 title: "Historical export parser and audit research"
 status: approved
-revision: 2
+revision: 3
 owner: owner
 research_only: true
 code_allowed: false
@@ -14,9 +14,9 @@ approval:
   required_role: owner
   status: approved
   decided_by: Flippylolz
-  decided_at: "2026-08-13T17:58:00Z"
-  approved_revision: 2
-  evidence: "Owner selected spike-only approval in the E2 Cursor conversation and authorized the attached E2 Historical Adapter execution plan"
+  decided_at: "2026-08-13T18:58:46Z"
+  approved_revision: 3
+  evidence: "Owner explicitly directed implementation of the complete E2 epic and approved the attached Complete E2 Historical Parser Epic scope"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -26,7 +26,7 @@ invalidation:
 
 # Spike: Historical export parser and audit
 
-> Revision 2 is approved research. It authorizes task promotion and implementation planning only; production/test code remains prohibited until the owner separately approves the current implementation-plan revision.
+> Revision 3 is approved research. It authorizes promotion and planning for E2-T2 through E2-T5, including the additive source-neutral media-group boundary; code remains governed by the separately approved implementation plan.
 
 ## Question
 
@@ -98,6 +98,8 @@ Implement one historical adapter in the backend ingestion feature:
 - Emit one result for every `messages` array item. Exactly one primary classification (`service`, `photo`, `video`, `text`, `empty`, `unhandled`, or `malformed`) participates in reconciliation; mixed-text and reply are orthogonal counters.
 - Represent structurally malformed records as typed rejected results with stable reason codes, source index, and payload checksum. Invalid/truncated top-level JSON or channel mismatch fails the source scan before canonical writes and reports only redacted metadata/counts.
 - Preserve unknown fields in the internal raw payload. E2-T1 does not detect candidates, group media, persist source/canonical rows, produce the final dry-run report, or replace the synthetic M1 map seed.
+- Add an optional source-neutral media-group ID to `RawMessage` in E2-T3 so historical and future live adapters can expose explicit grouping without downstream Telegram-specific payload access.
+- Preserve complete source values in `RawMessage` and future internal persistence. Sanitization applies to committed fixtures; masking/redaction applies to routine logs, report samples, and public presentation rather than destructively altering internal source evidence.
 
 ## Safe fixture corpus
 
@@ -116,13 +118,13 @@ The corpus bridges real export shapes into deterministic CI while the immutable 
 
 ## Proposed task boundaries
 
-- [E2-T1: Implement source adapter and fixture corpus](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md) — approved for promotion/planning; code still requires implementation-plan approval.
-- [E2-T2: Implement candidate detection and typed extractors](proposed-tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md) — candidate boundary for spike refinement.
-- [E2-T3: Implement media grouping](proposed-tasks/E2-T3-implement-media-grouping.md) — candidate boundary for spike refinement.
-- [E2-T4: Implement dry-run reports](proposed-tasks/E2-T4-implement-dry-run-reports.md) — candidate boundary for spike refinement.
-- [E2-T5: Audit the complete export](proposed-tasks/E2-T5-audit-the-complete-export.md) — candidate boundary for spike refinement.
+- [E2-T1: Implement source adapter and fixture corpus](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md) — completed source boundary.
+- [E2-T2: Implement candidate detection and typed extractors](tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md) — approved for promotion and implementation planning.
+- [E2-T3: Implement media grouping](tasks/E2-T3-implement-media-grouping.md) — approved for promotion and implementation planning after E2-T2.
+- [E2-T4: Implement dry-run reports](tasks/E2-T4-implement-dry-run-reports.md) — approved for promotion and implementation planning after E2-T2/E2-T3.
+- [E2-T5: Audit the complete export](tasks/E2-T5-audit-the-complete-export.md) — approved for promotion and implementation planning after E2-T4.
 
-Only promoted E2-T1 may appear in implementation-plan revision 2. E2-T2 through E2-T5 remain non-actionable under `proposed-tasks/`.
+Implementation-plan revision 3 may sequence E2-T2 through E2-T5. Each task remains independently gated and uses one dedicated branch and pull request.
 
 ## Risks and open questions
 
@@ -132,7 +134,7 @@ Only promoted E2-T1 may appear in implementation-plan revision 2. E2-T2 through 
 - Reports or fixtures can leak phone numbers, mentions, or payload text if redaction is not designed first.
 - iJSON returns decoded object values rather than original per-record byte spans, so per-record checksums must use the approved canonical JSON form while the export checksum remains byte-exact.
 - A consumer that stops iteration early cannot claim a complete checksum/reconciliation result; the adapter result must distinguish incomplete from complete scans.
-- E2-T1 has no deferred decision; later tasks retain their own approval and dependency gates.
+- E2-T2 through E2-T5 have no unresolved deferred decision; their ordered task and dependency gates remain mandatory.
 
 ## Invalidation triggers
 
@@ -145,11 +147,11 @@ Only promoted E2-T1 may appear in implementation-plan revision 2. E2-T2 through 
 - [x] The bounded question is answered with evidence and uncertainty distinguished.
 - [x] Governing domain documents and decisions are reviewed and linked.
 - [x] Options, recommendation, risks, and open questions are complete.
-- [x] E2-T1 scope, acceptance, dependency, priority/size, and traceability are refined.
+- [x] E2-T1 through E2-T5 scope, acceptance, dependencies, priority/size, and traceability are refined.
 - [x] No production or disposable proof code was created.
-- [x] Revision 2 represents the approved material content.
+- [x] Revision 3 represents the approved complete-epic material content.
 - [x] Status and approval metadata record the owner's spike-only decision.
 
 ## Owner decision
 
-Flippylolz approved revision 2 through the explicit spike-only decision in the E2 Cursor conversation and the attached execution plan. This permits E2-T1 promotion and implementation planning only. It does not approve the implementation plan or authorize production/test code.
+Flippylolz approved revision 3 by explicitly directing implementation of the complete E2 epic against the attached Complete E2 Historical Parser Epic plan. This permits promotion and implementation planning for E2-T2 through E2-T5. The separately recorded implementation-plan approval governs code authorization.

@@ -21,9 +21,9 @@ The complete export is parsed with reconciled reports, locations are geocoded/re
 
 ### [E2: Historical export parser and audit](../epics/E2-historical-export-parser-audit/README.md)
 
-- [E2-T3: Implement media grouping](../epics/E2-historical-export-parser-audit/proposed-tasks/E2-T3-implement-media-grouping.md) — `proposed`
-- [E2-T4: Implement dry-run reports](../epics/E2-historical-export-parser-audit/proposed-tasks/E2-T4-implement-dry-run-reports.md) — `proposed`
-- [E2-T5: Audit the complete export](../epics/E2-historical-export-parser-audit/proposed-tasks/E2-T5-audit-the-complete-export.md) — `proposed`
+- [E2-T3: Implement deterministic media grouping](../epics/E2-historical-export-parser-audit/tasks/E2-T3-implement-media-grouping.md) — `draft`, promoted/dependency-blocked
+- [E2-T4: Implement dry-run reports and operator wiring](../epics/E2-historical-export-parser-audit/tasks/E2-T4-implement-dry-run-reports.md) — `draft`, promoted/dependency-blocked
+- [E2-T5: Audit the complete export](../epics/E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md) — `draft`, promoted/dependency-blocked
 ### [E3: Database, geocoding, and media pipeline](../epics/E3-database-geocoding-media/README.md)
 
 - [E3-T4: Implement media storage and derivatives](../epics/E3-database-geocoding-media/proposed-tasks/E3-T4-implement-media-storage-and-derivatives.md) — `proposed`

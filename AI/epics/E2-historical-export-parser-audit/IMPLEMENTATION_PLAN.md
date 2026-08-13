@@ -3,19 +3,25 @@ schema: ai-workflow/implementation-plan@1
 epic: E2
 title: "Historical export parser and audit implementation plan"
 status: approved
-revision: 2
+revision: 3
 owner: owner
-spike_revision: 2
+spike_revision: 3
 task_sequence:
-  - id: E2-T1
+  - id: E2-T2
+    revision: 2
+  - id: E2-T3
+    revision: 2
+  - id: E2-T4
+    revision: 2
+  - id: E2-T5
     revision: 2
 approval:
   required_role: owner
   status: approved
   decided_by: Flippylolz
-  decided_at: "2026-08-13T18:20:00Z"
-  approved_revision: 2
-  evidence: "Owner explicitly approved E2 implementation-plan revision 2 and directed implementation to continue in the E2 Cursor conversation"
+  decided_at: "2026-08-13T18:58:46Z"
+  approved_revision: 3
+  evidence: "Owner accepted the attached Complete E2 Historical Parser Epic execution plan and explicitly directed implementation of the whole epic as four task PRs"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -27,104 +33,101 @@ invalidation:
 
 ## Approved spike baseline
 
-[E2 spike revision 2](SPIKE.md) approves a constant-memory Telegram Desktop source adapter, stable framework-independent `RawMessage` boundary, deterministic source/per-record checksums, reconciled input classification, and source-derived but irreversibly sanitized fixture corpus.
-
-It does not approve candidate/extractor rules, media grouping, persisted dry-run reports, a complete export audit/import, database/API changes, live Telegram access, or replacement of the persisted synthetic M1 map seed.
+[E2 spike revision 3](SPIKE.md) retains the completed constant-memory source adapter and approves the remaining parser, media grouping, dry-run reporting, and complete-export audit boundaries. It also approves an optional source-neutral media-group ID and distinguishes complete internal source evidence from sanitized fixtures and redacted logs/report samples/public presentation.
 
 ## Scope and outcome
 
-Deliver only [E2-T1 revision 2](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md): a bounded historical export adapter and safe real-shape corpus that later E2 tasks consume without source-specific logic crossing the `RawMessage` boundary.
+Deliver [E2-T2](tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md), [E2-T3](tasks/E2-T3-implement-media-grouping.md), [E2-T4](tasks/E2-T4-implement-dry-run-reports.md), and [E2-T5](tasks/E2-T5-audit-the-complete-export.md) as four sequential task PRs.
 
-The result advances the epic outcome—deterministic extraction from the raw Telegram export with reconciled dry-run reporting—without yet detecting listings, deriving fields, grouping galleries, writing reports, or persisting data.
+The result is a deterministic, versioned listing parser with explicit provenance/confidence, bounded media association, reconciled machine/human dry-run reports, and a reproducible audit of all 27,082 source records. E2 does not persist canonical data, geocode, copy media, alter public APIs, or replace the synthetic map seed.
 
 ## Ordered task sequence
 
-### 1. E2-T1 — Implement source adapter and fixture corpus
+### 1. E2-T2 — Candidate detection and typed extractors
 
-- Task: [E2-T1 revision 2](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md).
-- Dependency: E1-T2 is `done` through merged [PR #7](https://github.com/Flippylolz/WEF/pull/7).
-- Independent result: framework-independent source contract plus iJSON historical adapter and reviewed fixture/golden corpus.
-- Verification: bounded-reader and generated-large-input tests, fixture goldens/safety scans, malformed/truncated/channel failures, actual ignored export metadata/count/checksum scan, import boundaries, full repository CI.
+- Depends on completed [E2-T1](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md) through merged [PR #33](https://github.com/Flippylolz/WEF/pull/33).
+- Add immutable candidate, score/reason, source-span, confidence, warning, typed-range, link/contact-span, and extraction-bundle contracts.
+- Implement deterministic `e2-v1` development/unit candidate rules and extractors for market/content type, location/district, development name, apartment/parking/storage values, included flags, area, rooms, floor, delivery, links, and contact spans.
+- Preserve source text/payload unchanged; unknown/conflicting values remain null/reviewable and availability is never inferred.
+- Verify sanitized multilingual/range/negative goldens, synthetic runtime contact cases, exact provenance, deterministic versions, architecture, coverage, and repository CI.
 
-E2-T2 through E2-T5 remain under `proposed-tasks/` and are not executable sequence entries.
+### 2. E2-T3 — Deterministic media grouping
+
+- Depends on E2-T1 and completed E2-T2 because historical grouping consumes the versioned candidate result.
+- Add the optional source-neutral media-group ID to `RawMessage` and adapter conversion.
+- Emit ordered associations with rule/confidence using same-message, explicit group, reply, and 120-second historical time-burst evidence.
+- Preserve source ownership and reconcile associated plus unassociated media without file access.
+- Verify service/reply/gap boundaries and two nearby listing galleries that must remain separate.
+
+### 3. E2-T4 — Dry-run reports and operator wiring
+
+- Depends on completed E2-T2 and E2-T3.
+- Stream source, detection, extraction, and grouping through one application orchestrator.
+- Write atomic JSON and Markdown reports containing source/parser identity, date range, reconciled stage/reason/media buckets, timings, and terminal state.
+- Exclude or mask contacts, raw payload samples, internal paths, and source text in routine logs/report samples while retaining complete in-memory source evidence.
+- Extend bounded operator wiring without source/canonical/geocode/media writes or media copies.
+
+### 4. E2-T5 — Complete export audit
+
+- Depends on completed E2-T4.
+- Run the pipeline read-only over the ignored export after verifying the approved byte size and SHA-256.
+- Reconcile all 27,082 records, review candidate/rule/template/media gaps, explain differences from exploratory counters, and add only sanitized fixtures plus versioned rule fixes.
+- Commit a non-sensitive `AUDIT.md` with parser/source identity, aggregate counts, uncertainty, reviewed gap categories, and reproducibility evidence.
 
 ## Architecture and dependency direction
 
-- `features.ingestion.domain` owns immutable raw-message, source metadata, media descriptor, classification, reason-code, checksum, and count values.
-- `features.ingestion.application` owns the historical source port and complete/partial scan lifecycle/result contracts.
-- `features.ingestion.infrastructure` implements the port with `ijson`; iJSON types/exceptions do not cross into application/domain.
-- Infrastructure depends inward. Domain/application must not import FastAPI, Pydantic, SQLAlchemy, settings, or iJSON; extend `.importlinter` to enforce that boundary.
-- Add current iJSON through `uv`; commit the generated `uv.lock` change. Do not add Typer, Telethon, phonenumbers, persistence, or another parser dependency in E2-T1.
-- Composition/API/operator wiring is not required. A local acceptance invocation may construct the adapter directly and must emit only non-sensitive aggregate evidence.
-
-## Source and checksum behavior
-
-- Open the configured file in binary mode. A bounded preflight validates top-level keys and expected channel metadata; a bounded full pass iterates `messages.item`.
-- No `json.load`, `Path.read_text`, unbounded `read`, or tuple/list collection of all records is permitted.
-- A hash-tracking reader computes the byte-exact export SHA-256 during a complete pass. A stopped/failed pass remains explicitly incomplete and cannot expose a successful final summary.
-- Per-record SHA-256 uses canonical compact UTF-8 JSON with sorted keys and `ensure_ascii=False`; this is intentionally distinct from unavailable original per-object byte spans.
-- `date_unixtime` and `edited_unixtime` create timezone-aware UTC values. Original date strings remain in the raw payload.
-- Mixed text flattening preserves segment order and Unicode exactly; original text and entity values remain internal evidence.
-- Every input item produces one typed result and one primary count. Reply/mixed-text flags are supplemental. Missing/invalid record fields are malformed results; unknown but valid values are preserved/unhandled; invalid/truncated source JSON or channel mismatch fails closed.
-
-## Fixture and data-safety boundary
-
-- Commit fixtures only below `apps/backend/tests/fixtures/telegram_export/`; never reference the ignored source through a test path.
-- Source-derived cases are manually reviewed and irreversibly sanitized: rebase channel/message/reply IDs and dates, replace source/channel/agent/contact identity, generalize addresses and values, replace media paths, and omit media bytes.
-- Preserve only the real Unicode, whitespace, mixed entity/link, service/photo/video/reply/empty descriptor structure needed by the adapter contract.
-- Add synthetic structurally malformed and truncated documents rather than copying malformed private payload.
-- Golden outputs are generated from the sanitized bytes and include `RawMessage`, result kind/reason, canonical record checksum, source metadata, and reconciled counters.
-- A safety test rejects broad phone/mention patterns, the real channel ID/name/username, absolute/traversal paths, archive/media/session/key extensions, and binary files.
-- The real 21 MB export is used only for a local read-only acceptance scan. Its payload and samples never enter Git, terminal output, logs, CI, reports, or images.
+- Domain owns immutable source, candidate, extraction, association, and report values. Application owns deterministic rules, grouping, orchestration, reconciliation, and ports. Infrastructure remains limited to iJSON source conversion and atomic report output.
+- Reuse canonical catalog `ContentType`/`MarketType` rather than duplicate product semantics. Catalog and interfaces never import ingestion infrastructure.
+- Domain/application remain independent of iJSON, FastAPI, Pydantic, SQLAlchemy, settings, and report filesystem concerns; `.importlinter` and negative probes enforce the boundary.
+- No new parser framework is required. Python standard-library regex/decimal/URL behavior remains deterministic and locale-independent.
+- The pipeline streams records and retains only one record, active group state, counters, bounded samples, and a minimal message-ID index; no stage materializes the source document or all raw messages.
+- Parser/rule changes use explicit versions. T5 may change `e2-v1` behavior only with a version bump, golden updates, full reconciliation, and documented audit evidence.
 
 ## Contracts, persistence, and compatibility
 
-- No migration or database transaction.
-- No public HTTP/OpenAPI/frontend contract change.
-- No canonical `SourceMessage`, `Offer`, location, contact, geocode, media, or `IngestRun` write.
-- `RawMessage` is an internal replay boundary for later historical/live adapters. A material field/identity/checksum/timestamp semantic change invalidates the spike.
-- Unknown source fields remain in the internal raw payload so additive Telegram export changes do not silently disappear.
+- No migration, SQLAlchemy model, database transaction, public HTTP/OpenAPI/frontend change, geocoding request, or media copy.
+- `RawMessage` and future internal persistence retain complete source identity/text/entities/payload/contact evidence. Only committed fixtures and routine logs/report samples/public presentation are sanitized or masked.
+- E2-T4 writes only configured ignored report artifacts; it does not persist `SourceMessage`, `Offer`, `Location`, `ContactPoint`, `GeocodeResult`, `MediaAsset`, or canonical `IngestRun` rows.
+- Reports use a stable schema/version and never claim completion from a partial or failed scan.
+- E3-T2/E3-T5 later own database schema/persistence and production promotion of the audited data.
 
 ## Test and verification strategy
 
-- Unit: value validation, UTC timestamps, text flattening, canonical checksum/key-order invariance, classification, counters, and stable malformed reasons.
-- Golden adapter: string/mixed text, typed link/entity, service, photo, video/thumbnail, reply, empty caption, unknown field/type, and exact source metadata.
-- Failure: missing IDs/timestamps, wrong top-level/channel metadata, truncated/invalid JSON, source I/O error, and partial summary access.
-- Bounded processing: guarded reader rejects negative/unbounded reads and records maximum chunk size; generated large input proves the adapter does not retain all records.
-- Safety: fixture leak scanner plus Git/Docker/runtime source exclusions.
-- Local acceptance: complete ignored export scan must report 21,634,277 bytes, approved SHA-256, 27,082 total records, 27,075 message/7 service, 23,834 string/3,248 mixed text, 26,991 photo, 78 file/video, 11 reply, and terminal success without payload output.
-- Repository: frozen install, Ruff format/lint, strict mypy, import-linter (including deliberate forbidden import proof), pytest with branch coverage, dependency audit, OpenAPI/TypeScript drift checks, production builds, and repository safety.
+- Unit/golden tests cover candidate reasons/thresholds, typed values/ranges, exact spans, confidence/warnings, null/conflict behavior, parser versions, media rules/boundaries, report reconciliation/redaction, and atomic output.
+- Negative cases include non-listing token overlap, missing/ambiguous values, unknown/non-PLN currency, conflicting high-confidence values, close galleries, unsafe partial summaries, cancellation, and I/O failures.
+- Contact-shaped values appear only in synthetic runtime tests; committed source-derived fixtures remain sanitized and pass identity/contact/path/binary scans.
+- T2-T4 acceptance uses deterministic CI fixtures. T5 additionally runs the ignored export locally and emits only approved aggregate/redacted evidence.
+- Every PR runs frozen install, Ruff, strict mypy, import-linter/negative proof, branch-coverage pytest, dependency audit, OpenAPI/frontend drift checks, production builds, repository safety, and required GitHub CI.
 
 ## Rollout and rollback
 
-E2-T1 is inert library/test code and a dependency lock update. It does not activate an importer, database write, network call, or production path. Revert its commit/PR to roll back; no migration, data restoration, media cleanup, or deployment ordering is required.
+The remaining E2 work is inert parser/report library and operator code with no canonical persistence or production activation. Roll back any task by reverting its squash commit; no data restoration, schema downgrade, media cleanup, or deployment ordering is required.
 
-The feature branch must be created from the latest `main` only after this exact plan revision is separately owner-approved and E2-T1's implementation gate is satisfied. Open one E2-T1 PR, record acceptance evidence in that task, rerun CI after the evidence commit, and merge only when all required jobs are successful.
+Deliver in strict order: E2-T2, E2-T3, E2-T4, E2-T5. Each starts from the latest `main` after its predecessor is merged, uses one dedicated branch/PR, records completion evidence after an initial green run, reruns CI after that evidence commit, and squash-merges only when all required jobs are successful.
 
 ## Risks and mitigations
 
-- **Fixture privacy leak:** irreversible manual sanitization plus broad automated fixture/source-identity scans; no random slice or generation that defaults to raw output.
-- **False bounded-memory claim:** guarded-reader and generated-large-input tests; actual local scan; no full-record collection API.
-- **Checksum ambiguity:** byte-exact export hash and separately documented canonical per-record hash.
-- **Partial scan mislabeled complete:** explicit lifecycle state; final checksum/reconciliation inaccessible until exhaustion.
-- **Schema drift silently omitted:** preserve unknown payload fields, type valid unknowns as unhandled, and fail closed on top-level/channel mismatch.
-- **Scope creep into parsing/reporting/persistence:** no candidate rules, grouping, report CLI, database/API/map-seed mutation, or media access.
+- **False-positive/overconfident extraction:** weighted versioned reasons, negative fixtures, exact provenance, warnings, null/review outcomes, and no availability inference.
+- **Range/currency corruption:** Decimal/integer typed ranges, no midpoint, no inferred zeros, and no default PLN for unknown currency.
+- **Gallery false merge:** explicit evidence priority, stop boundaries, rule/confidence, and close-consecutive-listing goldens.
+- **Report/privacy leak:** complete data remains internal; bounded redacted samples, no payload/path/contact logs, atomic ignored outputs, and safety scans.
+- **Unreconciled audit:** exact source checksum/parser version, stage invariants, deterministic report hash, reason buckets, and repeated T5 audit after each rule change.
+- **Scope creep into E3:** import-linter and task acceptance prohibit database, geocoding, media storage/copy, and public API behavior.
 
 ## Invalidation triggers
 
-Return to the spike for a changed `RawMessage` identity/field contract, checksum meaning, timestamp authority, source privacy model, channel validation policy, shared historical/live boundary, or a different parser/dependency architecture. Return to this plan for material module boundaries, fixture policy/cases, classification/count semantics, test strategy, task scope, dependency, rollout, or rollback changes.
+Return to the spike for any further material `RawMessage` identity/checksum/timestamp/grouping change, destructive raw-data redaction, new parser/service architecture, database/public contract, geocoding/media operation, or changed epic outcome. Return to this plan for material task dependency, rule/report schema, confidence/reconciliation, fixture, CLI, test, rollout, or rollback changes.
 
 ## Approval checklist
 
-- [x] E2 spike revision 2 has explicit owner approval and remains current.
-- [x] E2-T1 revision 2 is promoted with complete acceptance criteria and traceability.
-- [x] E1-T2 is `done`; the sequence is complete, acyclic, and enforceable.
-- [x] Modules, dependency direction, contracts, fixtures, tests, risks, rollout, and rollback are explicit.
-- [x] E2-T1 has no deferred decision or migration.
-- [x] E2-T2 through E2-T5 remain proposed and absent from the executable sequence.
-- [x] No production or test code was written before this approval request.
-- [x] Revision 2 and its owner approval are recorded.
+- [x] E2 spike revision 3 has explicit owner approval and remains current.
+- [x] E2-T2 through E2-T5 revision 2 are promoted with complete acceptance criteria and traceability.
+- [x] The T1 → T2 → T3 → T4 → T5 sequence is complete, acyclic, and enforceable.
+- [x] Modules, contracts, data handling, tests, reports, risks, rollout, and rollback are explicit.
+- [x] No task has an unresolved deferred decision or migration.
+- [x] No remaining E2 implementation code was written before revision 3 approval.
+- [x] Revision 3 and its separate owner approval are recorded.
 
 ## Owner decision
 
-Flippylolz explicitly approved implementation-plan revision 2 and directed E2-T1 implementation to continue. E2-T1 may move to `ready` and then start only on its dedicated feature branch with the approved scope, tests, safety boundaries, and merge-after-green-CI gate above.
+Flippylolz separately approved implementation-plan revision 3 by accepting the attached Complete E2 Historical Parser Epic plan and directing implementation as four task PRs. This authorizes only E2-T2 through E2-T5 under the sequence, boundaries, tests, and merge gates above.
