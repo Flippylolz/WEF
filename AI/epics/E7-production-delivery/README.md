@@ -20,7 +20,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - Epic workspace status: `in_progress` for the anonymous synthetic production rehearsal.
 - [Spike](SPIKE.md): `approved`, revision 2.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing E7-T1 through E7-T4.
-- E7-T1/E7-T2/E7-T3 are `in_progress`; E7-T4 is promoted/`draft`; E7-T5 remains deferred and E7-T6/T7 remain proposed.
+- E7-T1 through E7-T4 are `in_progress` for the approved Caddy-based rehearsal sequence; E7-T5 remains deferred and E7-T6/T7/T8 remain proposed. E7-T8 requires a new approved spike/plan revision before promotion.
 
 ## Milestones
 
@@ -50,21 +50,24 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - [ADR-017](../../decisions/adr/ADR-017-no-enforced-branch-protection.md)
 - [ADR-018](../../decisions/adr/ADR-018-ordered-stacked-pull-requests.md)
 - [ADR-019](../../decisions/adr/ADR-019-anonymous-http-production-rehearsal.md)
+- [ADR-020](../../decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md)
 - [D-001](../../decisions/deferred/D-001-production-server-domain.md)
 - [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md)
+- [D-009](../../decisions/deferred/D-009-shared-tls-hostnames-and-forwarding.md)
 
 ## Promoted tasks
 
 - [E7-T1: Build production Compose topology](tasks/E7-T1-build-production-compose-topology.md) — `in_progress`, P0/L, M3
 - [E7-T2: Provision and verify supplied server](tasks/E7-T2-provision-and-verify-supplied-server.md) — `in_progress`, P0/M, M3
 - [E7-T3: Implement GitHub image and deployment workflows](tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `in_progress`, P0/L, M3
-- [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — `draft`, P0/M, M3
+- [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — `in_progress`, P0/M, M3
 
 ## Deferred/proposed tasks
 
 - [E7-T5: Future backup and restore capability](proposed-tasks/E7-T5-future-backup-and-restore-capability.md) — `deferred`, P2/L, M3
 - [E7-T6: Transfer and import the historical dataset](proposed-tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `proposed`, P1/L, M3
 - [E7-T7: Enable production registration and contact reveal](proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`, P1/M, M3
+- [E7-T8: Build shared Nginx TLS ingress](proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `proposed`, P1/L, M3
 
 ## Cross-epic dependencies
 
@@ -75,6 +78,8 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - Incoming: E7-T7 depends on E6-T5.
 - Incoming: E7-T7 depends on E6-T6.
 - Incoming: E7-T7 depends on E6-T7.
+- Incoming: E7-T7 depends on E7-T8.
+- E7-T8 depends on E7-T4 and D-009 hostname/router resolution.
 
 The exact normalized dependency and traceability registry is maintained in the [epics index](../README.md). Each workflow candidate is authoritative only in the single linked `proposed-tasks/` file above; its `legacy-roadmap:*` source value records non-path provenance.
 

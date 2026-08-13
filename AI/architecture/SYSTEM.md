@@ -22,30 +22,34 @@ flowchart LR
     tiles[OpenFreeMap]
 
     subgraph server [Single Docker Host]
-        caddy[Caddy]
+        nginx[Nginx TLS ingress]
+        certbot[Certbot ACME renewal]
         web[NextWeb]
         api[FastAPI]
         worker[ImporterTelegramWorker]
         db[(PostgreSQLPostGIS)]
         media[(MediaVolume)]
+        forecast[Existing AI Forecast]
     end
 
-    visitor -->|"Interim HTTP 3100; HTTPS after E7-T7"| caddy
+    visitor -->|"HTTPS 80/443 after E7-T8"| nginx
     visitor -->|"Vector tiles"| tiles
-    caddy --> web
-    caddy --> api
-    caddy --> media
+    nginx --> web
+    nginx --> api
+    nginx --> media
+    nginx --> forecast
+    certbot -.->|"Certificates and renewal reload"| nginx
     api --> db
     worker --> db
     worker --> media
     worker --> geocoder
     telegram --> worker
-    maintainer -->|"HTTPS owner admin"| caddy
+    maintainer -->|"HTTPS owner admin"| nginx
     maintainer -->|"Import command and review reports"| worker
     github -->|"Immutable images over SSH deploy"| server
 ```
 
-OpenFreeMap and the geocoder are external dependencies, not containers owned by this project. All project-owned runtime processes are containerized. The production HTTPS/authentication gate is tracked by [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md).
+OpenFreeMap and the geocoder are external dependencies, not containers owned by this project. All project-owned runtime processes are containerized. The implemented anonymous rehearsal still uses Caddy on port 3100. [E7-T8](../epics/E7-production-delivery/proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md) owns migration to shared Nginx plus free Certbot/Let's Encrypt renewal for WEF and the existing AI Forecast service; [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables sensitive WEF behavior only after that HTTPS gate.
 
 ## Technology stack
 
@@ -84,7 +88,7 @@ Durable imports, media work, and Telegram updates do not run as FastAPI backgrou
 ### Data and edge
 
 - PostgreSQL with PostGIS for spatial predicates and indexes.
-- Caddy for TLS, routing, compression, security headers, and local media delivery.
+- Nginx for target public TLS, routing, compression, security headers, and local media delivery; Certbot for free Let's Encrypt issuance/renewal. Caddy remains only in the implemented interim rehearsal until E7-T8.
 - A mounted media volume for the MVP.
 - OpenFreeMap vector styles/tiles, configured through environment values.
 
@@ -173,7 +177,8 @@ apps/
 infra/
   compose.yaml
   compose.production.yaml
-  Caddyfile
+  Caddyfile.production  # implemented interim WEF edge
+  nginx/                # target shared-edge configuration after E7-T8
 tests/
   fixtures/  # shared synthetic/redacted cross-application fixtures only
 .github/
@@ -188,15 +193,17 @@ The API, historical importer, and Telegram listener share feature/domain/applica
 
 ## Runtime components
 
-### Caddy
+### Nginx and Certbot
 
-- Initially serves same-origin anonymous HTTP on configurable port 3100.
-- Terminates HTTPS and redirects HTTP once [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables production authentication/contact reveal.
+- Nginx is the target public web server and TLS reverse proxy on ports 80/443; the implemented Caddy edge continues serving the bounded anonymous WEF rehearsal on configurable port 3100 until E7-T8 cutover.
+- Uses separate hostnames to route WEF and the existing AI Forecast frontend currently exposed on port 3000.
+- Certbot obtains free Let's Encrypt certificates, persists its complete state, renews unattended, and gracefully reloads Nginx only after successful renewal.
 - Routes `/api/*` to FastAPI.
 - Routes application requests to Next.js.
 - Serves `/media/*` from a read-only volume using generated storage keys.
 - Adds conservative security headers.
-- Exposes no database or worker port publicly.
+- Exposes no application, database, or worker upstream port publicly after cutover.
+- Keeps shared-ingress deploy/rollback independent of ordinary WEF application releases.
 
 ### Next.js web
 
@@ -250,12 +257,12 @@ The committed schema, frontend generation, static Redocly CI artifact, breaking-
 - The storage interface accepts a stream and returns an opaque key, checksum, byte count, detected MIME type, and dimensions/duration where available.
 - The local implementation writes atomically to a mounted volume.
 - Database rows store keys such as checksum-derived paths, never absolute host paths.
-- Caddy receives the same volume read-only.
+- The active edge receives the same volume read-only: Caddy during the interim rehearsal and Nginx after E7-T8.
 - A future S3 implementation can preserve public API URL semantics.
 
 ## Main request flow
 
-1. The browser opens a page through Caddy.
+1. The browser opens a page through the active same-origin edge: interim Caddy or target Nginx.
 2. Next.js returns the route shell; the client-only map initializes MapLibre.
 3. MapLibre loads the configured OpenFreeMap style and tiles with required attribution.
 4. The client parses filters from the URL and requests `/api/v1/map/locations` with the viewport bounding box.
@@ -322,7 +329,7 @@ No dedicated metrics stack is required initially. Add one when logs and host-lev
 - Uploaded/source media is not executable and is served with detected content types plus `X-Content-Type-Options: nosniff`.
 - API query values are parameterized through SQLAlchemy.
 - CORS is unnecessary when the web and API are same-origin.
-- Rate limiting belongs at Caddy for abusive public traffic; initial limits should be measured to avoid breaking map use.
+- Rate limiting belongs at the active edge—target Nginx after E7-T8—for abusive public traffic; initial limits should be measured to avoid breaking map use.
 
 ## Test strategy
 

@@ -15,6 +15,11 @@ on:
         required: true
         default: false
         type: boolean
+      force_rollback_rehearsal:
+        description: Fail after healthy smoke and require automatic restoration
+        required: true
+        default: false
+        type: boolean
 
 concurrency:
   group: wef-production
@@ -39,6 +44,7 @@ jobs:
     outputs:
       release_sha: ${{ steps.release.outputs.release_sha }}
       source_timestamp: ${{ steps.release.outputs.source_timestamp }}
+      force_rollback_rehearsal: ${{ steps.release.outputs.force_rollback_rehearsal }}
       seed_rehearsal: ${{ steps.release.outputs.seed_rehearsal }}
       should_deploy: ${{ steps.gate.outputs.should_deploy }}
     steps:
@@ -53,6 +59,7 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           PUSH_SHA: ${{ github.sha }}
+          REQUESTED_ROLLBACK: ${{ inputs.force_rollback_rehearsal }}
           REQUESTED_SEED: ${{ inputs.seed_rehearsal }}
           REQUESTED_SHA: ${{ inputs.release_sha }}
         run: |
@@ -69,13 +76,18 @@ jobs:
           git merge-base --is-ancestor "$release_sha" origin/main
           source_timestamp=$(git show -s --format=%cI "$release_sha")
           seed_rehearsal=false
+          force_rollback_rehearsal=false
           if [[ "$EVENT_NAME" == 'workflow_dispatch' && "$REQUESTED_SEED" == 'true' ]]; then
             seed_rehearsal=true
+          fi
+          if [[ "$EVENT_NAME" == 'workflow_dispatch' && "$REQUESTED_ROLLBACK" == 'true' ]]; then
+            force_rollback_rehearsal=true
           fi
           {
             echo "release_sha=$release_sha"
             echo "source_timestamp=$source_timestamp"
             echo "seed_rehearsal=$seed_rehearsal"
+            echo "force_rollback_rehearsal=$force_rollback_rehearsal"
           } >> "$GITHUB_OUTPUT"
 
       - name: Read associated pull requests
@@ -334,6 +346,7 @@ jobs:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_USER: ${{ vars.DEPLOY_USER }}
           GHCR_TOKEN: ${{ github.token }}
+          FORCE_ROLLBACK_REHEARSAL: ${{ needs.resolve.outputs.force_rollback_rehearsal }}
           RELEASE_SHA: ${{ needs.resolve.outputs.release_sha }}
           SEED_REHEARSAL: ${{ needs.resolve.outputs.seed_rehearsal }}
           SSH_PORT: ${{ vars.DEPLOY_SSH_PORT }}
@@ -366,6 +379,8 @@ jobs:
           release_dir="/home/nuc/wef/releases/${RELEASE_SHA}"
           incoming_secret="/home/nuc/wef/secrets/releases/.incoming-${RELEASE_SHA}-${GITHUB_RUN_ID}"
           config_file="/home/nuc/wef/secrets/releases/${RELEASE_SHA}/production.env"
+          inventory_before="/home/nuc/wef/state/inventory-${GITHUB_RUN_ID}-before.json"
+          inventory_after="/home/nuc/wef/state/inventory-${GITHUB_RUN_ID}-after.json"
 
           cleanup() {
             rm -f "$RUNNER_TEMP/production.env" "$ssh_dir/key"
@@ -427,6 +442,22 @@ jobs:
           fi
           REMOTE
 
+          if [[ "$FORCE_ROLLBACK_REHEARSAL" == 'true' ]]; then
+            ssh "${ssh_options[@]}" "$target" bash -s -- "$RELEASE_SHA" <<'REMOTE'
+          set -euo pipefail
+          candidate_sha=$1
+          test -f /home/nuc/wef/state/current.json
+          current_sha=$(
+            python3 /home/nuc/wef/releases/current/scripts/deploy/release_state.py \
+              get /home/nuc/wef/state/current.json release_sha
+          )
+          test "$current_sha" != "$candidate_sha"
+          REMOTE
+          fi
+
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" \
+            "umask 077; '$release_dir/scripts/deploy/server_inventory.sh' > '$inventory_before'"
           # shellcheck disable=SC2029
           printf '%s' "$GHCR_TOKEN" | ssh "${ssh_options[@]}" "$target" \
             "docker login ghcr.io --username '$GITHUB_ACTOR' --password-stdin"
@@ -439,6 +470,45 @@ jobs:
           if [[ "$SEED_REHEARSAL" == 'true' ]]; then
             deploy_command+=("WEF_SEED_REHEARSAL=1")
           fi
+          if [[ "$FORCE_ROLLBACK_REHEARSAL" == 'true' ]]; then
+            deploy_command+=("WEF_FORCE_ROLLBACK_REHEARSAL=1")
+          fi
           deploy_command+=("$release_dir/scripts/deploy/deploy.sh")
+          set +e
           # shellcheck disable=SC2029
           ssh "${ssh_options[@]}" "$target" "${deploy_command[@]}"
+          deploy_status=$?
+          set -e
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" \
+            "umask 077; '$release_dir/scripts/deploy/server_inventory.sh' > '$inventory_after'"
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" \
+            "python3 '$release_dir/scripts/deploy/compare_server_inventory.py' '$inventory_before' '$inventory_after'"
+          if [[ "$FORCE_ROLLBACK_REHEARSAL" == 'true' && "$deploy_status" -eq 42 ]]; then
+            ssh "${ssh_options[@]}" "$target" bash -s -- \
+              "$release_dir" "$RELEASE_SHA" "$inventory_before" "$inventory_after" <<'REMOTE'
+          set -euo pipefail
+          release_dir=$1
+          failed_sha=$2
+          before_inventory=$3
+          after_inventory=$4
+          healthy_sha=$(
+            python3 "$release_dir/scripts/deploy/release_state.py" \
+              get /home/nuc/wef/state/current.json release_sha
+          )
+          cd "$release_dir"
+          python3 -m scripts.deploy.verify_rollback_rehearsal \
+            /home/nuc/wef \
+            "$healthy_sha" \
+            "$failed_sha" \
+            "$before_inventory" \
+            "$after_inventory"
+          REMOTE
+            echo 'Rollback rehearsal restored the previous healthy release.'
+          elif [[ "$deploy_status" -ne 0 ]]; then
+            exit "$deploy_status"
+          elif [[ "$FORCE_ROLLBACK_REHEARSAL" == 'true' ]]; then
+            echo 'Rollback rehearsal did not exercise the expected failure path.' >&2
+            exit 1
+          fi

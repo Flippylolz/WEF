@@ -56,6 +56,11 @@ def non_wef_containers(inventory: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
+def non_wef_listeners(inventory: dict[str, Any]) -> list[str]:
+    """Exclude the dedicated WEF edge port from existing listener identity."""
+    return [listener for listener in inventory["listeners"] if not listener.endswith(":3100")]
+
+
 def validate_expected_paths(inventory: dict[str, Any]) -> None:
     """Require exact WEF directory kinds, owner UID, and restrictive modes."""
     paths = indexed(inventory["wef_paths"], "path")
@@ -64,10 +69,13 @@ def validate_expected_paths(inventory: dict[str, Any]) -> None:
         raise InventoryMismatchError(msg)
     for path, expected_mode in EXPECTED_WEF_PATHS.items():
         metadata = paths[path]
+        allowed_uids = {inventory["uid"]}
+        if path == "/home/nuc/wef/postgres":
+            allowed_uids.add(999)
         if (
             metadata["kind"] != "directory"
             or metadata["mode"] != expected_mode
-            or metadata["uid"] != inventory["uid"]
+            or metadata["uid"] not in allowed_uids
         ):
             msg = f"WEF path metadata is unsafe: {path}"
             raise InventoryMismatchError(msg)
@@ -84,7 +92,7 @@ def compare(before: dict[str, Any], after: dict[str, Any]) -> None:
     if non_wef_containers(before) != non_wef_containers(after):
         msg = "an existing container changed"
         raise InventoryMismatchError(msg)
-    if before["listeners"] != after["listeners"]:
+    if non_wef_listeners(before) != non_wef_listeners(after):
         msg = "a watched host listener changed"
         raise InventoryMismatchError(msg)
     if before["existing_http"] != after["existing_http"]:

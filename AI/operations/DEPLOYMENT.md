@@ -17,7 +17,7 @@ Required host software:
 - Docker Engine/Desktop with Compose v2.
 - Git.
 
-Node, Python, PostgreSQL, and Caddy do not need to be installed on the host.
+Node, Python, PostgreSQL, Caddy, Nginx, and Certbot do not need to be installed directly on the host; approved runtime components remain containerized.
 
 Local Compose services:
 
@@ -45,7 +45,8 @@ Exact service/command names are finalized during implementation, but no workflow
 
 Production services:
 
-- `caddy`: configurable `WEF_PUBLIC_PORT`, initially `3100/TCP`, after an immediate pre-deploy conflict check; TLS/standard 80/443 is a later public-launch decision.
+- `caddy` (current interim): configurable `WEF_PUBLIC_PORT`, initially `3100/TCP`, for the bounded anonymous rehearsal.
+- `nginx` plus `certbot` (target shared edge): standard 80/443 ingress with free automatically renewed TLS for WEF and the existing AI Forecast service; implemented only through [E7-T8](../epics/E7-production-delivery/proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md).
 - `web`: internal port only.
 - `api`: internal port only.
 - `db`: an application-owned PostgreSQL/PostGIS container on the internal network only, with a persistent host-backed volume.
@@ -79,7 +80,8 @@ Image requirements:
 
 - `infra/compose.yaml`: shared service definitions usable locally.
 - `infra/compose.production.yaml`: production images, restart policy, resources, networks, volumes, and hardened settings.
-- `infra/Caddyfile`: same-origin web/API/media routes and optional TLS.
+- `infra/Caddyfile.production`: implemented interim same-origin WEF routes.
+- Target shared-edge Nginx server blocks and Certbot renewal configuration are introduced only by E7-T8 and validated independently from ordinary WEF releases.
 - A checked-in `.env.example`: names and safe descriptions only.
 - Non-secret production values live in GitHub Actions variables and sensitive values in GitHub Actions secrets. Each deploy transfers complete validated configuration to `/home/nuc/wef/secrets/releases/<git-sha>/` with mode `0600` and atomically updates `/home/nuc/wef/secrets/current`.
 
@@ -89,27 +91,44 @@ Persistent paths:
 - `/home/nuc/wef/media/`.
 - `/home/nuc/wef/imports/` for operator-staged source data mounted read-only into importer runs.
 - `/home/nuc/wef/caddy-data/`.
+- A dedicated shared-edge root for future Nginx configuration/logs and persistent Certbot `/etc/letsencrypt` state; its exact owner-approved path is resolved by E7-T8 and is not deleted with `/home/nuc/wef`.
 - `/home/nuc/wef/releases/` for release metadata and Compose manifests.
 - `/home/nuc/wef/secrets/releases/<git-sha>/` plus `secrets/current` for complete deploy-managed service configuration, including the future Telegram session.
 
 Application containers must not rely on writable container layers. Writable temporary paths use explicit temporary filesystems or project-owned volumes. Do not add explicit generic `container_name` values; Compose's `wef-production` prefix prevents collisions.
 
+Before the first PostGIS start, a profile-gated one-shot service changes only the precreated WEF PostgreSQL bind root to the pinned image's UID/GID `999:999`. It runs with no network, a read-only root filesystem, and only `CHOWN`/`DAC_OVERRIDE`; this avoids sudo or broad host permissions. Inventory accepts the PostgreSQL root as either the inactive `nuc` owner or active UID 999 and rejects other WEF path ownership. The current Caddy rehearsal edge runs as host UID/GID `1000:1000` on unprivileged internal port 8080, drops all default capabilities, and adds back only `NET_BIND_SERVICE` because the pinned binary carries that file capability; its WEF-owned data bind remains writable without another root initializer. E7-T8 replaces this public edge with the separately managed shared Nginx/Certbot boundary.
+
 ## Routing and TLS
 
-Caddy:
+Current interim Caddy:
 
-- On interim port 3100, serves same-origin HTTP for anonymous smoke/browsing only.
-- After [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md), terminates HTTPS and redirects HTTP; authentication/contact reveal is enabled only in this mode.
+- On port 3100, serves same-origin HTTP for anonymous smoke/browsing only.
 - Routes `/api/*` to FastAPI and all other application routes to Next.js.
 - Serves `/media/*` from the media volume mounted read-only.
-- Preserves client/request IDs and correct proxy headers.
-- Enables compression for text/JSON, not already compressed media.
-- Adds HSTS after the domain and certificate flow are verified.
-- Adds `X-Content-Type-Options: nosniff`, a conservative referrer policy, and a tested Content Security Policy.
-- The CSP explicitly permits only the configured map style/tile origins, same-origin API/media, and the worker requirements used by MapLibre (including `worker-src blob:` only when the chosen bundle requires it).
-- Prevents directory listing and access to dotfiles or temporary media files.
+- Remains an implementation fact until the approved E7-T8 migration; historical Caddy verification evidence is not rewritten as Nginx evidence.
 
-Only Caddy publishes the selected WEF port. PostgreSQL, web, API, and worker ports remain on an internal Compose network. WEF must not publish or bind host ports 3000, 8080, or UDP 51820, and deployment must not restart or alter non-WEF projects. The selected port is rechecked immediately before Compose starts.
+Target Nginx/Certbot edge:
+
+- Nginx owns standard ports 80/443 and routes separate hostnames to private WEF and AI Forecast upstreams.
+- Certbot obtains free Let's Encrypt certificates, persists its complete state, renews unattended, and reloads Nginx only after successful renewal.
+- HTTP redirects to HTTPS only after both application routes and certificates pass external smoke checks.
+- [E7-T8](../epics/E7-production-delivery/proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md) owns DNS/router confirmation, AI Forecast port-3000 cutover, Caddy removal, renewal proof, monitoring, and rollback.
+- [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables authentication/contact reveal only after the E7-T8 HTTPS gate.
+- Full topology, certificate lifecycle, and evidence requirements are in [Nginx and TLS target](NGINX_TLS.md).
+
+Both current and target edges:
+
+- Preserve client/request IDs and correct proxy headers.
+- Enable compression for text/JSON, not already compressed media.
+- Add HSTS only after the domain and certificate flow are verified.
+- Add `X-Content-Type-Options: nosniff`, a conservative referrer policy, and a tested Content Security Policy.
+- The CSP explicitly permits only the configured map style/tile origins, same-origin API/media, and the worker requirements used by MapLibre (including `worker-src blob:` only when the chosen bundle requires it).
+- Prevent directory listing and access to dotfiles or temporary media files.
+
+During the rehearsal, only Caddy publishes the selected WEF port. PostgreSQL, web, API, and worker ports remain on an internal Compose network. WEF must not publish or bind host ports 3000, 8080, or UDP 51820, and deployment must not restart or alter non-WEF projects. The selected port is rechecked immediately before Compose starts.
+
+After E7-T8, shared Nginx is the only target public web server on 80/443. WEF application deploys do not own the shared edge, and the existing AI Forecast service is changed only by the separately approved, inventoried, and rollback-tested cutover.
 
 ## Preliminary server sizing
 
@@ -199,7 +218,7 @@ On a successful push to `main`:
 19. Wait for API readiness and test the public web, API, map shell, and a media URL.
 20. Mark the release successful and retain redacted deployment logs.
 
-The same workflow supports `workflow_dispatch` with an explicit tested SHA for the [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) rehearsal and owner-authorized emergency deployment.
+The same workflow supports `workflow_dispatch` with an explicit tested SHA for the [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) rehearsal and owner-authorized emergency deployment. Its explicit rollback-rehearsal input requires a different active SHA, lets the candidate pass real smoke, then injects a reviewed health-gate failure. Exit `42` counts as rehearsal success only after previous-release smoke, failure-state recording, and non-interference verification pass.
 
 Do not prune the previous release's images until a newer deployment has also succeeded and retention permits removal.
 
@@ -238,6 +257,7 @@ Deployment succeeds only when:
 - A browser smoke check initializes MapLibre and loads the configured style/tile origin without Content Security Policy violations.
 - A known test media asset is retrievable with the expected content type.
 - The release SHA in web/API responses or diagnostics matches the manifest.
+- The configured public MapLibre style document is reachable and has valid version/source/layer structure.
 
 Health scripts use fixed, non-sensitive test data.
 
@@ -250,7 +270,7 @@ Application rollback:
 3. Apply the previous Compose release manifest.
 4. Restart web/API/worker as needed.
 5. Verify the same health suite.
-6. Record the failed and restored releases.
+6. Record the failed and restored releases in mode-0600 `last-failure.json`, including only candidate/restored SHA, reason, and UTC timestamp.
 
 Database rules:
 
@@ -306,7 +326,7 @@ None of these paths is committed to Git, copied into an image, or stored on a co
 
 ## Backups
 
-Backups and restore drills are out of scope under [ADR-015](../decisions/adr/ADR-015-defer-backups.md). PostgreSQL, media, imports, Caddy state, and secrets persist on the NUC only.
+Backups and restore drills are out of scope under [ADR-015](../decisions/adr/ADR-015-defer-backups.md). PostgreSQL, media, imports, interim Caddy state, and secrets persist on the NUC only. After E7-T8, shared Nginx configuration and complete Certbot state also persist on the NUC under their independent edge boundary.
 
 This is persistence, not backup: one disk/host failure, corruption, accidental deletion, or destructive migration may permanently lose all application data. Future backup work must add encrypted off-server copies, retention, and restore verification before claiming recovery guarantees.
 
@@ -346,9 +366,9 @@ More source semantics are defined in the [ingestion pipeline](../ingestion/PIPEL
 
 Initial monitoring:
 
-- External HTTP uptime check for the interim 3100 endpoint; switch to HTTPS checks when [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables TLS.
+- External HTTP uptime check for the interim WEF 3100 endpoint; E7-T8 replaces it with independent HTTPS checks for WEF and AI Forecast.
 - Host disk, memory, CPU, load, and Docker restart count.
-- TLS expiry through Caddy/uptime service after HTTPS is enabled.
+- TLS chain/hostname/expiry, Certbot renewal, and Nginx reload checks after E7-T8.
 - Telegram last committed event once enabled.
 - Structured logs retained with size/rotation limits.
 
@@ -371,9 +391,9 @@ Then:
 - Patch the host and configure time synchronization.
 - Verify the already-installed Docker 29.5.1 and Compose 5.1.3 versions; do not reinstall during application deployment.
 - Create `/home/nuc/wef` project directories owned by `nuc` and install a dedicated deployment SSH key for that account.
-- Configure/forward SSH and `WEF_PUBLIC_PORT=3100`; add 80/443 only when the HTTPS design is approved.
+- Keep SSH and interim `WEF_PUBLIC_PORT=3100` forwarding through the anonymous rehearsal; E7-T8 confirms and forwards 80/443 for Nginx/Certbot only after both public hostnames are approved.
 - Configure swap only if appropriate for host memory; never use it to hide undersizing.
-- Verify DNS before enabling Caddy production TLS.
+- Verify both DNS names before enabling Nginx production TLS or changing the existing port-3000 route.
 - Rehearse the first release on production infrastructure with synthetic/empty data; do not create a staging environment.
 
 ## Public production readiness gate

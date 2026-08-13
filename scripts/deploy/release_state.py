@@ -18,6 +18,15 @@ class ReleaseState(TypedDict):
     release_sha: str
 
 
+class FailureState(TypedDict):
+    """Non-secret evidence for the latest failed application candidate."""
+
+    candidate_release_sha: str
+    failure_reason: str
+    recorded_at: str
+    restored_release_sha: str | None
+
+
 def read_state(path: Path) -> ReleaseState:
     """Read a state file and validate its primitive field types."""
     raw = json.loads(path.read_text(encoding="utf-8"))
@@ -35,6 +44,11 @@ def read_state(path: Path) -> ReleaseState:
 
 def write_state(path: Path, state: ReleaseState) -> None:
     """Write mode-0600 JSON and atomically replace the selected state."""
+    write_json_state(path, state)
+
+
+def write_json_state(path: Path, state: object) -> None:
+    """Write one JSON state object through a mode-0600 atomic replacement."""
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     try:
         descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -44,6 +58,23 @@ def write_state(path: Path, state: ReleaseState) -> None:
         temporary.replace(path)
     finally:
         temporary.unlink(missing_ok=True)
+
+
+def read_failure_state(path: Path) -> FailureState:
+    """Read and validate bounded failed-candidate evidence."""
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    restored = raw.get("restored_release_sha") if isinstance(raw, dict) else False
+    if (
+        not isinstance(raw, dict)
+        or not isinstance(raw.get("candidate_release_sha"), str)
+        or not isinstance(raw.get("failure_reason"), str)
+        or not isinstance(raw.get("recorded_at"), str)
+        or "restored_release_sha" not in raw
+        or (restored is not None and not isinstance(restored, str))
+    ):
+        msg = "failure state has an invalid shape"
+        raise TypeError(msg)
+    return cast("FailureState", raw)
 
 
 def activate_release_links(root: Path, release_dir: Path, config_file: Path) -> None:
@@ -92,6 +123,13 @@ def main() -> int:
     activate_parser.add_argument("release_dir", type=Path)
     activate_parser.add_argument("config_file", type=Path)
 
+    failure_parser = subparsers.add_parser("failure")
+    failure_parser.add_argument("path", type=Path)
+    failure_parser.add_argument("candidate_release_sha")
+    failure_parser.add_argument("failure_reason", choices=("health_verification",))
+    failure_parser.add_argument("recorded_at")
+    failure_parser.add_argument("restored_release_sha", nargs="?")
+
     arguments = parser.parse_args()
     if arguments.command == "write":
         write_state(
@@ -109,6 +147,17 @@ def main() -> int:
             arguments.root,
             arguments.release_dir,
             arguments.config_file,
+        )
+        return 0
+    if arguments.command == "failure":
+        write_json_state(
+            arguments.path,
+            {
+                "candidate_release_sha": arguments.candidate_release_sha,
+                "failure_reason": arguments.failure_reason,
+                "recorded_at": arguments.recorded_at,
+                "restored_release_sha": arguments.restored_release_sha,
+            },
         )
         return 0
 

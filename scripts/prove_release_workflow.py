@@ -38,6 +38,9 @@ def assert_workflow_boundaries() -> None:
     assert "AUTO_DEPLOY_ENABLED" in source
     assert "environment: production" in source
     assert "if: needs.resolve.outputs.should_deploy == 'true'" in source
+    assert "force_rollback_rehearsal" in source
+    assert "WEF_FORCE_ROLLBACK_REHEARSAL=1" in source
+    assert '"$deploy_status" -eq 42' in source
     assert "sha256sum --check SHA256SUMS" in source
     assert "StrictHostKeyChecking=yes" in source
     assert all(

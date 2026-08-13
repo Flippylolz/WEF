@@ -28,6 +28,10 @@ invalidation:
 
 > Revision 2 is approved research. The spike remains non-executable; implementation requires the approved plan and individually promoted tasks.
 
+## Post-approval change control
+
+The owner selected Nginx as the target shared public web server on 2026-08-13. [ADR-020](../../decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md) and the non-actionable [E7-T8 candidate](proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md) record that direction, including Certbot/Let's Encrypt renewal and TLS for the existing AI Forecast service on port 3000. Revision 2 remains the approved basis for the already-promoted E7-T1 through E7-T4 Caddy rehearsal only; it does not approve or promote E7-T8. Shared-ingress implementation requires a future researched and owner-approved spike/plan revision.
+
 ## Question
 
 How should immutable GitHub-built releases be configured, transferred, deployed, verified, rolled back, and used for the historical import on the supplied shared NUC without disrupting existing services?

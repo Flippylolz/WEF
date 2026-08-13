@@ -22,6 +22,34 @@ x-backend-environment: &backend-environment
   WEF_LOG_LEVEL: ${WEF_LOG_LEVEL:-info}
 
 services:
+  db-permissions:
+    profiles:
+      - operator
+    image: postgis/postgis:17-3.5@sha256:0a23a2b5e4fbd9b4c6980d20ee80dd6b63dec52669379c75a506db58a4116708
+    user: "0:0"
+    entrypoint: ["chown"]
+    command: ["999:999", "/var/lib/postgresql/data"]
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    network_mode: none
+    restart: "no"
+    cpus: "0.25"
+    mem_limit: 64m
+    pids_limit: 32
+    logging: *production-logging
+    volumes:
+      - type: bind
+        source: ${WEF_ROOT:?WEF_ROOT is required}/postgres
+        target: /var/lib/postgresql/data
+        bind:
+          create_host_path: false
+
   db:
     image: postgis/postgis:17-3.5@sha256:0a23a2b5e4fbd9b4c6980d20ee80dd6b63dec52669379c75a506db58a4116708
     environment:
@@ -135,6 +163,7 @@ services:
 
   edge:
     image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    user: "1000:1000"
     environment:
       WEF_RELEASE_SHA: ${WEF_RELEASE_SHA:?WEF_RELEASE_SHA is required}
     read_only: true

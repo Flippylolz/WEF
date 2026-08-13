@@ -19,4 +19,5 @@ resolved_by: [ADR-019]
 - Confirmed port: `WEF_PUBLIC_PORT=3100` initially, kept configurable.
 - Router rule: owner reports 3100/TCP forwarding is configured. An external connection still times out while no WEF listener exists, so verify again after Caddy binds the port.
 - Selected endpoint: interim `http://2fa54e2405.duckdns.org:3100`; E7-T2 verifies it only after the isolated edge binds and records resource ceilings.
-- Deferred sensitive scope: HTTPS remains an E7-T7 gate for registration, owner administration, sessions, and contact reveal, not a blocker for the anonymous synthetic rehearsal.
+- Deferred sensitive scope: E7-T8 HTTPS plus E7-T7 enablement remain gates for registration, owner administration, sessions, and contact reveal, not blockers for the anonymous synthetic rehearsal.
+- Public-launch follow-up: [D-009](D-009-shared-tls-hostnames-and-forwarding.md) owns the two-hostname and 80/443 forwarding inputs required by the later shared Nginx edge.

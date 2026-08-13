@@ -130,3 +130,21 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: it removes a standing package credential while still allowing private GHCR images to be pulled during the authorized deployment.
 - Safety limit: independent/manual host pulls outside the workflow are unavailable unless a separately scoped credential is approved later.
 - Reversal: provision a dedicated read-only package token through GitHub secrets and rotate/remove it independently.
+
+## AD-016: Rehearse rollback with a post-smoke failure gate
+
+- Time: 2026-08-13.
+- Prompt avoided: publish an intentionally broken image, alter production routing by hand, or add a bounded workflow failpoint after proving the candidate is otherwise healthy.
+- Selected approach: an explicit manual-dispatch input requires a different active release, runs the complete real candidate smoke, then converts only that successful result into failure. The deploy script returns reserved code `42` only after automatic rollback and previous-release smoke pass; GitHub then verifies state/manifests and before/after host inventory.
+- Rationale: this exercises the real activation failure and rollback path without putting deliberately vulnerable/broken code in GHCR or weakening ordinary deployment checks.
+- Safety limit: the flag is never produced for push events, automatic deployment cannot set it, a missing/different previous release fails closed, and `AUTO_DEPLOY_ENABLED` remains false until hosted evidence passes.
+- Reversal: remove the input/failpoint after a different reviewed rollback-injection mechanism supersedes it; normal health failures continue to fail with a nonzero status.
+
+## AD-017: Initialize only the PostGIS bind-root owner in a bounded container
+
+- Time: 2026-08-13.
+- Prompt avoided: request sudo to chown the production data root, grant broad writable permissions, move persistence into an opaque named volume, or use a capability-limited one-shot initializer.
+- Selected approach: before database startup, run the pinned PostGIS image once as root with no network, a read-only container root, and only `CHOWN`/`DAC_OVERRIDE` to set `/home/nuc/wef/postgres` itself to UID/GID 999. It is non-recursive and touches no path outside the WEF bind.
+- Rationale: the native Linux host's `nuc:0700` directory is not writable by the image's `postgres` UID 999; this preserves the documented host path without persisting or requesting sudo credentials.
+- Safety limit: topology proofs pin the exact command/capabilities/path; inventory permits UID 999 only for the PostgreSQL root.
+- Reversal: an owner may perform and maintain the same narrow ownership through host provisioning, after which the initializer can be removed in a reviewed task.

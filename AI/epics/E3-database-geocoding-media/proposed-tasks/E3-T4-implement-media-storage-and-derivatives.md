@@ -49,6 +49,7 @@ The following definition preserves the original E3-T4 roadmap entry:
 ## Scope and approval boundary
 
 - Preserve the roadmap work and acceptance criteria above for refinement against the owner-approved spike.
+- The Caddy wording above is legacy-roadmap provenance, not the current public-edge choice. Media remains edge-agnostic and is served read-only through Nginx after E7-T8, with interim Caddy compatibility only while the rehearsal stack exists.
 - Do not treat this file, its priority, its branch note, or its roadmap ordering as permission to implement.
 - Production code, scaffolds, migrations, infrastructure changes, and disposable proof code remain out of scope until promotion and current implementation-plan approval.
 

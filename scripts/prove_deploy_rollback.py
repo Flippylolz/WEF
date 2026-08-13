@@ -2,19 +2,24 @@
 
 from __future__ import annotations
 
-# ruff: noqa: PLR0913, S101, T201
+import json
+
+# ruff: noqa: PLR0913, PLR0915, PLR2004, S101, T201
 import os
 import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 
-from scripts.deploy.release_state import read_state
+from scripts.deploy.compare_server_inventory import EXPECTED_WEF_PATHS
+from scripts.deploy.release_state import read_failure_state, read_state
+from scripts.deploy.verify_rollback_rehearsal import verify
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DEPLOY_SCRIPT = REPOSITORY_ROOT / "scripts/deploy/deploy.sh"
 HEALTHY_SHA = "a" * 40
 UNHEALTHY_SHA = "b" * 40
+FORCED_FAILURE_SHA = "c" * 40
 MIGRATION_FAILURE_SHA = "d" * 40
 FAKE_DOCKER = """#!/bin/sh
 if [ "${1:-}" = "info" ]; then
@@ -60,9 +65,24 @@ if [ "$output" = "/dev/null" ] || [ -z "$output" ]; then
   exit 0
 fi
 case "$url" in
+  */api/v1/health/live)
+    printf '%s\\n' '{"status":"live"}' > "$output"
+    ;;
+  */api/v1/health/ready)
+    printf '%s\\n' '{"status":"ready"}' > "$output"
+    ;;
   */api/v1/map/locations*)
     payload='{"type":"FeatureCollection","features":[{}],"meta":{"feature_count":1}}'
     printf '%s\\n' "$payload" > "$output"
+    ;;
+  */api/v1/filter-facets)
+    printf '%s\\n' '{"districts":["wola"],"rooms":[2]}' > "$output"
+    ;;
+  */api/v1/locations/*/offers*)
+    printf '%s\\n' '{"matching_count":1,"total_count":1,"items":[{}]}' > "$output"
+    ;;
+  https://tiles.openfreemap.org/styles/liberty)
+    printf '%s\\n' '{"version":8,"sources":{"openmaptiles":{}},"layers":[{}]}' > "$output"
     ;;
   */)
     printf '%s\\n' '<h1>Find a place in Warsaw</h1><p>synthetic MVP fixtures</p>' > "$output"
@@ -86,6 +106,21 @@ def prepare_release(root: Path, release_sha: str) -> tuple[Path, Path]:
     config_dir.mkdir(parents=True)
     shutil.copy2(REPOSITORY_ROOT / "infra/compose.production.yaml", release_dir)
     shutil.copy2(REPOSITORY_ROOT / "infra/Caddyfile.production", release_dir)
+    (release_dir / "release-manifest.json").write_text(
+        json.dumps(
+            {
+                "schema": "wef-release@1",
+                "source_sha": release_sha,
+                "source_timestamp": "2026-08-13T00:00:00+00:00",
+                "migration_revision": "20260812_0001",
+                "images": {
+                    "backend": f"sha256:{'a' * 64}",
+                    "web": f"sha256:{'b' * 64}",
+                },
+            },
+        ),
+        encoding="utf-8",
+    )
     config_file = config_dir / "production.env"
     values = {
         "POSTGRES_DB": "wef",
@@ -175,6 +210,13 @@ def main() -> int:
             "WEF_MIN_FREE_KB": "1",
             "WEF_SEED_REHEARSAL": "1",
         }
+        sentinels = {
+            root / "postgres/persistence.sentinel": "postgres-survives\n",
+            root / "media/persistence.sentinel": "media-survives\n",
+            root / "caddy-data/persistence.sentinel": "caddy-survives\n",
+        }
+        for path, value in sentinels.items():
+            path.write_text(value, encoding="utf-8")
 
         healthy_dir, healthy_config = prepare_release(root, HEALTHY_SHA)
         healthy = run_deploy(
@@ -187,6 +229,8 @@ def main() -> int:
         )
         assert "Activated WEF release" in healthy.stdout
         assert read_state(root / "state/current.json")["release_sha"] == HEALTHY_SHA
+        assert (root / "releases/current").resolve() == healthy_dir.resolve()
+        assert (root / "secrets/current").resolve() == healthy_config.parent.resolve()
 
         unhealthy_dir, unhealthy_config = prepare_release(root, UNHEALTHY_SHA)
         unhealthy = run_deploy(
@@ -201,6 +245,28 @@ def main() -> int:
         assert "Previous WEF application release restored" in unhealthy.stderr
         assert read_state(root / "state/current.json")["release_sha"] == HEALTHY_SHA
         assert read_state(root / "state/previous.json")["release_sha"] == HEALTHY_SHA
+        failure = read_failure_state(root / "state/last-failure.json")
+        assert failure["candidate_release_sha"] == UNHEALTHY_SHA
+        assert failure["restored_release_sha"] == HEALTHY_SHA
+        assert (root / "releases/current").resolve() == healthy_dir.resolve()
+        assert (root / "secrets/current").resolve() == healthy_config.parent.resolve()
+
+        forced_dir, forced_config = prepare_release(root, FORCED_FAILURE_SHA)
+        forced_failure = run_deploy(
+            root,
+            forced_dir,
+            forced_config,
+            FORCED_FAILURE_SHA,
+            {**environment, "WEF_FORCE_ROLLBACK_REHEARSAL": "1"},
+            check=False,
+        )
+        assert forced_failure.returncode == 42
+        assert "Forcing the reviewed rollback rehearsal" in forced_failure.stderr
+        assert "Previous WEF application release restored" in forced_failure.stderr
+        assert read_state(root / "state/current.json")["release_sha"] == HEALTHY_SHA
+        failure = read_failure_state(root / "state/last-failure.json")
+        assert failure["candidate_release_sha"] == FORCED_FAILURE_SHA
+        assert failure["restored_release_sha"] == HEALTHY_SHA
 
         migration_dir, migration_config = prepare_release(root, MIGRATION_FAILURE_SHA)
         migration_failure = run_deploy(
@@ -214,6 +280,57 @@ def main() -> int:
         assert migration_failure.returncode == 1
         assert "existing application release was not replaced" in migration_failure.stderr
         assert read_state(root / "state/current.json")["release_sha"] == HEALTHY_SHA
+        for path, value in sentinels.items():
+            assert path.read_text(encoding="utf-8") == value
+        docker_log = (Path(directory) / "docker.log").read_text(encoding="utf-8")
+        assert "down -v" not in docker_log
+        assert "alembic downgrade" not in docker_log
+
+        uid = os.getuid()
+        common_inventory = {
+            "schema": "wef-server-inventory@1",
+            "hostname": "proof-host",
+            "uid": uid,
+            "containers": [],
+            "listeners": ["tcp 0.0.0.0:3000"],
+            "existing_http": {"3000": 200, "8080": 200},
+            "resources": {"disk_free_bytes": 1, "memory_available_kb": 1},
+            "wef_paths": [
+                {
+                    "path": path,
+                    "kind": "directory",
+                    "mode": mode,
+                    "uid": uid,
+                    "gid": os.getgid(),
+                }
+                for path, mode in EXPECTED_WEF_PATHS.items()
+            ],
+        }
+        before_inventory = {**common_inventory, "compose_projects": []}
+        after_inventory = {
+            **common_inventory,
+            "compose_projects": [{"Name": "wef-production"}],
+            "containers": [
+                {
+                    "name": f"wef-production-{service}-1",
+                    "state": "running",
+                    "health": "healthy",
+                }
+                for service in ("api", "db", "edge", "web")
+            ],
+            "listeners": ["tcp 0.0.0.0:3000", "tcp 0.0.0.0:3100"],
+        }
+        before_path = Path(directory) / "before.json"
+        after_path = Path(directory) / "after.json"
+        before_path.write_text(json.dumps(before_inventory), encoding="utf-8")
+        after_path.write_text(json.dumps(after_inventory), encoding="utf-8")
+        verify(
+            root,
+            HEALTHY_SHA,
+            FORCED_FAILURE_SHA,
+            before_path,
+            after_path,
+        )
 
     print("Healthy activation and unhealthy application rollback pass.")
     return 0
