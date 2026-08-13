@@ -23,7 +23,7 @@ The complete export is parsed with reconciled reports, locations are geocoded/re
 
 - [E2-T3: Implement deterministic media grouping](../epics/E2-historical-export-parser-audit/tasks/E2-T3-implement-media-grouping.md) — `done` through [PR #37](https://github.com/Flippylolz/WEF/pull/37)
 - [E2-T4: Implement dry-run reports and operator wiring](../epics/E2-historical-export-parser-audit/tasks/E2-T4-implement-dry-run-reports.md) — `done` through [PR #40](https://github.com/Flippylolz/WEF/pull/40)
-- [E2-T5: Audit the complete export](../epics/E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md) — `in_progress`, local audit reconciled and final PR/CI pending
+- [E2-T5: Audit the complete export](../epics/E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md) — `done` through [PR #42](https://github.com/Flippylolz/WEF/pull/42), with reconciled complete-export audit evidence
 ### [E3: Database, geocoding, and media pipeline](../epics/E3-database-geocoding-media/README.md)
 
 - [E3-T4: Implement media storage and derivatives](../epics/E3-database-geocoding-media/proposed-tasks/E3-T4-implement-media-storage-and-derivatives.md) — `proposed`
