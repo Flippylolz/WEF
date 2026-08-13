@@ -37,8 +37,9 @@ initialize_release_context() {
   case "$WEF_PUBLIC_PORT" in
     *[!0-9]* | "") fail "public port must be numeric" ;;
   esac
-  [ "$WEF_PUBLIC_PORT" -ge 1024 ] && [ "$WEF_PUBLIC_PORT" -le 65535 ] ||
+  if [ "$WEF_PUBLIC_PORT" -lt 1024 ] || [ "$WEF_PUBLIC_PORT" -gt 65535 ]; then
     fail "public port must be between 1024 and 65535"
+  fi
 
   if [ "${WEF_DEPLOY_TEST_MODE:-0}" != "1" ]; then
     [ "$WEF_ROOT" = "/home/nuc/wef" ] || fail "production root must be /home/nuc/wef"
