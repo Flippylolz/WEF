@@ -116,7 +116,7 @@ jobs:
       migration_revision: ${{ steps.metadata.outputs.migration_revision }}
     services:
       postgres:
-        image: postgis/postgis:17-3.5@sha256:af32112ed7698d411029ccba101437be3d4c738fd9c62609778526a09a271349
+        image: postgis/postgis:17-3.5@sha256:0a23a2b5e4fbd9b4c6980d20ee80dd6b63dec52669379c75a506db58a4116708
         env:
           POSTGRES_DB: wef_test
           POSTGRES_PASSWORD: wef_test
