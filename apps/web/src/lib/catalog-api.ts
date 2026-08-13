@@ -1,6 +1,10 @@
 import createClient from "openapi-fetch";
 
-import type { paths } from "@/generated/api";
+import type { operations, paths } from "@/generated/api";
+import { DEFAULT_BBOX, type MapLocationQuery } from "@/lib/map-search-params";
+
+export { DEFAULT_BBOX } from "@/lib/map-search-params";
+export type { MapLocationQuery } from "@/lib/map-search-params";
 
 export type FilterFacets =
   paths["/api/v1/filter-facets"]["get"]["responses"][200]["content"]["application/json"];
@@ -10,12 +14,16 @@ export type LocationMapFeature = LocationMap["features"][number];
 export type LocationOfferPage =
   paths["/api/v1/locations/{location_id}/offers"]["get"]["responses"][200]["content"]["application/json"];
 
-export const DEFAULT_BBOX = "20.7,52.0,21.4,52.4";
-
 type Ready<T> = { state: "ready"; data: T };
 type Failed = { state: "error" };
 export type ApiResult<T> = Ready<T> | Failed;
 type Fetcher = (request: Request) => Promise<Response>;
+type RequestOptions = {
+  fetcher?: Fetcher;
+  signal?: AbortSignal;
+};
+type LocationOffersQuery =
+  operations["listLocationOffers"]["parameters"]["query"];
 
 function apiBaseUrl() {
   if (typeof window !== "undefined") {
@@ -32,14 +40,16 @@ function client(fetcher?: Fetcher) {
 }
 
 export async function fetchLocationMap(
-  fetcher?: Fetcher,
+  query: MapLocationQuery = { bbox: DEFAULT_BBOX },
+  options: RequestOptions = {},
 ): Promise<ApiResult<LocationMap>> {
   try {
-    const { data, error, response } = await client(fetcher).GET(
+    const { data, error, response } = await client(options.fetcher).GET(
       "/api/v1/map/locations",
       {
-        params: { query: { bbox: DEFAULT_BBOX } },
+        params: { query },
         cache: "no-store",
+        ...(options.signal ? { signal: options.signal } : {}),
       },
     );
     if (!response.ok || error !== undefined || data === undefined) {
@@ -63,12 +73,15 @@ export async function fetchLocationMap(
 }
 
 export async function fetchFacets(
-  fetcher?: Fetcher,
+  options: RequestOptions = {},
 ): Promise<ApiResult<FilterFacets>> {
   try {
-    const { data, error, response } = await client(fetcher).GET(
+    const { data, error, response } = await client(options.fetcher).GET(
       "/api/v1/filter-facets",
-      { cache: "no-store" },
+      {
+        cache: "no-store",
+        ...(options.signal ? { signal: options.signal } : {}),
+      },
     );
     if (!response.ok || error !== undefined || data === undefined) {
       return { state: "error" };
@@ -81,21 +94,24 @@ export async function fetchFacets(
 
 export async function fetchLocationOffers(
   locationId: string,
-  fetcher?: Fetcher,
+  query: MapLocationQuery = { bbox: DEFAULT_BBOX },
+  options: RequestOptions = {},
 ): Promise<ApiResult<LocationOfferPage>> {
   try {
-    const { data, error, response } = await client(fetcher).GET(
+    const offersQuery: LocationOffersQuery = {
+      ...query,
+      include_non_matching: true,
+      limit: 20,
+    };
+    const { data, error, response } = await client(options.fetcher).GET(
       "/api/v1/locations/{location_id}/offers",
       {
         params: {
           path: { location_id: locationId },
-          query: {
-            bbox: DEFAULT_BBOX,
-            include_non_matching: true,
-            limit: 20,
-          },
+          query: offersQuery,
         },
         cache: "no-store",
+        ...(options.signal ? { signal: options.signal } : {}),
       },
     );
     if (!response.ok || error !== undefined || data === undefined) {
