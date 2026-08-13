@@ -22,7 +22,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `ready`; spike/plan revision 2; E4-T1/T2 done, 2 proposed; milestones M1, M2.
 - [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `ready`; spike/plan revision 2; E5-T1 done/E5-T2 ready, 3 proposed; milestones M1, M3.
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `draft`; 7 tasks (7 proposed); milestones M3.
-- [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `ready`; 8 tasks (4 done, 3 proposed, 1 deferred); milestones M3.
+- [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `ready`; 10 tasks (4 done, 1 ready, 1 draft, 3 proposed, 1 deferred); milestone M3.
 - [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; 5 tasks (5 proposed); milestones M4.
 
 The original E0/E1/E3/E4/E5-T1/E7 ordered stack is merged and reconciled against successful integrated `main` CI. E2-T1 and later E3–E5/E7 work retain approved current gates or remain proposed/ready. E6–E8 remain draft. New work must pass its dedicated pull-request CI before merge.
@@ -122,8 +122,10 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E7-T4](E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md): `done`, satisfied dependency `E7-T3`; M3; requirements `none`; decisions `ADR-008, ADR-010, ADR-014, ADR-015, ADR-019`.
 - [E7-T5](E7-production-delivery/proposed-tasks/E7-T5-future-backup-and-restore-capability.md): task dependencies `none`; M3; requirements `none`; decisions `ADR-015`.
 - [E7-T6](E7-production-delivery/proposed-tasks/E7-T6-transfer-and-import-the-historical-dataset.md): task dependencies `E3-T5, E7-T2, E7-T4`; deferred gates D-002; M3; requirements `P-001, P-002, P-005, P-007`; decisions `ADR-005, ADR-006, ADR-007, ADR-010, ADR-015`.
-- [E7-T7](E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md): task dependencies `E6-T4, E6-T5, E6-T6, E6-T7, E7-T4, E7-T8`; M3; requirements `P-008`; decisions `ADR-010, ADR-011, ADR-014, ADR-016, ADR-020`.
-- [E7-T8](E7-production-delivery/proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md): task dependency `E7-T4`; deferred gate `D-009` hostname/router resolution; M3; requirements `none`; decisions `ADR-010, ADR-014, ADR-019, ADR-020`.
+- [E7-T7](E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md): task dependencies `E6-T4, E6-T5, E6-T6, E6-T7, E7-T4, E7-T10`; M3; requirements `P-008`; decisions `ADR-010, ADR-011, ADR-014, ADR-016, ADR-020`.
+- [E7-T8](E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md): `ready`, satisfied dependency `E7-T4`; M3; requirements `none`; decisions `ADR-010, ADR-014, ADR-019, ADR-020`.
+- [E7-T9](E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md): `draft`, task dependency `E7-T8`; M3; requirements `none`; decisions `ADR-008, ADR-010, ADR-014, ADR-019, ADR-020`.
+- [E7-T10](E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md): task dependency `E7-T9`; deferred gate `D-009` hostname/router resolution; M3; requirements `none`; decisions `ADR-008, ADR-010, ADR-014, ADR-019, ADR-020`.
 ### E8
 
 - [E8-T1](E8-telegram-live-ingestion/proposed-tasks/E8-T1-confirm-channel-identity-and-access.md): task dependencies `none`; deferred gates D-003; milestone prerequisite M3; M4; requirements `P-006`; decisions `ADR-006`.
@@ -132,7 +134,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E8-T4](E8-telegram-live-ingestion/proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md): task dependencies `E3-T3`; deferred gates D-002; M4; requirements `P-001, P-007`; decisions `ADR-005, ADR-006`.
 - [E8-T5](E8-telegram-live-ingestion/proposed-tasks/E8-T5-production-reconciliation-and-worker-alerting.md): task dependencies `E8-T3, E8-T4`; M4; requirements `P-006, P-007`; decisions `ADR-006, ADR-010, ADR-015`.
 
-Bootstrap and production gates are preserved: E0-T1 depends on E1-T1 so its dedicated branch can exist; E0-T2 depends on E0-T1 and E1-T1; E1-T2 depends on E0-T2; E7-T1 depends on E1-T3/E5-T1 for the anonymous rehearsal, E7-T2 retains resolved D-001 plus E7-T1, and E7-T3 retains E1-T4/E7-T1/E7-T2. E7-T6 retains E3-T5/E7-T2/E7-T4 plus D-002; E7-T8 retains E7-T4 plus D-009 public-hostname/router resolution; E7-T7 retains E6-T4/E6-T5/E6-T6/E6-T7/E7-T4/E7-T8. E8-T5 depends only on E8-T3 and E8-T4—it does not depend on deferred E7-T5.
+Bootstrap and production gates are preserved: E0-T1 depends on E1-T1 so its dedicated branch can exist; E0-T2 depends on E0-T1 and E1-T1; E1-T2 depends on E0-T2; E7-T1 depends on E1-T3/E5-T1 for the anonymous rehearsal, E7-T2 retains resolved D-001 plus E7-T1, and E7-T3 retains E1-T4/E7-T1/E7-T2. E7-T6 retains E3-T5/E7-T2/E7-T4 plus D-002. Shared TLS proceeds E7-T4 → E7-T8 → E7-T9 → E7-T10, with D-009 gating only E7-T10; E7-T7 retains E6-T4/E6-T5/E6-T6/E6-T7/E7-T4/E7-T10. E8-T5 depends only on E8-T3 and E8-T4—it does not depend on deferred E7-T5.
 
 ## Global definition of done
 
@@ -160,8 +162,8 @@ The workflow's [expanded definition of done](../workflow/DEFINITION_OF_DONE.md) 
 - Attribution, source traceability, and confidence indicators: E4-T3, E5-T1, E5-T3, E6-T2.
 - WCAG 2.2 AA public flows: E5-T4, E6-T1.
 - Matching/non-matching related-offer disclosure: E4-T2, E5-T3.
-- Shared Nginx/Certbot TLS for WEF and AI Forecast: E7-T8.
-- Anonymous browsing plus username/password registration, owner administration, and audited contact reveal: E6-T4 through E6-T7, E7-T8, E7-T7.
+- Shared Nginx/Certbot TLS for WEF and AI Forecast: E7-T8 through E7-T10.
+- Anonymous browsing plus username/password registration, owner administration, and audited contact reveal: E6-T4 through E6-T7, E7-T10, E7-T7.
 - English-first i18n-keyed interface: E6-T6.
 - Verified Telegram links: E4-T3, E5-T3, then E8-T1 for live data.
 - Import traceability and failure accounting: E2-T4, E3-T2, E3-T5.

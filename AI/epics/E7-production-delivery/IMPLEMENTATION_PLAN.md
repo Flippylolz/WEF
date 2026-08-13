@@ -3,25 +3,21 @@ schema: ai-workflow/implementation-plan@1
 epic: E7
 title: "Docker/GitHub production delivery implementation plan"
 status: approved
-revision: 2
+revision: 3
 owner: owner
-spike_revision: 2
+spike_revision: 3
 task_sequence:
-  - id: E7-T1
+  - id: E7-T8
     revision: 2
-  - id: E7-T2
-    revision: 2
-  - id: E7-T3
-    revision: 2
-  - id: E7-T4
-    revision: 2
+  - id: E7-T9
+    revision: 1
 approval:
   required_role: owner
   status: approved
   decided_by: Flippylolz
-  decided_at: "2026-08-12T23:35:00Z"
-  approved_revision: 2
-  evidence: "Owner directive to prepare the MVP/autodeploy, choose safe defaults, log decisions/blockers, avoid non-WEF destruction, and continue stacking PRs"
+  decided_at: "2026-08-13T19:32:59Z"
+  approved_revision: 3
+  evidence: "Owner accepted the attached E7 Shared TLS Stack plan and selected the three-task E7 shared Nginx/TLS split"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -29,103 +25,98 @@ invalidation:
   return_to: null
 ---
 
-# Implementation Plan: Anonymous synthetic production delivery
+# Implementation Plan: Shared Nginx TLS delivery
 
 ## Approved spike baseline
 
-[E7 spike revision 2](SPIKE.md) approves an anonymous HTTP production-infrastructure rehearsal followed by immutable GitHub delivery and compatible application rollback. Historical import, backups, HTTPS/auth/contact/admin, and Telegram remain outside this sequence.
+[E7 spike revision 3](SPIKE.md) preserves completed E7-T1 through E7-T4 as the anonymous Caddy rehearsal and approves an isolated Nginx/Certbot target split into inert topology, reversible cutover automation, and live rollout.
 
-[ADR-020](../../decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md) was accepted after this plan approval and selects Nginx/Certbot as the later shared TLS target. It does not alter the E7-T1 through E7-T4 Caddy rehearsal scope or authorize [E7-T8](proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md); that task requires a future approved spike and implementation-plan revision.
+[ADR-020](../../decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md) selects the shared edge. [D-009](../../decisions/deferred/D-009-shared-tls-hostnames-and-forwarding.md) still blocks live hostnames, ACME issuance, public forwarding, and listener cutover. Therefore revision 3 authorizes only [E7-T8](tasks/E7-T8-build-shared-nginx-tls-ingress.md) and [E7-T9](tasks/E7-T9-implement-reversible-shared-edge-cutover.md); [E7-T10](proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) remains proposed until D-009 is resolved and a later plan revision is approved.
 
 ## Scope and outcome
 
-Deliver a production Compose topology that is locally proven, prepared only under `/home/nuc/wef`, released as exact GHCR digests through a gated GitHub workflow, and rehearsed with healthy/unhealthy synthetic releases without modifying existing host workloads. Autodeploy remains disabled if B-006 prevents hosted evidence.
+Deliver a locally proven, independently managed shared-edge topology plus host-safe cutover/rollback automation without mutating production. Nginx owns target ports 80/443 only after the future E7-T10 rollout. Certbot state, edge config, ACME webroot, and logs remain outside the ordinary WEF release boundary. Current Caddy/3100 and AI Forecast/3000 listeners remain active rollback paths throughout E7-T8/E7-T9.
 
 ## Ordered task sequence
 
-### 1. E7-T1 — Build production Compose topology
+### 1. E7-T8 — Build isolated shared Nginx TLS topology
 
-- Task: [E7-T1 revision 2](tasks/E7-T1-build-production-compose-topology.md).
-- Dependencies: E1-T3 local topology and E5-T1 browser MVP are direct stacked ancestors.
-- Independent result: inert production Compose/Caddy/scripts and local safety/rollback harness; no host or GitHub mutation.
-- Verification: positive/negative Compose render, shell/static policy tests, production images, same-origin synthetic runtime, unhealthy rollback harness.
+- Task: [E7-T8 revision 2](tasks/E7-T8-build-shared-nginx-tls-ingress.md).
+- Dependencies: completed E7-T4 release-health and rollback baseline.
+- Independent result: inert shared-edge Compose boundary, HTTP-01 bootstrap, generated two-host Nginx config, persistent Certbot state, validated renewal hook, and local failure harness; no host or GitHub mutation.
+- Verification: positive/negative Compose/config render, `nginx -t`, synthetic certificate files, two fixture host routes, least-privilege/static policy, renewal dry run, success-only reload hook, and secret exclusion.
 
-### 2. E7-T2 — Provision and verify supplied server
+### 2. E7-T9 — Implement reversible shared-edge cutover
 
-- Task: [E7-T2 revision 2](tasks/E7-T2-provision-and-verify-supplied-server.md).
-- Dependencies: E7-T1 direct ancestry; D-001 resolved for anonymous rehearsal by ADR-019.
-- Independent result: WEF-only directory/config boundary and redacted before/after host evidence.
-- Verification: pinned SSH, capacity/port/config preflight, restrictive modes, unchanged existing projects/listeners/health, external 3100 probe only while listening.
+- Task: [E7-T9 revision 1](tasks/E7-T9-implement-reversible-shared-edge-cutover.md).
+- Dependencies: E7-T8 through direct stacked ancestry.
+- Independent result: a cutover-safe WEF release variant, unchanged AI Forecast host-upstream route, before/after inventory, staged redirects, independent smokes, atomic edge activation, and previous-config/listener rollback; no production activation.
+- Verification: local upstream fixtures, occupied-port/config/upstream failure injection, WEF API/media/release marker checks, AI Forecast frontend/API checks, atomic current/previous pointers, unchanged application data, and exact non-interference inventory.
 
-### 3. E7-T3 — Implement GitHub image and deployment workflows
+## Deferred third task
 
-- Task: [E7-T3 revision 2](tasks/E7-T3-implement-github-image-and-deployment-workflows.md).
-- Dependencies: E1-T4 CI plus E7-T1/T2 direct ancestry.
-- Independent result: exact-image publication and gated/locked complete-config delivery review, with auto deploy still false.
-- Verification: actionlint/static gate matrix, complete local release commands, secret/source exclusion, hosted manual release when B-006 permits.
-
-### 4. E7-T4 — Implement health verification and rollback
-
-- Task: [E7-T4 revision 2](tasks/E7-T4-implement-health-verification-and-rollback.md).
-- Dependencies: E7-T3 direct ancestry.
-- Independent result: healthy production rehearsal, deliberate failure, restored prior app release, and evidence-gated autodeploy enablement.
-- Verification: public synthetic map/API/release identity, persistence sentinel, unhealthy timeout/rollback, existing-workload inventory diff, no Alembic downgrade.
+[E7-T10](proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) will execute DNS/ACME/listener cutover and capture live evidence after D-009. It is deliberately absent from `task_sequence`: unresolved deferred decisions prohibit promotion or executable planning. The intended branch stacks on E7-T9 only after the gate is resolved.
 
 ## Architecture and release invariants
 
-- `wef-production` is the only Compose project targeted; Caddy alone publishes configured port 3100.
-- Web/API/PostGIS use internal networking. Persistent database/media/Caddy/release/config state remains under `/home/nuc/wef`.
-- GitHub builds exact source SHAs; production consumes explicit image digests. The server never builds source.
-- Complete config is reconstructed from Actions variables/secrets each deploy, validated, transferred to a temporary 0600 release directory, and atomically activated.
-- One host `flock` and one Actions concurrency group serialize releases.
-- Migration runs before app replacement and must remain backward-compatible with the retained previous app. Rollback switches application manifests only and never automatically downgrades data.
-- Synthetic production seed is permitted only through an explicit rehearsal flag added within E7-T1; normal production remains fail-closed.
+- `wef-shared-edge` is a dedicated Compose project/path and lifecycle; ordinary `wef-production` deploys neither recreate nor remove it.
+- The edge owns target host ports 80/443, generated Nginx configuration, ACME webroot, bounded logs, and complete persistent `/etc/letsencrypt` state.
+- E7-T8/E7-T9 use fixtures and temporary local networks only. They do not bind production ports, issue public certificates, change router rules, or stop current listeners.
+- Nginx starts in an HTTP-only bootstrap configuration for ACME. TLS server blocks activate only after required certificate files exist and `nginx -t` passes.
+- WEF attaches to an explicitly managed external edge network through a cutover release variant; its web/API/media upstreams remain unpublished.
+- AI Forecast remains owned by its existing project. The edge reaches its retained host listener through an explicit host-gateway upstream and never joins, recreates, or edits its project.
+- Every generated edge release has immutable current/previous pointers. Activation validates files and upstreams before switching; rollback restores the previous validated config and listener state.
+- Certbot uses saved webroot renewal settings, a persistent state tree, and a deploy hook that validates Nginx before graceful reload. The renewal dry run also exercises the hook explicitly.
 
 ## Security, privacy, and non-interference
 
 - Interim HTTP serves anonymous synthetic data only. No account/session/contact/source/Telegram secret reaches it.
 - SSH known-host material and private key stay in GitHub secrets; strict checking is mandatory.
-- Workflows use minimum permissions and pinned third-party action commits. PR-originated code cannot receive deploy secrets or run SSH.
-- No deploy command uses global prune, generic container names, `down -v`, or a path outside `/home/nuc/wef`.
-- Existing AI Forecast, DuckDNS, WireGuard containers/networks/volumes/listeners are inventoried but never reconfigured.
+- Fixture hostnames use reserved `.test` names and synthetic certificates. Production hostnames, ACME account data, private keys, and generated environment files never enter Git, CI logs, artifacts, or image layers.
+- Nginx runs non-root with a read-only root filesystem, minimal writable tmp/log paths, dropped capabilities except the reviewed bind capability, and read-only configuration/certificate mounts.
+- No edge command uses global prune, generic container names, `down -v`, or a path owned by an application project.
+- Existing AI Forecast, DuckDNS, WireGuard, WEF persistence, and unrelated containers/networks/volumes/listeners are inventoried but never reconfigured by E7-T8/E7-T9.
 
 ## Test and verification strategy
 
-- Repository: format/lint/type/tests/contracts/build/audits, actionlint, Markdown links, Compose render, source/secret/image exclusions.
-- Release model: config schema/negative fixtures, immutable-digest/port/network/path/static shell policies, temporary release-state integration harness.
-- Host: before/after inventory, port/capacity/permission preflight, remote Compose render, existing service health.
-- Delivery: event/origin/enable/manual-SHA gate matrix, full local release command equivalence, hosted GHCR/digest/SSH evidence when B-006 permits.
-- Rollback: known healthy release, deliberately unhealthy app release, bounded failure, previous manifest restoration, persistence and existing-workload verification.
+- Repository: Markdown links, format/lint/type/tests/contracts/build/audits, Compose render, shell syntax/shellcheck, pinned images, and source/secret/image exclusions.
+- Edge topology: positive/negative config fixtures, `nginx -t`, HTTP-01 path, distinct host routing, proxy headers, health checks, read-only mounts, capability/log limits, and persistent Certbot paths.
+- Certificate lifecycle: non-interactive webroot command rendering, staging/dry-run behavior, success-only deploy hook, explicit dry-run hook execution, invalid-config refusal, and graceful reload.
+- Cutover model: current/previous atomic pointers, occupied-port and unavailable-upstream aborts, independent WEF/AI Forecast smokes, redirect staging, previous-config restoration, and retained application listeners.
+- Non-interference: exact before/after project/container/image/network/volume/listener/health comparison plus WEF database/media/release sentinel preservation.
 
 ## Rollout and rollback
 
-Land each task as a stacked PR. Keep `AUTO_DEPLOY_ENABLED=false`. E7-T2 may prepare the WEF boundary before GHCR is available but does not claim a running release. E7-T3 may run manual dispatch only after hosted Actions starts. E7-T4 alone may enable automatic main deployment after both healthy and unhealthy rollback rehearsals pass. On any failure, leave auto deploy false, preserve WEF data, and modify no non-WEF resource.
+Land E7-T8 and E7-T9 as direct stacked PRs after this documentation PR, waiting for green CI and triaged comments before creating each child. They produce inert artifacts and local evidence only. Keep Caddy/3100 and AI Forecast/3000 active in production.
+
+After D-009 resolves, promote E7-T10 and approve a plan revision for the live sequence: inventory, start HTTP-only Nginx, prove ACME staging, issue both certificates, validate/activate HTTPS, smoke each host independently, move WEF, move AI Forecast forwarding, enable redirects, rehearse renewal/reload and rollback, then remove public application-port forwarding. Any failure restores the previous validated edge config and listener/forwarding state without deleting application or certificate data.
 
 ## Risks and mitigations
 
-- **Hosted jobs never start:** keep B-006 active, locally validate artifacts, do not enable auto deploy or claim operational delivery.
-- **Port/path/project collision:** fail preflight before Compose pull/up; explicit project/path/port checks.
+- **Bootstrap certificate cycle:** use a separately valid HTTP-only ACME configuration and activate TLS only after certificate files exist.
+- **Port/path/project collision:** fail preflight before edge startup; explicitly check 80/443, dedicated paths/project, and external network ownership.
 - **Secret leak through generated config/logs:** no shell tracing, mode-0600 temporary transfer, static log/artifact tests, atomic activation and cleanup.
-- **Migration breaks rollback:** expand-compatible migrations only, previous-app compatibility test, no automatic downgrade.
-- **Unhealthy replacement causes outage:** pull first, retain manifest/images/config, bounded health timeout and automatic app rollback.
+- **One bad route takes down both applications:** validate config, probe both upstreams independently, retain old workers/listeners, and rollback on either failed smoke.
+- **Certbot renews but Nginx keeps the old certificate:** success-only deploy hook performs `nginx -t` plus graceful reload; external expiry/serial checks remain E7-T10 evidence.
+- **AI Forecast ownership leak:** proxy only to its retained host listener and compare its project resources before/after; never run Compose commands in its project.
 - **Shared-host pressure:** conservative CPU/memory/log limits and abort thresholds; no historical import in this sequence.
-- **Plain HTTP exposes sensitive behavior:** sensitive routes/features remain absent until the separately approved E7-T8 Nginx HTTPS migration and E7-T7 enablement; both remain outside this plan revision.
+- **Plain HTTP exposes sensitive behavior:** sensitive routes/features remain absent until E7-T10 verifies Nginx HTTPS and E7-T7 enables them.
 
 ## Invalidation triggers
 
-Return to the spike for a different host/orchestrator/registry, self-hosted runner, sensitive HTTP scope, destructive migration/restore policy, shared project/port, or new external paid service. Return to this plan for material task order, config source, health contract, release gate, or rollback changes.
+Return to the spike for a different proxy/certificate authority, DNS-01 credentials/plugin, one-host path-prefix routing, shared application ownership, sensitive HTTP scope, or a new paid service. Return to this plan for material task order, edge path/network/upstream design, health contract, activation gate, or rollback changes.
 
 ## Approval checklist
 
-- [x] E7 spike revision 2 is explicitly approved/current.
-- [x] E7-T1 through E7-T4 revision 2 are promoted with complete acceptance/traceability.
+- [x] E7 spike revision 3 is explicitly approved/current.
+- [x] E7-T8 revision 2 and E7-T9 revision 1 are promoted with complete acceptance/traceability.
 - [x] Dependencies are acyclic and enforceable through ordered stack ancestry.
 - [x] Topology, host boundary, workflow gates, tests, migration compatibility, risks, rollout, and rollback are explicit.
-- [x] D-001 is resolved for the anonymous rehearsal; B-006 is an evidence blocker, not silently waived.
-- [x] E7-T5/T6/T7 remain deferred/proposed and absent from the executable sequence.
-- [x] No implementation code was written before revision 2 approval.
-- [x] Revision 2 records the delegated owner approval.
+- [x] D-009 remains attached to proposed E7-T10 and is not silently waived.
+- [x] E7-T5 remains deferred; E7-T6/T7/T10 remain proposed and absent from the executable sequence.
+- [x] No E7-T8/E7-T9 implementation code was written before revision 3 approval.
+- [x] Revision 3 records the owner's accepted attached plan.
 
 ## Owner decision
 
-Flippylolz approved revision 2 through the delegated overnight MVP/autodeploy directive. E7-T1 through E7-T4 still start in order on dedicated stacked branches; B-006, hosted evidence, and server non-interference remain mandatory completion gates.
+Flippylolz approved revision 3 by accepting the attached E7 Shared TLS Stack plan and selecting E7-T8 topology, E7-T9 automation, and E7-T10 live rollout as separate task branches. Revision 3 authorizes only E7-T8/E7-T9; D-009 resolution and a later approved plan revision remain mandatory before E7-T10.
