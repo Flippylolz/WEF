@@ -18,10 +18,10 @@ deterministic extraction from the raw Telegram export with reconciled dry-run re
 ## Approval state
 
 - Epic workspace status: `ready`.
-- [Spike](SPIKE.md): `approved`, revision 2, owner-approved research; it permits promotion/planning only, no code.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing promoted E2-T1 only.
+- [Spike](SPIKE.md): `approved`, revision 3, including the complete parser/report/audit boundary and internal raw-data policy.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, sequencing promoted E2-T2 through E2-T5.
 - E2-T1 is promoted/`done` through [PR #33](https://github.com/Flippylolz/WEF/pull/33), with aggregate-only source acceptance and required CI evidence.
-- Every remaining file in `proposed-tasks/` is non-actionable.
+- E2-T2 is `ready`; E2-T3 through E2-T5 are promoted/`draft` and dependency-blocked.
 
 ## Milestones
 
@@ -42,16 +42,13 @@ deterministic extraction from the raw Telegram export with reconciled dry-run re
 - [ADR-007](../../decisions/adr/ADR-007-mounted-media-storage-interface.md)
 - [ADR-012](../../decisions/adr/ADR-012-backend-centric-modular-monolith.md)
 
-## Promoted task
+## Promoted tasks
 
 - [E2-T1: Implement source adapter and fixture corpus](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md) — `done`, P0/M, M1
-
-## Proposed tasks
-
-- [E2-T2: Implement candidate detection and typed extractors](proposed-tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md) — `proposed`, P0/L, M1
-- [E2-T3: Implement media grouping](proposed-tasks/E2-T3-implement-media-grouping.md) — `proposed`, P0/M, M2
-- [E2-T4: Implement dry-run reports](proposed-tasks/E2-T4-implement-dry-run-reports.md) — `proposed`, P0/M, M2
-- [E2-T5: Audit the complete export](proposed-tasks/E2-T5-audit-the-complete-export.md) — `proposed`, P0/L, M2
+- [E2-T2: Implement candidate detection and typed extractors](tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md) — `ready`, P0/L, M1
+- [E2-T3: Implement deterministic media grouping](tasks/E2-T3-implement-media-grouping.md) — `draft`, P0/M, M2
+- [E2-T4: Implement dry-run reports and operator wiring](tasks/E2-T4-implement-dry-run-reports.md) — `draft`, P0/M, M2
+- [E2-T5: Audit the complete export](tasks/E2-T5-audit-the-complete-export.md) — `draft`, P0/L, M2
 
 ## Cross-epic dependencies
 
@@ -62,7 +59,7 @@ deterministic extraction from the raw Telegram export with reconciled dry-run re
 - Outgoing: E3-T5 depends on E2-T5.
 - Outgoing: E6-T5 depends on E2-T2.
 
-The exact normalized dependency and traceability registry is maintained in the [epics index](../README.md). Each workflow candidate is authoritative only in the single linked `proposed-tasks/` file above; its `legacy-roadmap:*` source value records non-path provenance.
+The exact normalized dependency and traceability registry is maintained in the [epics index](../README.md). Each promoted workflow task is authoritative only in the single linked `tasks/` file above; its promotion metadata records the original roadmap-candidate provenance.
 
 ## Lifecycle
 

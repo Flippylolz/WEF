@@ -51,7 +51,7 @@ The following definition preserves the original E3-T5 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E2-T5](../../E2-historical-export-parser-audit/proposed-tasks/E2-T5-audit-the-complete-export.md), [E3-T2](E3-T2-implement-idempotent-persistence-and-reprocessing.md), [E3-T3](E3-T3-implement-geocoder-abstraction-and-cache.md), [E3-T4](E3-T4-implement-media-storage-and-derivatives.md)
+- Task dependencies: [E2-T5](../../E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md), [E3-T2](E3-T2-implement-idempotent-persistence-and-reprocessing.md), [E3-T3](E3-T3-implement-geocoder-abstraction-and-cache.md), [E3-T4](E3-T4-implement-media-storage-and-derivatives.md)
 - Milestone: [M2](../../../milestones/M2-historical-dataset-ready.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Data](../../../data/README.md), [Contracts](../../../contracts/README.md), [Ingestion](../../../ingestion/README.md), [Security](../../../security/README.md).
 

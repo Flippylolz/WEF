@@ -49,7 +49,7 @@ Simple reproducible sanity counters find:
 - 1,093 messages containing the token `Локализация`.
 - 1,135 messages containing `Покупка |` without `Локализация`.
 
-Those token groups are not equivalent to development and unit offers: templates overlap, drift, and include non-candidate context. The versioned detector in [E2-T2](../epics/E2-historical-export-parser-audit/proposed-tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md) must define exact reason codes; [E2-T5](../epics/E2-historical-export-parser-audit/proposed-tasks/E2-T5-audit-the-complete-export.md) then publishes the authoritative count and split for that parser version.
+Those token groups are not equivalent to development and unit offers: templates overlap, drift, and include non-candidate context. The versioned detector in [E2-T2](../epics/E2-historical-export-parser-audit/tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md) must define exact reason codes; [E2-T5](../epics/E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md) then publishes the authoritative count and split for that parser version.
 
 Common parseable fields include:
 
