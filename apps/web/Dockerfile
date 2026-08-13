@@ -33,6 +33,9 @@ CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
 
 FROM dependencies AS build
 
+ARG NEXT_PUBLIC_MAP_STYLE_URL=https://tiles.openfreemap.org/styles/liberty
+ENV NEXT_PUBLIC_MAP_STYLE_URL=${NEXT_PUBLIC_MAP_STYLE_URL}
+
 COPY . .
 
 RUN mkdir -p apps/web/public \

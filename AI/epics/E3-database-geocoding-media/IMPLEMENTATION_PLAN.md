@@ -1,19 +1,21 @@
 ---
 schema: ai-workflow/implementation-plan@1
 epic: E3
-title: "Database, geocoding, and media pipeline implementation plan"
-status: draft
-revision: 1
+title: "M1 schema, migration, and deterministic seed plan"
+status: approved
+revision: 2
 owner: owner
-spike_revision: null
-task_sequence: []
+spike_revision: 2
+task_sequence:
+  - id: E3-T1
+    revision: 2
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-12T22:34:40Z"
+  approved_revision: 2
+  evidence: "Owner directive to prepare the MVP/autodeploy, choose safe defaults, log decisions/blockers, and continue stacking PRs"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -21,50 +23,74 @@ invalidation:
   return_to: null
 ---
 
-# Implementation Plan: Database, geocoding, and media pipeline
+# Implementation Plan: M1 schema, migration, and deterministic seed
 
-## Blocked state
+## Approved spike baseline
 
-This artifact is deliberately blocked and incomplete. It cannot be completed, changed to `awaiting_approval`, or approved until [SPIKE.md](SPIKE.md) is explicitly owner-approved for its current revision and approved candidates have been moved—not copied—from `proposed-tasks/` to `tasks/` with valid promotion metadata.
+[E3 spike revision 2](SPIKE.md) approves only the persisted M1 map boundary. It keeps historical source/revision persistence, provider geocoding, media, contacts, and full import proposed.
 
-No proposed task is an executable sequence entry. `spike_revision` remains `null`, `task_sequence` remains empty, approval is pending, and no implementation is authorized.
+## Scope and outcome
 
-## Intended scope and outcome
-
-If the spike and promoted scope are later approved, this plan must preserve the epic outcome:
-
-> idempotent canonical data and web-safe media with reviewed map coordinates.
-
-The approved spike will determine binding inclusions, exclusions, architecture/contract constraints, and any changed task boundaries.
+Deliver a clean-install/upgradeable PostGIS schema for canonical locations and dated offers plus an explicit idempotent synthetic seed. It becomes the E4 replacement source while the unmigrated E0 proof mapping remains temporarily isolated until E4-T1 removes its route/model.
 
 ## Ordered task sequence
 
-Blocked: there are no promoted tasks. Files under `proposed-tasks/` are planning inputs only and cannot be listed here as executable work.
+### 1. E3-T1 — Create M1 schema, migrations, and deterministic seed
 
-## Required planning after spike approval
+- Task: [E3-T1 revision 2](tasks/E3-T1-create-schema-and-migrations.md).
+- Dependency: E1-T3 is the direct ancestor [PR #9](https://github.com/Flippylolz/WEF/pull/9).
+- Independent result: schema/migration/seed can be verified through PostgreSQL and Compose before any public map contract changes.
+- Affected code: Alembic environment/migration, persistence mappings, readiness, operator command, Compose migration/seed services, tests.
+- Verification: clean/repeated upgrade, prior-proof upgrade, seed replay, indexes/constraints/PostGIS, readiness, full repository suite.
 
-Before this plan may request owner approval, it must:
+## Cross-task architecture
 
-1. reference the owner-approved current spike revision;
-2. sequence only promoted `tasks/` definitions with their current revisions;
-3. explain independent review boundaries and dependency evidence for every task;
-4. document affected modules, public/persisted contracts, transaction and dependency direction;
-5. map acceptance to unit, integration, contract, migration, end-to-end, accessibility, security, build, and operational checks as applicable;
-6. specify data/migration compatibility, idempotency, release order, health checks, rollout, rollback, and recovery limits;
-7. resolve required deferred decisions and preserve accepted single-host/backup constraints; and
-8. enumerate concrete risks, mitigations, owners, and invalidation triggers.
+Infrastructure owns SQLAlchemy/Alembic mappings. Application/domain code owns enum/range/seed input semantics. Composition wires sessions; interfaces do not import ORM rows. E4 consumes narrow query ports rather than ORM entities and removes E0 proof persistence only after its replacement path passes.
+
+## Data and migrations
+
+- Implement only `locations` and `offers` fields required by M1; future migrations add lineage/media/auth tables.
+- Use stable synthetic UUIDs and upserts so replay converges.
+- The migration enables/verifies PostGIS, creates constraints/indexes, and writes no fixture rows.
+- Seeding is a separate explicit command guarded against production.
+- Migrations are forward-only; ordinary application rollback must remain schema compatible.
+
+## Security and privacy
+
+The fixture contains invented addresses/values only. It has no source text, phone, handle, raw payload, local path, media, session, provider response, or secret. Production never seeds automatically.
+
+## Test and verification strategy
+
+- Ruff/mypy/import-linter and unit tests for model/seed behavior.
+- Disposable PostGIS integration tests for upgrade, replay, constraints, indexes, coordinate order, and migration-head readiness.
+- Local Compose migration/seed/API smoke.
+- Existing OpenAPI/frontend/image checks remain unchanged until downstream tasks.
+
+## Operations, rollout, and rollback
+
+Local Compose gates API startup on successful migration. Production migration integration belongs to E7 and must run under the deploy lock before app activation. Before production, rollback is branch/container cleanup. After migration use, never auto-downgrade or imply database recovery.
+
+## Risks and mitigations
+
+- **Temporary proof model:** exclude it from Alembic and remove it in E4-T1 with replacement contract tests.
+- **Synthetic data mistaken for inventory:** stable synthetic labels and explicit operator-only command.
+- **Migration blocks API:** readiness checks revision compatibility and Compose logs one-shot migration failure.
+- **Future schema growth:** use additive forward revisions; do not prematurely add auth/media/source tables.
+
+## Invalidation triggers
+
+Return to the spike if M1 starts using real source/provider/media/auth data. Return to this plan if the approved model boundary remains but migration order, seed behavior, affected modules, or tests change materially.
 
 ## Approval checklist
 
-- [ ] The referenced spike revision has explicit owner approval and remains valid.
-- [ ] Every sequence entry is a promoted task with complete acceptance criteria and traceability.
-- [ ] Dependencies are complete, acyclic, and enforceable task by task.
-- [ ] Modules, contracts, tests, migrations, risks, rollout, and rollback are explicit.
-- [ ] Deferred decisions required for implementation are resolved.
-- [x] No proposed task appears as an executable sequence.
-- [x] No production or disposable proof code is authorized by this draft.
-- [ ] Status is `awaiting_approval` and approval remains `pending`.
+- [x] E3 spike revision 2 is explicitly approved and current.
+- [x] E3-T1 revision 2 is promoted with complete acceptance/traceability.
+- [x] E1-T3 ancestry is recorded and acyclic.
+- [x] Models, migration, tests, seed safety, rollout, and rollback limits are explicit.
+- [x] D-002 and full ingestion/media/auth do not gate this synthetic-only boundary.
+- [x] No implementation code was written before this plan approval.
+- [x] Revision 2 records the approved plan.
 
 ## Owner decision
 
-There is nothing to approve yet. After the spike and promotion gates are satisfied and this artifact is materially completed, the owner may decide only the recorded current revision. Individual task dependency, state, and one-branch-per-task gates would still apply.
+Flippylolz approved revision 2 through the delegated overnight MVP/autodeploy directive. It authorizes E3-T1 only after its dedicated branch/start gate; it does not authorize real-source ingestion, network geocoding, media, contacts, auth, or destructive production changes.

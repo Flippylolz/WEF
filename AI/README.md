@@ -55,7 +55,7 @@ Work proceeds in this order:
 4. Refine proposed tasks and promote approved candidates inside that epic.
 5. Complete the epic implementation plan.
 6. Record explicit owner approval of the current implementation-plan revision.
-7. Implement code task by task, using one branch per task and only after every dependency is done.
+7. Implement code task by task using one branch/PR per task, after dependencies are done or recorded as direct ordered stack ancestors under ADR-018.
 
 No production code or disposable proof code is allowed before implementation-plan approval. Files under `proposed-tasks/` are non-actionable.
 
