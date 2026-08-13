@@ -59,7 +59,11 @@ if [ -n "$headers" ]; then
   if [ "$WEF_RELEASE_SHA" = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" ]; then
     marker=unhealthy
   fi
-  printf 'HTTP/1.1 200 OK\\r\\nX-WEF-Release: %s\\r\\n\\r\\n' "$marker" > "$headers"
+  {
+    printf 'HTTP/1.1 200 OK\\r\\n'
+    printf 'Content-Type: application/javascript\\r\\n'
+    printf 'X-WEF-Release: %s\\r\\n\\r\\n' "$marker"
+  } > "$headers"
 fi
 if [ "$output" = "/dev/null" ] || [ -z "$output" ]; then
   exit 0
@@ -111,6 +115,12 @@ payload = {"type": "FeatureCollection", "features": [feature] * 18}
 with open(sys.argv[1], "w", encoding="utf-8") as output_file:
     json.dump(payload, output_file)
 PY
+    ;;
+  */vendor/maplibre/maplibre-gl-worker.mjs)
+    printf '%s\\n' 'import "./maplibre-gl-shared.mjs";' > "$output"
+    ;;
+  */vendor/maplibre/maplibre-gl-shared.mjs)
+    printf '%s\\n' 'export {};' > "$output"
     ;;
   https://tiles.openfreemap.org/styles/liberty)
     printf '%s\\n' '{"version":8,"sources":{"openmaptiles":{}},"layers":[{}]}' > "$output"

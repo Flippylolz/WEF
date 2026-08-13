@@ -89,6 +89,31 @@ assert all(
 )
 PY
 
+printf 'Smoke: MapLibre module worker...\n'
+curl_safe --fail --silent --show-error \
+  --dump-header "$tmp_dir/maplibre-worker.headers" \
+  --output "$tmp_dir/maplibre-worker.mjs" \
+  "$base_url/vendor/maplibre/maplibre-gl-worker.mjs"
+curl_safe --fail --silent --show-error \
+  --output "$tmp_dir/maplibre-shared.mjs" \
+  "$base_url/vendor/maplibre/maplibre-gl-shared.mjs"
+python3 - \
+  "$tmp_dir/maplibre-worker.headers" \
+  "$tmp_dir/maplibre-worker.mjs" \
+  "$tmp_dir/maplibre-shared.mjs" <<'PY'
+import sys
+from pathlib import Path
+
+headers = Path(sys.argv[1]).read_text(encoding="utf-8").casefold()
+worker = Path(sys.argv[2]).read_text(encoding="utf-8")
+shared = Path(sys.argv[3]).read_text(encoding="utf-8")
+assert "content-type:" in headers and "javascript" in headers
+assert "maplibre-gl-shared.mjs" in worker
+assert "<!doctype html" not in worker.casefold()
+assert "<!doctype html" not in shared.casefold()
+assert "export" in shared
+PY
+
 printf 'Smoke: filter facets...\n'
 curl_safe --fail --silent --show-error \
   --output "$tmp_dir/facets.json" \
