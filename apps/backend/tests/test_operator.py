@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from wef_backend import operator
+from wef_backend.features.ingestion.application import PARSER_VERSION, REPORT_VERSION
 from wef_backend.features.ingestion.domain import (
     CountBucket,
     DryRunCounts,
@@ -250,8 +251,8 @@ def _report(
     )
 
     return DryRunReport(
-        report_version="e2-report-v1",
-        parser_version="e2-v1",
+        report_version=REPORT_VERSION,
+        parser_version=PARSER_VERSION,
         grouping_version="e2-media-v1",
         terminal_status=status,
         error_code=error,
@@ -267,9 +268,13 @@ def _report(
         ),
         source_classifications=(CountBucket("text", 1),) if records else (),
         candidate_reasons=(),
+        candidate_score_buckets=(CountBucket("score_0", 1),) if records else (),
+        candidate_score_combinations=(CountBucket("none", 1),) if records else (),
+        candidate_boundaries=((CountBucket("non_candidate_below_boundary", 1),) if records else ()),
         content_types=(),
         extracted_fields=(),
         warning_codes=(),
+        warning_splits=(),
         media_rules=(),
         unassociated_media_reasons=(),
         timings=(StageTiming("total", 0),),

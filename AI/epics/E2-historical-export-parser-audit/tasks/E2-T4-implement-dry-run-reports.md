@@ -78,7 +78,8 @@ Compose source scanning, extraction, and media grouping into a bounded read-only
 - Write deterministic JSON plus Markdown using atomic same-directory replacement.
 - Report source checksum/file size/date range, parser/report versions, candidate/rule/extraction/media/reason buckets, stage timings, and terminal state.
 - Exclude or mask full text, contacts, source payloads, internal paths, and private samples from logs/reports.
-- Add bounded operator wiring configured with source path, expected identity, parser version, and ignored report destination.
+- Add bounded operator wiring configured with source path, expected identity, and
+  ignored report destination; derive parser identity from the executable rules.
 
 ## Out of scope
 

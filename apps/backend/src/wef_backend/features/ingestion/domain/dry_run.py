@@ -145,9 +145,13 @@ class DryRunReport:
     counts: DryRunCounts
     source_classifications: tuple[CountBucket, ...]
     candidate_reasons: tuple[CountBucket, ...]
+    candidate_score_buckets: tuple[CountBucket, ...]
+    candidate_score_combinations: tuple[CountBucket, ...]
+    candidate_boundaries: tuple[CountBucket, ...]
     content_types: tuple[CountBucket, ...]
     extracted_fields: tuple[CountBucket, ...]
     warning_codes: tuple[CountBucket, ...]
+    warning_splits: tuple[CountBucket, ...]
     media_rules: tuple[CountBucket, ...]
     unassociated_media_reasons: tuple[CountBucket, ...]
     timings: tuple[StageTiming, ...]
@@ -176,9 +180,11 @@ class DryRunReport:
         if self.terminal_status is DryRunTerminalStatus.EMPTY and self.counts.records_total != 0:
             message = "empty report cannot contain source records"
             raise ValueError(message)
+        _validate_unique_bucket_names(self)
         if sum(bucket.count for bucket in self.source_classifications) != self.counts.records_total:
             message = "source classification buckets must reconcile to input"
             raise ValueError(message)
+        _validate_audit_buckets(self)
 
     @property
     def is_complete(self) -> bool:
@@ -187,3 +193,47 @@ class DryRunReport:
             DryRunTerminalStatus.SUCCEEDED,
             DryRunTerminalStatus.EMPTY,
         }
+
+
+def _validate_unique_bucket_names(report: DryRunReport) -> None:
+    bucket_groups = (
+        ("source_classifications", report.source_classifications),
+        ("candidate_reasons", report.candidate_reasons),
+        ("candidate_score_buckets", report.candidate_score_buckets),
+        ("candidate_score_combinations", report.candidate_score_combinations),
+        ("candidate_boundaries", report.candidate_boundaries),
+        ("content_types", report.content_types),
+        ("extracted_fields", report.extracted_fields),
+        ("warning_codes", report.warning_codes),
+        ("warning_splits", report.warning_splits),
+        ("media_rules", report.media_rules),
+        ("unassociated_media_reasons", report.unassociated_media_reasons),
+    )
+    for field_name, buckets in bucket_groups:
+        names = tuple(bucket.name for bucket in buckets)
+        if len(names) != len(set(names)):
+            message = f"{field_name} bucket names must be unique"
+            raise ValueError(message)
+
+
+def _validate_audit_buckets(report: DryRunReport) -> None:
+    if sum(bucket.count for bucket in report.candidate_score_buckets) != (
+        report.counts.messages_evaluated
+    ):
+        message = "candidate score buckets must reconcile to evaluated messages"
+        raise ValueError(message)
+    if sum(bucket.count for bucket in report.candidate_score_combinations) != (
+        report.counts.messages_evaluated
+    ):
+        message = "candidate combinations must reconcile to evaluated messages"
+        raise ValueError(message)
+    if sum(bucket.count for bucket in report.candidate_boundaries) != (
+        report.counts.messages_evaluated
+    ):
+        message = "candidate boundaries must reconcile to evaluated messages"
+        raise ValueError(message)
+    if sum(bucket.count for bucket in report.warning_codes) != sum(
+        bucket.count for bucket in report.warning_splits
+    ):
+        message = "warning splits must reconcile to warning codes"
+        raise ValueError(message)

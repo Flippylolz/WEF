@@ -41,7 +41,7 @@ if TYPE_CHECKING:
         SourceMetadata,
     )
 
-REPORT_VERSION = "e2-report-v1"
+REPORT_VERSION = "e2-report-v2"
 _EXTRACTED_SCALAR_FIELDS = (
     "content_type",
     "market_type",
@@ -80,9 +80,13 @@ class _MutableRun:
     grouping_seconds: float = 0.0
     source_classifications: Counter[str] = field(default_factory=Counter)
     candidate_reasons: Counter[str] = field(default_factory=Counter)
+    candidate_score_buckets: Counter[str] = field(default_factory=Counter)
+    candidate_score_combinations: Counter[str] = field(default_factory=Counter)
+    candidate_boundaries: Counter[str] = field(default_factory=Counter)
     content_types: Counter[str] = field(default_factory=Counter)
     extracted_fields: Counter[str] = field(default_factory=Counter)
     warning_codes: Counter[str] = field(default_factory=Counter)
+    warning_splits: Counter[str] = field(default_factory=Counter)
     media_rules: Counter[str] = field(default_factory=Counter)
     unassociated_media_reasons: Counter[str] = field(default_factory=Counter)
 
@@ -99,6 +103,7 @@ class _MutableRun:
             self.published_to = published_at
 
     def add_extraction(self, result: ExtractionResult) -> None:
+        self._add_candidate_evidence(result)
         if result.decision.is_candidate:
             self.candidates += 1
         else:
@@ -116,12 +121,27 @@ class _MutableRun:
         self.extracted_fields["contact"] += len(result.listing.contacts)
         for warning in result.warnings:
             self.warning_codes[warning.code.value] += 1
+            self.warning_splits[f"{warning.code.value}:{warning.field_name}"] += 1
+
+    def _add_candidate_evidence(self, result: ExtractionResult) -> None:
+        decision = result.decision
+        self.candidate_score_buckets[f"score_{decision.score}"] += 1
+        combination = "+".join(sorted(signal.reason.value for signal in decision.signals))
+        self.candidate_score_combinations[combination or "none"] += 1
+        if decision.score == decision.threshold:
+            boundary = "candidate_at_threshold"
+        elif decision.score > decision.threshold:
+            boundary = "candidate_above_threshold"
+        elif decision.score == decision.threshold - 1:
+            boundary = "non_candidate_one_below_threshold"
+        else:
+            boundary = "non_candidate_below_boundary"
+        self.candidate_boundaries[boundary] += 1
 
 
 def run_dry_run(
     source: HistoricalSourcePort,
     *,
-    parser_version: str = PARSER_VERSION,
     grouping_version: str = GROUPING_VERSION,
     cancel_requested: Callable[[], bool] | None = None,
     monotonic: Callable[[], float] = time.monotonic,
@@ -143,7 +163,6 @@ def run_dry_run(
                 _grouping_inputs(
                     scan,
                     mutable,
-                    parser_version,
                     cancel,
                     monotonic,
                 ),
@@ -198,7 +217,6 @@ def run_dry_run(
         source_checksum,
         terminal_status,
         error_code,
-        parser_version,
         grouping_version,
         total_seconds=monotonic() - started,
     )
@@ -207,7 +225,6 @@ def run_dry_run(
 def _grouping_inputs(
     scan: HistoricalSourceScan,
     mutable: _MutableRun,
-    parser_version: str,
     cancel_requested: Callable[[], bool],
     monotonic: Callable[[], float],
 ) -> Iterator[GroupingInput]:
@@ -225,7 +242,7 @@ def _grouping_inputs(
         if record.message is None:
             continue
         stage_started = monotonic()
-        extraction = extract_listing(record.message, parser_version=parser_version)
+        extraction = extract_listing(record.message)
         mutable.extraction_seconds += monotonic() - stage_started
         mutable.add_extraction(extraction)
         yield GroupingInput(message=record.message, candidate=extraction.decision)
@@ -237,7 +254,6 @@ def _report(  # noqa: PLR0913, PLR0917
     source_checksum: str | None,
     terminal_status: DryRunTerminalStatus,
     error_code: DryRunErrorCode | None,
-    parser_version: str,
     grouping_version: str,
     *,
     total_seconds: float,
@@ -257,7 +273,7 @@ def _report(  # noqa: PLR0913, PLR0917
     )
     return DryRunReport(
         report_version=REPORT_VERSION,
-        parser_version=parser_version,
+        parser_version=PARSER_VERSION,
         grouping_version=grouping_version,
         terminal_status=terminal_status,
         error_code=error_code,
@@ -273,9 +289,13 @@ def _report(  # noqa: PLR0913, PLR0917
         ),
         source_classifications=_buckets(mutable.source_classifications),
         candidate_reasons=_buckets(mutable.candidate_reasons),
+        candidate_score_buckets=_buckets(mutable.candidate_score_buckets),
+        candidate_score_combinations=_buckets(mutable.candidate_score_combinations),
+        candidate_boundaries=_buckets(mutable.candidate_boundaries),
         content_types=_buckets(mutable.content_types),
         extracted_fields=_buckets(mutable.extracted_fields),
         warning_codes=_buckets(mutable.warning_codes),
+        warning_splits=_buckets(mutable.warning_splits),
         media_rules=_buckets(mutable.media_rules),
         unassociated_media_reasons=_buckets(mutable.unassociated_media_reasons),
         timings=(

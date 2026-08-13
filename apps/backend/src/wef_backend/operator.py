@@ -110,7 +110,6 @@ def run_operator(
         )
         report = run_dry_run(
             adapter,
-            parser_version=settings.ingestion_parser_version,
             grouping_version=GROUPING_VERSION,
             cancel_requested=cancel_requested,
         )

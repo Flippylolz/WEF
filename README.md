@@ -59,7 +59,12 @@ This describes the current local/rehearsal implementation. [ADR-020](AI/decision
 
 Open `http://127.0.0.1:3100/` after seeding. The public map style defaults to keyless OpenFreeMap and can be replaced at image-build time with `NEXT_PUBLIC_MAP_STYLE_URL`; OpenFreeMap/OpenStreetMap attribution remains visible in the map shell.
 
-`make importer-dry-run` starts the operator profile, confirms that `WEF_SOURCE_DIR` is mounted read-only, streams the configured historical export through the E2 parser, and atomically writes aggregate JSON/Markdown reports below the configured ignored report destination. It prints only terminal status/counts and performs no database/geocode/media write, media copy, or network request.
+`make importer-dry-run` starts the operator profile, confirms that
+`WEF_SOURCE_DIR` is mounted read-only, streams the configured historical export
+through the rule-bound E2 parser, and atomically writes detailed JSON/Markdown
+reports plus privacy-safe aggregate audit evidence below the configured ignored
+report destination. It prints only terminal status/counts and performs no
+database/geocode/media write, media copy, or network request.
 
 The inert production model is separate from local Compose:
 

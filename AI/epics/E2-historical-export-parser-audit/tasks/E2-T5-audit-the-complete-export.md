@@ -4,7 +4,7 @@ id: E2-T5
 epic: E2
 title: "Audit the complete export"
 status: done
-revision: 2
+revision: 3
 priority: P0
 size: L
 milestone: M2
@@ -46,10 +46,10 @@ completion:
   completed_at: "2026-08-13T20:03:40Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/42"
   evidence:
-    - "Complete read-only e2-v2 audit succeeded: approved 21,634,277-byte source and SHA-256 verified; 27,082 records, 2,991 candidates plus 24,091 non-candidates, and 27,147 media descriptors fully reconciled"
-    - "Material source-template gaps were fixed with sanitized regression cases: apartment price 2,049 to 2,881, room extraction 72 to 2,418, and invalid-range warnings 988 to 6; two post-fix runs had identical non-timing reports"
-    - "Local gates passed: frozen install, format, Ruff, import-linter, strict mypy/TypeScript, branch-coverage backend/frontend tests, contracts/docs, Compose, production proofs, and backend/frontend runtime image builds"
-    - "Initial PR https://github.com/Flippylolz/WEF/pull/42 CI run 31738741521 passed Backend, Frontend and contract, Repository safety, and Runtime images before completion evidence was recorded"
+    - "Merged PR https://github.com/Flippylolz/WEF/pull/42 recorded the complete read-only e2-v2 audit: approved source identity verified; 27,082 records, 2,991 candidates plus 24,091 non-candidates, and 27,147 media descriptors reconciled"
+    - "Merged PR https://github.com/Flippylolz/WEF/pull/42 recorded sanitized source-template regressions and two matching normalized e2-v2 reports; these are historical PR evidence, not a reproduced e2-v3 audit"
+    - "Merged PR https://github.com/Flippylolz/WEF/pull/42 recorded local quality gates and CI run https://github.com/Flippylolz/WEF/actions/runs/31738741521 as passing before merge"
+    - "Post-merge independent review found correctness gaps; the linked corrective follow-up records rule-bound e2-v3 changes, two reconciled complete runs, and matching normalized evidence"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -81,14 +81,20 @@ Produce reproducible, non-sensitive evidence that the approved parser accounts f
 
 ## Acceptance criteria
 
-- [ ] Approved source size and SHA-256 are verified before accepting audit results.
-- [ ] All 27,082 records reconcile through source, candidate, extraction, and media stages with no unexplained count gap.
-- [ ] Candidate/rule/template/conflict/unassociated-media categories are reviewed with documented uncertainty.
-- [ ] Differences from exploratory candidate/token counters are explained.
-- [ ] Material fixes are deterministic, versioned, covered by sanitized fixtures, and followed by a complete rerun.
-- [ ] `AUDIT.md` contains only aggregate/non-sensitive evidence and reproducibility commands.
-- [ ] Detailed reports/raw samples/media/contacts remain outside Git, CI, and routine logs.
-- [ ] Epic completion is recorded only after local audit evidence and all final required CI jobs pass.
+- [x] Approved source size and SHA-256 are verified before accepting audit results.
+- [x] All 27,082 records reconcile through source, candidate, extraction, and media stages with no unexplained count gap.
+- [x] Candidate/rule/template/conflict/unassociated-media categories are reviewed with documented uncertainty.
+- [x] Differences from exploratory candidate/token counters are explained.
+- [x] Material fixes are deterministic, versioned, covered by sanitized fixtures, and followed by a complete rerun.
+- [x] `AUDIT.md` contains only aggregate/non-sensitive evidence and reproducibility commands.
+- [x] Detailed reports/raw samples/media/contacts remain outside Git, CI, and routine logs.
+- [x] Epic completion is recorded only after local audit evidence and all final required CI jobs pass.
+
+These checkboxes describe the historical `e2-v2` acceptance recorded by merged
+[PR #42](https://github.com/Flippylolz/WEF/pull/42). The
+[post-merge correctness follow-up](../AUDIT.md#post-merge-correctness-follow-up)
+records the independently reproduced `e2-v3` complete rerun and deterministic
+normalized evidence without replacing the historical acceptance record.
 
 ## Test plan
 
