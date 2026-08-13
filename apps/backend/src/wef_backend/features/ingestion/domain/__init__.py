@@ -1,5 +1,14 @@
 """Framework-independent ingestion values."""
 
+from wef_backend.features.ingestion.domain.dry_run import (
+    CountBucket,
+    DryRunCounts,
+    DryRunErrorCode,
+    DryRunReport,
+    DryRunSource,
+    DryRunTerminalStatus,
+    StageTiming,
+)
 from wef_backend.features.ingestion.domain.extraction import (
     CandidateDecision,
     CandidateReason,
@@ -56,7 +65,13 @@ __all__ = [
     "Confidence",
     "ContactKind",
     "ContactSpan",
+    "CountBucket",
     "DecimalRange",
+    "DryRunCounts",
+    "DryRunErrorCode",
+    "DryRunReport",
+    "DryRunSource",
+    "DryRunTerminalStatus",
     "ExtractedValue",
     "ExtractionResult",
     "ExtractionWarning",
@@ -88,6 +103,7 @@ __all__ = [
     "SourceMetadata",
     "SourcePlatform",
     "SourceSpan",
+    "StageTiming",
     "UnassociatedMediaReason",
     "canonical_json_bytes",
     "canonical_json_checksum",

@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     env: Literal["development", "test", "production"] = "development"
     alembic_config: Path = Path("alembic.ini")
     source_path: Path = Path("/source")
+    historical_export_filename: str = "result.json"
+    historical_channel_id: str = "2180077318"
+    historical_channel_type: str = "public_channel"
+    historical_channel_name: str | None = "El Estate | Покупка Варшава"
+    ingestion_parser_version: str = "e2-v1"
+    ingestion_report_path: Path = Path("/app/media/reports/e2-dry-run")
     allow_synthetic_seed: bool = False
 
 
