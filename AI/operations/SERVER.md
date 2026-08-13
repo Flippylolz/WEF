@@ -138,6 +138,30 @@ Directories should be owned by `nuc`, default mode `0750`; secret files use `060
 
 GitHub Actions variables/secrets are the deployment configuration source of truth. Each release transfers complete config to temporary files, validates it, and atomically activates it; transfer files are deleted and values never enter Git/logs/images.
 
+### E7-T2 preparation evidence
+
+On 2026-08-13 UTC, strict known-host/batch SSH prepared only the WEF boundary:
+
+- Created `/home/nuc/wef` and its release, media, import, Caddy, state, and log directories as owner `nuc` with mode `0750`.
+- Created `secrets`, `secrets/releases`, and `postgres` with mode `0700`.
+- Transferred the inert E7-T1 manifests/scripts for commit `394329cb6a1a00f97c9a8533336667d1c072d2ac` to its versioned release directory with mode `0640`/`0750`.
+- Validated complete-config and Compose rendering with a temporary non-default fixture, then removed the fixture. No active environment, current/previous release state, application image, container, network, or database was created.
+- Recorded approximately 941 GB free disk and 6.35 GiB available memory after preparation; 3100/TCP remained unbound.
+- Automated before/after comparison proved the existing three Compose projects, five container/image identities, health/state/port bindings, watched listeners, and HTTP checks on 3000/8080 were unchanged.
+- No source export, media payload, credential, session, or sudo password was transferred.
+
+External 3100/router verification was deliberately not attempted because no immutable WEF images or edge listener exist while B-006 is active. E7-T4 performs that check only during the bounded release/rollback rehearsal.
+
+### E7-T3 deployment-identity preparation evidence
+
+On 2026-08-13 UTC:
+
+- Created the GitHub `production` environment and repository variables for host/user/ports, database identity, bind/log settings, and `AUTO_DEPLOY_ENABLED=false`.
+- Stored only three environment secrets: a generated production database password, the strict known-host material, and a new dedicated Ed25519 deployment private key. Values were piped directly to GitHub and were not printed or written into the repository.
+- Appended the corresponding public key to `nuc`'s `authorized_keys` without removing or changing existing keys, set the existing SSH file modes defensively, and proved batch login with that dedicated identity.
+- Kept GHCR authentication ephemeral: the workflow uses its job-scoped package-read token during the remote pull and logs out in its exit trap; no registry token is stored on the host.
+- Did not create a production config/release, start a container, bind port 3100, touch existing Compose projects, or enable automatic SSH. Hosted execution remains blocked by B-006, and E7-T4 owns the first bounded activation.
+
 ## Local dataset transfer
 
 The preferred transfer sends the single compressed archive rather than approximately 25,000 individual files:

@@ -2,8 +2,8 @@
 schema: ai-workflow/spike@1
 epic: E5
 title: "Interactive map frontend research"
-status: draft
-revision: 1
+status: approved
+revision: 2
 owner: owner
 research_only: true
 code_allowed: false
@@ -12,11 +12,11 @@ domain_docs: [product, contracts, architecture, security]
 proposed_task_ids: [E5-T1, E5-T2, E5-T3, E5-T4, E5-T5]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-12T22:34:40Z"
+  approved_revision: 2
+  evidence: "Owner directive to prepare the MVP/autodeploy, choose safe defaults, log decisions/blockers, and continue stacking PRs"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -26,7 +26,7 @@ invalidation:
 
 # Spike: Interactive map frontend
 
-> This is a draft research scope. It authorizes documentation/research only: no production code, scaffold, migration, infrastructure/configuration change, generated executable artifact, prototype, proof branch, or disposable proof code.
+> Revision 2 is approved research. The spike remains non-executable; implementation requires its approved plan and promoted tasks.
 
 ## Question
 
@@ -60,13 +60,16 @@ Map product interaction/quality criteria to component boundaries, generated API 
 
 Research outputs must remain non-executable Markdown. Any data inspection must preserve source privacy and may not copy real source payload, contacts, credentials, sessions, or media into this artifact.
 
-## Current evidence baseline
+## Evidence
 
 - P-001 through P-007 define grouped pins, details, filters, coordination, media, Telegram links, attribution, and confidence behavior.
 - ADR-004 selects MapLibre/OpenFreeMap; ADR-012 forbids a second frontend domain/service layer.
 - The roadmap requires 360 px behavior, WCAG 2.2 AA public flows, WebGL fallback, debounced viewport queries, and no full detail/media in initial map payloads.
+- Current `react-map-gl` guidance uses `react-map-gl/maplibre`, `Source`/`Layer` for clustered GeoJSON, `interactiveLayerIds`, and `getClusterExpansionZoom`.
+- Current Next.js App Router guidance loads browser-only libraries from a Client Component through `next/dynamic({ssr:false})`; URL state uses `useSearchParams`, `usePathname`, and `useRouter`.
+- The existing web proof already consumes generated OpenAPI types and renders backend-owned labels without a frontend domain layer.
 
-These are planning facts and constraints, not evidence that implementation or acceptance checks have run.
+No private source/media is needed for this UI boundary.
 
 ## Options to evaluate
 
@@ -74,29 +77,30 @@ These are planning facts and constraints, not evidence that implementation or ac
 - Introduce Redux/Zustand and client-side domain models initially, which adds duplicated state/rules without demonstrated need.
 - Use a server-rendered static map, which cannot meet the accepted grouped-pin interaction.
 
-## Draft recommendation
+## Approved recommendation
 
-Refine shell/pins, URL filters, detail/gallery, responsive accessibility, and production UX/performance as separate tasks while keeping all business decisions in API responses.
+Promote E5-T1 and E5-T2 as separate stacked tasks. E5-T1 builds the client-only Warsaw map, clustered/pin interaction, selected-location summary panel, visible attribution, accessible companion list, and degraded states over generated E4 GeoJSON. E5-T2 adds URL-backed M1 filters and debounced viewport requests without recomputing backend semantics.
 
-This recommendation remains draft and may change after bounded research. It is not approved and does not authorize any proposed task.
+Keep detail/media and later accessibility/performance expansion in E5-T3 through E5-T5. The promoted tasks must still meet keyboard, 360 px, loading/error/empty/WebGL fallback, and production-build baselines appropriate to their included interactions.
 
 ## Proposed task boundaries
 
-- [E5-T1: Build map shell and grouped pin interaction](proposed-tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — candidate boundary for spike refinement.
-- [E5-T2: Add URL-backed filters and viewport querying](proposed-tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md) — candidate boundary for spike refinement.
-- [E5-T3: Build offer detail and media gallery](proposed-tasks/E5-T3-build-offer-detail-and-media-gallery.md) — candidate boundary for spike refinement.
-- [E5-T4: Complete responsive list/map accessibility](proposed-tasks/E5-T4-complete-responsive-list-map-accessibility.md) — candidate boundary for spike refinement.
-- [E5-T5: Performance and production UX pass](proposed-tasks/E5-T5-performance-and-production-ux-pass.md) — candidate boundary for spike refinement.
+- [E5-T1: Build map shell and grouped pin interaction](tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — promote first.
+- [E5-T2: Add URL-backed filters and viewport querying](tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md) — promote as E5-T1 child.
+- [E5-T3: Build offer detail and media gallery](proposed-tasks/E5-T3-build-offer-detail-and-media-gallery.md) — keep proposed.
+- [E5-T4: Complete responsive list/map accessibility](proposed-tasks/E5-T4-complete-responsive-list-map-accessibility.md) — keep proposed.
+- [E5-T5: Performance and production UX pass](proposed-tasks/E5-T5-performance-and-production-ux-pass.md) — keep proposed.
 
-No candidate above may appear in an executable implementation-plan sequence while it remains under `proposed-tasks/`.
+Only promoted E5-T1 and E5-T2 may appear in implementation-plan revision 2.
 
 ## Risks and open questions
 
 - Map remounts and oversized payloads can harm the first useful render.
 - Pointer-only interactions or unmanaged focus can fail accessibility.
 - Frontend fallback logic can accidentally infer confidence, availability, or permissions.
-- Confirm task-level traceability, cross-epic dependencies, test evidence, rollout, and rollback during spike refinement.
-- Resolve every named deferred-decision gate before promoting affected work.
+- Canvas rendering is not itself accessible; keep a semantic companion result list and focusable selection controls.
+- Tile/provider failure must not remove filters/results; preserve an API-backed degraded list state.
+- Map style URL and attribution are public configuration; no secret map key is introduced.
 
 ## Invalidation triggers
 
@@ -106,14 +110,14 @@ No candidate above may appear in an executable implementation-plan sequence whil
 
 ## Exit checklist
 
-- [ ] The bounded question is answered with evidence and uncertainty distinguished.
-- [ ] Governing domain documents and decisions are reviewed and linked.
-- [ ] Options, recommendation, risks, and open questions are complete.
-- [ ] Proposed task scope, acceptance, dependencies, priority/size, and traceability are refined.
-- [ ] No production or disposable proof code was created.
-- [ ] `revision` represents the material content being submitted.
-- [ ] Status is changed to `awaiting_approval` while approval remains `pending`.
+- [x] The bounded question is answered with evidence and uncertainty distinguished.
+- [x] Governing domain documents and decisions are reviewed and linked.
+- [x] Options, recommendation, risks, and open questions are complete.
+- [x] E5-T1/T2 scope, acceptance, dependencies, priority/size, and traceability are refined.
+- [x] No production or disposable proof code was created during the spike.
+- [x] Revision 2 represents the approved material content.
+- [x] Status and approval metadata record the delegated owner decision.
 
 ## Owner decision
 
-The owner records the decision only in the YAML `approval` object. Approval of the current spike revision would permit task refinement/promotion and implementation planning only; it would not permit code.
+Flippylolz approved revision 2 through the explicit overnight MVP/autodeploy delegation. This permits E5-T1/T2 promotion and planning only; code still requires approved plan revision 2 and task stack gates.

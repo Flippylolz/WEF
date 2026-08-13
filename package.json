@@ -1,0 +1,12 @@
+{
+  "name": "wef",
+  "private": true,
+  "packageManager": "pnpm@11.21.0",
+  "scripts": {
+    "web:build": "pnpm --filter web build",
+    "web:contract": "pnpm --filter web contract:check",
+    "web:lint": "pnpm --filter web lint",
+    "web:test": "pnpm --filter web test",
+    "web:typecheck": "pnpm --filter web typecheck"
+  }
+}

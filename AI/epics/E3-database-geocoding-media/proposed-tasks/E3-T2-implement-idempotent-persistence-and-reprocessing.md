@@ -52,7 +52,7 @@ The following definition preserves the original E3-T2 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E2-T2](../../E2-historical-export-parser-audit/proposed-tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md), [E3-T1](E3-T1-create-schema-and-migrations.md)
+- Task dependencies: [E2-T2](../../E2-historical-export-parser-audit/proposed-tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md), [E3-T1](../tasks/E3-T1-create-schema-and-migrations.md)
 - Milestone: [M1](../../../milestones/M1-vertical-proof.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Data](../../../data/README.md), [Contracts](../../../contracts/README.md), [Ingestion](../../../ingestion/README.md), [Security](../../../security/README.md).
 

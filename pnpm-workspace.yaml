@@ -1,0 +1,8 @@
+packages:
+  - apps/web
+
+allowBuilds:
+  "@parcel/watcher": false
+  "@swc/core": true
+  sharp: false
+  unrs-resolver: false
