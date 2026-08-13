@@ -14,14 +14,18 @@ This append-only log records blockers that could not be safely resolved autonomo
 ### B-003: Telegram client credentials/session
 
 - Impact: live channel ingestion cannot run.
-- Current state: public channel URL is known, but Telegram API ID/hash and an authorized Telethon session are not available.
+- Current state: public channel URL is known, but Telegram API ID/hash and an authorized
+  Telethon session are not available. The GitHub Actions secret inventory checked on
+  2026-08-13 contains no Telegram credential/session names.
 - Needed from owner: provide credentials later through GitHub secrets, never chat/repository files.
-- Safe workaround: use synthetic fixtures and later the historical local export.
+- Safe workaround: use synthetic/fake-client fixtures and the historical adapter for
+  deterministic implementation checks; keep the production worker disabled.
 
 ### B-004: Recurring production geocoder revalidation
 
 - Impact: live recurring geocoding cannot be enabled yet.
-- Current state: Geoapify is the initial free recommendation; E8-T4 revalidation remains required before recurring live ingestion.
+- Current state: Geoapify is the initial free recommendation; E3-T3 remains an external
+  prerequisite and E8-T4 revalidation remains required before recurring live ingestion.
 - Needed from owner: none for the synthetic MVP; later approve provider/quota after measured fixtures.
 - Safe workaround: deterministic seeded coordinates/cache for the vertical MVP.
 

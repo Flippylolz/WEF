@@ -23,9 +23,9 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `ready`; spike/plan revision 2; E5-T1 done/E5-T2 ready, 3 proposed; milestones M1, M3.
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `draft`; 7 tasks (7 proposed); milestones M3.
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `ready`; 8 tasks (4 done, 3 proposed, 1 deferred); milestones M3.
-- [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; 5 tasks (5 proposed); milestones M4.
+- [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `selected`; spike revision 2 awaiting approval, 5 tasks proposed; milestones M4.
 
-The original E0/E1/E3/E4/E5-T1/E7 ordered stack is merged and reconciled against successful integrated `main` CI. E2-T1 and later E3–E5/E7 work retain approved current gates or remain proposed/ready. E6–E8 remain draft. New work must pass its dedicated pull-request CI before merge.
+The original E0/E1/E3/E4/E5-T1/E7 ordered stack is merged and reconciled against successful integrated `main` CI. E2-T1 and later E3–E5/E7 work retain approved current gates or remain proposed/ready. E6 remains draft; E8 is selected for research with no implementation permission. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
