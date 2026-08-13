@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E1-T2
 epic: E1
 title: "Scaffold web and backend applications"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: M
@@ -29,11 +29,11 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:07:21Z"
 dependency_gate:
-  status: stacked
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T22:07:21Z"
+  status: satisfied
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
   evidence:
-    - "E0-T2 | branch spike/E0-T2-architecture-proof | PR https://github.com/Flippylolz/WEF/pull/6 | head 7600ca8"
+    - "E0-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/6 | merge 9ba4833"
 branch:
   required: true
   name: feature/E1-T2-application-scaffold
@@ -42,10 +42,12 @@ branch:
   created_at: "2026-08-12T22:07:21Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/7"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-13T15:08:21Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/7"
+  evidence:
+    - "Task PR merged at 07ee778e2c09b154ca09ea234792cee0dc53e28c"
+    - "Integrated main CI passed for ad4d6de: https://github.com/Flippylolz/WEF/actions/runs/31726996540"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -103,7 +105,7 @@ There is no production rollout. E1-T2 is a direct child of E0-T2. Before merge, 
 ## Ready checklist
 
 - [x] Promoted source, actor, timestamp, spike revision 2, and implementation-plan revision 4 are recorded.
-- [x] E0-T2's open ancestor PR/head is recorded by `dependency_gate: stacked`.
+- [x] E0-T2's merged task PR is recorded by a satisfied dependency gate.
 - [x] Scope and acceptance match the approved plan.
 
 ## Start checklist
@@ -115,5 +117,5 @@ There is no production rollout. E1-T2 is a direct child of E0-T2. Before merge, 
 ## Done checklist
 
 - [x] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T2
 epic: E7
 title: "Provision and verify supplied server"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: M
@@ -29,11 +29,11 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T23:35:00Z"
 dependency_gate:
-  status: stacked
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-13T00:00:00Z"
+  status: satisfied
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
   evidence:
-    - "E7-T1 dependency | branch feature/E7-T1-production-compose | PR https://github.com/Flippylolz/WEF/pull/16 | direct parent 394329c"
+    - "E7-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/16 | integrated stack f766a63"
 branch:
   required: true
   name: chore/E7-T2-provision-server
@@ -42,10 +42,12 @@ branch:
   created_at: "2026-08-13T00:00:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/17"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-13T14:52:50Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/17"
+  evidence:
+    - "Task PR merged into the ordered stack at f766a63517b6ba49a1377e630ea54e9cb4e0e56f"
+    - "Integrated main CI passed for ad4d6de: https://github.com/Flippylolz/WEF/actions/runs/31726996540"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -108,8 +110,8 @@ Stop only the `wef-production` project if started. Preserve PostgreSQL/media by 
 ## Done checklist
 
 - [x] Acceptance criteria pass for the bounded preparation task.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
 
 ## Verification evidence
 
@@ -120,4 +122,4 @@ Stop only the `wef-production` project if started. Preserve PostgreSQL/media by 
 - Paths: only `/home/nuc/wef` was introduced. General/persistence directories are owner `nuc` mode 0750, while secrets/PostgreSQL directories are mode 0700.
 - Release: inert E7-T1 commit `394329cb6a1a00f97c9a8533336667d1c072d2ac` manifests/scripts were transferred mode 0640/0750, validated with a temporary non-default fixture, and left with no active config/current-release state.
 - Exclusions: no source archive, media payload, GitHub/Telegram credential, session, real production env, container, network, listener, or database was created.
-- Open evidence gate: hosted CI B-006 prevents immutable application images, so no WEF edge was intentionally started and external 3100/router verification remains correctly deferred to E7-T4.
+- Subsequent hosted release evidence resolved B-006 and exercised the prepared WEF boundary; E7-T4 records the completed release verification.

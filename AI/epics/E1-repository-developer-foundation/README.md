@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E1
 title: "Repository and developer foundation"
-status: in_progress
+status: done
 milestones: [M1]
 owner: owner
 spike: SPIKE.md
@@ -17,10 +17,10 @@ a reproducible monorepo that cannot accidentally commit or package the source ar
 
 ## Approval state
 
-- Epic workspace status: `in_progress`; E1-T1, E0 descendants, and E1-T2 proceed through recorded ordered stack ancestry.
+- Epic workspace status: `done`; every task in the approved implementation-plan sequence is merged with reconciled completion evidence.
 - [Spike](SPIKE.md): `approved`, revision 2, explicitly approved by the owner, research only, no code. It defines separate ownership and branches for repository safety, application Dockerfiles/Make targets, and local Compose.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 4, containing E1-T1, E1-T2, E1-T4, and E1-T3 in ordered stack sequence.
-- E1-T2, E1-T4, and E1-T3 are `in_progress` in direct stack ancestry.
+- E1-T1, E1-T2, E1-T4, and E1-T3 are `done`.
 - E1-T5 remains cancelled; E1-T6 and E1-T7 remain non-actionable under `proposed-tasks/`.
 
 ## Milestones
@@ -48,10 +48,10 @@ a reproducible monorepo that cannot accidentally commit or package the source ar
 
 ## Tasks
 
-- [E1-T1: Initialize repository safety](tasks/E1-T1-initialize-repository-safety.md) — promoted, `in_progress`, P0/S, M1
-- [E1-T2: Scaffold web and backend applications](tasks/E1-T2-scaffold-web-and-backend-applications.md) — promoted, `in_progress`, P0/M, M1
-- [E1-T4: Establish CI baseline](tasks/E1-T4-establish-ci-baseline.md) — promoted, `in_progress`, P0/M, M1
-- [E1-T3: Add local Docker Compose](tasks/E1-T3-add-local-docker-compose.md) — promoted, `in_progress`, P0/M, M1
+- [E1-T1: Initialize repository safety](tasks/E1-T1-initialize-repository-safety.md) — promoted, `done`, P0/S, M1
+- [E1-T2: Scaffold web and backend applications](tasks/E1-T2-scaffold-web-and-backend-applications.md) — promoted, `done`, P0/M, M1
+- [E1-T4: Establish CI baseline](tasks/E1-T4-establish-ci-baseline.md) — promoted, `done`, P0/M, M1
+- [E1-T3: Add local Docker Compose](tasks/E1-T3-add-local-docker-compose.md) — promoted, `done`, P0/M, M1
 - [E1-T5: Configure protected-main governance](proposed-tasks/E1-T5-configure-protected-main-governance.md) — `cancelled`, P0/M, M1
 - [E1-T6: Configure Dependabot update pull requests](proposed-tasks/E1-T6-configure-dependabot-update-pull-requests.md) — `proposed`, P0/M, M1
 - [E1-T7: Implement scheduled Dependabot merge controller](proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — `proposed`, P0/M, M1

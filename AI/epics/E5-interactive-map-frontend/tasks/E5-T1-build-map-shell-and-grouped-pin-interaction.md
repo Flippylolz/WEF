@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E5-T1
 epic: E5
 title: "Build map shell and grouped pin interaction"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: L
@@ -29,12 +29,12 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:34:40Z"
 dependency_gate:
-  status: stacked
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T23:21:56Z"
+  status: satisfied
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
   evidence:
-    - "E4-T2 dependency | branch feature/E4-T2-facets-results | PR https://github.com/Flippylolz/WEF/pull/13 | head acae538"
-    - "E1-T2 dependency | branch feat/E1-T2-app-scaffold | PR https://github.com/Flippylolz/WEF/pull/7 | ancestor 4eea7b4"
+    - "E4-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/13 | integrated stack f766a63"
+    - "E1-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/7 | merge 07ee778"
 branch:
   required: true
   name: feature/E5-T1-map-shell
@@ -43,10 +43,12 @@ branch:
   created_at: "2026-08-12T23:21:56Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/14"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-13T14:52:47Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/14"
+  evidence:
+    - "Task PR merged into the ordered stack at f766a63517b6ba49a1377e630ea54e9cb4e0e56f"
+    - "Integrated main CI passed for ad4d6de: https://github.com/Flippylolz/WEF/actions/runs/31726996540"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -111,7 +113,7 @@ Additive UI over E4 endpoints. A map/style failure degrades to list/results. Rol
 
 - [x] This file is authoritative under `tasks/`; the proposed source is removed.
 - [x] Promotion, spike revision 2, and plan revision 2 are recorded.
-- [x] E4-T2 and E1-T2 are recorded direct ancestors under ADR-018.
+- [x] E4-T2 and E1-T2 completion is recorded by the satisfied dependency gate.
 - [x] Scope and acceptance match the approved plan.
 
 ## Start checklist
@@ -123,8 +125,8 @@ Additive UI over E4 endpoints. A map/style failure degrades to list/results. Rol
 ## Done checklist
 
 - [x] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
 
 ## Verification evidence
 
@@ -134,4 +136,4 @@ Additive UI over E4 endpoints. A map/style failure degrades to list/results. Rol
 - Runtime: the production web image is healthy behind Caddy at `127.0.0.1:3100`; server HTML contains the product heading, explicit synthetic notice, and accessible loading state, while the configured OpenFreeMap style endpoint responds successfully.
 - Responsive/accessibility: semantic buttons/list/regions, visible focus, screen-reader count text, and CSS breakpoints at 56 rem/36 rem keep a 360 px single-column fallback without body overflow.
 - Data boundary: UI imports generated map/facet/offer response types and formats returned values; it does not infer availability, visibility, grouping, confidence, or matching.
-- Review: [stacked PR #14](https://github.com/Flippylolz/WEF/pull/14), based on E4-T2 PR #13; completion remains open until hosted CI B-006 and base-first merge gates pass.
+- Review: [stacked PR #14](https://github.com/Flippylolz/WEF/pull/14) merged after its base sequence; hosted integrated CI is now green.

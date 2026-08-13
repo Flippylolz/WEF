@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E1-T4
 epic: E1
 title: "Establish CI baseline"
-status: in_progress
+status: done
 revision: 1
 priority: P0
 size: M
@@ -29,11 +29,11 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:07:21Z"
 dependency_gate:
-  status: stacked
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T22:15:44Z"
+  status: satisfied
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
   evidence:
-    - "E1-T2 | branch feature/E1-T2-application-scaffold | PR https://github.com/Flippylolz/WEF/pull/7 | head 127f00c"
+    - "E1-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/7 | merge 07ee778"
 branch:
   required: true
   name: ci/E1-T4-baseline
@@ -42,10 +42,12 @@ branch:
   created_at: "2026-08-12T22:15:44Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/8"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-13T14:52:42Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/8"
+  evidence:
+    - "Task PR merged into the ordered stack at f766a63517b6ba49a1377e630ea54e9cb4e0e56f"
+    - "All four integrated main CI jobs passed: https://github.com/Flippylolz/WEF/actions/runs/31726996540"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -72,11 +74,11 @@ Generalize the E0 proof workflow into stable synthetic repository checks and com
 
 ## Acceptance criteria
 
-- [ ] Representative lint, test, architecture, contract, documentation-link, or image failures block stable CI jobs.
+- [x] Representative lint, test, architecture, contract, documentation-link, or image failures block stable CI jobs.
 - [x] Stale/breaking OpenAPI or generated frontend mismatch is rejected by the exact CI commands.
-- [ ] OpenAPI JSON, generated TypeScript declarations, and static HTML are available in a commit-addressed artifact.
+- [x] OpenAPI JSON, generated TypeScript declarations, and static HTML are available in a commit-addressed artifact.
 - [x] CI uses synthetic fixtures and no source/production credentials.
-- [ ] Workflow/action syntax passes local lint and GitHub checks.
+- [x] Workflow/action syntax passes local lint and GitHub checks.
 
 ## Test plan
 
@@ -94,7 +96,7 @@ Generalize the E0 proof workflow into stable synthetic repository checks and com
 - Import Linter rejects/cleans its deliberate domain framework violation. `scripts/check_markdown_links.py` validates every tracked relative Markdown target.
 - Runtime checks build digest-pinned non-root images and inspect users plus absence of development/source/contract content.
 - The artifact definition includes committed OpenAPI JSON, generated TypeScript, and standalone HTML under a commit-SHA name.
-- GitHub Actions remains externally blocked: both the original workflow and a separate one-job `echo` parser smoke fail before job creation with `startup_failure`. See [B-006](../../../operations/BLOCKERS.md). Hosted check/artifact acceptance remains open.
+- GitHub Actions recovered after the initial B-006 startup failure. The integrated `main` run completed Backend, Frontend and contract, Repository safety, and Runtime images successfully and published the commit-addressed contract artifact.
 
 ## Rollout and rollback
 
@@ -103,7 +105,7 @@ CI only. Revert the workflow commit to roll back; never disable checks silently 
 ## Ready checklist
 
 - [x] Promotion and approval artifacts are recorded.
-- [x] E1-T2 direct ancestor PR/head is recorded by a `stacked` dependency gate.
+- [x] E1-T2 completion evidence is recorded by a satisfied dependency gate.
 - [x] Scope and acceptance match implementation-plan revision 4.
 
 ## Start checklist
@@ -114,6 +116,6 @@ CI only. Revert the workflow commit to roll back; never disable checks silently 
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

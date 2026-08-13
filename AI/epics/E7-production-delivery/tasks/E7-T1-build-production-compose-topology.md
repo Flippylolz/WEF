@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T1
 epic: E7
 title: "Build production Compose topology"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: L
@@ -29,13 +29,12 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T23:35:00Z"
 dependency_gate:
-  status: stacked
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T23:38:00Z"
+  status: satisfied
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
   evidence:
-    - "E5-T1 dependency | branch feature/E5-T1-map-shell | PR https://github.com/Flippylolz/WEF/pull/14 | ancestor 6a50814"
-    - "E1-T3 dependency | branch feature/E1-T3-local-compose | PR https://github.com/Flippylolz/WEF/pull/9 | ancestor 1fbc639"
-    - "E7 approved plan | branch docs/E7-delivery-plan | PR https://github.com/Flippylolz/WEF/pull/15 | direct parent c478d45"
+    - "E5-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/14 | integrated stack f766a63"
+    - "E1-T3 | done | merged PR https://github.com/Flippylolz/WEF/pull/9 | integrated stack f766a63"
 branch:
   required: true
   name: feature/E7-T1-production-compose
@@ -44,10 +43,12 @@ branch:
   created_at: "2026-08-12T23:38:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/16"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-13T14:52:49Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/16"
+  evidence:
+    - "Task PR merged into the ordered stack at f766a63517b6ba49a1377e630ea54e9cb4e0e56f"
+    - "Integrated main CI passed for ad4d6de: https://github.com/Flippylolz/WEF/actions/runs/31726996540"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -111,8 +112,8 @@ This task ships inert repository artifacts only. Revert the task commit to remov
 ## Done checklist
 
 - [x] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
 
 ## Verification evidence
 
@@ -122,4 +123,4 @@ This task ships inert repository artifacts only. Revert the task commit to remov
 - Real runtime: `make production-runtime-proof` uses a unique temporary Compose project/path and local non-root images, migrates/seeds the explicit production rehearsal, serves the root/health/map/facets/offers contract through Caddy, tears every container/network down, recreates the stack without reseeding, and proves bind-mounted catalog persistence.
 - Non-interference: the existing `wef-local` API/web/PostGIS/Caddy remained healthy on loopback 3100; the temporary production-proof project left no containers or files.
 - Seed boundary: production remains denied by default; only the profile-gated seed service plus `WEF_ALLOW_SYNTHETIC_SEED=true` can insert the clearly synthetic fixture.
-- Review: [stacked PR #16](https://github.com/Flippylolz/WEF/pull/16), based on E7 planning PR #15; completion remains open until hosted CI B-006 and base-first merge gates pass.
+- Review: [stacked PR #16](https://github.com/Flippylolz/WEF/pull/16) merged after its base sequence; hosted integrated CI is now green.

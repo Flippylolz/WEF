@@ -4,13 +4,6 @@ This append-only log records blockers that could not be safely resolved autonomo
 
 ## Active blockers
 
-### B-001: Stacked PRs are not merged
-
-- Impact: code, CI, and deployment workflows prepared in descendant branches are not active on `main`; main-only autodeploy cannot run.
-- Current state: PRs #1–#3 were merged, but #2 and #3 targeted parent branches after those parents had already merged. [Roll-up PR #4](https://github.com/Flippylolz/WEF/pull/4) safely propagates their changes to `main`; the uninterrupted direct descendant stack now reaches [E7-T4 PR #19](https://github.com/Flippylolz/WEF/pull/19).
-- Needed from owner: review/merge PR #4, then continue merging/retargeting descendants base-first, or explicitly authorize autonomous merges.
-- Safe workaround: continue preparing/testing descendants against their parent branches under ADR-018.
-
 ### B-002: Production HTTPS/authentication gate
 
 - Impact: registration, sessions, owner administration, and contact reveal must remain disabled on interim HTTP port 3100.
@@ -39,14 +32,17 @@ This append-only log records blockers that could not be safely resolved autonomo
 - Needed from owner: none unless account/repository eligibility changes.
 - Safe workaround: one-task PRs, stable CI checks, base-first stack merging, and main-SHA deploy verification.
 
-### B-006: First proof workflow receives GitHub `startup_failure`
-
-- Impact: no stacked PR has a successful hosted check and GHCR/autodeploy cannot execute, even though local workflow equivalents pass.
-- Current state: GitHub runs `31645554630` and predecessors fail before creating jobs with `path: BuildFailed`; repository Actions are enabled/all actions allowed. A separate one-job `echo` workflow produced startup failure `31646260433`. The same zero-second failure continues through E7-T4 push/PR runs [`31654721609`](https://github.com/Flippylolz/WEF/actions/runs/31654721609) and [`31654724999`](https://github.com/Flippylolz/WEF/actions/runs/31654724999), while the complete local quality, advisory, image, production-Compose, migration/seed/smoke/persistence/recreate, workflow-gate, forced-failure, and rollback equivalents pass. This rules out application commands and strongly indicates a repository/account hosted-runner startup or quota/billing condition.
-- Needed from owner: inspect the Actions run/billing UI. The current GitHub token cannot read billing because it lacks the `user` scope; no auth escalation was attempted overnight.
-- Safe workaround: retain local PostGIS, architecture, contract, frontend, advisory, image, workflow-parser, and negative-gate evidence; do not mark hosted-CI acceptance complete or merge dependent production work until a hosted workflow passes.
-
 ## Resolved during overnight work
+
+### R-003 / B-001: Stacked PRs merged
+
+- Resolution: the ordered task stack and [roll-up PR #4](https://github.com/Flippylolz/WEF/pull/4) reached `main`; every task PR through [E7-T4 PR #19](https://github.com/Flippylolz/WEF/pull/19) is merged.
+- Evidence: integrated `main` SHA `ad4d6de` contains the stack and passed all CI jobs in [run 31726996540](https://github.com/Flippylolz/WEF/actions/runs/31726996540).
+
+### R-004 / B-006: Hosted Actions recovered
+
+- Resolution: hosted CI, immutable image publication, and verified deployment now start and complete successfully.
+- Evidence: all four CI jobs passed in [run 31726996540](https://github.com/Flippylolz/WEF/actions/runs/31726996540), and the production release completed in [run 31726996659](https://github.com/Flippylolz/WEF/actions/runs/31726996659).
 
 ### R-001: HTTPS Git authentication failed
 

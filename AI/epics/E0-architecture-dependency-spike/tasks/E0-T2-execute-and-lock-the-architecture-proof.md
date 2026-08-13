@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E0-T2
 epic: E0
 title: "Execute and lock the architecture proof"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: M
@@ -29,12 +29,12 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T21:03:00Z"
 dependency_gate:
-  status: stacked
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T21:37:55Z"
+  status: satisfied
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
   evidence:
-    - "E1-T1 | branch chore/E1-T1-repository-safety | roll-up PR https://github.com/Flippylolz/WEF/pull/4 | head 0c2e242"
-    - "E0-T1 | branch docs/E0-T1-architecture-review | PR https://github.com/Flippylolz/WEF/pull/5 | head df0a38b"
+    - "E1-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/2 | merge 0ccf516"
+    - "E0-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/5 | merge 3a1bf3b"
 branch:
   required: true
   name: spike/E0-T2-architecture-proof
@@ -43,10 +43,12 @@ branch:
   created_at: "2026-08-12T21:37:55Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/6"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-13T15:08:30Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/6"
+  evidence:
+    - "Task PR merged at 9ba483395f5f95d5456239abf4201d76d95548d1"
+    - "Integrated main CI passed for ad4d6de: https://github.com/Flippylolz/WEF/actions/runs/31726996540"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -56,7 +58,7 @@ invalidation:
 
 # E0-T2: Execute and lock the architecture proof
 
-> Promoted after explicit owner approval of E0 spike revision 2 and implementation-plan revision 3. This proof is `in_progress` on its dedicated branch above the recorded E1-T1 and E0-T1 pull requests. Under ADR-018, dependencies may remain `stacked` while implementation proceeds, but they must be `done` before this task completes or merges.
+> Promoted after explicit owner approval of E0 spike revision 2 and implementation-plan revision 3. The proof and its dependencies are merged with reconciled completion evidence.
 
 ## Outcome
 
@@ -94,7 +96,7 @@ Produce a synthetic, reproducible proof of the approved backend-centric architec
 ## Acceptance criteria
 
 - [x] Route → query/interactor → port/adapter → application DTO → presenter is demonstrated without domain logic in the frontend.
-- [ ] A targeted proof CI workflow runs checks, and `import-linter` rejects a deliberate dependency violation.
+- [x] A targeted proof CI workflow runs checks, and `import-linter` rejects a deliberate dependency violation.
 - [x] PostGIS integration, deterministic OpenAPI generation, generated TypeScript request, Next.js rendering, and English i18n proof pass.
 - [x] `contracts/openapi/v1.json`, Redocly lint/static docs, `oasdiff`, and production-disabled documentation routes follow the OpenAPI contract.
 - [x] Runtime/dependency versions, purposes, licenses, advisories, replacement paths, and lockfile reproducibility are recorded.
@@ -133,7 +135,7 @@ There is no production rollout. The proof becomes the scaffold baseline for E1-T
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references owner-approved spike revision 2 and is `satisfied`.
 - [x] `implementation_gate` references owner-approved implementation-plan revision 3 and is `satisfied`.
-- [x] E0-T1 and E1-T1 have open/integration ancestor pull requests recorded by `dependency_gate: stacked`; completion still requires both to be `done`.
+- [x] E0-T1 and E1-T1 are recorded as `done` by the satisfied dependency gate.
 - [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
@@ -145,6 +147,6 @@ There is no production rollout. The proof becomes the scaffold baseline for E1-T
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

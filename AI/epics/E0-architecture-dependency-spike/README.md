@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E0
 title: "Architecture and dependency spike"
-status: in_progress
+status: done
 milestones: [M1]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,11 @@ implementation starts from a reviewed backend-centric modular-monolith proof and
 
 ## Approval state
 
-- Epic workspace status: `in_progress`; E0-T1 is running as an ordered stack layer above E1-T1 and the workflow-policy PR.
+- Epic workspace status: `done`; the approved review and architecture proof are merged with reconciled completion evidence.
 - [Spike](SPIKE.md): `approved`, revision 2, explicitly approved by the owner, research only, no code. Revision 2 adds explicit repository, Dockerfile, Compose, Makefile, root README, task-ownership, and branch boundaries.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, with E0-T1 and E0-T2 as the only sequence entries and ADR-018 stacked sequencing.
 - [Proof report](PROOF_REPORT.md): measured E0-T2 dependency, architecture, OpenAPI, test, advisory, and image evidence.
-- E0-T1 is `in_progress` with E1-T1 recorded as its open ancestor PR. E0-T2 is `in_progress` as E0-T1's direct stack child.
+- E0-T1 and E0-T2 are `done`; their formerly stacked dependencies are satisfied.
 
 ## Milestones
 
@@ -43,8 +43,8 @@ implementation starts from a reviewed backend-centric modular-monolith proof and
 
 ## Promoted tasks
 
-- [E0-T1: Review architecture and dependency proposal](tasks/E0-T1-review-architecture-and-dependency-proposal.md) — `in_progress`, revision 2, P0/M, M1; stacked on E1-T1.
-- [E0-T2: Execute and lock the architecture proof](tasks/E0-T2-execute-and-lock-the-architecture-proof.md) — `in_progress`, revision 2, P0/M, M1; stacked on E0-T1.
+- [E0-T1: Review architecture and dependency proposal](tasks/E0-T1-review-architecture-and-dependency-proposal.md) — `done`, revision 2, P0/M, M1.
+- [E0-T2: Execute and lock the architecture proof](tasks/E0-T2-execute-and-lock-the-architecture-proof.md) — `done`, revision 2, P0/M, M1.
 
 ## Cross-epic dependencies
 
