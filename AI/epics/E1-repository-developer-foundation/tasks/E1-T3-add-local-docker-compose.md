@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E1-T3
 epic: E1
 title: "Add local Docker Compose"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: M
@@ -29,12 +29,11 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:07:21Z"
 dependency_gate:
-  status: stacked
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T22:22:02Z"
+  status: satisfied
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
   evidence:
-    - "E1-T2 dependency | branch feature/E1-T2-application-scaffold | PR https://github.com/Flippylolz/WEF/pull/7 | head 127f00c"
-    - "Direct parent/sequencing only: E1-T4 | branch ci/E1-T4-baseline | PR https://github.com/Flippylolz/WEF/pull/8 | head 0016b7b"
+    - "E1-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/7 | merge 07ee778"
 branch:
   required: true
   name: feature/E1-T3-local-compose
@@ -43,10 +42,12 @@ branch:
   created_at: "2026-08-12T22:22:02Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/9"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-13T14:52:43Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/9"
+  evidence:
+    - "Task PR merged into the ordered stack at f766a63517b6ba49a1377e630ea54e9cb4e0e56f"
+    - "Integrated main CI passed for ad4d6de: https://github.com/Flippylolz/WEF/actions/runs/31726996540"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -92,7 +93,7 @@ Local Docker only. `down` removes WEF containers/network while preserving named 
 ## Ready checklist
 
 - [x] Promotion and approval artifacts are recorded.
-- [x] E1-T2 ancestor evidence is recorded by a valid `stacked` dependency gate.
+- [x] E1-T2 completion evidence is recorded by a satisfied dependency gate.
 - [x] Scope and acceptance match implementation-plan revision 4.
 
 ## Start checklist
@@ -114,5 +115,5 @@ Local Docker only. `down` removes WEF containers/network while preserving named 
 ## Done checklist
 
 - [x] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

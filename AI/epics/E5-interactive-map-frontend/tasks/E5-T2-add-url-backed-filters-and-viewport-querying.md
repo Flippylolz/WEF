@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E5-T2
 epic: E5
 title: "Add URL-backed filters and viewport querying"
-status: draft
+status: ready
 revision: 2
 priority: P0
 size: L
@@ -29,10 +29,12 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:34:40Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
+  evidence:
+    - "E5-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/14 | integrated stack f766a63"
+    - "E4-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/13 | integrated stack f766a63"
 branch:
   required: true
   name: null
@@ -109,7 +111,7 @@ Additive web-only behavior over E4. Roll back the web image; endpoint/schema com
 
 - [x] This file is authoritative under `tasks/`; the proposed source is removed.
 - [x] Promotion, spike revision 2, and plan revision 2 are recorded.
-- [ ] E5-T1/E4-T2 are complete or recorded direct ancestors under ADR-018.
+- [x] E5-T1/E4-T2 are complete and recorded by the satisfied dependency gate.
 - [x] Scope and acceptance match the approved plan.
 
 ## Start checklist

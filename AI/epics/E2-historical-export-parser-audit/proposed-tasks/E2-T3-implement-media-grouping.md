@@ -51,7 +51,7 @@ The following definition preserves the original E2-T3 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E2-T1](E2-T1-implement-source-adapter-and-fixture-corpus.md)
+- Task dependencies: [E2-T1](../tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md)
 - Milestone: [M2](../../../milestones/M2-historical-dataset-ready.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Data](../../../data/README.md), [Ingestion](../../../ingestion/README.md), [Contracts](../../../contracts/README.md), [Security](../../../security/README.md).
 

@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E2
 title: "Historical export parser and audit"
-status: draft
+status: planning
 milestones: [M1, M2]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,11 @@ deterministic extraction from the raw Telegram export with reconciled dry-run re
 
 ## Approval state
 
-- Epic workspace status: `draft`.
-- [Spike](SPIKE.md): `draft`, revision 1, owner approval pending, research only, no code.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `draft`, revision 1, blocked with no approved spike revision and no executable task sequence.
-- Every file in `proposed-tasks/` is non-actionable. No implementation, scaffold, migration, infrastructure change, generated executable artifact, or proof code is approved.
-- No `tasks/` directory exists; it may be created only when an approved candidate is promoted after spike approval.
+- Epic workspace status: `planning`.
+- [Spike](SPIKE.md): `approved`, revision 2, owner-approved research; it permits promotion/planning only, no code.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `awaiting_approval`, revision 2, sequencing promoted E2-T1 only; owner approval remains pending.
+- E2-T1 is promoted/`draft` with a satisfied spike/dependency gate and blocked implementation gate. No feature branch or code is authorized.
+- Every remaining file in `proposed-tasks/` is non-actionable.
 
 ## Milestones
 
@@ -42,9 +42,12 @@ deterministic extraction from the raw Telegram export with reconciled dry-run re
 - [ADR-007](../../decisions/adr/ADR-007-mounted-media-storage-interface.md)
 - [ADR-012](../../decisions/adr/ADR-012-backend-centric-modular-monolith.md)
 
+## Promoted task
+
+- [E2-T1: Implement source adapter and fixture corpus](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md) — `draft`, P0/M, M1; awaiting implementation-plan approval
+
 ## Proposed tasks
 
-- [E2-T1: Implement source adapter and fixture corpus](proposed-tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md) — `proposed`, P0/M, M1
 - [E2-T2: Implement candidate detection and typed extractors](proposed-tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md) — `proposed`, P0/L, M1
 - [E2-T3: Implement media grouping](proposed-tasks/E2-T3-implement-media-grouping.md) — `proposed`, P0/M, M2
 - [E2-T4: Implement dry-run reports](proposed-tasks/E2-T4-implement-dry-run-reports.md) — `proposed`, P0/M, M2

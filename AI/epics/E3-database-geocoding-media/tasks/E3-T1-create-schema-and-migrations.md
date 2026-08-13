@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E3-T1
 epic: E3
 title: "Create M1 schema, migrations, and deterministic seed"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: L
@@ -29,11 +29,11 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:34:40Z"
 dependency_gate:
-  status: stacked
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T22:34:40Z"
+  status: satisfied
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
   evidence:
-    - "E1-T3 dependency | branch feature/E1-T3-local-compose | PR https://github.com/Flippylolz/WEF/pull/9 | head 1fbc639"
+    - "E1-T3 | done | merged PR https://github.com/Flippylolz/WEF/pull/9 | integrated stack f766a63"
 branch:
   required: true
   name: feature/E3-T1-m1-schema-seed
@@ -42,10 +42,12 @@ branch:
   created_at: "2026-08-12T22:44:16Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/11"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-13T14:52:45Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/11"
+  evidence:
+    - "Task PR merged into the ordered stack at f766a63517b6ba49a1377e630ea54e9cb4e0e56f"
+    - "Integrated main CI passed for ad4d6de: https://github.com/Flippylolz/WEF/actions/runs/31726996540"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -113,7 +115,7 @@ Apply the forward migration before starting the new API. Before merge, discard o
 - [x] This file is authoritative under `tasks/`; the proposed source is removed.
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] Spike revision 2 and implementation-plan revision 2 are approved and satisfied.
-- [x] E1-T3 is a recorded direct ancestor PR under ADR-018.
+- [x] E1-T3 completion is recorded by the satisfied dependency gate.
 - [x] Scope and acceptance criteria match the approved M1 plan.
 
 ## Start checklist
@@ -125,8 +127,8 @@ Apply the forward migration before starting the new API. Before merge, discard o
 ## Done checklist
 
 - [x] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
 
 ## Verification evidence
 

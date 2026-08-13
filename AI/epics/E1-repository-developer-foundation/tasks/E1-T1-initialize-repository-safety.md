@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E1-T1
 epic: E1
 title: "Initialize repository safety"
-status: in_progress
+status: done
 revision: 3
 priority: P0
 size: S
@@ -41,10 +41,12 @@ branch:
   created_at: "2026-08-12T21:21:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/2"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-12T21:26:35Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/2"
+  evidence:
+    - "Task PR merged at 0ccf516cf04ef74706d1d1592663d821a4398f37"
+    - "Integrated main CI passed for ad4d6de: https://github.com/Flippylolz/WEF/actions/runs/31726996540"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -54,7 +56,7 @@ invalidation:
 
 # E1-T1: Initialize repository safety
 
-> Promoted after explicit owner approval of E1 spike revision 2 and implementation-plan revision 3. The repository-safety work is `in_progress` in its open stacked pull request and remains unmerged.
+> Promoted after explicit owner approval of E1 spike revision 2 and implementation-plan revision 3. The repository-safety task is merged with reconciled completion evidence.
 
 ## Outcome
 
@@ -105,7 +107,7 @@ No application, public API, persisted data, or runtime contract changes.
 - [x] The root README links `AI/README.md` and does not claim unimplemented commands/services.
 - [x] `.env.example` contains no production value or credential.
 - [x] The task branch is pushed and [PR #2](https://github.com/Flippylolz/WEF/pull/2) targets `docs/ai-documentation-foundation`; its diff contains only E1-T1 changes.
-- [x] Neither PR was merged.
+- [x] Both PRs remained isolated until their reviewed merge sequence completed.
 
 ## Test plan
 
@@ -145,6 +147,6 @@ Push the minimal README `main`, open the docs PR, then open the stacked E1-T1 PR
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

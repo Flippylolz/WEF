@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E4-T1
 epic: E4
 title: "Implement map query service and GeoJSON endpoint"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: L
@@ -29,11 +29,11 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T22:34:40Z"
 dependency_gate:
-  status: stacked
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T22:56:40Z"
+  status: satisfied
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
   evidence:
-    - "E3-T1 dependency | branch feature/E3-T1-m1-schema-seed | PR https://github.com/Flippylolz/WEF/pull/11 | head 8d29bf1"
+    - "E3-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/11 | integrated stack f766a63"
 branch:
   required: true
   name: feature/E4-T1-map-geojson
@@ -42,10 +42,12 @@ branch:
   created_at: "2026-08-12T22:56:40Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/12"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-13T14:52:45Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/12"
+  evidence:
+    - "Task PR merged into the ordered stack at f766a63517b6ba49a1377e630ea54e9cb4e0e56f"
+    - "Integrated main CI passed for ad4d6de: https://github.com/Flippylolz/WEF/actions/runs/31726996540"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -113,7 +115,7 @@ Deploy only after E3-T1 migration/seed compatibility. The map endpoint is additi
 
 - [x] This file is authoritative under `tasks/`; the proposed source is removed.
 - [x] Promotion, spike revision 2, and plan revision 2 are recorded.
-- [x] E3-T1 is a direct ancestor PR recorded as `stacked`.
+- [x] E3-T1 completion is recorded by the satisfied dependency gate.
 - [x] Scope and acceptance match the approved plan.
 
 ## Start checklist
@@ -125,8 +127,8 @@ Deploy only after E3-T1 migration/seed compatibility. The map endpoint is additi
 ## Done checklist
 
 - [x] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
 
 ## Verification evidence
 

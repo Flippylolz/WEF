@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E3
 title: "Database, geocoding, and media pipeline"
-status: in_progress
+status: ready
 milestones: [M1, M2]
 owner: owner
 spike: SPIKE.md
@@ -17,10 +17,10 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 
 ## Approval state
 
-- Epic workspace status: `in_progress` for the synthetic M1 boundary.
+- Epic workspace status: `ready`; the synthetic M1 task is complete and later historical/geocoding/media candidates remain proposed.
 - [Spike](SPIKE.md): `approved`, revision 2.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing promoted E3-T1 only.
-- E3-T1 is `in_progress` on its dedicated branch; E3-T2 through E3-T5 remain non-actionable under `proposed-tasks/`.
+- E3-T1 is `done`; E3-T2 through E3-T5 remain non-actionable under `proposed-tasks/`.
 
 ## Milestones
 
@@ -47,7 +47,7 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 
 ## Promoted task
 
-- [E3-T1: Create M1 schema, migrations, and deterministic seed](tasks/E3-T1-create-schema-and-migrations.md) — `in_progress`, P0/L, M1
+- [E3-T1: Create M1 schema, migrations, and deterministic seed](tasks/E3-T1-create-schema-and-migrations.md) — `done`, P0/L, M1
 
 ## Proposed tasks
 

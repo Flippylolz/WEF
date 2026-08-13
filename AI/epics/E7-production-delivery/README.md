@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E7
 title: "Docker/GitHub production delivery"
-status: in_progress
+status: ready
 milestones: [M3]
 owner: owner
 spike: SPIKE.md
@@ -17,10 +17,10 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 
 ## Approval state
 
-- Epic workspace status: `in_progress` for the anonymous synthetic production rehearsal.
+- Epic workspace status: `ready`; the approved anonymous synthetic delivery sequence is complete and later production candidates remain gated.
 - [Spike](SPIKE.md): `approved`, revision 2.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing E7-T1 through E7-T4.
-- E7-T1 through E7-T4 are `in_progress` for the approved Caddy-based rehearsal sequence; E7-T5 remains deferred and E7-T6/T7/T8 remain proposed. E7-T8 requires a new approved spike/plan revision before promotion.
+- E7-T1 through E7-T4 are `done` for the approved Caddy-based rehearsal sequence; E7-T5 remains deferred and E7-T6/T7/T8 remain proposed. E7-T8 requires a new approved spike/plan revision before promotion.
 
 ## Milestones
 
@@ -57,10 +57,10 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 
 ## Promoted tasks
 
-- [E7-T1: Build production Compose topology](tasks/E7-T1-build-production-compose-topology.md) — `in_progress`, P0/L, M3
-- [E7-T2: Provision and verify supplied server](tasks/E7-T2-provision-and-verify-supplied-server.md) — `in_progress`, P0/M, M3
-- [E7-T3: Implement GitHub image and deployment workflows](tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `in_progress`, P0/L, M3
-- [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — `in_progress`, P0/M, M3
+- [E7-T1: Build production Compose topology](tasks/E7-T1-build-production-compose-topology.md) — `done`, P0/L, M3
+- [E7-T2: Provision and verify supplied server](tasks/E7-T2-provision-and-verify-supplied-server.md) — `done`, P0/M, M3
+- [E7-T3: Implement GitHub image and deployment workflows](tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `done`, P0/L, M3
+- [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — `done`, P0/M, M3
 
 ## Deferred/proposed tasks
 

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T3
 epic: E7
 title: "Implement GitHub image and deployment workflows"
-status: in_progress
+status: done
 revision: 3
 priority: P0
 size: L
@@ -30,10 +30,12 @@ implementation_gate:
   verified_at: "2026-08-12T23:35:00Z"
 dependency_gate:
   status: satisfied
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-13T00:09:47Z"
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
   evidence:
-    - "Branch ancestry contains E1-T4, E7-T1, and E7-T2 implementation commits."
+    - "E1-T4 | done | merged PR https://github.com/Flippylolz/WEF/pull/8 | integrated stack f766a63"
+    - "E7-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/16 | integrated stack f766a63"
+    - "E7-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/17 | integrated stack f766a63"
 branch:
   required: true
   name: ci/E7-T3-release-deploy
@@ -42,10 +44,12 @@ branch:
   created_at: "2026-08-12T23:39:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/18"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-13T14:52:51Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/18"
+  evidence:
+    - "Task PR merged into the ordered stack at f766a63517b6ba49a1377e630ea54e9cb4e0e56f"
+    - "Hosted release workflow published and deployed ad4d6de successfully: https://github.com/Flippylolz/WEF/actions/runs/31726996659"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -93,7 +97,7 @@ Publish exact tested application images and deploy complete validated production
 - The `production` GitHub environment, nine named repository variables, three environment secrets, and dedicated server public key are configured; names/status only are recorded, `AUTO_DEPLOY_ENABLED=false`, and batch login was proven without activating WEF.
 - `evaluate_deploy_gate.py` and `prove_release_workflow.py` cover disabled automation, direct/unassociated pushes, merged-main candidates, manual rehearsal, pinned Actions, secret-free conditions, manifest identity, and file permissions.
 - `actionlint`, Ruff, mypy, shellcheck, shell syntax checks, production topology proof, and healthy/failing deployment proofs pass locally.
-- Hosted execution remains unproven because active blocker B-006 still prevents GitHub jobs from starting; no operational autodeploy claim is made.
+- Hosted execution is proven by the successful release workflow for `ad4d6de`, including candidate verification, immutable image publication, and verified deployment.
 
 ## Test plan
 
@@ -120,6 +124,6 @@ Land with `AUTO_DEPLOY_ENABLED=false`. Manual rehearsal only after E7-T2. Disabl
 
 ## Done checklist
 
-- [x] Acceptance criteria pass locally; hosted operational evidence remains blocked by B-006.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass locally and in hosted release execution.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E0-T1
 epic: E0
 title: "Review architecture and dependency proposal"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: M
@@ -29,11 +29,11 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T21:03:00Z"
 dependency_gate:
-  status: stacked
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T21:25:00Z"
+  status: satisfied
+  verified_by: "Cursor Agent (owner-authorized reconciliation)"
+  verified_at: "2026-08-13T17:44:22Z"
   evidence:
-    - "E1-T1 | branch chore/E1-T1-repository-safety | roll-up PR https://github.com/Flippylolz/WEF/pull/4 | head 0c2e242"
+    - "E1-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/2 | merge 0ccf516"
 branch:
   required: true
   name: docs/E0-T1-architecture-review
@@ -42,10 +42,12 @@ branch:
   created_at: "2026-08-12T21:25:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/5"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Flippylolz (owner-authorized reconciliation)"
+  completed_at: "2026-08-13T15:08:39Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/5"
+  evidence:
+    - "Task PR merged at 3a1bf3b82591cb3473761d06af3163a2be188503"
+    - "Integrated main CI passed for ad4d6de: https://github.com/Flippylolz/WEF/actions/runs/31726996540"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -55,7 +57,7 @@ invalidation:
 
 # E0-T1: Review architecture and dependency proposal
 
-> Promoted after explicit owner approval of E0 spike revision 2 and implementation-plan revision 3. This documentation review is `in_progress` on its dedicated stacked branch.
+> Promoted after explicit owner approval of E0 spike revision 2 and implementation-plan revision 3. The dedicated task PR is merged and completion evidence is reconciled.
 
 ## Outcome
 
@@ -86,7 +88,7 @@ No runtime module, public API, or persisted contract changes are expected.
 
 This is a documentation/review task. The owner-approved spike is the baseline; this task records review evidence and consistency checks rather than silently changing that baseline.
 
-E1-T1 has prepared the safe repository baseline in an open ancestor pull request but is not yet `done`. Under ADR-018, this task may start from that branch without waiting for review/merge, but cannot be completed or merged until E1-T1 is `done` and this dependency gate becomes `satisfied`.
+E1-T1 supplied the safe repository baseline through its merged task PR. The dependency gate is now satisfied.
 
 ## Acceptance criteria
 
@@ -110,7 +112,7 @@ E1-T1 has prepared the safe repository baseline in an open ancestor pull request
 - Dependency check: the spike now labels unconditional adoption, E0-T2 evaluations, scope-deferred dependencies, and MVP rejections. Conditional items and rejected dependency groups state their fallback/replacement paths.
 - Bootstrap check: E1-T1 owns Git/ignore/environment/README safety; E0-T2 owns proof manifests/lockfiles/measured builds; E1-T2 owns application scaffolds, Dockerfiles, and initial real-command Make targets; E1-T3 owns Compose and Compose Make targets.
 - Safety check: source exports/media, secrets, Telegram sessions, local databases, and sensitive reports remain excluded from Git and Docker contexts; importer access is planned as an explicit read-only mount.
-- Stack check: E1-T1 remains `in_progress` in ancestor PR #2. This task's acceptance review can pass, but completion/merge remains blocked until its dependency gate becomes `satisfied`.
+- Stack check: E1-T1 and this task are merged; their completion and dependency evidence is reconciled against current `main`.
 - Proof boundary check: no application scaffold, dependency lockfile, generated OpenAPI contract, Docker proof, or E0-T2 completion evidence is asserted by this review.
 
 ## Rollout and rollback
@@ -123,7 +125,7 @@ There is no runtime rollout. A material correction increments the spike or imple
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references owner-approved spike revision 2 and is `satisfied`.
 - [x] `implementation_gate` references owner-approved implementation-plan revision 3 and is `satisfied`.
-- [x] E1-T1's open ancestor branch/PR/head are recorded by a `stacked` dependency gate.
+- [x] E1-T1's merged task PR is recorded by a satisfied dependency gate.
 - [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
@@ -136,5 +138,5 @@ There is no runtime rollout. A material correction increments the spike or imple
 ## Done checklist
 
 - [x] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
