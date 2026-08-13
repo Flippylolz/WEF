@@ -12,10 +12,31 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List synthetic estates
+         * Deprecated E0 synthetic estate proof
+         * @deprecated
          * @description Run the application query obtained from explicit app state.
          */
         get: operations["listEstates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/filter-facets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get canonical visible filter facets
+         * @description Return canonical options and visible dataset bounds.
+         */
+        get: operations["getFilterFacets"];
         put?: never;
         post?: never;
         delete?: never;
@@ -64,6 +85,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/locations/{location_id}/offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List dated offers for a selected location
+         * @description Return matching offers first and optional non-matching history.
+         */
+        get: operations["listLocationOffers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/map/locations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Query grouped map locations
+         * @description Return grouped accepted locations for the normalized filter query.
+         */
+        get: operations["queryMapLocations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -74,6 +135,18 @@ export interface components {
          * @enum {string}
          */
         Availability: "available" | "reserved";
+        /**
+         * ConfidenceIndicator
+         * @description Coarse public representation of internal coordinate confidence.
+         * @enum {string}
+         */
+        ConfidenceIndicator: "low" | "medium" | "high";
+        /**
+         * ContentType
+         * @description Public offer granularity.
+         * @enum {string}
+         */
+        ContentType: "development" | "unit";
         /**
          * CoordinatesResponse
          * @description WGS84 coordinates exposed by the API.
@@ -107,6 +180,32 @@ export interface components {
             items: components["schemas"]["EstateResponse"][];
         };
         /**
+         * FilterFacetsResponse
+         * @description Canonical visible options and dataset bounds.
+         */
+        FilterFacetsResponse: {
+            /** Area Max Sqm */
+            area_max_sqm: string | null;
+            /** Area Min Sqm */
+            area_min_sqm: string | null;
+            /** Content Types */
+            content_types: components["schemas"]["ContentType"][];
+            /** Districts */
+            districts: string[];
+            /** Market Types */
+            market_types: components["schemas"]["MarketType"][];
+            /** Price Max Minor */
+            price_max_minor: number | null;
+            /** Price Min Minor */
+            price_min_minor: number | null;
+            /** Published From */
+            published_from: string | null;
+            /** Published To */
+            published_to: string | null;
+            /** Rooms */
+            rooms: number[];
+        };
+        /**
          * HealthResponse
          * @description Machine-readable health response.
          */
@@ -116,6 +215,235 @@ export interface components {
              * @enum {string}
              */
             status: "live" | "ready";
+        };
+        /**
+         * LocationMapFeature
+         * @description One accepted grouped location feature.
+         */
+        LocationMapFeature: {
+            geometry: components["schemas"]["PointGeometry"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            properties: components["schemas"]["LocationMapProperties"];
+            /**
+             * Type
+             * @default Feature
+             * @constant
+             */
+            type: "Feature";
+        };
+        /**
+         * LocationMapProperties
+         * @description Backend-owned grouped location display data.
+         */
+        LocationMapProperties: {
+            /** Area Max Sqm */
+            area_max_sqm?: string | null;
+            /** Area Min Sqm */
+            area_min_sqm?: string | null;
+            confidence: components["schemas"]["ConfidenceIndicator"];
+            /** Coordinate Precision */
+            coordinate_precision: string;
+            /**
+             * Currency
+             * @default PLN
+             * @constant
+             */
+            currency: "PLN";
+            /** Display Address */
+            display_address: string;
+            /** Display Name */
+            display_name: string;
+            /** District */
+            district: string | null;
+            /**
+             * Latest Published At
+             * Format: date-time
+             */
+            latest_published_at: string;
+            /** Matching Offer Count */
+            matching_offer_count: number;
+            /** Price Max Minor */
+            price_max_minor?: number | null;
+            /** Price Min Minor */
+            price_min_minor?: number | null;
+            /** Total Offer Count */
+            total_offer_count: number;
+        };
+        /**
+         * LocationMapResponse
+         * @description GeoJSON FeatureCollection with stable WEF metadata.
+         */
+        LocationMapResponse: {
+            /** Features */
+            features: components["schemas"]["LocationMapFeature"][];
+            meta: components["schemas"]["MapResponseMeta"];
+            /**
+             * Type
+             * @default FeatureCollection
+             * @constant
+             */
+            type: "FeatureCollection";
+        };
+        /**
+         * LocationOfferPageResponse
+         * @description Selected-location items with explicit match/history context.
+         */
+        LocationOfferPageResponse: {
+            /** Items */
+            items: components["schemas"]["OfferSummaryResponse"][];
+            /** Matching Count */
+            matching_count: number;
+            /** Next Cursor */
+            next_cursor: string | null;
+            /** Total Count */
+            total_count: number;
+        };
+        /**
+         * MapResponseMeta
+         * @description Bounded response metadata safe for public clients.
+         */
+        MapResponseMeta: {
+            /** Feature Count */
+            feature_count: number;
+            /** Matching Offer Count */
+            matching_offer_count: number;
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+        };
+        /**
+         * MarketType
+         * @description Source market classification.
+         * @enum {string}
+         */
+        MarketType: "primary" | "secondary" | "unknown";
+        /**
+         * NotFoundProblemResponse
+         * @description Stable not-found envelope shared by absent and hidden resources.
+         */
+        NotFoundProblemResponse: {
+            /** Code */
+            code: string;
+            /** Detail */
+            detail: string;
+            /** Instance */
+            instance: string;
+            /**
+             * Kind
+             * @default not_found
+             * @constant
+             */
+            kind: "not_found";
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /** Status */
+            status: number;
+            /** Title */
+            title: string;
+            /** Type */
+            type: string;
+        };
+        /**
+         * OfferDataConfidence
+         * @description Coarse completeness indicator for offer summaries.
+         * @enum {string}
+         */
+        OfferDataConfidence: "partial" | "complete";
+        /**
+         * OfferSummaryResponse
+         * @description Dated selected-location offer summary.
+         */
+        OfferSummaryResponse: {
+            /** Area Max Sqm */
+            area_max_sqm?: string | null;
+            /** Area Min Sqm */
+            area_min_sqm?: string | null;
+            content_type: components["schemas"]["ContentType"];
+            /** Currency */
+            currency: string | null;
+            data_confidence: components["schemas"]["OfferDataConfidence"];
+            /** Delivery Label */
+            delivery_label: string | null;
+            /** Display Name */
+            display_name: string;
+            /** Floor Label */
+            floor_label: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            market_type: components["schemas"]["MarketType"];
+            /** Matches Filters */
+            matches_filters: boolean;
+            /** Price Max Minor */
+            price_max_minor?: number | null;
+            /** Price Min Minor */
+            price_min_minor?: number | null;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Rooms Max */
+            rooms_max?: number | null;
+            /** Rooms Min */
+            rooms_min?: number | null;
+        };
+        /**
+         * PointGeometry
+         * @description GeoJSON Point geometry in longitude/latitude order.
+         */
+        PointGeometry: {
+            /** Coordinates */
+            coordinates: [
+                number,
+                number
+            ];
+            /**
+             * Type
+             * @default Point
+             * @constant
+             */
+            type: "Point";
+        };
+        /**
+         * ProblemResponse
+         * @description Stable public error envelope without rejected values.
+         */
+        ProblemResponse: {
+            /** Code */
+            code: string;
+            /** Detail */
+            detail: string;
+            /** Instance */
+            instance: string;
+            /**
+             * Kind
+             * @default validation_error
+             * @constant
+             */
+            kind: "validation_error";
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /** Status */
+            status: number;
+            /** Title */
+            title: string;
+            /** Type */
+            type: string;
         };
     };
     responses: never;
@@ -142,6 +470,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EstatesResponse"];
+                };
+            };
+        };
+    };
+    getFilterFacets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FilterFacetsResponse"];
                 };
             };
         };
@@ -190,6 +538,111 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    listLocationOffers: {
+        parameters: {
+            query: {
+                area_max?: number | string | null;
+                area_min?: number | string | null;
+                bbox: string;
+                content_type?: components["schemas"]["ContentType"][];
+                cursor?: string | null;
+                district?: string[];
+                include_non_matching?: boolean;
+                limit?: number;
+                market_type?: components["schemas"]["MarketType"][];
+                price_max?: number | null;
+                price_min?: number | null;
+                published_from?: string | null;
+                published_to?: string | null;
+                rooms?: number[];
+            };
+            header?: never;
+            path: {
+                location_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocationOfferPageResponse"];
+                };
+            };
+            /** @description The location is absent or not public. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotFoundProblemResponse"];
+                };
+            };
+            /** @description The filters or cursor are invalid. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+        };
+    };
+    queryMapLocations: {
+        parameters: {
+            query: {
+                area_max?: number | string | null;
+                area_min?: number | string | null;
+                bbox: string;
+                content_type?: components["schemas"]["ContentType"][];
+                district?: string[];
+                market_type?: components["schemas"]["MarketType"][];
+                price_max?: number | null;
+                price_min?: number | null;
+                published_from?: string | null;
+                published_to?: string | null;
+                rooms?: number[];
+            };
+            header?: {
+                "if-none-match"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocationMapResponse"];
+                };
+            };
+            /** @description The filtered projection has not changed. */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The query is malformed, contradictory, or unsafe. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
             };
         };
     };

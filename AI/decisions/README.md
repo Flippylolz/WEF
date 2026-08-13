@@ -19,6 +19,7 @@ This registry is the highest-precedence documentation domain. Each linked archit
 - [ADR-016 — Username/password accounts and owner-only admin console](adr/ADR-016-pseudonymous-accounts-owner-console.md)
 - [ADR-017 — Operate without enforced GitHub branch protection](adr/ADR-017-no-enforced-branch-protection.md)
 - [ADR-018 — Allow ordered stacked pull request implementation](adr/ADR-018-ordered-stacked-pull-requests.md)
+- [ADR-019 — Separate the anonymous HTTP rehearsal from public launch](adr/ADR-019-anonymous-http-production-rehearsal.md)
 
 ## Partially superseded
 

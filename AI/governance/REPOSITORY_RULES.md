@@ -153,7 +153,7 @@ The deploy job additionally:
 - Receives no production secret in pull-request workflows.
 - Verifies through the GitHub API that the pushed SHA is associated with a merged pull request targeting `main`; an unassociated direct push builds/tests but does not deploy automatically.
 
-Until [E7-T4](../epics/E7-production-delivery/proposed-tasks/E7-T4-implement-health-verification-and-rollback.md) proves health-gated rollback on the supplied server, keep the repository variable `AUTO_DEPLOY_ENABLED=false` and deploy test releases by a manual `workflow_dispatch` for an explicit SHA. After that rehearsal, set it to `true`; successful, tested `main` merges then deploy automatically.
+Until [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) proves health-gated rollback on the supplied server, keep the repository variable `AUTO_DEPLOY_ENABLED=false` and deploy test releases by a manual `workflow_dispatch` for an explicit SHA. After that rehearsal, set it to `true`; successful, tested `main` merges then deploy automatically.
 
 ## Dependabot
 
@@ -228,7 +228,7 @@ Work allowed now:
 4. Add CI workflows and follow branch/pull-request rules manually.
 5. Enable squash merge, auto-delete branches, vulnerability alerts, and Dependabot version/security updates.
 6. Add the scheduled label/check/commit-gated Dependabot merge controller.
-7. Build the main-only GHCR/SSH deployment workflow; keep automatic execution disabled with `AUTO_DEPLOY_ENABLED=false` until [E7-T4](../epics/E7-production-delivery/proposed-tasks/E7-T4-implement-health-verification-and-rollback.md).
+7. Build the main-only GHCR/SSH deployment workflow; keep automatic execution disabled with `AUTO_DEPLOY_ENABLED=false` until [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md).
 
 Permanently out of current scope under [ADR-017](../decisions/adr/ADR-017-no-enforced-branch-protection.md):
 

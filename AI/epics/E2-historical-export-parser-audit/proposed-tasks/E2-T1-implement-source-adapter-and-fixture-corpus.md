@@ -52,7 +52,7 @@ The following definition preserves the original E2-T1 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E1-T2](../../E1-repository-developer-foundation/proposed-tasks/E1-T2-scaffold-web-and-backend-applications.md)
+- Task dependencies: [E1-T2](../../E1-repository-developer-foundation/tasks/E1-T2-scaffold-web-and-backend-applications.md)
 - Milestone: [M1](../../../milestones/M1-vertical-proof.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Data](../../../data/README.md), [Ingestion](../../../ingestion/README.md), [Contracts](../../../contracts/README.md), [Security](../../../security/README.md).
 

@@ -1,5 +1,8 @@
 """Runtime settings loaded only by the composition root."""
 
+from pathlib import Path
+from typing import Literal
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -17,6 +20,10 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = Field(default=8000, ge=1, le=65535)
     log_level: str = "info"
+    env: Literal["development", "test", "production"] = "development"
+    alembic_config: Path = Path("alembic.ini")
+    source_path: Path = Path("/source")
+    allow_synthetic_seed: bool = False
 
 
 def load_settings() -> Settings:

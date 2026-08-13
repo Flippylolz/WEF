@@ -2,8 +2,8 @@
 schema: ai-workflow/spike@1
 epic: E3
 title: "Database, geocoding, and media pipeline research"
-status: draft
-revision: 1
+status: approved
+revision: 2
 owner: owner
 research_only: true
 code_allowed: false
@@ -12,11 +12,11 @@ domain_docs: [data, contracts, ingestion, security]
 proposed_task_ids: [E3-T1, E3-T2, E3-T3, E3-T4, E3-T5]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-12T22:34:40Z"
+  approved_revision: 2
+  evidence: "Owner directive to prepare the MVP/autodeploy, choose safe defaults, log decisions/blockers, and continue stacking PRs"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -26,7 +26,7 @@ invalidation:
 
 # Spike: Database, geocoding, and media pipeline
 
-> This is a draft research scope. It authorizes documentation/research only: no production code, scaffold, migration, infrastructure/configuration change, generated executable artifact, prototype, proof branch, or disposable proof code.
+> Revision 2 is approved research. The spike itself remains non-executable; implementation is authorized only through a separately approved plan and promoted task.
 
 ## Question
 
@@ -63,13 +63,16 @@ Review persisted contracts, ingestion/geocoding rules, source/media constraints,
 
 Research outputs must remain non-executable Markdown. Any data inspection must preserve source privacy and may not copy real source payload, contacts, credentials, sessions, or media into this artifact.
 
-## Current evidence baseline
+## Evidence
 
 - ADR-005 selects PostgreSQL/PostGIS, ADR-007 selects mounted media behind a storage interface, and ADR-006 requires one ingestion core.
 - The roadmap requires advisory locking, bounded transactions, resumable checkpoints, checksum deduplication, and migration tests.
 - D-002 identifies Geoapify as the initial candidate, LocationIQ as an alternative, and public Nominatim as one-time cached seed use only.
+- The accepted E0 proof verifies async SQLAlchemy/PostGIS mapping, inward-owned query ports, and non-root backend images.
+- E1-T3 verifies persistent PostGIS/media volumes and isolated Compose health without production credentials.
+- The first browser-visible MVP needs canonical `Location`/`Offer` rows and accepted synthetic coordinates, but not real-source parsing, provider calls, contact data, or media.
 
-These are planning facts and constraints, not evidence that implementation or acceptance checks have run.
+No private export payload was inspected for this revision. The documented source baseline is sufficient to keep future ingestion constraints explicit.
 
 ## Options to evaluate
 
@@ -77,29 +80,30 @@ These are planning facts and constraints, not evidence that implementation or ac
 - Persist parser output directly into public projections, which would couple uncertainty and reprocessing to API shape.
 - Expose source media paths or provider-specific fields, which would violate storage and contract boundaries.
 
-## Draft recommendation
+## Approved recommendation
 
-Refine schema/migration, persistence/reprocessing, geocoder/cache, media derivative, and complete-import tasks as separate reviewable boundaries with explicit reconciliation and recovery behavior.
+Promote only E3-T1 for the first map MVP. Implement the M1 subset of the canonical schema (`Location` and `Offer` plus required enums/indexes), Alembic clean-install migrations, and an explicit deterministic synthetic seed command. Synthetic coordinates are fixture facts marked accepted; they are not inferred or provider results.
 
-This recommendation remains draft and may change after bounded research. It is not approved and does not authorize any proposed task.
+Keep E3-T2 through E3-T5 proposed. Real-source idempotent persistence, geocoding/provider/cache behavior, media, and full import remain required before historical data replaces the seed. The seed command is idempotent, verification-only, and cannot run implicitly in production.
 
 ## Proposed task boundaries
 
-- [E3-T1: Create schema and migrations](proposed-tasks/E3-T1-create-schema-and-migrations.md) — candidate boundary for spike refinement.
-- [E3-T2: Implement idempotent persistence and reprocessing](proposed-tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md) — candidate boundary for spike refinement.
-- [E3-T3: Implement geocoder abstraction and cache](proposed-tasks/E3-T3-implement-geocoder-abstraction-and-cache.md) — candidate boundary for spike refinement.
-- [E3-T4: Implement media storage and derivatives](proposed-tasks/E3-T4-implement-media-storage-and-derivatives.md) — candidate boundary for spike refinement.
-- [E3-T5: Import and review the complete dataset](proposed-tasks/E3-T5-import-and-review-the-complete-dataset.md) — candidate boundary for spike refinement.
+- [E3-T1: Create schema and migrations](tasks/E3-T1-create-schema-and-migrations.md) — promote for the deterministic M1 schema/seed boundary.
+- [E3-T2: Implement idempotent persistence and reprocessing](proposed-tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md) — keep proposed for historical ingestion.
+- [E3-T3: Implement geocoder abstraction and cache](proposed-tasks/E3-T3-implement-geocoder-abstraction-and-cache.md) — keep proposed; no provider is needed for synthetic fixtures.
+- [E3-T4: Implement media storage and derivatives](proposed-tasks/E3-T4-implement-media-storage-and-derivatives.md) — keep proposed.
+- [E3-T5: Import and review the complete dataset](proposed-tasks/E3-T5-import-and-review-the-complete-dataset.md) — keep proposed.
 
-No candidate above may appear in an executable implementation-plan sequence while it remains under `proposed-tasks/`.
+Only promoted E3-T1 may appear in implementation-plan revision 2.
 
 ## Risks and open questions
 
 - A uniqueness or transaction mistake can duplicate canonical offers or advance checkpoints before commit.
 - Low-precision/out-of-bounds coordinates can become misleading public pins.
 - Single-host media/database persistence is not backup; E7-T5 remains deferred.
-- Confirm task-level traceability, cross-epic dependencies, test evidence, rollout, and rollback during spike refinement.
-- Resolve every named deferred-decision gate before promoting affected work.
+- Migration/schema drift can leave a competing disposable proof model; E3-T1 replaces proof persistence rather than maintaining two models.
+- Synthetic fixtures can be mistaken for inventory; label them clearly and require an explicit seed command.
+- D-002 does not gate accepted synthetic coordinates. It continues to gate real provider implementation/use in E3-T3/E8-T4.
 
 ## Invalidation triggers
 
@@ -109,14 +113,14 @@ No candidate above may appear in an executable implementation-plan sequence whil
 
 ## Exit checklist
 
-- [ ] The bounded question is answered with evidence and uncertainty distinguished.
-- [ ] Governing domain documents and decisions are reviewed and linked.
-- [ ] Options, recommendation, risks, and open questions are complete.
-- [ ] Proposed task scope, acceptance, dependencies, priority/size, and traceability are refined.
-- [ ] No production or disposable proof code was created.
-- [ ] `revision` represents the material content being submitted.
-- [ ] Status is changed to `awaiting_approval` while approval remains `pending`.
+- [x] The bounded question is answered with evidence and uncertainty distinguished.
+- [x] Governing domain documents and decisions are reviewed and linked.
+- [x] Options, recommendation, risks, and open questions are complete.
+- [x] E3-T1 scope, acceptance, dependencies, priority/size, and traceability are refined.
+- [x] No production or disposable proof code was created during the spike.
+- [x] Revision 2 represents the approved material content.
+- [x] Status and approval metadata record the delegated owner decision.
 
 ## Owner decision
 
-The owner records the decision only in the YAML `approval` object. Approval of the current spike revision would permit task refinement/promotion and implementation planning only; it would not permit code.
+Flippylolz approved revision 2 through the explicit overnight MVP/autodeploy delegation. This permits E3-T1 promotion and implementation planning only; code still requires approved plan revision 2 and an in-progress task branch.

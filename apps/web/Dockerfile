@@ -21,7 +21,20 @@ COPY apps/web/package.json ./apps/web/package.json
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --filter web...
 
+FROM dependencies AS development
+
+COPY . .
+
+WORKDIR /workspace/apps/web
+
+EXPOSE 3000
+
+CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
+
 FROM dependencies AS build
+
+ARG NEXT_PUBLIC_MAP_STYLE_URL=https://tiles.openfreemap.org/styles/liberty
+ENV NEXT_PUBLIC_MAP_STYLE_URL=${NEXT_PUBLIC_MAP_STYLE_URL}
 
 COPY . .
 

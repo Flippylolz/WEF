@@ -4,7 +4,7 @@ Warsaw Estate Platform (WEF) will turn a Telegram real-estate export into a filt
 
 ## Current status
 
-The repository contains the synthetic E0 architecture proof: a layered FastAPI/PostGIS query, committed OpenAPI contract, generated thin Next.js client, tests, and non-root Docker images. It is not yet the product MVP: historical ingestion, the production schema, MapLibre UI, authentication, Docker Compose, and deployment remain task-gated follow-up work.
+The repository contains a browser-visible synthetic M1: a forward-migrated PostGIS catalog, backend-authoritative grouped GeoJSON/facets/dated results, and a responsive MapLibre/OpenFreeMap map with an accessible companion list. Historical ingestion, URL-backed filters, authentication, real media/data, and deployment remain task-gated follow-up work.
 
 Start with:
 
@@ -29,22 +29,49 @@ The backend is authoritative for business behavior. The frontend primarily rende
 Prerequisites are Python 3.13.2, Node.js 22.22.2, uv, Corepack/pnpm, and Docker. Versions are recorded in `.tool-versions` and lockfiles.
 
 ```shell
-uv sync --project apps/backend --frozen
-uv run --project apps/backend pytest
-pnpm install --frozen-lockfile
-pnpm --filter web contract:check
-pnpm --filter web test
-docker build -f apps/backend/Dockerfile -t wef-backend:e0-proof .
-docker build -f apps/web/Dockerfile -t wef-web:e0-proof .
+make install
+make format-check lint typecheck test contract-check
+make build
 ```
 
 The real PostGIS test runs only with an explicit disposable `TEST_DATABASE_URL`. Static API documentation is generated as an artifact and is not served by the production API.
+
+`make help` lists the exact command façade. The Makefile delegates to uv, pnpm, and Docker; it does not select environments or contain application logic.
+
+## Local Docker Compose
+
+Docker with Compose v2 is the only prerequisite for the isolated local stack. Optional overrides can be copied from `.env.example` to an ignored `.env`.
+
+```shell
+make compose-config
+make up
+make seed-m1
+curl --fail http://127.0.0.1:3100/api/v1/health/live
+curl --fail 'http://127.0.0.1:3100/api/v1/map/locations?bbox=20.7%2C52.0%2C21.4%2C52.4'
+make down
+```
+
+Only Caddy publishes a host port, bound to loopback on `3100` by default. The API, web process, PostGIS, and operator container remain on an internal network. `make down` preserves the named database and media volumes.
+
+`make up` applies forward Alembic migrations before API startup. `make seed-m1` explicitly converges a small invented Warsaw fixture for map/API verification; production requires a separate explicit rehearsal opt-in and the command never reads the local export.
+
+Open `http://127.0.0.1:3100/` after seeding. The public map style defaults to keyless OpenFreeMap and can be replaced at image-build time with `NEXT_PUBLIC_MAP_STYLE_URL`; OpenFreeMap/OpenStreetMap attribution remains visible in the map shell.
+
+`make importer-dry-run` starts the operator profile and confirms that `WEF_SOURCE_DIR` is mounted read-only. It reports only a file count and does not read file contents, parse listings, contact Telegram, or persist imports.
+
+The inert production model is separate from local Compose:
+
+```shell
+make production-proof
+```
+
+That command renders the digest-only `wef-production` topology, validates Caddy, rejects mutable/default release configuration, checks internal networks/single-edge-port/resource boundaries, and statically rejects global cleanup or schema-downgrade commands. It does not connect to or mutate the production host.
 
 ## Repository safety
 
 The local `est-test/` export, `est-test.tar.gz`, media, environment files, Telegram sessions, local databases, and generated sensitive reports must never be committed or copied into Docker build contexts.
 
-Use `.env.example` only as a list of safe local-development names. Production configuration is transferred from GitHub Actions during deployment and is never committed.
+Use `.env.example` only as a list of names and non-runnable placeholders. Complete production configuration is transferred from GitHub Actions during deployment and is never committed.
 
 ## Contribution workflow
 

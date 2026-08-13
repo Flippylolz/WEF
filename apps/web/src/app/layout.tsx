@@ -3,10 +3,11 @@ import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 
 import "./globals.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 export const metadata: Metadata = {
-  title: "Synthetic estates",
-  description: "A thin frontend proof for backend-provided estate data.",
+  title: "Warsaw Estate Finder",
+  description: "Explore grouped, dated Warsaw estate offers on a map.",
 };
 
 type RootLayoutProps = {
