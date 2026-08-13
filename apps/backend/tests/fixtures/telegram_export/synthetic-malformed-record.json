@@ -1,0 +1,14 @@
+{
+  "name": "Sanitized Fixture Channel",
+  "type": "public_channel",
+  "id": 9001,
+  "messages": [
+    {
+      "type": "message",
+      "date": "2030-01-02T00:00:00",
+      "date_unixtime": "1893542400",
+      "text": "Synthetic record with a deliberately missing identifier",
+      "text_entities": []
+    }
+  ]
+}

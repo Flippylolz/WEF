@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E2-T1
 epic: E2
 title: "Implement source adapter and fixture corpus"
-status: ready
+status: in_progress
 revision: 2
 priority: P0
 size: M
@@ -36,10 +36,10 @@ dependency_gate:
     - "E1-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/7 | merge 07ee778"
 branch:
   required: true
-  name: null
+  name: feature/E2-T1-telegram-export-adapter
   task_id: E2-T1
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-13T18:25:01Z"
   pull_request: null
 completion:
   completed_by: null
@@ -138,9 +138,9 @@ The adapter is inert library code with no persistence or network side effect. Be
 
 ## Start checklist
 
-- [ ] Status passes through `ready`.
-- [ ] Dedicated branch `feature/E2-T1-telegram-export-adapter` is created from the latest `main`.
-- [ ] Branch/PR contain E2-T1 only and branch metadata is recorded before `in_progress`.
+- [x] Status passed through `ready`.
+- [x] Dedicated branch `feature/E2-T1-telegram-export-adapter` was created from the latest `main`.
+- [x] Branch contains E2-T1 only and branch metadata was recorded at task start.
 
 ## Done checklist
 
