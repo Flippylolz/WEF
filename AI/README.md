@@ -21,7 +21,7 @@ The documentation migration is complete. Canonical content lives in the domain d
 - API contract: deterministic FastAPI OpenAPI committed in the repository and emitted as CI JSON, generated types, and static HTML artifacts; Swagger, OpenAPI, and ReDoc routes are disabled in production.
 - Map renderer: MapLibre GL JS with OpenFreeMap as the initial basemap.
 - Database: PostgreSQL with PostGIS.
-- Runtime: Docker Compose on one server, with Caddy at the edge.
+- Runtime: Docker Compose on one server. The current anonymous rehearsal uses Caddy; the accepted public-launch target is a shared Nginx TLS edge with Certbot/Let's Encrypt renewal for WEF and AI Forecast.
 - Delivery: GitHub Actions, GitHub Container Registry, and SSH deployment.
 - Production configuration: GitHub Actions variables and secrets are the deploy configuration source of truth. Complete validated configuration is transferred atomically on every deploy; no production `.env` is committed.
 - Reliability scope: application data persists on the NUC, but backups and restore drills are deferred. Persistence is not backup, and the accepted single-host data-loss risk must not be presented as a recovery guarantee.

@@ -19,7 +19,7 @@ Start with:
 
 - Python, FastAPI, SQLAlchemy, PostgreSQL, and PostGIS
 - TypeScript, Next.js, React, and MapLibre
-- Docker Compose with Caddy
+- Docker Compose; Caddy for the current local/interim stack and Nginx plus Certbot/Let's Encrypt for the target shared production edge
 - GitHub Actions and GitHub Container Registry
 
 The backend is authoritative for business behavior. The frontend primarily renders generated API contracts and backend-provided projections.
@@ -52,6 +52,8 @@ make down
 ```
 
 Only Caddy publishes a host port, bound to loopback on `3100` by default. The API, web process, PostGIS, and operator container remain on an internal network. `make down` preserves the named database and media volumes.
+
+This describes the current local/rehearsal implementation. [ADR-020](AI/decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md) selects Nginx as the target NUC web server, with free Certbot renewal for both WEF and the existing AI Forecast service; [E7-T8](AI/epics/E7-production-delivery/proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md) remains non-actionable until its spike/plan gates pass.
 
 `make up` applies forward Alembic migrations before API startup. `make seed-m1` explicitly converges a small invented Warsaw fixture for map/API verification; production requires a separate explicit rehearsal opt-in and the command never reads the local export.
 

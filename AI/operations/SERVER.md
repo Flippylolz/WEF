@@ -119,7 +119,9 @@ Privileged UFW/router configuration still needs an interactive, non-logged admin
 - Host/provider firewall allowance.
 - Whether the initial endpoint may use plain HTTP or must use HTTPS.
 
-Public launch should use HTTPS. A high non-standard HTTPS port or DNS challenge requires additional Caddy/DuckDNS design; plain `http://...:3100` should be treated as an interim deployment, not the final security posture.
+Public launch should use HTTPS. A high non-standard HTTPS port or DNS challenge requires additional shared-ingress/DuckDNS design; plain `http://...:3100` should be treated as an interim deployment, not the final security posture.
+
+[ADR-020](../decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md) now selects Nginx as the target public web server with Certbot/Let's Encrypt auto-renewal for both WEF and the AI Forecast frontend currently on port 3000. This does not change the observed/current listeners above. [E7-T8](../epics/E7-production-delivery/proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md) must first confirm two hostnames and 80/443 forwarding, then perform an inventoried, health-checked, reversible cutover; until then Caddy/3100 and AI Forecast/3000 remain current facts.
 
 ## Deployment paths
 
