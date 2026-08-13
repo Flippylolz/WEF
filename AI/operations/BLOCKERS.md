@@ -7,7 +7,7 @@ This append-only log records blockers that could not be safely resolved autonomo
 ### B-001: Stacked PRs are not merged
 
 - Impact: code, CI, and deployment workflows prepared in descendant branches are not active on `main`; main-only autodeploy cannot run.
-- Current state: PRs #1–#3 were merged, but #2 and #3 targeted parent branches after those parents had already merged. [Roll-up PR #4](https://github.com/Flippylolz/WEF/pull/4) safely propagates their changes to `main`; the uninterrupted direct descendant stack now reaches [E7-T2 PR #17](https://github.com/Flippylolz/WEF/pull/17).
+- Current state: PRs #1–#3 were merged, but #2 and #3 targeted parent branches after those parents had already merged. [Roll-up PR #4](https://github.com/Flippylolz/WEF/pull/4) safely propagates their changes to `main`; the uninterrupted direct descendant stack now reaches [E7-T3 PR #18](https://github.com/Flippylolz/WEF/pull/18).
 - Needed from owner: review/merge PR #4, then continue merging/retargeting descendants base-first, or explicitly authorize autonomous merges.
 - Safe workaround: continue preparing/testing descendants against their parent branches under ADR-018.
 
@@ -42,7 +42,7 @@ This append-only log records blockers that could not be safely resolved autonomo
 ### B-006: First proof workflow receives GitHub `startup_failure`
 
 - Impact: no stacked PR has a successful hosted check and GHCR/autodeploy cannot execute, even though local workflow equivalents pass.
-- Current state: GitHub runs `31645554630` and predecessors fail before creating jobs with `path: BuildFailed`; repository Actions are enabled/all actions allowed. A separate one-job `echo` workflow produced startup failure `31646260433`. The same zero-second failure continues through E7-T2 push/PR runs [`31652841631`](https://github.com/Flippylolz/WEF/actions/runs/31652841631) and [`31652837819`](https://github.com/Flippylolz/WEF/actions/runs/31652837819), while the complete local quality, audit, image, production-Compose, migration/seed/smoke/persistence, and failure/rollback equivalents pass. This rules out application commands and strongly indicates a repository/account hosted-runner startup or quota/billing condition.
+- Current state: GitHub runs `31645554630` and predecessors fail before creating jobs with `path: BuildFailed`; repository Actions are enabled/all actions allowed. A separate one-job `echo` workflow produced startup failure `31646260433`. The same zero-second failure continues through E7-T3 push/PR runs [`31653669559`](https://github.com/Flippylolz/WEF/actions/runs/31653669559) and [`31653671447`](https://github.com/Flippylolz/WEF/actions/runs/31653671447), while the complete local quality, audit, image, production-Compose, migration/seed/smoke/persistence, workflow-gate, and failure/rollback equivalents pass. This rules out application commands and strongly indicates a repository/account hosted-runner startup or quota/billing condition.
 - Needed from owner: inspect the Actions run/billing UI. The current GitHub token cannot read billing because it lacks the `user` scope; no auth escalation was attempted overnight.
 - Safe workaround: retain local PostGIS, architecture, contract, frontend, advisory, image, workflow-parser, and negative-gate evidence; do not mark hosted-CI acceptance complete or merge dependent production work until a hosted workflow passes.
 
