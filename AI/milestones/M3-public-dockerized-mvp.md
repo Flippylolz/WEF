@@ -8,11 +8,11 @@ status: in_progress
 
 ## Outcome
 
-The responsive map experience is production-deployed from GitHub with persistent server storage, monitoring, application rollback, attribution, contact masking, and reveal auditing. An interim anonymous-only HTTP rehearsal may precede launch; M3 public launch includes E7-T7 HTTPS before registration/contact reveal/admin is enabled. Backups remain explicitly out of scope.
+The responsive map experience is production-deployed from GitHub with persistent server storage, monitoring, application rollback, attribution, contact masking, and reveal auditing. An interim anonymous-only HTTP rehearsal may precede launch; M3 public launch includes E7-T8 shared Nginx/Certbot HTTPS for WEF and AI Forecast before E7-T7 registration/contact reveal/admin is enabled. Backups remain explicitly out of scope.
 
 ## Current constraints
 
-- Only the configured edge port is published, and the existing NUC workloads must remain unchanged.
+- During the rehearsal, only the configured WEF edge port is published and existing workloads remain unchanged. E7-T8 may alter only the explicitly approved AI Forecast/public-edge listener topology after independent health and rollback proof; application/data resources remain unchanged.
 - Production authentication, administration, and contact reveal remain disabled until HTTPS and required secrets pass smoke/security checks.
 - Rollback covers compatible application releases; no destructive schema downgrade or data-recovery guarantee is implied.
 - E7-T5 remains deferred under ADR-015 and is not a public-launch gate.
@@ -42,6 +42,7 @@ The responsive map experience is production-deployed from GitHub with persistent
 - [E7-T5: Future backup and restore capability](../epics/E7-production-delivery/proposed-tasks/E7-T5-future-backup-and-restore-capability.md) — `deferred`
 - [E7-T6: Transfer and import the historical dataset](../epics/E7-production-delivery/proposed-tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `proposed`
 - [E7-T7: Enable production registration and contact reveal](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`
+- [E7-T8: Build shared Nginx TLS ingress](../epics/E7-production-delivery/proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `proposed`
 
 Cancelled and deferred candidates remain linked for traceability but are not completion requirements unless an approved revision restores them to required scope.
 
@@ -51,6 +52,7 @@ Cancelled and deferred candidates remain linked for traceability but are not com
 - [ ] Immutable images deploy from GitHub to the isolated NUC topology with complete validated configuration and no host interference.
 - [ ] Health verification and compatible application rollback are rehearsed; release SHA/digests/migration revision are auditable.
 - [ ] HTTPS-gated registration, owner administration, and contact reveal pass production smoke/security checks while anonymous browsing remains available.
+- [ ] Shared Nginx serves independently healthy WEF and AI Forecast HTTPS hostnames, and Certbot renewal/reload/expiry monitoring plus rollback evidence pass.
 - [ ] Every required task has been promoted, approved, dependency-gated, implemented on its dedicated branch, and completed with definition-of-done evidence.
 
 ## Status rule

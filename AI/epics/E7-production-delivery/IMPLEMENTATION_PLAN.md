@@ -35,6 +35,8 @@ invalidation:
 
 [E7 spike revision 2](SPIKE.md) approves an anonymous HTTP production-infrastructure rehearsal followed by immutable GitHub delivery and compatible application rollback. Historical import, backups, HTTPS/auth/contact/admin, and Telegram remain outside this sequence.
 
+[ADR-020](../../decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md) was accepted after this plan approval and selects Nginx/Certbot as the later shared TLS target. It does not alter the E7-T1 through E7-T4 Caddy rehearsal scope or authorize [E7-T8](proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md); that task requires a future approved spike and implementation-plan revision.
+
 ## Scope and outcome
 
 Deliver a production Compose topology that is locally proven, prepared only under `/home/nuc/wef`, released as exact GHCR digests through a gated GitHub workflow, and rehearsed with healthy/unhealthy synthetic releases without modifying existing host workloads. Autodeploy remains disabled if B-006 prevents hosted evidence.
@@ -107,7 +109,7 @@ Land each task as a stacked PR. Keep `AUTO_DEPLOY_ENABLED=false`. E7-T2 may prep
 - **Migration breaks rollback:** expand-compatible migrations only, previous-app compatibility test, no automatic downgrade.
 - **Unhealthy replacement causes outage:** pull first, retain manifest/images/config, bounded health timeout and automatic app rollback.
 - **Shared-host pressure:** conservative CPU/memory/log limits and abort thresholds; no historical import in this sequence.
-- **Plain HTTP exposes sensitive behavior:** sensitive routes/features remain absent until E7-T7 HTTPS.
+- **Plain HTTP exposes sensitive behavior:** sensitive routes/features remain absent until the separately approved E7-T8 Nginx HTTPS migration and E7-T7 enablement; both remain outside this plan revision.
 
 ## Invalidation triggers
 
