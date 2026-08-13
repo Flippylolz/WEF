@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E2
 title: "Historical export parser and audit implementation plan"
-status: awaiting_approval
+status: approved
 revision: 2
 owner: owner
 spike_revision: 2
@@ -11,11 +11,11 @@ task_sequence:
     revision: 2
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-13T18:20:00Z"
+  approved_revision: 2
+  evidence: "Owner explicitly approved E2 implementation-plan revision 2 and directed implementation to continue in the E2 Cursor conversation"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -123,8 +123,8 @@ Return to the spike for a changed `RawMessage` identity/field contract, checksum
 - [x] E2-T1 has no deferred decision or migration.
 - [x] E2-T2 through E2-T5 remain proposed and absent from the executable sequence.
 - [x] No production or test code was written before this approval request.
-- [x] Revision 2 is `awaiting_approval` with `approval.status: pending`.
+- [x] Revision 2 and its owner approval are recorded.
 
 ## Owner decision
 
-Implementation-plan revision 2 awaits a separate explicit owner decision. The current spike-only approval does not approve this plan. Until approval metadata records revision 2, E2-T1 remains `draft`, its implementation gate remains blocked, and no feature branch or production/test code is authorized.
+Flippylolz explicitly approved implementation-plan revision 2 and directed E2-T1 implementation to continue. E2-T1 may move to `ready` and then start only on its dedicated feature branch with the approved scope, tests, safety boundaries, and merge-after-green-CI gate above.

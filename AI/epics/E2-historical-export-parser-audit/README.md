@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E2
 title: "Historical export parser and audit"
-status: planning
+status: ready
 milestones: [M1, M2]
 owner: owner
 spike: SPIKE.md
@@ -17,10 +17,10 @@ deterministic extraction from the raw Telegram export with reconciled dry-run re
 
 ## Approval state
 
-- Epic workspace status: `planning`.
+- Epic workspace status: `ready`.
 - [Spike](SPIKE.md): `approved`, revision 2, owner-approved research; it permits promotion/planning only, no code.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `awaiting_approval`, revision 2, sequencing promoted E2-T1 only; owner approval remains pending.
-- E2-T1 is promoted/`draft` with a satisfied spike/dependency gate and blocked implementation gate. No feature branch or code is authorized.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing promoted E2-T1 only.
+- E2-T1 is promoted/`ready` with every gate satisfied; implementation must use its dedicated branch and merge only after green CI.
 - Every remaining file in `proposed-tasks/` is non-actionable.
 
 ## Milestones
@@ -44,7 +44,7 @@ deterministic extraction from the raw Telegram export with reconciled dry-run re
 
 ## Promoted task
 
-- [E2-T1: Implement source adapter and fixture corpus](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md) — `draft`, P0/M, M1; awaiting implementation-plan approval
+- [E2-T1: Implement source adapter and fixture corpus](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md) — `ready`, P0/M, M1
 
 ## Proposed tasks
 

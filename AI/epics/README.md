@@ -17,7 +17,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 
 - [E0 — Architecture and dependency spike](E0-architecture-dependency-spike/README.md) — `done`; spike revision 2/plan revision 3 approved, E0-T1 and E0-T2 done; milestones M1.
 - [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `done`; spike revision 2/plan revision 4 approved; 4 done, 2 proposed, 1 cancelled; milestones M1.
-- [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `planning`; spike revision 2 approved, plan revision 2 awaiting approval, 1 promoted draft/4 proposed; milestones M1, M2.
+- [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `ready`; spike/plan revision 2 approved, E2-T1 ready/4 proposed; milestones M1, M2.
 - [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `ready`; spike/plan revision 2; E3-T1 done, 4 proposed; milestones M1, M2.
 - [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `ready`; spike/plan revision 2; E4-T1/T2 done, 2 proposed; milestones M1, M2.
 - [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `ready`; spike/plan revision 2; E5-T1 done/E5-T2 ready, 3 proposed; milestones M1, M3.
@@ -25,7 +25,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `ready`; 8 tasks (4 done, 3 proposed, 1 deferred); milestones M3.
 - [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; 5 tasks (5 proposed); milestones M4.
 
-The original E0/E1/E3/E4/E5-T1/E7 ordered stack is merged and reconciled against successful integrated `main` CI. E3–E5 and E7 retain approved current plans with later work still proposed or ready. E2 has an approved spike but its implementation plan is awaiting separate owner approval; E6–E8 remain draft. New work must pass its dedicated pull-request CI before merge.
+The original E0/E1/E3/E4/E5-T1/E7 ordered stack is merged and reconciled against successful integrated `main` CI. E2-T1 and later E3–E5/E7 work retain approved current gates or remain proposed/ready. E6–E8 remain draft. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
@@ -80,7 +80,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E1-T7](E1-repository-developer-foundation/proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md): task dependencies `E1-T4, E1-T6`; M1; requirements `none`; decisions `ADR-017`.
 ### E2
 
-- [E2-T1](E2-historical-export-parser-audit/tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md): promoted/draft revision 2; satisfied dependency `E1-T2`; implementation gate blocked pending plan revision 2 approval; M1; requirements `P-006, P-007`; decisions `ADR-006, ADR-012`.
+- [E2-T1](E2-historical-export-parser-audit/tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md): promoted/ready revision 2; satisfied dependency `E1-T2` and approved spike/implementation gates; M1; requirements `P-006, P-007`; decisions `ADR-006, ADR-012`.
 - [E2-T2](E2-historical-export-parser-audit/proposed-tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md): task dependencies `E2-T1`; M1; requirements `P-002, P-003, P-007`; decisions `ADR-003, ADR-006, ADR-012`.
 - [E2-T3](E2-historical-export-parser-audit/proposed-tasks/E2-T3-implement-media-grouping.md): task dependencies `E2-T1`; M2; requirements `P-005`; decisions `ADR-006, ADR-007`.
 - [E2-T4](E2-historical-export-parser-audit/proposed-tasks/E2-T4-implement-dry-run-reports.md): task dependencies `E2-T2, E2-T3`; M2; requirements `P-007`; decisions `ADR-006`.

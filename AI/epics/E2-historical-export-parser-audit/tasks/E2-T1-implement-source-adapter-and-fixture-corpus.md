@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E2-T1
 epic: E2
 title: "Implement source adapter and fixture corpus"
-status: draft
+status: ready
 revision: 2
 priority: P0
 size: M
@@ -23,11 +23,11 @@ spike_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-13T18:00:00Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 2
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-13T18:20:00Z"
 dependency_gate:
   status: satisfied
   verified_by: "Cursor Agent"
@@ -55,7 +55,7 @@ invalidation:
 
 # E2-T1: Implement source adapter and fixture corpus
 
-> Promoted after explicit owner approval of E2 spike revision 2. The task remains `draft` and non-executable until the owner separately approves the current implementation plan and its implementation gate is satisfied.
+> Promoted after explicit owner approval of E2 spike revision 2. Implementation-plan revision 2 is now owner-approved, every task gate is satisfied, and E2-T1 is ready to start on its dedicated branch.
 
 ## Outcome
 
@@ -132,7 +132,7 @@ The adapter is inert library code with no persistence or network side effect. Be
 - [x] This file is authoritative under `tasks/`; the proposed source is removed.
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references owner-approved E2 spike revision 2 and is `satisfied`.
-- [ ] `implementation_gate` references a separately owner-approved current implementation-plan revision and is `satisfied`.
+- [x] `implementation_gate` references owner-approved implementation-plan revision 2 and is `satisfied`.
 - [x] E1-T2 is `done` and recorded by the satisfied dependency gate.
 - [x] Scope and acceptance criteria match approved spike revision 2.
 
