@@ -15,6 +15,8 @@
 }
 
 body {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   margin: 0;
   overflow-x: hidden;
@@ -28,6 +30,31 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+}
+
+.app-content {
+  flex: 1 0 auto;
+  min-width: 0;
+}
+
+.version-footer {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+
+.version-footer p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.version-footer code {
+  font-size: inherit;
+  font-variant-numeric: tabular-nums;
 }
 
 .page-shell {
