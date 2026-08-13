@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E2-T3
 epic: E2
 title: "Implement deterministic media grouping"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: M
@@ -29,18 +29,18 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-13T18:58:46Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
+  status: satisfied
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-13T19:18:11Z"
   evidence:
     - "E2-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/33 | merge 6e43d0a"
-    - "E2-T2 | ready | must merge before E2-T3 starts"
+    - "E2-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/36 | merge 5a8552b"
 branch:
   required: true
-  name: null
+  name: feature/E2-T3-media-grouping
   task_id: E2-T3
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-13T19:18:11Z"
   pull_request: null
 completion:
   completed_by: null
@@ -101,14 +101,14 @@ This is inert in-memory association code and an additive internal raw-message fi
 
 - [x] Promotion and current spike/implementation gates are recorded.
 - [x] E2-T1 completion is recorded.
-- [ ] E2-T2 is `done`; dependency gate is satisfied.
-- [ ] Status moves to `ready` only after all dependencies are complete.
+- [x] E2-T2 is `done`; dependency gate is satisfied.
+- [x] Status passed through `ready` after all dependencies completed.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated E2-T3 branch is created from latest `main`.
-- [ ] Branch and PR contain E2-T3 only; metadata is recorded.
+- [x] Status passed through `ready`.
+- [x] Dedicated E2-T3 branch is created from latest `main`.
+- [x] Branch contains E2-T3 only; branch metadata is recorded.
 
 ## Done checklist
 

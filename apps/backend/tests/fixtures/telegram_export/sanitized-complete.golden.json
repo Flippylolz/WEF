@@ -9,6 +9,7 @@
         "edited_at": null,
         "external_message_id": 101,
         "media": [],
+        "media_group_id": null,
         "message_type": "message",
         "original_text": "Zażółć gęślą jaźń — sample listing",
         "published_at": "2030-01-01T00:00:00+00:00",
@@ -53,6 +54,7 @@
         "edited_at": null,
         "external_message_id": 102,
         "media": [],
+        "media_group_id": null,
         "message_type": "message",
         "original_text": [
           "Mixed ",
@@ -149,6 +151,7 @@
         "edited_at": null,
         "external_message_id": 103,
         "media": [],
+        "media_group_id": null,
         "message_type": "service",
         "original_text": "",
         "published_at": "2030-01-01T00:02:00+00:00",
@@ -194,6 +197,7 @@
             "width": 1200
           }
         ],
+        "media_group_id": null,
         "message_type": "message",
         "original_text": "",
         "published_at": "2030-01-01T00:03:00+00:00",
@@ -251,6 +255,7 @@
             "width": null
           }
         ],
+        "media_group_id": null,
         "message_type": "message",
         "original_text": [
           "Видео ",
@@ -304,6 +309,7 @@
         "edited_at": null,
         "external_message_id": 106,
         "media": [],
+        "media_group_id": null,
         "message_type": "message",
         "original_text": "Ответ без контактов",
         "published_at": "2030-01-01T00:05:00+00:00",
@@ -338,6 +344,7 @@
         "edited_at": null,
         "external_message_id": 107,
         "media": [],
+        "media_group_id": null,
         "message_type": "message",
         "original_text": "",
         "published_at": "2030-01-01T00:06:00+00:00",
@@ -371,6 +378,7 @@
         "edited_at": null,
         "external_message_id": 108,
         "media": [],
+        "media_group_id": null,
         "message_type": "fixture_unknown",
         "original_text": "",
         "published_at": "2030-01-01T00:07:00+00:00",

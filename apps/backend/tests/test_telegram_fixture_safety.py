@@ -15,6 +15,7 @@ ALLOWED_FIXTURE_FILES = {
     "sanitized-complete.golden.json",
     "sanitized-complete.json",
     "sanitized-extraction-cases.json",
+    "sanitized-media-grouping-cases.json",
     "synthetic-malformed-record.json",
     TRUNCATED_FIXTURE,
 }

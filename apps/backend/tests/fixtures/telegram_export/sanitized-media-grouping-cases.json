@@ -1,0 +1,36 @@
+{
+  "grouping_version": "e2-media-v1",
+  "events": [
+    {"message_id": 201, "second": 0, "candidate": true, "text": "Kupno | Mieszkanie", "group_id": "synthetic-a", "media": ["photo"]},
+    {"message_id": 202, "second": 30, "candidate": false, "text": "", "group_id": "synthetic-a", "media": ["video", "thumbnail"]},
+    {"message_id": 203, "second": 60, "candidate": true, "text": "Kupno | Mieszkanie", "media": []},
+    {"message_id": 204, "second": 90, "candidate": false, "text": "", "reply_to": 203, "media": ["photo"]},
+    {"message_id": 205, "second": 120, "candidate": true, "text": "Kupno | Mieszkanie", "media": []},
+    {"message_id": 206, "second": 150, "candidate": false, "text": "", "media": ["photo"]},
+    {"message_id": 207, "second": 200, "candidate": false, "text": "", "media": ["video"]},
+    {"message_id": 208, "second": 210, "candidate": true, "text": "Kupno | Mieszkanie", "media": []},
+    {"message_id": 209, "second": 230, "candidate": false, "text": "", "media": ["photo"]},
+    {"message_id": 210, "second": 240, "candidate": false, "type": "service", "text": "", "media": ["photo"]},
+    {"message_id": 211, "second": 250, "candidate": false, "text": "", "media": ["photo"]},
+    {"message_id": 212, "second": 300, "candidate": true, "text": "Kupno | Mieszkanie", "media": []},
+    {"message_id": 213, "second": 421, "candidate": false, "text": "", "media": ["photo"]},
+    {"message_id": 214, "second": 430, "candidate": false, "text": "ordinary caption", "media": ["photo"]},
+    {"message_id": 215, "second": 440, "candidate": false, "text": "", "group_id": "synthetic-missing", "media": ["photo"]},
+    {"message_id": 216, "second": 450, "candidate": false, "text": "", "reply_to": 999, "media": ["photo"]}
+  ],
+  "expected": [
+    {"message_id": 201, "media_index": 0, "listing_id": 201, "rule": "same_message", "reason": null},
+    {"message_id": 202, "media_index": 0, "listing_id": 201, "rule": "explicit_group", "reason": null},
+    {"message_id": 202, "media_index": 1, "listing_id": 201, "rule": "explicit_group", "reason": null},
+    {"message_id": 204, "media_index": 0, "listing_id": 203, "rule": "reply", "reason": null},
+    {"message_id": 206, "media_index": 0, "listing_id": 205, "rule": "time_burst", "reason": null},
+    {"message_id": 207, "media_index": 0, "listing_id": 205, "rule": "time_burst", "reason": null},
+    {"message_id": 209, "media_index": 0, "listing_id": 208, "rule": "time_burst", "reason": null},
+    {"message_id": 210, "media_index": 0, "listing_id": null, "rule": null, "reason": "service_boundary"},
+    {"message_id": 211, "media_index": 0, "listing_id": null, "rule": null, "reason": "no_active_candidate"},
+    {"message_id": 213, "media_index": 0, "listing_id": null, "rule": null, "reason": "time_gap"},
+    {"message_id": 214, "media_index": 0, "listing_id": null, "rule": null, "reason": "text_boundary"},
+    {"message_id": 215, "media_index": 0, "listing_id": null, "rule": null, "reason": "unknown_explicit_group"},
+    {"message_id": 216, "media_index": 0, "listing_id": null, "rule": null, "reason": "unknown_reply_target"}
+  ]
+}

@@ -72,6 +72,7 @@ class MalformedReason(StrEnum):
     INVALID_PUBLISHED_TIMESTAMP = "invalid_published_timestamp"
     INVALID_EDITED_TIMESTAMP = "invalid_edited_timestamp"
     INVALID_REPLY_ID = "invalid_reply_id"
+    INVALID_MEDIA_GROUP_ID = "invalid_media_group_id"
     INVALID_TEXT = "invalid_text"
     INVALID_MEDIA_DESCRIPTOR = "invalid_media_descriptor"
 
@@ -150,6 +151,7 @@ class RawMessage:
     media: tuple[MediaDescriptor, ...]
     raw_payload: Mapping[str, FrozenJSONValue]
     checksum: str
+    media_group_id: str | None = None
 
     def __post_init__(self) -> None:
         """Enforce stable identity, UTC timestamps, and checksum shape."""
@@ -163,6 +165,9 @@ class RawMessage:
             raise ValueError(message)
         if not self.message_type:
             message = "message type must not be empty"
+            raise ValueError(message)
+        if self.media_group_id is not None and not self.media_group_id.strip():
+            message = "media group id must not be empty"
             raise ValueError(message)
         if not _is_utc(self.published_at) or (
             self.edited_at is not None and not _is_utc(self.edited_at)

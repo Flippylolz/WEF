@@ -63,6 +63,7 @@ def convert_record(raw: object, source_index: int, source: SourceIdentity) -> Co
             invalid=MalformedReason.INVALID_EDITED_TIMESTAMP,
         )
         reply_id = _reply_id(payload)
+        media_group_id = _media_group_id(payload)
         text, original_text, entities, mixed_text = _text(payload)
         media = _media(payload)
         classification = _classification(message_type, text, media)
@@ -85,6 +86,7 @@ def convert_record(raw: object, source_index: int, source: SourceIdentity) -> Co
             media=media,
             raw_payload=frozen_payload,
             checksum=checksum,
+            media_group_id=media_group_id,
         )
         return ConvertedRecord(
             result=RecordResult(
@@ -172,6 +174,18 @@ def _reply_id(payload: Mapping[str, object]) -> int | None:
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
         raise _RecordProblemError(MalformedReason.INVALID_REPLY_ID)
     return value
+
+
+def _media_group_id(payload: Mapping[str, object]) -> str | None:
+    value = payload.get("grouped_id")
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int | str):
+        raise _RecordProblemError(MalformedReason.INVALID_MEDIA_GROUP_ID)
+    normalized = str(value)
+    if not normalized.strip() or (isinstance(value, int) and value <= 0):
+        raise _RecordProblemError(MalformedReason.INVALID_MEDIA_GROUP_ID)
+    return normalized
 
 
 def _text(
