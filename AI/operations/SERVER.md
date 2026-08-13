@@ -138,6 +138,20 @@ Directories should be owned by `nuc`, default mode `0750`; secret files use `060
 
 GitHub Actions variables/secrets are the deployment configuration source of truth. Each release transfers complete config to temporary files, validates it, and atomically activates it; transfer files are deleted and values never enter Git/logs/images.
 
+### E7-T2 preparation evidence
+
+On 2026-08-13 UTC, strict known-host/batch SSH prepared only the WEF boundary:
+
+- Created `/home/nuc/wef` and its release, media, import, Caddy, state, and log directories as owner `nuc` with mode `0750`.
+- Created `secrets`, `secrets/releases`, and `postgres` with mode `0700`.
+- Transferred the inert E7-T1 manifests/scripts for commit `394329cb6a1a00f97c9a8533336667d1c072d2ac` to its versioned release directory with mode `0640`/`0750`.
+- Validated complete-config and Compose rendering with a temporary non-default fixture, then removed the fixture. No active environment, current/previous release state, application image, container, network, or database was created.
+- Recorded approximately 941 GB free disk and 6.35 GiB available memory after preparation; 3100/TCP remained unbound.
+- Automated before/after comparison proved the existing three Compose projects, five container/image identities, health/state/port bindings, watched listeners, and HTTP checks on 3000/8080 were unchanged.
+- No source export, media payload, credential, session, or sudo password was transferred.
+
+External 3100/router verification was deliberately not attempted because no immutable WEF images or edge listener exist while B-006 is active. E7-T4 performs that check only during the bounded release/rollback rehearsal.
+
 ## Local dataset transfer
 
 The preferred transfer sends the single compressed archive rather than approximately 25,000 individual files:

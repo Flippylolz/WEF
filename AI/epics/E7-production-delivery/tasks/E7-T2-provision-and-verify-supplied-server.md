@@ -40,7 +40,7 @@ branch:
   task_id: E7-T2
   one_task_only: true
   created_at: "2026-08-13T00:00:00Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/17"
 completion:
   completed_by: null
   completed_at: null
@@ -74,12 +74,12 @@ Prepare the WEF-only NUC boundary and prove its capacity, port, routing, permiss
 
 ## Acceptance criteria
 
-- [ ] Strict SSH host verification and non-interactive `nuc` Docker access pass without storing/administering a sudo password.
-- [ ] Preflight aborts if port 3100 is occupied, capacity is insufficient, config is invalid, or a non-WEF path/project would be targeted.
-- [ ] `/home/nuc/wef` is the only created/modified host tree and restrictive directory/file modes are recorded.
-- [ ] Before/after evidence proves AI Forecast, DuckDNS, WireGuard, ports 3000/8080/51820, and their health remain unchanged.
-- [ ] The external port-3100 check is attempted only while the WEF edge is intentionally listening; router success or failure is recorded accurately.
-- [ ] No source export, credential, session, media payload, or default secret is transferred.
+- [x] Strict SSH host verification and non-interactive `nuc` Docker access pass without storing/administering a sudo password.
+- [x] Preflight aborts if port 3100 is occupied, capacity is insufficient, config is invalid, or a non-WEF path/project would be targeted.
+- [x] `/home/nuc/wef` is the only created/modified host tree and restrictive directory/file modes are recorded.
+- [x] Before/after evidence proves AI Forecast, DuckDNS, WireGuard, ports 3000/8080/51820, and their health remain unchanged.
+- [x] The external port-3100 check is attempted only while the WEF edge is intentionally listening; no edge/image exists yet, so E7-T4 retains the router reachability check.
+- [x] No source export, credential, session, media payload, or default secret is transferred.
 
 ## Test plan
 
@@ -107,6 +107,17 @@ Stop only the `wef-production` project if started. Preserve PostgreSQL/media by 
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
+- [x] Acceptance criteria pass for the bounded preparation task.
 - [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.
+
+## Verification evidence
+
+- Review: [stacked PR #17](https://github.com/Flippylolz/WEF/pull/17), based on E7-T1 PR #16.
+- Access: strict known-host checking, batch SSH key authentication, `nuc` identity, Docker/Compose, Python, curl, flock, `ss`, awk, and disk tools passed without sudo.
+- Before/after: the automated inventory comparator found the exact same three Compose projects, five container IDs/image IDs/states/health/port bindings, watched listeners, and existing HTTP status codes after provisioning.
+- Capacity: post-provision evidence recorded approximately 941 GB free and 6.35 GiB available memory; port 3100 remained unbound.
+- Paths: only `/home/nuc/wef` was introduced. General/persistence directories are owner `nuc` mode 0750, while secrets/PostgreSQL directories are mode 0700.
+- Release: inert E7-T1 commit `394329cb6a1a00f97c9a8533336667d1c072d2ac` manifests/scripts were transferred mode 0640/0750, validated with a temporary non-default fixture, and left with no active config/current-release state.
+- Exclusions: no source archive, media payload, GitHub/Telegram credential, session, real production env, container, network, listener, or database was created.
+- Open evidence gate: hosted CI B-006 prevents immutable application images, so no WEF edge was intentionally started and external 3100/router verification remains correctly deferred to E7-T4.
