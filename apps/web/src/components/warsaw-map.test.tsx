@@ -6,6 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { WarsawMap } from "@/components/warsaw-map";
 import type { LocationMap } from "@/lib/catalog-api";
 
+const setWorkerUrl = vi.hoisted(() => vi.fn());
+
+vi.mock("maplibre-gl", () => ({ setWorkerUrl }));
+
 const easeTo = vi.fn();
 const getClusterExpansionZoom = vi.fn(async () => 13);
 let clickedFeature: object = {
@@ -61,7 +65,12 @@ vi.mock("react-map-gl/maplibre", () => ({
       {children}
     </div>
   ),
-  Layer: () => null,
+  Layer: ({ id, layout }: { id: string; layout?: Record<string, unknown> }) => (
+    <div
+      data-testid={`layer-${id}`}
+      data-text-font={JSON.stringify(layout?.["text-font"])}
+    />
+  ),
   NavigationControl: () => null,
   AttributionControl: ({
     customAttribution,
@@ -90,6 +99,9 @@ describe("WarsawMap", () => {
   it("selects an unclustered backend feature and shows attribution", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
+    expect(setWorkerUrl).toHaveBeenCalledWith(
+      "/vendor/maplibre/maplibre-gl-worker.mjs",
+    );
     clickedFeature = {
       id: "10000000-0000-4000-8000-000000000001",
       properties: {},
@@ -125,6 +137,10 @@ describe("WarsawMap", () => {
     expect(screen.getByTestId("source-warsaw-districts")).toHaveAttribute(
       "data-source-url",
       "/data/warsaw-districts.geojson",
+    );
+    expect(screen.getByTestId("layer-warsaw-district-labels")).toHaveAttribute(
+      "data-text-font",
+      '["Noto Sans Regular"]',
     );
   });
 

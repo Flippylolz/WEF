@@ -1,7 +1,7 @@
 "use client";
 
 import type { FeatureCollection, Point } from "geojson";
-import type { GeoJSONSource } from "maplibre-gl";
+import { setWorkerUrl, type GeoJSONSource } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
 import {
   AttributionControl,
@@ -18,8 +18,11 @@ import type { LocationMap } from "@/lib/catalog-api";
 const MAP_STYLE =
   process.env.NEXT_PUBLIC_MAP_STYLE_URL?.trim() ||
   "https://tiles.openfreemap.org/styles/liberty";
+const MAPLIBRE_WORKER = "/vendor/maplibre/maplibre-gl-worker.mjs";
 const DISTRICT_BOUNDARIES = "/data/warsaw-districts.geojson";
 const MAP_LOAD_TIMEOUT_MS = 15_000;
+
+setWorkerUrl(MAPLIBRE_WORKER);
 
 const districtFillLayer: LayerProps = {
   id: "warsaw-district-fills",
@@ -49,6 +52,7 @@ const districtLabelLayer: LayerProps = {
   minzoom: 9,
   layout: {
     "text-field": ["get", "name"],
+    "text-font": ["Noto Sans Regular"],
     "text-size": ["interpolate", ["linear"], ["zoom"], 9, 10, 12, 13],
     "text-letter-spacing": 0.05,
   },

@@ -45,6 +45,7 @@ node_modules/
 .next/
 .turbo/
 .pnpm-store/
+/apps/web/public/vendor/maplibre/
 coverage/
 playwright-report/
 test-results/
