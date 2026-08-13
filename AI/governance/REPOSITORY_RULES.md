@@ -34,13 +34,27 @@ Examples:
 
 Rules:
 
-- Branch from the latest `main`.
+- Branch from the latest `main` when the task has no open dependency. Under [ADR-018](../decisions/adr/ADR-018-ordered-stacked-pull-requests.md), a dependent task branches from its immediate upstream task branch and targets that branch until the parent merges.
 - Keep a branch scoped to one task/feature.
 - Rebase or update from `main` before merge when required checks are strict.
 - Merge through a pull request; do not push ordinary work directly to `main`.
 - Use squash merge so one reviewed feature becomes one main-branch commit.
 - Delete merged branches automatically.
 - Never force-push `main`.
+
+## Ordered stacked pull requests
+
+Do not pause approved implementation merely because an upstream pull request awaits review:
+
+1. Verify the dependent task's spike and implementation-plan approvals.
+2. Record a `stacked` dependency gate with each upstream task, branch, pull request, and head commit.
+3. Branch from the immediate upstream task branch.
+4. Open the child pull request against that branch so the diff contains only the child task.
+5. Continue the stack in dependency order; never combine two task scopes in one branch.
+6. When a parent merges, retarget/rebase its direct child to the parent's new base and rerun required checks.
+7. Merge from the bottom/base of the stack upward. A child cannot be completed or merged while any dependency is not `done`.
+
+Reviews and CI remain required before merge. Stacking changes wait time, not acceptance or completion standards.
 
 ## `hotfix/` exception
 
@@ -139,7 +153,7 @@ The deploy job additionally:
 - Receives no production secret in pull-request workflows.
 - Verifies through the GitHub API that the pushed SHA is associated with a merged pull request targeting `main`; an unassociated direct push builds/tests but does not deploy automatically.
 
-Until [E7-T4](../epics/E7-production-delivery/proposed-tasks/E7-T4-implement-health-verification-and-rollback.md) proves health-gated rollback on the supplied server, keep the repository variable `AUTO_DEPLOY_ENABLED=false` and deploy test releases by a manual `workflow_dispatch` for an explicit SHA. After that rehearsal, set it to `true`; successful, tested `main` merges then deploy automatically.
+Until [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) proves health-gated rollback on the supplied server, keep the repository variable `AUTO_DEPLOY_ENABLED=false` and deploy test releases by a manual `workflow_dispatch` for an explicit SHA. After that rehearsal, set it to `true`; successful, tested `main` merges then deploy automatically.
 
 ## Dependabot
 
@@ -209,12 +223,12 @@ This is a compensating control, not equivalent to protected branches: GitHub can
 Work allowed now:
 
 1. Initialize the local repository with the existing `AI/` documentation and safety ignore files.
-2. Add `origin` as `https://github.com/Flippylolz/WEF`.
+2. Add `origin` as `git@github.com:Flippylolz/WEF.git`; SSH is the preferred Git transport.
 3. Create and push the initial `main`.
 4. Add CI workflows and follow branch/pull-request rules manually.
 5. Enable squash merge, auto-delete branches, vulnerability alerts, and Dependabot version/security updates.
 6. Add the scheduled label/check/commit-gated Dependabot merge controller.
-7. Build the main-only GHCR/SSH deployment workflow; keep automatic execution disabled with `AUTO_DEPLOY_ENABLED=false` until [E7-T4](../epics/E7-production-delivery/proposed-tasks/E7-T4-implement-health-verification-and-rollback.md).
+7. Build the main-only GHCR/SSH deployment workflow; keep automatic execution disabled with `AUTO_DEPLOY_ENABLED=false` until [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md).
 
 Permanently out of current scope under [ADR-017](../decisions/adr/ADR-017-no-enforced-branch-protection.md):
 

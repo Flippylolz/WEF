@@ -1,0 +1,68 @@
+# Version-control and planning metadata
+.git
+.gitignore
+.github
+AI
+README.md
+
+# Source export, archives, and generated media
+est-test
+est-test.tar.gz
+imports
+media
+reports
+**/*.tar
+**/*.tar.gz
+**/*.tgz
+**/*.zip
+
+# Environment, credentials, and Telegram sessions
+.env
+.env.*
+secrets
+**/*.session
+**/*.session-journal
+**/*.key
+**/*.pem
+
+# Local databases and persistent runtime state
+**/*.db
+**/*.db-*
+**/*.sqlite
+**/*.sqlite3
+postgres-data
+caddy-data
+
+# Dependency, build, test, and cache output
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.hypothesis
+**/.coverage*
+**/htmlcov
+**/.venv
+**/venv
+**/node_modules
+**/.next
+**/.turbo
+**/.pnpm-store
+**/coverage
+**/playwright-report
+**/test-results
+**/*.tsbuildinfo
+**/build
+**/dist
+**/out
+**/tmp
+**/temp
+**/.cache
+**/*.log
+
+# IDE and operating-system files
+**/.DS_Store
+**/.idea
+**/.vscode
+**/*.swp
+**/*.swo

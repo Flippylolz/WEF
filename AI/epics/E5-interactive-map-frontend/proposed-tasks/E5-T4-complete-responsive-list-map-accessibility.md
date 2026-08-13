@@ -51,7 +51,7 @@ The following definition preserves the original E5-T4 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E5-T2](E5-T2-add-url-backed-filters-and-viewport-querying.md), [E5-T3](E5-T3-build-offer-detail-and-media-gallery.md)
+- Task dependencies: [E5-T2](../tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md), [E5-T3](E5-T3-build-offer-detail-and-media-gallery.md)
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Product](../../../product/README.md), [Contracts](../../../contracts/README.md), [Architecture](../../../architecture/README.md), [Security](../../../security/README.md).
 

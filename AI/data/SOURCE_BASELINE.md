@@ -4,10 +4,10 @@
 
 The workspace is a greenfield data drop, not an existing application repository.
 
-- [`../../est-test/result.json`](../../est-test/result.json): approximately 21 MB Telegram Desktop JSON export and the canonical historical message index.
+- `../../est-test/result.json`: approximately 21 MB Telegram Desktop JSON export and the canonical historical message index.
 - `../../est-test/photos/`: 25,733 JPEG files, approximately 2.2 GB.
 - `../../est-test/video_files/`: 75 unique MP4/MOV videos plus thumbnails, approximately 537 MB.
-- [`../../est-test.tar.gz`](../../est-test.tar.gz): approximately 2.85 GB archive duplicating the extracted export.
+- `../../est-test.tar.gz`: approximately 2.85 GB archive duplicating the extracted export.
 - Total workspace footprint is approximately 5.4 GB because both the extracted data and archive are present.
 
 The raw export and archive are immutable inputs. They must be excluded from Git, Docker build contexts, test fixtures, and production application images.

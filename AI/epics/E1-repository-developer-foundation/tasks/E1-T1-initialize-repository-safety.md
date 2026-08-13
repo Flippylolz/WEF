@@ -3,14 +3,14 @@ schema: ai-workflow/task@1
 id: E1-T1
 epic: E1
 title: "Initialize repository safety"
-status: ready
+status: in_progress
 revision: 3
 priority: P0
 size: S
 milestone: M1
 dependencies: []
 requirement_ids: []
-decision_ids: [ADR-009, ADR-017]
+decision_ids: [ADR-009, ADR-017, ADR-018]
 deferred_decision_ids: []
 promotion:
   source: ../proposed-tasks/E1-T1-initialize-repository-safety.md
@@ -35,11 +35,11 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: chore/E1-T1-repository-safety
   task_id: E1-T1
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-12T21:21:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/2"
 completion:
   completed_by: null
   completed_at: null
@@ -54,7 +54,7 @@ invalidation:
 
 # E1-T1: Initialize repository safety
 
-> Promoted after explicit owner approval of E1 spike revision 2. This task remains `draft`; no repository initialization, files, commits, pushes, or pull request are authorized until implementation-plan approval.
+> Promoted after explicit owner approval of E1 spike revision 2 and implementation-plan revision 3. The repository-safety work is `in_progress` in its open stacked pull request and remains unmerged.
 
 ## Outcome
 
@@ -62,7 +62,7 @@ Create a safe Git/GitHub baseline in which pre-existing planning documentation h
 
 ## Scope
 
-- Initialize Git and configure `https://github.com/Flippylolz/WEF` as `origin`.
+- Initialize Git and configure `git@github.com:Flippylolz/WEF.git` as `origin`; use SSH for fetches and pushes.
 - Create a minimal root-README commit on `main`, required because GitHub needs a base ref and empty commits are prohibited.
 - Commit the pre-existing `AI/` documentation on `docs/ai-documentation-foundation` and open its PR to `main`.
 - Create `chore/E1-T1-repository-safety` from the documentation branch.
@@ -95,17 +95,17 @@ No application, public API, persisted data, or runtime contract changes.
 
 ## Acceptance criteria
 
-- [ ] `origin` is exactly `https://github.com/Flippylolz/WEF`.
-- [ ] The only direct bootstrap content on `main` is the minimal root README.
-- [ ] Existing `AI/**` documentation is committed on `docs/ai-documentation-foundation` with a PR to `main`.
-- [ ] The E1-T1 commit is on `chore/E1-T1-repository-safety`, branched from the docs branch.
-- [ ] Git status/add candidates contain no raw export, archive, media, Telegram session, environment secret, local database, or sensitive generated report.
-- [ ] Docker build-context checks cannot include the export/archive or secrets.
-- [ ] Lockfiles and `contracts/openapi/v1.json` remain committable.
-- [ ] The root README links `AI/README.md` and does not claim unimplemented commands/services.
-- [ ] `.env.example` contains no production value or credential.
-- [ ] The task branch is pushed and its stacked PR targets `docs/ai-documentation-foundation`; its diff contains only E1-T1 root files.
-- [ ] Neither PR is merged without a separate instruction.
+- [x] The canonical repository is `Flippylolz/WEF`, and Git pushes use SSH.
+- [x] The only direct bootstrap content on `main` is the minimal root README.
+- [x] Existing `AI/**` documentation is committed on `docs/ai-documentation-foundation` with [PR #1](https://github.com/Flippylolz/WEF/pull/1) to `main`.
+- [x] The E1-T1 commit is on `chore/E1-T1-repository-safety`, branched from the docs branch.
+- [x] Git status/add candidates contain no raw export, archive, media, Telegram session, environment secret, local database, or sensitive generated report.
+- [x] Docker build-context rules exclude the export/archive and secrets.
+- [x] Lockfiles and `contracts/openapi/v1.json` remain committable.
+- [x] The root README links `AI/README.md` and does not claim unimplemented commands/services.
+- [x] `.env.example` contains no production value or credential.
+- [x] The task branch is pushed and [PR #2](https://github.com/Flippylolz/WEF/pull/2) targets `docs/ai-documentation-foundation`; its diff contains only E1-T1 changes.
+- [x] Neither PR was merged.
 
 ## Test plan
 
@@ -114,6 +114,14 @@ No application, public API, persisted data, or runtime contract changes.
 - Docker context: inspect future context candidates using `.dockerignore` semantics without building an application image.
 - Documentation: validate Markdown links and lints.
 - GitHub: verify both PRs' base/head and changed-file lists, including isolation of the stacked E1-T1 diff.
+
+## Verification evidence
+
+- Bootstrap commit: `a8eda7b` on `main`.
+- Documentation commit: `87dec75` on `docs/ai-documentation-foundation`; [PR #1](https://github.com/Flippylolz/WEF/pull/1).
+- E1-T1 safety commit: `c7f7410` on `chore/E1-T1-repository-safety`; [PR #2](https://github.com/Flippylolz/WEF/pull/2).
+- `git check-ignore` matched representative export, archive, environment, session, database, report, and dependency-cache paths.
+- IDE lints reported no errors for changed documentation.
 
 ## Rollout and rollback
 
@@ -126,14 +134,14 @@ Push the minimal README `main`, open the docs PR, then open the stacked E1-T1 PR
 - [x] `spike_gate` references owner-approved spike revision 2 and is `satisfied`.
 - [x] `implementation_gate` references owner-approved implementation-plan revision 3 and is `satisfied`.
 - [x] The empty dependency set is verified and `dependency_gate` is `satisfied`.
-- [ ] Scope and acceptance criteria match the approved implementation plan.
+- [x] Scope and acceptance criteria match the approved implementation plan.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] The dedicated branch is `chore/E1-T1-repository-safety`.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] The dedicated branch is `chore/E1-T1-repository-safety`.
+- [x] The branch is stacked from the documentation foundation and contains E1-T1 only.
+- [x] `branch.name` and `branch.created_at` were recorded when setting `in_progress`.
 
 ## Done checklist
 

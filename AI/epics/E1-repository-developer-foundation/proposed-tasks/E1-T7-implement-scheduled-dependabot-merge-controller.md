@@ -53,7 +53,7 @@ The following definition preserves the original E1-T7 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E1-T4](E1-T4-establish-ci-baseline.md), [E1-T6](E1-T6-configure-dependabot-update-pull-requests.md)
+- Task dependencies: [E1-T4](../tasks/E1-T4-establish-ci-baseline.md), [E1-T6](E1-T6-configure-dependabot-update-pull-requests.md)
 - Milestone: [M1](../../../milestones/M1-vertical-proof.md).
 - Traceability: [Decision registry](../../../decisions/README.md), [Architecture](../../../architecture/README.md), [Governance](../../../governance/README.md), [Operations](../../../operations/README.md).
 

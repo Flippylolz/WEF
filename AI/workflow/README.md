@@ -158,8 +158,8 @@ Use [the task template](templates/TASK.md). Its identity, priority, size, milest
 A promoted task’s `status` is exactly:
 
 - `draft`: promoted but not yet eligible.
-- `ready`: all approvals and dependencies are satisfied for the current revisions.
-- `in_progress`: `ready` gates remain satisfied and the dedicated branch is recorded.
+- `ready`: all approvals are satisfied and dependencies are either complete or represented by a valid ordered stack for the current revisions.
+- `in_progress`: `ready` gates remain valid and the dedicated branch is recorded.
 - `done`: acceptance criteria and the [definition of done](DEFINITION_OF_DONE.md) are satisfied.
 - `cancelled`: intentionally stopped by an approved scope decision.
 - `deferred`: waits for a named trigger.
@@ -170,20 +170,23 @@ A task cannot enter `ready` or `in_progress` unless all of these are true:
 1. `spike_gate.status` is `satisfied`, references the epic’s approved current spike revision, and records verifier/time.
 2. The definition is under `tasks/` and has complete promotion metadata.
 3. `implementation_gate.status` is `satisfied`, references the epic’s approved current implementation-plan revision, confirms that plan’s `task_sequence` contains this task ID and current task revision, and records verifier/time.
-4. `dependency_gate.status` is `satisfied`; every task ID in `dependencies` resolves to one authoritative task with `status: done`.
+4. `dependency_gate.status` is `satisfied` or `stacked`. `satisfied` requires every dependency to be `done`; `stacked` requires every incomplete dependency to have an open ancestor pull request recorded in direct merge order.
 5. Every referenced deferred decision is resolved or explicitly removed by a newly approved scope/plan revision.
 
 Before `in_progress`, `branch.name` must be non-null, contain this task’s ID, and identify a branch used for no other task.
 
-Gate `status` is exactly `blocked`, `satisfied`, or `invalidated`. A `satisfied` spike/implementation gate requires non-null revision, verifier, and time; a `blocked` gate requires those fields to be `null`. An `invalidated` gate retains the previously verified revision/evidence for history and requires the task invalidation record.
+Gate `status` is exactly `blocked`, `stacked`, `satisfied`, or `invalidated`. `stacked` is valid only for `dependency_gate`; spike and implementation gates never use it. A `satisfied` spike/implementation gate requires non-null revision, verifier, and time; a `blocked` gate requires those fields to be `null`. An `invalidated` gate retains the previously verified revision/evidence for history and requires the task invalidation record.
 
 ## Dependency gate
 
 - Dependencies are task IDs, not prose.
-- No task may depend on itself, contain a dependency cycle, or treat `cancelled`, `deferred`, `ready`, or `in_progress` as complete.
+- No task may depend on itself or contain a dependency cycle. `cancelled`, `deferred`, `ready`, or `in_progress` never count as complete.
 - An empty `dependencies: []` may use `dependency_gate.status: satisfied` with empty evidence after verifier/time are recorded.
 - Otherwise, `dependency_gate.evidence` lists every dependency ID and the commit/PR/reference proving its `done` state.
 - A satisfied dependency gate requires non-null verifier/time and evidence for every non-empty dependency. A blocked gate has null verifier/time and empty evidence.
+- A stacked dependency gate requires non-null verifier/time and one evidence entry for every incomplete dependency, including task ID, branch, pull request URL, and head commit. Every dependency branch must be an ancestor of the current task branch in direct stack order.
+- `stacked` permits implementation to continue but never permits `done`, merge, deployment, or use as completion evidence. Before completion, all dependencies must become `done` and the gate must transition to `satisfied`.
+- If an upstream branch changes materially, refresh the descendant branch and evidence; invalidate the task when the approved scope or plan no longer matches.
 - Any newly discovered dependency is a material plan/task change: stop, invalidate as required, update the plan, and reapprove before continuing.
 - Removing a dependency requires an approved material revision; it cannot be bypassed by editing only the task gate.
 
@@ -192,7 +195,8 @@ Gate `status` is exactly `blocked`, `satisfied`, or `invalidated`. A `satisfied`
 - Every implementation task uses exactly one dedicated branch and pull request.
 - The branch name contains the task ID, for example `feature/E4-T1-map-geojson`, `fix/E3-T3-geocode-bounds`, or `spike/E0-T2-architecture-proof`.
 - A branch/PR contains one task only; do not batch unrelated tasks or reuse a branch for a later task.
-- Branch from the latest `main`, satisfy procedural review/CI governance, squash merge, and delete the merged branch.
+- Branch from the latest `main` when no dependency is open. For an ordered stack, branch from the immediate upstream task and target that branch so the pull request diff contains only the current task.
+- Satisfy procedural review/CI governance, then merge/retarget from the base of the stack upward. Squash merge and delete each merged branch.
 - Documentation-only spike/planning revisions may use a documentation branch, but that branch must contain no production or disposable proof code.
 
 ## Implementation-plan schema and gate
@@ -238,6 +242,7 @@ Typographical, formatting, and link-only corrections that do not change meaning 
 
 ## Templates and completion
 
+- [Autonomous decision log](AUTONOMOUS_DECISIONS.md)
 - [Spike template](templates/SPIKE.md)
 - [Proposed-task template](templates/PROPOSED_TASK.md)
 - [Promoted task template](templates/TASK.md)

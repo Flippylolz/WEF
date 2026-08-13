@@ -1,0 +1,514 @@
+name: Release and deploy production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Full commit SHA already reachable from main
+        required: true
+        type: string
+      seed_rehearsal:
+        description: Seed the idempotent synthetic rehearsal fixture
+        required: true
+        default: false
+        type: boolean
+      force_rollback_rehearsal:
+        description: Fail after healthy smoke and require automatic restoration
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: wef-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: 3.13.2
+  NODE_VERSION: 22.22.2
+  PNPM_VERSION: 11.21.0
+  UV_VERSION: 0.10.11
+
+jobs:
+  resolve:
+    name: Resolve release gate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      release_sha: ${{ steps.release.outputs.release_sha }}
+      source_timestamp: ${{ steps.release.outputs.source_timestamp }}
+      force_rollback_rehearsal: ${{ steps.release.outputs.force_rollback_rehearsal }}
+      seed_rehearsal: ${{ steps.release.outputs.seed_rehearsal }}
+      should_deploy: ${{ steps.gate.outputs.should_deploy }}
+    steps:
+      - name: Check out requested source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_sha || github.sha }}
+
+      - name: Resolve immutable release
+        id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_SHA: ${{ github.sha }}
+          REQUESTED_ROLLBACK: ${{ inputs.force_rollback_rehearsal }}
+          REQUESTED_SEED: ${{ inputs.seed_rehearsal }}
+          REQUESTED_SHA: ${{ inputs.release_sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == 'workflow_dispatch' ]]; then
+            [[ "$REQUESTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+            release_sha="$REQUESTED_SHA"
+          else
+            release_sha="$PUSH_SHA"
+          fi
+          resolved_sha=$(git rev-parse "${release_sha}^{commit}")
+          test "$resolved_sha" = "$release_sha"
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$release_sha" origin/main
+          source_timestamp=$(git show -s --format=%cI "$release_sha")
+          seed_rehearsal=false
+          force_rollback_rehearsal=false
+          if [[ "$EVENT_NAME" == 'workflow_dispatch' && "$REQUESTED_SEED" == 'true' ]]; then
+            seed_rehearsal=true
+          fi
+          if [[ "$EVENT_NAME" == 'workflow_dispatch' && "$REQUESTED_ROLLBACK" == 'true' ]]; then
+            force_rollback_rehearsal=true
+          fi
+          {
+            echo "release_sha=$release_sha"
+            echo "source_timestamp=$source_timestamp"
+            echo "seed_rehearsal=$seed_rehearsal"
+            echo "force_rollback_rehearsal=$force_rollback_rehearsal"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Read associated pull requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ steps.release.outputs.release_sha }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == 'push' ]]; then
+            gh api \
+              --header 'Accept: application/vnd.github+json' \
+              "/repos/${GITHUB_REPOSITORY}/commits/${RELEASE_SHA}/pulls" > associated-prs.json
+          else
+            printf '[]\n' > associated-prs.json
+          fi
+
+      - name: Evaluate deployment gate
+        id: gate
+        env:
+          AUTO_DEPLOY_ENABLED: ${{ vars.AUTO_DEPLOY_ENABLED || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_SHA: ${{ steps.release.outputs.release_sha }}
+        run: |
+          set -euo pipefail
+          should_deploy=$(python3 -m scripts.deploy.evaluate_deploy_gate \
+            "$EVENT_NAME" \
+            "$GITHUB_REF" \
+            "$RELEASE_SHA" \
+            "$AUTO_DEPLOY_ENABLED" \
+            associated-prs.json)
+          echo "should_deploy=$should_deploy" >> "$GITHUB_OUTPUT"
+
+  verify:
+    name: Verify release candidate
+    needs: resolve
+    runs-on: ubuntu-24.04
+    outputs:
+      migration_revision: ${{ steps.metadata.outputs.migration_revision }}
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5@sha256:0a23a2b5e4fbd9b4c6980d20ee80dd6b63dec52669379c75a506db58a4116708
+        env:
+          POSTGRES_DB: wef_test
+          POSTGRES_PASSWORD: wef_test
+          POSTGRES_USER: wef_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U wef_test -d wef_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      WEF_TEST_DATABASE_URL: postgresql+asyncpg://wef_test:wef_test@127.0.0.1:5432/wef_test
+    steps:
+      - name: Check out immutable release
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.resolve.outputs.release_sha }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@f0ec1fc3b38f5e7cd731bb6ce540c5af426746bb # v7.3.1
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Install Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Node
+        uses: actions/setup-node@1e60f620b9541dca1515402f7a7c48dc8c8b3b93 # v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install --yes shellcheck
+
+      - name: Install locked dependencies
+        run: |
+          corepack enable
+          corepack prepare "pnpm@${PNPM_VERSION}" --activate
+          make install
+
+      - name: Verify quality, tests, contract, and topology
+        run: |
+          make format-check
+          make lint
+          make typecheck
+          make test
+          make contract-check
+          make compose-config
+          make production-proof
+
+      - name: Audit production dependencies
+        run: |
+          uv --directory apps/backend run pip-audit
+          pnpm audit --prod --audit-level high
+
+      - name: Resolve migration metadata
+        id: metadata
+        working-directory: apps/backend
+        run: |
+          migration_revision=$(uv run python -c \
+            'from wef_backend.migration import EXPECTED_DATABASE_REVISION; print(EXPECTED_DATABASE_REVISION)')
+          echo "migration_revision=$migration_revision" >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Publish immutable images
+    needs:
+      - resolve
+      - verify
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      backend_digest: ${{ steps.backend.outputs.digest }}
+      backend_image: ${{ steps.images.outputs.backend }}
+      web_digest: ${{ steps.web.outputs.digest }}
+      web_image: ${{ steps.images.outputs.web }}
+    steps:
+      - name: Check out immutable release
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.resolve.outputs.release_sha }}
+
+      - name: Set image names
+        id: images
+        run: |
+          repository=$(printf '%s' "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+          {
+            echo "backend=ghcr.io/${repository}-backend"
+            echo "web=ghcr.io/${repository}-web"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and publish backend
+        id: backend
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v6.15.0
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          target: runtime
+          push: true
+          tags: ${{ steps.images.outputs.backend }}:${{ needs.resolve.outputs.release_sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ needs.resolve.outputs.release_sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=backend-production
+          cache-to: type=gha,mode=max,scope=backend-production
+
+      - name: Build and publish web
+        id: web
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v6.15.0
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          target: runtime
+          push: true
+          tags: ${{ steps.images.outputs.web }}:${{ needs.resolve.outputs.release_sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ needs.resolve.outputs.release_sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=web-production
+          cache-to: type=gha,mode=max,scope=web-production
+
+      - name: Assemble release artifact
+        env:
+          BACKEND_DIGEST: ${{ steps.backend.outputs.digest }}
+          MIGRATION_REVISION: ${{ needs.verify.outputs.migration_revision }}
+          RELEASE_SHA: ${{ needs.resolve.outputs.release_sha }}
+          SOURCE_TIMESTAMP: ${{ needs.resolve.outputs.source_timestamp }}
+          WEB_DIGEST: ${{ steps.web.outputs.digest }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release/scripts"
+          cp infra/compose.production.yaml "$RUNNER_TEMP/release/"
+          cp infra/Caddyfile.production "$RUNNER_TEMP/release/"
+          cp -R scripts/deploy "$RUNNER_TEMP/release/scripts/"
+          python3 -m scripts.deploy.create_release_manifest \
+            "$RUNNER_TEMP/release/release-manifest.json" \
+            "$RELEASE_SHA" \
+            "$SOURCE_TIMESTAMP" \
+            "$MIGRATION_REVISION" \
+            "$BACKEND_DIGEST" \
+            "$WEB_DIGEST"
+          python3 -m scripts.deploy.create_checksums "$RUNNER_TEMP/release"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: release-${{ needs.resolve.outputs.release_sha }}
+          path: ${{ runner.temp }}/release
+          if-no-files-found: error
+          retention-days: 14
+
+  deploy:
+    name: Deploy verified release
+    needs:
+      - resolve
+      - publish
+    if: needs.resolve.outputs.should_deploy == 'true'
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Check out immutable release
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.resolve.outputs.release_sha }}
+
+      - name: Download release artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: release-${{ needs.resolve.outputs.release_sha }}
+          path: ${{ runner.temp }}/release
+
+      - name: Build private release configuration
+        env:
+          POSTGRES_DB: ${{ vars.POSTGRES_DB }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+          WEF_ALLOW_SYNTHETIC_SEED: ${{ needs.resolve.outputs.seed_rehearsal }}
+          WEF_LOG_LEVEL: ${{ vars.WEF_LOG_LEVEL }}
+        run: |
+          set -euo pipefail
+          chmod 0750 "$RUNNER_TEMP"/release/scripts/deploy/*.sh
+          python3 -m scripts.deploy.build_release_config \
+            "$RUNNER_TEMP/production.env" \
+            /home/nuc/wef \
+            "/home/nuc/wef/releases/${{ needs.resolve.outputs.release_sha }}" \
+            "${{ needs.resolve.outputs.release_sha }}" \
+            "${{ vars.WEF_PUBLIC_PORT }}" \
+            "${{ vars.WEF_BIND_ADDRESS }}" \
+            "${{ needs.publish.outputs.backend_image }}@${{ needs.publish.outputs.backend_digest }}" \
+            "${{ needs.publish.outputs.web_image }}@${{ needs.publish.outputs.web_digest }}"
+
+      - name: Transfer, activate, and verify release
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          GHCR_TOKEN: ${{ github.token }}
+          FORCE_ROLLBACK_REHEARSAL: ${{ needs.resolve.outputs.force_rollback_rehearsal }}
+          RELEASE_SHA: ${{ needs.resolve.outputs.release_sha }}
+          SEED_REHEARSAL: ${{ needs.resolve.outputs.seed_rehearsal }}
+          SSH_PORT: ${{ vars.DEPLOY_SSH_PORT }}
+        run: |
+          # shellcheck disable=SC2029
+          set -euo pipefail
+          [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$SSH_PORT" =~ ^[0-9]{1,5}$ ]]
+          [[ "$GITHUB_ACTOR" =~ ^[A-Za-z0-9-]+$ ]]
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+          test -n "$GHCR_TOKEN"
+
+          ssh_dir="$RUNNER_TEMP/wef-ssh"
+          install -m 0700 -d "$ssh_dir"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          chmod 0600 "$ssh_dir/key" "$ssh_dir/known_hosts"
+          ssh_options=(
+            -i "$ssh_dir/key"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$ssh_dir/known_hosts"
+            -p "$SSH_PORT"
+          )
+          target="${DEPLOY_USER}@${DEPLOY_HOST}"
+          incoming_release="/home/nuc/wef/releases/.incoming-${RELEASE_SHA}-${GITHUB_RUN_ID}"
+          release_dir="/home/nuc/wef/releases/${RELEASE_SHA}"
+          incoming_secret="/home/nuc/wef/secrets/releases/.incoming-${RELEASE_SHA}-${GITHUB_RUN_ID}"
+          config_file="/home/nuc/wef/secrets/releases/${RELEASE_SHA}/production.env"
+          inventory_before="/home/nuc/wef/state/inventory-${GITHUB_RUN_ID}-before.json"
+          inventory_after="/home/nuc/wef/state/inventory-${GITHUB_RUN_ID}-after.json"
+
+          cleanup() {
+            rm -f "$RUNNER_TEMP/production.env" "$ssh_dir/key"
+            # shellcheck disable=SC2029
+            ssh "${ssh_options[@]}" "$target" \
+              "rm -rf -- '$incoming_release' '$incoming_secret'" >/dev/null 2>&1 || true
+            ssh "${ssh_options[@]}" "$target" 'docker logout ghcr.io' >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" \
+            "install -m 0750 -d '$incoming_release' '$incoming_secret'"
+          rsync -a --delete \
+            -e "ssh -i '$ssh_dir/key' -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile='$ssh_dir/known_hosts' -p '$SSH_PORT'" \
+            "$RUNNER_TEMP/release/" "$target:$incoming_release/"
+          rsync \
+            -e "ssh -i '$ssh_dir/key' -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile='$ssh_dir/known_hosts' -p '$SSH_PORT'" \
+            "$RUNNER_TEMP/production.env" "$target:$incoming_secret/production.env"
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" \
+            "cd '$incoming_release' && sha256sum --check SHA256SUMS"
+
+          ssh "${ssh_options[@]}" "$target" bash -s -- \
+            "$incoming_release" "$release_dir" "$incoming_secret" "$(dirname "$config_file")" <<'REMOTE'
+          set -euo pipefail
+          incoming_release=$1
+          release_dir=$2
+          incoming_secret=$3
+          secret_dir=$4
+          case "$incoming_release:$release_dir:$incoming_secret:$secret_dir" in
+            /home/nuc/wef/releases/.incoming-*:/home/nuc/wef/releases/*:/home/nuc/wef/secrets/releases/.incoming-*:/home/nuc/wef/secrets/releases/*) ;;
+            *) exit 64 ;;
+          esac
+          chmod 0750 \
+            "$incoming_release" \
+            "$incoming_release/scripts" \
+            "$incoming_release/scripts/deploy" \
+            "$incoming_release/scripts/deploy"/*.sh
+          chmod 0640 \
+            "$incoming_release/Caddyfile.production" \
+            "$incoming_release/compose.production.yaml" \
+            "$incoming_release/release-manifest.json" \
+            "$incoming_release/SHA256SUMS" \
+            "$incoming_release/scripts/deploy"/*.py
+          chmod 0750 "$incoming_secret"
+          chmod 0600 "$incoming_secret/production.env"
+          if [[ -e "$release_dir" ]]; then
+            diff -qr "$incoming_release" "$release_dir"
+            rm -rf -- "$incoming_release"
+          else
+            mv "$incoming_release" "$release_dir"
+          fi
+          if [[ -e "$secret_dir/production.env" ]]; then
+            cmp "$incoming_secret/production.env" "$secret_dir/production.env"
+            rm -rf -- "$incoming_secret"
+          else
+            mv "$incoming_secret" "$secret_dir"
+          fi
+          REMOTE
+
+          if [[ "$FORCE_ROLLBACK_REHEARSAL" == 'true' ]]; then
+            ssh "${ssh_options[@]}" "$target" bash -s -- "$RELEASE_SHA" <<'REMOTE'
+          set -euo pipefail
+          candidate_sha=$1
+          test -f /home/nuc/wef/state/current.json
+          current_sha=$(
+            python3 /home/nuc/wef/releases/current/scripts/deploy/release_state.py \
+              get /home/nuc/wef/state/current.json release_sha
+          )
+          test "$current_sha" != "$candidate_sha"
+          REMOTE
+          fi
+
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" \
+            "umask 077; '$release_dir/scripts/deploy/server_inventory.sh' > '$inventory_before'"
+          # shellcheck disable=SC2029
+          printf '%s' "$GHCR_TOKEN" | ssh "${ssh_options[@]}" "$target" \
+            "docker login ghcr.io --username '$GITHUB_ACTOR' --password-stdin"
+          deploy_command=(
+            env
+            "WEF_ROOT=/home/nuc/wef"
+            "WEF_RELEASE_DIR=$release_dir"
+            "WEF_CONFIG_FILE=$config_file"
+          )
+          if [[ "$SEED_REHEARSAL" == 'true' ]]; then
+            deploy_command+=("WEF_SEED_REHEARSAL=1")
+          fi
+          if [[ "$FORCE_ROLLBACK_REHEARSAL" == 'true' ]]; then
+            deploy_command+=("WEF_FORCE_ROLLBACK_REHEARSAL=1")
+          fi
+          deploy_command+=("$release_dir/scripts/deploy/deploy.sh")
+          set +e
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" "${deploy_command[@]}"
+          deploy_status=$?
+          set -e
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" \
+            "umask 077; '$release_dir/scripts/deploy/server_inventory.sh' > '$inventory_after'"
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" \
+            "python3 '$release_dir/scripts/deploy/compare_server_inventory.py' '$inventory_before' '$inventory_after'"
+          if [[ "$FORCE_ROLLBACK_REHEARSAL" == 'true' && "$deploy_status" -eq 42 ]]; then
+            ssh "${ssh_options[@]}" "$target" bash -s -- \
+              "$release_dir" "$RELEASE_SHA" "$inventory_before" "$inventory_after" <<'REMOTE'
+          set -euo pipefail
+          release_dir=$1
+          failed_sha=$2
+          before_inventory=$3
+          after_inventory=$4
+          healthy_sha=$(
+            python3 "$release_dir/scripts/deploy/release_state.py" \
+              get /home/nuc/wef/state/current.json release_sha
+          )
+          cd "$release_dir"
+          python3 -m scripts.deploy.verify_rollback_rehearsal \
+            /home/nuc/wef \
+            "$healthy_sha" \
+            "$failed_sha" \
+            "$before_inventory" \
+            "$after_inventory"
+          REMOTE
+            echo 'Rollback rehearsal restored the previous healthy release.'
+          elif [[ "$deploy_status" -ne 0 ]]; then
+            exit "$deploy_status"
+          elif [[ "$FORCE_ROLLBACK_REHEARSAL" == 'true' ]]; then
+            echo 'Rollback rehearsal did not exercise the expected failure path.' >&2
+            exit 1
+          fi

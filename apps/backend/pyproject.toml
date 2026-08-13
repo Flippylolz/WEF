@@ -1,0 +1,91 @@
+[project]
+name = "wef-backend"
+version = "0.1.0"
+description = "Backend-centric WEF architecture proof"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.19.1",
+    "asyncpg>=0.31.0",
+    "fastapi>=0.141.1",
+    "geoalchemy2>=0.20.0",
+    "pydantic-settings>=2.15.0",
+    "sqlalchemy[asyncio]>=2.0.52",
+    "structlog>=26.1.0",
+    "uvicorn[standard]>=0.52.1",
+]
+
+[project.scripts]
+wef-backend = "wef_backend.cli:serve"
+wef-export-openapi = "wef_backend.openapi_export:main"
+wef-importer-dry-run = "wef_backend.operator:main"
+wef-migrate = "wef_backend.migration:migrate"
+wef-seed-m1 = "wef_backend.seed_command:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "coverage>=7.15.4",
+    "httpx>=0.28.1",
+    "import-linter>=2.13",
+    "mypy>=2.3.0",
+    "pip-audit>=2.10.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wef_backend"]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+    "-ra",
+]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: requires a disposable PostGIS TEST_DATABASE_URL",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["wef_backend"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["src", "tests", "scripts"]
+warn_unreachable = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",
+    "CPY001",
+    "D203",
+    "D213",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "PLR2004",
+    "S101",
+]
+"scripts/**/*.py" = [
+    "T201",
+]

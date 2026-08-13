@@ -26,7 +26,7 @@ invalidation:
 
 # Spike: Repository and developer foundation
 
-> This is a draft research scope. It authorizes documentation/research only: no production code, scaffold, migration, infrastructure/configuration change, generated executable artifact, prototype, proof branch, or disposable proof code.
+> Revision 2 is owner-approved research. Implementation proceeds only through promoted tasks in the current approved implementation plan; this spike alone authorizes no code.
 
 ## Question
 
@@ -88,8 +88,8 @@ For the requested repository bootstrap:
 
 ### E1-T1 repository safety and initial branch
 
-- Initialize the local repository directly on the unborn branch `chore/E1-T1-repository-safety`, then configure `https://github.com/Flippylolz/WEF` as `origin`. Do not make an ordinary direct feature commit to `main`.
-- The first prepared commit boundary contains the existing approved documentation plus E1-T1's `.gitignore`, `.dockerignore`, safe `.env.example`, and concise root `README.md`.
+- Bootstrap the empty remote with only a minimal root README on `main`, then configure `git@github.com:Flippylolz/WEF.git` as `origin`. Use SSH for Git fetches/pushes; this one-time base-ref bootstrap is not an ordinary direct feature commit.
+- Carry the pre-existing approved `AI/` documentation on `docs/ai-documentation-foundation`, then create `chore/E1-T1-repository-safety` from that branch. E1-T1's commit boundary contains only `.gitignore`, `.dockerignore`, safe `.env.example`, and the full root `README.md`.
 - `.gitignore` excludes `est-test/`, `est-test.tar.gz`, archives, media, environment/secrets, Telegram sessions, local databases, caches, coverage, build output, generated sensitive reports, and editor/OS noise. It does not ignore dependency lockfiles or `contracts/openapi/v1.json`.
 - `.dockerignore` protects any root build context from Git metadata, source data/media, secrets, local databases, caches, and unrelated outputs. It is verified against the actual workspace before a build.
 - The root README links `AI/README.md`, states that the repository is pre-implementation, documents prerequisites and source-data exclusions, and does not advertise commands or services that do not exist.
@@ -120,14 +120,14 @@ This recommendation is complete for owner review but does not authorize any prop
 ## Proposed task boundaries
 
 - [E1-T1: Initialize repository safety](tasks/E1-T1-initialize-repository-safety.md) — promoted after spike approval; initial repository branch, ignores, safe environment example, root README, commit, and PR; no executable scaffold.
-- [E1-T2: Scaffold web and backend applications](proposed-tasks/E1-T2-scaffold-web-and-backend-applications.md) — accepted E0 application scaffolds, starter Dockerfiles, and the first real-command Make targets.
-- [E1-T3: Add local Docker Compose](proposed-tasks/E1-T3-add-local-docker-compose.md) — PostGIS/API/web/optional-edge/importer topology and real Compose Make targets.
-- [E1-T4: Establish CI baseline](proposed-tasks/E1-T4-establish-ci-baseline.md) — candidate boundary for spike refinement.
+- [E1-T2: Scaffold web and backend applications](tasks/E1-T2-scaffold-web-and-backend-applications.md) — promoted; accepted E0 application scaffolds, named Docker targets, and the first real-command Make targets.
+- [E1-T4: Establish CI baseline](tasks/E1-T4-establish-ci-baseline.md) — promoted; stable synthetic CI, contract checks, and commit-addressed artifacts.
+- [E1-T3: Add local Docker Compose](tasks/E1-T3-add-local-docker-compose.md) — promoted; PostGIS/API/web/optional-edge/importer topology and real Compose Make targets.
 - [E1-T5: Configure protected-main governance](proposed-tasks/E1-T5-configure-protected-main-governance.md) — cancelled traceability only.
 - [E1-T6: Configure Dependabot update pull requests](proposed-tasks/E1-T6-configure-dependabot-update-pull-requests.md) — candidate boundary for spike refinement.
 - [E1-T7: Implement scheduled Dependabot merge controller](proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — candidate boundary for spike refinement.
 
-Only E1-T1 has been promoted and may appear in implementation-plan revision 2. Every remaining candidate above is non-actionable while it remains under `proposed-tasks/`.
+E1-T1, E1-T2, E1-T4, and E1-T3 are promoted in implementation-plan revision 4. E1-T5 remains cancelled; E1-T6 and E1-T7 remain non-actionable under `proposed-tasks/`.
 
 ## Risks and open questions
 
