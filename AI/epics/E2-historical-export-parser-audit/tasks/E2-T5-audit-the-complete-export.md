@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E2-T5
 epic: E2
 title: "Audit the complete export"
-status: draft
+status: done
 revision: 2
 priority: P0
 size: L
@@ -29,23 +29,27 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-13T18:58:46Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
+  status: satisfied
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-13T19:46:00Z"
   evidence:
-    - "E2-T4 | draft | must merge before E2-T5 starts"
+    - "E2-T4 | done | merged PR https://github.com/Flippylolz/WEF/pull/40 | merge 6cf1fec"
 branch:
   required: true
-  name: null
+  name: feature/E2-T5-complete-export-audit
   task_id: E2-T5
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-13T19:46:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/42"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (owner-authorized)"
+  completed_at: "2026-08-13T20:03:40Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/42"
+  evidence:
+    - "Complete read-only e2-v2 audit succeeded: approved 21,634,277-byte source and SHA-256 verified; 27,082 records, 2,991 candidates plus 24,091 non-candidates, and 27,147 media descriptors fully reconciled"
+    - "Material source-template gaps were fixed with sanitized regression cases: apartment price 2,049 to 2,881, room extraction 72 to 2,418, and invalid-range warnings 988 to 6; two post-fix runs had identical non-timing reports"
+    - "Local gates passed: frozen install, format, Ruff, import-linter, strict mypy/TypeScript, branch-coverage backend/frontend tests, contracts/docs, Compose, production proofs, and backend/frontend runtime image builds"
+    - "Initial PR https://github.com/Flippylolz/WEF/pull/42 CI run 31738741521 passed Backend, Frontend and contract, Repository safety, and Runtime images before completion evidence was recorded"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -100,17 +104,17 @@ This task publishes aggregate audit evidence and, only if required, bounded pars
 ## Ready checklist
 
 - [x] Promotion and current spike/implementation gates are recorded.
-- [ ] E2-T4 is `done`; dependency gate is satisfied.
-- [ ] Status moves to `ready` only after the dependency is complete.
+- [x] E2-T4 is `done`; dependency gate is satisfied.
+- [x] Status passed through `ready` after the dependency completed.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated E2-T5 branch is created from latest `main`.
-- [ ] Branch and PR contain E2-T5 only; metadata is recorded.
+- [x] Status passed through `ready`.
+- [x] Dedicated E2-T5 branch is created from latest `main`.
+- [x] Branch contains E2-T5 only; branch metadata is recorded.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

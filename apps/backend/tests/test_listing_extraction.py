@@ -220,6 +220,55 @@ def test_conflicting_values_and_content_types_remain_null() -> None:
         assert all(span.extract(text) for span in warning.spans)
 
 
+def test_ambiguous_strong_headers_without_location_remain_reviewable() -> None:
+    """No source-template tiebreak is invented when strong headers conflict."""
+    result = _candidate("Development opportunity\nFor sale | Apartment\nCena: 500 000 PLN")
+    listing = result.listing
+    assert listing is not None
+    assert listing.content_type is None
+    assert result.decision.content_type is None
+    assert [warning.code for warning in result.warnings] == [
+        ExtractionWarningCode.CONFLICTING_CONTENT_TYPE
+    ]
+
+
+def test_source_shaped_prices_and_room_hashtags_preserve_typed_ranges() -> None:
+    """Per-area context is not mistaken for a range and room tags remain typed."""
+    scalar = _candidate(
+        "Покупка | Квартира\n"
+        "Цена: 700 000 PLN (14 000 PLN/m²)\n"
+        "Комнаты: #1_комната #2_комнаты #3_комнаты"
+    )
+    scalar_listing = scalar.listing
+    assert scalar_listing is not None
+    assert scalar_listing.apartment_price is not None
+    assert scalar_listing.apartment_price.value.amount == DecimalRange(
+        Decimal(700_000),
+        Decimal(700_000),
+    )
+    assert scalar_listing.rooms is not None
+    assert scalar_listing.rooms.value == IntegerRange(1, 3)
+
+    ranged = _candidate(
+        "Inwestycja | Synthetic\n"
+        "Lokalizacja: Miasto Testowe\n"
+        "Cena: 650 000-810 000 PLN (12 500 PLN/m²)"
+    )
+    ranged_listing = ranged.listing
+    assert ranged_listing is not None
+    assert ranged_listing.apartment_price is not None
+    assert ranged_listing.apartment_price.value.amount == DecimalRange(
+        Decimal(650_000),
+        Decimal(810_000),
+    )
+
+    tagged = _candidate("For sale | Apartment\nPrice: 500 000 PLN\n#1_room #2_rooms #4_rooms")
+    tagged_listing = tagged.listing
+    assert tagged_listing is not None
+    assert tagged_listing.rooms is not None
+    assert tagged_listing.rooms.value == IntegerRange(1, 4)
+
+
 def test_invalid_ranges_are_reviewable_and_not_reordered() -> None:
     """Reversed values do not become invented normalized ranges."""
     result = _candidate("Kupno | Mieszkanie\nCena: 800 000-700 000 PLN\nPowierzchnia: 60-40 m2")

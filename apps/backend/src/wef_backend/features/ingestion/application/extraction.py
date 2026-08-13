@@ -33,14 +33,24 @@ from wef_backend.features.ingestion.domain import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v1"
+PARSER_VERSION = "e2-v2"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
+_MAX_ROOM_COUNT = 20
 
 _FLAGS = re.IGNORECASE | re.UNICODE
 _NUMBER = r"(?<!\w)(?:\d{1,3}(?:[ \u00a0]\d{3})+(?:[,.]\d+)?|\d+(?:[,.]\d+)?)(?!\w)"
 _VALUE_SUFFIX = r"\s*(?:[:|]\s*|[\u2013\u2014-]\s+)(?P<value>[^\r\n]+)"
 _NUMBER_PATTERN = re.compile(_NUMBER)
+_ROOM_NUMBER_PATTERN = re.compile(r"(?<!\w)\d+(?!\w)")
+_ROOM_TAG_PATTERN = re.compile(
+    r"#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|комнат[аы]?)",
+    _FLAGS,
+)
+_RANGE_JOINER_PATTERN = re.compile(
+    r"(?:-|\u2013|\u2014|\b\u0434\u043e\b|\bto\b)",
+    _FLAGS,
+)
 _CURRENCY_PATTERN = re.compile(r"(?:\b(?P<iso>PLN|EUR|USD|GBP)\b|(?P<symbol>zł|€|\$))", _FLAGS)
 _INCLUDED_PATTERN = re.compile(
     r"\b(?:included|w cenie|wliczon[eya]?|включен[аоы]?|входит в стоимость)\b",
@@ -112,7 +122,8 @@ _CANDIDATE_RULES = (
         1,
         None,
         re.compile(
-            r"(?:#\d+\b|\b(?:pokoje?|rooms?|комнат[аы]?|pok\.)\s*"
+            r"(?:#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|комнат[аы]?)"
+            r"|\b(?:pokoje?|rooms?|комнат[аы]?|pok\.)\s*"
             r"(?:[:|]|\u2013|\u2014|-))",
             _FLAGS,
         ),
@@ -260,13 +271,10 @@ def extract_listing(
         warnings,
         _decimal_range,
     )
-    rooms = _range_field(
+    rooms = _rooms_field(
         message.text,
-        _ROOMS_PATTERN,
-        "rooms",
         parser_version,
         warnings,
-        _integer_range,
     )
     floor = _string_field(message.text, _FLOOR_PATTERN, "floor", parser_version, warnings)
     delivery = _string_field(
@@ -512,6 +520,46 @@ def _range_field[T](  # noqa: PLR0913, PLR0917
     return _unique_parsed_value(text, parsed, field_name, parser_version, warnings)
 
 
+def _rooms_field(
+    text: str,
+    parser_version: str,
+    warnings: list[ExtractionWarning],
+) -> ExtractedValue[IntegerRange] | None:
+    labeled_matches = tuple(_ROOMS_PATTERN.finditer(text))
+    tag_matches = tuple(_ROOM_TAG_PATTERN.finditer(text))
+    ranges = tuple(
+        parsed
+        for parsed in (
+            *(_room_range(_trimmed_value(text, match)) for match in labeled_matches),
+            *(_room_tag_range(match.group()) for match in tag_matches),
+        )
+        if parsed is not None
+    )
+    if not ranges:
+        warnings.extend(
+            _invalid_range_warning("rooms", text, match)
+            for match in labeled_matches
+            if _NUMBER_PATTERN.search(_trimmed_value(text, match))
+        )
+        return None
+    spans = (
+        *(_trimmed_span(text, match) for match in labeled_matches),
+        *(SourceSpan(*match.span()) for match in tag_matches),
+    )
+    return ExtractedValue(
+        value=IntegerRange(
+            lower=min(value.lower for value in ranges),
+            upper=max(value.upper for value in ranges),
+        ),
+        provenance=_provenance(
+            "extract.rooms",
+            parser_version,
+            Confidence.HIGH,
+            *dict.fromkeys(spans),
+        ),
+    )
+
+
 def _unique_parsed_value[T](
     text: str,
     parsed: Sequence[tuple[T, re.Match[str]]],
@@ -537,29 +585,40 @@ def _unique_parsed_value[T](
 
 
 def _decimal_range(value: str) -> DecimalRange | None:
-    numbers = _NUMBER_PATTERN.findall(value)
-    if not numbers or len(numbers) > _MAX_RANGE_VALUES:
+    matches = tuple(_NUMBER_PATTERN.finditer(value))
+    if not matches:
         return None
     try:
-        parsed = tuple(_decimal(number) for number in numbers)
-        lower, upper = (parsed[0], parsed[0]) if len(parsed) == 1 else parsed
+        lower = _decimal(matches[0].group())
+        upper = lower
+        if len(matches) >= _MAX_RANGE_VALUES:
+            separator = value[matches[0].end() : matches[1].start()]
+            if _RANGE_JOINER_PATTERN.search(separator):
+                upper = _decimal(matches[1].group())
         return DecimalRange(lower=lower, upper=upper)
     except (InvalidOperation, ValueError):
         return None
 
 
-def _integer_range(value: str) -> IntegerRange | None:
-    parsed = _decimal_range(value)
-    if (
-        parsed is None
-        or parsed.lower != parsed.lower.to_integral_value()
-        or (parsed.upper != parsed.upper.to_integral_value())
-    ):
+def _room_range(value: str) -> IntegerRange | None:
+    rooms = {
+        int(match.group())
+        for match in _ROOM_NUMBER_PATTERN.finditer(value)
+        if 0 < int(match.group()) <= _MAX_ROOM_COUNT
+    }
+    if not rooms:
         return None
-    try:
-        return IntegerRange(lower=int(parsed.lower), upper=int(parsed.upper))
-    except ValueError:
+    return IntegerRange(lower=min(rooms), upper=max(rooms))
+
+
+def _room_tag_range(value: str) -> IntegerRange | None:
+    match = re.search(r"\d+", value)
+    if match is None:
         return None
+    room = int(match.group())
+    if not 0 < room <= _MAX_ROOM_COUNT:
+        return None
+    return IntegerRange(lower=room, upper=room)
 
 
 def _decimal(value: str) -> Decimal:
