@@ -114,6 +114,7 @@ def _message_snapshot(message: RawMessage) -> dict[str, object]:
         "published_at": message.published_at.isoformat(),
         "edited_at": message.edited_at.isoformat() if message.edited_at else None,
         "message_type": message.message_type,
+        "media_group_id": message.media_group_id,
         "text": message.text,
         "original_text": _json_value(message.original_text),
         "text_entities": _json_value(message.text_entities),

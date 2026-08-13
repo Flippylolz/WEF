@@ -134,6 +134,7 @@ def test_source_and_media_values_reject_incomplete_or_negative_data() -> None:
     [
         ({"external_message_id": 0}, "external message id"),
         ({"reply_to_message_id": 0}, "reply message id"),
+        ({"media_group_id": ""}, "media group id"),
         ({"message_type": ""}, "message type"),
         (
             {"edited_at": datetime(2030, 1, 1, tzinfo=timezone(timedelta(hours=1)))},

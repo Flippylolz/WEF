@@ -6,6 +6,11 @@ from wef_backend.features.ingestion.application.extraction import (
     detect_candidate,
     extract_listing,
 )
+from wef_backend.features.ingestion.application.media_grouping import (
+    GROUPING_VERSION,
+    TIME_BURST_SECONDS,
+    group_media,
+)
 from wef_backend.features.ingestion.application.source import (
     ChannelExpectation,
     HistoricalSourcePort,
@@ -18,7 +23,9 @@ from wef_backend.features.ingestion.application.source import (
 
 __all__ = [
     "CANDIDATE_THRESHOLD",
+    "GROUPING_VERSION",
     "PARSER_VERSION",
+    "TIME_BURST_SECONDS",
     "ChannelExpectation",
     "HistoricalSourcePort",
     "HistoricalSourceScan",
@@ -28,4 +35,5 @@ __all__ = [
     "SourceScanError",
     "detect_candidate",
     "extract_listing",
+    "group_media",
 ]
