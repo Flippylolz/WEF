@@ -51,7 +51,7 @@ The following definition preserves the original E1-T6 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E1-T1](E1-T1-initialize-repository-safety.md), [E1-T4](E1-T4-establish-ci-baseline.md)
+- Task dependencies: [E1-T1](../tasks/E1-T1-initialize-repository-safety.md), [E1-T4](../tasks/E1-T4-establish-ci-baseline.md)
 - Milestone: [M1](../../../milestones/M1-vertical-proof.md).
 - Traceability: [Decision registry](../../../decisions/README.md), [Architecture](../../../architecture/README.md), [Governance](../../../governance/README.md), [Operations](../../../operations/README.md).
 

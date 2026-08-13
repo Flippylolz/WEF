@@ -56,7 +56,7 @@ The following definition preserves the original E3-T3 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E3-T1](E3-T1-create-schema-and-migrations.md), [E2-T2](../../E2-historical-export-parser-audit/proposed-tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md)
+- Task dependencies: [E3-T1](../tasks/E3-T1-create-schema-and-migrations.md), [E2-T2](../../E2-historical-export-parser-audit/proposed-tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md)
 - Deferred-decision gates: [D-002](../../../decisions/deferred/D-002-recurring-geocoding-provider.md).
 - Milestone: [M1](../../../milestones/M1-vertical-proof.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Data](../../../data/README.md), [Contracts](../../../contracts/README.md), [Ingestion](../../../ingestion/README.md), [Security](../../../security/README.md).

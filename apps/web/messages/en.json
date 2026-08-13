@@ -1,0 +1,28 @@
+{
+  "home": {
+    "title": "Find a place in Warsaw",
+    "subtitle": "Explore grouped, dated offers on an interactive map. All current records are clearly synthetic MVP fixtures."
+  },
+  "map": {
+    "loading": "Loading Warsaw locations…",
+    "error": "Map data is unavailable right now.",
+    "empty": "No locations match this view.",
+    "explorerLabel": "Warsaw estate explorer",
+    "mapUnavailable": "The interactive map could not load.",
+    "listStillAvailable": "Use the location list to continue browsing.",
+    "locationsLabel": "Warsaw locations and offers",
+    "locationsEyebrow": "Warsaw",
+    "locationsTitle": "Grouped locations",
+    "locationCount": "{count, plural, one {# location} other {# locations}}",
+    "districtCount": "{count, plural, one {# district represented} other {# districts represented}}",
+    "matchingOffers": "matching offers",
+    "lowConfidence": "Approximate district-level location",
+    "selectLocation": "Select a pin or location to view dated offers.",
+    "offersLoading": "Loading dated offers…",
+    "offersError": "Offers for this location could not be loaded.",
+    "offersEmpty": "No visible offers were returned for this location.",
+    "retry": "Try again",
+    "selectedEyebrow": "Selected location",
+    "partialData": "Some structured values were not provided."
+  }
+}

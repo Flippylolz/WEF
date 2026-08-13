@@ -1,0 +1,75 @@
+"""Explicit composition root for runtime services."""
+
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
+
+import structlog
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+
+from wef_backend.database import create_database_resources
+from wef_backend.features.catalog.application import (
+    BrowseLocationOffers,
+    QueryFacets,
+    QueryMapLocations,
+)
+from wef_backend.features.catalog.infrastructure import (
+    SQLAlchemyCatalogBrowseAdapter,
+    SQLAlchemyMapQueryAdapter,
+)
+from wef_backend.features.estates.application import ListEstates
+from wef_backend.features.estates.infrastructure import RetiredEstateQueryAdapter
+from wef_backend.migration import EXPECTED_DATABASE_REVISION
+from wef_backend.settings import Settings, load_settings
+
+ReadyCheck = Callable[[], Awaitable[bool]]
+ResourceCloser = Callable[[], Awaitable[None]]
+
+logger = structlog.get_logger()
+
+
+@dataclass(frozen=True, slots=True)
+class AppServices:
+    """Fully composed services placed on FastAPI app state."""
+
+    list_estates: ListEstates
+    query_map: QueryMapLocations
+    query_facets: QueryFacets
+    browse_location_offers: BrowseLocationOffers
+    is_ready: ReadyCheck
+    close: ResourceCloser
+
+
+def build_services(settings: Settings | None = None) -> AppServices:
+    """Wire concrete adapters to inward-owned application contracts."""
+    runtime_settings = settings or load_settings()
+    database = create_database_resources(runtime_settings.database_url)
+    map_adapter = SQLAlchemyMapQueryAdapter(database.session_factory)
+    browse_adapter = SQLAlchemyCatalogBrowseAdapter(database.session_factory)
+
+    async def database_is_ready() -> bool:
+        try:
+            async with database.session_factory() as session:
+                revision = await session.scalar(
+                    text("SELECT version_num FROM alembic_version"),
+                )
+        except SQLAlchemyError as error:
+            logger.warning("database_not_ready", error=str(error))
+            return False
+        if revision != EXPECTED_DATABASE_REVISION:
+            logger.warning(
+                "database_revision_mismatch",
+                expected=EXPECTED_DATABASE_REVISION,
+                actual=revision,
+            )
+            return False
+        return True
+
+    return AppServices(
+        list_estates=ListEstates(RetiredEstateQueryAdapter()),
+        query_map=QueryMapLocations(map_adapter),
+        query_facets=QueryFacets(browse_adapter),
+        browse_location_offers=BrowseLocationOffers(browse_adapter),
+        is_ready=database_is_ready,
+        close=database.engine.dispose,
+    )

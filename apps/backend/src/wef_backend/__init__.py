@@ -1,0 +1,1 @@
+"""Synthetic backend architecture proof."""

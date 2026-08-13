@@ -3,14 +3,14 @@ schema: ai-workflow/task@1
 id: E0-T1
 epic: E0
 title: "Review architecture and dependency proposal"
-status: ready
+status: in_progress
 revision: 2
 priority: P0
 size: M
 milestone: M1
 dependencies: [E1-T1]
 requirement_ids: []
-decision_ids: [ADR-012, ADR-018]
+decision_ids: [ADR-012, ADR-013, ADR-018]
 deferred_decision_ids: []
 promotion:
   source: ../proposed-tasks/E0-T1-review-architecture-and-dependency-proposal.md
@@ -33,14 +33,14 @@ dependency_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T21:25:00Z"
   evidence:
-    - "E1-T1 | branch chore/E1-T1-repository-safety | PR https://github.com/Flippylolz/WEF/pull/2 | head 8be707a"
+    - "E1-T1 | branch chore/E1-T1-repository-safety | roll-up PR https://github.com/Flippylolz/WEF/pull/4 | head 0c2e242"
 branch:
   required: true
-  name: null
+  name: docs/E0-T1-architecture-review
   task_id: E0-T1
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-12T21:25:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/5"
 completion:
   completed_by: null
   completed_at: null
@@ -55,7 +55,7 @@ invalidation:
 
 # E0-T1: Review architecture and dependency proposal
 
-> Promoted after explicit owner approval of E0 spike revision 2. This task remains `draft`; no implementation or task branch is authorized until the current implementation plan is approved.
+> Promoted after explicit owner approval of E0 spike revision 2 and implementation-plan revision 3. This documentation review is `in_progress` on its dedicated stacked branch.
 
 ## Outcome
 
@@ -86,21 +86,32 @@ No runtime module, public API, or persisted contract changes are expected.
 
 This is a documentation/review task. The owner-approved spike is the baseline; this task records review evidence and consistency checks rather than silently changing that baseline.
 
-E1-T1 initialized the safe repository and has an open ancestor pull request. Under ADR-018, this task may start from that branch without waiting for review/merge, but cannot be completed or merged until E1-T1 is `done` and this dependency gate becomes `satisfied`.
+E1-T1 has prepared the safe repository baseline in an open ancestor pull request but is not yet `done`. Under ADR-018, this task may start from that branch without waiting for review/merge, but cannot be completed or merged until E1-T1 is `done` and this dependency gate becomes `satisfied`.
 
 ## Acceptance criteria
 
-- [ ] Backend/frontend responsibilities and every layer's allowed dependencies are explicit and internally consistent.
-- [ ] Adopted, evaluated, deferred, and rejected dependency categories have reasons and replacement paths.
-- [ ] Repository, Dockerfile, Compose, Makefile, README, task-ownership, and branch boundaries are explicit.
-- [ ] ADR-012 and affected architecture/contracts either match spike revision 2 or are updated through an approved material revision.
-- [ ] Review evidence is attached without claiming that E0-T2 or product scaffolding has run.
+- [x] Backend/frontend responsibilities and every layer's allowed dependencies are explicit and internally consistent.
+- [x] Adopted, evaluated, deferred, and rejected dependency categories have reasons and replacement paths.
+- [x] Repository, Dockerfile, Compose, Makefile, README, task-ownership, and branch boundaries are explicit.
+- [x] ADR-012 and ADR-013 plus affected architecture/contracts match spike revision 2.
+- [x] Review evidence is attached without claiming that E0-T2 or product scaffolding has run.
 
 ## Test plan
 
 - Documentation: validate YAML, relative links, task/decision IDs, and revision references.
 - Architecture: compare dependency-direction and module-boundary statements across the spike, ADR-012, and architecture docs.
 - Security/operations: verify source-data, secret, image-context, and branch gates remain explicit.
+
+## Review evidence
+
+- An independent read-only cross-document audit checked spike revision 2, implementation-plan revision 3, ADR-012, ADR-013, ADR-018, architecture/contracts/workflow/governance documents, and this task.
+- Responsibility and direction check: backend authority and the `interface -> application -> domain` direction are consistent; infrastructure implements inward-owned ports. Interactors own mutation orchestration/unit-of-work boundaries, read query services build projections, presenters perform I/O-free DTO mapping, and repositories flush without committing.
+- Contract check: deterministic `contracts/openapi/v1.json`, frontend generation, offline Redocly artifacts, and disabled production documentation routes are consistently assigned to E0-T2/E1-T4. No generated schema or proof execution is claimed here.
+- Dependency check: the spike now labels unconditional adoption, E0-T2 evaluations, scope-deferred dependencies, and MVP rejections. Conditional items and rejected dependency groups state their fallback/replacement paths.
+- Bootstrap check: E1-T1 owns Git/ignore/environment/README safety; E0-T2 owns proof manifests/lockfiles/measured builds; E1-T2 owns application scaffolds, Dockerfiles, and initial real-command Make targets; E1-T3 owns Compose and Compose Make targets.
+- Safety check: source exports/media, secrets, Telegram sessions, local databases, and sensitive reports remain excluded from Git and Docker contexts; importer access is planned as an explicit read-only mount.
+- Stack check: E1-T1 remains `in_progress` in ancestor PR #2. This task's acceptance review can pass, but completion/merge remains blocked until its dependency gate becomes `satisfied`.
+- Proof boundary check: no application scaffold, dependency lockfile, generated OpenAPI contract, Docker proof, or E0-T2 completion evidence is asserted by this review.
 
 ## Rollout and rollback
 
@@ -117,13 +128,13 @@ There is no runtime rollout. A material correction increments the spike or imple
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains `E0-T1`.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] `docs/E0-T1-architecture-review` contains `E0-T1`.
+- [x] The branch is stacked from the workflow PR and contains this task only.
+- [x] `branch.name` and `branch.created_at` are recorded.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
+- [x] Acceptance criteria pass.
 - [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.

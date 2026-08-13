@@ -16,4 +16,4 @@ This domain owns system boundaries, dependency direction, runtime components, sc
 - Docker Compose runs the system on one server behind Caddy.
 - Added abstractions and dependencies need a demonstrated responsibility or implementation boundary.
 
-Architecture research is documentation-only until the epic spike is approved. Even after spike approval, no production or disposable proof code is allowed until the epic implementation plan has explicit owner approval.
+Spike revision 2 and implementation-plan revision 3 are owner-approved. Proof or product code still proceeds only through the promoted task's state, dependency, dedicated-branch, review, and completion gates.

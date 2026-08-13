@@ -1,19 +1,23 @@
 ---
 schema: ai-workflow/implementation-plan@1
 epic: E4
-title: "Read API and filter contracts implementation plan"
-status: draft
-revision: 1
+title: "M1 grouped map API implementation plan"
+status: approved
+revision: 2
 owner: owner
-spike_revision: null
-task_sequence: []
+spike_revision: 2
+task_sequence:
+  - id: E4-T1
+    revision: 2
+  - id: E4-T2
+    revision: 2
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-12T22:34:40Z"
+  approved_revision: 2
+  evidence: "Owner directive to prepare the MVP/autodeploy, choose safe defaults, log decisions/blockers, and continue stacking PRs"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -21,50 +25,83 @@ invalidation:
   return_to: null
 ---
 
-# Implementation Plan: Read API and filter contracts
+# Implementation Plan: M1 grouped map API
 
-## Blocked state
+## Approved spike baseline
 
-This artifact is deliberately blocked and incomplete. It cannot be completed, changed to `awaiting_approval`, or approved until [SPIKE.md](SPIKE.md) is explicitly owner-approved for its current revision and approved candidates have been moved—not copied—from `proposed-tasks/` to `tasks/` with valid promotion metadata.
+[E4 spike revision 2](SPIKE.md) approves grouped GeoJSON/filter, canonical facets, and the selected-location dated-offer collection. Details, media, auth, contacts, and full-data hardening remain proposed.
 
-No proposed task is an executable sequence entry. `spike_revision` remains `null`, `task_sequence` remains empty, approval is pending, and no implementation is authorized.
+## Scope and outcome
 
-## Intended scope and outcome
-
-If the spike and promoted scope are later approved, this plan must preserve the epic outcome:
-
-> stable, efficient public endpoints that implement filter semantics once.
-
-The approved spike will determine binding inclusions, exclusions, architecture/contract constraints, and any changed task boundaries.
+Replace the public list proof with stable backend-owned map/facet/selected-location contracts over E3's migrated synthetic M1 records. One filter policy is reused across compact GeoJSON, canonical options, and dated results.
 
 ## Ordered task sequence
 
-Blocked: there are no promoted tasks. Files under `proposed-tasks/` are planning inputs only and cannot be listed here as executable work.
+### 1. E4-T1 — Implement map query service and GeoJSON endpoint
 
-## Required planning after spike approval
+- Task: [E4-T1 revision 2](tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md).
+- Dependency: E3-T1 must become a direct ancestor PR or complete before this task starts.
+- Independent result: API/query/contract changes remain reviewable separately from schema and UI.
+- Affected code: map application/domain/interface/infrastructure modules, composition, OpenAPI/generated client, tests.
+- Verification: unit/PostGIS/contract/security/performance/same-origin smoke.
 
-Before this plan may request owner approval, it must:
+### 2. E4-T2 — Implement facets and location offer collection
 
-1. reference the owner-approved current spike revision;
-2. sequence only promoted `tasks/` definitions with their current revisions;
-3. explain independent review boundaries and dependency evidence for every task;
-4. document affected modules, public/persisted contracts, transaction and dependency direction;
-5. map acceptance to unit, integration, contract, migration, end-to-end, accessibility, security, build, and operational checks as applicable;
-6. specify data/migration compatibility, idempotency, release order, health checks, rollout, rollback, and recovery limits;
-7. resolve required deferred decisions and preserve accepted single-host/backup constraints; and
-8. enumerate concrete risks, mitigations, owners, and invalidation triggers.
+- Task: [E4-T2 revision 2](tasks/E4-T2-implement-facets-and-location-offer-collection.md).
+- Dependency: E4-T1 must become its direct ancestor PR or complete before start.
+- Independent result: adds options/result-panel data without mixing frontend work into backend review.
+- Affected code: shared filter policy plus facet/collection ports, adapters, presenters, routes, OpenAPI/types, tests.
+- Verification: aggregation, cursor tie cases, matching/history behavior, safe IDs/cursors, contract and Caddy smoke.
+
+## Cross-task architecture
+
+Pydantic query input maps into application-owned immutable filters. Query services invoke narrow inward-owned ports. SQLAlchemy/PostGIS implements filtering/grouping/aggregation/pagination. Pure presenters create versioned responses. Routes contain transport behavior only. E4-T2 imports/reuses E4-T1 application policy rather than copying semantics.
+
+## Data and migrations
+
+No migration is added. The query relies on E3-T1's locations/offers/indexes and accepted synthetic points. E3-T3 remains required before real unresolved addresses become public.
+
+## Security and privacy
+
+The public response is an explicit allowlist. It excludes source/raw text, contacts, paths, media internals, provider responses, and credentials. Input bounds/count/range limits prevent unbounded spatial queries. Logs record safe metadata, not query/source values.
+
+## Test and verification strategy
+
+- Unit tests for normalized filters and pure presenter.
+- PostGIS integration matrix for all filter semantics/group counts/scope/order.
+- OpenAPI generation, generated TypeScript, docs lint/build, and breaking-change probe for all three endpoints.
+- Cursor/facet/location integration matrices and selected-location same-origin flow.
+- Conditional ETag tests, safe problem responses, and representative local query timing.
+- Local Caddy endpoint smoke against E3 seed.
+
+## Operations, rollout, and rollback
+
+Activate after E3 migration/seed. Keep health routes stable. Application rollback requires only E3 schema compatibility. No schema/data/provider operation occurs in E4-T1.
+
+## Risks and mitigations
+
+- **Semantic duplication:** one application filter policy and one query adapter.
+- **Coordinate reversal:** integration and contract assertions.
+- **Filter explosion:** validated counts/ranges/bbox.
+- **Stale cache:** deterministic ETag tied to normalized filters plus latest relevant data version.
+- **Real low-confidence pin:** persistence predicate requires accepted/in-scope/non-null coordinates.
+- **Map/collection drift:** shared filter object and paired integration assertions.
+- **Cursor gaps:** deterministic timestamp/UUID order and tie fixtures.
+
+## Invalidation triggers
+
+Return to the spike for a different public map representation, server-side tiles, real-source visibility bypass, or frontend-owned filtering. Return to this plan for material endpoint/query/test/rollout changes within the approved architecture.
 
 ## Approval checklist
 
-- [ ] The referenced spike revision has explicit owner approval and remains valid.
-- [ ] Every sequence entry is a promoted task with complete acceptance criteria and traceability.
-- [ ] Dependencies are complete, acyclic, and enforceable task by task.
-- [ ] Modules, contracts, tests, migrations, risks, rollout, and rollback are explicit.
-- [ ] Deferred decisions required for implementation are resolved.
-- [x] No proposed task appears as an executable sequence.
-- [x] No production or disposable proof code is authorized by this draft.
-- [ ] Status is `awaiting_approval` and approval remains `pending`.
+- [x] E4 spike revision 2 is explicitly approved/current.
+- [x] E4-T1/T2 revision 2 are promoted with complete acceptance/traceability.
+- [x] Dependencies on E3-T1 and ordered E4-T1 ancestry are acyclic/start-gated.
+- [x] Modules, contract, tests, risks, rollout, and rollback are explicit.
+- [x] No deferred decision blocks the synthetic map API.
+- [x] No implementation code was written before this plan approval.
+- [x] Revision 2 records the approved plan.
 
 ## Owner decision
 
-There is nothing to approve yet. After the spike and promotion gates are satisfied and this artifact is materially completed, the owner may decide only the recorded current revision. Individual task dependency, state, and one-branch-per-task gates would still apply.
+Flippylolz approved revision 2 through the delegated overnight MVP/autodeploy directive. E4-T1 starts after E3-T1 ancestry and E4-T2 after E4-T1 ancestry; this does not authorize details/media/auth/contacts or real-source publication.

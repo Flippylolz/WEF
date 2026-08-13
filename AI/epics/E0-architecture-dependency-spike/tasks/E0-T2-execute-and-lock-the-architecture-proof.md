@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E0-T2
 epic: E0
 title: "Execute and lock the architecture proof"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: M
@@ -29,17 +29,19 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T21:03:00Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-12T21:37:55Z"
+  evidence:
+    - "E1-T1 | branch chore/E1-T1-repository-safety | roll-up PR https://github.com/Flippylolz/WEF/pull/4 | head 0c2e242"
+    - "E0-T1 | branch docs/E0-T1-architecture-review | PR https://github.com/Flippylolz/WEF/pull/5 | head df0a38b"
 branch:
   required: true
-  name: null
+  name: spike/E0-T2-architecture-proof
   task_id: E0-T2
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-12T21:37:55Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/6"
 completion:
   completed_by: null
   completed_at: null
@@ -54,7 +56,7 @@ invalidation:
 
 # E0-T2: Execute and lock the architecture proof
 
-> Promoted after explicit owner approval of E0 spike revision 2. This task remains `draft`; code is prohibited until the implementation plan is approved, E0-T1 and E1-T1 are done, and this task becomes `ready` then `in_progress` on its dedicated branch.
+> Promoted after explicit owner approval of E0 spike revision 2 and implementation-plan revision 3. This proof is `in_progress` on its dedicated branch above the recorded E1-T1 and E0-T1 pull requests. Under ADR-018, dependencies may remain `stacked` while implementation proceeds, but they must be `done` before this task completes or merges.
 
 ## Outcome
 
@@ -91,13 +93,13 @@ Produce a synthetic, reproducible proof of the approved backend-centric architec
 
 ## Acceptance criteria
 
-- [ ] Route → query/interactor → port/adapter → application DTO → presenter is demonstrated without domain logic in the frontend.
+- [x] Route → query/interactor → port/adapter → application DTO → presenter is demonstrated without domain logic in the frontend.
 - [ ] A targeted proof CI workflow runs checks, and `import-linter` rejects a deliberate dependency violation.
-- [ ] PostGIS integration, deterministic OpenAPI generation, generated TypeScript request, Next.js rendering, and English i18n proof pass.
-- [ ] `contracts/openapi/v1.json`, Redocly lint/static docs, `oasdiff`, and production-disabled documentation routes follow the OpenAPI contract.
-- [ ] Runtime/dependency versions, purposes, licenses, advisories, replacement paths, and lockfile reproducibility are recorded.
-- [ ] Docker builds pass with safe contexts and contain no source data, media, credentials, production values, or documentation generators in runtime layers.
-- [ ] The proof touches no real source data, media, credentials, or production service.
+- [x] PostGIS integration, deterministic OpenAPI generation, generated TypeScript request, Next.js rendering, and English i18n proof pass.
+- [x] `contracts/openapi/v1.json`, Redocly lint/static docs, `oasdiff`, and production-disabled documentation routes follow the OpenAPI contract.
+- [x] Runtime/dependency versions, purposes, licenses, advisories, replacement paths, and lockfile reproducibility are recorded.
+- [x] Docker builds pass with safe contexts and contain no source data, media, credentials, production values, or documentation generators in runtime layers.
+- [x] The proof touches no real source data, media, credentials, or production service.
 
 ## Test plan
 
@@ -107,6 +109,19 @@ Produce a synthetic, reproducible proof of the approved backend-centric architec
 - Contract: deterministic OpenAPI export, Redocly, `oasdiff`, generated TypeScript compile/request.
 - Frontend: thin rendering and English i18n behavior.
 - Build/security: locked clean installs, Docker image builds, license/advisory scans, and context/image-content checks.
+
+## Verification evidence
+
+The measured dependency conclusions and full command results are recorded in the [E0-T2 proof report](../PROOF_REPORT.md).
+
+- Backend: Ruff and strict mypy pass; Import Linter keeps all three contracts and rejects/cleans a deliberate domain-to-FastAPI violation.
+- Tests: 15 backend tests pass against a disposable PostGIS 17/3.5 container with 96.10% branch-aware coverage; 3 frontend Vitest tests pass.
+- Contract: deterministic OpenAPI export, generated TypeScript currentness, typed `openapi-fetch` request, Redocly lint/static HTML, and oasdiff checks pass. Runtime schema/Swagger/ReDoc routes are absent.
+- Frontend: strict TypeScript, ESLint, fixed-English Server/Client next-intl rendering, and the Next.js production build pass without reimplementing availability logic.
+- Supply chain: uv/pnpm frozen locks pass; pip-audit and production pnpm audit report no known vulnerabilities; direct dependency licenses and replacement paths are recorded.
+- Images: digest-pinned backend and web builds pass. Runtime users are `wef` and `node`; backend development tools and frontend source/contracts/documentation generators are absent.
+- Safety: only synthetic fixtures and the disposable local PostGIS container were used. No real export, media, credential, Telegram session, or production service was read.
+- CI: `.github/workflows/e0-architecture-proof.yml` reproduces backend/PostGIS, architecture, contract, frontend, advisory, and image checks in [PR #6](https://github.com/Flippylolz/WEF/pull/6).
 
 ## Rollout and rollback
 
@@ -118,15 +133,15 @@ There is no production rollout. The proof becomes the scaffold baseline for E1-T
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references owner-approved spike revision 2 and is `satisfied`.
 - [x] `implementation_gate` references owner-approved implementation-plan revision 3 and is `satisfied`.
-- [ ] E0-T1 and E1-T1 are `done`, with dependency evidence recorded.
-- [ ] Scope and acceptance criteria match the approved plan.
+- [x] E0-T1 and E1-T1 have open/integration ancestor pull requests recorded by `dependency_gate: stacked`; completion still requires both to be `done`.
+- [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains `E0-T2`.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] One new branch contains `E0-T2`.
+- [x] The branch contains E0-T2 only; its pull request is opened after verification.
+- [x] `branch.name` and `branch.created_at` were recorded before setting `in_progress`.
 
 ## Done checklist
 
