@@ -1,5 +1,11 @@
 """Ingestion source ports and lifecycle contracts."""
 
+from wef_backend.features.ingestion.application.extraction import (
+    CANDIDATE_THRESHOLD,
+    PARSER_VERSION,
+    detect_candidate,
+    extract_listing,
+)
 from wef_backend.features.ingestion.application.source import (
     ChannelExpectation,
     HistoricalSourcePort,
@@ -11,6 +17,8 @@ from wef_backend.features.ingestion.application.source import (
 )
 
 __all__ = [
+    "CANDIDATE_THRESHOLD",
+    "PARSER_VERSION",
     "ChannelExpectation",
     "HistoricalSourcePort",
     "HistoricalSourceScan",
@@ -18,4 +26,6 @@ __all__ = [
     "ScanSummary",
     "SourceErrorCode",
     "SourceScanError",
+    "detect_candidate",
+    "extract_listing",
 ]

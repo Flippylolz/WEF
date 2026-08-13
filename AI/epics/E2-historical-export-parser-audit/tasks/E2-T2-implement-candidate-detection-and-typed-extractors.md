@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E2-T2
 epic: E2
 title: "Implement candidate detection and typed extractors"
-status: ready
+status: in_progress
 revision: 2
 priority: P0
 size: L
@@ -36,10 +36,10 @@ dependency_gate:
     - "E2-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/33 | merge 6e43d0a"
 branch:
   required: true
-  name: null
+  name: feature/E2-T2-candidate-extraction
   task_id: E2-T2
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-13T19:06:01Z"
   pull_request: null
 completion:
   completed_by: null
@@ -119,9 +119,9 @@ This is inert parser library code with no persistence or network side effect. Re
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated E2-T2 branch is created from the latest `main`.
-- [ ] Branch and PR contain E2-T2 only; metadata is recorded.
+- [x] Status passed through `ready`.
+- [x] Dedicated E2-T2 branch is created from the latest `main`.
+- [x] Branch contains E2-T2 only; branch metadata is recorded.
 
 ## Done checklist
 

@@ -14,6 +14,7 @@ TRUNCATED_FIXTURE = "synthetic-truncated.json"
 ALLOWED_FIXTURE_FILES = {
     "sanitized-complete.golden.json",
     "sanitized-complete.json",
+    "sanitized-extraction-cases.json",
     "synthetic-malformed-record.json",
     TRUNCATED_FIXTURE,
 }
