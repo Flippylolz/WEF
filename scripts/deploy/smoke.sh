@@ -29,10 +29,9 @@ from pathlib import Path
 html = Path(sys.argv[1]).read_text(encoding="utf-8")
 headers = Path(sys.argv[2]).read_text(encoding="utf-8").lower()
 release_sha = sys.argv[3]
-assert "Find a place in Warsaw" in html
+assert "Apartments and houses for sale in Warsaw" in html
 assert "synthetic MVP fixtures" in html
-assert "version:" in html
-assert release_sha in html
+assert f"version: <code>{release_sha[:7]}</code>" in html
 assert f"x-wef-release: {release_sha}".lower() in headers
 PY
 

@@ -116,8 +116,10 @@ PY
     printf '%s\\n' '{"version":8,"sources":{"openmaptiles":{}},"layers":[{}]}' > "$output"
     ;;
   */)
-    page='<h1>Find a place in Warsaw</h1><p>synthetic MVP fixtures</p>'
-    page="${page}<footer>version: <code>${WEF_RELEASE_SHA}</code></footer>"
+    short_sha=$(printf '%.7s' "$WEF_RELEASE_SHA")
+    page='<h1>Apartments and houses for sale in Warsaw</h1>'
+    page="${page}<p>synthetic MVP fixtures</p>"
+    page="${page}<div>version: <code>${short_sha}</code></div>"
     printf '%s\\n' "$page" > "$output"
     ;;
   *) printf '%s\\n' '{}' > "$output" ;;

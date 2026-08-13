@@ -3,14 +3,14 @@ import { connection } from "next/server";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 
-import { VersionFooter } from "@/components/version-footer";
+import { VersionBadge } from "@/components/version-footer";
 
 import "./globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 export const metadata: Metadata = {
   title: "Warsaw Estate Finder",
-  description: "Explore grouped, dated Warsaw estate offers on a map.",
+  description: "Browse apartments and houses offered for sale across Warsaw.",
 };
 
 type RootLayoutProps = {
@@ -26,7 +26,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         <div className="app-content">
           <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </div>
-        <VersionFooter />
+        <VersionBadge />
       </body>
     </html>
   );
