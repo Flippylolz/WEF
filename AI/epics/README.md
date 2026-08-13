@@ -18,7 +18,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E0 — Architecture and dependency spike](E0-architecture-dependency-spike/README.md) — `done`; spike revision 2/plan revision 3 approved, E0-T1 and E0-T2 done; milestones M1.
 - [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `done`; spike revision 2/plan revision 4 approved; 4 done, 2 proposed, 1 cancelled; milestones M1.
 - [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `done`; spike/plan revision 3 approved and E2-T1–T5 done with a reconciled complete-export audit; milestones M1, M2.
-- [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `ready`; spike/plan revision 2; E3-T1 done, 4 proposed; milestones M1, M2.
+- [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `selected`; spike revision 3 pending owner approval; existing approved plan revision 2 authorizes only completed E3-T1; 4 proposed/non-actionable; milestones M1, M2.
 - [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `ready`; spike/plan revision 2; E4-T1/T2 done, 2 proposed; milestones M1, M2.
 - [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `ready`; spike/plan revision 2; E5-T1 done/E5-T2 ready, 3 proposed; milestones M1, M3.
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `draft`; 7 tasks (7 proposed); milestones M3.
