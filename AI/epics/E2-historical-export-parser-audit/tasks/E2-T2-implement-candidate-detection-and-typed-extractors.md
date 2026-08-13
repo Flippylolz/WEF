@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E2-T2
 epic: E2
 title: "Implement candidate detection and typed extractors"
-status: ready
+status: done
 revision: 2
 priority: P0
 size: L
@@ -36,16 +36,22 @@ dependency_gate:
     - "E2-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/33 | merge 6e43d0a"
 branch:
   required: true
-  name: null
+  name: feature/E2-T2-candidate-extraction
   task_id: E2-T2
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-13T19:06:01Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/36"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (owner-authorized)"
+  completed_at: "2026-08-13T19:15:07Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/36"
+  evidence:
+    - "Versioned e2-v1 candidate decisions expose stable weighted reasons, exact spans, thresholds, and canonical content types"
+    - "Typed multilingual extraction covers market/content, location/district/development, apartment/parking/storage values, included flags, area, rooms, floor, delivery, Google Maps links, and internal contact spans"
+    - "Sanitized extraction corpus plus runtime-only contact tests cover Unicode, decimal comma/point, ranges, explicit/unknown/non-PLN currency, conflicts, and negative non-listings"
+    - "Local backend gates passed: Ruff, strict mypy, import-linter plus negative probes, 97 tests/4 PostGIS skips with 92.22% branch coverage, dependency audit, link and fixture safety"
+    - "Initial task PR CI passed at 2822e6f: Backend, Frontend and contract, Repository safety, Runtime images | https://github.com/Flippylolz/WEF/actions/runs/31734663247"
+    - "No source mutation, availability inference, database/API/geocode/media write, media copy, network call, or production activation; rollback is a PR revert"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -89,14 +95,14 @@ Convert accepted raw messages into deterministic, versioned listing-candidate de
 
 ## Acceptance criteria
 
-- [ ] Golden fixtures produce expected candidate decisions, typed ranges, exact spans, rule/version provenance, confidence, and warnings.
-- [ ] Development and unit templates classify canonical market/content types without duplicating catalog enums.
-- [ ] Unknown, missing, ambiguous, and conflicting values remain null/reviewable and are never invented.
-- [ ] Negative non-listings with overlapping price/location tokens do not become candidates.
-- [ ] Unicode/whitespace, decimal comma/point, ranges, unknown/non-PLN currencies, links, and delivery variants are deterministic.
-- [ ] Source text/entities/payload and checksums remain unchanged by detection/extraction.
-- [ ] Committed Telegram fixtures remain sanitized and contact-free; contact spans are covered by synthetic runtime values.
-- [ ] Domain/application architecture and full repository CI pass.
+- [x] Golden fixtures produce expected candidate decisions, typed ranges, exact spans, rule/version provenance, confidence, and warnings.
+- [x] Development and unit templates classify canonical market/content types without duplicating catalog enums.
+- [x] Unknown, missing, ambiguous, and conflicting values remain null/reviewable and are never invented.
+- [x] Negative non-listings with overlapping price/location tokens do not become candidates.
+- [x] Unicode/whitespace, decimal comma/point, ranges, unknown/non-PLN currencies, links, and delivery variants are deterministic.
+- [x] Source text/entities/payload and checksums remain unchanged by detection/extraction.
+- [x] Committed Telegram fixtures remain sanitized and contact-free; contact spans are covered by synthetic runtime values.
+- [x] Domain/application architecture and full repository CI pass.
 
 ## Test plan
 
@@ -119,12 +125,12 @@ This is inert parser library code with no persistence or network side effect. Re
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated E2-T2 branch is created from the latest `main`.
-- [ ] Branch and PR contain E2-T2 only; metadata is recorded.
+- [x] Status passed through `ready`.
+- [x] Dedicated E2-T2 branch is created from the latest `main`.
+- [x] Branch contains E2-T2 only; branch metadata is recorded.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

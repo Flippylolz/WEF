@@ -1,0 +1,44 @@
+{
+  "cases": [
+    {
+      "case_id": "development_multilingual_ranges",
+      "text": "Inwestycja | Synthetic Riverside\nRynek — pierwotny\nLokalizacja — ul. Przykładowa 1, Miasto Testowe\nDzielnica — Wola\nCena — 650 000 – 810 000 PLN\nPowierzchnia — 40,5 - 62.25 m²\nPokoje — 2-3\nPiętro — 1-5\nOddanie — Q4 2028\nParking — 45 000 PLN\nKomórka lokatorska — w cenie\nhttps://maps.app.goo.gl/SyntheticMapA",
+      "candidate": true,
+      "content_type": "development",
+      "market_type": "primary",
+      "currency": "PLN"
+    },
+    {
+      "case_id": "unit_cyrillic_non_pln",
+      "text": "Покупка | Квартира\nРынок — вторичный\nЛокализация — Тестовая 7, Тестовый Город\nРайон — Центр\nЦена квартиры — 125 000 EUR\nПлощадь — 37,5 m2\nКомнаты — 2\nЭтаж — 4\nСдача — готово\nhttps://goo.gl/maps/SyntheticMapB",
+      "candidate": true,
+      "content_type": "unit",
+      "market_type": "secondary",
+      "currency": "EUR"
+    },
+    {
+      "case_id": "unit_unknown_currency",
+      "text": "Kupno | Mieszkanie\nLokalizacja: Testowa 9, Miasto Testowe\nCena: 500000\nPowierzchnia: 45.5 m2\nPokoje: 2",
+      "candidate": true,
+      "content_type": "unit",
+      "market_type": null,
+      "currency": null
+    },
+    {
+      "case_id": "negative_marker_overlap",
+      "text": "Location: meeting room\nPrice: discussion only",
+      "candidate": false,
+      "content_type": null,
+      "market_type": null,
+      "currency": null
+    },
+    {
+      "case_id": "negative_unicode_prose",
+      "text": "Zażółć gęślą jaźń — wiadomość organizacyjna bez oferty.",
+      "candidate": false,
+      "content_type": null,
+      "market_type": null,
+      "currency": null
+    }
+  ]
+}
