@@ -148,3 +148,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: the native Linux host's `nuc:0700` directory is not writable by the image's `postgres` UID 999; this preserves the documented host path without persisting or requesting sudo credentials.
 - Safety limit: topology proofs pin the exact command/capabilities/path; inventory permits UID 999 only for the PostgreSQL root.
 - Reversal: an owner may perform and maintain the same narrow ownership through host provisioning, after which the initializer can be removed in a reviewed task.
+
+## AD-018: Complete E5 as a green-gated documentation-first stack
+
+- Time: 2026-08-13.
+- Prompt avoided: implement only the already-ready E5-T2, combine the remaining frontend epic into one change, or authorize the complete E5 sequence while upstream E3/E4 work proceeds independently.
+- Selected approach: approve E5 spike/plan revision 3, promote E5-T3 through E5-T5, and deliver documentation → E5-T2 → E5-T3 → E5-T4 → E5-T5 as one ordered stack in a separate worktree. Open each child only after fresh parent CI is green.
+- Rationale: the owner explicitly requested full E5, one task per stacked branch, documentation first, and confirmed that E3/E4 dependencies are handled by parallel agents.
+- Safety limit: E5-T3 and E5-T5 remain blocked until exact E4-T3/E4-T4 ancestry or completion is recorded. E5 cannot invent frontend contracts, weaken privacy/accessibility/performance acceptance, or absorb E3/E4 task scope.
+- Reversal: close unmerged E5 descendants, keep promoted tasks in `draft`, and revise/reapprove E5 if parallel contract delivery materially changes the accepted boundary; do not rewrite shared history.

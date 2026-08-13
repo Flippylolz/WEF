@@ -41,8 +41,8 @@ A deterministic synthetic fixture is migrated/seeded into canonical PostGIS loca
 - [E4-T2: Implement facets and location offer collection](../epics/E4-read-api-filter-contracts/tasks/E4-T2-implement-facets-and-location-offer-collection.md) — `in_progress`, stacked on E4-T1
 ### [E5: Interactive map frontend](../epics/E5-interactive-map-frontend/README.md)
 
-- [E5-T1: Build map shell and grouped pin interaction](../epics/E5-interactive-map-frontend/tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — `in_progress`, stacked on E4-T2
-- [E5-T2: Add URL-backed filters and viewport querying](../epics/E5-interactive-map-frontend/tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md) — promoted, `draft`, blocked until E5-T1 ancestry
+- [E5-T1: Build map shell and grouped pin interaction](../epics/E5-interactive-map-frontend/tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — `done`
+- [E5-T2: Add URL-backed filters and viewport querying](../epics/E5-interactive-map-frontend/tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md) — promoted, `ready`, dependencies satisfied
 
 Cancelled and deferred candidates remain linked for traceability but are not completion requirements unless an approved revision restores them to required scope.
 
