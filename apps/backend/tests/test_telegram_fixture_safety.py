@@ -28,6 +28,14 @@ CONTACT_PATTERNS = (
     re.compile(r"(?<!\w)\+[\d ()-]{7,}\d"),
     re.compile(r"\b\d{3}[ .]\d{3}[ .]\d{3}\b"),
 )
+SOURCE_IDENTITY_PATTERNS = tuple(
+    re.compile(re.escape(value), re.IGNORECASE)
+    for value in (
+        "2180077318",
+        "El Estate | Покупка Варшава",
+        "elestate_warszawa",
+    )
+)
 FORBIDDEN_TEXT = ("warszawa", "варшава", "real source", "private channel")
 MEDIA_KEYS = {"file", "photo", "thumbnail"}
 SAFE_MEDIA_ROOTS = {"photos", "video_files"}
@@ -62,7 +70,7 @@ def test_fixture_directory_contains_only_reviewed_text_json() -> None:
 def test_fixture_bytes_reject_contact_and_source_identity_patterns(path: Path) -> None:
     """Broad leak indicators stay absent from fixtures and goldens."""
     text = path.read_text(encoding="utf-8")
-    for pattern in CONTACT_PATTERNS:
+    for pattern in CONTACT_PATTERNS + SOURCE_IDENTITY_PATTERNS:
         assert pattern.search(text) is None
     lowered = text.casefold()
     assert all(forbidden not in lowered for forbidden in FORBIDDEN_TEXT)
