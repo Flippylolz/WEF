@@ -82,6 +82,7 @@ compose-config: ## Validate the fully rendered local Compose model.
 production-proof: ## Prove production topology and deployment safety.
 	python3 -m scripts.prove_production_topology
 	python3 -m scripts.prove_deploy_rollback
+	python3 -m scripts.prove_release_workflow
 	for script in scripts/deploy/*.sh; do sh -n "$$script"; done
 	shellcheck scripts/deploy/*.sh
 	$(DOCKER) run --rm \

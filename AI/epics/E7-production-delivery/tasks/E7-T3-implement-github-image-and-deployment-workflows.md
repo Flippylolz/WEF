@@ -3,8 +3,8 @@ schema: ai-workflow/task@1
 id: E7-T3
 epic: E7
 title: "Implement GitHub image and deployment workflows"
-status: draft
-revision: 2
+status: in_progress
+revision: 3
 priority: P0
 size: L
 milestone: M3
@@ -29,16 +29,17 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-12T23:35:00Z"
 dependency_gate:
-  status: pending
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-13T00:09:47Z"
+  evidence:
+    - "Branch ancestry contains E1-T4, E7-T1, and E7-T2 implementation commits."
 branch:
   required: true
-  name: null
+  name: ci/E7-T3-release-deploy
   task_id: E7-T3
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-12T23:39:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -74,14 +75,25 @@ Publish exact tested application images and deploy complete validated production
 
 ## Acceptance criteria
 
-- [ ] PR/feature/hotfix/Dependabot events cannot execute production deployment.
-- [ ] A successful release publishes SHA-tagged backend/web images and a manifest with exact digests, source SHA, migration revision, and timestamp.
-- [ ] Automatic SSH requires `main`, merged-PR association, all release checks, and `AUTO_DEPLOY_ENABLED=true`; a direct main push builds but does not deploy.
-- [ ] Manual dispatch accepts an explicit tested SHA for rehearsal while auto deploy is false.
-- [ ] Deployment concurrency is serialized in GitHub and again by the host lock.
-- [ ] SSH host identity is pinned, config is complete/0600/atomically activated, secrets are absent from logs/artifacts/images, and transfer temporaries are removed.
-- [ ] Invalid/missing config fails before remote activation; workflow and negative event/origin/enable gates are testable locally.
-- [ ] B-006 is either resolved by a successful hosted run or remains explicitly active; local syntax cannot be presented as operational autodeploy.
+- [x] PR/feature/hotfix/Dependabot events cannot execute production deployment.
+- [x] A successful release publishes SHA-tagged backend/web images and a manifest with exact digests, source SHA, migration revision, and timestamp.
+- [x] Automatic SSH requires `main`, merged-PR association, all release checks, and `AUTO_DEPLOY_ENABLED=true`; a direct main push builds but does not deploy.
+- [x] Manual dispatch accepts an explicit tested SHA for rehearsal while auto deploy is false.
+- [x] Deployment concurrency is serialized in GitHub and again by the host lock.
+- [x] SSH host identity is pinned, config is complete/0600/atomically activated, secrets are absent from logs/artifacts/images, and transfer temporaries are removed.
+- [x] Invalid/missing config fails before remote activation; workflow and negative event/origin/enable gates are testable locally.
+- [x] B-006 is either resolved by a successful hosted run or remains explicitly active; local syntax cannot be presented as operational autodeploy.
+
+## Verification evidence
+
+- `.github/workflows/deploy-production.yml` limits automatic candidates to `push` on `main`, verifies merged-PR association and `AUTO_DEPLOY_ENABLED=true`, supports an exact-main-ancestor manual SHA, serializes production runs, and keeps deployment behind the `production` environment.
+- The release job runs the locked quality/test/contract/topology/audit suite before publishing two SHA-tagged GHCR images, records immutable digests plus migration/source metadata, and transfers a checksummed non-secret artifact.
+- `build_release_config.py` constructs the complete validated config from GitHub variables/secrets, rejects dotenv-unsafe passwords, writes with mode `0600`, and never prints values.
+- The transfer uses a dedicated strict-known-host SSH key, bounded `/home/nuc/wef` incoming paths, remote checksum verification, atomic versioned moves, the existing host `flock`, and a transient job token that is logged out after the pull.
+- The `production` GitHub environment, nine named repository variables, three environment secrets, and dedicated server public key are configured; names/status only are recorded, `AUTO_DEPLOY_ENABLED=false`, and batch login was proven without activating WEF.
+- `evaluate_deploy_gate.py` and `prove_release_workflow.py` cover disabled automation, direct/unassociated pushes, merged-main candidates, manual rehearsal, pinned Actions, secret-free conditions, manifest identity, and file permissions.
+- `actionlint`, Ruff, mypy, shellcheck, shell syntax checks, production topology proof, and healthy/failing deployment proofs pass locally.
+- Hosted execution remains unproven because active blocker B-006 still prevents GitHub jobs from starting; no operational autodeploy claim is made.
 
 ## Test plan
 
@@ -98,16 +110,16 @@ Land with `AUTO_DEPLOY_ENABLED=false`. Manual rehearsal only after E7-T2. Disabl
 
 - [x] This file is authoritative under `tasks/`; its proposed source is removed.
 - [x] Promotion and approved spike revision 2 are recorded.
-- [ ] Approved implementation-plan revision 2 and E1-T4/E7-T1/E7-T2 ancestry are recorded.
+- [x] Approved implementation-plan revision 2 and E1-T4/E7-T1/E7-T2 ancestry are recorded.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated branch is created and recorded.
-- [ ] Branch contains E7-T3 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated branch is created and recorded.
+- [x] Branch contains E7-T3 only.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
+- [x] Acceptance criteria pass locally; hosted operational evidence remains blocked by B-006.
 - [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.

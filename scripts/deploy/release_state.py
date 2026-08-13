@@ -46,6 +46,28 @@ def write_state(path: Path, state: ReleaseState) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def activate_release_links(root: Path, release_dir: Path, config_file: Path) -> None:
+    """Atomically point release and secret-current links at one verified release."""
+    config_dir = config_file.parent
+    if release_dir.parent != root / "releases":
+        msg = "release link target is outside the release root"
+        raise ValueError(msg)
+    if config_dir.parent != root / "secrets/releases":
+        msg = "secret link target is outside the secret release root"
+        raise ValueError(msg)
+
+    for link, target in (
+        (root / "releases/current", release_dir),
+        (root / "secrets/current", config_dir),
+    ):
+        temporary = link.with_name(f".{link.name}.{os.getpid()}.tmp")
+        try:
+            temporary.symlink_to(target, target_is_directory=True)
+            temporary.replace(link)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+
 def main() -> int:
     """Run the bounded state read/write command."""
     parser = argparse.ArgumentParser()
@@ -65,6 +87,11 @@ def main() -> int:
         choices=("release_dir", "config_file", "release_sha", "public_port"),
     )
 
+    activate_parser = subparsers.add_parser("activate")
+    activate_parser.add_argument("root", type=Path)
+    activate_parser.add_argument("release_dir", type=Path)
+    activate_parser.add_argument("config_file", type=Path)
+
     arguments = parser.parse_args()
     if arguments.command == "write":
         write_state(
@@ -75,6 +102,13 @@ def main() -> int:
                 "release_sha": arguments.release_sha,
                 "public_port": arguments.public_port,
             },
+        )
+        return 0
+    if arguments.command == "activate":
+        activate_release_links(
+            arguments.root,
+            arguments.release_dir,
+            arguments.config_file,
         )
         return 0
 

@@ -57,8 +57,8 @@ The importer is a run-to-completion command, not an always-running service. The 
 
 Build two application images:
 
-- `ghcr.io/<owner>/<repository>/web:<git-sha>`.
-- `ghcr.io/<owner>/<repository>/backend:<git-sha>`.
+- `ghcr.io/<owner>/<repository>-web:<git-sha>`.
+- `ghcr.io/<owner>/<repository>-backend:<git-sha>`.
 
 The backend image supplies API, migration, importer, verification, and Telegram-listener commands. Each service chooses a different entry command.
 
@@ -150,6 +150,13 @@ Complete inspected details and the transfer runbook are in the [production serve
 - Apply the branch, hotfix, owner-bypass, and Dependabot policy in [Repository and change rules](../governance/REPOSITORY_RULES.md).
 - Native protection-dependent auto-merge remains disabled; the custom merge controller and tested main-only deployment remain available.
 
+E7-T3 repository configuration:
+
+- Variables: `AUTO_DEPLOY_ENABLED` (initially `false`), `DEPLOY_HOST`, `DEPLOY_SSH_PORT`, `DEPLOY_USER`, `POSTGRES_DB`, `POSTGRES_USER`, `WEF_BIND_ADDRESS`, `WEF_LOG_LEVEL`, and `WEF_PUBLIC_PORT`.
+- Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, and `POSTGRES_PASSWORD`.
+- The `production` GitHub environment is a deployment audit boundary, not a paid approval/protection claim.
+- The database password must be 24–128 characters from the workflow's documented dotenv-safe alphabet; generate it rather than reusing an account password.
+
 ## CI workflow
 
 Pull requests run independent jobs where practical:
@@ -203,7 +210,8 @@ GitHub Actions publishes with `GITHUB_TOKEN` and `packages: write`.
 The production server pulls with one of:
 
 - Anonymous pulls if packages are intentionally public.
-- Preferably, a dedicated fine-grained/read-only package credential stored server-side.
+- During GitHub deployment, the job-scoped `GITHUB_TOKEN` with `packages: read`; the workflow logs in immediately before pull, logs out in its exit trap, and the token expires with the job.
+- A dedicated fine-grained/read-only package credential only if future operations must pull independently of GitHub Actions.
 
 Do not copy the workflow's transient `GITHUB_TOKEN` into long-lived server configuration. Registry credentials are scoped to package read access and supplied to `docker login` without appearing in command logs.
 

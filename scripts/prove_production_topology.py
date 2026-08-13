@@ -15,7 +15,12 @@ from scripts.deploy.compare_server_inventory import (
     InventoryMismatchError,
     compare,
 )
-from scripts.deploy.release_state import ReleaseState, read_state, write_state
+from scripts.deploy.release_state import (
+    ReleaseState,
+    activate_release_links,
+    read_state,
+    write_state,
+)
 from scripts.deploy.validate_release import (
     ReleaseConfigurationError,
     ReleaseContext,
@@ -201,6 +206,15 @@ def assert_atomic_release_state() -> None:
         write_state(path, state)
         assert read_state(path) == state
         assert path.stat().st_mode & 0o777 == 0o600
+
+        root = Path(directory) / "wef"
+        release_dir = root / "releases" / RELEASE_SHA
+        config_file = root / "secrets/releases" / RELEASE_SHA / "production.env"
+        release_dir.mkdir(parents=True)
+        config_file.parent.mkdir(parents=True)
+        activate_release_links(root, release_dir, config_file)
+        assert (root / "releases/current").resolve() == release_dir.resolve()
+        assert (root / "secrets/current").resolve() == config_file.parent.resolve()
 
 
 def assert_inventory_non_interference_gate() -> None:

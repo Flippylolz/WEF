@@ -152,6 +152,16 @@ On 2026-08-13 UTC, strict known-host/batch SSH prepared only the WEF boundary:
 
 External 3100/router verification was deliberately not attempted because no immutable WEF images or edge listener exist while B-006 is active. E7-T4 performs that check only during the bounded release/rollback rehearsal.
 
+### E7-T3 deployment-identity preparation evidence
+
+On 2026-08-13 UTC:
+
+- Created the GitHub `production` environment and repository variables for host/user/ports, database identity, bind/log settings, and `AUTO_DEPLOY_ENABLED=false`.
+- Stored only three environment secrets: a generated production database password, the strict known-host material, and a new dedicated Ed25519 deployment private key. Values were piped directly to GitHub and were not printed or written into the repository.
+- Appended the corresponding public key to `nuc`'s `authorized_keys` without removing or changing existing keys, set the existing SSH file modes defensively, and proved batch login with that dedicated identity.
+- Kept GHCR authentication ephemeral: the workflow uses its job-scoped package-read token during the remote pull and logs out in its exit trap; no registry token is stored on the host.
+- Did not create a production config/release, start a container, bind port 3100, touch existing Compose projects, or enable automatic SSH. Hosted execution remains blocked by B-006, and E7-T4 owns the first bounded activation.
+
 ## Local dataset transfer
 
 The preferred transfer sends the single compressed archive rather than approximately 25,000 individual files:

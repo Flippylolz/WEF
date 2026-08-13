@@ -54,6 +54,10 @@ if production_compose up --detach --wait api web edge &&
     "$WEF_CONFIG_FILE" \
     "$WEF_RELEASE_SHA" \
     "$WEF_PUBLIC_PORT"
+  python3 "$SCRIPT_DIR/release_state.py" activate \
+    "$WEF_ROOT" \
+    "$WEF_RELEASE_DIR" \
+    "$WEF_CONFIG_FILE"
   printf 'Activated WEF release %.12s.\n' "$WEF_RELEASE_SHA"
   exit 0
 fi

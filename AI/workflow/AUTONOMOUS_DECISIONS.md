@@ -112,3 +112,21 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: this proves isolated persistence, immutable images, GitHub configuration transfer, same-origin routing, health checks, and application rollback without exposing sensitive functionality.
 - Safety limit: the rehearsal is not M3/public-launch completion; B-006 remains an operational autodeploy blocker until GitHub can start hosted jobs, and E7-T7 HTTPS remains mandatory for sensitive features.
 - Reversal: stop only the `wef-production` project and retain its persistent paths, or remove `/home/nuc/wef` only after explicit owner authorization.
+
+## AD-014: Keep automatic deployment disabled through the rollback rehearsal
+
+- Time: 2026-08-13.
+- Prompt avoided: enable every-main-merge deployment immediately or prepare the complete path behind an explicit enable gate.
+- Selected approach: the release workflow verifies and publishes exact-SHA images, but SSH requires merged-PR association plus `AUTO_DEPLOY_ENABLED=true`; repository configuration starts with that variable `false`, while an owner-triggered exact-main-SHA rehearsal remains available.
+- Rationale: this allows E7-T3 configuration and image delivery to be tested without turning an unproven rollback path into unattended production mutation.
+- Safety limit: E7-T4 health/failure rehearsal and a successful hosted run are required before changing the variable to `true`.
+- Reversal: set `AUTO_DEPLOY_ENABLED=false` to stop automatic SSH without changing image publication or release history.
+
+## AD-015: Use the job-scoped token only for the deployment pull
+
+- Time: 2026-08-13.
+- Prompt avoided: persist a long-lived GHCR credential on the NUC or reuse the workflow's transient package token only while the job is active.
+- Selected approach: the deploy job has `packages: read`, pipes its job-scoped `GITHUB_TOKEN` directly to remote `docker login`, pulls under the host lock, and logs out in the exit trap; the token is never written to release configuration or artifacts.
+- Rationale: it removes a standing package credential while still allowing private GHCR images to be pulled during the authorized deployment.
+- Safety limit: independent/manual host pulls outside the workflow are unavailable unless a separately scoped credential is approved later.
+- Reversal: provision a dedicated read-only package token through GitHub secrets and rotate/remove it independently.
