@@ -4,6 +4,7 @@ from wef_backend.features.ingestion.infrastructure.report_writer import (
     AtomicReportWriter,
     ReportPaths,
     ReportWriteError,
+    audit_evidence_document,
     report_document,
 )
 from wef_backend.features.ingestion.infrastructure.telegram_export import (
@@ -17,5 +18,6 @@ __all__ = [
     "ReportWriteError",
     "TelegramDesktopExportAdapter",
     "TelegramExportScan",
+    "audit_evidence_document",
     "report_document",
 ]

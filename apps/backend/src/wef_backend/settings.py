@@ -27,7 +27,6 @@ class Settings(BaseSettings):
     historical_channel_id: str = "2180077318"
     historical_channel_type: str = "public_channel"
     historical_channel_name: str | None = "El Estate | Покупка Варшава"
-    ingestion_parser_version: str = "e2-v2"
     ingestion_report_path: Path = Path("/app/media/reports/e2-dry-run")
     allow_synthetic_seed: bool = False
 

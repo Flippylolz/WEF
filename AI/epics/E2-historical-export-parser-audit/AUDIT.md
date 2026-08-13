@@ -1,6 +1,6 @@
 # E2 complete-export audit
 
-## Accepted source and versions
+## Merged e2-v2 source and versions
 
 The read-only audit accepted the ignored Telegram Desktop export only after these
 preconditions matched:
@@ -122,21 +122,106 @@ The complete export was rerun after the fixes. Two additional runs produced
 identical reports after timing values were normalized, confirming deterministic
 non-timing output.
 
+## Post-merge correctness follow-up
+
+An independent review completed after
+[PR #42](https://github.com/Flippylolz/WEF/pull/42) merged and found bounded
+parser correctness gaps. The corrective implementation is rule-bound as
+`e2-v3` and the expanded aggregate report is `e2-report-v2`. It:
+
+- accepts labeled rooms only as bounded integer scalars or ordered ranges,
+  rejects malformed labels, and keeps invalid/conflicting room evidence in
+  warning buckets;
+- keeps explicit room hashtags as separate evidence, with a trailing word
+  boundary that excludes prefixes such as `#2_roommate`;
+- rejects unexplained extra price numbers while retaining the explicitly
+  recognized per-area context;
+- removes the runtime parser-version override, so reports and provenance cannot
+  label the current executable rules as another parser version;
+- emits a separate `e2-audit-evidence-v1` JSON artifact containing score
+  combinations, threshold-boundary buckets, warning-code/field splits, the
+  aggregate `e2-v1` comparison, and a SHA-256 digest of the normalized report.
+
+The approved ignored export remained in the main worktree and was mounted
+read-only into this isolated corrective worktree. Its recorded size and SHA-256
+were verified before both runs. Two complete `e2-v3` runs succeeded and produced
+the same normalized report hash:
+`a9c2aef4f043f4e5708dc6e53a30d973439051bcf9d5cf61cc0bbfffe7b80a8c`.
+
+The `e2-report-v2` counts reconcile:
+
+- 27,082 records evaluated as 2,988 candidates and 24,094 non-candidates.
+- 27,147 media descriptors split into 23,225 associated and 3,922
+  unassociated.
+- Candidate boundaries split into 2,659 above threshold, 329 exactly at
+  threshold, 31 exactly one below, and 24,063 below the boundary bucket.
+
+The exact score-5 combinations are 303 price-plus-unit, 16
+area-plus-price-plus-room, 8 area-plus-unit, and 2 development-header-only
+records. The exact score-4 combinations are 26 room-plus-unit, 3
+area-plus-price, and 2 location-plus-price records. The safe audit artifact
+retains the full aggregate score-combination map.
+
+Warning splits remain aggregate and reviewable:
+
+- conflicting content type 188;
+- conflicting values: 32 floor, 5 storage-price, and 1 apartment-price;
+- invalid ranges: 843 apartment-price, 592 rooms, 57 area, 7 storage-price,
+  and 4 parking-price;
+- unknown currencies: 1,092 apartment-price, 35 storage-price, and 25
+  parking-price.
+
+Against the historical complete `e2-v1` baseline, `e2-v3` changes candidate
+count from 2,976 to 2,988, apartment-price extraction from 2,049 to 2,044,
+room extraction from 72 to 1,733, invalid-range warnings from 988 to 1,503,
+associated media from 23,123 to 23,225, and unassociated media from 4,024 to
+3,922. The stricter price and room rules deliberately trade silent/invented
+values for explicit review warnings.
+
 ## Reproduction
 
 Run only with the ignored source mounted read-only and the expected channel
-identity supplied through local environment configuration:
+identity supplied through local environment configuration. `WEF_SOURCE_DIR` is
+the host directory bound read-only to `/source`; `WEF_SOURCE_PATH` is the
+container path and should remain `/source`.
 
 ```sh
-stat -f %z "$WEF_SOURCE_PATH/$WEF_HISTORICAL_EXPORT_FILENAME"
-shasum -a 256 "$WEF_SOURCE_PATH/$WEF_HISTORICAL_EXPORT_FILENAME"
+export WEF_SOURCE_DIR=/absolute/path/to/the/ignored/export-directory
+export WEF_HISTORICAL_EXPORT_FILENAME=result.json
+stat -f %z "$WEF_SOURCE_DIR/$WEF_HISTORICAL_EXPORT_FILENAME"
+shasum -a 256 "$WEF_SOURCE_DIR/$WEF_HISTORICAL_EXPORT_FILENAME"
 make importer-dry-run
 ```
 
-To compare deterministic report content while excluding elapsed timings:
+Compose writes the detailed JSON/Markdown and safe audit JSON into its
+`media_data` named volume at the container-only
+`/app/media/reports/e2-dry-run*` paths. Do not set
+`WEF_INGESTION_REPORT_PATH` to a host path. To copy only the safe aggregate
+artifact, use the importer UID that owns the mode-`0600` report and let the host
+shell create the ignored destination with the same restrictive mode:
 
 ```sh
-jq -cS '.timings_ms = {}' "$WEF_INGESTION_REPORT_PATH.json" | shasum -a 256
+mkdir -p reports/e2
+(
+  umask 077
+  docker compose --file infra/compose.yaml --profile operator run \
+    --rm --no-deps --user 10001:10001 --entrypoint cat importer \
+    /app/media/reports/e2-dry-run.audit.json \
+    > reports/e2/e2-dry-run.audit.json
+)
+test "$(stat -f %Lp reports/e2/e2-dry-run.audit.json)" = 600
+```
+
+To reproduce the deterministic normalized evidence, preserve the first safe
+artifact outside Git, rerun the importer, copy the second artifact, and compare
+the embedded normalized hashes:
+
+```sh
+cp reports/e2/e2-dry-run.audit.json reports/e2/e2-dry-run.first.audit.json
+make importer-dry-run
+# Repeat the safe-artifact copy command above.
+test "$(jq -r .normalized_report_sha256 reports/e2/e2-dry-run.first.audit.json)" = \
+  "$(jq -r .normalized_report_sha256 reports/e2/e2-dry-run.audit.json)"
 ```
 
 Run the repository acceptance gates before accepting the audit:
