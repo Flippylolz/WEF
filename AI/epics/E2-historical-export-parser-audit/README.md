@@ -20,7 +20,7 @@ deterministic extraction from the raw Telegram export with reconciled dry-run re
 - Epic workspace status: `ready`.
 - [Spike](SPIKE.md): `approved`, revision 2, owner-approved research; it permits promotion/planning only, no code.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing promoted E2-T1 only.
-- E2-T1 is promoted/`ready` with every gate satisfied; implementation must use its dedicated branch and merge only after green CI.
+- E2-T1 is promoted/`done` through [PR #33](https://github.com/Flippylolz/WEF/pull/33), with aggregate-only source acceptance and required CI evidence.
 - Every remaining file in `proposed-tasks/` is non-actionable.
 
 ## Milestones
@@ -44,7 +44,7 @@ deterministic extraction from the raw Telegram export with reconciled dry-run re
 
 ## Promoted task
 
-- [E2-T1: Implement source adapter and fixture corpus](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md) — `ready`, P0/M, M1
+- [E2-T1: Implement source adapter and fixture corpus](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md) — `done`, P0/M, M1
 
 ## Proposed tasks
 

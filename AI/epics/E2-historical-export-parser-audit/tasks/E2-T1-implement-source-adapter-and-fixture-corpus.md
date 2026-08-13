@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E2-T1
 epic: E2
 title: "Implement source adapter and fixture corpus"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: M
@@ -40,12 +40,17 @@ branch:
   task_id: E2-T1
   one_task_only: true
   created_at: "2026-08-13T18:25:01Z"
-  pull_request: https://github.com/Flippylolz/WEF/pull/33
+  pull_request: "https://github.com/Flippylolz/WEF/pull/33"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (owner-authorized)"
+  completed_at: "2026-08-13T18:43:39Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/33"
+  evidence:
+    - "Aggregate-only ignored export acceptance passed: 21,634,277 bytes; SHA-256 d349e27003058f470fa53e5cd9004fe6759e8db466bc690f132398e038816249; 27,082 reconciled records; approved message/service/text/media/reply counts"
+    - "Local backend gates passed: frozen install, Ruff, strict mypy, import-linter plus negative probes, 85 tests/4 PostGIS skips with 92.96% branch coverage, dependency audit, and deterministic OpenAPI"
+    - "Fixture corpus safety passed: reviewed JSON allowlist, contact/source-identity scans, rebased IDs, safe relative media descriptors, UTF-8/no-binary checks"
+    - "Initial task PR CI passed at f8c71fc: Backend, Frontend and contract, Repository safety, Runtime images | https://github.com/Flippylolz/WEF/actions/runs/31731977384"
+    - "No migration, canonical write, API change, media copy, network call, or synthetic map-seed mutation; rollback is a PR revert"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -55,7 +60,7 @@ invalidation:
 
 # E2-T1: Implement source adapter and fixture corpus
 
-> Promoted after explicit owner approval of E2 spike revision 2. Implementation-plan revision 2 is now owner-approved, every task gate is satisfied, and E2-T1 is ready to start on its dedicated branch.
+> Completed through the owner-approved revision 2 plan on dedicated [PR #33](https://github.com/Flippylolz/WEF/pull/33), with aggregate-only source acceptance and all initial required CI jobs passing before the completion-evidence commit.
 
 ## Outcome
 
@@ -104,14 +109,14 @@ No public HTTP or persisted database contract changes in E2-T1.
 
 ## Acceptance criteria
 
-- [ ] The ignored 21,634,277-byte export streams to completion with SHA-256 `d349e27003058f470fa53e5cd9004fe6759e8db466bc690f132398e038816249` and 27,082 reconciled records without whole-file loading.
-- [ ] Every input item produces exactly one primary accepted/unhandled/malformed result; primary counts sum to total records and partial scans cannot report completion.
-- [ ] `RawMessage` preserves channel/message/reply identity, UTC timestamps, type, flattened and original text/entities, media descriptors, raw payload, and deterministic checksum.
-- [ ] Tests cover string/mixed text, service, photo, video/thumbnail, reply, empty caption, unknown fields/type, structurally malformed record, truncated JSON, and channel mismatch.
-- [ ] Export and per-record checksum behavior is deterministic, and equivalent source data does not depend on locale, process timezone, or JSON key order.
-- [ ] The committed source-derived fixtures contain no real channel identity, message IDs, contacts, agent names, identifying address, unsafe media path, source payload slice, or media bytes.
-- [ ] Import-linter and tests prove the ingestion core is framework-independent and iJSON remains an infrastructure concern.
-- [ ] E2-T1 performs no database/API/map-seed mutation and does not implement E2-T2 through E2-T5 behavior.
+- [x] The ignored 21,634,277-byte export streams to completion with SHA-256 `d349e27003058f470fa53e5cd9004fe6759e8db466bc690f132398e038816249` and 27,082 reconciled records without whole-file loading.
+- [x] Every input item produces exactly one primary accepted/unhandled/malformed result; primary counts sum to total records and partial scans cannot report completion.
+- [x] `RawMessage` preserves channel/message/reply identity, UTC timestamps, type, flattened and original text/entities, media descriptors, raw payload, and deterministic checksum.
+- [x] Tests cover string/mixed text, service, photo, video/thumbnail, reply, empty caption, unknown fields/type, structurally malformed record, truncated JSON, and channel mismatch.
+- [x] Export and per-record checksum behavior is deterministic, and equivalent source data does not depend on locale, process timezone, or JSON key order.
+- [x] The committed source-derived fixtures contain no real channel identity, message IDs, contacts, agent names, identifying address, unsafe media path, source payload slice, or media bytes.
+- [x] Import-linter and tests prove the ingestion core is framework-independent and iJSON remains an infrastructure concern.
+- [x] E2-T1 performs no database/API/map-seed mutation and does not implement E2-T2 through E2-T5 behavior.
 
 ## Test plan
 
@@ -144,6 +149,6 @@ The adapter is inert library code with no persistence or network side effect. Be
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
