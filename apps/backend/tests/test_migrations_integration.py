@@ -48,47 +48,17 @@ async def test_clean_upgrade_and_seed_replay_converge() -> None:
                 ),
             )
 
+        await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
+        service = SeedM1Catalog(
+            SQLAlchemyCatalogSeedAdapter(database.session_factory),
+            environment="test",
+        )
+        await service(locations, offers)
         await asyncio.to_thread(
-            command.upgrade,
+            command.downgrade,
             alembic_config(settings),
             "20260812_0001",
         )
-        async with database.engine.begin() as connection:
-            await connection.execute(
-                text(
-                    "INSERT INTO locations ("
-                    "id, display_name, display_address, normalized_address, "
-                    "normalized_address_hash, district, precision, confidence, "
-                    "review_status, out_of_scope"
-                    ") VALUES ("
-                    ":location_id, 'Legacy synthetic location', "
-                    "'Legacy synthetic address', 'legacy synthetic address', "
-                    "'legacy-synthetic-hash', 'wola', 'unknown', 0, "
-                    "'needs_review', false"
-                    ")",
-                ),
-                {"location_id": location_ids[0]},
-            )
-            await connection.execute(
-                text(
-                    "INSERT INTO offers ("
-                    "id, location_id, content_type, market_type, visibility, "
-                    "published_at, latest_source_at, currency, "
-                    "price_min_minor, price_max_minor, source_text_excerpt, "
-                    "source_text_public_masked, canonical_fingerprint, parser_version"
-                    ") VALUES ("
-                    ":offer_id, :location_id, 'development', 'primary', 'visible', "
-                    "CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'PLN', "
-                    "80000000, 125000000, 'Legacy synthetic offer', "
-                    "'Legacy synthetic offer', 'legacy-synthetic-offer', "
-                    "'synthetic-m1-v1'"
-                    ")",
-                ),
-                {
-                    "offer_id": offer_ids[0],
-                    "location_id": location_ids[0],
-                },
-            )
         await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
         async with database.session_factory() as session:
             migrated_addon_prices = (
@@ -104,10 +74,6 @@ async def test_clean_upgrade_and_seed_replay_converge() -> None:
 
         await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
 
-        service = SeedM1Catalog(
-            SQLAlchemyCatalogSeedAdapter(database.session_factory),
-            environment="test",
-        )
         assert await service(locations, offers) == await service(locations, offers)
 
         async with database.session_factory() as session:
