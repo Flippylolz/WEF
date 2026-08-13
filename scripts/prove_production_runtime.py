@@ -187,6 +187,7 @@ def main() -> int:
                     "run",
                     "--rm",
                     "db-permissions",
+                    "-R",
                     f"{os.getuid()}:{os.getgid()}",
                     "/var/lib/postgresql/data",
                 ],

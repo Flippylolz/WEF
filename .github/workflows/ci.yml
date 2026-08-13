@@ -102,16 +102,16 @@ jobs:
           docker run --rm \
             -v "${PWD}:/work" \
             tufin/oasdiff:v1.28.0@sha256:86830f988eaafcf589acb2794ee5ab78e3300ded071d6517bf085469300cbf36 \
-            breaking /work/tmp/openapi-base.json /work/contracts/openapi/v1.json
+            breaking --fail-on ERR /work/tmp/openapi-base.json /work/contracts/openapi/v1.json
       - name: Breaking OpenAPI negative probe
         shell: bash
         run: |
-          python3 -c 'import json; p="contracts/openapi/v1.json"; d=json.load(open(p)); del d["paths"]["/api/v1/estates"]; json.dump(d, open("tmp/openapi-breaking-probe.json", "w"))'
+          python3 -c 'import json; p="contracts/openapi/v1.json"; d=json.load(open(p)); del d["paths"]["/api/v1/map/locations"]; json.dump(d, open("tmp/openapi-breaking-probe.json", "w"))'
           status=0
           docker run --rm \
             -v "${PWD}:/work" \
             tufin/oasdiff:v1.28.0@sha256:86830f988eaafcf589acb2794ee5ab78e3300ded071d6517bf085469300cbf36 \
-            breaking /work/contracts/openapi/v1.json /work/tmp/openapi-breaking-probe.json || status=$?
+            breaking --fail-on ERR /work/contracts/openapi/v1.json /work/tmp/openapi-breaking-probe.json || status=$?
           if [[ "${status}" -eq 0 ]]; then
             echo "oasdiff accepted a deliberately removed endpoint"
             exit 1
