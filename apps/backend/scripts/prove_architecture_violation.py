@@ -8,8 +8,17 @@ from pathlib import Path
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 CONFIG_PATH = REPOSITORY_ROOT / ".importlinter"
-PROBE_PATH = (
-    BACKEND_ROOT / "src/wef_backend/features/estates/domain/_deliberate_forbidden_import_probe.py"
+PROBES = (
+    (
+        BACKEND_ROOT
+        / "src/wef_backend/features/estates/domain/_deliberate_forbidden_import_probe.py",
+        "import fastapi\n",
+    ),
+    (
+        BACKEND_ROOT
+        / "src/wef_backend/features/ingestion/domain/_deliberate_forbidden_import_probe.py",
+        "import ijson\n",
+    ),
 )
 
 
@@ -46,23 +55,24 @@ def main() -> int:
         report("baseline architecture lint failed", baseline)
         return 1
 
-    violation: subprocess.CompletedProcess[str] | None = None
-    try:
-        PROBE_PATH.write_text("import fastapi\n", encoding="utf-8")
-        violation = run_import_linter()
-    finally:
-        PROBE_PATH.unlink(missing_ok=True)
+    for probe_path, source in PROBES:
+        violation: subprocess.CompletedProcess[str] | None = None
+        try:
+            probe_path.write_text(source, encoding="utf-8")
+            violation = run_import_linter()
+        finally:
+            probe_path.unlink(missing_ok=True)
 
-    cleaned = run_import_linter()
-    if violation is None or violation.returncode == 0:
-        if violation is not None:
-            report("deliberate violation was not rejected", violation)
-        return 1
-    if cleaned.returncode != 0:
-        report("architecture lint did not recover after cleanup", cleaned)
-        return 1
+        cleaned = run_import_linter()
+        if violation is None or violation.returncode == 0:
+            if violation is not None:
+                report("deliberate violation was not rejected", violation)
+            return 1
+        if cleaned.returncode != 0:
+            report("architecture lint did not recover after cleanup", cleaned)
+            return 1
 
-    print("import-linter rejected the deliberate violation and cleanup passed")
+    print("import-linter rejected all deliberate violations and cleanup passed")
     return 0
 
 

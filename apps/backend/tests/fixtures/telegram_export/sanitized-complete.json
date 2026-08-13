@@ -1,0 +1,136 @@
+{
+  "name": "Sanitized Fixture Channel",
+  "type": "public_channel",
+  "id": 9001,
+  "messages": [
+    {
+      "id": 101,
+      "type": "message",
+      "date": "2030-01-01T00:00:00",
+      "date_unixtime": "1893456000",
+      "from": "Sanitized Publisher",
+      "text": "Zażółć gęślą jaźń — sample listing",
+      "text_entities": [
+        {
+          "type": "plain",
+          "text": "Zażółć gęślą jaźń — sample listing"
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "type": "message",
+      "date": "2030-01-01T00:01:00",
+      "date_unixtime": "1893456060",
+      "text": [
+        "Mixed ",
+        {
+          "type": "bold",
+          "text": "Żółć"
+        },
+        " and ",
+        {
+          "type": "link",
+          "text": "example",
+          "href": "https://example.invalid/item"
+        }
+      ],
+      "text_entities": [
+        {
+          "type": "plain",
+          "text": "Mixed "
+        },
+        {
+          "type": "bold",
+          "text": "Żółć"
+        },
+        {
+          "type": "plain",
+          "text": " and "
+        },
+        {
+          "type": "link",
+          "text": "example",
+          "href": "https://example.invalid/item"
+        }
+      ],
+      "fixture_extension": {
+        "preserved": true
+      }
+    },
+    {
+      "id": 103,
+      "type": "service",
+      "date": "2030-01-01T00:02:00",
+      "date_unixtime": "1893456120",
+      "actor": "Sanitized Publisher",
+      "action": "fixture_service_action",
+      "text": "",
+      "text_entities": []
+    },
+    {
+      "id": 104,
+      "type": "message",
+      "date": "2030-01-01T00:03:00",
+      "date_unixtime": "1893456180",
+      "edited": "2030-01-01T00:03:30",
+      "edited_unixtime": "1893456210",
+      "photo": "photos/sample_photo.jpg",
+      "width": 1200,
+      "height": 800,
+      "text": "",
+      "text_entities": []
+    },
+    {
+      "id": 105,
+      "type": "message",
+      "date": "2030-01-01T00:04:00",
+      "date_unixtime": "1893456240",
+      "file": "video_files/sample_video.mp4",
+      "thumbnail": "video_files/sample_thumb.jpg",
+      "media_type": "video_file",
+      "mime_type": "video/mp4",
+      "duration_seconds": 12,
+      "file_size": 4096,
+      "width": 640,
+      "height": 360,
+      "text": [
+        "Видео ",
+        {
+          "type": "italic",
+          "text": "пример"
+        }
+      ],
+      "text_entities": []
+    },
+    {
+      "id": 106,
+      "type": "message",
+      "date": "2030-01-01T00:05:00",
+      "date_unixtime": "1893456300",
+      "reply_to_message_id": 101,
+      "text": "Ответ без контактов",
+      "text_entities": []
+    },
+    {
+      "id": 107,
+      "type": "message",
+      "date": "2030-01-01T00:06:00",
+      "date_unixtime": "1893456360",
+      "text": "",
+      "text_entities": []
+    },
+    {
+      "id": 108,
+      "type": "fixture_unknown",
+      "date": "2030-01-01T00:07:00",
+      "date_unixtime": "1893456420",
+      "text": "",
+      "text_entities": [],
+      "unknown_payload": [
+        "kept",
+        1
+      ]
+    }
+  ]
+}

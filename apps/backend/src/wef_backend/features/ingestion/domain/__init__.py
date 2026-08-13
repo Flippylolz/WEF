@@ -1,0 +1,41 @@
+"""Framework-independent ingestion values."""
+
+from wef_backend.features.ingestion.domain.model import (
+    FrozenJSONValue,
+    JSONValue,
+    JSONValueError,
+    MalformedReason,
+    MediaDescriptor,
+    MediaKind,
+    PrimaryClassification,
+    RawMessage,
+    RecordDisposition,
+    RecordResult,
+    ScanCounts,
+    SourceIdentity,
+    SourceMetadata,
+    SourcePlatform,
+    canonical_json_bytes,
+    canonical_json_checksum,
+    freeze_json,
+)
+
+__all__ = [
+    "FrozenJSONValue",
+    "JSONValue",
+    "JSONValueError",
+    "MalformedReason",
+    "MediaDescriptor",
+    "MediaKind",
+    "PrimaryClassification",
+    "RawMessage",
+    "RecordDisposition",
+    "RecordResult",
+    "ScanCounts",
+    "SourceIdentity",
+    "SourceMetadata",
+    "SourcePlatform",
+    "canonical_json_bytes",
+    "canonical_json_checksum",
+    "freeze_json",
+]

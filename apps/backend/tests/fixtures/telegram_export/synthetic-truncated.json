@@ -1,0 +1,10 @@
+{
+  "name": "Sanitized Fixture Channel",
+  "type": "public_channel",
+  "id": 9001,
+  "messages": [
+    {
+      "id": 201,
+      "type": "message",
+      "date_unixtime": "1893542400",
+      "text": "Synthetic truncated document"

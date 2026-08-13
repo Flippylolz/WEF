@@ -17,7 +17,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 
 - [E0 — Architecture and dependency spike](E0-architecture-dependency-spike/README.md) — `done`; spike revision 2/plan revision 3 approved, E0-T1 and E0-T2 done; milestones M1.
 - [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `done`; spike revision 2/plan revision 4 approved; 4 done, 2 proposed, 1 cancelled; milestones M1.
-- [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `ready`; spike/plan revision 2 approved, E2-T1 ready/4 proposed; milestones M1, M2.
+- [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `ready`; spike/plan revision 2 approved, E2-T1 done/4 proposed; milestones M1, M2.
 - [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `ready`; spike/plan revision 2; E3-T1 done, 4 proposed; milestones M1, M2.
 - [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `ready`; spike/plan revision 2; E4-T1/T2 done, 2 proposed; milestones M1, M2.
 - [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `ready`; spike/plan revision 2; E5-T1 done/E5-T2 ready, 3 proposed; milestones M1, M3.
@@ -80,7 +80,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E1-T7](E1-repository-developer-foundation/proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md): task dependencies `E1-T4, E1-T6`; M1; requirements `none`; decisions `ADR-017`.
 ### E2
 
-- [E2-T1](E2-historical-export-parser-audit/tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md): promoted/ready revision 2; satisfied dependency `E1-T2` and approved spike/implementation gates; M1; requirements `P-006, P-007`; decisions `ADR-006, ADR-012`.
+- [E2-T1](E2-historical-export-parser-audit/tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md): promoted/done revision 2 through [PR #33](https://github.com/Flippylolz/WEF/pull/33); satisfied dependency `E1-T2` and approved spike/implementation gates; M1; requirements `P-006, P-007`; decisions `ADR-006, ADR-012`.
 - [E2-T2](E2-historical-export-parser-audit/proposed-tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md): task dependencies `E2-T1`; M1; requirements `P-002, P-003, P-007`; decisions `ADR-003, ADR-006, ADR-012`.
 - [E2-T3](E2-historical-export-parser-audit/proposed-tasks/E2-T3-implement-media-grouping.md): task dependencies `E2-T1`; M2; requirements `P-005`; decisions `ADR-006, ADR-007`.
 - [E2-T4](E2-historical-export-parser-audit/proposed-tasks/E2-T4-implement-dry-run-reports.md): task dependencies `E2-T2, E2-T3`; M2; requirements `P-007`; decisions `ADR-006`.
