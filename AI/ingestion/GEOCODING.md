@@ -9,17 +9,18 @@
 
 This is a low-volume backend workload. A free hosted production allowance is operationally safer than running a search index on the current shared 8 GB NUC.
 
-Provider selection and recurring-use revalidation are governed by [D-002](../decisions/deferred/D-002-recurring-geocoding-provider.md) and [E8-T4](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md).
+Provider selection remains deferred by [D-002](../decisions/deferred/D-002-recurring-geocoding-provider.md). [ADR-021](../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) is a proposed historical-path decision pending owner approval; [E8-T4](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) still revalidates recurring use.
 
 ## Recommended MVP: Geoapify free
 
-Current published free-plan terms checked on 2026-08-12:
+Official [pricing](https://www.geoapify.com/pricing/), [Geocoding API storage guidance](https://www.geoapify.com/geocoding-api/), and [terms](https://www.geoapify.com/terms-and-conditions/) checked on 2026-08-13:
 
 - 3,000 credits per day.
 - One forward geocoding request generally costs one credit.
 - Up to 5 requests/second on the free plan.
 - No credit card required.
 - Commercial use is allowed with required Geoapify attribution/link.
+- Geocoding results may be stored, subject to retaining required source attribution.
 
 Fit:
 
@@ -38,23 +39,20 @@ Controls:
 
 ## Free hosted alternative: LocationIQ
 
-Current published free-plan terms checked on 2026-08-12:
+Official [pricing](https://locationiq.com/pricing) and [caching policy](https://help.locationiq.com/support/solutions/articles/36000216111-can-i-save-addresses-from-api-output-) checked on 2026-08-13:
 
 - 5,000 requests per day.
 - Up to 2 requests/second and 60 requests/minute.
 - Limited commercial use with a prominent LocationIQ attribution link.
+- Response data may be stored indefinitely, but free-account request/response caching is limited to 48 hours.
 
-LocationIQ is a viable fallback if its result quality for the Warsaw fixture set is equal or better. Compare both providers against a manually verified address sample before final selection.
-
-## Testing-only hosted alternative: OpenCage
-
-OpenCage currently offers a 2,500 requests/day free trial at 1 request/second, but its documentation says the free plan is for testing rather than ongoing production use. Do not choose it as the free production dependency.
+LocationIQ remains a comparator only if its result quality is equal or better and the account/terms in force at selection time permit the durable result/cache behavior approved for ingestion.
 
 ## Public Nominatim
 
-The OpenStreetMap Foundation public Nominatim instance is not a recurring production provider.
+The OpenStreetMap Foundation public Nominatim instance is not a recurring production provider. Its [official usage policy](https://operations.osmfoundation.org/policies/nominatim/) was checked on 2026-08-13.
 
-It may be used for a one-time seed batch only under its policy:
+A smaller one-time seed batch **may be permissible** only if the policy permits the specific use and all of these additional conditions are met:
 
 - Maximum 1 request/second and preferably slower.
 - Single thread/machine.
@@ -123,4 +121,4 @@ Provider choice must be configuration, not branching business logic.
 
 ## Recommendation
 
-Use Geoapify free for the historical import and initial production ingestion, with LocationIQ as the evaluated fallback. Keep public Nominatim seed-only. Defer self-hosting until usage or provider terms justify a separate benchmark/host.
+Pending owner approval of ADR-021, evaluate Geoapify first for the historical import and LocationIQ as the terms-compatible comparator. Select neither until the owner-reviewed Warsaw fixture and then-current terms pass. Consider public Nominatim, at most, as a potential small one-time fallback only if its policy permits the specific use and every condition is met. Defer self-hosting until usage or provider terms justify a separate benchmark/host.
