@@ -54,7 +54,7 @@ def _source() -> SourceIdentity:
     )
 
 
-def _message(  # noqa: PLR0913
+def _message(
     message_id: int,
     second: int,
     *,

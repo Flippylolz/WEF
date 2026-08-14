@@ -19,6 +19,24 @@ from wef_backend.features.catalog.infrastructure import (
 )
 from wef_backend.features.estates.application import ListEstates
 from wef_backend.features.estates.infrastructure import RetiredEstateQueryAdapter
+from wef_backend.features.identity.application import (
+    AuthenticateAccount,
+    ChangeAccountPassword,
+    DeleteOwnAccount,
+    DisableOwnAccount,
+    IdentityService,
+    LogoutSession,
+    RegisterAccount,
+    ResolveSession,
+    RevokeAllAccountSessions,
+)
+from wef_backend.features.identity.infrastructure import (
+    MemoryRateLimiter,
+    PwdlibPasswordHasher,
+    SecretsTokenService,
+    SQLAlchemyIdentityStore,
+    SystemClock,
+)
 from wef_backend.migration import EXPECTED_DATABASE_REVISION
 from wef_backend.settings import Settings, load_settings
 
@@ -38,6 +56,8 @@ class AppServices:
     browse_location_offers: BrowseLocationOffers
     is_ready: ReadyCheck
     close: ResourceCloser
+    identity: IdentityService
+    auth_cookie_secure: bool
 
 
 def build_services(settings: Settings | None = None) -> AppServices:
@@ -46,6 +66,10 @@ def build_services(settings: Settings | None = None) -> AppServices:
     database = create_database_resources(runtime_settings.database_url)
     map_adapter = SQLAlchemyMapQueryAdapter(database.session_factory)
     browse_adapter = SQLAlchemyCatalogBrowseAdapter(database.session_factory)
+    identity_store = SQLAlchemyIdentityStore(database.session_factory)
+    hasher = PwdlibPasswordHasher()
+    tokens = SecretsTokenService()
+    clock = SystemClock()
 
     async def database_is_ready() -> bool:
         try:
@@ -72,4 +96,22 @@ def build_services(settings: Settings | None = None) -> AppServices:
         browse_location_offers=BrowseLocationOffers(browse_adapter),
         is_ready=database_is_ready,
         close=database.engine.dispose,
+        identity=IdentityService(
+            register=RegisterAccount(identity_store, hasher),
+            authenticate=AuthenticateAccount(
+                identity_store,
+                hasher,
+                tokens,
+                clock,
+                session_ttl_seconds=runtime_settings.session_ttl_seconds,
+            ),
+            resolve_session=ResolveSession(identity_store, tokens, clock),
+            logout=LogoutSession(identity_store, tokens),
+            change_password=ChangeAccountPassword(identity_store, hasher, clock),
+            revoke_all_sessions=RevokeAllAccountSessions(identity_store),
+            disable_account=DisableOwnAccount(identity_store, clock),
+            delete_account=DeleteOwnAccount(identity_store, clock),
+            rate_limiter=MemoryRateLimiter(),
+        ),
+        auth_cookie_secure=runtime_settings.env == "production",
     )

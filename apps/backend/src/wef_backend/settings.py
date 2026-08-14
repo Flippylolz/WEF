@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     historical_channel_name: str | None = "El Estate | Покупка Варшава"
     ingestion_report_path: Path = Path("/app/media/reports/e2-dry-run")
     allow_synthetic_seed: bool = False
+    session_ttl_seconds: int = Field(default=43_200, ge=60, le=2_592_000)
+    bootstrap_owner_username: str | None = None
+    bootstrap_owner_password: str | None = None
 
 
 def load_settings() -> Settings:

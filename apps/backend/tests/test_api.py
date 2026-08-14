@@ -14,6 +14,7 @@ from tests.fakes import (
     FakeEstateQuery,
     FakeMapQuery,
     always_ready,
+    build_identity_service,
     close_nothing,
     empty_facet_snapshot,
     never_ready,
@@ -43,6 +44,8 @@ def create_test_app(ready_check: ReadyCheck = always_ready) -> FastAPI:
         browse_location_offers=BrowseLocationOffers(browse),
         is_ready=ready_check,
         close=close_nothing,
+        identity=build_identity_service(),
+        auth_cookie_secure=False,
     )
     return create_http_app(services)
 

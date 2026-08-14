@@ -9,8 +9,10 @@ from fastapi.exceptions import RequestValidationError
 
 from wef_backend.composition import AppServices, build_services
 from wef_backend.errors import (
+    AuthProblemError,
     QueryValidationError,
     ResourceNotFoundError,
+    auth_problem_handler,
     query_validation_handler,
     request_validation_handler,
     resource_not_found_handler,
@@ -21,6 +23,7 @@ from wef_backend.features.catalog.interface import (
 )
 from wef_backend.features.catalog.interface import router as catalog_router
 from wef_backend.features.estates.interface import router as estates_router
+from wef_backend.features.identity.interface import identity_router
 from wef_backend.health import router as health_router
 
 
@@ -46,9 +49,11 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     app.include_router(facets_router)
     app.include_router(locations_router)
     app.include_router(estates_router)
+    app.include_router(identity_router)
     app.add_exception_handler(RequestValidationError, request_validation_handler)
     app.add_exception_handler(QueryValidationError, query_validation_handler)
     app.add_exception_handler(ResourceNotFoundError, resource_not_found_handler)
+    app.add_exception_handler(AuthProblemError, auth_problem_handler)
 
     @app.middleware("http")
     async def attach_request_identity(
@@ -67,6 +72,8 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
         app.state.query_facets = services.query_facets
         app.state.browse_location_offers = services.browse_location_offers
         app.state.is_ready = services.is_ready
+        app.state.identity = services.identity
+        app.state.auth_cookie_secure = services.auth_cookie_secure
 
     return app
 

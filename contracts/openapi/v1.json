@@ -1,6 +1,58 @@
 {
   "components": {
     "schemas": {
+      "AccountResponse": {
+        "additionalProperties": false,
+        "description": "Minimal public account projection.",
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_login_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login At"
+          },
+          "must_change_password": {
+            "title": "Must Change Password",
+            "type": "boolean"
+          },
+          "role": {
+            "enum": [
+              "user",
+              "owner"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "role",
+          "must_change_password",
+          "created_at",
+          "last_login_at"
+        ],
+        "title": "AccountResponse",
+        "type": "object"
+      },
       "Availability": {
         "description": "Availability states understood by every delivery channel.",
         "enum": [
@@ -9,6 +61,30 @@
         ],
         "title": "Availability",
         "type": "string"
+      },
+      "ChangePasswordRequest": {
+        "additionalProperties": false,
+        "description": "Strict password-change syntax.",
+        "properties": {
+          "current_password": {
+            "maxLength": 256,
+            "minLength": 10,
+            "title": "Current Password",
+            "type": "string"
+          },
+          "new_password": {
+            "maxLength": 256,
+            "minLength": 10,
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "ChangePasswordRequest",
+        "type": "object"
       },
       "ConfidenceIndicator": {
         "description": "Coarse public representation of internal coordinate confidence.",
@@ -216,6 +292,19 @@
           "published_to"
         ],
         "title": "FilterFacetsResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
         "type": "object"
       },
       "HealthResponse": {
@@ -448,6 +537,30 @@
           "next_cursor"
         ],
         "title": "LocationOfferPageResponse",
+        "type": "object"
+      },
+      "LoginRequest": {
+        "additionalProperties": false,
+        "description": "Strict login syntax.",
+        "properties": {
+          "password": {
+            "maxLength": 256,
+            "minLength": 10,
+            "title": "Password",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 64,
+            "minLength": 3,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginRequest",
         "type": "object"
       },
       "MapResponseMeta": {
@@ -841,6 +954,70 @@
         ],
         "title": "ProblemResponse",
         "type": "object"
+      },
+      "RegisterRequest": {
+        "additionalProperties": false,
+        "description": "Strict registration syntax.",
+        "properties": {
+          "password": {
+            "maxLength": 256,
+            "minLength": 10,
+            "title": "Password",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 64,
+            "minLength": 3,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "RegisterRequest",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
       }
     }
   },
@@ -850,6 +1027,286 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/auth/account/delete": {
+      "post": {
+        "description": "Mark the account deleted and revoke all sessions.",
+        "operationId": "deleteOwnAccount",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "415": {
+            "description": "Mutations require a JSON content type."
+          }
+        },
+        "summary": "Soft-delete the authenticated account",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/account/disable": {
+      "post": {
+        "description": "Mark the account inactive and revoke all sessions.",
+        "operationId": "disableOwnAccount",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "415": {
+            "description": "Mutations require a JSON content type."
+          }
+        },
+        "summary": "Disable the authenticated account",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "description": "Verify credentials and set the HttpOnly session cookie.",
+        "operationId": "loginAccount",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "The credentials were not accepted."
+          },
+          "415": {
+            "description": "Mutations require a JSON content type."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Too many attempts from this client."
+          }
+        },
+        "summary": "Establish one opaque session",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "description": "Revoke the session behind the cookie and clear it.",
+        "operationId": "logoutAccount",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "wef_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wef Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "415": {
+            "description": "Mutations require a JSON content type."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke the current session",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "description": "Return the minimal account view for the current session.",
+        "operationId": "getOwnAccount",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          }
+        },
+        "summary": "View the authenticated account",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/password": {
+      "post": {
+        "description": "Verify the current password, rotate it, and revoke all sessions.",
+        "operationId": "changeOwnPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "415": {
+            "description": "Mutations require a JSON content type."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Too many attempts from this client."
+          }
+        },
+        "summary": "Change the account password",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "description": "Create one user-role account; no session is established.",
+        "operationId": "registerAccount",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "The username or registration was declined."
+          },
+          "415": {
+            "description": "Mutations require a JSON content type."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Too many attempts from this client."
+          }
+        },
+        "summary": "Register one pseudonymous account",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sessions/revoke-all": {
+      "post": {
+        "description": "Revoke all sessions including the current one.",
+        "operationId": "revokeOwnSessions",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "415": {
+            "description": "Mutations require a JSON content type."
+          }
+        },
+        "summary": "Revoke every session of the account",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/v1/estates": {
       "get": {
         "deprecated": true,

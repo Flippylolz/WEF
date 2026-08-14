@@ -1,6 +1,6 @@
 """Safe RFC 9457-style HTTP problem responses."""
 
-from typing import Literal
+from typing import Literal, cast
 from uuid import UUID
 
 from fastapi import Request
@@ -44,6 +44,51 @@ class QueryValidationError(ValueError):
 
 class ResourceNotFoundError(LookupError):
     """Raised when a public resource is absent or not visible."""
+
+
+class AuthProblemError(Exception):
+    """Raised when an authentication transport decision must become a problem."""
+
+    def __init__(self, *, status_code: int, code: str, detail: str) -> None:
+        """Store the bounded public problem fields."""
+        self.status_code = status_code
+        self.code = code
+        self.detail = detail
+        super().__init__(detail)
+
+
+class AuthProblemResponse(BaseModel):
+    """Stable authentication problem envelope without credentials."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: str
+    title: str
+    status: int
+    code: str
+    request_id: UUID
+    detail: str
+    instance: str
+    kind: Literal["auth"] = "auth"
+
+
+async def auth_problem_handler(request: Request, error: Exception) -> JSONResponse:
+    """Present one bounded authentication problem response."""
+    problem_error = cast("AuthProblemError", error)
+    problem = AuthProblemResponse(
+        type="https://wef.invalid/problems/auth",
+        title="Authentication problem",
+        status=problem_error.status_code,
+        code=problem_error.code,
+        request_id=request.state.request_id,
+        detail=problem_error.detail,
+        instance=request.url.path,
+    )
+    return JSONResponse(
+        status_code=problem_error.status_code,
+        content=problem.model_dump(mode="json"),
+        media_type="application/problem+json",
+    )
 
 
 def problem_response(
