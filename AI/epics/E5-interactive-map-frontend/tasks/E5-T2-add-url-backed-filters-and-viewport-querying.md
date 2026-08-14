@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E5-T2
 epic: E5
 title: "Add URL-backed filters and viewport querying"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: L
@@ -43,10 +43,14 @@ branch:
   created_at: "2026-08-13T19:40:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/43"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode Agent (owner-authorized)"
+  completed_at: "2026-08-14T11:34:15Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/43"
+  evidence:
+    - "E5-T2 branch feature/E5-T2-url-filters squash-merged via https://github.com/Flippylolz/WEF/pull/43 (2026-08-13T20:06:08Z); branch deleted"
+    - "PR #43 test evidence: Prettier, ESLint, strict TypeScript, 27 Vitest component/API/URL lifecycle tests, OpenAPI generated-contract check/lint/docs/drift proof, Next.js 16 production build"
+    - "Post-merge deployed-explorer regression (scroll-zoom bbox 422, filter layout) fixed and merged via follow-up https://github.com/Flippylolz/WEF/pull/47 (2026-08-14T10:55:24Z): viewport clamping, no refit on URL catch-up, filter drafts survive bbox-only URL updates"
+    - "No API schema or database migration in scope; rollback is the web image only"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -123,8 +127,8 @@ Additive web-only behavior over E4. Roll back the web image; endpoint/schema com
 ## Done checklist
 
 - [x] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
 
 ## Verification evidence
 

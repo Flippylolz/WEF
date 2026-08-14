@@ -19,8 +19,8 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `done`; spike revision 2/plan revision 4 approved; 4 done, 2 proposed, 1 cancelled; milestones M1.
 - [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `done`; spike/plan revision 3 approved and E2-T1–T5 done with a reconciled complete-export audit; milestones M1, M2.
 - [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `selected`; spike revision 3 pending owner approval; existing approved plan revision 2 authorizes only completed E3-T1; 4 proposed/non-actionable; milestones M1, M2.
-- [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `ready`; spike/plan revision 2; E4-T1/T2 done, 2 proposed; milestones M1, M2.
-- [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `ready`; spike/plan revision 3; E5-T1 done, E5-T2 ready, E5-T3–T5 promoted/dependency-blocked; milestones M1, M3.
+- [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `done`; spike/plan revision 2; E4-T1/T2 done through PRs #12/#13, 2 proposed (unactionable M2 candidates); milestones M1, M2.
+- [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `ready`; spike/plan revision 3; E5-T1 done, E5-T2 done through PR #43 (with fix PR #47), E5-T3–T5 promoted/dependency-blocked; milestones M1, M3.
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `draft`; 7 tasks (7 proposed); milestones M3.
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `ready`; 10 tasks (4 done, 1 ready, 1 draft, 3 proposed, 1 deferred); milestone M3.
 - [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; 5 tasks (5 proposed); milestones M4.
@@ -101,9 +101,9 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 ### E5
 
 - [E5-T1](E5-interactive-map-frontend/tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md): promoted/done revision 2; satisfied dependencies `E1-T2, E4-T2`; M1; requirements `P-001, P-004, P-007`; decisions `ADR-002, ADR-004, ADR-012`.
-- [E5-T2](E5-interactive-map-frontend/tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md): promoted/ready revision 2; satisfied dependencies `E5-T1, E4-T2`; M1; requirements `P-001, P-003, P-004`; decisions `ADR-002, ADR-003, ADR-012`.
+- [E5-T2](E5-interactive-map-frontend/tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md): promoted/done revision 2 through [PR #43](https://github.com/Flippylolz/WEF/pull/43) with deployed-regression fix [PR #47](https://github.com/Flippylolz/WEF/pull/47); satisfied dependencies `E5-T1, E4-T2`; M1; requirements `P-001, P-003, P-004`; decisions `ADR-002, ADR-003, ADR-012`.
 - [E5-T3](E5-interactive-map-frontend/tasks/E5-T3-build-offer-detail-and-media-gallery.md): promoted/draft revision 2; blocked on `E4-T3`, with `E5-T1` satisfied; M3; requirements `P-002, P-005, P-006, P-007`; decisions `ADR-003, ADR-004, ADR-007, ADR-012`.
-- [E5-T4](E5-interactive-map-frontend/tasks/E5-T4-complete-responsive-list-map-accessibility.md): promoted/draft revision 2; blocked dependencies `E5-T2, E5-T3`; M3; requirements `P-001, P-002, P-003, P-004, P-005`; decisions `ADR-002, ADR-004, ADR-012`.
+- [E5-T4](E5-interactive-map-frontend/tasks/E5-T4-complete-responsive-list-map-accessibility.md): promoted/draft revision 2; blocked dependency `E5-T3` (`E5-T2` done); M3; requirements `P-001, P-002, P-003, P-004, P-005`; decisions `ADR-002, ADR-004, ADR-012`.
 - [E5-T5](E5-interactive-map-frontend/tasks/E5-T5-performance-and-production-ux-pass.md): promoted/draft revision 2; blocked dependencies `E5-T4, E4-T4`; M3; requirements `P-001, P-004, P-005`; decisions `ADR-004, ADR-007, ADR-012`.
 ### E6
 
