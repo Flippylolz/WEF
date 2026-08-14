@@ -21,11 +21,11 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `selected`; spike revision 3 pending owner approval; existing approved plan revision 2 authorizes only completed E3-T1; 4 proposed/non-actionable; milestones M1, M2.
 - [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `done`; spike/plan revision 2; E4-T1/T2 done through PRs #12/#13, 2 proposed (unactionable M2 candidates); milestones M1, M2.
 - [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `ready`; spike/plan revision 3; E5-T1 done, E5-T2 done through PR #43 (with fix PR #47), E5-T3–T5 promoted/dependency-blocked; milestones M1, M3.
-- [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `draft`; 7 tasks (7 proposed); milestones M3.
+- [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `selected`; spike revision 2 awaiting owner approval; 7 tasks (7 proposed; only E6-T4 has complete dependencies); milestones M3.
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `ready`; 10 tasks (4 done, 1 ready, 1 draft, 3 proposed, 1 deferred); milestone M3.
 - [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; 5 tasks (5 proposed); milestones M4.
 
-The original E0/E1/E3/E4/E5-T1/E7 ordered stack is merged and reconciled against successful integrated `main` CI. E2-T1 and later E3–E5/E7 work retain approved current gates or remain proposed/ready. E6 remains draft; E8 is selected for research with no implementation permission. New work must pass its dedicated pull-request CI before merge.
+The original E0/E1/E3/E4/E5-T1/E7 ordered stack is merged and reconciled against successful integrated `main` CI. E2-T1 and later E3–E5/E7 work retain approved current gates or remain proposed/ready. E6 is selected with spike revision 2 awaiting owner approval; E8 is selected for research with no implementation permission. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
