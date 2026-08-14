@@ -9,6 +9,7 @@ dependencies = [
     "fastapi>=0.141.1",
     "geoalchemy2>=0.20.0",
     "ijson>=3.5.1",
+    "pwdlib[argon2]>=0.2.1",
     "pydantic-settings>=2.15.0",
     "sqlalchemy[asyncio]>=2.0.52",
     "structlog>=26.1.0",
@@ -21,6 +22,7 @@ wef-export-openapi = "wef_backend.openapi_export:main"
 wef-importer-dry-run = "wef_backend.operator:main"
 wef-migrate = "wef_backend.migration:migrate"
 wef-seed-m1 = "wef_backend.seed_command:main"
+wef-bootstrap-owner = "wef_backend.owner_command:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -84,8 +86,12 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
+    "PLR0913",
     "PLR2004",
     "S101",
+    "S105",
+    "S106",
+    "S107",
 ]
 "scripts/**/*.py" = [
     "T201",

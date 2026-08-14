@@ -82,3 +82,33 @@ forbidden_modules =
     pydantic_settings
     sqlalchemy
     wef_backend.settings
+
+[importlinter:contract:identity-infrastructure-layers]
+name = Identity infrastructure implements inward contracts
+type = layers
+layers =
+    wef_backend.features.identity.infrastructure
+    wef_backend.features.identity.application
+    wef_backend.features.identity.domain
+
+[importlinter:contract:identity-interface-layers]
+name = Identity interface depends inward
+type = layers
+layers =
+    wef_backend.features.identity.interface
+    wef_backend.features.identity.application
+    wef_backend.features.identity.domain
+
+[importlinter:contract:identity-core-framework-independence]
+name = Identity core is framework independent
+type = forbidden
+source_modules =
+    wef_backend.features.identity.domain
+    wef_backend.features.identity.application
+forbidden_modules =
+    fastapi
+    geoalchemy2
+    pwdlib
+    pydantic
+    pydantic_settings
+    sqlalchemy

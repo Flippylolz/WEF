@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E6
 title: "Quality, security, and operations"
-status: planning
+status: in_progress
 milestones: [M3]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,11 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 
 ## Approval state
 
-- Epic workspace status: `planning`; spike revision 2 is owner-approved (PR #49, squash cd2ad36).
-- [Spike](SPIKE.md): `approved`, revision 2. It records the 2026-08-14 repository survey, the E6 dependency reality (only E6-T4 is actionable), and recommends the project-owned `pwdlib[argon2]` identity implementation for E6-T4.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `awaiting_approval`, revision 2 (`spike_revision: 2`), sequencing E6-T4 only.
-- E6-T4 is promoted to `tasks/` with a satisfied spike gate, satisfied dependency gate, and blocked implementation gate pending plan approval.
-- Every remaining file in `proposed-tasks/` is non-actionable. No implementation, scaffold, migration, infrastructure change, generated executable artifact, or proof code is approved.
+- Epic workspace status: `in_progress`; E6-T4 is being implemented on its dedicated branch.
+- [Spike](SPIKE.md): `approved`, revision 2 (PR #49, squash cd2ad36). It records the 2026-08-14 repository survey, the E6 dependency reality (only E6-T4 is actionable), and recommends the project-owned `pwdlib[argon2]` identity implementation for E6-T4.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2 (`spike_revision: 2`, PR #50, squash bd4d34f), sequencing E6-T4 only.
+- E6-T4 is `in_progress` on `feature/E6-T4-registration-sessions` with all gates satisfied.
+- Every remaining file in `proposed-tasks/` is non-actionable. No implementation beyond the approved E6-T4 sequence is approved.
 
 ## Milestones
 
@@ -50,7 +50,7 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 
 ## Promoted tasks
 
-- [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `draft`, P1/L, M3; implementation gate pending plan revision 2 approval
+- [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `in_progress`, P1/L, M3; branch `feature/E6-T4-registration-sessions`
 
 ## Proposed tasks
 

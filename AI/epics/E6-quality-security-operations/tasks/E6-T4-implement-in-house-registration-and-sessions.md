@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E6-T4
 epic: E6
 title: "Implement in-house registration and sessions"
-status: draft
+status: in_progress
 revision: 1
 priority: P1
 size: L
@@ -23,11 +23,11 @@ spike_gate:
   verified_by: "ZCode Agent"
   verified_at: "2026-08-14T11:46:36Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 2
+  verified_by: "ZCode Agent"
+  verified_at: "2026-08-14T21:30:59Z"
 dependency_gate:
   status: satisfied
   verified_by: "ZCode Agent"
@@ -37,10 +37,10 @@ dependency_gate:
     - "E3-T1 | done | task record ../../E3-database-geocoding-media/tasks/E3-T1-create-schema-and-migrations.md | schema/migrations live on integrated main cd2ad36"
 branch:
   required: true
-  name: null
+  name: feature/E6-T4-registration-sessions
   task_id: E6-T4
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-14T21:30:59Z"
   pull_request: null
 completion:
   completed_by: null
@@ -112,16 +112,16 @@ Pseudonymous username/password accounts with opaque database-backed sessions exi
 - [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references the owner-approved current spike revision and is `satisfied`.
-- [ ] `implementation_gate` references the owner-approved current implementation-plan revision, which contains this task ID/current revision, and is `satisfied`.
+- [x] `implementation_gate` references the owner-approved current implementation-plan revision, which contains this task ID/current revision, and is `satisfied`.
 - [x] Every dependency is `done` with `dependency_gate: satisfied`; no deferred gates apply.
-- [ ] Scope and acceptance criteria match the approved plan.
+- [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] One new branch contains this task ID.
+- [x] The branch and pull request contain this task only.
+- [x] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
 
 ## Done checklist
 
