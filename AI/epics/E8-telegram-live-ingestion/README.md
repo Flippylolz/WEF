@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E8
 title: "Future Telegram live ingestion"
-status: draft
+status: selected
 milestones: [M4]
 owner: owner
 spike: SPIKE.md
@@ -17,8 +17,8 @@ new, edited, and deleted channel posts are processed safely without changing pub
 
 ## Approval state
 
-- Epic workspace status: `draft`.
-- [Spike](SPIKE.md): `draft`, revision 1, owner approval pending, research only, no code.
+- Epic workspace status: `selected`.
+- [Spike](SPIKE.md): `awaiting_approval`, revision 2, owner approval pending, completed research only, no code.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `draft`, revision 1, blocked with no approved spike revision and no executable task sequence.
 - Every file in `proposed-tasks/` is non-actionable. No implementation, scaffold, migration, infrastructure change, generated executable artifact, or proof code is approved.
 - No `tasks/` directory exists; it may be created only when an approved candidate is promoted after spike approval.
