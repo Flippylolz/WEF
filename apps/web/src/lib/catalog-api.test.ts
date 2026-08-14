@@ -28,7 +28,7 @@ describe("catalog API", () => {
       });
     });
 
-    const result = await fetchLocationMap(fetcher);
+    const result = await fetchLocationMap({ bbox: DEFAULT_BBOX }, { fetcher });
 
     expect(result.state).toBe("ready");
   });
@@ -60,15 +60,62 @@ describe("catalog API", () => {
       });
     });
 
-    expect((await fetchFacets(fetcher)).state).toBe("ready");
+    expect((await fetchFacets({ fetcher })).state).toBe("ready");
     expect(
       (
         await fetchLocationOffers(
           "10000000-0000-4000-8000-000000000001",
-          fetcher,
+          { bbox: DEFAULT_BBOX },
+          { fetcher },
         )
       ).state,
     ).toBe("ready");
+  });
+
+  it("passes every filter and AbortSignal through the typed client", async () => {
+    const controller = new AbortController();
+    const fetcher = vi.fn(async (request: Request) => {
+      const params = new URL(request.url).searchParams;
+      expect(params.get("price_min")).toBe("80000000");
+      expect(params.get("price_max")).toBe("125000000");
+      expect(params.get("area_min")).toBe("35");
+      expect(params.get("area_max")).toBe("71.5");
+      expect(params.getAll("rooms")).toEqual(["1", "3"]);
+      expect(params.getAll("district")).toEqual(["ochota", "wola"]);
+      expect(params.getAll("market_type")).toEqual(["secondary"]);
+      expect(params.getAll("content_type")).toEqual(["unit"]);
+      expect(params.get("published_from")).toBe("2026-08-01T00:00:00.000Z");
+      expect(params.get("published_to")).toBe("2026-08-31T23:59:59.999Z");
+      expect(request.signal.aborted).toBe(false);
+      return response({
+        type: "FeatureCollection",
+        features: [],
+        meta: {
+          request_id: "00000000-0000-4000-8000-000000000001",
+          feature_count: 0,
+          matching_offer_count: 0,
+        },
+      });
+    });
+
+    const result = await fetchLocationMap(
+      {
+        bbox: "20.8,52.1,21.2,52.3",
+        price_min: 80_000_000,
+        price_max: 125_000_000,
+        area_min: "35",
+        area_max: "71.5",
+        rooms: [1, 3],
+        district: ["ochota", "wola"],
+        market_type: ["secondary"],
+        content_type: ["unit"],
+        published_from: "2026-08-01T00:00:00.000Z",
+        published_to: "2026-08-31T23:59:59.999Z",
+      },
+      { fetcher, signal: controller.signal },
+    );
+
+    expect(result.state).toBe("ready");
   });
 
   it("returns a stable error state for transport and API failures", async () => {
@@ -77,7 +124,10 @@ describe("catalog API", () => {
     });
     const failed = vi.fn(async () => response({}, 503));
 
-    expect((await fetchLocationMap(rejected)).state).toBe("error");
-    expect((await fetchFacets(failed)).state).toBe("error");
+    expect(
+      (await fetchLocationMap({ bbox: DEFAULT_BBOX }, { fetcher: rejected }))
+        .state,
+    ).toBe("error");
+    expect((await fetchFacets({ fetcher: failed })).state).toBe("error");
   });
 });

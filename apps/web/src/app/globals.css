@@ -67,7 +67,7 @@ body {
 }
 
 .page-header {
-  max-width: 56rem;
+  max-width: none;
   margin-bottom: 2rem;
 }
 
@@ -87,9 +87,12 @@ p {
 
 h1 {
   margin-bottom: 0.75rem;
-  font-size: clamp(2.25rem, 6vw, 4rem);
+  /* Sized so the full page title stays on one line down to the 56rem
+     app layout breakpoint; narrower screens may wrap. */
+  font-size: clamp(2rem, 3.4vw, 3.5rem);
   line-height: 0.98;
   letter-spacing: -0.05em;
+  text-wrap: nowrap;
 }
 
 .subtitle,
@@ -164,7 +167,8 @@ button {
   font: inherit;
 }
 
-button:focus-visible {
+button:focus-visible,
+input:focus-visible {
   outline: 3px solid #6ea98b;
   outline-offset: 3px;
 }
@@ -180,8 +184,145 @@ button:focus-visible {
   border: 0;
 }
 
+.map-explorer-shell {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.filter-panel {
+  flex: 0 0 auto;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1rem;
+}
+
+.filter-heading {
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.filter-heading h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.filter-heading .eyebrow {
+  margin-bottom: 0.35rem;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.filter-actions .button-primary,
+.filter-actions .button-secondary,
+.offer-placeholder button {
+  border: 1px solid var(--accent);
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.button-secondary,
+.offer-placeholder button {
+  background: #fff;
+  color: var(--accent);
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.filter-group {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  padding: 0.6rem;
+}
+
+.filter-group legend {
+  padding: 0 0.25rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.filter-range > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.filter-range label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.filter-range input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  background: #fff;
+  color: var(--foreground);
+  padding: 0.48rem;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-checkboxes > div {
+  display: flex;
+  max-height: 5.5rem;
+  overflow-y: auto;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.7rem;
+}
+
+.filter-checkboxes label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.filter-checkboxes input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent);
+}
+
+.filter-status {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+}
+
 .map-explorer {
   display: grid;
+  flex: 1 1 auto;
   grid-template-columns: minmax(0, 1.7fr) minmax(20rem, 0.8fr);
   min-height: 36rem;
   overflow: hidden;
@@ -189,6 +330,11 @@ button:focus-visible {
   border-radius: 1rem;
   background: var(--surface);
   box-shadow: 0 1.5rem 4rem rgb(28 57 42 / 8%);
+  transition: grid-template-columns 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-explorer-collapsed {
+  grid-template-columns: minmax(0, 1fr) 0fr;
 }
 
 .map-region {
@@ -241,11 +387,80 @@ button:focus-visible {
   font-size: 0.66rem;
 }
 
+.explorer-sidebar {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid var(--border);
+  opacity: 1;
+  transition:
+    opacity 140ms ease,
+    visibility 0s;
+}
+
+.map-explorer-collapsed .explorer-sidebar {
+  border-left-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 140ms ease,
+    visibility 0s 140ms;
+}
+
+.sidebar-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 92%);
+  color: var(--accent);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.sidebar-toggle:hover {
+  border-color: var(--accent);
+  transform: scale(1.08);
+}
+
+.sidebar-toggle:active {
+  transform: scale(0.92);
+}
+
+.sidebar-toggle-floating {
+  position: absolute;
+  z-index: 3;
+  top: 0.75rem;
+  left: 0.75rem;
+  box-shadow: 0 0.4rem 1rem rgb(28 57 42 / 14%);
+  animation: sidebar-toggle-in 180ms ease;
+}
+
+@keyframes sidebar-toggle-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .results-panel {
   min-width: 0;
-  max-height: 70vh;
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
-  border-left: 1px solid var(--border);
   padding: 1.25rem;
 }
 
@@ -275,7 +490,8 @@ button:focus-visible {
 }
 
 .facet-summary,
-.offer-placeholder {
+.offer-placeholder,
+.results-status {
   color: var(--muted);
   font-size: 0.9rem;
 }
@@ -339,6 +555,15 @@ button:focus-visible {
   padding: 0.8rem;
 }
 
+.offer-card-nonmatching {
+  border: 1px dashed #b8c0ba;
+  opacity: 0.82;
+}
+
+.nonmatching-note {
+  font-weight: 700;
+}
+
 .offer-prices {
   display: grid;
   gap: 0.35rem;
@@ -397,8 +622,12 @@ button:focus-visible {
     margin-bottom: 1rem;
   }
 
-  .map-explorer {
+  .map-explorer-shell {
     flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .map-explorer {
     min-height: 0;
   }
 
@@ -410,8 +639,7 @@ button:focus-visible {
     min-height: 0;
   }
 
-  .results-panel {
-    max-height: none;
+  .explorer-sidebar {
     min-height: 0;
   }
 }
@@ -429,10 +657,19 @@ button:focus-visible {
     min-height: 50vh;
   }
 
-  .results-panel {
-    max-height: none;
+  .explorer-sidebar {
     border-top: 1px solid var(--border);
     border-left: 0;
+    max-height: none;
+    transition:
+      max-height 280ms cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 140ms ease,
+      visibility 0s;
+  }
+
+  .explorer-sidebar-collapsed {
+    max-height: 0;
+    border-top-width: 0;
   }
 }
 
@@ -448,10 +685,33 @@ button:focus-visible {
 
   h1 {
     font-size: clamp(2rem, 10vw, 3rem);
+    text-wrap: wrap;
   }
 
   .map-explorer {
     border-radius: 0.75rem;
+  }
+
+  .filter-panel {
+    padding: 0.8rem;
+  }
+
+  .filter-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filter-actions {
+    justify-content: stretch;
+  }
+
+  .filter-actions .button-primary,
+  .filter-actions .button-secondary {
+    flex: 1 1 8rem;
+  }
+
+  .filter-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .map-region,

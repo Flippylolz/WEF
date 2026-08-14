@@ -4,12 +4,12 @@ id: E7-T7
 epic: E7
 title: "Enable production registration and contact reveal"
 status: proposed
-revision: 2
+revision: 3
 actionable: false
 priority: P1
 size: M
 milestone: M3
-dependencies: [E6-T4, E6-T5, E6-T6, E6-T7, E7-T4, E7-T8]
+dependencies: [E6-T4, E6-T5, E6-T6, E6-T7, E7-T4, E7-T10]
 requirement_ids: [P-008]
 decision_ids: [ADR-010, ADR-011, ADR-014, ADR-016, ADR-020]
 deferred_decision_ids: []
@@ -47,13 +47,13 @@ The following definition preserves the original E7-T7 roadmap entry:
 ## Scope and approval boundary
 
 - Preserve the roadmap work and acceptance criteria above for refinement against the owner-approved spike.
-- Revision 2 refines the HTTPS dependency: E7-T8 must provide the verified shared Nginx origin before this task enables any sensitive production behavior.
+- Revision 3 follows the approved shared-edge split: E7-T10 must complete the live, verified Nginx HTTPS rollout before this task enables any sensitive production behavior. E7-T8/E7-T9 alone are inert topology and automation evidence.
 - Do not treat this file, its priority, its branch note, or its roadmap ordering as permission to implement.
 - Production code, scaffolds, migrations, infrastructure changes, and disposable proof code remain out of scope until promotion and current implementation-plan approval.
 
 ## Dependencies and traceability
 
-- Task dependencies: [E6-T4](../../E6-quality-security-operations/proposed-tasks/E6-T4-implement-in-house-registration-and-sessions.md), [E6-T5](../../E6-quality-security-operations/proposed-tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md), [E6-T6](../../E6-quality-security-operations/proposed-tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md), [E6-T7](../../E6-quality-security-operations/proposed-tasks/E6-T7-implement-owner-administration-console.md), [E7-T4](../tasks/E7-T4-implement-health-verification-and-rollback.md), and [E7-T8](E7-T8-build-shared-nginx-tls-ingress.md).
+- Task dependencies: [E6-T4](../../E6-quality-security-operations/tasks/E6-T4-implement-in-house-registration-and-sessions.md), [E6-T5](../../E6-quality-security-operations/proposed-tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md), [E6-T6](../../E6-quality-security-operations/proposed-tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md), [E6-T7](../../E6-quality-security-operations/proposed-tasks/E6-T7-implement-owner-administration-console.md), [E7-T4](../tasks/E7-T4-implement-health-verification-and-rollback.md), and [E7-T10](E7-T10-roll-out-and-verify-shared-tls.md).
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Operations](../../../operations/README.md), [Governance](../../../governance/README.md), [Security](../../../security/README.md), [Data](../../../data/README.md).
 

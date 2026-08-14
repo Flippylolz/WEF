@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E5-T2
 epic: E5
 title: "Add URL-backed filters and viewport querying"
-status: ready
+status: done
 revision: 2
 priority: P0
 size: L
@@ -19,15 +19,15 @@ promotion:
 spike_gate:
   status: satisfied
   file: ../SPIKE.md
-  approved_revision: 2
+  approved_revision: 3
   verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T22:34:40Z"
+  verified_at: "2026-08-13T19:30:00Z"
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 2
+  approved_revision: 3
   verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T22:34:40Z"
+  verified_at: "2026-08-13T19:30:00Z"
 dependency_gate:
   status: satisfied
   verified_by: "Cursor Agent (owner-authorized reconciliation)"
@@ -37,16 +37,20 @@ dependency_gate:
     - "E4-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/13 | integrated stack f766a63"
 branch:
   required: true
-  name: null
+  name: feature/E5-T2-url-filters
   task_id: E5-T2
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-13T19:40:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/43"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode Agent (owner-authorized)"
+  completed_at: "2026-08-14T11:34:15Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/43"
+  evidence:
+    - "E5-T2 branch feature/E5-T2-url-filters squash-merged via https://github.com/Flippylolz/WEF/pull/43 (2026-08-13T20:06:08Z); branch deleted"
+    - "PR #43 test evidence: Prettier, ESLint, strict TypeScript, 27 Vitest component/API/URL lifecycle tests, OpenAPI generated-contract check/lint/docs/drift proof, Next.js 16 production build"
+    - "Post-merge deployed-explorer regression (scroll-zoom bbox 422, filter layout) fixed and merged via follow-up https://github.com/Flippylolz/WEF/pull/47 (2026-08-14T10:55:24Z): viewport clamping, no refit on URL catch-up, filter drafts survive bbox-only URL updates"
+    - "No API schema or database migration in scope; rollback is the web image only"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -87,13 +91,13 @@ Make all M1 filters and the current map viewport reloadable/shareable while requ
 
 ## Acceptance criteria
 
-- [ ] Reloading/sharing a URL restores identical filters and viewport.
-- [ ] Clear filters deterministically restores default Warsaw view/both content types.
-- [ ] Every M1 filter is represented by canonical facets and changes pins/offers only through backend responses.
-- [ ] Viewport requests are debounced, obsolete requests are aborted, and equivalent state avoids duplicate requests.
-- [ ] Loading/empty/API/map errors preserve controls and URL state.
-- [ ] M1 tests demonstrate price, room, district, market/content type, area, and publication filters plus combined behavior.
-- [ ] Controls have labels, keyboard operation, visible focus, and usable 360 px layout.
+- [x] Reloading/sharing a URL restores identical filters and viewport.
+- [x] Clear filters deterministically restores default Warsaw view/both content types.
+- [x] Every M1 filter is represented by canonical facets and changes pins/offers only through backend responses.
+- [x] Viewport requests are debounced, obsolete requests are aborted, and equivalent state avoids duplicate requests.
+- [x] Loading/empty/API/map errors preserve controls and URL state.
+- [x] M1 tests demonstrate price, room, district, market/content type, area, and publication filters plus combined behavior.
+- [x] Controls have labels, keyboard operation, visible focus, and usable 360 px layout.
 
 ## Test plan
 
@@ -110,18 +114,26 @@ Additive web-only behavior over E4. Roll back the web image; endpoint/schema com
 ## Ready checklist
 
 - [x] This file is authoritative under `tasks/`; the proposed source is removed.
-- [x] Promotion, spike revision 2, and plan revision 2 are recorded.
+- [x] Promotion, spike revision 3, and plan revision 3 are recorded.
 - [x] E5-T1/E4-T2 are complete and recorded by the satisfied dependency gate.
 - [x] Scope and acceptance match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passes through `ready`.
-- [ ] Dedicated E5-T2 branch is created and recorded.
-- [ ] Branch/PR contain E5-T2 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated E5-T2 branch is created and recorded.
+- [x] Branch contains E5-T2 only; pull request metadata is recorded when opened.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
+
+## Verification evidence
+
+- URL lifecycle: canonical parser/serializer tests cover defaults, every M1 filter, repeated-value ordering, UTC publication ranges, invalid syntax, bounded Warsaw viewports, reload, clear, and stateful URL rerenders.
+- Request lifecycle: TanStack Query keys use canonical URL state; component/API tests prove debounced `router.replace`, duplicate suppression, filter-aware selected-location requests, and `AbortSignal` cancellation after URL changes and unmount.
+- Resilience/accessibility: controls remain mounted through loading, empty, API, facet, and map failures; native labels/fieldsets/checkboxes, focus styles, semantic status regions, and the 36 rem breakpoint preserve keyboard and 360 px operation.
+- Local CI parity: Prettier, ESLint, strict TypeScript, 27 Vitest tests, generated-contract check/lint/docs/drift proof, and the Next 16 production build pass.
+- Rollback: the change is web-only and can be rolled back with the web image; no API schema or migration changed.

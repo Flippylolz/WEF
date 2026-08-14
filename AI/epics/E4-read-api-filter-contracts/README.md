@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E4
 title: "Read API and filter contracts"
-status: ready
+status: done
 milestones: [M1, M2]
 owner: owner
 spike: SPIKE.md
@@ -17,10 +17,11 @@ stable, efficient public endpoints that implement filter semantics once.
 
 ## Approval state
 
-- Epic workspace status: `ready`; the approved M1 map/facet sequence is complete and later detail/hardening candidates remain proposed.
+- Epic workspace status: `done`; the approved M1 map/facet sequence is complete and later detail/hardening candidates remain proposed (unactionable).
 - [Spike](SPIKE.md): `approved`, revision 2.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing E4-T1 then E4-T2.
 - E4-T1 and E4-T2 are `done`; E4-T3/T4 remain proposed.
+- Epic completion evidence: E4-T1 merged via https://github.com/Flippylolz/WEF/pull/12 and E4-T2 merged via https://github.com/Flippylolz/WEF/pull/13 on the integrated `main` stack; no open branches or PRs carry E4 implementation work.
 
 ## Milestones
 

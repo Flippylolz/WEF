@@ -53,7 +53,7 @@ make down
 
 Only Caddy publishes a host port, bound to loopback on `3100` by default. The API, web process, PostGIS, and operator container remain on an internal network. `make down` preserves the named database and media volumes.
 
-This describes the current local/rehearsal implementation. [ADR-020](AI/decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md) selects Nginx as the target NUC web server, with free Certbot renewal for both WEF and the existing AI Forecast service; [E7-T8](AI/epics/E7-production-delivery/proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md) remains non-actionable until its spike/plan gates pass.
+This describes the current local/rehearsal implementation. [ADR-020](AI/decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md) selects Nginx as the target NUC web server, with free Certbot renewal for both WEF and the existing AI Forecast service. [E7-T8](AI/epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) and [E7-T9](AI/epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) build inert topology/automation; [E7-T10](AI/epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) remains gated before live activation.
 
 `make up` applies forward Alembic migrations before API startup. `make seed-m1` explicitly converges a small invented Warsaw fixture for map/API verification; production requires a separate explicit rehearsal opt-in and the command never reads the local export.
 

@@ -32,7 +32,7 @@ flowchart LR
         forecast[Existing AI Forecast]
     end
 
-    visitor -->|"HTTPS 80/443 after E7-T8"| nginx
+    visitor -->|"HTTPS 80/443 after E7-T10"| nginx
     visitor -->|"Vector tiles"| tiles
     nginx --> web
     nginx --> api
@@ -49,7 +49,7 @@ flowchart LR
     github -->|"Immutable images over SSH deploy"| server
 ```
 
-OpenFreeMap and the geocoder are external dependencies, not containers owned by this project. All project-owned runtime processes are containerized. The implemented anonymous rehearsal still uses Caddy on port 3100. [E7-T8](../epics/E7-production-delivery/proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md) owns migration to shared Nginx plus free Certbot/Let's Encrypt renewal for WEF and the existing AI Forecast service; [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables sensitive WEF behavior only after that HTTPS gate.
+OpenFreeMap and the geocoder are external dependencies, not containers owned by this project. All project-owned runtime processes are containerized. The implemented anonymous rehearsal still uses Caddy on port 3100. [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) owns inert shared-edge topology, [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) owns cutover automation, and [E7-T10](../epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) owns the live Nginx/Certbot migration; [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables sensitive WEF behavior only after that HTTPS gate.
 
 ## Technology stack
 
@@ -88,7 +88,7 @@ Durable imports, media work, and Telegram updates do not run as FastAPI backgrou
 ### Data and edge
 
 - PostgreSQL with PostGIS for spatial predicates and indexes.
-- Nginx for target public TLS, routing, compression, security headers, and local media delivery; Certbot for free Let's Encrypt issuance/renewal. Caddy remains only in the implemented interim rehearsal until E7-T8.
+- Nginx for target public TLS, routing, compression, security headers, and local media delivery; Certbot for free Let's Encrypt issuance/renewal. Caddy remains only in the implemented interim rehearsal until E7-T10.
 - A mounted media volume for the MVP.
 - OpenFreeMap vector styles/tiles, configured through environment values.
 
@@ -178,7 +178,7 @@ infra/
   compose.yaml
   compose.production.yaml
   Caddyfile.production  # implemented interim WEF edge
-  nginx/                # target shared-edge configuration after E7-T8
+  nginx/                # target shared-edge configuration from E7-T8
 tests/
   fixtures/  # shared synthetic/redacted cross-application fixtures only
 .github/
@@ -195,7 +195,7 @@ The API, historical importer, and Telegram listener share feature/domain/applica
 
 ### Nginx and Certbot
 
-- Nginx is the target public web server and TLS reverse proxy on ports 80/443; the implemented Caddy edge continues serving the bounded anonymous WEF rehearsal on configurable port 3100 until E7-T8 cutover.
+- Nginx is the target public web server and TLS reverse proxy on ports 80/443; the implemented Caddy edge continues serving the bounded anonymous WEF rehearsal on configurable port 3100 until E7-T10 cutover.
 - Uses separate hostnames to route WEF and the existing AI Forecast frontend currently exposed on port 3000.
 - Certbot obtains free Let's Encrypt certificates, persists its complete state, renews unattended, and gracefully reloads Nginx only after successful renewal.
 - Routes `/api/*` to FastAPI.
@@ -257,7 +257,7 @@ The committed schema, frontend generation, static Redocly CI artifact, breaking-
 - The storage interface accepts a stream and returns an opaque key, checksum, byte count, detected MIME type, and dimensions/duration where available.
 - The local implementation writes atomically to a mounted volume.
 - Database rows store keys such as checksum-derived paths, never absolute host paths.
-- The active edge receives the same volume read-only: Caddy during the interim rehearsal and Nginx after E7-T8.
+- The active edge receives the same volume read-only: Caddy during the interim rehearsal and Nginx after E7-T10.
 - A future S3 implementation can preserve public API URL semantics.
 
 ## Main request flow
@@ -329,7 +329,7 @@ No dedicated metrics stack is required initially. Add one when logs and host-lev
 - Uploaded/source media is not executable and is served with detected content types plus `X-Content-Type-Options: nosniff`.
 - API query values are parameterized through SQLAlchemy.
 - CORS is unnecessary when the web and API are same-origin.
-- Rate limiting belongs at the active edge—target Nginx after E7-T8—for abusive public traffic; initial limits should be measured to avoid breaking map use.
+- Rate limiting belongs at the active edge—target Nginx after E7-T10—for abusive public traffic; initial limits should be measured to avoid breaking map use.
 
 ## Test strategy
 

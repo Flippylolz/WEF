@@ -1,6 +1,6 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
+import { forwardRef, useImperativeHandle, type ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { WarsawMap } from "@/components/warsaw-map";
@@ -11,6 +11,7 @@ const setWorkerUrl = vi.hoisted(() => vi.fn());
 vi.mock("maplibre-gl", () => ({ setWorkerUrl }));
 
 const easeTo = vi.fn();
+const fitBounds = vi.fn();
 const getClusterExpansionZoom = vi.fn(async () => 13);
 let clickedFeature: object = {
   id: "10000000-0000-4000-8000-000000000001",
@@ -19,36 +20,95 @@ let clickedFeature: object = {
 };
 
 vi.mock("react-map-gl/maplibre", () => ({
-  Map: ({
-    children,
-    onClick,
-    onLoad,
-  }: {
-    children: ReactNode;
-    onClick: (event: object) => void;
-    onLoad: () => void;
-  }) => (
-    <div>
-      <button type="button" onClick={onLoad}>
-        simulated-map-load
-      </button>
-      <button
-        type="button"
-        onClick={() =>
-          onClick({
-            features: [clickedFeature],
-            target: {
-              getSource: () => ({ getClusterExpansionZoom }),
-              easeTo,
-            },
-          })
-        }
-      >
-        simulated-map-click
-      </button>
-      {children}
-    </div>
-  ),
+  Map: forwardRef(function FakeMap(
+    {
+      children,
+      onClick,
+      onLoad,
+      onMoveEnd,
+    }: {
+      children: ReactNode;
+      onClick: (event: object) => void;
+      onLoad: () => void;
+      onMoveEnd: (event: object) => void;
+    },
+    ref,
+  ) {
+    useImperativeHandle(ref, () => ({
+      fitBounds: (
+        bounds: [[number, number], [number, number]],
+        options: object,
+      ) => {
+        fitBounds(bounds, options);
+        onMoveEnd({
+          target: {
+            getBounds: () => ({
+              getWest: () => bounds[0][0],
+              getSouth: () => bounds[0][1],
+              getEast: () => bounds[1][0],
+              getNorth: () => bounds[1][1],
+            }),
+          },
+        });
+      },
+    }));
+    return (
+      <div>
+        <button type="button" onClick={onLoad}>
+          simulated-map-load
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onClick({
+              features: [clickedFeature],
+              target: {
+                getSource: () => ({ getClusterExpansionZoom }),
+                easeTo,
+              },
+            })
+          }
+        >
+          simulated-map-click
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onMoveEnd({
+              target: {
+                getBounds: () => ({
+                  getWest: () => 20.81234549,
+                  getSouth: () => 52.12345651,
+                  getEast: () => 21.2,
+                  getNorth: () => 52.3,
+                }),
+              },
+            })
+          }
+        >
+          simulated-map-move
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onMoveEnd({
+              target: {
+                getBounds: () => ({
+                  getWest: () => 20.8,
+                  getSouth: () => 52.3,
+                  getEast: () => 21.2,
+                  getNorth: () => 52.3,
+                }),
+              },
+            })
+          }
+        >
+          simulated-map-move-flat
+        </button>
+        {children}
+      </div>
+    );
+  }),
   Source: ({
     children,
     data,
@@ -109,11 +169,13 @@ describe("WarsawMap", () => {
     };
     render(
       <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
         data={mapData}
         selectedId={null}
         loadingLabel="Loading interactive map"
         onSelect={onSelect}
         onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
       />,
     );
 
@@ -154,11 +216,13 @@ describe("WarsawMap", () => {
     };
     render(
       <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
         data={mapData}
         selectedId={null}
         loadingLabel="Loading interactive map"
         onSelect={onSelect}
         onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
       />,
     );
 
@@ -180,11 +244,13 @@ describe("WarsawMap", () => {
 
     render(
       <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
         data={mapData}
         selectedId={null}
         loadingLabel="Loading interactive map"
         onSelect={vi.fn()}
         onFailure={onFailure}
+        onViewportChange={vi.fn()}
       />,
     );
 
@@ -192,5 +258,108 @@ describe("WarsawMap", () => {
     expect(onFailure).not.toHaveBeenCalled();
     act(() => vi.advanceTimersByTime(1));
     expect(onFailure).toHaveBeenCalledOnce();
+  });
+
+  it("reports a normalized viewport after movement", async () => {
+    const user = userEvent.setup();
+    const onViewportChange = vi.fn();
+    render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={onViewportChange}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-move" }),
+    );
+
+    expect(onViewportChange).toHaveBeenCalledWith(
+      "20.812345,52.123457,21.2,52.3",
+    );
+  });
+
+  it("ignores a degenerate viewport reported mid-resize", async () => {
+    const user = userEvent.setup();
+    const onViewportChange = vi.fn();
+    render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={onViewportChange}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-move-flat" }),
+    );
+
+    expect(onViewportChange).not.toHaveBeenCalled();
+  });
+
+  it("fits the rendered map to a bounded URL viewport", async () => {
+    const user = userEvent.setup();
+    const props = {
+      data: mapData,
+      selectedId: null,
+      loadingLabel: "Loading interactive map",
+      onSelect: vi.fn(),
+      onFailure: vi.fn(),
+      onViewportChange: vi.fn(),
+    };
+    const view = render(<WarsawMap bbox="20.7,52.0,21.4,52.4" {...props} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+    view.rerender(<WarsawMap bbox="20.65,51.8,21.45,52.6" {...props} />);
+
+    expect(fitBounds).toHaveBeenLastCalledWith(
+      [
+        [20.65, 51.8],
+        [21.45, 52.6],
+      ],
+      { duration: 0, padding: 32 },
+    );
+    expect(props.onViewportChange).not.toHaveBeenCalled();
+  });
+
+  it("does not refit when the URL catches up with the reported viewport", async () => {
+    const user = userEvent.setup();
+    const props = {
+      data: mapData,
+      selectedId: null,
+      loadingLabel: "Loading interactive map",
+      onSelect: vi.fn(),
+      onFailure: vi.fn(),
+      onViewportChange: vi.fn(),
+    };
+    const view = render(<WarsawMap bbox="20.7,52.0,21.4,52.4" {...props} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-move" }),
+    );
+    expect(props.onViewportChange).toHaveBeenCalledWith(
+      "20.812345,52.123457,21.2,52.3",
+    );
+    fitBounds.mockClear();
+
+    view.rerender(
+      <WarsawMap bbox="20.812345,52.123457,21.2,52.3" {...props} />,
+    );
+
+    expect(fitBounds).not.toHaveBeenCalled();
   });
 });

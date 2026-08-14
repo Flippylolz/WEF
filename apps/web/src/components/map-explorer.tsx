@@ -1,18 +1,28 @@
 "use client";
 
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { MapFilterControls } from "@/components/map-filter-controls";
 
 import {
   fetchFacets,
   fetchLocationMap,
   fetchLocationOffers,
-  type FilterFacets,
-  type LocationMap,
   type LocationMapFeature,
   type LocationOfferPage,
 } from "@/lib/catalog-api";
+import {
+  DEFAULT_MAP_SEARCH_STATE,
+  normalizeBbox,
+  parseMapSearchParams,
+  serializeMapSearchState,
+  toMapLocationQuery,
+  type MapSearchState,
+} from "@/lib/map-search-params";
 
 const WarsawMap = dynamic(
   () => import("@/components/warsaw-map").then((module) => module.WarsawMap),
@@ -22,11 +32,6 @@ const WarsawMap = dynamic(
   },
 );
 
-type CatalogState =
-  | { status: "loading" }
-  | { status: "error" }
-  | { status: "ready"; map: LocationMap; facets: FilterFacets };
-
 type OfferState =
   | { status: "idle" }
   | { status: "loading" }
@@ -35,139 +40,320 @@ type OfferState =
 
 export function MapExplorer() {
   const t = useTranslations("map");
-  const [catalog, setCatalog] = useState<CatalogState>({ status: "loading" });
-  const [offers, setOffers] = useState<OfferState>({ status: "idle" });
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawSearch = searchParams.toString();
+  const searchState = useMemo(
+    () => parseMapSearchParams(new URLSearchParams(rawSearch)),
+    [rawSearch],
+  );
+  const canonicalSearch = useMemo(
+    () => serializeMapSearchState(searchState),
+    [searchState],
+  );
+  const mapQueryParams = useMemo(
+    () => toMapLocationQuery(searchState),
+    [searchState],
+  );
+  const filtersOnlySearch = useMemo(() => {
+    const params = new URLSearchParams(canonicalSearch);
+    params.delete("bbox");
+    return params.toString();
+  }, [canonicalSearch]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedFeatureSnapshot, setSelectedFeatureSnapshot] =
+    useState<LocationMapFeature | null>(null);
   const [mapFailed, setMapFailed] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    async function loadCatalog() {
-      const [mapResult, facetResult] = await Promise.all([
-        fetchLocationMap(),
-        fetchFacets(),
-      ]);
-      if (!active) return;
-      if (mapResult.state === "error" || facetResult.state === "error") {
-        setCatalog({ status: "error" });
-        return;
-      }
-      setCatalog({
-        status: "ready",
-        map: mapResult.data,
-        facets: facetResult.data,
-      });
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const viewportTimer = useRef<number | null>(null);
+  const cancelViewportUpdate = useCallback(() => {
+    if (viewportTimer.current !== null) {
+      window.clearTimeout(viewportTimer.current);
+      viewportTimer.current = null;
     }
-    void loadCatalog();
-    return () => {
-      active = false;
-    };
   }, []);
 
+  useEffect(() => {
+    cancelViewportUpdate();
+    if (rawSearch !== canonicalSearch) {
+      router.replace(href(pathname, canonicalSearch), { scroll: false });
+    }
+  }, [cancelViewportUpdate, canonicalSearch, pathname, rawSearch, router]);
+
+  useEffect(() => {
+    return cancelViewportUpdate;
+  }, [cancelViewportUpdate]);
+
+  const facetsQuery = useQuery({
+    queryKey: ["filter-facets"],
+    queryFn: async ({ signal }) => {
+      const result = await fetchFacets({ signal });
+      if (result.state === "error") throw new Error("facets");
+      return result.data;
+    },
+  });
+  const mapQuery = useQuery({
+    queryKey: ["location-map", canonicalSearch],
+    queryFn: async ({ signal }) => {
+      const result = await fetchLocationMap(mapQueryParams, { signal });
+      if (result.state === "error") throw new Error("map");
+      return result.data;
+    },
+    placeholderData: keepPreviousData,
+  });
+  const offersQuery = useQuery({
+    queryKey: ["location-offers", selectedId, canonicalSearch],
+    enabled: selectedId !== null,
+    queryFn: async ({ signal }) => {
+      if (selectedId === null) throw new Error("missing location");
+      const result = await fetchLocationOffers(selectedId, mapQueryParams, {
+        signal,
+      });
+      if (result.state === "error") throw new Error("offers");
+      return result.data;
+    },
+  });
+
   const selectedFeature = useMemo(() => {
-    if (catalog.status !== "ready" || selectedId === null) return null;
+    if (selectedId === null) return null;
     return (
-      catalog.map.features.find((feature) => feature.id === selectedId) ?? null
+      mapQuery.data?.features.find((feature) => feature.id === selectedId) ??
+      selectedFeatureSnapshot
     );
-  }, [catalog, selectedId]);
+  }, [mapQuery.data?.features, selectedFeatureSnapshot, selectedId]);
 
-  async function selectLocation(locationId: string) {
+  const navigate = useCallback(
+    (nextState: MapSearchState, mode: "push" | "replace") => {
+      cancelViewportUpdate();
+      const nextSearch = serializeMapSearchState(nextState);
+      if (nextSearch === canonicalSearch) return;
+      router[mode](href(pathname, nextSearch), { scroll: false });
+    },
+    [cancelViewportUpdate, canonicalSearch, pathname, router],
+  );
+
+  const handleViewportChange = useCallback(
+    (bbox: string) => {
+      const normalized = normalizeBbox(bbox);
+      cancelViewportUpdate();
+      if (normalized === null || normalized === searchState.bbox) return;
+      viewportTimer.current = window.setTimeout(() => {
+        viewportTimer.current = null;
+        navigate({ ...searchState, bbox: normalized }, "replace");
+      }, 300);
+    },
+    [cancelViewportUpdate, navigate, searchState],
+  );
+
+  function selectLocation(locationId: string) {
+    const currentFeature = mapQuery.data?.features.find(
+      (feature) => feature.id === locationId,
+    );
+    if (currentFeature) setSelectedFeatureSnapshot(currentFeature);
     setSelectedId(locationId);
-    setOffers({ status: "loading" });
-    const result = await fetchLocationOffers(locationId);
-    setOffers(
-      result.state === "ready"
-        ? { status: "ready", data: result.data }
-        : { status: "error" },
-    );
+    setSidebarOpen(true);
   }
 
-  if (catalog.status === "loading") {
-    return (
-      <p className="state-message" role="status">
-        {t("loading")}
-      </p>
-    );
-  }
-
-  if (catalog.status === "error") {
-    return (
-      <p className="state-message state-error" role="alert">
-        {t("error")}
-      </p>
-    );
-  }
-
-  if (catalog.map.features.length === 0) {
-    return (
-      <p className="state-message" role="status">
-        {t("empty")}
-      </p>
-    );
-  }
+  const offers: OfferState =
+    selectedId === null
+      ? { status: "idle" }
+      : offersQuery.isPending
+        ? { status: "loading" }
+        : offersQuery.isError || offersQuery.data === undefined
+          ? { status: "error" }
+          : { status: "ready", data: offersQuery.data };
+  const map = mapQuery.data;
 
   return (
-    <section className="map-explorer" aria-label={t("explorerLabel")}>
-      <div className="map-region">
-        {mapFailed ? (
-          <div className="map-fallback" role="status">
-            <strong>{t("mapUnavailable")}</strong>
-            <span>{t("listStillAvailable")}</span>
-          </div>
-        ) : (
-          <WarsawMap
-            data={catalog.map}
-            selectedId={selectedId}
-            loadingLabel={t("mapLoading")}
-            onSelect={(id) => void selectLocation(id)}
-            onFailure={() => setMapFailed(true)}
-          />
-        )}
-        <p className="map-attribution">
-          © OpenFreeMap · © OpenStreetMap contributors
-        </p>
-      </div>
-
-      <aside className="results-panel" aria-label={t("locationsLabel")}>
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">{t("locationsEyebrow")}</p>
-            <h2>{t("locationsTitle")}</h2>
-          </div>
-          <span className="result-count">
-            {t("locationCount", { count: catalog.map.meta.feature_count })}
-          </span>
-        </div>
-        <p className="facet-summary">
-          {t("districtCount", { count: catalog.facets.districts.length })}
-        </p>
-        <ul className="location-list">
-          {catalog.map.features.map((feature) => (
-            <LocationButton
-              key={feature.id}
-              feature={feature}
-              selected={feature.id === selectedId}
+    <section className="map-explorer-shell" aria-label={t("explorerLabel")}>
+      <div
+        className={`map-explorer${sidebarOpen ? "" : " map-explorer-collapsed"}`}
+      >
+        <div className="map-region">
+          {mapFailed ? (
+            <div className="map-fallback" role="status">
+              <strong>{t("mapUnavailable")}</strong>
+              <span>{t("listStillAvailable")}</span>
+            </div>
+          ) : map ? (
+            <WarsawMap
+              bbox={searchState.bbox}
+              data={map}
+              selectedId={selectedId}
+              loadingLabel={t("mapLoading")}
               onSelect={selectLocation}
+              onFailure={() => setMapFailed(true)}
+              onViewportChange={handleViewportChange}
             />
-          ))}
-        </ul>
+          ) : (
+            <div
+              className={`map-fallback${mapQuery.isError ? " state-error" : ""}`}
+              role={mapQuery.isError ? "alert" : "status"}
+            >
+              <strong>{mapQuery.isError ? t("error") : t("loading")}</strong>
+              {mapQuery.isError ? <span>{t("filtersPreserved")}</span> : null}
+            </div>
+          )}
+          {!sidebarOpen ? (
+            <button
+              className="sidebar-toggle sidebar-toggle-floating"
+              type="button"
+              aria-label={t("showPanel")}
+              title={t("showPanel")}
+              aria-expanded={false}
+              aria-controls="explorer-sidebar"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <ChevronLeftIcon />
+            </button>
+          ) : null}
+          <p className="map-attribution">
+            © OpenFreeMap · © OpenStreetMap contributors
+          </p>
+        </div>
 
-        <OfferPanel
-          feature={selectedFeature}
-          offers={offers}
-          onRetry={
-            selectedId ? () => void selectLocation(selectedId) : undefined
-          }
-        />
-      </aside>
+        <aside
+          id="explorer-sidebar"
+          className={`explorer-sidebar${sidebarOpen ? "" : " explorer-sidebar-collapsed"}`}
+          aria-label={t("panelLabel")}
+          inert={!sidebarOpen}
+        >
+          <MapFilterControls
+            key={filtersOnlySearch}
+            facets={facetsQuery.data ?? null}
+            facetsError={facetsQuery.isError}
+            facetsLoading={facetsQuery.isPending}
+            state={searchState}
+            onApply={(nextState) =>
+              navigate({ ...nextState, bbox: searchState.bbox }, "push")
+            }
+            onClear={() => navigate(DEFAULT_MAP_SEARCH_STATE, "push")}
+            collapseControl={
+              <button
+                className="sidebar-toggle"
+                type="button"
+                aria-label={t("hidePanel")}
+                title={t("hidePanel")}
+                aria-expanded={sidebarOpen}
+                aria-controls="explorer-sidebar"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <ChevronRightIcon />
+              </button>
+            }
+          />
+
+          <section className="results-panel" aria-label={t("locationsLabel")}>
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">{t("locationsEyebrow")}</p>
+                <h2>{t("locationsTitle")}</h2>
+              </div>
+              <span className="result-count">
+                {t("locationCount", {
+                  count: map?.meta.feature_count ?? 0,
+                })}
+              </span>
+            </div>
+            {facetsQuery.data ? (
+              <p className="facet-summary">
+                {t("districtCount", {
+                  count: facetsQuery.data.districts.length,
+                })}
+              </p>
+            ) : null}
+            {mapQuery.isFetching && map ? (
+              <p className="results-status" role="status">
+                {t("updating")}
+              </p>
+            ) : null}
+            {mapQuery.isError ? (
+              <p className="results-status state-error" role="alert">
+                {t("error")}
+              </p>
+            ) : null}
+            {mapQuery.isPending ? (
+              <p className="results-status" role="status">
+                {t("loading")}
+              </p>
+            ) : null}
+            {map && map.features.length === 0 ? (
+              <p className="results-status" role="status">
+                {t("empty")}
+              </p>
+            ) : null}
+            {map && map.features.length > 0 ? (
+              <ul className="location-list">
+                {map.features.map((feature) => (
+                  <LocationButton
+                    key={feature.id}
+                    feature={feature}
+                    selected={feature.id === selectedId}
+                    onSelect={selectLocation}
+                  />
+                ))}
+              </ul>
+            ) : null}
+
+            <OfferPanel
+              feature={selectedFeature}
+              offers={offers}
+              onRetry={
+                selectedId ? () => void offersQuery.refetch() : undefined
+              }
+            />
+          </section>
+        </aside>
+      </div>
     </section>
   );
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      height="16"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 24 24"
+      width="16"
+    >
+      <path d="m15 6-6 6 6 6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      height="16"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 24 24"
+      width="16"
+    >
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+function href(pathname: string, search: string) {
+  return search ? `${pathname}?${search}` : pathname;
 }
 
 type LocationButtonProps = {
   feature: LocationMapFeature;
   selected: boolean;
-  onSelect: (id: string) => Promise<void>;
+  onSelect: (id: string) => void;
 };
 
 function LocationButton({ feature, selected, onSelect }: LocationButtonProps) {
@@ -179,7 +365,7 @@ function LocationButton({ feature, selected, onSelect }: LocationButtonProps) {
         className="location-button"
         type="button"
         aria-pressed={selected}
-        onClick={() => void onSelect(feature.id)}
+        onClick={() => onSelect(feature.id)}
       >
         <span>
           <strong>{properties.display_name}</strong>
@@ -239,12 +425,18 @@ function OfferPanel({ feature, offers, onRetry }: OfferPanelProps) {
           <h3 id="offer-panel-title">{feature.properties.display_name}</h3>
         </div>
         <span className="result-count">
-          {offers.data.matching_count}/{offers.data.total_count}
+          {t("offerCountSummary", {
+            matching: offers.data.matching_count,
+            total: offers.data.total_count,
+          })}
         </span>
       </div>
       <ul className="offer-list">
         {offers.data.items.map((offer) => (
-          <li key={offer.id} className="offer-card">
+          <li
+            key={offer.id}
+            className={`offer-card${offer.matches_filters ? "" : " offer-card-nonmatching"}`}
+          >
             <div className="offer-card-heading">
               <strong>{offer.display_name}</strong>
               <time dateTime={offer.published_at}>
@@ -253,6 +445,9 @@ function OfferPanel({ feature, offers, onRetry }: OfferPanelProps) {
                 }).format(new Date(offer.published_at))}
               </time>
             </div>
+            {!offer.matches_filters ? (
+              <p className="nonmatching-note">{t("nonMatchingOffer")}</p>
+            ) : null}
             <dl className="offer-prices">
               <PriceRow
                 label={t("apartmentPrice")}

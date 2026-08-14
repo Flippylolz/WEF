@@ -17,10 +17,10 @@ a responsive, accessible map/list/detail experience over dated offers.
 
 ## Approval state
 
-- Epic workspace status: `ready`; E5-T1 is complete and E5-T2 is eligible to start on its own branch.
-- [Spike](SPIKE.md): `approved`, revision 2.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing E5-T1 then E5-T2.
-- E5-T1 is `done`; E5-T2 is promoted/`ready`; E5-T3 through E5-T5 remain proposed.
+- Epic workspace status: `ready`; E5-T1 and E5-T2 are complete and the full remaining sequence is approved.
+- [Spike](SPIKE.md): `approved`, revision 3.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, sequencing E5-T2 through E5-T5 after the documentation branch.
+- E5-T1 and E5-T2 are `done` (E5-T2 merged via PR #43 with post-merge fix PR #47); E5-T3 through E5-T5 are promoted/`draft` behind explicit E4/E5 dependency gates.
 
 ## Milestones
 
@@ -45,13 +45,10 @@ a responsive, accessible map/list/detail experience over dated offers.
 ## Promoted tasks
 
 - [E5-T1: Build map shell and grouped pin interaction](tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — `done`, P0/L, M1
-- [E5-T2: Add URL-backed filters and viewport querying](tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md) — `ready`, P0/L, M1
-
-## Proposed tasks
-
-- [E5-T3: Build offer detail and media gallery](proposed-tasks/E5-T3-build-offer-detail-and-media-gallery.md) — `proposed`, P0/L, M3
-- [E5-T4: Complete responsive list/map accessibility](proposed-tasks/E5-T4-complete-responsive-list-map-accessibility.md) — `proposed`, P1/L, M3
-- [E5-T5: Performance and production UX pass](proposed-tasks/E5-T5-performance-and-production-ux-pass.md) — `proposed`, P1/M, M3
+- [E5-T2: Add URL-backed filters and viewport querying](tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md) — `done`, P0/L, M1
+- [E5-T3: Build offer detail and media gallery](tasks/E5-T3-build-offer-detail-and-media-gallery.md) — `draft`, P0/L, M3; blocked on E4-T3
+- [E5-T4: Complete responsive list/map accessibility](tasks/E5-T4-complete-responsive-list-map-accessibility.md) — `draft`, P1/L, M3; blocked on E5-T3 (E5-T2 is complete)
+- [E5-T5: Performance and production UX pass](tasks/E5-T5-performance-and-production-ux-pass.md) — `draft`, P1/M, M3; blocked on E5-T4/E4-T4
 
 ## Cross-epic dependencies
 
@@ -64,7 +61,9 @@ a responsive, accessible map/list/detail experience over dated offers.
 - Outgoing: E6-T2 depends on E5-T3.
 - Outgoing: E6-T6 depends on E5-T3.
 
-The exact normalized dependency and traceability registry is maintained in the [epics index](../README.md). Each workflow candidate is authoritative only in the single linked `proposed-tasks/` file above; its `legacy-roadmap:*` source value records non-path provenance.
+The exact normalized dependency and traceability registry is maintained in the [epics index](../README.md). Every E5 task now has one authoritative promoted definition under `tasks/`; promotion metadata preserves its prior roadmap/proposed provenance.
+
+E3/E4 implementation is being delivered by parallel agents. E5 never replaces those dependencies with mocked contracts: E5-T3 and E5-T5 remain blocked until their exact E4 task ancestry is recorded or complete.
 
 ## Lifecycle
 
