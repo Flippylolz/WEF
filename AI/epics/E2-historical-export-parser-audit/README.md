@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E2
 title: "Historical export parser and audit"
-status: ready
+status: done
 milestones: [M1, M2]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,15 @@ deterministic extraction from the raw Telegram export with reconciled dry-run re
 
 ## Approval state
 
-- Epic workspace status: `ready`.
+- Epic workspace status: `done`.
 - [Spike](SPIKE.md): `approved`, revision 3, including the complete parser/report/audit boundary and internal raw-data policy.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, sequencing promoted E2-T2 through E2-T5.
 - E2-T1 is promoted/`done` through [PR #33](https://github.com/Flippylolz/WEF/pull/33), with aggregate-only source acceptance and required CI evidence.
-- E2-T2 is `ready`; E2-T3 through E2-T5 are promoted/`draft` and dependency-blocked.
+- E2-T2 is `done` through [PR #36](https://github.com/Flippylolz/WEF/pull/36).
+- E2-T3 is `done` through [PR #37](https://github.com/Flippylolz/WEF/pull/37).
+- E2-T4 is `done` through [PR #40](https://github.com/Flippylolz/WEF/pull/40).
+- E2-T5 is `done` through [PR #42](https://github.com/Flippylolz/WEF/pull/42),
+  with a reconciled [complete-export audit](AUDIT.md) and green required CI.
 
 ## Milestones
 
@@ -45,10 +49,10 @@ deterministic extraction from the raw Telegram export with reconciled dry-run re
 ## Promoted tasks
 
 - [E2-T1: Implement source adapter and fixture corpus](tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md) — `done`, P0/M, M1
-- [E2-T2: Implement candidate detection and typed extractors](tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md) — `ready`, P0/L, M1
-- [E2-T3: Implement deterministic media grouping](tasks/E2-T3-implement-media-grouping.md) — `draft`, P0/M, M2
-- [E2-T4: Implement dry-run reports and operator wiring](tasks/E2-T4-implement-dry-run-reports.md) — `draft`, P0/M, M2
-- [E2-T5: Audit the complete export](tasks/E2-T5-audit-the-complete-export.md) — `draft`, P0/L, M2
+- [E2-T2: Implement candidate detection and typed extractors](tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md) — `done`, P0/L, M1
+- [E2-T3: Implement deterministic media grouping](tasks/E2-T3-implement-media-grouping.md) — `done`, P0/M, M2
+- [E2-T4: Implement dry-run reports and operator wiring](tasks/E2-T4-implement-dry-run-reports.md) — `done`, P0/M, M2
+- [E2-T5: Audit the complete export](tasks/E2-T5-audit-the-complete-export.md) — `done`, P0/L, M2
 
 ## Cross-epic dependencies
 

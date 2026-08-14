@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E3
 title: "Database, geocoding, and media pipeline"
-status: ready
+status: selected
 milestones: [M1, M2]
 owner: owner
 spike: SPIKE.md
@@ -17,10 +17,10 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 
 ## Approval state
 
-- Epic workspace status: `ready`; the synthetic M1 task is complete and later historical/geocoding/media candidates remain proposed.
-- [Spike](SPIKE.md): `approved`, revision 2.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing promoted E3-T1 only.
-- E3-T1 is `done`; E3-T2 through E3-T5 remain non-actionable under `proposed-tasks/`.
+- Epic workspace status: `selected`; completed E3-T1 remains governed by the old approvals while spike revision 3 awaits owner review.
+- [Spike](SPIKE.md): `awaiting_approval`, revision 3, approval `pending`.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): unchanged `approved` revision 2; it authorized only completed E3-T1.
+- E3-T1 is `done`; unchanged revision 1 E3-T2 through E3-T5 remain proposed and non-actionable under `proposed-tasks/`.
 
 ## Milestones
 
@@ -43,6 +43,7 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 - [ADR-011](../../decisions/adr/ADR-011-accounts-gate-contact-reveal.md)
 - [ADR-012](../../decisions/adr/ADR-012-backend-centric-modular-monolith.md)
 - [ADR-016](../../decisions/adr/ADR-016-pseudonymous-accounts-owner-console.md)
+- [ADR-021](../../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) — proposed by spike revision 3, not accepted.
 - [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md)
 
 ## Promoted task
@@ -62,7 +63,7 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 - Incoming: E3-T2 depends on E2-T2.
 - Incoming: E3-T3 depends on E2-T2.
 - Incoming: E3-T4 depends on E2-T3.
-- Incoming: E3-T5 depends on E2-T5.
+- Incoming: E3-T5's E2-T5 dependency is satisfied through merged [PR #42](https://github.com/Flippylolz/WEF/pull/42); later E3 dependencies remain unapproved/incomplete.
 - Outgoing: synthetic M1 E4-T1 depends on E3-T1; publishing non-fixture coordinates still requires E3-T3.
 - Outgoing: E4-T3 depends on E3-T4.
 - Outgoing: E4-T4 depends on E3-T5.

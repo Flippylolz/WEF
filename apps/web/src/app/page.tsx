@@ -1,6 +1,8 @@
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
 import { MapExplorer } from "@/components/map-explorer";
+import { QueryProvider } from "@/components/query-provider";
 
 export default async function Home() {
   const t = await getTranslations("home");
@@ -12,7 +14,17 @@ export default async function Home() {
         <h1 id="page-title">{t("title")}</h1>
         <p className="subtitle">{t("subtitle")}</p>
       </header>
-      <MapExplorer />
+      <QueryProvider>
+        <Suspense
+          fallback={
+            <p className="state-message" role="status">
+              Loading Warsaw locations…
+            </p>
+          }
+        >
+          <MapExplorer />
+        </Suspense>
+      </QueryProvider>
     </main>
   );
 }

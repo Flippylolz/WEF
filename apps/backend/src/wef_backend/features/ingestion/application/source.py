@@ -103,6 +103,11 @@ class HistoricalSourceScan(Protocol):
         ...
 
     @property
+    def source(self) -> SourceMetadata:
+        """Return safe preflight metadata without claiming complete exhaustion."""
+        ...
+
+    @property
     def summary(self) -> ScanSummary:
         """Return terminal aggregates or reject partial access."""
         ...

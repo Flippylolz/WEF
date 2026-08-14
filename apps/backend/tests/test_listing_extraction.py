@@ -220,6 +220,137 @@ def test_conflicting_values_and_content_types_remain_null() -> None:
         assert all(span.extract(text) for span in warning.spans)
 
 
+def test_ambiguous_strong_headers_without_location_remain_reviewable() -> None:
+    """No source-template tiebreak is invented when strong headers conflict."""
+    result = _candidate("Development opportunity\nFor sale | Apartment\nCena: 500 000 PLN")
+    listing = result.listing
+    assert listing is not None
+    assert listing.content_type is None
+    assert result.decision.content_type is None
+    assert [warning.code for warning in result.warnings] == [
+        ExtractionWarningCode.CONFLICTING_CONTENT_TYPE
+    ]
+
+
+def test_source_shaped_prices_and_room_hashtags_preserve_typed_ranges() -> None:
+    """Per-area context is not mistaken for a range and room tags remain typed."""
+    scalar = _candidate(
+        "Покупка | Квартира\n"
+        "Цена: 700 000 PLN (14 000 PLN/m²)\n"
+        "Комнаты: #1_комната #2_комнаты #3_комнаты"
+    )
+    scalar_listing = scalar.listing
+    assert scalar_listing is not None
+    assert scalar_listing.apartment_price is not None
+    assert scalar_listing.apartment_price.value.amount == DecimalRange(
+        Decimal(700_000),
+        Decimal(700_000),
+    )
+    assert scalar_listing.rooms is not None
+    assert scalar_listing.rooms.value == IntegerRange(1, 3)
+
+    ranged = _candidate(
+        "Inwestycja | Synthetic\n"
+        "Lokalizacja: Miasto Testowe\n"
+        "Cena: 650 000-810 000 PLN (12 500 PLN/m²)"
+    )
+    ranged_listing = ranged.listing
+    assert ranged_listing is not None
+    assert ranged_listing.apartment_price is not None
+    assert ranged_listing.apartment_price.value.amount == DecimalRange(
+        Decimal(650_000),
+        Decimal(810_000),
+    )
+
+    unknown_primary_currency = _candidate("For sale | Apartment\nPrice: 500000 (14 000 PLN/m²)")
+    unknown_listing = unknown_primary_currency.listing
+    assert unknown_listing is not None
+    assert unknown_listing.apartment_price is not None
+    assert unknown_listing.apartment_price.value.currency is None
+    assert [
+        (warning.code, warning.field_name) for warning in unknown_primary_currency.warnings
+    ] == [(ExtractionWarningCode.UNKNOWN_CURRENCY, "apartment_price")]
+
+    tagged = _candidate("For sale | Apartment\nPrice: 500 000 PLN\n#1_room #2_rooms #4_rooms")
+    tagged_listing = tagged.listing
+    assert tagged_listing is not None
+    assert tagged_listing.rooms is not None
+    assert tagged_listing.rooms.value == IntegerRange(1, 4)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "2.5",
+        "4-2",
+        "2-25",
+        "2-3-4",
+        "#2_roommate",
+    ],
+)
+def test_malformed_labeled_room_values_are_not_invented(value: str) -> None:
+    """Only bounded ordered integer scalar/range room labels are accepted."""
+    result = _candidate(f"For sale | Apartment\nPrice: 500 000 PLN\nRooms: {value}")
+    listing = result.listing
+    assert listing is not None
+    assert listing.rooms is None
+    assert [(warning.code, warning.field_name) for warning in result.warnings] == [
+        (ExtractionWarningCode.INVALID_RANGE, "rooms")
+    ]
+
+
+def test_room_conflicts_and_invalid_matches_remain_reviewable() -> None:
+    """Divergent values stay null and invalid labels survive alongside valid values."""
+    conflicting = _candidate("For sale | Apartment\nPrice: 500 000 PLN\nRooms: 2\nRooms: 3")
+    assert conflicting.listing is not None
+    assert conflicting.listing.rooms is None
+    assert [(warning.code, warning.field_name) for warning in conflicting.warnings] == [
+        (ExtractionWarningCode.CONFLICTING_VALUES, "rooms")
+    ]
+
+    mixed = _candidate("For sale | Apartment\nPrice: 500 000 PLN\nRooms: 2\nRooms: 2.5")
+    assert mixed.listing is not None
+    assert mixed.listing.rooms is not None
+    assert mixed.listing.rooms.value == IntegerRange(2, 2)
+    assert [(warning.code, warning.field_name) for warning in mixed.warnings] == [
+        (ExtractionWarningCode.INVALID_RANGE, "rooms")
+    ]
+
+    label_and_tag = _candidate("For sale | Apartment\nPrice: 500 000 PLN\nRooms: 2\n#3_rooms")
+    assert label_and_tag.listing is not None
+    assert label_and_tag.listing.rooms is None
+    assert [(warning.code, warning.field_name) for warning in label_and_tag.warnings] == [
+        (ExtractionWarningCode.CONFLICTING_VALUES, "rooms")
+    ]
+
+
+def test_room_hashtags_require_a_trailing_word_boundary() -> None:
+    """A roommate hashtag must not become room-count evidence."""
+    result = _candidate("For sale | Apartment\nPrice: 500 000 PLN\n#2_roommate")
+    assert result.listing is not None
+    assert result.listing.rooms is None
+    assert CandidateReason.ROOM_MARKER not in {signal.reason for signal in result.decision.signals}
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "500 000 PLN 600 000 700 000",
+        "500 000-600 000-700 000 PLN",
+        "500 000 PLN reference 2026",
+        "500 000 PLN (14 000 PLN/m²) reference 2026",
+    ],
+)
+def test_prices_reject_unexplained_extra_numbers(value: str) -> None:
+    """Only an explicit per-area amount may be ignored after a total price."""
+    result = _candidate(f"For sale | Apartment\nPrice: {value}")
+    assert result.listing is not None
+    assert result.listing.apartment_price is None
+    assert [(warning.code, warning.field_name) for warning in result.warnings] == [
+        (ExtractionWarningCode.INVALID_RANGE, "apartment_price")
+    ]
+
+
 def test_invalid_ranges_are_reviewable_and_not_reordered() -> None:
     """Reversed values do not become invented normalized ranges."""
     result = _candidate("Kupno | Mieszkanie\nCena: 800 000-700 000 PLN\nPowierzchnia: 60-40 m2")
@@ -267,20 +398,22 @@ def test_non_candidates_and_service_records_have_no_derived_listing() -> None:
     assert extract_listing(_message("Cena: 20 PLN")).listing is None
 
 
-def test_extraction_does_not_mutate_source_and_versions_are_explicit() -> None:
-    """Repeated versions leave raw text/payload/checksum byte semantics untouched."""
+def test_extraction_does_not_mutate_source_and_version_is_rule_bound() -> None:
+    """Rule provenance cannot be relabeled independently of executable behavior."""
     message = _message("Kupno | Mieszkanie\nCena: 123 456 PLN\nPokoje: 2")
     before = (message.text, message.raw_payload, message.checksum)
 
-    custom = extract_listing(message, parser_version="e2-test-version")
+    result = extract_listing(message)
 
     assert (message.text, message.raw_payload, message.checksum) == before
-    assert custom.decision.parser_version == "e2-test-version"
-    assert custom.listing is not None
-    assert custom.listing.parser_version == "e2-test-version"
+    assert result.decision.parser_version == PARSER_VERSION
+    assert result.listing is not None
+    assert result.listing.parser_version == PARSER_VERSION
     assert all(
-        signal.provenance.rule_version == "e2-test-version" for signal in custom.decision.signals
+        signal.provenance.rule_version == PARSER_VERSION for signal in result.decision.signals
     )
+    with pytest.raises(TypeError, match="parser_version"):
+        extract_listing(message, parser_version="misleading-label")  # type: ignore[call-arg]
 
 
 def test_extraction_domain_values_reject_contradictory_shapes() -> None:

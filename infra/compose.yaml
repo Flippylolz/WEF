@@ -150,6 +150,11 @@ services:
     command: ["wef-importer-dry-run"]
     environment:
       WEF_SOURCE_PATH: /source
+      WEF_HISTORICAL_EXPORT_FILENAME: ${WEF_HISTORICAL_EXPORT_FILENAME:-result.json}
+      WEF_HISTORICAL_CHANNEL_ID: ${WEF_HISTORICAL_CHANNEL_ID:-2180077318}
+      WEF_HISTORICAL_CHANNEL_TYPE: ${WEF_HISTORICAL_CHANNEL_TYPE:-public_channel}
+      WEF_HISTORICAL_CHANNEL_NAME: ${WEF_HISTORICAL_CHANNEL_NAME:-El Estate | Покупка Варшава}
+      WEF_INGESTION_REPORT_PATH: ${WEF_INGESTION_REPORT_PATH:-/app/media/reports/e2-dry-run}
     depends_on:
       media-init:
         condition: service_completed_successfully

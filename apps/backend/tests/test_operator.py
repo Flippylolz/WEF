@@ -2,12 +2,24 @@
 
 import errno
 import json
+from io import StringIO
 from pathlib import Path
 
 import pytest
 
 from wef_backend import operator
-from wef_backend.operator import UnsafeSourceMountError, inspect_source
+from wef_backend.features.ingestion.application import PARSER_VERSION, REPORT_VERSION
+from wef_backend.features.ingestion.domain import (
+    CountBucket,
+    DryRunCounts,
+    DryRunErrorCode,
+    DryRunReport,
+    DryRunSource,
+    DryRunTerminalStatus,
+    StageTiming,
+)
+from wef_backend.features.ingestion.infrastructure import ReportWriteError
+from wef_backend.operator import OperatorExitCode, UnsafeSourceMountError, inspect_source
 from wef_backend.settings import Settings
 
 
@@ -67,20 +79,203 @@ def test_inspect_source_accepts_read_only_directory(
     )
 
 
-def test_main_emits_json(
+def test_run_operator_emits_redacted_success_summary(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The command emits stable machine-readable metadata."""
-    expected = operator.SourceInspection(file_count=2, read_only=True, source=str(tmp_path))
-    monkeypatch.setattr(operator, "load_settings", lambda: Settings(source_path=tmp_path))
-    monkeypatch.setattr(operator, "inspect_source", lambda _source: expected)
+    """Operator output contains status/counts but no configured internal paths."""
+    settings = Settings(
+        source_path=tmp_path,
+        ingestion_report_path=tmp_path / "private" / "report",
+    )
+    output = StringIO()
+    written: list[DryRunReport] = []
 
-    operator.main()
+    class FakeWriter:
+        def __init__(self, destination: Path) -> None:
+            assert destination == settings.ingestion_report_path
 
-    assert json.loads(capsys.readouterr().out) == {
-        "file_count": 2,
-        "read_only": True,
-        "source": str(tmp_path),
+        def write(self, report: DryRunReport) -> None:
+            written.append(report)
+
+    monkeypatch.setattr(
+        operator,
+        "inspect_source",
+        lambda _source: operator.SourceInspection(
+            file_count=2,
+            read_only=True,
+            source=str(tmp_path),
+        ),
+    )
+    monkeypatch.setattr(operator, "TelegramDesktopExportAdapter", lambda *_args: object())
+    monkeypatch.setattr(operator, "run_dry_run", lambda *_args, **_kwargs: _report())
+    monkeypatch.setattr(operator, "AtomicReportWriter", FakeWriter)
+
+    exit_code = operator.run_operator(settings, stdout=output)
+
+    assert exit_code is OperatorExitCode.SUCCEEDED
+    assert written == [_report()]
+    assert json.loads(output.getvalue()) == {
+        "error_code": None,
+        "records_total": 1,
+        "status": "succeeded",
     }
+    assert str(tmp_path) not in output.getvalue()
+
+
+@pytest.mark.parametrize(
+    ("status", "error", "exit_code"),
+    [
+        (DryRunTerminalStatus.EMPTY, None, OperatorExitCode.EMPTY),
+        (DryRunTerminalStatus.PARTIAL, DryRunErrorCode.SOURCE_IO, OperatorExitCode.PARTIAL),
+        (
+            DryRunTerminalStatus.CANCELLED,
+            DryRunErrorCode.CANCELLED,
+            OperatorExitCode.CANCELLED,
+        ),
+        (DryRunTerminalStatus.FAILED, DryRunErrorCode.SOURCE_IO, OperatorExitCode.FAILED),
+    ],
+)
+def test_run_operator_has_stable_terminal_exit_codes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    status: DryRunTerminalStatus,
+    error: DryRunErrorCode | None,
+    exit_code: OperatorExitCode,
+) -> None:
+    """Automation can distinguish every non-success terminal state."""
+    report = _report(status=status, error=error)
+
+    class FakeWriter:
+        def __init__(self, _destination: Path) -> None:
+            return
+
+        def write(self, _report_value: DryRunReport) -> None:
+            return
+
+    monkeypatch.setattr(
+        operator,
+        "inspect_source",
+        lambda _source: operator.SourceInspection(
+            file_count=0,
+            read_only=True,
+            source="redacted",
+        ),
+    )
+    monkeypatch.setattr(operator, "TelegramDesktopExportAdapter", lambda *_args: object())
+    monkeypatch.setattr(operator, "run_dry_run", lambda *_args, **_kwargs: report)
+    monkeypatch.setattr(operator, "AtomicReportWriter", FakeWriter)
+
+    assert operator.run_operator(Settings(source_path=tmp_path), stdout=StringIO()) is exit_code
+
+
+def test_run_operator_redacts_mount_and_report_failures(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Configuration and output failures never print private paths."""
+    output = StringIO()
+    monkeypatch.setattr(
+        operator,
+        "inspect_source",
+        lambda _source: (_ for _ in ()).throw(UnsafeSourceMountError(f"private: {tmp_path}")),
+    )
+    assert (
+        operator.run_operator(Settings(source_path=tmp_path), stdout=output)
+        is OperatorExitCode.CONFIGURATION
+    )
+    assert str(tmp_path) not in output.getvalue()
+
+    class FailingWriter:
+        def __init__(self, _destination: Path) -> None:
+            return
+
+        def write(self, _report_value: DryRunReport) -> None:
+            raise ReportWriteError
+
+    output = StringIO()
+    monkeypatch.setattr(
+        operator,
+        "inspect_source",
+        lambda _source: operator.SourceInspection(
+            file_count=1,
+            read_only=True,
+            source="redacted",
+        ),
+    )
+    monkeypatch.setattr(operator, "TelegramDesktopExportAdapter", lambda *_args: object())
+    monkeypatch.setattr(operator, "run_dry_run", lambda *_args, **_kwargs: _report())
+    monkeypatch.setattr(operator, "AtomicReportWriter", FailingWriter)
+    assert (
+        operator.run_operator(Settings(source_path=tmp_path), stdout=output)
+        is OperatorExitCode.REPORT_IO
+    )
+    assert json.loads(output.getvalue())["error_code"] == "report_io"
+
+
+def test_main_returns_operator_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The console entry point delegates its stable integer result."""
+    monkeypatch.setattr(operator, "load_settings", Settings)
+    monkeypatch.setattr(
+        operator,
+        "run_operator",
+        lambda _settings: OperatorExitCode.SUCCEEDED,
+    )
+
+    assert operator.main() == 0
+
+
+def _report(
+    *,
+    status: DryRunTerminalStatus = DryRunTerminalStatus.SUCCEEDED,
+    error: DryRunErrorCode | None = None,
+) -> DryRunReport:
+    complete = status in {DryRunTerminalStatus.SUCCEEDED, DryRunTerminalStatus.EMPTY}
+    records = (
+        1
+        if status
+        in {
+            DryRunTerminalStatus.SUCCEEDED,
+            DryRunTerminalStatus.PARTIAL,
+        }
+        else 0
+    )
+    source = DryRunSource(
+        platform="telegram",
+        channel_id="safe",
+        channel_type="public_channel",
+        file_size=10,
+        checksum="a" * 64 if complete else None,
+        published_from=None,
+        published_to=None,
+    )
+
+    return DryRunReport(
+        report_version=REPORT_VERSION,
+        parser_version=PARSER_VERSION,
+        grouping_version="e2-media-v1",
+        terminal_status=status,
+        error_code=error,
+        source=source,
+        counts=DryRunCounts(
+            records_total=records,
+            messages_evaluated=records,
+            candidates=0,
+            non_candidates=records,
+            media_total=0,
+            media_associated=0,
+            media_unassociated=0,
+        ),
+        source_classifications=(CountBucket("text", 1),) if records else (),
+        candidate_reasons=(),
+        candidate_score_buckets=(CountBucket("score_0", 1),) if records else (),
+        candidate_score_combinations=(CountBucket("none", 1),) if records else (),
+        candidate_boundaries=((CountBucket("non_candidate_below_boundary", 1),) if records else ()),
+        content_types=(),
+        extracted_fields=(),
+        warning_codes=(),
+        warning_splits=(),
+        media_rules=(),
+        unassociated_media_reasons=(),
+        timings=(StageTiming("total", 0),),
+    )

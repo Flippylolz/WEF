@@ -1,0 +1,136 @@
+---
+schema: ai-workflow/task@1
+id: E5-T5
+epic: E5
+title: "Performance and production UX pass"
+status: draft
+revision: 2
+priority: P1
+size: M
+milestone: M3
+dependencies: [E5-T4, E4-T4]
+requirement_ids: [P-001, P-004, P-005]
+decision_ids: [ADR-004, ADR-007, ADR-012]
+deferred_decision_ids: []
+promotion:
+  source: ../proposed-tasks/E5-T5-performance-and-production-ux-pass.md
+  promoted_by: "Cursor Agent (owner-authorized)"
+  promoted_at: "2026-08-13T19:30:00Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 3
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-13T19:30:00Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 3
+  verified_by: "Cursor Agent"
+  verified_at: "2026-08-13T19:30:00Z"
+dependency_gate:
+  status: blocked
+  verified_by: null
+  verified_at: null
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E5-T5
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
+---
+
+# E5-T5: Performance and production UX pass
+
+> Promoted under E5 revision 3, but blocked until E5-T4 and E4-T4 are complete or recorded in valid direct stack ancestry.
+
+## Outcome
+
+Make the complete map/list/detail experience production-ready with a measured mobile performance budget, stable map lifecycle, deferred detail/media work, route metadata/error boundaries, and useful recovery actions that preserve user state.
+
+## Scope
+
+- Establish a repeatable cold-load production profile and record median plus individual results.
+- Keep map controls/status useful while MapLibre loads; prevent filter, selection, detail, and responsive-mode changes from recreating the map instance.
+- Keep full offer detail and media absent from initial map requests, rendered payload, and network activity until explicit selection.
+- Optimize image sizing/loading and heavy client boundaries without hiding required attribution or semantic fallback content.
+- Add route metadata, safe global/segment error boundaries, retry actions, and offline/API/tile recovery messaging that preserves filters, URL, and useful list state.
+- Measure Core Web Vitals through a privacy-safe local/reporting boundary that records no listing/source/contact/URL-query values.
+
+## Out of scope
+
+- Backend query performance/caching/problem semantics (E4-T4), media derivative generation/storage (E3-T4), analytics vendor integration, user tracking, secrets, service workers/offline data caches, authentication, contact reveal, or a visual redesign.
+
+## Affected modules and contracts
+
+- Next configuration and route metadata/error boundaries.
+- Map/detail dynamic import boundaries, map lifecycle, media/image loading, recovery UI, web-vitals reporting adapter, and performance regression tests.
+- Existing generated E4 contracts; [E4](../../E4-read-api-filter-contracts/README.md) task E4-T4 owns backend performance and predictable error behavior.
+
+## Implementation notes
+
+- Agreed lab profile: production build served locally; Chromium mobile viewport 390×844; 4× CPU slowdown; 1.6 Mbps downstream, 750 Kbps upstream, 150 ms round-trip latency; deterministic synthetic dataset; five cold-cache runs.
+- Budgets use the median of five runs: controls/status first contentful paint at or below 2.5 seconds, largest contentful paint at or below 4.0 seconds, cumulative layout shift at or below 0.10, and total blocking time at or below 300 ms. Record all five values and tool/version details.
+- Do not make CI depend on external tiles or timing from the public provider. The repeatable profile stubs only tile bytes/failures at the network boundary while exercising the real application bundle and API fixture.
+- Web-vitals reporting is local/no-op by default and accepts metric name/value/rating/navigation type only; never include route query, offer/location IDs, source text, contacts, or user identifiers.
+- Preserve a single map owner/key across query and selection changes. Use regression instrumentation in tests rather than production debug globals.
+
+## Acceptance criteria
+
+- [ ] The documented five-run cold-load profile meets median FCP ≤ 2.5 s, LCP ≤ 4.0 s, CLS ≤ 0.10, and TBT ≤ 300 ms, with tool/version and all run values committed as non-sensitive evidence.
+- [ ] Filter, viewport-query, selection, detail open/close, and responsive-mode changes do not recreate the MapLibre instance.
+- [ ] Initial map HTML/RSC and pre-selection network activity contain no full offer detail response or full media asset request; detail/media load only after explicit selection.
+- [ ] Images provide stable dimensions/aspect ratio, thumbnails precede full assets, lazy loading does not break keyboard/gallery behavior, and missing assets retain useful placeholders.
+- [ ] Route metadata is present and error boundaries provide safe retry/list recovery without raw errors, internal URLs, or state loss.
+- [ ] API, tile/style, and WebGL failures preserve canonical URL filters and accessible controls; API-backed list content remains available whenever the API succeeds.
+- [ ] Web-vitals collection is privacy-safe, disabled/no-op without an explicit sink, and covered by tests proving no listing/source/contact/query data is emitted.
+- [ ] Production build and runtime image pass with no map library or source/contracts unintentionally added to the server/runtime boundary.
+
+## Test plan
+
+- Performance: repeatable five-run production profile with controlled API/tile fixtures, committed summary evidence, threshold assertion, and initial-request audit.
+- Lifecycle: map construction count remains one across filter, query, selection, detail, and responsive transitions.
+- Component/browser: metadata/error boundary, retry, preserved URL/controls/list, tile/style/WebGL/API failures, lazy gallery, layout stability, and keyboard regression.
+- Privacy: web-vitals payload allowlist and negative tests for URL query, IDs, source text, contacts, and arbitrary error values.
+- Repository: format, lint, typecheck, unit/contract tests, production build, repository safety, dependency audit, and runtime image CI.
+
+## Rollout and rollback
+
+Web-only behavior after E5-T4 and E4-T4. Roll back the E5-T5 web commit/image without changing backend caching, database data, or media. The prior E5-T4 interface remains functional against additive E4 contracts.
+
+## Dependency blocker
+
+- E5-T4 is delivered in this stack; E4-T4 is delivered by a parallel E4 agent.
+- Keep this task `draft` with a blocked dependency gate until both dependencies are `done`, or use `stacked` only with direct ancestor branch, PR URL, and exact head evidence for every incomplete dependency.
+- A material E4-T4 error/caching contract change or an infeasible agreed performance profile returns to the current spike/plan instead of silently weakening acceptance.
+
+## Ready checklist
+
+- [x] This file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
+- [x] Promotion, spike revision 3, and implementation-plan revision 3 are recorded.
+- [ ] E5-T4 and E4-T4 are complete or valid direct ancestor PRs are recorded.
+- [ ] Status moves to `ready` only after every gate is valid.
+
+## Start checklist
+
+- [ ] Status passed through `ready`.
+- [ ] Dedicated E5-T5 branch is created from the green E5-T4 branch after required E4 ancestry refresh.
+- [ ] Branch/PR contain E5-T5 only and metadata is recorded before `in_progress`.
+
+## Done checklist
+
+- [ ] Acceptance criteria pass.
+- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [ ] Dependency gate is `satisfied`; completion actor, time, pull request, and evidence are recorded.

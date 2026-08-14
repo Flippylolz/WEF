@@ -33,15 +33,35 @@ from wef_backend.features.ingestion.domain import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v1"
+PARSER_VERSION = "e2-v3"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
+_MAX_ROOM_COUNT = 20
 
 _FLAGS = re.IGNORECASE | re.UNICODE
 _NUMBER = r"(?<!\w)(?:\d{1,3}(?:[ \u00a0]\d{3})+(?:[,.]\d+)?|\d+(?:[,.]\d+)?)(?!\w)"
 _VALUE_SUFFIX = r"\s*(?:[:|]\s*|[\u2013\u2014-]\s+)(?P<value>[^\r\n]+)"
 _NUMBER_PATTERN = re.compile(_NUMBER)
+_ROOM_TAG_PATTERN = re.compile(
+    r"#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|комнат[аы]?)(?!\w)",
+    _FLAGS,
+)
+_ROOM_RANGE_PATTERN = re.compile(
+    r"\s*(?P<lower>\d+)(?:\s*(?:-|\u2013|\u2014|\b\u0434\u043e\b|\bto\b)"
+    r"\s*(?P<upper>\d+))?\s*",
+    _FLAGS,
+)
+_RANGE_JOINER_PATTERN = re.compile(
+    r"(?:-|\u2013|\u2014|\b\u0434\u043e\b|\bto\b)",
+    _FLAGS,
+)
 _CURRENCY_PATTERN = re.compile(r"(?:\b(?P<iso>PLN|EUR|USD|GBP)\b|(?P<symbol>zł|€|\$))", _FLAGS)
+_PER_AREA_CONTEXT_PATTERN = re.compile(
+    rf"(?:\(\s*)?{_NUMBER}\s*(?:PLN|EUR|USD|GBP|zł|€|\$)?\s*"
+    r"(?:/|\bper\b|\bza\b|\bna\b|\b\u0437\u0430\b)\s*"
+    r"(?:m(?:²|2)|sqm|\u043a\u0432\.?\s*\u043c)(?:\s*\))?",
+    _FLAGS,
+)
 _INCLUDED_PATTERN = re.compile(
     r"\b(?:included|w cenie|wliczon[eya]?|включен[аоы]?|входит в стоимость)\b",
     _FLAGS,
@@ -112,7 +132,8 @@ _CANDIDATE_RULES = (
         1,
         None,
         re.compile(
-            r"(?:#\d+\b|\b(?:pokoje?|rooms?|комнат[аы]?|pok\.)\s*"
+            r"(?:#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|комнат[аы]?)(?!\w)"
+            r"|\b(?:pokoje?|rooms?|комнат[аы]?|pok\.)\s*"
             r"(?:[:|]|\u2013|\u2014|-))",
             _FLAGS,
         ),
@@ -161,8 +182,6 @@ _DELIVERY_PATTERN = re.compile(
 
 def detect_candidate(
     message: RawMessage,
-    *,
-    parser_version: str = PARSER_VERSION,
 ) -> CandidateDecision:
     """Score one unchanged raw message against stable candidate evidence."""
     signals: list[CandidateSignal] = []
@@ -177,7 +196,7 @@ def detect_candidate(
                         weight=rule.weight,
                         provenance=_provenance(
                             f"candidate.{rule.reason.value}",
-                            parser_version,
+                            PARSER_VERSION,
                             Confidence.HIGH
                             if rule.weight >= CANDIDATE_THRESHOLD
                             else Confidence.MEDIUM,
@@ -188,7 +207,7 @@ def detect_candidate(
     score = sum(signal.weight for signal in signals)
     is_candidate = score >= CANDIDATE_THRESHOLD
     return CandidateDecision(
-        parser_version=parser_version,
+        parser_version=PARSER_VERSION,
         is_candidate=is_candidate,
         score=score,
         threshold=CANDIDATE_THRESHOLD,
@@ -199,87 +218,82 @@ def detect_candidate(
 
 def extract_listing(
     message: RawMessage,
-    *,
-    parser_version: str = PARSER_VERSION,
 ) -> ExtractionResult:
     """Detect and extract one listing without mutating its raw evidence."""
-    decision = detect_candidate(message, parser_version=parser_version)
+    decision = detect_candidate(message)
     if not decision.is_candidate:
         return ExtractionResult(decision=decision, listing=None)
 
     warnings: list[ExtractionWarning] = []
     content_type = _content_value(decision, warnings)
-    market_type = _market_type(message.text, parser_version, warnings)
+    market_type = _market_type(message.text, PARSER_VERSION, warnings)
     location = _string_field(
         message.text,
         _LOCATION_PATTERN,
         "location",
-        parser_version,
+        PARSER_VERSION,
         warnings,
     )
     district = _string_field(
         message.text,
         _DISTRICT_PATTERN,
         "district",
-        parser_version,
+        PARSER_VERSION,
         warnings,
     )
     development_name = _string_field(
         message.text,
         _DEVELOPMENT_PATTERN,
         "development_name",
-        parser_version,
+        PARSER_VERSION,
         warnings,
     )
     apartment_price = _money_field(
         message.text,
         _APARTMENT_PRICE_PATTERN,
         "apartment_price",
-        parser_version,
+        PARSER_VERSION,
         warnings,
     )
     parking_price, parking_included = _addon_fields(
         message.text,
         _PARKING_PATTERN,
         "parking",
-        parser_version,
+        PARSER_VERSION,
         warnings,
     )
     storage_price, storage_included = _addon_fields(
         message.text,
         _STORAGE_PATTERN,
         "storage",
-        parser_version,
+        PARSER_VERSION,
         warnings,
     )
     area = _range_field(
         message.text,
         _AREA_PATTERN,
         "area_sqm",
-        parser_version,
+        PARSER_VERSION,
         warnings,
         _decimal_range,
     )
-    rooms = _range_field(
+    rooms = _rooms_field(
         message.text,
-        _ROOMS_PATTERN,
-        "rooms",
-        parser_version,
+        PARSER_VERSION,
         warnings,
-        _integer_range,
     )
-    floor = _string_field(message.text, _FLOOR_PATTERN, "floor", parser_version, warnings)
+    floor = _string_field(message.text, _FLOOR_PATTERN, "floor", PARSER_VERSION, warnings)
     delivery = _string_field(
         message.text,
         _DELIVERY_PATTERN,
         "delivery",
-        parser_version,
+        PARSER_VERSION,
         warnings,
     )
     listing = ListingCandidate(
         source_message_id=message.external_message_id,
         source_checksum=message.checksum,
-        parser_version=parser_version,
+        parser_version=PARSER_VERSION,
         content_type=content_type,
         market_type=market_type,
         location=location,
@@ -294,8 +308,8 @@ def extract_listing(
         rooms=rooms,
         floor=floor,
         delivery=delivery,
-        map_links=_map_links(message.text, parser_version),
-        contacts=_contacts(message.text, parser_version),
+        map_links=_map_links(message.text, PARSER_VERSION),
+        contacts=_contacts(message.text, PARSER_VERSION),
     )
     return ExtractionResult(decision=decision, listing=listing, warnings=tuple(warnings))
 
@@ -439,12 +453,12 @@ def _money_field(
     parsed: list[tuple[MoneyRange, re.Match[str]]] = []
     for match in matches:
         value = _trimmed_value(text, match)
-        amount = _decimal_range(value)
+        amount = _money_amount_range(value)
         if amount is None:
             if _NUMBER_PATTERN.search(value):
                 warnings.append(_invalid_range_warning(field_name, text, match))
             continue
-        currency = _currency(value)
+        currency = _money_currency(value)
         if currency is None:
             warnings.append(
                 ExtractionWarning(
@@ -512,6 +526,81 @@ def _range_field[T](  # noqa: PLR0913, PLR0917
     return _unique_parsed_value(text, parsed, field_name, parser_version, warnings)
 
 
+def _rooms_field(
+    text: str,
+    parser_version: str,
+    warnings: list[ExtractionWarning],
+) -> ExtractedValue[IntegerRange] | None:
+    labeled_matches = tuple(_ROOMS_PATTERN.finditer(text))
+    tag_matches = tuple(_ROOM_TAG_PATTERN.finditer(text))
+    parsed: list[tuple[IntegerRange, SourceSpan]] = []
+    for match in labeled_matches:
+        value = _trimmed_value(text, match)
+        if _is_room_tag_list(value):
+            continue
+        room_range = _room_range(value)
+        if room_range is None:
+            warnings.append(_invalid_range_warning("rooms", text, match))
+            continue
+        parsed.append((room_range, _trimmed_span(text, match)))
+
+    valid_tag_ranges: list[tuple[IntegerRange, SourceSpan]] = []
+    for match in tag_matches:
+        room_range = _room_tag_range(match.group())
+        span = SourceSpan(*match.span())
+        if room_range is None:
+            warnings.append(
+                ExtractionWarning(
+                    code=ExtractionWarningCode.INVALID_RANGE,
+                    field_name="rooms",
+                    spans=(span,),
+                )
+            )
+            continue
+        valid_tag_ranges.append((room_range, span))
+    if valid_tag_ranges:
+        parsed.append(
+            (
+                IntegerRange(
+                    lower=min(value.lower for value, _ in valid_tag_ranges),
+                    upper=max(value.upper for value, _ in valid_tag_ranges),
+                ),
+                valid_tag_ranges[0][1],
+            )
+        )
+
+    if not parsed:
+        return None
+    distinct = {value for value, _ in parsed}
+    spans = tuple(
+        dict.fromkeys(
+            (
+                *(span for _, span in parsed),
+                *(span for _, span in valid_tag_ranges),
+            )
+        )
+    )
+    if len(distinct) > 1:
+        warnings.append(
+            ExtractionWarning(
+                code=ExtractionWarningCode.CONFLICTING_VALUES,
+                field_name="rooms",
+                spans=spans,
+            )
+        )
+        return None
+    selected_range = parsed[0][0]
+    return ExtractedValue(
+        value=selected_range,
+        provenance=_provenance(
+            "extract.rooms",
+            parser_version,
+            Confidence.HIGH,
+            *spans,
+        ),
+    )
+
+
 def _unique_parsed_value[T](
     text: str,
     parsed: Sequence[tuple[T, re.Match[str]]],
@@ -537,29 +626,73 @@ def _unique_parsed_value[T](
 
 
 def _decimal_range(value: str) -> DecimalRange | None:
-    numbers = _NUMBER_PATTERN.findall(value)
-    if not numbers or len(numbers) > _MAX_RANGE_VALUES:
+    matches = tuple(_NUMBER_PATTERN.finditer(value))
+    if not 0 < len(matches) <= _MAX_RANGE_VALUES:
         return None
     try:
-        parsed = tuple(_decimal(number) for number in numbers)
-        lower, upper = (parsed[0], parsed[0]) if len(parsed) == 1 else parsed
+        lower = _decimal(matches[0].group())
+        upper = lower
+        if len(matches) == _MAX_RANGE_VALUES:
+            separator = value[matches[0].end() : matches[1].start()]
+            if _RANGE_JOINER_PATTERN.fullmatch(separator.strip()) is None:
+                return None
+            upper = _decimal(matches[1].group())
         return DecimalRange(lower=lower, upper=upper)
     except (InvalidOperation, ValueError):
         return None
 
 
-def _integer_range(value: str) -> IntegerRange | None:
-    parsed = _decimal_range(value)
-    if (
-        parsed is None
-        or parsed.lower != parsed.lower.to_integral_value()
-        or (parsed.upper != parsed.upper.to_integral_value())
+def _money_amount_range(value: str) -> DecimalRange | None:
+    context_spans = tuple(match.span() for match in _PER_AREA_CONTEXT_PATTERN.finditer(value))
+    amount_matches = tuple(
+        match
+        for match in _NUMBER_PATTERN.finditer(value)
+        if not any(start <= match.start() and match.end() <= end for start, end in context_spans)
+    )
+    if not 0 < len(amount_matches) <= _MAX_RANGE_VALUES or any(
+        start < amount_matches[-1].end() for start, _ in context_spans
     ):
         return None
-    try:
-        return IntegerRange(lower=int(parsed.lower), upper=int(parsed.upper))
-    except ValueError:
+    amount_text = " ".join(match.group() for match in amount_matches)
+    if len(amount_matches) == _MAX_RANGE_VALUES:
+        separator = value[amount_matches[0].end() : amount_matches[1].start()]
+        amount_text = f"{amount_matches[0].group()}{separator}{amount_matches[1].group()}"
+    return _decimal_range(amount_text)
+
+
+def _money_currency(value: str) -> str | None:
+    context = _PER_AREA_CONTEXT_PATTERN.search(value)
+    primary_value = value[: context.start()] if context is not None else value
+    return _currency(primary_value)
+
+
+def _room_range(value: str) -> IntegerRange | None:
+    match = _ROOM_RANGE_PATTERN.fullmatch(value)
+    if match is None:
         return None
+    lower = int(match.group("lower"))
+    upper_group = match.group("upper")
+    upper = int(upper_group) if upper_group is not None else lower
+    if not 0 < lower <= upper <= _MAX_ROOM_COUNT:
+        return None
+    return IntegerRange(lower=lower, upper=upper)
+
+
+def _is_room_tag_list(value: str) -> bool:
+    if _ROOM_TAG_PATTERN.search(value) is None:
+        return False
+    remainder = _ROOM_TAG_PATTERN.sub("", value)
+    return not remainder.strip(" \t,;|")
+
+
+def _room_tag_range(value: str) -> IntegerRange | None:
+    match = re.search(r"\d+", value)
+    if match is None:
+        return None
+    room = int(match.group())
+    if not 0 < room <= _MAX_ROOM_COUNT:
+        return None
+    return IntegerRange(lower=room, upper=room)
 
 
 def _decimal(value: str) -> Decimal:

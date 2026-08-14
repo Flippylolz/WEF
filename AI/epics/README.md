@@ -17,15 +17,15 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 
 - [E0 — Architecture and dependency spike](E0-architecture-dependency-spike/README.md) — `done`; spike revision 2/plan revision 3 approved, E0-T1 and E0-T2 done; milestones M1.
 - [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `done`; spike revision 2/plan revision 4 approved; 4 done, 2 proposed, 1 cancelled; milestones M1.
-- [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `ready`; spike/plan revision 3 approved, E2-T1 done, E2-T2 ready, E2-T3–T5 promoted/dependency-blocked; milestones M1, M2.
-- [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `ready`; spike/plan revision 2; E3-T1 done, 4 proposed; milestones M1, M2.
+- [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `done`; spike/plan revision 3 approved and E2-T1–T5 done with a reconciled complete-export audit; milestones M1, M2.
+- [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `selected`; spike revision 3 pending owner approval; existing approved plan revision 2 authorizes only completed E3-T1; 4 proposed/non-actionable; milestones M1, M2.
 - [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `ready`; spike/plan revision 2; E4-T1/T2 done, 2 proposed; milestones M1, M2.
-- [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `ready`; spike/plan revision 2; E5-T1 done/E5-T2 ready, 3 proposed; milestones M1, M3.
+- [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `ready`; spike/plan revision 3; E5-T1 done, E5-T2 ready, E5-T3–T5 promoted/dependency-blocked; milestones M1, M3.
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `draft`; 7 tasks (7 proposed); milestones M3.
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `ready`; 10 tasks (4 done, 1 ready, 1 draft, 3 proposed, 1 deferred); milestone M3.
 - [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; 5 tasks (5 proposed); milestones M4.
 
-The original E0/E1/E3/E4/E5-T1/E7 ordered stack is merged and reconciled against successful integrated `main` CI. E2-T1 and later E3–E5/E7 work retain approved current gates or remain proposed/ready. E6–E8 remain draft. New work must pass its dedicated pull-request CI before merge.
+The original E0/E1/E3/E4/E5-T1/E7 ordered stack is merged and reconciled against successful integrated `main` CI. E2-T1 and later E3–E5/E7 work retain approved current gates or remain proposed/ready. E6 remains draft; E8 is selected for research with no implementation permission. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
@@ -81,10 +81,10 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 ### E2
 
 - [E2-T1](E2-historical-export-parser-audit/tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md): promoted/done revision 2 through [PR #33](https://github.com/Flippylolz/WEF/pull/33); satisfied dependency `E1-T2` and approved spike/implementation gates; M1; requirements `P-006, P-007`; decisions `ADR-006, ADR-012`.
-- [E2-T2](E2-historical-export-parser-audit/tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md): promoted/ready revision 2; satisfied dependency `E2-T1` and approved revision 3 gates; M1; requirements `P-002, P-003, P-007`; decisions `ADR-003, ADR-006, ADR-012`.
-- [E2-T3](E2-historical-export-parser-audit/tasks/E2-T3-implement-media-grouping.md): promoted/draft revision 2; task dependencies `E2-T1, E2-T2`; M2; requirements `P-005`; decisions `ADR-006, ADR-007`.
-- [E2-T4](E2-historical-export-parser-audit/tasks/E2-T4-implement-dry-run-reports.md): promoted/draft revision 2; task dependencies `E2-T2, E2-T3`; M2; requirements `P-007`; decisions `ADR-006`.
-- [E2-T5](E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md): promoted/draft revision 2; task dependency `E2-T4`; M2; requirements `P-007`; decisions `ADR-006`.
+- [E2-T2](E2-historical-export-parser-audit/tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md): promoted/done revision 2 through [PR #36](https://github.com/Flippylolz/WEF/pull/36); satisfied dependency `E2-T1` and approved revision 3 gates; M1; requirements `P-002, P-003, P-007`; decisions `ADR-003, ADR-006, ADR-012`.
+- [E2-T3](E2-historical-export-parser-audit/tasks/E2-T3-implement-media-grouping.md): promoted/done revision 2 through [PR #37](https://github.com/Flippylolz/WEF/pull/37); satisfied dependencies `E2-T1, E2-T2`; M2; requirements `P-005`; decisions `ADR-006, ADR-007`.
+- [E2-T4](E2-historical-export-parser-audit/tasks/E2-T4-implement-dry-run-reports.md): promoted/done revision 2 through [PR #40](https://github.com/Flippylolz/WEF/pull/40); satisfied dependencies `E2-T2, E2-T3`; M2; requirements `P-007`; decisions `ADR-006`.
+- [E2-T5](E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md): promoted/done revision 2 through [PR #42](https://github.com/Flippylolz/WEF/pull/42); satisfied dependency `E2-T4`; M2; requirements `P-007`; decisions `ADR-006`.
 ### E3
 
 - [E3-T1](E3-database-geocoding-media/tasks/E3-T1-create-schema-and-migrations.md): promoted/done revision 2; satisfied dependency `E1-T3`; M1; requirements `P-001, P-002, P-007`; decisions `ADR-003, ADR-005, ADR-012`.
@@ -102,9 +102,9 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 
 - [E5-T1](E5-interactive-map-frontend/tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md): promoted/done revision 2; satisfied dependencies `E1-T2, E4-T2`; M1; requirements `P-001, P-004, P-007`; decisions `ADR-002, ADR-004, ADR-012`.
 - [E5-T2](E5-interactive-map-frontend/tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md): promoted/ready revision 2; satisfied dependencies `E5-T1, E4-T2`; M1; requirements `P-001, P-003, P-004`; decisions `ADR-002, ADR-003, ADR-012`.
-- [E5-T3](E5-interactive-map-frontend/proposed-tasks/E5-T3-build-offer-detail-and-media-gallery.md): task dependencies `E4-T3, E5-T1`; M3; requirements `P-002, P-005, P-006, P-007`; decisions `ADR-003, ADR-004, ADR-007, ADR-012`.
-- [E5-T4](E5-interactive-map-frontend/proposed-tasks/E5-T4-complete-responsive-list-map-accessibility.md): task dependencies `E5-T2, E5-T3`; M3; requirements `P-001, P-002, P-003, P-004, P-005`; decisions `ADR-002, ADR-004, ADR-012`.
-- [E5-T5](E5-interactive-map-frontend/proposed-tasks/E5-T5-performance-and-production-ux-pass.md): task dependencies `E5-T4, E4-T4`; M3; requirements `P-001, P-004, P-005`; decisions `ADR-004, ADR-007, ADR-012`.
+- [E5-T3](E5-interactive-map-frontend/tasks/E5-T3-build-offer-detail-and-media-gallery.md): promoted/draft revision 2; blocked on `E4-T3`, with `E5-T1` satisfied; M3; requirements `P-002, P-005, P-006, P-007`; decisions `ADR-003, ADR-004, ADR-007, ADR-012`.
+- [E5-T4](E5-interactive-map-frontend/tasks/E5-T4-complete-responsive-list-map-accessibility.md): promoted/draft revision 2; blocked dependencies `E5-T2, E5-T3`; M3; requirements `P-001, P-002, P-003, P-004, P-005`; decisions `ADR-002, ADR-004, ADR-012`.
+- [E5-T5](E5-interactive-map-frontend/tasks/E5-T5-performance-and-production-ux-pass.md): promoted/draft revision 2; blocked dependencies `E5-T4, E4-T4`; M3; requirements `P-001, P-004, P-005`; decisions `ADR-004, ADR-007, ADR-012`.
 ### E6
 
 - [E6-T1](E6-quality-security-operations/proposed-tasks/E6-T1-complete-automated-test-pyramid.md): task dependencies `E4-T3, E5-T3`; M3; requirements `P-001, P-002, P-003, P-004, P-005, P-006, P-007, P-008`; decisions `ADR-012, ADR-013, ADR-016`.

@@ -2,6 +2,10 @@
 
 This registry is the highest-precedence documentation domain. Each linked architecture decision record (ADR) and deferred decision is authoritative for its own ID. IDs remain stable, and a later decision changes an accepted record only through an explicit linked supersession or resolution.
 
+## Proposed
+
+- [ADR-021 — Use cached provider-neutral geocoding with Geoapify first](adr/ADR-021-use-cached-provider-neutral-geocoding.md) — candidate from E3 spike revision 3; pending owner approval and does not yet resolve D-002.
+
 ## Accepted/current
 
 - [ADR-001 — Split Python API and TypeScript web application](adr/ADR-001-split-python-api-typescript-web.md)
@@ -38,7 +42,7 @@ This registry is the highest-precedence documentation domain. Each linked archit
 ## Deferred/revalidation
 
 - [D-001 — Production server and domain](deferred/D-001-production-server-domain.md) — resolved for the anonymous rehearsal by ADR-019.
-- [D-002 — Recurring geocoding provider](deferred/D-002-recurring-geocoding-provider.md) — initial path resolved; evaluate at E3-T3/E7-T6 and revalidate before E8-T4.
+- [D-002 — Recurring geocoding provider](deferred/D-002-recurring-geocoding-provider.md) — deferred pending owner review; proposed ADR-021 does not yet resolve it, and recurring use still requires E8-T4 revalidation.
 - [D-003 — Telegram channel identity and access](deferred/D-003-telegram-channel-access.md) — public link format resolved; live access remains deferred until E8-T1.
 - [D-005 — Object storage and CDN](deferred/D-005-object-storage-cdn.md) — revisit when its operational cost triggers occur.
 - [D-009 — Shared TLS hostnames and forwarding](deferred/D-009-shared-tls-hostnames-and-forwarding.md) — resolve two public hostnames and 80/443 forwarding before E7-T10 live rollout; E7-T8/E7-T9 remain inert.
