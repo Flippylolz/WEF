@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E6
 title: "Quality, security, and operations"
-status: draft
+status: selected
 milestones: [M3]
 owner: owner
 spike: SPIKE.md
@@ -17,8 +17,8 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 
 ## Approval state
 
-- Epic workspace status: `draft`.
-- [Spike](SPIKE.md): `draft`, revision 1, owner approval pending, research only, no code.
+- Epic workspace status: `selected`; revision 2 spike research is complete and submitted for owner approval.
+- [Spike](SPIKE.md): `awaiting_approval`, revision 2, research only, no code. It records the 2026-08-14 repository survey, the E6 dependency reality (only E6-T4 is actionable), and recommends the project-owned `pwdlib[argon2]` identity implementation for E6-T4.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `draft`, revision 1, blocked with no approved spike revision and no executable task sequence.
 - Every file in `proposed-tasks/` is non-actionable. No implementation, scaffold, migration, infrastructure change, generated executable artifact, or proof code is approved.
 - No `tasks/` directory exists; it may be created only when an approved candidate is promoted after spike approval.
