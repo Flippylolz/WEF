@@ -29,7 +29,7 @@ The responsive map experience is production-deployed from GitHub with persistent
 - [E6-T1: Complete automated test pyramid](../epics/E6-quality-security-operations/proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — `proposed`
 - [E6-T2: Perform privacy and security hardening](../epics/E6-quality-security-operations/proposed-tasks/E6-T2-perform-privacy-and-security-hardening.md) — `proposed`
 - [E6-T3: Add operational diagnostics](../epics/E6-quality-security-operations/proposed-tasks/E6-T3-add-operational-diagnostics.md) — `proposed`
-- [E6-T4: Implement in-house registration and sessions](../epics/E6-quality-security-operations/proposed-tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `proposed`
+- [E6-T4: Implement in-house registration and sessions](../epics/E6-quality-security-operations/tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `draft` (promoted; implementation gate pending plan approval)
 - [E6-T5: Implement contact masking, encryption, reveal, and audit](../epics/E6-quality-security-operations/proposed-tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `proposed`
 - [E6-T6: Implement English i18n and restricted-action UX](../epics/E6-quality-security-operations/proposed-tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — `proposed`
 - [E6-T7: Implement owner administration console](../epics/E6-quality-security-operations/proposed-tasks/E6-T7-implement-owner-administration-console.md) — `proposed`

@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E6
 title: "Quality, security, and operations"
-status: selected
+status: planning
 milestones: [M3]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,11 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 
 ## Approval state
 
-- Epic workspace status: `selected`; revision 2 spike research is complete and submitted for owner approval.
-- [Spike](SPIKE.md): `awaiting_approval`, revision 2, research only, no code. It records the 2026-08-14 repository survey, the E6 dependency reality (only E6-T4 is actionable), and recommends the project-owned `pwdlib[argon2]` identity implementation for E6-T4.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `draft`, revision 1, blocked with no approved spike revision and no executable task sequence.
-- Every file in `proposed-tasks/` is non-actionable. No implementation, scaffold, migration, infrastructure change, generated executable artifact, or proof code is approved.
-- No `tasks/` directory exists; it may be created only when an approved candidate is promoted after spike approval.
+- Epic workspace status: `planning`; spike revision 2 is owner-approved (PR #49, squash cd2ad36).
+- [Spike](SPIKE.md): `approved`, revision 2. It records the 2026-08-14 repository survey, the E6 dependency reality (only E6-T4 is actionable), and recommends the project-owned `pwdlib[argon2]` identity implementation for E6-T4.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `awaiting_approval`, revision 2 (`spike_revision: 2`), sequencing E6-T4 only.
+- E6-T4 is promoted to `tasks/` with a satisfied spike gate, satisfied dependency gate, and blocked implementation gate pending plan approval.
+- Every remaining file in `proposed-tasks/` is non-actionable. No implementation, scaffold, migration, infrastructure change, generated executable artifact, or proof code is approved.
 
 ## Milestones
 
@@ -48,15 +48,18 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 - [ADR-015](../../decisions/adr/ADR-015-defer-backups.md)
 - [ADR-016](../../decisions/adr/ADR-016-pseudonymous-accounts-owner-console.md)
 
+## Promoted tasks
+
+- [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `draft`, P1/L, M3; implementation gate pending plan revision 2 approval
+
 ## Proposed tasks
 
-- [E6-T1: Complete automated test pyramid](proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — `proposed`, P1/L, M3
-- [E6-T2: Perform privacy and security hardening](proposed-tasks/E6-T2-perform-privacy-and-security-hardening.md) — `proposed`, P1/M, M3
-- [E6-T3: Add operational diagnostics](proposed-tasks/E6-T3-add-operational-diagnostics.md) — `proposed`, P1/M, M3
-- [E6-T4: Implement in-house registration and sessions](proposed-tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `proposed`, P1/L, M3
-- [E6-T5: Implement contact masking, encryption, reveal, and audit](proposed-tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `proposed`, P1/L, M3
-- [E6-T6: Implement English i18n and restricted-action UX](proposed-tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — `proposed`, P1/L, M3
-- [E6-T7: Implement owner administration console](proposed-tasks/E6-T7-implement-owner-administration-console.md) — `proposed`, P1/L, M3
+- [E6-T1: Complete automated test pyramid](proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — `proposed`, P1/L, M3; blocked on E4-T3/E5-T3
+- [E6-T2: Perform privacy and security hardening](proposed-tasks/E6-T2-perform-privacy-and-security-hardening.md) — `proposed`, P1/M, M3; blocked on E3-T4/E4-T3/E5-T3
+- [E6-T3: Add operational diagnostics](proposed-tasks/E6-T3-add-operational-diagnostics.md) — `proposed`, P1/M, M3; blocked on E3-T2/E4-T4
+- [E6-T5: Implement contact masking, encryption, reveal, and audit](proposed-tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `proposed`, P1/L, M3; blocked on E4-T3 and E6-T4
+- [E6-T6: Implement English i18n and restricted-action UX](proposed-tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — `proposed`, P1/L, M3; blocked on E5-T3/E6-T4/E6-T5
+- [E6-T7: Implement owner administration console](proposed-tasks/E6-T7-implement-owner-administration-console.md) — `proposed`, P1/L, M3; blocked on E6-T4/E6-T5
 
 ## Cross-epic dependencies
 
