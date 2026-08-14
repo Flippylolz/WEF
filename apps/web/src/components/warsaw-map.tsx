@@ -11,9 +11,12 @@ import {
   Source,
   type LayerProps,
   type MapLayerMouseEvent,
+  type MapRef,
+  type ViewStateChangeEvent,
 } from "react-map-gl/maplibre";
 
 import type { LocationMap } from "@/lib/catalog-api";
+import { boundedWarsawViewport, parseBbox } from "@/lib/map-search-params";
 
 const MAP_STYLE =
   process.env.NEXT_PUBLIC_MAP_STYLE_URL?.trim() ||
@@ -115,24 +118,31 @@ const locationLayer: LayerProps = {
 };
 
 type WarsawMapProps = {
+  bbox: string;
   data: LocationMap;
   selectedId: string | null;
   loadingLabel: string;
   onSelect: (locationId: string) => void;
   onFailure: () => void;
+  onViewportChange: (bbox: string) => void;
 };
 
 export function WarsawMap({
+  bbox,
   data,
   selectedId,
   loadingLabel,
   onSelect,
   onFailure,
+  onViewportChange,
 }: WarsawMapProps) {
   const geojson = data as FeatureCollection<Point>;
   const [mapReady, setMapReady] = useState(false);
+  const mapRef = useRef<MapRef>(null);
   const mapLoaded = useRef(false);
   const failureHandler = useRef(onFailure);
+  const suppressNextMoveEnd = useRef(false);
+  const initialBounds = parseBbox(bbox);
 
   useEffect(() => {
     failureHandler.current = onFailure;
@@ -144,6 +154,20 @@ export function WarsawMap({
     }, MAP_LOAD_TIMEOUT_MS);
     return () => window.clearTimeout(timeout);
   }, []);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    const bounds = parseBbox(bbox);
+    if (bounds === null) return;
+    suppressNextMoveEnd.current = true;
+    mapRef.current?.fitBounds(
+      [
+        [bounds[0], bounds[1]],
+        [bounds[2], bounds[3]],
+      ],
+      { duration: 0, padding: 32 },
+    );
+  }, [bbox, mapReady]);
 
   async function handleClick(event: MapLayerMouseEvent) {
     const feature = event.features?.[0];
@@ -168,6 +192,21 @@ export function WarsawMap({
     }
   }
 
+  function handleMoveEnd(event: ViewStateChangeEvent) {
+    if (suppressNextMoveEnd.current) {
+      suppressNextMoveEnd.current = false;
+      return;
+    }
+    const bounds = event.target.getBounds();
+    const nextBbox = boundedWarsawViewport([
+      bounds.getWest(),
+      bounds.getSouth(),
+      bounds.getEast(),
+      bounds.getNorth(),
+    ]);
+    onViewportChange(nextBbox);
+  }
+
   return (
     <div className="map-canvas" aria-label="Interactive map of Warsaw">
       {!mapReady ? (
@@ -176,14 +215,26 @@ export function WarsawMap({
         </div>
       ) : null}
       <Map
-        initialViewState={{
-          longitude: 21.0122,
-          latitude: 52.2297,
-          zoom: 10.4,
-        }}
+        ref={mapRef}
+        initialViewState={
+          initialBounds
+            ? {
+                bounds: [
+                  [initialBounds[0], initialBounds[1]],
+                  [initialBounds[2], initialBounds[3]],
+                ],
+                fitBoundsOptions: { padding: 32 },
+              }
+            : {
+                longitude: 21.0122,
+                latitude: 52.2297,
+                zoom: 10.4,
+              }
+        }
         mapStyle={MAP_STYLE}
         interactiveLayerIds={["location-clusters", "locations-unclustered"]}
         onClick={(event) => void handleClick(event)}
+        onMoveEnd={handleMoveEnd}
         onLoad={() => {
           mapLoaded.current = true;
           setMapReady(true);

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E5-T2
 epic: E5
 title: "Add URL-backed filters and viewport querying"
-status: ready
+status: in_progress
 revision: 2
 priority: P0
 size: L
@@ -37,11 +37,11 @@ dependency_gate:
     - "E4-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/13 | integrated stack f766a63"
 branch:
   required: true
-  name: null
+  name: feature/E5-T2-url-filters
   task_id: E5-T2
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-13T19:40:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/43"
 completion:
   completed_by: null
   completed_at: null
@@ -87,13 +87,13 @@ Make all M1 filters and the current map viewport reloadable/shareable while requ
 
 ## Acceptance criteria
 
-- [ ] Reloading/sharing a URL restores identical filters and viewport.
-- [ ] Clear filters deterministically restores default Warsaw view/both content types.
-- [ ] Every M1 filter is represented by canonical facets and changes pins/offers only through backend responses.
-- [ ] Viewport requests are debounced, obsolete requests are aborted, and equivalent state avoids duplicate requests.
-- [ ] Loading/empty/API/map errors preserve controls and URL state.
-- [ ] M1 tests demonstrate price, room, district, market/content type, area, and publication filters plus combined behavior.
-- [ ] Controls have labels, keyboard operation, visible focus, and usable 360 px layout.
+- [x] Reloading/sharing a URL restores identical filters and viewport.
+- [x] Clear filters deterministically restores default Warsaw view/both content types.
+- [x] Every M1 filter is represented by canonical facets and changes pins/offers only through backend responses.
+- [x] Viewport requests are debounced, obsolete requests are aborted, and equivalent state avoids duplicate requests.
+- [x] Loading/empty/API/map errors preserve controls and URL state.
+- [x] M1 tests demonstrate price, room, district, market/content type, area, and publication filters plus combined behavior.
+- [x] Controls have labels, keyboard operation, visible focus, and usable 360 px layout.
 
 ## Test plan
 
@@ -116,12 +116,20 @@ Additive web-only behavior over E4. Roll back the web image; endpoint/schema com
 
 ## Start checklist
 
-- [ ] Status passes through `ready`.
-- [ ] Dedicated E5-T2 branch is created and recorded.
-- [ ] Branch/PR contain E5-T2 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated E5-T2 branch is created and recorded.
+- [x] Branch contains E5-T2 only; pull request metadata is recorded when opened.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
+- [x] Acceptance criteria pass.
 - [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.
+
+## Verification evidence
+
+- URL lifecycle: canonical parser/serializer tests cover defaults, every M1 filter, repeated-value ordering, UTC publication ranges, invalid syntax, bounded Warsaw viewports, reload, clear, and stateful URL rerenders.
+- Request lifecycle: TanStack Query keys use canonical URL state; component/API tests prove debounced `router.replace`, duplicate suppression, filter-aware selected-location requests, and `AbortSignal` cancellation after URL changes and unmount.
+- Resilience/accessibility: controls remain mounted through loading, empty, API, facet, and map failures; native labels/fieldsets/checkboxes, focus styles, semantic status regions, and the 36 rem breakpoint preserve keyboard and 360 px operation.
+- Local CI parity: Prettier, ESLint, strict TypeScript, 27 Vitest tests, generated-contract check/lint/docs/drift proof, and the Next 16 production build pass.
+- Rollback: the change is web-only and can be rolled back with the web image; no API schema or migration changed.
