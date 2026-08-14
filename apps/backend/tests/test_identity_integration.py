@@ -171,10 +171,19 @@ async def test_auth_sessions_table_constraints() -> None:
 
 
 async def _purge_identity_tables(database_url: str) -> None:
-    """Remove every identity row from the disposable test database."""
+    """Remove identity rows from the disposable test database when present."""
     database = create_database_resources(database_url)
     try:
         async with database.session_factory() as session:
+            exists = await session.scalar(
+                text(
+                    "SELECT EXISTS ("
+                    "SELECT 1 FROM information_schema.tables "
+                    "WHERE table_name = 'users')"
+                ),
+            )
+            if not exists:
+                return
             await session.execute(text("DELETE FROM auth_sessions"))
             await session.execute(text("DELETE FROM users"))
             await session.commit()
