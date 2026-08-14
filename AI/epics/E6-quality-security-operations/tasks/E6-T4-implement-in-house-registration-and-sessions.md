@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E6-T4
 epic: E6
 title: "Implement in-house registration and sessions"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: L
@@ -41,12 +41,19 @@ branch:
   task_id: E6-T4
   one_task_only: true
   created_at: "2026-08-14T21:30:59Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/51"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode Agent (owner-authorized)"
+  completed_at: "2026-08-14T21:46:38Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/51"
+  evidence:
+    - "E6-T4 branch feature/E6-T4-registration-sessions squash-merged via https://github.com/Flippylolz/WEF/pull/51 (squash 6607f96, branch deleted); one task per branch/PR"
+    - "Local parity with CI: ruff format/check clean, strict mypy clean, import-linter 11 contracts kept, architecture-violation probe passed, pip-audit clean"
+    - "189 pytest tests passed against pinned PostGIS (17-3.5) including 71 new identity tests; coverage 94.47% against the 90% floor; fresh-database migration replay to 20260814_0003 verified"
+    - "Security evidence: anti-enumeration equivalence between unknown-user and wrong-password 401s; dummy-hash verification equalizes timing; tokens/passwords/hashes absent from all responses (negative probes); cookies HttpOnly/SameSite=Lax with Secure in production; origin-rejected 403 and JSON-only 415 on mutations; rate-limited 429 paths"
+    - "OpenAPI contract regenerated additively (+457 lines) with frontend typed client regenerated; web typecheck, 33 vitest tests, contract:check/lint/docs, and next build passed; oasdiff impact is additive paths only"
+    - "Rollback: additive migration, image redeploy; readiness revision gate (EXPECTED_DATABASE_REVISION=20260814_0003) orders migrate-then-serve; no backup claims (ADR-015)"
+    - "Production boundary: registration/login activation and live verification are owned by E7-T7 after E7-T10 shared TLS; no production activation was performed by this task"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -125,6 +132,6 @@ Pseudonymous username/password accounts with opaque database-backed sessions exi
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
