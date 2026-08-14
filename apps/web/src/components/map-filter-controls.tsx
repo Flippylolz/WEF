@@ -4,11 +4,10 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState, type ReactNode } from "react";
 
 import type { FilterFacets } from "@/lib/catalog-api";
-import {
-  DEFAULT_CONTENT_TYPES,
-  type ContentType,
-  type MapSearchState,
-  type MarketType,
+import type {
+  ContentType,
+  MapSearchState,
+  MarketType,
 } from "@/lib/map-search-params";
 
 type MapFilterControlsProps = {
@@ -18,6 +17,7 @@ type MapFilterControlsProps = {
   state: MapSearchState;
   onApply: (state: MapSearchState) => void;
   onClear: () => void;
+  collapseControl?: ReactNode;
 };
 
 export function MapFilterControls({
@@ -27,6 +27,7 @@ export function MapFilterControls({
   state,
   onApply,
   onClear,
+  collapseControl,
 }: MapFilterControlsProps) {
   const t = useTranslations("map");
   const [draft, setDraft] = useState(state);
@@ -41,16 +42,13 @@ export function MapFilterControls({
   );
   const marketOptions = useMemo(
     () =>
-      mergeOptions<MarketType>(
-        facets?.market_types ?? ["primary", "secondary"],
-        draft.marketTypes,
-      ),
+      mergeOptions<MarketType>(facets?.market_types ?? [], draft.marketTypes),
     [draft.marketTypes, facets?.market_types],
   );
   const contentOptions = useMemo(
     () =>
       mergeOptions<ContentType>(
-        facets?.content_types ?? DEFAULT_CONTENT_TYPES,
+        facets?.content_types ?? [],
         draft.contentTypes,
       ),
     [draft.contentTypes, facets?.content_types],
@@ -77,6 +75,7 @@ export function MapFilterControls({
           <button className="button-primary" type="submit">
             {t("applyFilters")}
           </button>
+          {collapseControl}
         </div>
       </div>
 

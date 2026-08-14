@@ -9,7 +9,10 @@ export const DEFAULT_BBOX = "20.7,52.0,21.4,52.4";
 export const DEFAULT_CONTENT_TYPES: ContentType[] = ["development", "unit"];
 const WARSAW_LONGITUDE_RANGE = [20.5, 21.6] as const;
 const WARSAW_LATITUDE_RANGE = [51.8, 52.6] as const;
-const MAX_BBOX_SPAN = 0.8;
+// The backend rejects spans above 0.8 measured on floats re-parsed from the
+// six-decimal bbox string, where an exact 0.8 span can round-trip as
+// 0.8000000000000007. Keep a margin so every emitted bbox stays queryable.
+const MAX_BBOX_SPAN = 0.799;
 
 export type MapSearchState = {
   bbox: string;

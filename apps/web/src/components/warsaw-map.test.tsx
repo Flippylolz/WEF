@@ -88,6 +88,23 @@ vi.mock("react-map-gl/maplibre", () => ({
         >
           simulated-map-move
         </button>
+        <button
+          type="button"
+          onClick={() =>
+            onMoveEnd({
+              target: {
+                getBounds: () => ({
+                  getWest: () => 20.8,
+                  getSouth: () => 52.3,
+                  getEast: () => 21.2,
+                  getNorth: () => 52.3,
+                }),
+              },
+            })
+          }
+        >
+          simulated-map-move-flat
+        </button>
         {children}
       </div>
     );
@@ -267,6 +284,28 @@ describe("WarsawMap", () => {
     );
   });
 
+  it("ignores a degenerate viewport reported mid-resize", async () => {
+    const user = userEvent.setup();
+    const onViewportChange = vi.fn();
+    render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={onViewportChange}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-move-flat" }),
+    );
+
+    expect(onViewportChange).not.toHaveBeenCalled();
+  });
+
   it("fits the rendered map to a bounded URL viewport", async () => {
     const user = userEvent.setup();
     const props = {
@@ -292,5 +331,35 @@ describe("WarsawMap", () => {
       { duration: 0, padding: 32 },
     );
     expect(props.onViewportChange).not.toHaveBeenCalled();
+  });
+
+  it("does not refit when the URL catches up with the reported viewport", async () => {
+    const user = userEvent.setup();
+    const props = {
+      data: mapData,
+      selectedId: null,
+      loadingLabel: "Loading interactive map",
+      onSelect: vi.fn(),
+      onFailure: vi.fn(),
+      onViewportChange: vi.fn(),
+    };
+    const view = render(<WarsawMap bbox="20.7,52.0,21.4,52.4" {...props} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-move" }),
+    );
+    expect(props.onViewportChange).toHaveBeenCalledWith(
+      "20.812345,52.123457,21.2,52.3",
+    );
+    fitBounds.mockClear();
+
+    view.rerender(
+      <WarsawMap bbox="20.812345,52.123457,21.2,52.3" {...props} />,
+    );
+
+    expect(fitBounds).not.toHaveBeenCalled();
   });
 });

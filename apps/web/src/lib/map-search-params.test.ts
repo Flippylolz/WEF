@@ -91,7 +91,21 @@ describe("map search parameters", () => {
       "20.812345,52.123457,21.2,52.3",
     );
     expect(boundedWarsawViewport([19, 51, 23, 54])).toBe(
-      "20.65,51.8,21.45,52.6",
+      "20.6505,51.8005,21.4495,52.5995",
     );
+  });
+
+  it("never emits a viewport span the backend query limit rejects", () => {
+    // Regression: an exact 0.8 span round-trips through the six-decimal
+    // bbox string as 0.8000000000000007 and the API answers 422.
+    const bounded = boundedWarsawViewport([
+      20.649911, 52.092717, 21.449911, 52.323579,
+    ]);
+    const [west, south, east, north] = bounded
+      .split(",")
+      .map((part) => Number(part));
+
+    expect(east - west).toBeLessThanOrEqual(0.8);
+    expect(north - south).toBeLessThanOrEqual(0.8);
   });
 });
