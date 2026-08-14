@@ -34,17 +34,17 @@ This append-only log records blockers that could not be safely resolved autonomo
 
 ### B-008: Hosted geocoder credentials and reviewed Warsaw fixture
 
-- Impact: the hosted Geoapify/LocationIQ comparison cannot run and no provider can be selected/activated from repository evidence.
-- Current state: ADR-021 and E3 spike revision 3 are pending owner review. No provider key or owner-reviewed redacted Warsaw fixture is stored in the repository.
+- Impact: the hosted Geoapify/LocationIQ comparison cannot run and no provider can be selected/activated from repository evidence. E3-T3 cannot complete without that comparison.
+- Current state: E3 spike revision 3 is approved; implementation-plan revision 3 awaits owner approval. ADR-021 remains proposed and D-002 remains deferred. No provider key or owner-reviewed redacted Warsaw fixture is stored in the repository.
 - Needed from owner: later provide keys through approved secret channels and approve a redacted fixture; never put credentials or private source addresses in Git/chat.
-- Safe workaround: keep CI network-free and treat provider terms/quality/selection as unresolved. Missing inputs are not acceptance evidence.
+- Safe workaround: keep CI network-free and treat provider terms/quality/selection as unresolved. Missing inputs are not acceptance evidence and cannot replace the hard E3-T3 hosted-comparison gate.
 
 ## Resolved during overnight work
 
 ### R-005 / B-007: E3 complete-import upstream audit
 
 - Resolution: E2-T5 completed the authoritative export audit and merged through [PR #42](https://github.com/Flippylolz/WEF/pull/42).
-- Effect: E2-T5 no longer blocks E3-T5. E3-T5 remains an unchanged, proposed, non-actionable candidate pending future spike/plan/task approvals and completion of its later E3 dependencies.
+- Effect: E2-T5 no longer blocks E3-T5. E3-T5 is promoted/draft under `tasks/` with spike revision 3 satisfied; it remains non-actionable until implementation-plan revision 3 is approved and E3-T2/T3/T4 complete.
 
 ### R-003 / B-001: Stacked PRs merged
 

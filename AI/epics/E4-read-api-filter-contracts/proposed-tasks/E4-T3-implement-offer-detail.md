@@ -50,7 +50,7 @@ The following definition preserves the original E4-T3 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E3-T4](../../E3-database-geocoding-media/proposed-tasks/E3-T4-implement-media-storage-and-derivatives.md), [E4-T2](../tasks/E4-T2-implement-facets-and-location-offer-collection.md)
+- Task dependencies: [E3-T4](../../E3-database-geocoding-media/tasks/E3-T4-implement-media-storage-and-derivatives.md), [E4-T2](../tasks/E4-T2-implement-facets-and-location-offer-collection.md)
 - Milestone: [M2](../../../milestones/M2-historical-dataset-ready.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Product](../../../product/README.md), [Contracts](../../../contracts/README.md), [Architecture](../../../architecture/README.md), [Security](../../../security/README.md).
 

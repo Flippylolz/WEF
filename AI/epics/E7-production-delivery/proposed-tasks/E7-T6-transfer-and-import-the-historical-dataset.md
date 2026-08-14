@@ -53,7 +53,7 @@ The following definition preserves the original E7-T6 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E3-T5](../../E3-database-geocoding-media/proposed-tasks/E3-T5-import-and-review-the-complete-dataset.md), [E7-T2](../tasks/E7-T2-provision-and-verify-supplied-server.md), [E7-T4](../tasks/E7-T4-implement-health-verification-and-rollback.md)
+- Task dependencies: [E3-T5](../../E3-database-geocoding-media/tasks/E3-T5-import-and-review-the-complete-dataset.md), [E7-T2](../tasks/E7-T2-provision-and-verify-supplied-server.md), [E7-T4](../tasks/E7-T4-implement-health-verification-and-rollback.md)
 - Deferred-decision gates: [D-002](../../../decisions/deferred/D-002-recurring-geocoding-provider.md).
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Operations](../../../operations/README.md), [Governance](../../../governance/README.md), [Security](../../../security/README.md), [Data](../../../data/README.md).

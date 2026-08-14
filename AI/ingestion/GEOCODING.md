@@ -9,7 +9,7 @@
 
 This is a low-volume backend workload. A free hosted production allowance is operationally safer than running a search index on the current shared 8 GB NUC.
 
-Provider selection remains deferred by [D-002](../decisions/deferred/D-002-recurring-geocoding-provider.md). [ADR-021](../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) is a proposed historical-path decision pending owner approval; [E8-T4](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) still revalidates recurring use.
+Provider selection remains deferred by [D-002](../decisions/deferred/D-002-recurring-geocoding-provider.md). [ADR-021](../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) remains a proposed historical-path decision; approved E3 spike revision 3 does not accept it. [E8-T4](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) still revalidates recurring use.
 
 ## Recommended MVP: Geoapify free
 
@@ -121,4 +121,4 @@ Provider choice must be configuration, not branching business logic.
 
 ## Recommendation
 
-Pending owner approval of ADR-021, evaluate Geoapify first for the historical import and LocationIQ as the terms-compatible comparator. Select neither until the owner-reviewed Warsaw fixture and then-current terms pass. Consider public Nominatim, at most, as a potential small one-time fallback only if its policy permits the specific use and every condition is met. Defer self-hosting until usage or provider terms justify a separate benchmark/host.
+Pending owner approval of ADR-021, evaluate Geoapify first for the historical import and LocationIQ as the terms-compatible comparator. Select neither until the owner-reviewed Warsaw fixture and then-current terms pass. Approved E3 spike revision 3 does not accept ADR-021 or resolve D-002. Consider public Nominatim, at most, as a potential small one-time fallback only if its policy permits the specific use and every condition is met. Defer self-hosting until usage or provider terms justify a separate benchmark/host.

@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E3
 title: "Historical persistence, geocoding, media, and import research"
-status: awaiting_approval
+status: approved
 revision: 3
 owner: owner
 research_only: true
@@ -12,11 +12,11 @@ domain_docs: [data, contracts, ingestion, security]
 proposed_task_ids: [E3-T1, E3-T2, E3-T3, E3-T4, E3-T5]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-14T00:42:00Z"
+  approved_revision: 3
+  evidence: "Owner merge of https://github.com/Flippylolz/WEF/pull/44 (f968adb) plus owner continue directive authorizing spike revision 3 for task refinement/promotion and implementation planning"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -26,7 +26,7 @@ invalidation:
 
 # Spike: Historical persistence, geocoding, media, and import
 
-> Revision 3 is research awaiting durable owner approval. It does not refine/promote E3-T2–T5, authorize implementation, approve [ADR-021](../../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md), or replace the approved revision 2 implementation plan, which authorized only completed E3-T1.
+> Revision 3 is owner-approved research. It authorizes task refinement/promotion and a later implementation-plan revision. It does not authorize code, accept [ADR-021](../../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md), resolve [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md), or approve any implementation plan.
 
 ## Question
 
@@ -36,8 +36,8 @@ What architecture constraints should govern a later plan for converting the audi
 
 - PostgreSQL/PostGIS remains canonical under ADR-005; E3-T1 already delivered the synthetic M1 `locations`/`offers` foundation.
 - E2-T2/E2-T3 provide source-neutral extraction and media-association contracts. E2-T5 is `done` through merged [PR #42](https://github.com/Flippylolz/WEF/pull/42), so B-007 is satisfied.
-- E3-T2 through E3-T5 remain unchanged revision 1 candidates under `proposed-tasks/`; none is actionable.
-- [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) remains the approved revision 2 plan for completed E3-T1 only. A material plan for later tasks may be authored only after this spike revision is approved.
+- E3-T2 through E3-T5 are refined and promoted under `tasks/` after this approval; they remain non-actionable until an owner-approved material implementation plan unlocks their implementation gates.
+- Completed E3-T1 remains governed by the historical approved plan revision 2. A material plan for E3-T2–T5 is submitted separately and is not approved by this spike.
 - No real-world availability flag, contact product/reveal, public detail/media API, production import, live Telegram ingestion, or backup claim enters this spike.
 - Research outputs contain no private export payload, contact value, source path, credential, provider response, or media bytes.
 
@@ -68,7 +68,7 @@ These are spike-level constraints for later planning, not approved tables, field
 - **Contact-safe persistence:** retain restricted lineage while excluding plaintext contact values/spans from routine projections, excerpts, logs, reports, indexes, and errors until the later encrypted contact boundary.
 - **Complete-run ownership with bounded commits:** prevent overlapping writers for one source across the whole run while keeping row/checkpoint transactions bounded; session advisory locking is one candidate, not a selected implementation.
 - **Canonical replay identity:** preserve exact source/version ownership and same-message provenance; fuzzy fingerprints may suggest review but must not become canonical uniqueness or silently merge records.
-- **Cache ambiguity:** cache uniqueness alone may not prevent cross-process duplicate provider calls; later planning must choose and test miss ownership without holding a database transaction across HTTP.
+- **Cache ambiguity:** cache uniqueness alone may not prevent cross-process duplicate provider calls; later planning must choose and test miss ownership with a healthy-concurrency guarantee and ambiguous-retry reconciliation, not an impossible at-most-once network promise. Provider I/O must not hold a database transaction.
 - **Reviewed pin atomicity:** provider success is not pin acceptance; selected coordinates, review state, and auditable selection lineage must change coherently.
 - **Independent media ownership:** physical deduplication must not collapse source/media associations, including E2 `explicit_group`; restricted originals and public derivatives require separate serving boundaries.
 - **Immutable derivative input identity:** a derivative must remain attributable to the exact verified original/version used, and unsafe/unread inputs must be rejectable without reading bytes merely to derive identity.
@@ -81,6 +81,7 @@ These are spike-level constraints for later planning, not approved tables, field
 - LocationIQ remains a comparator only after its then-current account/cache terms are confirmed compatible with the required durable result model.
 - Public Nominatim remains, at most, a potential small one-time fallback that may be considered only if the linked OSMF policy permits the specific use and all conditions are met; it is not a recurring production dependency.
 - **Unresolved:** no provider credentials or owner-reviewed redacted fixture are in the repository. B-008 remains active; absent evidence cannot be treated as provider approval or task completion.
+- **ADR-021 / D-002:** [ADR-021](../../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) remains `proposed`. This spike approval does not accept ADR-021 or resolve [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md).
 
 ## Options evaluated
 
@@ -91,21 +92,19 @@ These are spike-level constraints for later planning, not approved tables, field
 
 ## Proposed task boundaries
 
-The existing task definitions remain unchanged planning inputs:
-
 - [E3-T1](tasks/E3-T1-create-schema-and-migrations.md) — completed under approved spike/plan revision 2.
-- [E3-T2](proposed-tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md) — unchanged revision 1 candidate.
-- [E3-T3](proposed-tasks/E3-T3-implement-geocoder-abstraction-and-cache.md) — unchanged revision 1 candidate.
-- [E3-T4](proposed-tasks/E3-T4-implement-media-storage-and-derivatives.md) — unchanged revision 1 candidate.
-- [E3-T5](proposed-tasks/E3-T5-import-and-review-the-complete-dataset.md) — unchanged revision 1 candidate; E2-T5 is satisfied, while later E3 dependencies remain unapproved/incomplete.
+- [E3-T2](tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md) — refined/promoted after this spike approval; implementation gate pending plan approval.
+- [E3-T3](tasks/E3-T3-implement-geocoder-abstraction-and-cache.md) — refined/promoted after this spike approval; implementation gate pending plan approval; hosted comparison remains a hard completion gate; B-008 unresolved.
+- [E3-T4](tasks/E3-T4-implement-media-storage-and-derivatives.md) — refined/promoted after this spike approval; independent of E3-T3 after E3-T2; implementation gate pending plan approval.
+- [E3-T5](tasks/E3-T5-import-and-review-the-complete-dataset.md) — refined/promoted after this spike approval; depends on E3-T2/T3/T4; implementation gate pending plan approval.
 
-No task sequence, branch order, detailed model, acceptance criteria, migration, or rollout is approved by this spike draft. Those belong to a separate post-approval planning PR.
+Delivery sequence after a later approved plan: T2 first, then T3 and T4 may proceed independently, then T5. Do not serialize T4 behind T3.
 
 ## Risks and open questions
 
 - Source/contact leakage through provenance, excerpts, diagnostics, or committed fixtures.
 - Replay divergence, overlapping runs, premature checkpoints, or canonical over-merge.
-- Duplicate provider calls, changing terms/quotas, unavailable credentials/fixture, and misleading low-precision/out-of-scope pins.
+- Duplicate or ambiguous provider calls, changing terms/quotas, unavailable credentials/fixture, and misleading low-precision/out-of-scope pins.
 - Traversal/symlink/non-regular/oversized/polyglot/decompression/metadata/partial-write media hazards.
 - Original/derivative identity drift or physical deduplication that loses source association.
 - Single-host database/media persistence remains data-loss exposure, not backup, under ADR-015.
@@ -116,10 +115,10 @@ No task sequence, branch order, detailed model, acceptance criteria, migration, 
 - [x] Observed facts, recommendations, and unresolved evidence are distinguished.
 - [x] Official external sources are dated and linked directly.
 - [x] E2-T5/B-007 is recorded satisfied and B-008 remains unresolved.
-- [x] Existing proposed tasks and the approved revision 2 implementation plan remain unchanged.
+- [x] Spike approval authorizes refinement/promotion and planning only; ADR-021 stays proposed and D-002 stays deferred.
 - [x] No production/disposable proof code or private source data was created.
-- [x] `status` is `awaiting_approval` and approval metadata is `pending`.
+- [x] `status` is `approved` and approval metadata matches revision 3.
 
 ## Owner decision
 
-Pending. Only a durable owner-authored approval reference for **SPIKE.md revision 3** belongs on this branch. Approval would permit later task refinement/promotion and implementation planning; it would not authorize code, accept ADR-021, resolve D-002, or approve a later implementation plan.
+Flippylolz approved spike revision 3 through the merge of [PR #44](https://github.com/Flippylolz/WEF/pull/44) (`f968adb`) and the owner continue directive that authorized recording that approval. This permits task refinement/promotion and a separate material implementation-plan revision. It does not authorize code, accept ADR-021, resolve D-002, or approve any implementation plan.
