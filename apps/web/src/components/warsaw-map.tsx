@@ -142,6 +142,7 @@ export function WarsawMap({
   const mapLoaded = useRef(false);
   const failureHandler = useRef(onFailure);
   const suppressNextMoveEnd = useRef(false);
+  const lastReportedViewport = useRef<string | null>(null);
   const initialBounds = parseBbox(bbox);
 
   useEffect(() => {
@@ -159,6 +160,7 @@ export function WarsawMap({
     if (!mapReady) return;
     const bounds = parseBbox(bbox);
     if (bounds === null) return;
+    if (bbox === lastReportedViewport.current) return;
     suppressNextMoveEnd.current = true;
     mapRef.current?.fitBounds(
       [
@@ -198,12 +200,15 @@ export function WarsawMap({
       return;
     }
     const bounds = event.target.getBounds();
-    const nextBbox = boundedWarsawViewport([
-      bounds.getWest(),
-      bounds.getSouth(),
-      bounds.getEast(),
-      bounds.getNorth(),
-    ]);
+    const west = bounds.getWest();
+    const south = bounds.getSouth();
+    const east = bounds.getEast();
+    const north = bounds.getNorth();
+    // A flat viewport (unsized canvas mid-resize) would serialize into an
+    // invalid bbox and permanently fail every locations query.
+    if (east <= west || north <= south) return;
+    const nextBbox = boundedWarsawViewport([west, south, east, north]);
+    lastReportedViewport.current = nextBbox;
     onViewportChange(nextBbox);
   }
 

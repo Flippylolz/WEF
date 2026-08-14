@@ -57,15 +57,23 @@ vi.mock("next/dynamic", () => ({
   default: () =>
     function FakeMap({
       onFailure,
+      onSelect,
       onViewportChange,
     }: {
       onFailure: () => void;
+      onSelect: (locationId: string) => void;
       onViewportChange: (bbox: string) => void;
     }) {
       return (
         <div data-testid="map">
           <button type="button" onClick={onFailure}>
             fail-map
+          </button>
+          <button
+            type="button"
+            onClick={() => onSelect("10000000-0000-4000-8000-000000000001")}
+          >
+            select-pin
           </button>
           <button
             type="button"
@@ -406,6 +414,63 @@ describe("MapExplorer", () => {
     expect(catalogApi.fetchLocationMap).toHaveBeenLastCalledWith(
       { bbox: "20.8,52.1,21.2,52.3" },
       { signal: expect.any(AbortSignal) },
+    );
+  });
+
+  it("hides the sidebar and reopens it with data when a pin is selected", async () => {
+    const user = userEvent.setup();
+    renderExplorer();
+    await screen.findByRole("button", {
+      name: /Synthetic Central Residence/,
+    });
+
+    const sidebar = document.getElementById("explorer-sidebar");
+    expect(sidebar).not.toBeNull();
+    expect(sidebar).not.toHaveAttribute("inert");
+
+    await user.click(screen.getByRole("button", { name: "hidePanel" }));
+
+    // the panel stays mounted for the collapse animation but is inert
+    expect(sidebar).toHaveAttribute("inert");
+    const show = screen.getByRole("button", { name: "showPanel" });
+    expect(show).toHaveAttribute("aria-expanded", "false");
+    expect(show.querySelector("svg")).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "hidePanel" }).querySelector("svg"),
+    ).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "select-pin" }));
+
+    expect(sidebar).not.toHaveAttribute("inert");
+    expect(
+      await screen.findByText("development · primary"),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps filter drafts across viewport updates and preserves the view on apply", async () => {
+    renderExplorer();
+    await screen.findByRole("button", {
+      name: /Synthetic Central Residence/,
+    });
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "minimumPrice" }), {
+      target: { value: "800000" },
+    });
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole("button", { name: "move-map" }));
+    act(() => vi.advanceTimersByTime(300));
+
+    expect(navigation.search).toBe("bbox=20.8%2C52.1%2C21.2%2C52.3");
+    expect(
+      screen.getByRole("spinbutton", { name: "minimumPrice" }),
+    ).toHaveValue(800000);
+
+    navigation.push.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "applyFilters" }));
+
+    expect(navigation.push).toHaveBeenCalledWith(
+      "/?bbox=20.8%2C52.1%2C21.2%2C52.3&price_min=80000000",
+      { scroll: false },
     );
   });
 

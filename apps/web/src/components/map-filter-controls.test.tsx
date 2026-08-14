@@ -111,4 +111,41 @@ describe("MapFilterControls", () => {
     await user.click(screen.getByRole("button", { name: "clearFilters" }));
     expect(onClear).toHaveBeenCalledOnce();
   });
+
+  it("renders only facet-provided options while facets are unavailable", () => {
+    render(
+      <MapFilterControls
+        facets={null}
+        facetsError={false}
+        facetsLoading
+        state={DEFAULT_MAP_SEARCH_STATE}
+        onApply={vi.fn()}
+        onClear={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("facetsLoading");
+    // Rooms, districts, and market options come only from facets, so none
+    // render while the facet snapshot is unavailable.
+    expect(
+      screen.queryByRole("checkbox", { name: "roomOption:1" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: "marketType.primary" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: "marketType.unknown" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: "Wola" }),
+    ).not.toBeInTheDocument();
+    // Active URL state stays visible: both default content types remain
+    // checked and selectable even without a facet snapshot.
+    expect(
+      screen.getByRole("checkbox", { name: "contentType.development" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "contentType.unit" }),
+    ).toBeChecked();
+  });
 });

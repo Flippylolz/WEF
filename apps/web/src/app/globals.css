@@ -67,7 +67,7 @@ body {
 }
 
 .page-header {
-  max-width: 56rem;
+  max-width: none;
   margin-bottom: 2rem;
 }
 
@@ -87,9 +87,12 @@ p {
 
 h1 {
   margin-bottom: 0.75rem;
-  font-size: clamp(2.25rem, 6vw, 4rem);
+  /* Sized so the full page title stays on one line down to the 56rem
+     app layout breakpoint; narrower screens may wrap. */
+  font-size: clamp(2rem, 3.4vw, 3.5rem);
   line-height: 0.98;
   letter-spacing: -0.05em;
+  text-wrap: nowrap;
 }
 
 .subtitle,
@@ -185,24 +188,23 @@ input:focus-visible {
   display: flex;
   min-width: 0;
   min-height: 0;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: 1rem;
 }
 
 .filter-panel {
   flex: 0 0 auto;
-  border: 1px solid var(--border);
-  border-radius: 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--border);
   background: var(--surface);
   padding: 1rem;
-  box-shadow: 0 0.75rem 2rem rgb(28 57 42 / 5%);
 }
 
 .filter-heading {
   display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 1rem;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .filter-heading h2 {
@@ -216,12 +218,14 @@ input:focus-visible {
 
 .filter-actions {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.5rem;
 }
 
-.filter-actions button,
+.filter-actions .button-primary,
+.filter-actions .button-secondary,
 .offer-placeholder button {
   border: 1px solid var(--accent);
   border-radius: 0.55rem;
@@ -326,6 +330,11 @@ input:focus-visible {
   border-radius: 1rem;
   background: var(--surface);
   box-shadow: 0 1.5rem 4rem rgb(28 57 42 / 8%);
+  transition: grid-template-columns 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-explorer-collapsed {
+  grid-template-columns: minmax(0, 1fr) 0fr;
 }
 
 .map-region {
@@ -378,11 +387,80 @@ input:focus-visible {
   font-size: 0.66rem;
 }
 
+.explorer-sidebar {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid var(--border);
+  opacity: 1;
+  transition:
+    opacity 140ms ease,
+    visibility 0s;
+}
+
+.map-explorer-collapsed .explorer-sidebar {
+  border-left-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 140ms ease,
+    visibility 0s 140ms;
+}
+
+.sidebar-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 92%);
+  color: var(--accent);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.sidebar-toggle:hover {
+  border-color: var(--accent);
+  transform: scale(1.08);
+}
+
+.sidebar-toggle:active {
+  transform: scale(0.92);
+}
+
+.sidebar-toggle-floating {
+  position: absolute;
+  z-index: 3;
+  top: 0.75rem;
+  left: 0.75rem;
+  box-shadow: 0 0.4rem 1rem rgb(28 57 42 / 14%);
+  animation: sidebar-toggle-in 180ms ease;
+}
+
+@keyframes sidebar-toggle-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .results-panel {
   min-width: 0;
-  max-height: 70vh;
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
-  border-left: 1px solid var(--border);
   padding: 1.25rem;
 }
 
@@ -561,8 +639,7 @@ input:focus-visible {
     min-height: 0;
   }
 
-  .results-panel {
-    max-height: none;
+  .explorer-sidebar {
     min-height: 0;
   }
 }
@@ -580,10 +657,19 @@ input:focus-visible {
     min-height: 50vh;
   }
 
-  .results-panel {
-    max-height: none;
+  .explorer-sidebar {
     border-top: 1px solid var(--border);
     border-left: 0;
+    max-height: none;
+    transition:
+      max-height 280ms cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 140ms ease,
+      visibility 0s;
+  }
+
+  .explorer-sidebar-collapsed {
+    max-height: 0;
+    border-top-width: 0;
   }
 }
 
@@ -599,6 +685,7 @@ input:focus-visible {
 
   h1 {
     font-size: clamp(2rem, 10vw, 3rem);
+    text-wrap: wrap;
   }
 
   .map-explorer {
@@ -606,7 +693,6 @@ input:focus-visible {
   }
 
   .filter-panel {
-    border-radius: 0.75rem;
     padding: 0.8rem;
   }
 
@@ -619,7 +705,8 @@ input:focus-visible {
     justify-content: stretch;
   }
 
-  .filter-actions button {
+  .filter-actions .button-primary,
+  .filter-actions .button-secondary {
     flex: 1 1 8rem;
   }
 

@@ -56,10 +56,16 @@ export function MapExplorer() {
     () => toMapLocationQuery(searchState),
     [searchState],
   );
+  const filtersOnlySearch = useMemo(() => {
+    const params = new URLSearchParams(canonicalSearch);
+    params.delete("bbox");
+    return params.toString();
+  }, [canonicalSearch]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedFeatureSnapshot, setSelectedFeatureSnapshot] =
     useState<LocationMapFeature | null>(null);
   const [mapFailed, setMapFailed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const viewportTimer = useRef<number | null>(null);
   const cancelViewportUpdate = useCallback(() => {
     if (viewportTimer.current !== null) {
@@ -146,6 +152,7 @@ export function MapExplorer() {
     );
     if (currentFeature) setSelectedFeatureSnapshot(currentFeature);
     setSelectedId(locationId);
+    setSidebarOpen(true);
   }
 
   const offers: OfferState =
@@ -160,17 +167,9 @@ export function MapExplorer() {
 
   return (
     <section className="map-explorer-shell" aria-label={t("explorerLabel")}>
-      <MapFilterControls
-        key={canonicalSearch}
-        facets={facetsQuery.data ?? null}
-        facetsError={facetsQuery.isError}
-        facetsLoading={facetsQuery.isPending}
-        state={searchState}
-        onApply={(nextState) => navigate(nextState, "push")}
-        onClear={() => navigate(DEFAULT_MAP_SEARCH_STATE, "push")}
-      />
-
-      <div className="map-explorer">
+      <div
+        className={`map-explorer${sidebarOpen ? "" : " map-explorer-collapsed"}`}
+      >
         <div className="map-region">
           {mapFailed ? (
             <div className="map-fallback" role="status">
@@ -196,71 +195,154 @@ export function MapExplorer() {
               {mapQuery.isError ? <span>{t("filtersPreserved")}</span> : null}
             </div>
           )}
+          {!sidebarOpen ? (
+            <button
+              className="sidebar-toggle sidebar-toggle-floating"
+              type="button"
+              aria-label={t("showPanel")}
+              title={t("showPanel")}
+              aria-expanded={false}
+              aria-controls="explorer-sidebar"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <ChevronLeftIcon />
+            </button>
+          ) : null}
           <p className="map-attribution">
             © OpenFreeMap · © OpenStreetMap contributors
           </p>
         </div>
 
-        <aside className="results-panel" aria-label={t("locationsLabel")}>
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">{t("locationsEyebrow")}</p>
-              <h2>{t("locationsTitle")}</h2>
-            </div>
-            <span className="result-count">
-              {t("locationCount", {
-                count: map?.meta.feature_count ?? 0,
-              })}
-            </span>
-          </div>
-          {facetsQuery.data ? (
-            <p className="facet-summary">
-              {t("districtCount", {
-                count: facetsQuery.data.districts.length,
-              })}
-            </p>
-          ) : null}
-          {mapQuery.isFetching && map ? (
-            <p className="results-status" role="status">
-              {t("updating")}
-            </p>
-          ) : null}
-          {mapQuery.isError ? (
-            <p className="results-status state-error" role="alert">
-              {t("error")}
-            </p>
-          ) : null}
-          {mapQuery.isPending ? (
-            <p className="results-status" role="status">
-              {t("loading")}
-            </p>
-          ) : null}
-          {map && map.features.length === 0 ? (
-            <p className="results-status" role="status">
-              {t("empty")}
-            </p>
-          ) : null}
-          {map && map.features.length > 0 ? (
-            <ul className="location-list">
-              {map.features.map((feature) => (
-                <LocationButton
-                  key={feature.id}
-                  feature={feature}
-                  selected={feature.id === selectedId}
-                  onSelect={selectLocation}
-                />
-              ))}
-            </ul>
-          ) : null}
-
-          <OfferPanel
-            feature={selectedFeature}
-            offers={offers}
-            onRetry={selectedId ? () => void offersQuery.refetch() : undefined}
+        <aside
+          id="explorer-sidebar"
+          className={`explorer-sidebar${sidebarOpen ? "" : " explorer-sidebar-collapsed"}`}
+          aria-label={t("panelLabel")}
+          inert={!sidebarOpen}
+        >
+          <MapFilterControls
+            key={filtersOnlySearch}
+            facets={facetsQuery.data ?? null}
+            facetsError={facetsQuery.isError}
+            facetsLoading={facetsQuery.isPending}
+            state={searchState}
+            onApply={(nextState) =>
+              navigate({ ...nextState, bbox: searchState.bbox }, "push")
+            }
+            onClear={() => navigate(DEFAULT_MAP_SEARCH_STATE, "push")}
+            collapseControl={
+              <button
+                className="sidebar-toggle"
+                type="button"
+                aria-label={t("hidePanel")}
+                title={t("hidePanel")}
+                aria-expanded={sidebarOpen}
+                aria-controls="explorer-sidebar"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <ChevronRightIcon />
+              </button>
+            }
           />
+
+          <section className="results-panel" aria-label={t("locationsLabel")}>
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">{t("locationsEyebrow")}</p>
+                <h2>{t("locationsTitle")}</h2>
+              </div>
+              <span className="result-count">
+                {t("locationCount", {
+                  count: map?.meta.feature_count ?? 0,
+                })}
+              </span>
+            </div>
+            {facetsQuery.data ? (
+              <p className="facet-summary">
+                {t("districtCount", {
+                  count: facetsQuery.data.districts.length,
+                })}
+              </p>
+            ) : null}
+            {mapQuery.isFetching && map ? (
+              <p className="results-status" role="status">
+                {t("updating")}
+              </p>
+            ) : null}
+            {mapQuery.isError ? (
+              <p className="results-status state-error" role="alert">
+                {t("error")}
+              </p>
+            ) : null}
+            {mapQuery.isPending ? (
+              <p className="results-status" role="status">
+                {t("loading")}
+              </p>
+            ) : null}
+            {map && map.features.length === 0 ? (
+              <p className="results-status" role="status">
+                {t("empty")}
+              </p>
+            ) : null}
+            {map && map.features.length > 0 ? (
+              <ul className="location-list">
+                {map.features.map((feature) => (
+                  <LocationButton
+                    key={feature.id}
+                    feature={feature}
+                    selected={feature.id === selectedId}
+                    onSelect={selectLocation}
+                  />
+                ))}
+              </ul>
+            ) : null}
+
+            <OfferPanel
+              feature={selectedFeature}
+              offers={offers}
+              onRetry={
+                selectedId ? () => void offersQuery.refetch() : undefined
+              }
+            />
+          </section>
         </aside>
       </div>
     </section>
+  );
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      height="16"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 24 24"
+      width="16"
+    >
+      <path d="m15 6-6 6 6 6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      height="16"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 24 24"
+      width="16"
+    >
+      <path d="m9 6 6 6-6 6" />
+    </svg>
   );
 }
 

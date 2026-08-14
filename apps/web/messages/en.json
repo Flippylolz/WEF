@@ -9,7 +9,7 @@
     "empty": "No locations match this view.",
     "explorerLabel": "Warsaw estate explorer",
     "filtersEyebrow": "Search",
-    "filtersTitle": "Filter dated offers",
+    "filtersTitle": "Filters",
     "clearFilters": "Clear filters",
     "applyFilters": "Apply filters",
     "priceLabel": "Price (PLN)",
@@ -61,6 +61,9 @@
     "parkingPrice": "Parking",
     "storagePrice": "Storage",
     "includedInApartmentPrice": "Included in apartment price",
-    "partialData": "Some structured values were not provided."
+    "partialData": "Some structured values were not provided.",
+    "panelLabel": "Filters and results",
+    "hidePanel": "Hide panel",
+    "showPanel": "Show panel"
   }
 }
