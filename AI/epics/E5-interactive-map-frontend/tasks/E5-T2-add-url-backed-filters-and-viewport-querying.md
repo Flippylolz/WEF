@@ -19,15 +19,15 @@ promotion:
 spike_gate:
   status: satisfied
   file: ../SPIKE.md
-  approved_revision: 2
+  approved_revision: 3
   verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T22:34:40Z"
+  verified_at: "2026-08-13T19:30:00Z"
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 2
+  approved_revision: 3
   verified_by: "Cursor Agent"
-  verified_at: "2026-08-12T22:34:40Z"
+  verified_at: "2026-08-13T19:30:00Z"
 dependency_gate:
   status: satisfied
   verified_by: "Cursor Agent (owner-authorized reconciliation)"
@@ -110,7 +110,7 @@ Additive web-only behavior over E4. Roll back the web image; endpoint/schema com
 ## Ready checklist
 
 - [x] This file is authoritative under `tasks/`; the proposed source is removed.
-- [x] Promotion, spike revision 2, and plan revision 2 are recorded.
+- [x] Promotion, spike revision 3, and plan revision 3 are recorded.
 - [x] E5-T1/E4-T2 are complete and recorded by the satisfied dependency gate.
 - [x] Scope and acceptance match the approved plan.
 

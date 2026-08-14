@@ -21,9 +21,9 @@ The responsive map experience is production-deployed from GitHub with persistent
 
 ### [E5: Interactive map frontend](../epics/E5-interactive-map-frontend/README.md)
 
-- [E5-T3: Build offer detail and media gallery](../epics/E5-interactive-map-frontend/proposed-tasks/E5-T3-build-offer-detail-and-media-gallery.md) — `proposed`
-- [E5-T4: Complete responsive list/map accessibility](../epics/E5-interactive-map-frontend/proposed-tasks/E5-T4-complete-responsive-list-map-accessibility.md) — `proposed`
-- [E5-T5: Performance and production UX pass](../epics/E5-interactive-map-frontend/proposed-tasks/E5-T5-performance-and-production-ux-pass.md) — `proposed`
+- [E5-T3: Build offer detail and media gallery](../epics/E5-interactive-map-frontend/tasks/E5-T3-build-offer-detail-and-media-gallery.md) — promoted, `draft`, blocked on E4-T3
+- [E5-T4: Complete responsive list/map accessibility](../epics/E5-interactive-map-frontend/tasks/E5-T4-complete-responsive-list-map-accessibility.md) — promoted, `draft`, blocked on E5-T2/E5-T3
+- [E5-T5: Performance and production UX pass](../epics/E5-interactive-map-frontend/tasks/E5-T5-performance-and-production-ux-pass.md) — promoted, `draft`, blocked on E5-T4/E4-T4
 ### [E6: Quality, security, and operations](../epics/E6-quality-security-operations/README.md)
 
 - [E6-T1: Complete automated test pyramid](../epics/E6-quality-security-operations/proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — `proposed`

@@ -52,7 +52,7 @@ The following definition preserves the original E6-T6 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E5-T3](../../E5-interactive-map-frontend/proposed-tasks/E5-T3-build-offer-detail-and-media-gallery.md), [E6-T4](E6-T4-implement-in-house-registration-and-sessions.md), [E6-T5](E6-T5-implement-contact-masking-encryption-reveal-and-audit.md)
+- Task dependencies: [E5-T3](../../E5-interactive-map-frontend/tasks/E5-T3-build-offer-detail-and-media-gallery.md), [E6-T4](E6-T4-implement-in-house-registration-and-sessions.md), [E6-T5](E6-T5-implement-contact-masking-encryption-reveal-and-audit.md)
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Product](../../../product/README.md), [Security](../../../security/README.md), [Operations](../../../operations/README.md), [Governance](../../../governance/README.md), [Contracts](../../../contracts/README.md).
 
