@@ -185,7 +185,10 @@ Fields:
 - `extraction_json`: versioned field-level value, rule, non-contact source offsets, and confidence. It excludes plaintext `ContactSpan` values and the text of every contact-bearing span.
 - `created_at`.
 
-Constraint: unique `(offer_id, source_message_revision_id)`; a changed source revision appends revision-specific provenance rather than silently rebasing old offsets onto new text.
+Constraints:
+
+- Unique `(offer_id, source_message_revision_id)`; a changed source revision appends revision-specific provenance rather than silently rebasing old offsets onto new text.
+- `source_message_revision_id` must identify a `SourceMessageRevision` whose `source_message_id` equals this row's `source_message_id` (composite foreign key, or derive message identity solely from the revision). Cross-message revision references are forbidden, matching the `SourceMessage.current_revision_id` same-message rule.
 
 ### StoredMediaObject
 
@@ -260,6 +263,7 @@ Fields:
 Constraints and replay identity:
 
 - `source_ordinal >= 0`; unassociated media retains its original E2 ordinal rather than replacing it with null.
+- `source_message_revision_id` must identify a `SourceMessageRevision` whose `source_message_id` equals this row's `source_message_id` (composite foreign key, or derive message identity solely from the revision). Cross-message revision references are forbidden, matching the `SourceMessage.current_revision_id` same-message rule.
 - The logical replay key is `(source_message_id, source_ordinal, source_message_revision_id, source_descriptor_identity, content-identity-component, verifier_version, association_version)`. The content-identity component is the checksum for `read_observed`, or a stable versioned `unread:<observation_reason_code>` sentinel for an unread state. `attempt_number` is unique within that key.
 - Including `source_ordinal` prevents two identical descriptors in one message from collapsing into one attempt.
 - Path confinement, symlink/no-follow, regular-file, supported-descriptor, and safe metadata/size checks run before content access. Traversal, symlink, non-regular, oversized, unsupported, missing, and similar failures are persisted as unread states without opening or hashing unsafe bytes.
@@ -498,7 +502,7 @@ Index additions require an observed query and `EXPLAIN ANALYZE` evidence; avoid 
 
 ## Field-level extraction provenance
 
-`OfferSource.extraction_json` stores provenance in a stable shape:
+`OfferSource.extraction_json` stores provenance in a stable shape. For the illustrated preserved string `Цена квартиры — 560 000 zł`, Python `str` slicing uses `source_start: 16` / `source_end: 26` so `preserved_text[16:26] == "560 000 zł"`:
 
 ```json
 {
@@ -506,7 +510,7 @@ Index additions require an observed query and `EXPLAIN ANALYZE` evidence; avoid 
     "value": {"min_minor": 56000000, "max_minor": 56000000, "currency": "PLN"},
     "rule": "price_dash_v2",
     "confidence": 0.98,
-    "source_start": 17,
+    "source_start": 16,
     "source_end": 26
   }
 }
