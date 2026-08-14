@@ -16,7 +16,7 @@ This domain owns deployment behavior, production-host constraints, configuration
 - Every deploy transfers a complete validated release configuration, activates it atomically, and commits no production `.env`.
 - Deploy immutable SHA-tagged images through GitHub Actions/GHCR/SSH to the isolated `/home/nuc/wef` runtime.
 - Existing host workloads must not be disrupted.
-- Nginx is the target public web server. Any shared-ingress migration affecting the existing port-3000 service requires separate approval, health evidence, and rollback under E7-T8.
+- Nginx is the target public web server. E7-T8/E7-T9 may build inert topology and automation; any shared-ingress migration affecting the existing port-3000 service requires separate approval, health evidence, and rollback under E7-T10.
 - PostgreSQL, media, imports, and secrets persist on the NUC, but backups and restore drills are deferred. This is a single-host failure domain, not a recovery guarantee.
 - Rollback guarantees cover compatible application images; data rollback is not guaranteed without backups.
 

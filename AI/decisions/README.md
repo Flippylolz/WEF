@@ -45,7 +45,7 @@ This registry is the highest-precedence documentation domain. Each linked archit
 - [D-002 — Recurring geocoding provider](deferred/D-002-recurring-geocoding-provider.md) — deferred pending owner review; proposed ADR-021 does not yet resolve it, and recurring use still requires E8-T4 revalidation.
 - [D-003 — Telegram channel identity and access](deferred/D-003-telegram-channel-access.md) — public link format resolved; live access remains deferred until E8-T1.
 - [D-005 — Object storage and CDN](deferred/D-005-object-storage-cdn.md) — revisit when its operational cost triggers occur.
-- [D-009 — Shared TLS hostnames and forwarding](deferred/D-009-shared-tls-hostnames-and-forwarding.md) — resolve two public hostnames and 80/443 forwarding before E7-T8.
+- [D-009 — Shared TLS hostnames and forwarding](deferred/D-009-shared-tls-hostnames-and-forwarding.md) — resolve two public hostnames and 80/443 forwarding before E7-T10 live rollout; E7-T8/E7-T9 remain inert.
 
 ## Supersession and resolution graph
 

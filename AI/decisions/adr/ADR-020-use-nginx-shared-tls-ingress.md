@@ -26,4 +26,4 @@ resolves: []
   - Nginx is the target edge web server; Next.js remains the WEF application server and FastAPI remains the API server.
   - Ports 80 and 443 must reach the NUC for normal HTTP-01/TLS operation unless a separately reviewed DNS-01 design is selected.
   - Certificate renewal, expiry monitoring, configuration validation, graceful reload, both application smoke checks, and rollback evidence become public-launch gates.
-  - No Nginx, Certbot, router, existing-project, or port-3000 mutation is authorized by this ADR alone; [E7-T8](../../epics/E7-production-delivery/proposed-tasks/E7-T8-build-shared-nginx-tls-ingress.md) remains proposed and non-actionable.
+  - No Nginx, Certbot, router, existing-project, or port-3000 mutation is authorized by this ADR alone. [E7-T8](../../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) and [E7-T9](../../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) are inert implementation tasks; [E7-T10](../../epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) owns the gated live mutation.
