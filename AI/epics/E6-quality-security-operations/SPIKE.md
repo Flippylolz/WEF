@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E6
 title: "Quality, security, and operations research"
-status: awaiting_approval
+status: approved
 revision: 2
 owner: owner
 research_only: true
@@ -12,11 +12,11 @@ domain_docs: [product, security, operations, governance, contracts]
 proposed_task_ids: [E6-T1, E6-T2, E6-T3, E6-T4, E6-T5, E6-T6, E6-T7]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-14T11:46:36Z"
+  approved_revision: 2
+  evidence: "Spike PR https://github.com/Flippylolz/WEF/pull/49 merged after green CI (squash cd2ad36) under the owner's 2026-08-14 session directive to take E6, document the spike, and proceed through stacked PRs"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -143,7 +143,7 @@ This recommendation is submitted for owner approval and does not authorize any p
 - [E6-T1: Complete automated test pyramid](proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — boundary confirmed; blocked on E4-T3/E5-T3.
 - [E6-T2: Perform privacy and security hardening](proposed-tasks/E6-T2-perform-privacy-and-security-hardening.md) — boundary confirmed; blocked on E3-T4/E4-T3/E5-T3.
 - [E6-T3: Add operational diagnostics](proposed-tasks/E6-T3-add-operational-diagnostics.md) — boundary confirmed; blocked on E3-T2/E4-T4.
-- [E6-T4: Implement in-house registration and sessions](proposed-tasks/E6-T4-implement-in-house-registration-and-sessions.md) — boundary confirmed and actionable; candidate for promotion and the first implementation-plan sequence entry.
+- [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — boundary confirmed and actionable; promoted and the first implementation-plan sequence entry.
 - [E6-T5: Implement contact masking, encryption, reveal, and audit](proposed-tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — boundary confirmed; blocked on E4-T3 and E6-T4.
 - [E6-T6: Implement English i18n and restricted-action UX](proposed-tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — boundary confirmed; blocked on E5-T3/E6-T4/E6-T5.
 - [E6-T7: Implement owner administration console](proposed-tasks/E6-T7-implement-owner-administration-console.md) — boundary confirmed; blocked on E6-T4/E6-T5.

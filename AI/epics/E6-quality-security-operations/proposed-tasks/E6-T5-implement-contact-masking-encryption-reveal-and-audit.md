@@ -52,7 +52,7 @@ The following definition preserves the original E6-T5 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E2-T2](../../E2-historical-export-parser-audit/tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md), [E3-T1](../../E3-database-geocoding-media/tasks/E3-T1-create-schema-and-migrations.md), [E4-T3](../../E4-read-api-filter-contracts/proposed-tasks/E4-T3-implement-offer-detail.md), [E6-T4](E6-T4-implement-in-house-registration-and-sessions.md)
+- Task dependencies: [E2-T2](../../E2-historical-export-parser-audit/tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md), [E3-T1](../../E3-database-geocoding-media/tasks/E3-T1-create-schema-and-migrations.md), [E4-T3](../../E4-read-api-filter-contracts/proposed-tasks/E4-T3-implement-offer-detail.md), [E6-T4](../tasks/E6-T4-implement-in-house-registration-and-sessions.md)
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Product](../../../product/README.md), [Security](../../../security/README.md), [Operations](../../../operations/README.md), [Governance](../../../governance/README.md), [Contracts](../../../contracts/README.md).
 
