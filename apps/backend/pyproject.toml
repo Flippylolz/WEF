@@ -8,6 +8,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "fastapi>=0.141.1",
     "geoalchemy2>=0.20.0",
+    "httpx>=0.28.1",
     "ijson>=3.5.1",
     "pwdlib[argon2]>=0.2.1",
     "pydantic-settings>=2.15.0",
@@ -31,7 +32,6 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "coverage>=7.15.4",
-    "httpx>=0.28.1",
     "import-linter>=2.13",
     "mypy>=2.3.0",
     "pip-audit>=2.10.1",

@@ -10,6 +10,12 @@ from wef_backend.features.ingestion.application.extraction import (
     detect_candidate,
     extract_listing,
 )
+from wef_backend.features.ingestion.application.geocoding import (
+    CachedGeocode,
+    CacheWaitExpiredError,
+    GeocodeResolution,
+    ResolveGeocode,
+)
 from wef_backend.features.ingestion.application.media_grouping import (
     GROUPING_VERSION,
     TIME_BURST_SECONDS,
@@ -31,10 +37,14 @@ __all__ = [
     "PARSER_VERSION",
     "REPORT_VERSION",
     "TIME_BURST_SECONDS",
+    "CacheWaitExpiredError",
+    "CachedGeocode",
     "ChannelExpectation",
+    "GeocodeResolution",
     "HistoricalSourcePort",
     "HistoricalSourceScan",
     "IncompleteScanError",
+    "ResolveGeocode",
     "ScanSummary",
     "SourceErrorCode",
     "SourceScanError",
