@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T8
 epic: E7
 title: "Build isolated shared Nginx TLS topology"
-status: ready
+status: in_progress
 revision: 2
 priority: P1
 size: M
@@ -36,10 +36,10 @@ dependency_gate:
     - "E7-T4 | done | merged PR https://github.com/Flippylolz/WEF/pull/19 | integrated on main"
 branch:
   required: true
-  name: null
+  name: feature/E7-T8-shared-edge-nginx
   task_id: E7-T8
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-15T15:19:18Z"
   pull_request: null
 completion:
   completed_by: null
@@ -122,9 +122,9 @@ This task is inert. Roll back by reverting its dedicated PR; it creates no produ
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated E7-T8 branch is created and recorded.
-- [ ] Branch contains E7-T8 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated E7-T8 branch is created and recorded.
+- [x] Branch contains E7-T8 only.
 
 ## Done checklist
 
