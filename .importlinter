@@ -79,6 +79,7 @@ forbidden_modules =
     geoalchemy2
     httpx
     ijson
+    PIL
     pydantic
     pydantic_settings
     sqlalchemy

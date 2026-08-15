@@ -338,3 +338,254 @@ class LocationGeocodeSelectionRow(IngestionBase):
     review_policy_version: Mapped[str] = mapped_column(String(40))
     selection_version: Mapped[int] = mapped_column(Integer)
     decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class StoredMediaObjectRow(IngestionBase):
+    """Class-scoped verified physical media object."""
+
+    __tablename__ = "stored_media_objects"
+    __table_args__ = (
+        UniqueConstraint("id", "storage_class", name="uq_stored_media_object_class_identity"),
+        UniqueConstraint(
+            "storage_backend",
+            "storage_key",
+            name="uq_stored_media_objects_backend_key",
+        ),
+        UniqueConstraint(
+            "storage_backend",
+            "storage_class",
+            "checksum_sha256",
+            "byte_size",
+            name="uq_stored_media_objects_class_checksum",
+        ),
+        CheckConstraint(
+            "storage_class IN ('restricted_original', 'public_derivative')",
+            name="ck_stored_media_objects_class",
+        ),
+        CheckConstraint("byte_size >= 0", name="ck_stored_media_objects_size"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    storage_backend: Mapped[str] = mapped_column(String(24))
+    storage_key: Mapped[str] = mapped_column(String(320))
+    storage_class: Mapped[str] = mapped_column(String(24))
+    checksum_sha256: Mapped[str] = mapped_column(String(64))
+    mime_type: Mapped[str] = mapped_column(String(80))
+    byte_size: Mapped[int] = mapped_column(BigInteger)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+
+class MediaAssetRow(IngestionBase):
+    """Source-owned logical media item referencing a restricted object."""
+
+    __tablename__ = "media_assets"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_message_id",
+            "source_ordinal",
+            name="uq_media_assets_source_ordinal",
+        ),
+        ForeignKeyConstraint(
+            ["stored_object_id", "stored_object_storage_class"],
+            ["stored_media_objects.id", "stored_media_objects.storage_class"],
+            name="fk_media_assets_restricted_object",
+            ondelete="RESTRICT",
+        ),
+        CheckConstraint("source_ordinal >= 0", name="ck_media_assets_ordinal"),
+        CheckConstraint(
+            "stored_object_storage_class = 'restricted_original'",
+            name="ck_media_assets_restricted_class",
+        ),
+        CheckConstraint("media_type IN ('image', 'video')", name="ck_media_assets_type"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    source_message_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("source_messages.id", ondelete="RESTRICT"),
+    )
+    source_ordinal: Mapped[int] = mapped_column(Integer)
+    source_descriptor_json: Mapped[object] = mapped_column(JSONB)
+    stored_object_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
+    stored_object_storage_class: Mapped[str] = mapped_column(String(24))
+    media_type: Mapped[str] = mapped_column(String(16))
+    mime_type: Mapped[str] = mapped_column(String(80))
+    byte_size: Mapped[int] = mapped_column(BigInteger)
+    width: Mapped[int | None] = mapped_column(Integer)
+    height: Mapped[int | None] = mapped_column(Integer)
+    duration_seconds: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+
+class MediaDispositionAttemptRow(IngestionBase):
+    """Versioned read/unread original disposition attempt."""
+
+    __tablename__ = "media_disposition_attempts"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["source_message_id", "source_message_revision_id"],
+            ["source_message_revisions.source_message_id", "source_message_revisions.id"],
+            name="fk_media_dispositions_revision_same_message",
+        ),
+        UniqueConstraint(
+            "source_message_id",
+            "source_ordinal",
+            "source_message_revision_id",
+            "source_descriptor_identity",
+            "content_identity",
+            "verifier_version",
+            "association_version",
+            "attempt_number",
+            name="uq_media_disposition_replay_attempt",
+        ),
+        CheckConstraint("source_ordinal >= 0", name="ck_media_dispositions_ordinal"),
+        CheckConstraint("attempt_number > 0", name="ck_media_dispositions_attempt"),
+        CheckConstraint(
+            "observation_status IN ('read_observed', 'unread_unavailable', 'unread_rejected')",
+            name="ck_media_dispositions_observation",
+        ),
+        CheckConstraint(
+            "disposition IN ('stored', 'missing', 'rejected', 'unsupported', 'unassociated')",
+            name="ck_media_dispositions_disposition",
+        ),
+        CheckConstraint(
+            "(observation_status = 'read_observed' AND observed_checksum_sha256 IS NOT NULL) "
+            "OR (observation_status != 'read_observed' AND observed_checksum_sha256 IS NULL)",
+            name="ck_media_dispositions_checksum_observation",
+        ),
+        Index("ix_media_dispositions_source", "source_message_id", "source_ordinal"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    source_message_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
+    source_ordinal: Mapped[int] = mapped_column(Integer)
+    source_message_revision_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
+    source_descriptor_identity: Mapped[str] = mapped_column(String(64))
+    observation_status: Mapped[str] = mapped_column(String(24))
+    observation_reason_code: Mapped[str] = mapped_column(String(40))
+    observed_checksum_sha256: Mapped[str | None] = mapped_column(String(64))
+    observed_byte_size: Mapped[int | None] = mapped_column(BigInteger)
+    content_identity: Mapped[str] = mapped_column(String(80))
+    attempt_number: Mapped[int] = mapped_column(Integer)
+    verifier_version: Mapped[str] = mapped_column(String(40))
+    association_version: Mapped[str] = mapped_column(String(40))
+    disposition: Mapped[str] = mapped_column(String(24))
+    reason_code: Mapped[str] = mapped_column(String(40))
+    media_asset_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("media_assets.id", ondelete="RESTRICT"),
+    )
+    attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class MediaDerivativeRow(IngestionBase):
+    """Successful versioned public derivative of one source asset."""
+
+    __tablename__ = "media_derivatives"
+    __table_args__ = (
+        UniqueConstraint("media_asset_id", "variant", name="uq_media_derivatives_variant"),
+        ForeignKeyConstraint(
+            ["stored_object_id", "stored_object_storage_class"],
+            ["stored_media_objects.id", "stored_media_objects.storage_class"],
+            name="fk_media_derivatives_public_object",
+            ondelete="RESTRICT",
+        ),
+        CheckConstraint(
+            "stored_object_storage_class = 'public_derivative'",
+            name="ck_media_derivatives_public_class",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    media_asset_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("media_assets.id", ondelete="CASCADE"),
+    )
+    stored_object_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
+    stored_object_storage_class: Mapped[str] = mapped_column(String(24))
+    variant: Mapped[str] = mapped_column(String(40))
+    width: Mapped[int] = mapped_column(Integer)
+    height: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+
+class MediaDerivativeAttemptRow(IngestionBase):
+    """Independent auditable derivative generation attempt."""
+
+    __tablename__ = "media_derivative_attempts"
+    __table_args__ = (
+        UniqueConstraint(
+            "media_asset_id",
+            "variant",
+            "attempt_number",
+            name="uq_media_derivative_attempt_number",
+        ),
+        CheckConstraint("attempt_number > 0", name="ck_media_derivative_attempts_positive"),
+        CheckConstraint(
+            "status IN ('pending', 'succeeded', 'failed')",
+            name="ck_media_derivative_attempts_status",
+        ),
+        CheckConstraint(
+            "(status = 'succeeded' AND media_derivative_id IS NOT NULL AND reason_code IS NULL) "
+            "OR (status = 'failed' AND media_derivative_id IS NULL AND reason_code IS NOT NULL) "
+            "OR (status = 'pending' AND media_derivative_id IS NULL AND reason_code IS NULL)",
+            name="ck_media_derivative_attempts_terminal_shape",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    media_asset_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("media_assets.id", ondelete="CASCADE"),
+    )
+    variant: Mapped[str] = mapped_column(String(40))
+    attempt_number: Mapped[int] = mapped_column(Integer)
+    transform_version: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(16))
+    reason_code: Mapped[str | None] = mapped_column(String(40))
+    source_object_checksum_sha256: Mapped[str] = mapped_column(String(64))
+    media_derivative_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("media_derivatives.id", ondelete="RESTRICT"),
+    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class OfferMediaRow(IngestionBase):
+    """Ordered offer association preserving the E2 evidence rule."""
+
+    __tablename__ = "offer_media"
+    __table_args__ = (
+        UniqueConstraint("offer_id", "media_asset_id", name="uq_offer_media_asset"),
+        UniqueConstraint("offer_id", "position", name="uq_offer_media_position"),
+        CheckConstraint("position >= 0", name="ck_offer_media_position"),
+        CheckConstraint(
+            "association_rule IN "
+            "('same_message', 'explicit_group', 'reply', 'time_burst', 'manual')",
+            name="ck_offer_media_rule",
+        ),
+        CheckConstraint(
+            "association_confidence >= 0 AND association_confidence <= 1",
+            name="ck_offer_media_confidence",
+        ),
+    )
+
+    offer_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    media_asset_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("media_assets.id", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    position: Mapped[int] = mapped_column(Integer)
+    association_rule: Mapped[str] = mapped_column(String(24))
+    association_confidence: Mapped[Decimal] = mapped_column(Numeric(4, 3))

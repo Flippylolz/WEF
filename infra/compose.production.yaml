@@ -136,8 +136,8 @@ services:
         condition: service_healthy
     volumes:
       - type: bind
-        source: ${WEF_ROOT:?WEF_ROOT is required}/media
-        target: /app/media
+        source: ${WEF_ROOT:?WEF_ROOT is required}/media/public
+        target: /app/media/public
         read_only: true
         bind:
           create_host_path: false
@@ -217,7 +217,7 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ${WEF_ROOT:?WEF_ROOT is required}/media
+        source: ${WEF_ROOT:?WEF_ROOT is required}/media/public
         target: /srv/media
         read_only: true
         bind:

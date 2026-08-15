@@ -21,6 +21,11 @@ from wef_backend.features.ingestion.application.media_grouping import (
     TIME_BURST_SECONDS,
     group_media,
 )
+from wef_backend.features.ingestion.application.media_storage import (
+    MediaProcessResult,
+    MediaWorkItem,
+    ProcessMedia,
+)
 from wef_backend.features.ingestion.application.source import (
     ChannelExpectation,
     HistoricalSourcePort,
@@ -44,6 +49,9 @@ __all__ = [
     "HistoricalSourcePort",
     "HistoricalSourceScan",
     "IncompleteScanError",
+    "MediaProcessResult",
+    "MediaWorkItem",
+    "ProcessMedia",
     "ResolveGeocode",
     "ScanSummary",
     "SourceErrorCode",

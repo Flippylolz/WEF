@@ -29,6 +29,7 @@ from scripts.deploy.validate_release import (
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.production.yaml"
+LOCAL_COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.yaml"
 RELEASE_SHA = "a" * 40
 WEF_ROOT = Path("/home/nuc/wef")
 RELEASE_DIR = WEF_ROOT / "releases" / RELEASE_SHA
@@ -106,7 +107,50 @@ def render_compose(environment: dict[str, str]) -> dict[str, Any]:
     return cast("dict[str, Any]", json.loads(result.stdout))
 
 
-def assert_topology(model: dict[str, Any]) -> None:
+def render_local_compose() -> dict[str, Any]:
+    """Render the local operator topology for media-boundary assertions."""
+    docker = shutil.which("docker")
+    if docker is None:
+        msg = "docker is required to prove local media topology"
+        raise RuntimeError(msg)
+    result = subprocess.run(  # noqa: S603 - executable resolved from trusted PATH
+        [
+            docker,
+            "compose",
+            "--file",
+            str(LOCAL_COMPOSE_FILE),
+            "--profile",
+            "operator",
+            "config",
+            "--format",
+            "json",
+        ],
+        check=True,
+        cwd=REPOSITORY_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    return cast("dict[str, Any]", json.loads(result.stdout))
+
+
+def assert_local_media_boundary(model: dict[str, Any]) -> None:
+    """Prove only the operator sees source/original roots and public mounts stay narrow."""
+    services = cast("dict[str, dict[str, Any]]", model["services"])
+    mounts = {
+        name: {volume["target"]: volume for volume in service.get("volumes", [])}
+        for name, service in services.items()
+    }
+    assert mounts["api"]["/app/media/public"]["read_only"] is True
+    assert mounts["edge"]["/srv/media"]["read_only"] is True
+    assert mounts["importer"]["/source"]["read_only"] is True
+    assert mounts["importer"]["/app/media/originals"].get("read_only", False) is False
+    assert mounts["importer"]["/app/media/public"].get("read_only", False) is False
+    forbidden = {"/source", "/app/media/originals", "/srv/originals"}
+    assert forbidden.isdisjoint(mounts["api"])
+    assert forbidden.isdisjoint(mounts["edge"])
+
+
+def assert_topology(model: dict[str, Any]) -> None:  # noqa: PLR0915
     """Assert ports, images, paths, networks, resources, and service hardening."""
     assert model["name"] == "wef-production"
     services = cast("dict[str, dict[str, Any]]", model["services"])
@@ -161,6 +205,16 @@ def assert_topology(model: dict[str, Any]) -> None:
     assert services["edge"]["user"] == "1000:1000"
     assert services["edge"]["cap_drop"] == ["ALL"]
     assert services["edge"]["cap_add"] == ["NET_BIND_SERVICE"]
+
+    api_mounts = {volume["target"]: volume for volume in services["api"]["volumes"]}
+    edge_mounts = {volume["target"]: volume for volume in services["edge"]["volumes"]}
+    assert api_mounts["/app/media/public"]["source"] == f"{WEF_ROOT}/media/public"
+    assert api_mounts["/app/media/public"]["read_only"] is True
+    assert edge_mounts["/srv/media"]["source"] == f"{WEF_ROOT}/media/public"
+    assert edge_mounts["/srv/media"]["read_only"] is True
+    forbidden_targets = {"/source", "/app/media/originals", "/srv/originals"}
+    assert forbidden_targets.isdisjoint(api_mounts)
+    assert forbidden_targets.isdisjoint(edge_mounts)
 
     for name in ("api", "geocoder-check", "migrate", "seed", "web"):
         service = services[name]
@@ -302,6 +356,7 @@ def main() -> int:
     environment = release_environment()
     model = render_compose(environment)
     assert_topology(model)
+    assert_local_media_boundary(render_local_compose())
     assert_negative_configuration_gate()
     assert_script_safety()
     assert_atomic_release_state()

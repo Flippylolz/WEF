@@ -96,11 +96,13 @@ services:
     image: wef-backend:local
     build: *backend-build
     user: "0:0"
-    command: ["sh", "-c", "chown 10001:10001 /media"]
+    command: ["sh", "-c", "chown 10001:10001 /originals /public /reports"]
     network_mode: none
     restart: "no"
     volumes:
-      - media_data:/media
+      - media_originals:/originals
+      - media_derivatives:/public
+      - media_reports:/reports
 
   migrate:
     image: wef-backend:local
@@ -131,7 +133,7 @@ services:
       migrate:
         condition: service_completed_successfully
     volumes:
-      - media_data:/app/media
+      - media_derivatives:/app/media/public:ro
     expose:
       - "8000"
     networks:
@@ -189,6 +191,7 @@ services:
       - /tmp
     volumes:
       - ./Caddyfile.local:/etc/caddy/Caddyfile:ro
+      - media_derivatives:/srv/media:ro
     healthcheck:
       test:
         [
@@ -229,7 +232,9 @@ services:
         read_only: true
         bind:
           create_host_path: false
-      - media_data:/app/media
+      - media_originals:/app/media/originals
+      - media_derivatives:/app/media/public
+      - media_reports:/app/media/reports
     networks:
       - application
 
@@ -269,4 +274,6 @@ networks:
 
 volumes:
   db_data:
-  media_data:
+  media_originals:
+  media_derivatives:
+  media_reports:
