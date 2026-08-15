@@ -178,7 +178,11 @@ jobs:
           make format-check
           make lint
           make typecheck
-          make test
+          # The release job also exposes a host PostGIS service at 127.0.0.1,
+          # but `make test` runs the backend suite inside Compose. Do not leak
+          # the host-only URL into that container; let Compose use its internal
+          # `db:5432` test URL.
+          env -u TEST_DATABASE_URL make test
           make contract-check
           make compose-config
           make production-proof

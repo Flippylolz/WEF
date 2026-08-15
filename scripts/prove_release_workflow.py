@@ -44,6 +44,7 @@ def assert_workflow_boundaries() -> None:
     assert "PUBLIC_PORT: ${{ vars.WEF_PUBLIC_PORT }}" in source
     assert "WEF_GEOAPIFY_API_KEY: ${{ secrets.WEF_GEOAPIFY_API_KEY }}" in source
     assert "WEF_RELEASE_SHA=${{ needs.resolve.outputs.release_sha }}" in source
+    assert "env -u TEST_DATABASE_URL make test" in source
     deploy_script = (REPOSITORY_ROOT / "scripts/deploy/deploy.sh").read_text(encoding="utf-8")
     assert "run --rm geocoder-check" in deploy_script
     assert "WEF_DEPLOY_TEST_MODE" in deploy_script
