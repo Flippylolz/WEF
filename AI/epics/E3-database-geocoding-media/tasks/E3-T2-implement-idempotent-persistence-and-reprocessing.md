@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E3-T2
 epic: E3
 title: "Implement idempotent persistence and reprocessing"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: L
@@ -41,12 +41,19 @@ branch:
   task_id: E3-T2
   one_task_only: true
   created_at: "2026-08-15T03:52:26Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/53"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode Agent (owner-authorized)"
+  completed_at: "2026-08-15T04:31:23Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/53"
+  evidence:
+    - "E3-T2 branch feature/E3-T2-idempotent-persistence squash-merged via https://github.com/Flippylolz/WEF/pull/53 (squash 0016a7a, branch deleted); one task per branch/PR"
+    - "Acceptance: migration 20260815_0004 upgrades clean schemas to head with repeated upgrade a no-op; revision 1 created on initial ingestion, unchanged replay creates none, changed checksum appends exactly one ordered snapshot and atomically advances the current pointer; current checksum/text/payload equals the referenced snapshot (integration assertions)"
+    - "Every accepted candidate carries an exact primary OfferSource relationship with deterministic contact-free extraction_json bound to the immutable revision; non-candidates remain source records only"
+    - "Cross-process complete-run exclusion proven across batch commits via pg_try_advisory_lock while independent sources remain processable; injected batch failure rolls back rows/counts/checkpoint atomically, retains reconciled partial counts with a redacted error category, and resume converges without duplicates"
+    - "Contact leakage scans prove phone/handle values absent from extraction_json, excerpts, masked text, and error summaries; Polish/Cyrillic/supplementary/combining fixtures prove persisted half-open offsets reproduce Python str slicing of the exact preserved flattened text"
+    - "No availability boolean, ContactPoint, geocoder, media copy, public API change, or destructive cleanup introduced; OpenAPI contract unchanged"
+    - "Local CI parity: ruff, strict mypy, import-linter 11 contracts kept, architecture probe, pip-audit, 207 tests at 94.79% coverage against pinned PostGIS"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -148,6 +155,6 @@ Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLA
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

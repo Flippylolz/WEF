@@ -17,10 +17,10 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 
 ## Approval state
 
-- Epic workspace status: `in_progress`; plan revision 3 is owner-approved (PR #46, squash 0fdb87f) and E3-T2 is being implemented.
+- Epic workspace status: `in_progress`; plan revision 3 is owner-approved (PR #46, squash 0fdb87f); E3-T2 is done through PR #53 and E3-T3/E3-T4 are now dependency-eligible.
 - [Spike](SPIKE.md): `approved`, revision 3.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3 (PR #46); historical revision 2 remains the completed authorization record for done E3-T1 only.
-- E3-T1 is `done`. E3-T2 is `in_progress` on `feature/E3-T2-idempotent-persistence`. E3-T3 through E3-T5 remain promoted `draft` behind their dependency gates.
+- E3-T1 and E3-T2 are `done`. E3-T3 through E3-T5 remain promoted `draft` behind their dependency gates; E3-T3 and E3-T4 may proceed independently after T2 per the approved sequence.
 
 ## Milestones
 
