@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -345,6 +346,31 @@ async def test_unassociated_outcome_and_derivative_failure_remain_independent() 
     assert result.derivative_failure is ObservationReason.DECODE_FAILED
     assert result.observation.original is original
     assert result.replayed
+
+
+async def test_concurrent_media_work_serializes_repository_writes() -> None:
+    """Threaded verification retains one ordered database reconciliation boundary."""
+
+    class ContendedRepository:
+        def __init__(self) -> None:
+            self.active = 0
+            self.maximum_active = 0
+
+        async def persist_media_result(self, **_: object) -> bool:
+            self.active += 1
+            self.maximum_active = max(self.maximum_active, self.active)
+            await asyncio.sleep(0.01)
+            self.active -= 1
+            return False
+
+    repository = ContendedRepository()
+    processor = ProcessMedia(
+        FakeFilesystem(_unread(ObservationReason.MISSING)),
+        repository,
+        persistence_lock=asyncio.Lock(),
+    )
+    await asyncio.gather(*(processor(_work()) for _ in range(4)))
+    assert repository.maximum_active == 1
 
 
 def test_work_item_rejects_invalid_association_and_ordinal() -> None:

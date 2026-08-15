@@ -502,6 +502,7 @@ async def _media(  # noqa: PLR0913
             ),
         ),
         repository=SQLAlchemyMediaRepository(database.session_factory),
+        persistence_lock=asyncio.Lock(),
     )
     concurrency = min(_MEDIA_CONCURRENCY, batch_size)
     processed = 0
