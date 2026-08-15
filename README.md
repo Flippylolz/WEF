@@ -1,10 +1,12 @@
 # Warsaw Estate Platform
 
-Warsaw Estate Platform (WEF) will turn a Telegram real-estate export into a filterable map of Warsaw developments and offers.
+[![Repository coverage](.github/badges/coverage.svg)](.github/workflows/ci.yml)
+
+Warsaw Estate Platform (WEF) turns a Telegram real-estate export into a filterable map of Warsaw developments and offers.
 
 ## Current status
 
-The repository contains a browser-visible synthetic M1: a forward-migrated PostGIS catalog, backend-authoritative grouped GeoJSON/facets/dated results, and a responsive MapLibre/OpenFreeMap map with an accessible companion list. Historical ingestion, URL-backed filters, authentication, real media/data, and deployment remain task-gated follow-up work.
+The repository contains a browser-visible synthetic milestone: a forward-migrated PostGIS catalog, backend-authoritative GeoJSON, facets and dated results, and a responsive MapLibre/OpenFreeMap map with an accessible companion list. It also includes the historical export parser, idempotent persistence, provider-neutral geocoding cache, safe media processing, and backend authentication flows. Importing and reviewing the real dataset, URL-backed filters, frontend account experiences, and public rollout remain gated follow-up work.
 
 Start with:
 
@@ -15,22 +17,23 @@ Start with:
 - [Approval-gated workflow](AI/workflow/README.md)
 - [Repository and change rules](AI/governance/REPOSITORY_RULES.md)
 
-## Planned stack
+## Stack
 
 - Python, FastAPI, SQLAlchemy, PostgreSQL, and PostGIS
 - TypeScript, Next.js, React, and MapLibre
-- Docker Compose; Caddy for the current local/interim stack and Nginx plus Certbot/Let's Encrypt for the target shared production edge
+- Docker Compose and Caddy for the isolated local and production-rehearsal topology
 - GitHub Actions and GitHub Container Registry
 
 The backend is authoritative for business behavior. The frontend primarily renders generated API contracts and backend-provided projections.
 
-## Architecture proof
+## Development
 
 Prerequisites are Python 3.13.2, Node.js 22.22.2, uv, Corepack/pnpm, and Docker. Versions are recorded in `.tool-versions` and lockfiles.
 
 ```shell
 make install
 make format-check lint typecheck test contract-check
+make coverage
 make build
 ```
 
@@ -39,7 +42,8 @@ recreates a reserved `wef_test` database alongside the persistent development
 database, and runs the backend and frontend suites in development containers.
 No test database URL or host language runtime is required. Static API
 documentation is generated as an artifact and is not served by the production
-API.
+API. `make coverage` runs both test suites with line and branch measurement and
+refreshes the badge above; CI rejects a stale badge.
 
 `make help` lists the exact command façade. The Makefile delegates to uv, pnpm, and Docker; it does not select environments or contain application logic.
 
@@ -58,7 +62,7 @@ make down
 
 Only Caddy publishes a host port, bound to loopback on `3100` by default. The API, web process, PostGIS, and operator container remain on an internal network. `make down` preserves the named database and media volumes.
 
-This describes the current local/rehearsal implementation. [ADR-020](AI/decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md) selects Nginx as the target NUC web server, with free Certbot renewal for both WEF and the existing AI Forecast service. [E7-T8](AI/epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) and [E7-T9](AI/epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) build inert topology/automation; [E7-T10](AI/epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) remains gated before live activation.
+This is the current local and production-rehearsal topology. See [deployment operations](AI/operations/DEPLOYMENT.md) for the current release model and the separately gated shared-ingress plan.
 
 `make up` applies forward Alembic migrations before API startup. `make seed-m1` explicitly converges a small invented Warsaw fixture for map/API verification; production requires a separate explicit rehearsal opt-in and the command never reads the local export.
 

@@ -8,7 +8,7 @@ BACKEND := $(UV) --directory apps/backend run
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install format format-check lint typecheck test contract-generate contract-check build build-development compose-config production-proof production-runtime-proof up down ps logs importer-dry-run seed-m1
+.PHONY: help install format format-check lint typecheck test coverage contract-generate contract-check build build-development compose-config production-proof production-runtime-proof up down ps logs importer-dry-run seed-m1
 
 help: ## List supported commands.
 	@printf '%s\n' \
@@ -18,6 +18,7 @@ help: ## List supported commands.
 		'make lint               Run backend/frontend and architecture lint' \
 		'make typecheck          Run strict Python and TypeScript checks' \
 		'make test               Run backend/frontend tests' \
+		'make coverage           Run tests and refresh the repository coverage badge' \
 		'make contract-generate  Export OpenAPI and generated TypeScript' \
 		'make contract-check     Verify OpenAPI, generated types, and static docs' \
 		'make build              Build production runtime images' \
@@ -58,6 +59,22 @@ test: ## Run synthetic backend/frontend tests.
 	$(COMPOSE) --profile test run --rm --no-deps test-db-reset
 	$(COMPOSE) --profile test run --rm --no-deps --build backend-test
 	$(COMPOSE) --profile test run --rm --no-deps --build frontend-test
+
+coverage: ## Run branch-aware coverage and refresh the README badge.
+	mkdir -p "$(CURDIR)/tmp/coverage/backend" "$(CURDIR)/tmp/coverage/frontend"
+	$(COMPOSE) --profile test up --detach --wait db
+	$(COMPOSE) --profile test run --rm --no-deps test-db-reset
+	$(COMPOSE) --profile test run --rm --no-deps --build \
+		--volume "$(CURDIR)/tmp/coverage/backend:/coverage" \
+		backend-test pytest --cov=wef_backend --cov-branch \
+		--cov-report=json:/coverage/coverage.json --cov-report=term-missing
+	$(COMPOSE) --profile test run --rm --no-deps --build \
+		--volume "$(CURDIR)/tmp/coverage/frontend:/coverage" \
+		frontend-test pnpm test:coverage --coverage.reportsDirectory=/coverage/report
+	python3 scripts/render_coverage_badge.py \
+		--backend tmp/coverage/backend/coverage.json \
+		--frontend tmp/coverage/frontend/report/coverage-summary.json \
+		--output .github/badges/coverage.svg
 
 contract-generate: ## Generate committed API contracts.
 	$(BACKEND) wef-export-openapi
