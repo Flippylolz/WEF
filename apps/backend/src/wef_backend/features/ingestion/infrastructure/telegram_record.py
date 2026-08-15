@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import PurePosixPath
 from typing import cast
 
 from wef_backend.features.ingestion.domain import (
@@ -24,6 +25,12 @@ from wef_backend.features.ingestion.domain import (
 _MESSAGE_TYPE = "message"
 _SERVICE_TYPE = "service"
 _VIDEO_MEDIA_TYPES = {"video", "video_file"}
+_IMAGE_MIME_BY_SUFFIX = {
+    ".jpeg": "image/jpeg",
+    ".jpg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -222,7 +229,14 @@ def _media(payload: Mapping[str, object]) -> tuple[MediaDescriptor, ...]:
     descriptors: list[MediaDescriptor] = []
     photo = _optional_path(payload, "photo")
     if photo is not None:
-        descriptors.append(_descriptor(MediaKind.PHOTO, photo, payload))
+        descriptors.append(
+            _descriptor(
+                MediaKind.PHOTO,
+                photo,
+                payload,
+                inferred_mime_type=_image_mime_type(photo),
+            )
+        )
 
     file_path = _optional_path(payload, "file")
     if file_path is not None:
@@ -237,7 +251,13 @@ def _media(payload: Mapping[str, object]) -> tuple[MediaDescriptor, ...]:
 
     thumbnail = _optional_path(payload, "thumbnail")
     if thumbnail is not None:
-        descriptors.append(MediaDescriptor(kind=MediaKind.THUMBNAIL, path=thumbnail))
+        descriptors.append(
+            MediaDescriptor(
+                kind=MediaKind.THUMBNAIL,
+                path=thumbnail,
+                mime_type=_image_mime_type(thumbnail),
+            )
+        )
     return tuple(descriptors)
 
 
@@ -254,6 +274,8 @@ def _descriptor(
     kind: MediaKind,
     path: str,
     payload: Mapping[str, object],
+    *,
+    inferred_mime_type: str | None = None,
 ) -> MediaDescriptor:
     mime_type = payload.get("mime_type")
     if mime_type is not None and not isinstance(mime_type, str):
@@ -261,12 +283,17 @@ def _descriptor(
     return MediaDescriptor(
         kind=kind,
         path=path,
-        mime_type=mime_type,
+        mime_type=mime_type or inferred_mime_type,
         size_bytes=_optional_integer(payload, "file_size"),
         width=_optional_integer(payload, "width"),
         height=_optional_integer(payload, "height"),
         duration_seconds=_optional_integer(payload, "duration_seconds"),
     )
+
+
+def _image_mime_type(path: str) -> str | None:
+    """Infer only supported Telegram image MIME candidates for later byte verification."""
+    return _IMAGE_MIME_BY_SUFFIX.get(PurePosixPath(path).suffix.casefold())
 
 
 def _optional_integer(payload: Mapping[str, object], key: str) -> int | None:

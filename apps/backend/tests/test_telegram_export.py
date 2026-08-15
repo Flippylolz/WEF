@@ -431,6 +431,36 @@ def test_generic_file_is_preserved_as_valid_unhandled_media() -> None:
     assert converted.result.classification is PrimaryClassification.UNHANDLED
     assert converted.result.message is not None
     assert converted.result.message.media[0].kind is MediaKind.FILE
+    assert converted.result.message.media[0].mime_type is None
+
+
+def test_telegram_image_descriptors_infer_candidates_for_byte_verification() -> None:
+    """Photo and thumbnail paths gain only supported image MIME candidates."""
+    source = SourceIdentity(
+        platform=SourcePlatform.TELEGRAM,
+        channel_id="9001",
+        channel_name="Fixture",
+        channel_type="public_channel",
+    )
+    converted = convert_record(
+        {
+            "id": 1,
+            "type": "message",
+            "date_unixtime": 1_893_456_000,
+            "photo": "photos/sample_photo.JPG",
+            "thumbnail": "video_files/sample_thumb.webp",
+            "text": "",
+            "text_entities": [],
+        },
+        0,
+        source,
+    )
+
+    assert converted.result.message is not None
+    assert [item.mime_type for item in converted.result.message.media] == [
+        "image/jpeg",
+        "image/webp",
+    ]
 
 
 def _write_large_source(path: Path) -> None:

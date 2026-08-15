@@ -84,7 +84,13 @@ class FailingStore(SQLAlchemyIngestionPersistence):
         )
 
 
-def _candidate(message_id: int, body: str, checksum: str) -> PersistableMessage:
+def _candidate(
+    message_id: int,
+    body: str,
+    checksum: str,
+    *,
+    location: str = "ul. Przykładowa 5, Warszawa",
+) -> PersistableMessage:
     """Build one persistable candidate message with contacts and fields."""
     contacts = [
         _contact(body.index(value), body.index(value) + len(value), value)
@@ -112,7 +118,7 @@ def _candidate(message_id: int, body: str, checksum: str) -> PersistableMessage:
         price_span=price_span,
         area=DecimalRange(Decimal(40), Decimal(45)),
         area_span=(area_start, area_start + len(area_marker)),
-        location="ul. Przykładowa 5, Warszawa",
+        location=location,
         contacts=tuple(contacts),
     )
     signal = CandidateSignal(
@@ -333,6 +339,36 @@ async def test_real_adapter_payloads_persist_in_bounded_batches() -> None:
         )
     assert summary.counts.seen == 8
     assert payload_shape == "array"
+    await database.engine.dispose()
+
+
+async def test_long_location_text_persists_without_truncation() -> None:
+    """Source-derived location fields preserve values beyond legacy limits."""
+    assert TEST_DATABASE_URL is not None
+    await _prepare()
+    database = create_database_resources(TEST_DATABASE_URL)
+    location = "ul. " + "Bardzo Długa Nazwa Lokalizacji " * 12 + "Warszawa"
+    body = "Mieszkanie 40 m², cena 560 000 zł"
+
+    summary = await PersistHistoricalIngestion(
+        store=SQLAlchemyIngestionPersistence(database.session_factory),
+        batch_size=1,
+    )(
+        channel=_raw().source,
+        messages=[_candidate(31, body, "8" * 64, location=location)],
+        metadata=RunMetadata(parser_version="integration@1"),
+    )
+
+    async with database.session_factory() as session:
+        persisted = (
+            await session.execute(
+                text("SELECT display_name, display_address, normalized_address FROM locations"),
+            )
+        ).one()
+    assert summary.counts.offers == 1
+    assert persisted.display_name == location
+    assert persisted.display_address == location
+    assert persisted.normalized_address == " ".join(location.casefold().split())
     await database.engine.dispose()
 
 

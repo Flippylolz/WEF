@@ -111,6 +111,7 @@ Required fields:
 
 Rules:
 
+- Source-derived display and normalized address values are stored as unbounded text; ingestion must not truncate them to fit presentation-oriented limits.
 - Coordinates are nullable; no fallback Warsaw-centre point is permitted.
 - Similar normalized addresses may be candidates for merge, but only an explicit merge operation changes identity.
 - Coordinate order at the API boundary is longitude, latitude.

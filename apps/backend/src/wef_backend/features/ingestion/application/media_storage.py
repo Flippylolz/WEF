@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
@@ -107,10 +108,12 @@ class ProcessMedia:
 
     filesystem: MediaFilesystemPort
     repository: MediaPersistencePort
+    persistence_lock: asyncio.Lock | None = None
 
     async def __call__(self, item: MediaWorkItem) -> MediaProcessResult:
         """Keep original disposition independent from derivative failures."""
-        observation = self.filesystem.observe_and_store(
+        observation = await asyncio.to_thread(
+            self.filesystem.observe_and_store,
             item.descriptor,
             item.expected_checksum_sha256,
         )
@@ -119,7 +122,10 @@ class ProcessMedia:
         derivative_failure: ObservationReason | None = None
         if observation.original is not None:
             try:
-                derivatives = self.filesystem.create_derivatives(observation.original)
+                derivatives = await asyncio.to_thread(
+                    self.filesystem.create_derivatives,
+                    observation.original,
+                )
             except RuntimeError as error:
                 reason = getattr(error, "reason", ObservationReason.DECODE_FAILED)
                 derivative_failure = (
@@ -127,19 +133,46 @@ class ProcessMedia:
                     if isinstance(reason, ObservationReason)
                     else ObservationReason.DECODE_FAILED
                 )
-        replayed = await self.repository.persist_media_result(
-            item=item,
-            observation=observation,
-            disposition=disposition,
-            derivatives=derivatives,
-            derivative_failure=derivative_failure,
-        )
+        if self.persistence_lock is None:
+            replayed = await self._persist(
+                item,
+                observation,
+                disposition,
+                derivatives,
+                derivative_failure,
+            )
+        else:
+            async with self.persistence_lock:
+                replayed = await self._persist(
+                    item,
+                    observation,
+                    disposition,
+                    derivatives,
+                    derivative_failure,
+                )
         return MediaProcessResult(
             disposition=disposition,
             observation=observation,
             derivatives=derivatives,
             derivative_failure=derivative_failure,
             replayed=replayed,
+        )
+
+    async def _persist(
+        self,
+        item: MediaWorkItem,
+        observation: MediaObservation,
+        disposition: OriginalDisposition,
+        derivatives: tuple[PublicDerivative, ...],
+        derivative_failure: ObservationReason | None,
+    ) -> bool:
+        """Persist one result, optionally under the importer-owned serialization lock."""
+        return await self.repository.persist_media_result(
+            item=item,
+            observation=observation,
+            disposition=disposition,
+            derivatives=derivatives,
+            derivative_failure=derivative_failure,
         )
 
 

@@ -191,7 +191,7 @@
             "duration_seconds": null,
             "height": 800,
             "kind": "photo",
-            "mime_type": null,
+          "mime_type": "image/jpeg",
             "path": "photos/sample_photo.jpg",
             "size_bytes": null,
             "width": 1200
@@ -249,7 +249,7 @@
             "duration_seconds": null,
             "height": null,
             "kind": "thumbnail",
-            "mime_type": null,
+          "mime_type": "image/jpeg",
             "path": "video_files/sample_thumb.jpg",
             "size_bytes": null,
             "width": null

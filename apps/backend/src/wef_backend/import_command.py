@@ -67,6 +67,7 @@ _DEFAULT_BATCH_SIZE = 200
 _DEFAULT_GEOCODE_BATCH_SIZE = 25
 _DEFAULT_MAX_PROVIDER_REQUESTS = 500
 _LEASE_DURATION = timedelta(minutes=5)
+_MEDIA_CONCURRENCY = 4
 _NONINTERACTIVE_PROGRESS_STEP = 500
 
 
@@ -501,17 +502,22 @@ async def _media(  # noqa: PLR0913
             ),
         ),
         repository=SQLAlchemyMediaRepository(database.session_factory),
+        persistence_lock=asyncio.Lock(),
     )
-    for index, item in enumerate(work, start=1):
-        await processor(item)
-        progress.update(index)
-        if index % batch_size == 0:
+    concurrency = min(_MEDIA_CONCURRENCY, batch_size)
+    processed = 0
+    while processed < len(work):
+        batch = work[processed : processed + concurrency]
+        await asyncio.gather(*(processor(item) for item in batch))
+        processed += len(batch)
+        progress.update(processed)
+        if processed % batch_size == 0:
             active = await repository.checkpoint_run(
                 active,
                 stage=CompleteImportStage.MEDIA,
                 status=CompleteImportStatus.RUNNING,
-                checkpoint={"media": index},
-                counts={"remaining": len(work) - index},
+                checkpoint={"media": processed},
+                counts={"remaining": len(work) - processed},
                 now=datetime.now(UTC),
                 lease_duration=_LEASE_DURATION,
             )

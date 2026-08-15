@@ -194,6 +194,26 @@ class SQLAlchemyGeocodeStore(GeocodeStorePort):
                 raise RuntimeError(message)
             return durable
 
+    async def abandon_miss(
+        self,
+        key: GeocodeCacheKey,
+        *,
+        claim: MissClaim,
+        now: datetime,
+    ) -> None:
+        """Expire only the caller's still-incomplete fenced miss claim."""
+        async with self._session_factory() as session, session.begin():
+            await session.execute(
+                update(GeocodeMissClaimRow)
+                .where(
+                    GeocodeMissClaimRow.query_hash == key.query_hash,
+                    GeocodeMissClaimRow.owner_id == claim.owner_id,
+                    GeocodeMissClaimRow.fencing_token == claim.fencing_token,
+                    GeocodeMissClaimRow.completed_geocode_result_id.is_(None),
+                )
+                .values(lease_expires_at=now),
+            )
+
     async def _get_cached_in_session(
         self,
         session: AsyncSession,
