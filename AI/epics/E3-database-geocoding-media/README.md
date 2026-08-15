@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E3
 title: "Database, geocoding, and media pipeline"
-status: planning
+status: in_progress
 milestones: [M1, M2]
 owner: owner
 spike: SPIKE.md
@@ -17,10 +17,10 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 
 ## Approval state
 
-- Epic workspace status: `planning`; spike revision 3 is approved and implementation-plan revision 3 awaits owner approval.
+- Epic workspace status: `in_progress`; plan revision 3 is owner-approved (PR #46, squash 0fdb87f) and E3-T2 is being implemented.
 - [Spike](SPIKE.md): `approved`, revision 3.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): material revision 3 `awaiting_approval` with approval `pending`; historical revision 2 remains the completed authorization record for done E3-T1 only.
-- E3-T1 is `done`. E3-T2 through E3-T5 are promoted under `tasks/` as `draft` with satisfied spike gates and blocked implementation gates until plan revision 3 is approved. They are not actionable for code.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3 (PR #46); historical revision 2 remains the completed authorization record for done E3-T1 only.
+- E3-T1 is `done`. E3-T2 is `in_progress` on `feature/E3-T2-idempotent-persistence`. E3-T3 through E3-T5 remain promoted `draft` behind their dependency gates.
 
 ## Milestones
 

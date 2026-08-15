@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E3
 title: "Historical persistence, geocoding, media, and staged import plan"
-status: awaiting_approval
+status: approved
 revision: 3
 owner: owner
 spike_revision: 3
@@ -17,11 +17,11 @@ task_sequence:
     revision: 2
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-15T03:52:26Z"
+  approved_revision: 3
+  evidence: "Plan PR https://github.com/Flippylolz/WEF/pull/46 merged after green CI (squash 0fdb87f, conflicts reconciled) under the owner's standing 2026-08-14/15 session directives to proceed through stacked PRs"
 invalidation:
   invalidated_by: null
   invalidated_at: null
