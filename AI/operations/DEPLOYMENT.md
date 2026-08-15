@@ -172,7 +172,8 @@ Complete inspected details and the transfer runbook are in the [production serve
 E7-T3 repository configuration:
 
 - Variables: `AUTO_DEPLOY_ENABLED` (initially `false`), `DEPLOY_HOST`, `DEPLOY_SSH_PORT`, `DEPLOY_USER`, `POSTGRES_DB`, `POSTGRES_USER`, `WEF_BIND_ADDRESS`, `WEF_LOG_LEVEL`, and `WEF_PUBLIC_PORT`.
-- Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, and `POSTGRES_PASSWORD`.
+- Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `POSTGRES_PASSWORD`, and
+  `WEF_GEOAPIFY_API_KEY`.
 - The `production` GitHub environment is a deployment audit boundary, not a paid approval/protection claim.
 - The database password must be 24–128 characters from the workflow's documented dotenv-safe alphabet; generate it rather than reusing an account password.
 
@@ -213,10 +214,11 @@ On a successful push to `main`:
 14. Pull the new image digests before changing running services.
 15. Record the current release as `previous_release`.
 16. Verify database connectivity, disk headroom, and configuration.
-17. Run forward-compatible Alembic migrations from the new backend image.
-18. Start/update services with the new explicit release SHA/digests.
-19. Wait for API readiness and test the public web, API, map shell, and a media URL.
-20. Mark the release successful and retain redacted deployment logs.
+17. Run the operator-only Geoapify readiness command from the production host. It consumes one public-fixture request and fails closed without logging the key or provider payload.
+18. Run forward-compatible Alembic migrations from the new backend image.
+19. Start/update services with the new explicit release SHA/digests.
+20. Wait for API readiness and test the public web, API, map shell, and a media URL.
+21. Mark the release successful and retain redacted deployment logs.
 
 The same workflow supports `workflow_dispatch` with an explicit tested SHA for the [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) rehearsal and owner-authorized emergency deployment. Its explicit rollback-rehearsal input requires a different active SHA, lets the candidate pass real smoke, then injects a reviewed health-gate failure. Exit `42` counts as rehearsal success only after previous-release smoke, failure-state recording, and non-interference verification pass.
 

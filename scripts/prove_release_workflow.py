@@ -42,7 +42,11 @@ def assert_workflow_boundaries() -> None:
     assert "WEF_FORCE_ROLLBACK_REHEARSAL=1" in source
     assert '"$deploy_status" -eq 42' in source
     assert "PUBLIC_PORT: ${{ vars.WEF_PUBLIC_PORT }}" in source
+    assert "WEF_GEOAPIFY_API_KEY: ${{ secrets.WEF_GEOAPIFY_API_KEY }}" in source
     assert "WEF_RELEASE_SHA=${{ needs.resolve.outputs.release_sha }}" in source
+    deploy_script = (REPOSITORY_ROOT / "scripts/deploy/deploy.sh").read_text(encoding="utf-8")
+    assert "run --rm geocoder-check" in deploy_script
+    assert "WEF_DEPLOY_TEST_MODE" in deploy_script
     assert re.search(
         r'deploy_command\+=\(\s*"\$release_dir/scripts/deploy/deploy\.sh"'
         r'\s*/home/nuc/wef\s*"\$release_dir"\s*"\$config_file"'
@@ -101,6 +105,7 @@ def assert_release_configuration() -> None:
         "POSTGRES_PASSWORD": "safe:/password-0123456789abcdef",
         "POSTGRES_USER": "wef",
         "WEF_ALLOW_SYNTHETIC_SEED": "false",
+        "WEF_GEOAPIFY_API_KEY": "fixture-geoapify-key-0123456789",
         "WEF_LOG_LEVEL": "INFO",
     }
     previous = {key: os.environ.get(key) for key in environment}
@@ -127,6 +132,7 @@ def assert_release_configuration() -> None:
                 os.environ[key] = value
 
     assert "safe%3A%2Fpassword-0123456789abcdef" in values["WEF_DATABASE_URL"]
+    assert values["WEF_GEOAPIFY_API_KEY"] == "fixture-geoapify-key-0123456789"
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "production.env"
         write_environment(path, values)

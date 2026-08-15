@@ -39,8 +39,12 @@ This append-only log records blockers that could not be safely resolved autonomo
 ### B-008: Hosted geocoder credentials and reviewed Warsaw fixture
 
 - Impact: the hosted Geoapify/LocationIQ comparison cannot run and no provider can be selected/activated from repository evidence. E3-T3 cannot complete without that comparison.
-- Current state: E3 spike revision 3 is approved; implementation-plan revision 3 awaits owner approval. ADR-021 remains proposed and D-002 remains deferred. No provider key or owner-reviewed redacted Warsaw fixture is stored in the repository.
-- Needed from owner: later provide keys through approved secret channels and approve a redacted fixture; never put credentials or private source addresses in Git/chat.
+- Current state: E3 spike and implementation-plan revision 3 are approved. A Geoapify
+  key is configured through ignored local settings and the production secret pipeline;
+  no owner-reviewed redacted Warsaw fixture is stored in the repository. ADR-021 remains
+  proposed and D-002 remains deferred.
+- Needed from owner: approve a redacted fixture; never put credentials or private source
+  addresses in Git/chat.
 - Safe workaround: keep CI network-free and treat provider terms/quality/selection as unresolved. Missing inputs are not acceptance evidence and cannot replace the hard E3-T3 hosted-comparison gate.
 
 ## Resolved during overnight work

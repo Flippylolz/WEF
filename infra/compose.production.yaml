@@ -103,6 +103,23 @@ services:
     networks:
       - application
 
+  geocoder-check:
+    profiles:
+      - operator
+    image: ${WEF_BACKEND_IMAGE:?WEF_BACKEND_IMAGE digest is required}
+    command: ["wef-geocoder-check"]
+    environment:
+      WEF_ENV: production
+      WEF_GEOAPIFY_API_KEY: ${WEF_GEOAPIFY_API_KEY:?WEF_GEOAPIFY_API_KEY is required}
+    <<: *application-security
+    restart: "no"
+    cpus: "0.25"
+    mem_limit: 256m
+    pids_limit: 64
+    logging: *production-logging
+    networks:
+      - provider-egress
+
   api:
     image: ${WEF_BACKEND_IMAGE:?WEF_BACKEND_IMAGE digest is required}
     environment: *backend-environment
@@ -251,3 +268,4 @@ networks:
   application:
     internal: true
   edge:
+  provider-egress:

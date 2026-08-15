@@ -175,6 +175,7 @@ def prepare_release(root: Path, release_sha: str) -> tuple[Path, Path]:
         "WEF_BACKEND_IMAGE": "wef-backend:local",
         "WEF_BIND_ADDRESS": "127.0.0.1",
         "WEF_DATABASE_URL": "postgresql+asyncpg://wef:proof-password@db:5432/wef",
+        "WEF_GEOAPIFY_API_KEY": "fixture-geoapify-key-0123456789",
         "WEF_LOG_LEVEL": "info",
         "WEF_PUBLIC_PORT": "43100",
         "WEF_RELEASE_DIR": str(release_dir),

@@ -13,6 +13,7 @@ DIGEST_IMAGE_PATTERN = re.compile(
     r"@sha256:[0-9a-f]{64}$",
 )
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+PROVIDER_KEY_PATTERN = re.compile(r"^[A-Za-z0-9._-]{20,200}$")
 FORBIDDEN_VALUE_FRAGMENTS = ("change-me", "changeme", "local-only", "replace-for")
 MIN_PUBLIC_PORT = 1024
 MAX_PUBLIC_PORT = 65535
@@ -25,6 +26,7 @@ REQUIRED_KEYS = frozenset(
         "WEF_BACKEND_IMAGE",
         "WEF_BIND_ADDRESS",
         "WEF_DATABASE_URL",
+        "WEF_GEOAPIFY_API_KEY",
         "WEF_LOG_LEVEL",
         "WEF_PUBLIC_PORT",
         "WEF_RELEASE_DIR",
@@ -155,6 +157,9 @@ def _validate_runtime_boundaries(
         raise ReleaseConfigurationError(msg)
     if values["WEF_ALLOW_SYNTHETIC_SEED"] not in {"true", "false"}:
         msg = "synthetic seed gate must be an explicit boolean"
+        raise ReleaseConfigurationError(msg)
+    if not PROVIDER_KEY_PATTERN.fullmatch(values["WEF_GEOAPIFY_API_KEY"]):
+        msg = "Geoapify API key has an unsafe release format"
         raise ReleaseConfigurationError(msg)
 
 

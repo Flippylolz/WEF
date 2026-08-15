@@ -1,14 +1,15 @@
 """Tests for lazy runtime wiring and deterministic tooling."""
 
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import pytest
+from pydantic import SecretStr
 
-from wef_backend import cli, migration, seed_command
+from wef_backend import cli, geocoder_check, migration, seed_command
 from wef_backend.app import create_app
 from wef_backend.database import create_database_resources
 from wef_backend.features.catalog.application import (
@@ -50,6 +51,67 @@ def test_settings_loader_returns_typed_defaults() -> None:
 
     assert settings.port == 8000
     assert settings.env == "development"
+    assert settings.geoapify_requests_per_second == 4
+    assert settings.geoapify_daily_quota == 2_700
+
+
+@dataclass
+class FakeGeocoderTransport:
+    """Return one public, sanitized Geoapify-shaped response."""
+
+    payload: object
+
+    async def get_json(
+        self,
+        _url: str,
+        *,
+        params: Mapping[str, str],
+        headers: Mapping[str, str],
+        timeout_seconds: float,
+    ) -> object:
+        """Prove the command supplies a key without exposing it in output."""
+        assert params["apiKey"] == "fixture-secret-key-0123456789"
+        assert headers["User-Agent"]
+        assert timeout_seconds == 15
+        return self.payload
+
+
+async def test_geoapify_check_is_bounded_and_secret_safe() -> None:
+    """The operator check validates one mapped Warsaw result without secret output."""
+    settings = Settings(geoapify_api_key=SecretStr("fixture-secret-key-0123456789"))
+    result = await geocoder_check.check_geoapify(
+        settings,
+        transport=FakeGeocoderTransport(
+            {
+                "features": [
+                    {
+                        "geometry": {"coordinates": [21.0058, 52.2318]},
+                        "properties": {
+                            "place_id": "public-check",
+                            "formatted": "Warszawa",
+                            "result_type": "building",
+                            "rank": {"confidence": 1},
+                        },
+                    },
+                ],
+            },
+        ),
+    )
+
+    assert result == {
+        "attribution": "© OpenStreetMap contributors; Geoapify",
+        "precision": "building",
+        "provider": "geoapify",
+        "status": "ok",
+        "within_scope": True,
+    }
+    assert "fixture-secret-key" not in repr(settings)
+
+
+async def test_geoapify_check_fails_closed_without_configuration() -> None:
+    """A missing production secret fails before any network request."""
+    with pytest.raises(geocoder_check.GeoapifyCheckError, match="not configured"):
+        await geocoder_check.check_geoapify(Settings())
 
 
 def test_openapi_export_is_deterministic(tmp_path: Path) -> None:

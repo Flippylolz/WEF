@@ -26,6 +26,11 @@ elif [ "${WEF_DEPLOY_TEST_MODE:-0}" != "1" ]; then
   fail "image pull can be skipped only in deployment test mode"
 fi
 
+if [ "${WEF_DEPLOY_TEST_MODE:-0}" != "1" ] &&
+  ! production_compose --profile operator run --rm geocoder-check; then
+  fail "Geoapify readiness failed; existing application release was not replaced"
+fi
+
 production_compose --profile operator run --rm db-permissions
 production_compose up --detach --wait db
 if ! production_compose --profile operator run --rm migrate; then
