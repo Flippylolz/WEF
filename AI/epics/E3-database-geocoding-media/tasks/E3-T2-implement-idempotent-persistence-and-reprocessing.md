@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E3-T2
 epic: E3
 title: "Implement idempotent persistence and reprocessing"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: L
@@ -23,11 +23,11 @@ spike_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-14T00:42:00Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 3
+  verified_by: "ZCode Agent"
+  verified_at: "2026-08-15T03:52:26Z"
 dependency_gate:
   status: satisfied
   verified_by: "Cursor Agent (owner-authorized promotion)"
@@ -37,10 +37,10 @@ dependency_gate:
     - "E3-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/11"
 branch:
   required: true
-  name: null
+  name: feature/E3-T2-idempotent-persistence
   task_id: E3-T2
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-15T03:52:26Z"
   pull_request: null
 completion:
   completed_by: null
@@ -135,16 +135,16 @@ Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLA
 - [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references the owner-approved current spike revision 3 and is `satisfied`.
-- [ ] `implementation_gate` references the owner-approved current implementation-plan revision containing this task ID/current revision, and is `satisfied`.
-- [ ] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is a valid stacked ancestor; every deferred gate required for start is resolved per the approved plan.
-- [ ] Scope and acceptance criteria match the approved plan.
+- [x] `implementation_gate` references the owner-approved current implementation-plan revision containing this task ID/current revision, and is `satisfied`.
+- [x] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is a valid stacked ancestor; every deferred gate required for start is resolved per the approved plan.
+- [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] One new branch contains this task ID.
+- [x] The branch and pull request contain this task only.
+- [x] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
 
 ## Done checklist
 
