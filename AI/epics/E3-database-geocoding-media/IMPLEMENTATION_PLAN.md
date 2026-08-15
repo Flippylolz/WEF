@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E3
 title: "Historical persistence, geocoding, media, and staged import plan"
-status: awaiting_approval
+status: approved
 revision: 4
 owner: owner
 spike_revision: 4
@@ -17,11 +17,11 @@ task_sequence:
     revision: 3
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-15T09:31:46Z"
+  approved_revision: 4
+  evidence: "Owner explicitly approved E3 IMPLEMENTATION_PLAN revision 4 in the Codex task and directed E3-T5 implementation to proceed with batching and an incremental dry run"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -31,11 +31,11 @@ invalidation:
 
 # Implementation Plan: Historical persistence, geocoding, media, and staged import
 
-> Material revision 4 binds pending [spike revision 4](SPIKE.md), the owner's historical Geoapify decision in merged [PR #59](https://github.com/Flippylolz/WEF/pull/59), and revised E3-T3/E3-T5 task boundaries. It awaits revision-specific owner approval and authorizes no E3-T5 code yet. Historical plan revision 3 remains the authorization record for E3-T2 through E3-T4 work completed under it.
+> Material revision 4 binds approved [spike revision 4](SPIKE.md), the owner's historical Geoapify decision in merged [PR #59](https://github.com/Flippylolz/WEF/pull/59), and revised E3-T3/E3-T5 task boundaries. The owner approved this revision on 2026-08-15. Historical plan revision 3 remains the authorization record for E3-T2 through E3-T4 work completed under it.
 
 ## Approved spike baseline
 
-[E3 spike revision 4](SPIKE.md) is awaiting owner approval. If approved, its binding constraints for this plan are:
+[E3 spike revision 4](SPIKE.md) is owner-approved. Its binding constraints for this plan are:
 
 - Contact-safe persistence with no `ContactSpan` leakage into routine projections.
 - Session-level/durable complete-run ownership with bounded transactions.

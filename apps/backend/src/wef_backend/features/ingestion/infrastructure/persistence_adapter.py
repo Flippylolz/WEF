@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -66,7 +67,21 @@ def _lock_id(source_key: str) -> int:
 
 def _json_text(value: object) -> str:
     """Serialize source JSON values deterministically."""
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=_json_default,
+    )
+
+
+def _json_default(value: object) -> object:
+    """Thaw immutable source mappings without weakening JSON type checks."""
+    if isinstance(value, Mapping):
+        return dict(value)
+    message = f"Object of type {type(value).__name__} is not JSON serializable"
+    raise TypeError(message)
 
 
 @dataclass(frozen=True, slots=True)

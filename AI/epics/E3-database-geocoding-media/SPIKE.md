@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E3
 title: "Historical persistence, geocoding, media, and import research"
-status: awaiting_approval
+status: approved
 revision: 4
 owner: owner
 research_only: true
@@ -12,11 +12,11 @@ domain_docs: [data, contracts, ingestion, security]
 proposed_task_ids: [E3-T1, E3-T2, E3-T3, E3-T4, E3-T5]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-15T09:31:46Z"
+  approved_revision: 4
+  evidence: "Owner explicitly approved E3 SPIKE revision 4 in the Codex task and directed E3-T5 implementation to proceed"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -26,7 +26,7 @@ invalidation:
 
 # Spike: Historical persistence, geocoding, media, and import
 
-> Revision 4 reconciles the owner's historical-provider decision in merged [PR #59](https://github.com/Flippylolz/WEF/pull/59). It awaits revision-specific owner approval and authorizes no new code until the corresponding implementation plan is also approved.
+> Revision 4 reconciles the owner's historical-provider decision in merged [PR #59](https://github.com/Flippylolz/WEF/pull/59). The owner approved this revision on 2026-08-15; code still requires the corresponding approved implementation plan and task gates.
 
 ## Revision 4 change
 

@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     geoapify_api_key: SecretStr | None = None
     geoapify_requests_per_second: Decimal = Field(default=Decimal(4), gt=0, le=5)
     geoapify_daily_quota: int = Field(default=2_700, ge=1, le=3_000)
+    geoapify_account_identity: str = Field(default="default", min_length=1, max_length=64)
     restricted_originals_path: Path = Path("/app/media/originals")
     public_derivatives_path: Path = Path("/app/media/public")
     media_max_bytes: int = Field(default=52_428_800, ge=1)

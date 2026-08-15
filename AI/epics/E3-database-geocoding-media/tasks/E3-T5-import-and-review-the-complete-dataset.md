@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E3-T5
 epic: E3
 title: "Import and review the complete dataset"
-status: invalidated
+status: in_progress
 revision: 3
 priority: P0
 size: L
@@ -17,28 +17,32 @@ promotion:
   promoted_by: "Cursor Agent (owner-authorized after spike revision 3 approval)"
   promoted_at: "2026-08-14T00:42:00Z"
 spike_gate:
-  status: invalidated
+  status: satisfied
   file: ../SPIKE.md
-  approved_revision: 3
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-14T00:42:00Z"
+  approved_revision: 4
+  verified_by: "Codex (owner-authorized)"
+  verified_at: "2026-08-15T09:31:46Z"
 implementation_gate:
-  status: invalidated
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 3
-  verified_by: "Codex (historical plan reference)"
-  verified_at: "2026-08-15T08:10:21Z"
+  approved_revision: 4
+  verified_by: "Codex (owner-authorized)"
+  verified_at: "2026-08-15T09:31:46Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Codex (owner-authorized)"
+  verified_at: "2026-08-15T09:31:46Z"
+  evidence:
+    - "E2-T5 | done | merged PR https://github.com/Flippylolz/WEF/pull/42"
+    - "E3-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/53"
+    - "E3-T3 | done | merged PR https://github.com/Flippylolz/WEF/pull/59 | revision-4 gates revalidated 2026-08-15"
+    - "E3-T4 | done | merged PR https://github.com/Flippylolz/WEF/pull/60"
 branch:
   required: true
-  name: null
+  name: feature/E3-T5-resumable-import
   task_id: E3-T5
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-15T09:31:46Z"
   pull_request: null
 completion:
   completed_by: null
@@ -46,15 +50,15 @@ completion:
   pull_request: null
   evidence: []
 invalidation:
-  invalidated_by: "Codex (owner-authorized provider decision reconciliation)"
-  invalidated_at: "2026-08-15T08:10:21Z"
-  reason: "The owner selected Geoapify without a mandatory LocationIQ comparison and required quota-aware resumable batching; revision 2's dependency and complete-import acceptance boundaries materially changed."
-  return_to: spike
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E3-T5: Import and review the complete dataset
 
-> Revision 3 awaits owner approval of E3 spike/implementation-plan revision 4. It moves Geoapify-only quality review into the complete import and adds durable, quota-aware resumable batching. No code may start from this invalidated task yet.
+> Revision 3 is approved and in progress on `feature/E3-T5-resumable-import`. It moves Geoapify-only quality review into the complete import and adds durable, quota-aware resumable batching.
 
 ## Outcome
 
@@ -141,17 +145,17 @@ Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLA
 
 - [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
 - [x] Promotion source, promoter, and timestamp are recorded.
-- [ ] `spike_gate` references owner-approved current spike revision 4 and is `satisfied`.
-- [ ] `implementation_gate` references owner-approved implementation-plan revision 4 containing E3-T5 revision 3 and is `satisfied`.
-- [ ] Every dependency is `done` with `dependency_gate: satisfied`; revised E3-T3 completion is still pending.
-- [ ] Scope and acceptance criteria match the approved plan.
+- [x] `spike_gate` references owner-approved current spike revision 4 and is `satisfied`.
+- [x] `implementation_gate` references owner-approved implementation-plan revision 4 containing E3-T5 revision 3 and is `satisfied`.
+- [x] Every dependency is `done` with `dependency_gate: satisfied`.
+- [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] One new branch contains this task ID.
+- [x] The branch contains this task only; the pull request will be recorded after creation.
+- [x] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
 
 ## Done checklist
 

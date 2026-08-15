@@ -14,6 +14,7 @@ from sqlalchemy import text
 from tests.test_persistence_application import _contact, _listing, _raw
 from wef_backend.database import create_database_resources
 from wef_backend.features.catalog.domain import ContentType
+from wef_backend.features.ingestion.application.complete_import import prepare_import
 from wef_backend.features.ingestion.application.persistence import (
     PersistableMessage,
     PersistHistoricalIngestion,
@@ -21,6 +22,7 @@ from wef_backend.features.ingestion.application.persistence import (
     RunLockHeldError,
     RunMetadata,
 )
+from wef_backend.features.ingestion.application.source import ChannelExpectation
 from wef_backend.features.ingestion.domain.extraction import (
     CandidateDecision,
     CandidateReason,
@@ -34,6 +36,9 @@ from wef_backend.features.ingestion.domain.extraction import (
 )
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
+)
+from wef_backend.features.ingestion.infrastructure.telegram_export import (
+    TelegramDesktopExportAdapter,
 )
 from wef_backend.migration import alembic_config
 from wef_backend.settings import Settings
@@ -295,6 +300,39 @@ async def test_migration_and_replay_reconciliation() -> None:
     assert row.total_revisions == 2
     assert offer_link_count == 2
     assert offer_price == 61_000_000
+    await database.engine.dispose()
+
+
+async def test_real_adapter_payloads_persist_in_bounded_batches() -> None:
+    """Recursively immutable Telegram JSON persists losslessly as JSONB."""
+    assert TEST_DATABASE_URL is not None
+    await _prepare()
+    fixture = Path(__file__).parent / "fixtures/telegram_export/sanitized-complete.json"
+    prepared = prepare_import(
+        TelegramDesktopExportAdapter(
+            fixture,
+            ChannelExpectation("9001", "public_channel", "Sanitized Fixture Channel"),
+        ),
+    )
+    database = create_database_resources(TEST_DATABASE_URL)
+    summary = await PersistHistoricalIngestion(
+        store=SQLAlchemyIngestionPersistence(database.session_factory),
+        batch_size=2,
+    )(
+        channel=prepared.channel,
+        messages=prepared.messages,
+        metadata=RunMetadata(parser_version="integration@1"),
+    )
+
+    async with database.session_factory() as session:
+        payload_shape = await session.scalar(
+            text(
+                "SELECT jsonb_typeof(raw_payload_json->'text_entities') "
+                "FROM source_messages WHERE external_message_id = 101"
+            ),
+        )
+    assert summary.counts.seen == 8
+    assert payload_shape == "array"
     await database.engine.dispose()
 
 

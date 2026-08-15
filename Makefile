@@ -8,7 +8,15 @@ BACKEND := $(UV) --directory apps/backend run
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install format format-check lint typecheck test coverage contract-generate contract-check build build-development compose-config production-proof production-runtime-proof up down ps logs importer-dry-run seed-m1
+.PHONY: help install format format-check lint typecheck test coverage contract-generate contract-check build build-development compose-config production-proof production-runtime-proof up down ps logs importer-dry-run import-dry-run import-persist import-geocode import-media import-verify import-run seed-m1
+
+IMPORT_BATCH_SIZE ?= 200
+IMPORT_GEOCODE_BATCH_SIZE ?= 25
+IMPORT_MAX_PROVIDER_REQUESTS ?= 500
+IMPORTER := $(COMPOSE) --profile operator run --rm historical-importer \
+	--batch-size $(IMPORT_BATCH_SIZE) \
+	--geocode-batch-size $(IMPORT_GEOCODE_BATCH_SIZE) \
+	--max-provider-requests $(IMPORT_MAX_PROVIDER_REQUESTS)
 
 help: ## List supported commands.
 	@printf '%s\n' \
@@ -31,6 +39,12 @@ help: ## List supported commands.
 		'make ps                 Show local service status' \
 		'make logs               Follow recent local service logs' \
 		'make importer-dry-run   Run the read-only historical parser report' \
+		'make import-dry-run     Preview exact new/changed rows and pending work' \
+		'make import-persist     Persist new/changed source rows in batches' \
+		'make import-geocode     Resume cache-first quota-aware geocoding' \
+		'make import-media       Resume verified media copy and derivatives' \
+		'make import-verify      Reconcile one exact source import' \
+		'make import-run         Run all resumable import stages' \
 		'make seed-m1            Converge the invented local M1 fixture'
 
 install: ## Install frozen dependencies.
@@ -127,6 +141,24 @@ logs: ## Follow recent local service logs.
 
 importer-dry-run: ## Run the historical parser and write aggregate dry-run reports.
 	$(COMPOSE) --profile operator run --rm importer
+
+import-dry-run: ## Preview exact new/changed rows and pending work without canonical writes.
+	$(IMPORTER) dry-run
+
+import-persist: ## Persist only new or changed source messages in bounded batches.
+	$(IMPORTER) persist
+
+import-geocode: ## Resume cache-first Geoapify work under durable rate/daily limits.
+	$(IMPORTER) geocode
+
+import-media: ## Resume safe original storage and public derivative generation.
+	$(IMPORTER) media
+
+import-verify: ## Reconcile aggregate source/canonical/geocode/media counts.
+	$(IMPORTER) verify
+
+import-run: ## Run persistence, geocoding, media, and verification until complete or paused.
+	$(IMPORTER) run
 
 seed-m1: ## Converge the invented local M1 fixture after migrations.
 	$(COMPOSE) --profile operator run --rm seed

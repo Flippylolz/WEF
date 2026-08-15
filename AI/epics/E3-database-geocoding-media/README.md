@@ -17,7 +17,7 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 
 ## Approval state
 
-- Epic workspace status: `in_progress`; historical plan revision 3 authorized merged E3-T2/T3/T4 work. The provider decision in PR #59 materially revises T3/T5 and awaits spike/plan revision 4 approval before E3-T5 implementation.
+- Epic workspace status: `in_progress`; owner-approved plan revision 4 revalidates merged E3-T3 and authorizes quota-aware, resumable E3-T5 implementation.
 - [Spike](SPIKE.md): `awaiting_approval`, revision 4; historical revision 3 remains the prior approval record.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `awaiting_approval`, revision 4; historical revision 3 remains the authorization record for completed E3-T2/T4 and merged T3 implementation.
 - E3-T1, E3-T2, and E3-T4 are `done`. E3-T3 revision 3 and E3-T5 revision 3 are invalidated pending revised approvals; T5 adds quota-aware resumable Geoapify batches.

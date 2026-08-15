@@ -45,6 +45,10 @@ class ProviderTransportError(RuntimeError):
     """Redacted provider transport failure."""
 
 
+class ProviderQuotaTransportError(ProviderTransportError):
+    """A hosted provider explicitly rejected the request for quota/rate reasons."""
+
+
 class HTTPXJSONTransport:
     """HTTPX implementation created only by operator composition."""
 
@@ -60,6 +64,9 @@ class HTTPXJSONTransport:
         try:
             async with httpx.AsyncClient(timeout=timeout_seconds) as client:
                 response = await client.get(url, params=params, headers=headers)
+                if response.status_code == 429:  # noqa: PLR2004 - HTTP Too Many Requests
+                    message = "hosted geocoder quota response"
+                    raise ProviderQuotaTransportError(message)
                 response.raise_for_status()
                 return response.json()
         except (httpx.HTTPError, ValueError) as error:
@@ -173,6 +180,12 @@ class HostedGeocoder:
                     timeout_seconds=self.policy.timeout_seconds,
                 )
                 return _map_payload(self.provider, payload)
+            except ProviderQuotaTransportError:
+                return _error_result(
+                    provider=self.provider,
+                    error=GeocodeErrorCode.QUOTA,
+                    attribution=_attribution(self.provider),
+                )
             except ProviderTransportError:
                 if attempt == self.policy.retries:
                     return _error_result(

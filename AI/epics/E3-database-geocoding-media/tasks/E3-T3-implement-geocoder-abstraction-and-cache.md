@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E3-T3
 epic: E3
 title: "Implement geocoder abstraction and cache"
-status: invalidated
+status: done
 revision: 3
 priority: P0
 size: L
@@ -17,17 +17,17 @@ promotion:
   promoted_by: "Cursor Agent (owner-authorized after spike revision 3 approval)"
   promoted_at: "2026-08-14T00:42:00Z"
 spike_gate:
-  status: invalidated
+  status: satisfied
   file: ../SPIKE.md
-  approved_revision: 3
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-14T00:42:00Z"
+  approved_revision: 4
+  verified_by: "Codex (owner-authorized gate reconciliation)"
+  verified_at: "2026-08-15T09:31:46Z"
 implementation_gate:
-  status: invalidated
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 3
-  verified_by: "Codex (owner-authorized)"
-  verified_at: "2026-08-15T06:29:24Z"
+  approved_revision: 4
+  verified_by: "Codex (owner-authorized gate reconciliation)"
+  verified_at: "2026-08-15T09:31:46Z"
 dependency_gate:
   status: satisfied
   verified_by: "Codex (owner-authorized)"
@@ -44,20 +44,22 @@ branch:
   created_at: "2026-08-15T06:29:24Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/59"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Codex (owner-authorized gate reconciliation)"
+  completed_at: "2026-08-15T09:31:46Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/59"
+  evidence:
+    - "Merged PR #59 implements the provider-neutral cache, miss ownership, review lineage, hosted adapters, and bounded Geoapify readiness proof"
+    - "Owner-approved E3 spike/implementation-plan revision 4 removes the obsolete mandatory LocationIQ comparison and assigns private-input quality review to E3-T5"
 invalidation:
-  invalidated_by: "Codex (owner-authorized provider decision reconciliation)"
-  invalidated_at: "2026-08-15T08:10:21Z"
-  reason: "Merged PR #59 records the owner's Geoapify-only historical selection and moves sample-quality review to E3-T5, superseding revision 2's mandatory Geoapify/LocationIQ comparison acceptance gate."
-  return_to: spike
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E3-T3: Implement geocoder abstraction and cache
 
-> Revision 3 reconciles the merged provider-neutral implementation and the owner's Geoapify-only historical decision in [PR #59](https://github.com/Flippylolz/WEF/pull/59). Its prior gates are invalidated until spike/plan revision 4 approval; completion cannot be recorded before revalidation.
+> Revision 3 reconciles the merged provider-neutral implementation and the owner's Geoapify-only historical decision in [PR #59](https://github.com/Flippylolz/WEF/pull/59). Owner-approved spike/plan revision 4 revalidated its gates and completion on 2026-08-15.
 
 ## Outcome
 
@@ -142,10 +144,10 @@ Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLA
 
 - [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
 - [x] Promotion source, promoter, and timestamp are recorded.
-- [ ] `spike_gate` references owner-approved current spike revision 4 and is `satisfied`.
-- [ ] `implementation_gate` references owner-approved current implementation-plan revision 4 containing E3-T3 revision 3 and is `satisfied`.
+- [x] `spike_gate` references owner-approved current spike revision 4 and is `satisfied`.
+- [x] `implementation_gate` references owner-approved current implementation-plan revision 4 containing E3-T3 revision 3 and is `satisfied`.
 - [x] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is a valid stacked ancestor; every deferred gate required for start is resolved per the approved plan.
-- [ ] Scope and acceptance criteria match the approved plan.
+- [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
@@ -156,6 +158,6 @@ Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLA
 
 ## Done checklist
 
-- [x] Acceptance criteria pass with PR #59 evidence, pending gate revalidation.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass with PR #59 evidence and revision-4 gate revalidation.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

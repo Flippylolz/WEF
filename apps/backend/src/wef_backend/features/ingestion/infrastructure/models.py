@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime  # noqa: TC003 - SQLAlchemy resolves mapped annotations
+from datetime import date, datetime  # noqa: TC003 - SQLAlchemy resolves mapped annotations
 from decimal import Decimal  # noqa: TC003 - SQLAlchemy resolves mapped annotations
 from uuid import UUID  # noqa: TC003 - SQLAlchemy resolves mapped annotations
 
@@ -11,6 +11,7 @@ from geoalchemy2.elements import WKBElement  # noqa: TC002 - resolved by SQLAlch
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
@@ -236,6 +237,95 @@ class IngestRunRow(IngestionBase):
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     release_sha: Mapped[str | None] = mapped_column(String(64))
     error_summary: Mapped[str | None] = mapped_column(Text)
+
+
+class CompleteImportRunRow(IngestionBase):
+    """Durable fenced state for one exact source/pipeline import."""
+
+    __tablename__ = "complete_import_runs"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_channel_id",
+            "source_checksum",
+            "pipeline_version",
+            name="uq_complete_import_runs_identity",
+        ),
+        CheckConstraint(
+            "status IN ('running', 'paused', 'failed', 'succeeded')",
+            name="ck_complete_import_runs_status",
+        ),
+        CheckConstraint(
+            "stage IN ('preflight', 'persistence', 'geocode', 'media', 'verify')",
+            name="ck_complete_import_runs_stage",
+        ),
+        CheckConstraint("fencing_token > 0", name="ck_complete_import_runs_positive_fence"),
+        CheckConstraint("source_size >= 0", name="ck_complete_import_runs_source_size"),
+        Index("ix_complete_import_runs_lease", "status", "lease_expires_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    source_channel_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("source_channels.id", ondelete="RESTRICT"),
+    )
+    source_checksum: Mapped[str] = mapped_column(String(64))
+    source_size: Mapped[int] = mapped_column(BigInteger)
+    pipeline_version: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(16))
+    stage: Mapped[str] = mapped_column(String(16))
+    owner_id: Mapped[str] = mapped_column(String(64))
+    fencing_token: Mapped[int] = mapped_column(BigInteger)
+    lease_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    checkpoint_json: Mapped[object | None] = mapped_column(JSONB)
+    counts_json: Mapped[object | None] = mapped_column(JSONB)
+    pause_reason: Mapped[str | None] = mapped_column(String(40))
+    next_eligible_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ProviderDailyBudgetRow(IngestionBase):
+    """Cross-process daily provider budget and globally spaced call slot."""
+
+    __tablename__ = "provider_daily_budgets"
+    __table_args__ = (CheckConstraint("used_attempts >= 0", name="ck_provider_daily_budgets_used"),)
+
+    provider: Mapped[str] = mapped_column(String(24), primary_key=True)
+    budget_date: Mapped[date] = mapped_column(Date, primary_key=True)
+    account_identity: Mapped[str] = mapped_column(String(64), primary_key=True)
+    used_attempts: Mapped[int] = mapped_column(Integer)
+    last_not_before: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class ProviderAttemptRow(IngestionBase):
+    """Non-sensitive ledger for every reserved hosted-provider attempt."""
+
+    __tablename__ = "provider_attempts"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('reserved', 'succeeded', 'no_result', 'transient', 'quota', 'failed')",
+            name="ck_provider_attempts_status",
+        ),
+        Index("ix_provider_attempts_run_reserved", "complete_import_run_id", "reserved_at"),
+        Index("ix_provider_attempts_budget", "provider", "budget_date", "account_identity"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    complete_import_run_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("complete_import_runs.id", ondelete="CASCADE"),
+    )
+    provider: Mapped[str] = mapped_column(String(24))
+    budget_date: Mapped[date] = mapped_column(Date)
+    account_identity: Mapped[str] = mapped_column(String(64))
+    query_hash: Mapped[str] = mapped_column(String(64))
+    not_before: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(16))
+    error_code: Mapped[str | None] = mapped_column(String(32))
+    reserved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class GeocodeResultRow(IngestionBase):

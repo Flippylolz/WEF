@@ -75,6 +75,45 @@ reports plus privacy-safe aggregate audit evidence below the configured ignored
 report destination. It prints only terminal status/counts and performs no
 database/geocode/media write, media copy, or network request.
 
+## Resumable historical import
+
+After exporting Telegram as machine-readable JSON, point the ignored local
+configuration at the directory containing `result.json` and run the incremental
+preview before any canonical write:
+
+```shell
+WEF_SOURCE_DIR=/absolute/path/to/export make import-dry-run
+```
+
+The preview scans and validates the complete immutable snapshot, displays a
+terminal progress bar, and reports exact new, changed, unchanged, candidate,
+media, and pending-geocode counts. It does not write canonical rows, copy media,
+or call a provider. Stable Telegram channel/message identity plus the per-record
+checksum means a later dump processes only unseen or changed messages while
+retaining every prior revision.
+
+Run all stages, or operate them independently:
+
+```shell
+WEF_SOURCE_DIR=/absolute/path/to/export make import-persist
+WEF_SOURCE_DIR=/absolute/path/to/export make import-geocode
+WEF_SOURCE_DIR=/absolute/path/to/export make import-media
+WEF_SOURCE_DIR=/absolute/path/to/export make import-verify
+
+# Equivalent staged sequence; stops cleanly when a configured provider limit pauses it.
+WEF_SOURCE_DIR=/absolute/path/to/export make import-run
+```
+
+Persistence defaults to 200-record transactions. Geocoding is cache-first,
+checkpoints every 25 locations, reserves every hosted attempt before network I/O,
+spaces calls globally at four per second, and stops at the durable 2,700-attempt
+UTC-day safety cap. `IMPORT_BATCH_SIZE`, `IMPORT_GEOCODE_BATCH_SIZE`, and
+`IMPORT_MAX_PROVIDER_REQUESTS` bound one invocation. Interrupted work is safe to
+rerun: database/cache/media replay identities determine unresolved work, while a
+five-minute fenced lease prevents overlapping owners after a crash. Provider
+credentials stay in ignored `.env`/runtime secrets; output contains aggregate
+counts and opaque run IDs only.
+
 The inert production model is separate from local Compose:
 
 ```shell
