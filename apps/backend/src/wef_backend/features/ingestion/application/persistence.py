@@ -22,7 +22,7 @@ from wef_backend.features.ingestion.domain.extraction import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Awaitable, Callable, Sequence
     from uuid import UUID
 
     from wef_backend.features.ingestion.domain.model import RawMessage, SourceIdentity
@@ -406,6 +406,7 @@ class PersistHistoricalIngestion:
 
     store: IngestionPersistencePort
     batch_size: int = _BATCH_DEFAULT
+    progress: Callable[[RunCounts], Awaitable[None]] | None = None
 
     async def __call__(
         self,
@@ -447,6 +448,8 @@ class PersistHistoricalIngestion:
                         checkpoint=checkpoint,
                         counts=counts,
                     )
+                    if self.progress is not None:
+                        await self.progress(counts)
             except PersistenceBatchError as error:
                 await self.store.finish_run(
                     run_id=run_id,

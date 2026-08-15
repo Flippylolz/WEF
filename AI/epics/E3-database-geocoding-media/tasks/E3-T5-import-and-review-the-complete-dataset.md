@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E3-T5
 epic: E3
 title: "Import and review the complete dataset"
-status: invalidated
+status: in_progress
 revision: 3
 priority: P0
 size: L
@@ -17,44 +17,48 @@ promotion:
   promoted_by: "Cursor Agent (owner-authorized after spike revision 3 approval)"
   promoted_at: "2026-08-14T00:42:00Z"
 spike_gate:
-  status: invalidated
+  status: satisfied
   file: ../SPIKE.md
-  approved_revision: 3
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-14T00:42:00Z"
+  approved_revision: 4
+  verified_by: "Codex (owner-authorized)"
+  verified_at: "2026-08-15T09:31:46Z"
 implementation_gate:
-  status: invalidated
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 3
-  verified_by: "Codex (historical plan reference)"
-  verified_at: "2026-08-15T08:10:21Z"
+  approved_revision: 4
+  verified_by: "Codex (owner-authorized)"
+  verified_at: "2026-08-15T09:31:46Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Codex (owner-authorized)"
+  verified_at: "2026-08-15T09:31:46Z"
+  evidence:
+    - "E2-T5 | done | merged PR https://github.com/Flippylolz/WEF/pull/42"
+    - "E3-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/53"
+    - "E3-T3 | done | merged PR https://github.com/Flippylolz/WEF/pull/59 | revision-4 gates revalidated 2026-08-15"
+    - "E3-T4 | done | merged PR https://github.com/Flippylolz/WEF/pull/60"
 branch:
   required: true
-  name: null
+  name: feature/E3-T5-resumable-import
   task_id: E3-T5
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-15T09:31:46Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/65"
 completion:
   completed_by: null
   completed_at: null
   pull_request: null
   evidence: []
 invalidation:
-  invalidated_by: "Codex (owner-authorized provider decision reconciliation)"
-  invalidated_at: "2026-08-15T08:10:21Z"
-  reason: "The owner selected Geoapify without a mandatory LocationIQ comparison and required quota-aware resumable batching; revision 2's dependency and complete-import acceptance boundaries materially changed."
-  return_to: spike
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E3-T5: Import and review the complete dataset
 
-> Revision 3 awaits owner approval of E3 spike/implementation-plan revision 4. It moves Geoapify-only quality review into the complete import and adds durable, quota-aware resumable batching. No code may start from this invalidated task yet.
+> Revision 3 is approved and in progress on `feature/E3-T5-resumable-import`. It moves Geoapify-only quality review into the complete import and adds durable, quota-aware resumable batching.
 
 ## Outcome
 
@@ -115,19 +119,19 @@ E3-T2 and E3-T4 are done. Revised E3-T3 completion plus spike/plan revision 4 ap
 ## Dependencies and traceability
 
 - Satisfied dependency: [E2-T5](../../E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md) — `done` through merged [PR #42](https://github.com/Flippylolz/WEF/pull/42).
-- Remaining task dependency pending revised approval: [E3-T3 revision 3](E3-T3-implement-geocoder-abstraction-and-cache.md). [E3-T2](E3-T2-implement-idempotent-persistence-and-reprocessing.md) and [E3-T4](E3-T4-implement-media-storage-and-derivatives.md) are done.
+- Satisfied dependencies: [E3-T2](E3-T2-implement-idempotent-persistence-and-reprocessing.md), [E3-T3 revision 3](E3-T3-implement-geocoder-abstraction-and-cache.md), and [E3-T4](E3-T4-implement-media-storage-and-derivatives.md) are done.
 - Milestone: [M2](../../../milestones/M2-historical-dataset-ready.md).
 - Traceability: [Source baseline](../../../data/SOURCE_BASELINE.md), [Data readiness](../../../data/QUALITY_AND_READINESS.md), [Pipeline](../../../ingestion/PIPELINE.md), [Data model](../../../contracts/DATA_MODEL.md).
 
 ## Approval and start boundary
 
-- Spike and implementation gates are invalidated until explicit owner approval of revision 4 artifacts and revised E3-T3 completion reconciliation.
-- After authorization and completed dependencies, this task starts from then-current `main` on a dedicated E3-T5 branch and opens a PR targeting `main`.
-- Production transfer/activation remains proposed E7-T6 revision 2. It consumes the materialized local snapshot and must not rerun hosted geocoding or media transformations. Code, private-data access, import runs, migrations, and destructive operations remain out of scope while this task is invalidated.
+- Spike and implementation gates are satisfied by explicit owner approval of revision 4 artifacts and revised E3-T3 completion reconciliation.
+- This task started from then-current `main` on dedicated branch `feature/E3-T5-resumable-import`; draft PR #65 targets `main` while the private import/review remains pending.
+- Production transfer/activation remains proposed E7-T6 revision 2. It consumes the materialized local snapshot and must not rerun hosted geocoding or media transformations. E3-T5 authorizes only the approved local staged import and aggregate/redacted evidence.
 
 ## Affected modules and contracts
 
-- See pending [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) revision 4 and [DATA_MODEL.md](../../../contracts/DATA_MODEL.md).
+- See approved [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) revision 4 and [DATA_MODEL.md](../../../contracts/DATA_MODEL.md).
 
 ## Implementation notes
 
@@ -141,17 +145,17 @@ Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLA
 
 - [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
 - [x] Promotion source, promoter, and timestamp are recorded.
-- [ ] `spike_gate` references owner-approved current spike revision 4 and is `satisfied`.
-- [ ] `implementation_gate` references owner-approved implementation-plan revision 4 containing E3-T5 revision 3 and is `satisfied`.
-- [ ] Every dependency is `done` with `dependency_gate: satisfied`; revised E3-T3 completion is still pending.
-- [ ] Scope and acceptance criteria match the approved plan.
+- [x] `spike_gate` references owner-approved current spike revision 4 and is `satisfied`.
+- [x] `implementation_gate` references owner-approved implementation-plan revision 4 containing E3-T5 revision 3 and is `satisfied`.
+- [x] Every dependency is `done` with `dependency_gate: satisfied`.
+- [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] One new branch contains this task ID.
+- [x] The branch contains this task only; the pull request will be recorded after creation.
+- [x] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
 
 ## Done checklist
 

@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E3
 title: "Historical persistence, geocoding, media, and staged import plan"
-status: awaiting_approval
+status: approved
 revision: 4
 owner: owner
 spike_revision: 4
@@ -17,11 +17,11 @@ task_sequence:
     revision: 3
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-15T09:31:46Z"
+  approved_revision: 4
+  evidence: "Owner explicitly approved E3 IMPLEMENTATION_PLAN revision 4 in the Codex task and directed E3-T5 implementation to proceed with batching and an incremental dry run"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -31,11 +31,11 @@ invalidation:
 
 # Implementation Plan: Historical persistence, geocoding, media, and staged import
 
-> Material revision 4 binds pending [spike revision 4](SPIKE.md), the owner's historical Geoapify decision in merged [PR #59](https://github.com/Flippylolz/WEF/pull/59), and revised E3-T3/E3-T5 task boundaries. It awaits revision-specific owner approval and authorizes no E3-T5 code yet. Historical plan revision 3 remains the authorization record for E3-T2 through E3-T4 work completed under it.
+> Material revision 4 binds approved [spike revision 4](SPIKE.md), the owner's historical Geoapify decision in merged [PR #59](https://github.com/Flippylolz/WEF/pull/59), and revised E3-T3/E3-T5 task boundaries. The owner approved this revision on 2026-08-15. Historical plan revision 3 remains the authorization record for E3-T2 through E3-T4 work completed under it.
 
 ## Approved spike baseline
 
-[E3 spike revision 4](SPIKE.md) is awaiting owner approval. If approved, its binding constraints for this plan are:
+[E3 spike revision 4](SPIKE.md) is owner-approved. Its binding constraints for this plan are:
 
 - Contact-safe persistence with no `ContactSpan` leakage into routine projections.
 - Session-level/durable complete-run ownership with bounded transactions.
@@ -146,7 +146,7 @@ The result preserves every source/revision, converges under replay, keeps checkp
 - **Media escape/resource attack:** read-only source, restricted originals, derivative-only public mount, path confinement/no-follow checks, generated hostile fixtures, streamed bounds, Pillow limits, opaque atomic storage, and metadata-free derivatives (T4).
 - **Dedup deletes ownership/bytes:** separate logical/physical tables, class-scoped dedup, reference constraints, idempotent keys, and orphan/reference integrity checks (T4/T5).
 - **Private-data leakage:** no private samples/artifacts, redacted summaries, safety scans, restricted source tables, and contact-product deferral (all).
-- **Incomplete E3 dependencies:** E3-T2 and E3-T4 are complete. E3-T3 completion awaits revised spike/plan approval; E3-T5 remains blocked by that gate. E2-T5 is already satisfied through PR #42.
+- **Incomplete E3 execution:** E2-T5 and E3-T2 through E3-T4 are complete. Revision-4 approval satisfied E3-T3 reconciliation and opened E3-T5; the private complete import/review and aggregate evidence remain pending.
 - **No backup:** report/retain ADR-015 risk; E3 does not add destructive rollback or recovery claims.
 
 ## Invalidation triggers
@@ -157,15 +157,15 @@ Return to this plan for material changes to task sequence/dependencies, migratio
 
 ## Approval checklist
 
-- [ ] E3 spike revision 4 has durable owner approval and remains current.
+- [x] E3 spike revision 4 has durable owner approval and remains current.
 - [x] E3-T2 revision 2, E3-T3 revision 3, E3-T4 revision 2, and E3-T5 revision 3 are authoritative under `tasks/` and locked into `task_sequence`.
 - [x] The T2 → {T3, T4} → T5 order and cross-epic gates are explicit and acyclic; T4 is not serialized behind T3.
 - [x] Architecture, migrations, transactions, cache/storage contracts, tests, security, operations, rollout, and rollback are explicit.
 - [x] ADR-021 is accepted for historical use only; D-002 remains deferred; Geoapify-only quality/review evidence belongs to E3-T5.
-- [x] E3-T2 through E3-T4 implementation history is preserved; no E3-T5 implementation code has been written.
+- [x] E3-T2 through E3-T4 implementation history is preserved; E3-T5 started only after revision-4 approval and dependency reconciliation.
 - [x] `revision` is the material plan being submitted (4).
-- [x] `status` is `awaiting_approval` and approval remains `pending`.
+- [x] `status` is `approved` and approval metadata records revision 4.
 
 ## Owner decision
 
-Pending. Only durable owner-authored approval of **SPIKE.md revision 4** and then **IMPLEMENTATION_PLAN.md revision 4** belongs next. Plan approval would permit E3-T3 completion reconciliation and E3-T5 implementation under their task/dependency/branch gates. It would not resolve D-002, authorize recurring geocoding or production import, or waive the dedicated E3-T5 branch.
+Approved. Flippylolz explicitly approved **SPIKE.md revision 4** and **IMPLEMENTATION_PLAN.md revision 4** on 2026-08-15 and directed E3-T5 implementation to proceed with batching and an incremental dry run. Approval does not resolve D-002 or authorize recurring geocoding or production import.
