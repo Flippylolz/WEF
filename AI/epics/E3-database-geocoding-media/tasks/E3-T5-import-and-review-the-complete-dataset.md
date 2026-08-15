@@ -43,7 +43,7 @@ branch:
   task_id: E3-T5
   one_task_only: true
   created_at: "2026-08-15T09:31:46Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/65"
 completion:
   completed_by: null
   completed_at: null
@@ -119,19 +119,19 @@ E3-T2 and E3-T4 are done. Revised E3-T3 completion plus spike/plan revision 4 ap
 ## Dependencies and traceability
 
 - Satisfied dependency: [E2-T5](../../E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md) — `done` through merged [PR #42](https://github.com/Flippylolz/WEF/pull/42).
-- Remaining task dependency pending revised approval: [E3-T3 revision 3](E3-T3-implement-geocoder-abstraction-and-cache.md). [E3-T2](E3-T2-implement-idempotent-persistence-and-reprocessing.md) and [E3-T4](E3-T4-implement-media-storage-and-derivatives.md) are done.
+- Satisfied dependencies: [E3-T2](E3-T2-implement-idempotent-persistence-and-reprocessing.md), [E3-T3 revision 3](E3-T3-implement-geocoder-abstraction-and-cache.md), and [E3-T4](E3-T4-implement-media-storage-and-derivatives.md) are done.
 - Milestone: [M2](../../../milestones/M2-historical-dataset-ready.md).
 - Traceability: [Source baseline](../../../data/SOURCE_BASELINE.md), [Data readiness](../../../data/QUALITY_AND_READINESS.md), [Pipeline](../../../ingestion/PIPELINE.md), [Data model](../../../contracts/DATA_MODEL.md).
 
 ## Approval and start boundary
 
-- Spike and implementation gates are invalidated until explicit owner approval of revision 4 artifacts and revised E3-T3 completion reconciliation.
-- After authorization and completed dependencies, this task starts from then-current `main` on a dedicated E3-T5 branch and opens a PR targeting `main`.
-- Production transfer/activation remains proposed E7-T6 revision 2. It consumes the materialized local snapshot and must not rerun hosted geocoding or media transformations. Code, private-data access, import runs, migrations, and destructive operations remain out of scope while this task is invalidated.
+- Spike and implementation gates are satisfied by explicit owner approval of revision 4 artifacts and revised E3-T3 completion reconciliation.
+- This task started from then-current `main` on dedicated branch `feature/E3-T5-resumable-import`; draft PR #65 targets `main` while the private import/review remains pending.
+- Production transfer/activation remains proposed E7-T6 revision 2. It consumes the materialized local snapshot and must not rerun hosted geocoding or media transformations. E3-T5 authorizes only the approved local staged import and aggregate/redacted evidence.
 
 ## Affected modules and contracts
 
-- See pending [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) revision 4 and [DATA_MODEL.md](../../../contracts/DATA_MODEL.md).
+- See approved [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) revision 4 and [DATA_MODEL.md](../../../contracts/DATA_MODEL.md).
 
 ## Implementation notes
 

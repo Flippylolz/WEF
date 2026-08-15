@@ -44,7 +44,7 @@ What architecture constraints should govern a later plan for converting the audi
 
 - PostgreSQL/PostGIS remains canonical under ADR-005; E3-T1 already delivered the synthetic M1 `locations`/`offers` foundation.
 - E2-T2/E2-T3 provide source-neutral extraction and media-association contracts. E2-T5 is `done` through merged [PR #42](https://github.com/Flippylolz/WEF/pull/42), so B-007 is satisfied.
-- E3-T1, E3-T2, and E3-T4 are done. E3-T3 implementation merged in PR #59 but its completion boundary changed materially; E3-T3 revision 3 and E3-T5 revision 3 remain invalidated until spike/plan revision 4 approvals.
+- E3-T1 through E3-T4 are done. Revision-4 approval reconciled E3-T3's completion boundary after merged PR #59 and opened E3-T5 revision 3 for implementation.
 - Completed E3-T1 remains governed by historical plan revision 2; completed E3-T2/E3-T4 and merged E3-T3 implementation remain governed by historical revision 3. Revision 4 governs only the provider-boundary reconciliation and E3-T5 implementation.
 - No real-world availability flag, contact product/reveal, public detail/media API, production import, live Telegram ingestion, or backup claim enters this spike.
 - Research outputs contain no private export payload, contact value, source path, credential, provider response, or media bytes.
@@ -102,11 +102,11 @@ These are spike-level constraints for later planning, not approved tables, field
 
 - [E3-T1](tasks/E3-T1-create-schema-and-migrations.md) — completed under approved spike/plan revision 2.
 - [E3-T2](tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md) — done through PR #53 under revision 3 approvals.
-- [E3-T3](tasks/E3-T3-implement-geocoder-abstraction-and-cache.md) — revision 3 reconciles the merged provider-neutral implementation and bounded Geoapify readiness evidence; it awaits revised spike/plan approval before completion may be recorded.
+- [E3-T3](tasks/E3-T3-implement-geocoder-abstraction-and-cache.md) — done after revision-4 approval reconciled the merged provider-neutral implementation and bounded Geoapify readiness evidence.
 - [E3-T4](tasks/E3-T4-implement-media-storage-and-derivatives.md) — done through PR #60 under revision 3 approvals; independent of E3-T3.
-- [E3-T5](tasks/E3-T5-import-and-review-the-complete-dataset.md) — revision 3 owns Geoapify-only sample quality, review, and aggregate/redacted evidence; depends on E3-T2/T3/T4 and awaits revised spike/plan approval.
+- [E3-T5](tasks/E3-T5-import-and-review-the-complete-dataset.md) — in progress; revision 3 owns Geoapify-only sample quality, review, and aggregate/redacted evidence after satisfied E3-T2/T3/T4 dependencies.
 
-Delivery sequence after a later approved plan: T2 first, then T3 and T4 may proceed independently, then T5. Do not serialize T4 behind T3.
+The approved delivery sequence completed T2 first, then T3 and T4 independently, and has now opened T5.
 
 ## Risks and open questions
 
@@ -125,8 +125,8 @@ Delivery sequence after a later approved plan: T2 first, then T3 and T4 may proc
 - [x] E2-T5/B-007 is recorded satisfied and PR #59 resolves B-008 for historical provider selection.
 - [x] ADR-021 is accepted only for the historical import; D-002 stays deferred for recurring production use.
 - [x] No production/disposable proof code or private source data was created.
-- [ ] `status` is `approved` and approval metadata matches revision 4.
+- [x] `status` is `approved` and approval metadata matches revision 4.
 
 ## Owner decision
 
-Pending. Revision 3 remains the historical approval for work already completed under it. Revision 4 requires explicit owner approval before revised E3-T3 completion or E3-T5 implementation gates may be satisfied; approval would accept the historical-provider boundary above but would not resolve D-002 or approve implementation plan revision 4.
+Approved. Flippylolz explicitly approved revision 4 on 2026-08-15. That approval accepted the historical-provider boundary above and allowed the implementation plan to proceed; it did not resolve D-002 or itself authorize production import.

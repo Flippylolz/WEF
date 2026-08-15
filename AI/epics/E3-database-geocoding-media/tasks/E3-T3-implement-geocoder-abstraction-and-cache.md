@@ -125,12 +125,12 @@ PR #59 contains the owner's historical-provider decision and successful bounded 
 ## Approval and start boundary
 
 - Historical implementation was completed and merged in PR #59 under spike/plan revision 3, but revision 2's hosted-comparison completion gate was not met.
-- Revision 3 materially changes that acceptance boundary and remains invalidated until owner approval of spike/plan revision 4. No new implementation is authorized by this task revision.
+- Revision 3 materially changed that acceptance boundary. Owner approval of spike/plan revision 4 revalidated the merged implementation and recorded this task done without adding new implementation scope.
 - Production import and recurring geocoding remain outside E3-T3; E3-T5 and E8-T4/D-002 own those later gates.
 
 ## Affected modules and contracts
 
-- See pending [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) revision 4 and [DATA_MODEL.md](../../../contracts/DATA_MODEL.md).
+- See approved [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) revision 4 and [DATA_MODEL.md](../../../contracts/DATA_MODEL.md).
 
 ## Implementation notes
 
