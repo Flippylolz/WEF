@@ -34,7 +34,12 @@ make format-check lint typecheck test contract-check
 make build
 ```
 
-The real PostGIS test runs only with an explicit disposable `TEST_DATABASE_URL`. Static API documentation is generated as an artifact and is not served by the production API.
+`make test` is fully containerized. It starts the local Compose PostGIS service,
+recreates a reserved `wef_test` database alongside the persistent development
+database, and runs the backend and frontend suites in development containers.
+No test database URL or host language runtime is required. Static API
+documentation is generated as an artifact and is not served by the production
+API.
 
 `make help` lists the exact command façade. The Makefile delegates to uv, pnpm, and Docker; it does not select environments or contain application logic.
 

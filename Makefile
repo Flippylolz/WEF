@@ -54,8 +54,10 @@ typecheck: ## Run static type checks.
 	$(PNPM) --filter web typecheck
 
 test: ## Run synthetic backend/frontend tests.
-	$(BACKEND) pytest --cov=wef_backend --cov-branch --cov-report=term-missing
-	$(PNPM) --filter web test
+	$(COMPOSE) --profile test up --detach --wait db
+	$(COMPOSE) --profile test run --rm --no-deps test-db-reset
+	$(COMPOSE) --profile test run --rm --no-deps --build backend-test
+	$(COMPOSE) --profile test run --rm --no-deps --build frontend-test
 
 contract-generate: ## Generate committed API contracts.
 	$(BACKEND) wef-export-openapi

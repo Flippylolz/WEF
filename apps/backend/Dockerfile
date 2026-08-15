@@ -30,10 +30,18 @@ FROM build AS development
 ENV PATH="/build/.venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    UV_PROJECT_ENVIRONMENT=/build/.venv \
     WEF_HOST=0.0.0.0
 
+WORKDIR /workspace/apps/backend
+
+COPY apps/backend/pyproject.toml apps/backend/uv.lock ./
+COPY apps/backend/src ./src
+COPY apps/backend/alembic.ini ./alembic.ini
+COPY apps/backend/migrations ./migrations
 COPY apps/backend/scripts ./scripts
 COPY apps/backend/tests ./tests
+COPY contracts /workspace/contracts
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen
