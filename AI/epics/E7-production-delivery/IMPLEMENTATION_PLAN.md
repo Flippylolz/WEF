@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E7
 title: "Docker/GitHub production delivery implementation plan"
-status: approved
+status: invalidated
 revision: 3
 owner: owner
 spike_revision: 3
@@ -13,19 +13,21 @@ task_sequence:
     revision: 1
 approval:
   required_role: owner
-  status: approved
+  status: invalidated
   decided_by: Flippylolz
   decided_at: "2026-08-13T19:32:59Z"
   approved_revision: 3
   evidence: "Owner accepted the attached E7 Shared TLS Stack plan and selected the three-task E7 shared Nginx/TLS split"
 invalidation:
-  invalidated_by: null
-  invalidated_at: null
-  reason: null
-  return_to: null
+  invalidated_by: Flippylolz
+  invalidated_at: "2026-08-15T16:22:08Z"
+  reason: "Owner prioritized E7-T6 and authorized preparation of material E7 spike revision 4, invalidating the revision-3 executable sequence for non-done work"
+  return_to: spike
 ---
 
 # Implementation Plan: Shared Nginx TLS delivery
+
+> Revision 3 remains the historical authorization record for work performed under it. Material E7 spike revision 4 invalidates this plan for all non-done work. Do not prepare or approve a replacement implementation plan until spike revision 4 is explicitly owner-approved.
 
 ## Approved spike baseline
 
