@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E3-T4
 epic: E3
 title: "Implement media storage and derivatives"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: L
@@ -44,10 +44,14 @@ branch:
   created_at: "2026-08-15T06:42:59Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/60"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Codex (owner-authorized)"
+  completed_at: "2026-08-15T08:00:17Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/60"
+  evidence:
+    - "E3-T4 branch feature/E3-T4-media-storage squash-merged via https://github.com/Flippylolz/WEF/pull/60 at 8915d86 after E3-T3 merged; T3 was a review-stack base, not a task dependency"
+    - "All four CI jobs passed on the merged head: Backend, Frontend and contract, Repository safety, and Runtime images"
+    - "PR verification: 246 backend tests and 33 frontend tests passed; 93.60% backend branch coverage; Ruff, strict mypy, 11 import-linter contracts, contract/runtime/topology/rollback/release/shell/Caddy checks passed"
+    - "Acceptance evidence covers pre-read path confinement/no-open rejection, replay-safe restricted originals, storage-class-scoped dedup, source-owned dispositions/associations, metadata-free derivatives, atomic publication, and derivative-only public mounts"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -57,7 +61,7 @@ invalidation:
 
 # E3-T4: Implement media storage and derivatives
 
-> In progress under owner-approved spike and implementation-plan revision 3 on the dedicated E3-T4 branch. The review branch is stacked on E3-T3 by current owner directive; T4 retains no task dependency on geocoding.
+> Done through merged [PR #60](https://github.com/Flippylolz/WEF/pull/60) under owner-approved spike and implementation-plan revision 3. E3-T3 was a review-stack base, not a task dependency.
 
 ## Outcome
 
@@ -122,13 +126,12 @@ Verify source media and publish replay-safe public derivatives while preserving 
 
 ## Approval and start boundary
 
-- Spike gate is satisfied for revision 3. Implementation remains blocked until owner approval of implementation-plan revision 3 and remaining dependency/deferred gates required by the workflow.
-- After authorization and completed declared dependencies, this task starts from then-current `main` on a dedicated E3-T4 branch and opens a PR targeting `main`.
-- Production code, migrations, media access/copy, edge configuration, dependency changes, and disposable proof code remain out of scope while status is `draft` and the implementation gate is blocked.
+- Spike/implementation gates were satisfied for revision 3, dependencies were complete, and the dedicated E3-T4 branch merged through PR #60.
+- Production snapshot transfer/import remains outside this completed task; proposed E7-T6 revision 2 owns materialized database/media delivery.
 
 ## Affected modules and contracts
 
-- See the approved/awaiting [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) revision 3 sequence entry for this task and [DATA_MODEL.md](../../../contracts/DATA_MODEL.md).
+- See the historical approved [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) revision 3 sequence entry for this task and [DATA_MODEL.md](../../../contracts/DATA_MODEL.md).
 
 ## Implementation notes
 
@@ -157,5 +160,5 @@ Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLA
 ## Done checklist
 
 - [x] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

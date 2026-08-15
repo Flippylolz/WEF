@@ -24,10 +24,11 @@ The complete export is parsed with reconciled reports, locations are geocoded/re
 - [E2-T3: Implement deterministic media grouping](../epics/E2-historical-export-parser-audit/tasks/E2-T3-implement-media-grouping.md) — `done` through [PR #37](https://github.com/Flippylolz/WEF/pull/37)
 - [E2-T4: Implement dry-run reports and operator wiring](../epics/E2-historical-export-parser-audit/tasks/E2-T4-implement-dry-run-reports.md) — `done` through [PR #40](https://github.com/Flippylolz/WEF/pull/40)
 - [E2-T5: Audit the complete export](../epics/E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md) — `done` through [PR #42](https://github.com/Flippylolz/WEF/pull/42), with reconciled complete-export audit evidence
+
 ### [E3: Database, geocoding, and media pipeline](../epics/E3-database-geocoding-media/README.md)
 
-- [E3-T4: Implement media storage and derivatives](../epics/E3-database-geocoding-media/tasks/E3-T4-implement-media-storage-and-derivatives.md) — `draft`, non-actionable until plan approval
-- [E3-T5: Import and review the complete dataset](../epics/E3-database-geocoding-media/tasks/E3-T5-import-and-review-the-complete-dataset.md) — `draft`, non-actionable until plan approval and E3-T2/T3/T4 complete
+- [E3-T4: Implement media storage and derivatives](../epics/E3-database-geocoding-media/tasks/E3-T4-implement-media-storage-and-derivatives.md) — `done` through PR #60
+- [E3-T5: Import and review the complete dataset](../epics/E3-database-geocoding-media/tasks/E3-T5-import-and-review-the-complete-dataset.md) — `invalidated` revision 3 pending E3 spike/plan revision 4 approval and revised E3-T3 completion
 ### [E4: Read API and filter contracts](../epics/E4-read-api-filter-contracts/README.md)
 
 - [E4-T2: Implement facets and location offer collection](../epics/E4-read-api-filter-contracts/tasks/E4-T2-implement-facets-and-location-offer-collection.md) — promoted for M1, still reused by M2

@@ -2,8 +2,8 @@
 schema: ai-workflow/spike@1
 epic: E3
 title: "Historical persistence, geocoding, media, and import research"
-status: approved
-revision: 3
+status: awaiting_approval
+revision: 4
 owner: owner
 research_only: true
 code_allowed: false
@@ -12,11 +12,11 @@ domain_docs: [data, contracts, ingestion, security]
 proposed_task_ids: [E3-T1, E3-T2, E3-T3, E3-T4, E3-T5]
 approval:
   required_role: owner
-  status: approved
-  decided_by: Flippylolz
-  decided_at: "2026-08-14T00:42:00Z"
-  approved_revision: 3
-  evidence: "Owner merge of https://github.com/Flippylolz/WEF/pull/44 (f968adb) plus owner continue directive authorizing spike revision 3 for task refinement/promotion and implementation planning"
+  status: pending
+  decided_by: null
+  decided_at: null
+  approved_revision: null
+  evidence: null
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -26,7 +26,15 @@ invalidation:
 
 # Spike: Historical persistence, geocoding, media, and import
 
-> Revision 3 is owner-approved research. It authorizes task refinement/promotion and a later implementation-plan revision. It does not authorize code, accept [ADR-021](../../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md), resolve [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md), or approve any implementation plan.
+> Revision 4 reconciles the owner's historical-provider decision in merged [PR #59](https://github.com/Flippylolz/WEF/pull/59). It awaits revision-specific owner approval and authorizes no new code until the corresponding implementation plan is also approved.
+
+## Revision 4 change
+
+- Preserve the provider-neutral durable cache, miss ownership, review lineage, bounds, precision, confidence, attribution, and secret-handling constraints from approved revision 3.
+- Accept [ADR-021](../../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) for the historical import: Geoapify is the selected provider after owner review of current pricing, rate, storage, attribution, and a successful bounded readiness call in PR #59.
+- Remove LocationIQ as a mandatory historical comparator. Its free-account cache terms were not selected for the durable replay model, though its adapter remains replaceable infrastructure.
+- Move Geoapify-only sample quality, uncertain-result review, and aggregate/redacted acceptance evidence into E3-T5, where the private ignored historical inputs are available.
+- Keep [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md) deferred; E8-T4 still revalidates recurring production quota, terms, quality, and fallback behavior.
 
 ## Question
 
@@ -36,8 +44,8 @@ What architecture constraints should govern a later plan for converting the audi
 
 - PostgreSQL/PostGIS remains canonical under ADR-005; E3-T1 already delivered the synthetic M1 `locations`/`offers` foundation.
 - E2-T2/E2-T3 provide source-neutral extraction and media-association contracts. E2-T5 is `done` through merged [PR #42](https://github.com/Flippylolz/WEF/pull/42), so B-007 is satisfied.
-- E3-T2 through E3-T5 are refined and promoted under `tasks/` after this approval; they remain non-actionable until an owner-approved material implementation plan unlocks their implementation gates.
-- Completed E3-T1 remains governed by the historical approved plan revision 2. A material plan for E3-T2–T5 is submitted separately and is not approved by this spike.
+- E3-T1, E3-T2, and E3-T4 are done. E3-T3 implementation merged in PR #59 but its completion boundary changed materially; E3-T3 revision 3 and E3-T5 revision 3 remain invalidated until spike/plan revision 4 approvals.
+- Completed E3-T1 remains governed by historical plan revision 2; completed E3-T2/E3-T4 and merged E3-T3 implementation remain governed by historical revision 3. Revision 4 governs only the provider-boundary reconciliation and E3-T5 implementation.
 - No real-world availability flag, contact product/reveal, public detail/media API, production import, live Telegram ingestion, or backup claim enters this spike.
 - Research outputs contain no private export payload, contact value, source path, credential, provider response, or media bytes.
 
@@ -77,11 +85,11 @@ These are spike-level constraints for later planning, not approved tables, field
 ## Provider recommendation and unresolved evidence
 
 - **Recommendation, not decision:** retain a provider-neutral, persistent cache and evaluate Geoapify first because its currently published free quota/rate/storage/attribution terms fit the historical workload.
-- Compare Geoapify and LocationIQ through the same interface against an owner-reviewed, redacted Warsaw fixture; record quality, precision, false positives, latency, current terms, and attribution before selecting or activating either provider.
-- LocationIQ remains a comparator only after its then-current account/cache terms are confirmed compatible with the required durable result model.
+- Use Geoapify for the historical import through the provider-neutral interface and durable cache. E3-T5 records aggregate/redacted precision, accepted/rejected/out-of-area/unresolved results, latency, current terms, and attribution before accepting visible pins.
+- LocationIQ is not a mandatory historical comparator. Its adapter remains available only for a future decision after then-current account/cache terms are confirmed compatible with the durable result model.
 - Public Nominatim remains, at most, a potential small one-time fallback that may be considered only if the linked OSMF policy permits the specific use and all conditions are met; it is not a recurring production dependency.
-- **Unresolved:** no provider credentials or owner-reviewed redacted fixture are in the repository. B-008 remains active; absent evidence cannot be treated as provider approval or task completion.
-- **ADR-021 / D-002:** [ADR-021](../../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) remains `proposed`. This spike approval does not accept ADR-021 or resolve [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md).
+- **Resolved historical selection:** PR #59 proves a redacted Geoapify credential/readiness call and records the owner's historical-provider selection. Private source addresses and provider responses remain outside the repository.
+- **ADR-021 / D-002:** [ADR-021](../../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) is accepted for the historical import. This does not resolve [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md) or authorize recurring production use.
 
 ## Options evaluated
 
@@ -93,10 +101,10 @@ These are spike-level constraints for later planning, not approved tables, field
 ## Proposed task boundaries
 
 - [E3-T1](tasks/E3-T1-create-schema-and-migrations.md) — completed under approved spike/plan revision 2.
-- [E3-T2](tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md) — refined/promoted after this spike approval; implementation gate pending plan approval.
-- [E3-T3](tasks/E3-T3-implement-geocoder-abstraction-and-cache.md) — refined/promoted after this spike approval; implementation gate pending plan approval; hosted comparison remains a hard completion gate; B-008 unresolved.
-- [E3-T4](tasks/E3-T4-implement-media-storage-and-derivatives.md) — refined/promoted after this spike approval; independent of E3-T3 after E3-T2; implementation gate pending plan approval.
-- [E3-T5](tasks/E3-T5-import-and-review-the-complete-dataset.md) — refined/promoted after this spike approval; depends on E3-T2/T3/T4; implementation gate pending plan approval.
+- [E3-T2](tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md) — done through PR #53 under revision 3 approvals.
+- [E3-T3](tasks/E3-T3-implement-geocoder-abstraction-and-cache.md) — revision 3 reconciles the merged provider-neutral implementation and bounded Geoapify readiness evidence; it awaits revised spike/plan approval before completion may be recorded.
+- [E3-T4](tasks/E3-T4-implement-media-storage-and-derivatives.md) — done through PR #60 under revision 3 approvals; independent of E3-T3.
+- [E3-T5](tasks/E3-T5-import-and-review-the-complete-dataset.md) — revision 3 owns Geoapify-only sample quality, review, and aggregate/redacted evidence; depends on E3-T2/T3/T4 and awaits revised spike/plan approval.
 
 Delivery sequence after a later approved plan: T2 first, then T3 and T4 may proceed independently, then T5. Do not serialize T4 behind T3.
 
@@ -104,7 +112,7 @@ Delivery sequence after a later approved plan: T2 first, then T3 and T4 may proc
 
 - Source/contact leakage through provenance, excerpts, diagnostics, or committed fixtures.
 - Replay divergence, overlapping runs, premature checkpoints, or canonical over-merge.
-- Duplicate or ambiguous provider calls, changing terms/quotas, unavailable credentials/fixture, and misleading low-precision/out-of-scope pins.
+- Duplicate or ambiguous provider calls, changing terms/quotas, misleading low-precision/out-of-scope pins, and incomplete private-data review.
 - Traversal/symlink/non-regular/oversized/polyglot/decompression/metadata/partial-write media hazards.
 - Original/derivative identity drift or physical deduplication that loses source association.
 - Single-host database/media persistence remains data-loss exposure, not backup, under ADR-015.
@@ -114,11 +122,11 @@ Delivery sequence after a later approved plan: T2 first, then T3 and T4 may proc
 - [x] The question is answered at architecture/research level.
 - [x] Observed facts, recommendations, and unresolved evidence are distinguished.
 - [x] Official external sources are dated and linked directly.
-- [x] E2-T5/B-007 is recorded satisfied and B-008 remains unresolved.
-- [x] Spike approval authorizes refinement/promotion and planning only; ADR-021 stays proposed and D-002 stays deferred.
+- [x] E2-T5/B-007 is recorded satisfied and PR #59 resolves B-008 for historical provider selection.
+- [x] ADR-021 is accepted only for the historical import; D-002 stays deferred for recurring production use.
 - [x] No production/disposable proof code or private source data was created.
-- [x] `status` is `approved` and approval metadata matches revision 3.
+- [ ] `status` is `approved` and approval metadata matches revision 4.
 
 ## Owner decision
 
-Flippylolz approved spike revision 3 through the merge of [PR #44](https://github.com/Flippylolz/WEF/pull/44) (`f968adb`) and the owner continue directive that authorized recording that approval. This permits task refinement/promotion and a separate material implementation-plan revision. It does not authorize code, accept ADR-021, resolve D-002, or approve any implementation plan.
+Pending. Revision 3 remains the historical approval for work already completed under it. Revision 4 requires explicit owner approval before revised E3-T3 completion or E3-T5 implementation gates may be satisfied; approval would accept the historical-provider boundary above but would not resolve D-002 or approve implementation plan revision 4.

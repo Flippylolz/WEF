@@ -3,27 +3,27 @@ schema: ai-workflow/task@1
 id: E3-T3
 epic: E3
 title: "Implement geocoder abstraction and cache"
-status: in_progress
-revision: 2
+status: invalidated
+revision: 3
 priority: P0
 size: L
 milestone: M1
 dependencies: [E2-T2, E3-T1, E3-T2]
 requirement_ids: [P-001, P-007]
 decision_ids: [ADR-005, ADR-012, ADR-021]
-deferred_decision_ids: [D-002]
+deferred_decision_ids: []
 promotion:
   source: ../proposed-tasks/E3-T3-implement-geocoder-abstraction-and-cache.md
   promoted_by: "Cursor Agent (owner-authorized after spike revision 3 approval)"
   promoted_at: "2026-08-14T00:42:00Z"
 spike_gate:
-  status: satisfied
+  status: invalidated
   file: ../SPIKE.md
   approved_revision: 3
   verified_by: "Cursor Agent"
   verified_at: "2026-08-14T00:42:00Z"
 implementation_gate:
-  status: satisfied
+  status: invalidated
   file: ../IMPLEMENTATION_PLAN.md
   approved_revision: 3
   verified_by: "Codex (owner-authorized)"
@@ -49,15 +49,15 @@ completion:
   pull_request: null
   evidence: []
 invalidation:
-  invalidated_by: null
-  invalidated_at: null
-  reason: null
-  return_to: null
+  invalidated_by: "Codex (owner-authorized provider decision reconciliation)"
+  invalidated_at: "2026-08-15T08:10:21Z"
+  reason: "Merged PR #59 records the owner's Geoapify-only historical selection and moves sample-quality review to E3-T5, superseding revision 2's mandatory Geoapify/LocationIQ comparison acceptance gate."
+  return_to: spike
 ---
 
 # E3-T3: Implement geocoder abstraction and cache
 
-> In progress under owner-approved spike and implementation-plan revision 3 on the dedicated E3-T3 branch. Hosted comparison evidence remains a hard completion gate.
+> Revision 3 reconciles the merged provider-neutral implementation and the owner's Geoapify-only historical decision in [PR #59](https://github.com/Flippylolz/WEF/pull/59). Its prior gates are invalidated until spike/plan revision 4 approval; completion cannot be recorded before revalidation.
 
 ## Outcome
 
@@ -72,7 +72,7 @@ Normalize extracted Warsaw locations and resolve them through a durable provider
   - Add provider-neutral result mapping, persistent cache, Warsaw bounds, confidence/precision, and review states.
   - Add a no-network fixture/cached provider for the vertical proof.
   - Add the policy-controlled one-time Nominatim seed adapter.
-  - Evaluate the verified Warsaw fixture against Geoapify and LocationIQ; use Geoapify first only if quality passes.
+  - Prove bounded Geoapify credential/readiness behavior; complete-import sample quality and manual review belong to E3-T5.
 - Acceptance:
   - Repeated queries hit the database cache.
   - Out-of-bounds/low-precision results cannot become accepted pins automatically.
@@ -87,48 +87,48 @@ Normalize extracted Warsaw locations and resolve them through a durable provider
 - Before any hosted call, atomically claim ownership of the identical miss across processes. The owner performs HTTP outside a database transaction; non-owners wait/recheck within a bound, and an expired owner may be replaced using owner/fencing semantics. Guarantee healthy concurrency and reconcile ambiguous retries after timeout/crash/lease takeover; do not promise an impossible at-most-once network call.
 - Map provider-specific quality into common precision/confidence and validate Warsaw/Poland scope. Provider success never implies acceptance.
 - Record selection and every automatic/manual review transition with geocode result ID, actor, reason code, prior/next state, review-policy version, and timestamp.
-- Implement deterministic no-network fixtures, Geoapify, a LocationIQ comparator only under durable-storage-compatible terms, and the policy-locked one-time public Nominatim adapter.
-- Run the owner-reviewed redacted Warsaw fixture through Geoapify and LocationIQ and record quality, terms, attribution, and selection evidence.
+- Implement deterministic no-network fixtures, Geoapify, a replaceable LocationIQ adapter that is inactive unless later selected under compatible terms, and the policy-locked one-time public Nominatim adapter.
+- Prove Geoapify configuration, egress, neutral result mapping, attribution, and redacted failure behavior with one bounded readiness call. E3-T5 owns Geoapify-only quality/review evidence over private ignored historical inputs.
 
-## Hard completion gate
+## Revised completion gate
 
-The hosted comparison is mandatory E3-T3 acceptance evidence. Missing credentials or an owner-reviewed fixture may block starting the hosted acceptance run, but an unresolved blocker cannot replace the comparison, satisfy the task, or permit E3-T3 to be marked done.
+PR #59 contains the owner's historical-provider decision and successful bounded Geoapify readiness evidence. No LocationIQ hosted comparison is required. Task completion still requires owner approval of revised E3 spike/plan revision 4 and gate revalidation; E3-T5 remains responsible for measured Geoapify quality and manual review before visible-pin acceptance.
 
 ## Acceptance criteria
 
-- [ ] Normalization is deterministic/versioned across supported Polish/Russian/Ukrainian forms, preserves display/original values, and never invents an address.
-- [ ] Repeated identical requests use the durable database cache without a provider call; any provider/normalizer/scope/request-version change creates a distinct identity.
-- [ ] Two or more processes racing the same miss claim ownership under healthy concurrency, converge on one durable cache result after any ambiguous retry, avoid holding a database transaction during HTTP, and recover through bounded owner-failure takeover without requiring impossible at-most-once network semantics.
-- [ ] Out-of-country/out-of-Warsaw, ambiguous, low-confidence, and district/city-precision results cannot become accepted exact pins automatically.
-- [ ] Every accepted location references its selected `GeocodeResult`; selection/rejection/review changes retain append-only actor/reason/from/to/version/time lineage.
-- [ ] Fixture/cached M1 cases resolve with no network and stable precision/confidence/review evidence.
-- [ ] All adapters enforce tested key, identification, timeout, retry, rate, quota, attribution, storage, and defer policies without hidden provider fan-out.
-- [ ] The reviewed hosted comparison records quality/terms evidence and selects Geoapify only if it passes; E3-T3 cannot complete without this evidence.
-- [ ] Persisted/logged diagnostics contain no API keys, authorization headers, unapproved responses, contacts, or private source samples.
+- [x] Normalization is deterministic/versioned across supported Polish/Russian/Ukrainian forms, preserves display/original values, and never invents an address.
+- [x] Repeated identical requests use the durable database cache without a provider call; any provider/normalizer/scope/request-version change creates a distinct identity.
+- [x] Two or more processes racing the same miss claim ownership under healthy concurrency, converge on one durable cache result after any ambiguous retry, avoid holding a database transaction during HTTP, and recover through bounded owner-failure takeover without requiring impossible at-most-once network semantics.
+- [x] Out-of-country/out-of-Warsaw, ambiguous, low-confidence, and district/city-precision results cannot become accepted exact pins automatically.
+- [x] Every accepted location references its selected `GeocodeResult`; selection/rejection/review changes retain append-only actor/reason/from/to/version/time lineage.
+- [x] Fixture/cached M1 cases resolve with no network and stable precision/confidence/review evidence.
+- [x] All adapters enforce tested key, identification, timeout, retry, rate, quota, attribution, storage, and defer policies without hidden provider fan-out.
+- [x] A bounded operator-only Geoapify readiness call proves configured egress, neutral mapping, attribution, and secret-safe failure behavior without committing provider payloads.
+- [x] Persisted/logged diagnostics contain no API keys, authorization headers, unapproved responses, contacts, or private source samples.
 
 ## Test plan
 
 - Unit: normalization/versioning, query hash, result mapping, scope/review policy, selected-result transitions, review audit lineage, retry/rate/quota, and redaction.
 - Integration: migration/head, cache hit/re-geocode, multiprocess identical-miss ownership, lease expiry/fencing takeover, ambiguous-retry reconciliation, selected-result constraints/atomicity, PostGIS point order/scope, and transaction failure.
 - Contract: fake HTTP transports for each adapter, synthetic responses, attribution/terms metadata, and import-linter negative probes.
-- Acceptance: explicit hosted Geoapify/LocationIQ comparison against the approved redacted fixture outside CI, with sanitized aggregate evidence committed.
+- Acceptance: bounded operator-only Geoapify readiness outside CI, with only sanitized result-shape/status evidence; full private-input quality/review evidence is E3-T5 scope.
 
 ## Dependencies and traceability
 
 - Task dependencies: [E2-T2](../../E2-historical-export-parser-audit/tasks/E2-T2-implement-candidate-detection-and-typed-extractors.md), [E3-T1](E3-T1-create-schema-and-migrations.md), [E3-T2](E3-T2-implement-idempotent-persistence-and-reprocessing.md)
-- Decision path: [ADR-021](../../../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) remains proposed and is referenced only as architecture research. [D-002](../../../decisions/deferred/D-002-recurring-geocoding-provider.md) remains deferred for recurring production provider selection and does not block implementing the provider-neutral abstraction, durable cache, fixtures, or adapters under an approved plan. Hosted comparison remains a hard completion gate; B-008 remains unresolved.
+- Decision path: [ADR-021](../../../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) selects Geoapify for the historical import through PR #59. [D-002](../../../decisions/deferred/D-002-recurring-geocoding-provider.md) remains deferred for recurring production selection and E8-T4 revalidation.
 - Milestone: [M1](../../../milestones/M1-vertical-proof.md).
 - Traceability: [Geocoding](../../../ingestion/GEOCODING.md), [Data model](../../../contracts/DATA_MODEL.md), [Security](../../../security/README.md).
 
 ## Approval and start boundary
 
-- Spike gate is satisfied for revision 3. Implementation remains blocked until owner approval of implementation-plan revision 3 and remaining dependency/deferred gates required by the workflow.
-- After authorization and completed dependencies, this task starts from then-current `main` on a dedicated E3-T3 branch and opens a PR targeting `main`.
-- Production code, hosted calls, migrations, secrets/configuration changes, and disposable proof code remain out of scope while status is `draft` and the implementation gate is blocked.
+- Historical implementation was completed and merged in PR #59 under spike/plan revision 3, but revision 2's hosted-comparison completion gate was not met.
+- Revision 3 materially changes that acceptance boundary and remains invalidated until owner approval of spike/plan revision 4. No new implementation is authorized by this task revision.
+- Production import and recurring geocoding remain outside E3-T3; E3-T5 and E8-T4/D-002 own those later gates.
 
 ## Affected modules and contracts
 
-- See the approved/awaiting [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) revision 3 sequence entry for this task and [DATA_MODEL.md](../../../contracts/DATA_MODEL.md).
+- See pending [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) revision 4 and [DATA_MODEL.md](../../../contracts/DATA_MODEL.md).
 
 ## Implementation notes
 
@@ -142,10 +142,10 @@ Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLA
 
 - [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
 - [x] Promotion source, promoter, and timestamp are recorded.
-- [x] `spike_gate` references the owner-approved current spike revision 3 and is `satisfied`.
-- [x] `implementation_gate` references the owner-approved current implementation-plan revision containing this task ID/current revision, and is `satisfied`.
+- [ ] `spike_gate` references owner-approved current spike revision 4 and is `satisfied`.
+- [ ] `implementation_gate` references owner-approved current implementation-plan revision 4 containing E3-T3 revision 3 and is `satisfied`.
 - [x] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is a valid stacked ancestor; every deferred gate required for start is resolved per the approved plan.
-- [x] Scope and acceptance criteria match the approved plan.
+- [ ] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
@@ -156,6 +156,6 @@ Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLA
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
+- [x] Acceptance criteria pass with PR #59 evidence, pending gate revalidation.
 - [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.

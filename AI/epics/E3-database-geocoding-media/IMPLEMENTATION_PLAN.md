@@ -2,26 +2,26 @@
 schema: ai-workflow/implementation-plan@1
 epic: E3
 title: "Historical persistence, geocoding, media, and staged import plan"
-status: approved
-revision: 3
+status: awaiting_approval
+revision: 4
 owner: owner
-spike_revision: 3
+spike_revision: 4
 task_sequence:
   - id: E3-T2
     revision: 2
   - id: E3-T3
-    revision: 2
+    revision: 3
   - id: E3-T4
     revision: 2
   - id: E3-T5
-    revision: 2
+    revision: 3
 approval:
   required_role: owner
-  status: approved
-  decided_by: Flippylolz
-  decided_at: "2026-08-15T03:52:26Z"
-  approved_revision: 3
-  evidence: "Plan PR https://github.com/Flippylolz/WEF/pull/46 merged after green CI (squash 0fdb87f, conflicts reconciled) under the owner's standing 2026-08-14/15 session directives to proceed through stacked PRs"
+  status: pending
+  decided_by: null
+  decided_at: null
+  approved_revision: null
+  evidence: null
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -31,11 +31,11 @@ invalidation:
 
 # Implementation Plan: Historical persistence, geocoding, media, and staged import
 
-> Material revision 3 binds approved [spike revision 3](SPIKE.md) and promoted E3-T2–T5. It is submitted for owner approval only. It does not authorize code, accept [ADR-021](../../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md), resolve [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md), or claim plan approval. Historical plan revision 2 remains the completed authorization record for done E3-T1 only.
+> Material revision 4 binds pending [spike revision 4](SPIKE.md), the owner's historical Geoapify decision in merged [PR #59](https://github.com/Flippylolz/WEF/pull/59), and revised E3-T3/E3-T5 task boundaries. It awaits revision-specific owner approval and authorizes no E3-T5 code yet. Historical plan revision 3 remains the authorization record for E3-T2 through E3-T4 work completed under it.
 
 ## Approved spike baseline
 
-[E3 spike revision 3](SPIKE.md) is owner-approved. Binding constraints for this plan:
+[E3 spike revision 4](SPIKE.md) is awaiting owner approval. If approved, its binding constraints for this plan are:
 
 - Contact-safe persistence with no `ContactSpan` leakage into routine projections.
 - Session-level/durable complete-run ownership with bounded transactions.
@@ -44,8 +44,8 @@ invalidation:
 - Reviewed pin atomicity for selected result, coordinates, and review state.
 - Independent media storage vs association outcomes; storage-class-scoped dedup; unread/rejected-before-read states; non-null E2 ordinals; observed content identity; derivative versioning by immutable input content.
 - Same-message revision foreign keys; Python string offsets on preserved flattened text.
-- Staged import failure domains; T3 hosted comparison remains a hard completion gate; B-008 credentials/fixture remain unresolved.
-- ADR-021 stays proposed; D-002 stays deferred.
+- Staged import failure domains; E3-T3 owns provider-neutral infrastructure/readiness, while E3-T5 owns Geoapify-only private-input quality and review evidence.
+- ADR-021 is accepted for the historical import; D-002 stays deferred for recurring production use.
 
 ## Scope and outcome
 
@@ -65,12 +65,12 @@ The result preserves every source/revision, converges under replay, keeps checkp
 
 ### 2a. E3-T3 — Geocoder abstraction and cache
 
-- Task: [E3-T3 revision 2](tasks/E3-T3-implement-geocoder-abstraction-and-cache.md).
+- Task: [E3-T3 revision 3](tasks/E3-T3-implement-geocoder-abstraction-and-cache.md).
 - Dependencies: E2-T2, E3-T1, and E3-T2. After T2 merges, branch from then-current `main` and target `main`. Independent of E3-T4.
-- Deferred gate: [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md) remains deferred for recurring production provider selection. This plan does not accept ADR-021. E3-T3 may implement provider-neutral ports, durable cache, fixtures, and adapters under plan approval without resolving D-002 or accepting ADR-021.
-- Independent result: normalization, cache, miss ownership, review/selection lineage, and no-network fixtures; hosted comparison is a hard completion gate.
+- Deferred gate: [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md) remains deferred for recurring production provider selection. ADR-021 selects Geoapify only for the historical import.
+- Independent result: merged normalization, cache, miss ownership, review/selection lineage, no-network fixtures/adapters, and bounded Geoapify credential/readiness proof. Historical sample quality belongs to E3-T5.
 - Affected modules: geocode/cache/review migrations and ports; provider adapters; composition secrets; operator geocode/review modes; tests.
-- Verification: cache hits/versioning; process-level miss ownership with ambiguous-retry reconciliation; selected-result atomicity; bounds/precision/confidence; network-free fixtures; mandatory hosted Geoapify/LocationIQ comparison evidence. B-008 blocks that comparison until credentials/fixture exist and cannot substitute for it.
+- Verification: cache hits/versioning; process-level miss ownership with ambiguous-retry reconciliation; selected-result atomicity; bounds/precision/confidence; network-free fixtures; redacted bounded Geoapify readiness evidence from PR #59. No LocationIQ hosted comparison is required.
 
 ### 2b. E3-T4 — Media storage and derivatives
 
@@ -82,20 +82,21 @@ The result preserves every source/revision, converges under replay, keeps checkp
 
 ### 3. E3-T5 — Complete import and review
 
-- Task: [E3-T5 revision 2](tasks/E3-T5-import-and-review-the-complete-dataset.md).
-- Dependencies: satisfied [E2-T5](../E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md) ([PR #42](https://github.com/Flippylolz/WEF/pull/42)) plus completed E3-T2, E3-T3 (including hosted comparison), and E3-T4.
+- Task: [E3-T5 revision 3](tasks/E3-T5-import-and-review-the-complete-dataset.md).
+- Dependencies: satisfied [E2-T5](../E2-historical-export-parser-audit/tasks/E2-T5-audit-the-complete-export.md) ([PR #42](https://github.com/Flippylolz/WEF/pull/42)) plus completed E3-T2, revised E3-T3 after revision-4 approvals, and completed E3-T4.
 - Independent result: staged local complete import with aggregate/redacted reconciliation evidence.
-- Affected modules: operator staged modes; reconciliation reports; local ignored export/media wiring; tests/evidence docs.
-- Verification: preflight identity/checksum; run-level lock across stages; stage reconciliation; visible-pin acceptance; reportable unresolved categories; deterministic second run; leakage scans. Local completion does not authorize production mutation (E7-T6).
+- Affected modules: operator staged modes; durable complete-import lease/stage checkpoint and provider-budget reservation migration/ports; reconciliation reports; local ignored export/media wiring; tests/evidence docs.
+- Batch/resume contract: claim a fenced durable run lease for the exact source/pipeline identity; process deterministic cache-first work in bounded batches; reserve each hosted attempt/retry atomically against a UTC-day 2,700-request safety budget before network I/O; enforce four requests/second; checkpoint stage/counts after every bounded unit; pause cleanly on operator limit, daily budget, `429`, cancellation, or lease loss; resume from durable unresolved version state rather than an offset alone.
+- Verification: preflight identity/checksum; lease exclusion/expiry/fencing across multi-day pauses; atomic provider-budget reservations under concurrency/crash; batch limit/quota/`429`/cancellation resume; Geoapify-only aggregate quality and manual review; stage reconciliation; visible-pin acceptance; reportable unresolved categories; deterministic second run; leakage scans. Local completion does not authorize production mutation (E7-T6) or recurring geocoding (E8-T4/D-002).
 
 ## Cross-task architecture
 
 - Ingestion domain owns immutable source/extraction/association/geocode/media/run values. Application owns normalization, review policy, orchestration, reconciliation, UoW/geocoder/storage/cache contracts, and stable reason codes. Infrastructure owns SQLAlchemy/Alembic, HTTP provider clients, Pillow/filesystem behavior, and report output. Composition alone loads settings/secrets.
 - Catalog public queries continue through existing inward-owned read ports. Interface/public DTOs never import ORM rows, provider payloads, source descriptors, storage paths, or raw contacts.
 - T2 establishes source/canonical transaction identity and complete-run ownership. T3 and T4 attach geocode/media state through their own bounded units; network and filesystem work never occurs while a database transaction is held.
-- T5 coordinates stages and checkpoints but does not duplicate parser, normalization, geocoder, storage, or repository rules.
+- T5 coordinates stages, durable lease/checkpoint state, and provider-budget reservations but does not duplicate parser, normalization, geocoder, storage, or repository rules. Cache/result/selection/media state is the correctness source for resume; cursors are progress hints and cannot skip unresolved work.
 - Import-linter extends the ingestion framework-independence contract to prohibit SQLAlchemy, GeoAlchemy, HTTP clients, Pillow, settings, and filesystem infrastructure from domain/application modules.
-- Delivery shape is **T2 → {T3, T4} → T5**. After T2 merges green, T3 and T4 independently branch from then-current `main` and target `main`. Blocked T3 hosted evidence does not block T4 implementation or completion. T5 starts only after both are merged. Ordering creates no branch ancestry or undeclared T3→T4 dependency.
+- Delivery shape remains **T2 → {T3, T4} → T5**. T2/T4 are done and T3 implementation is merged; revised T3 completion gates must be approved/revalidated before T5 starts. Ordering creates no undeclared T3→T4 dependency.
 
 ## Data and migrations
 
@@ -103,6 +104,8 @@ The result preserves every source/revision, converges under replay, keeps checkp
 - T2 adds source/revision/development/offer-source/ingest-run tables and constraints, preserves current seed rows, and makes only the compatibility changes needed for unresolved real offers.
 - T3 adds provider/version-complete geocode audit/cache rows, cross-process cache-miss claims, selected-result linkage, and append-only review history.
 - T4 separates storage-class-scoped restricted original objects from public derivative objects, source-owned assets, disposition attempts, per-variant derivative attempts/failures, successful versioned derivatives, and ordered offer relationships.
+- T5 adds `complete_import_runs`-equivalent durable lease/stage/checkpoint state plus provider budget/attempt state. The exact schema must enforce one active pipeline identity, owner/fencing/lease expiry, explicit running/paused/failed/succeeded state, stage/version identity, redacted pause reason/next-eligible time, and atomic checkpoint/count updates.
+- Provider budget state is keyed by provider, UTC date, and a non-secret configuration/account identity. Row-locked reservation atomically increments the configured 2,700-attempt safety budget and allocates a globally spaced `not_before` slot at least 250 ms after the prior slot; HTTP occurs after commit. A non-sensitive attempt ledger links run/query hash/reservation/outcome without storing the query, key, headers, or payload. Retries reserve separately; ambiguous crash reservations remain spent.
 - UUIDs are opaque. Exact source and cache/storage natural keys enforce replay; fuzzy address/offer fingerprints produce review suggestions and are never uniqueness constraints.
 - Every migration upgrades both an empty database and the previous head, is repeatable to head, updates SQLAlchemy metadata/readiness expectations, and has constraint/index/forbidden-column integration tests.
 - Migrations are forward-only for normal operations. Application rollback must remain schema compatible; downgrades, deleting imported rows, and removing stored objects are explicit destructive recovery operations outside automatic deployment.
@@ -121,8 +124,8 @@ The result preserves every source/revision, converges under replay, keeps checkp
 - Unit/property-style invariants cover source/checksum/revision decisions, transaction commands, provenance serialization, normalizer/cache identity, Warsaw review policy, media path/key/type/derivative rules, staged reconciliation, and stable reason codes.
 - Disposable PostGIS integration covers every migration path, exact uniqueness/check constraints/indexes, initial/current source snapshot references, complete-run lock ownership across commits, process-level cache miss ownership/ambiguous-retry reconciliation, rollback/resume, selected-result/review lineage, storage-class-scoped dedup/references, non-negative source ordinals, safe-read checksum versus unread-sentinel replay identity, no-open unsafe rejection tests, original dispositions, derivative attempts/failures, and repeat-to-head.
 - Filesystem tests use generated safe/hostile fixtures only.
-- Provider tests use fake clocks/transports and recorded sanitized diagnostic subsets. The hosted quality comparison is an explicit operator acceptance run outside CI and is mandatory before E3-T3 can be completed.
-- Complete-import tests use the sanitized E2 corpus in CI. T5 additionally runs the ignored export locally after exact E2 checksum/audit verification and commits only aggregate/redacted evidence.
+- Provider tests use fake clocks/transports and recorded sanitized diagnostic subsets. PR #59 supplies bounded Geoapify readiness evidence for revised T3; T5's Geoapify-only private-input quality/review run remains outside CI and publishes only aggregate/redacted evidence.
+- Complete-import tests use the sanitized E2 corpus in CI, including tiny daily budgets and forced multi-day clocks to prove pause/resume equivalence. T5 additionally runs the ignored export locally after exact E2 checksum/audit verification and commits only aggregate/redacted evidence.
 - Every PR keeps CI green, including backend coverage `fail_under=90`, Ruff, mypy, import-linter, Markdown links, and existing Compose/production proofs applicable to docs-free task PRs later. This planning PR is documentation only.
 
 ## Operations, rollout, and rollback
@@ -139,11 +142,11 @@ The result preserves every source/revision, converges under replay, keeps checkp
 - **Replay divergence/checkpoint loss:** database uniqueness, checksum revisions, complete-run session locks or durable leases, same-transaction checkpoints, injected-failure integration tests, and deterministic second-run comparisons (T2/T5).
 - **Canonical over-merge:** exact source relationships converge; fingerprints/fuzzy addresses only suggest review and never delete or auto-merge (T2/T3/T5).
 - **Misleading coordinates:** provider-neutral mappings, versioned cache, explicit bounds/precision/confidence, accepted-state constraints, and unresolved reports (T3/T5).
-- **Provider cost/terms/key failure / B-008:** free-plan limits, no paid activation, durable cache, cross-process miss ownership with ambiguous-retry reconciliation, redacted configuration, mandatory fixture quality/terms gate, unresolved credentials/fixture blocker, and later E8-T4 revalidation (T3).
+- **Provider cost/terms/key failure:** free-plan limits, four-request/second throttle, durable 2,700-request UTC-day reservations with a safety margin, no paid activation, cache-first batches, clean quota/`429` pause, cross-process miss ownership with ambiguous-retry reconciliation, redacted configuration, Geoapify-only quality/review evidence during T5, and later E8-T4 revalidation.
 - **Media escape/resource attack:** read-only source, restricted originals, derivative-only public mount, path confinement/no-follow checks, generated hostile fixtures, streamed bounds, Pillow limits, opaque atomic storage, and metadata-free derivatives (T4).
 - **Dedup deletes ownership/bytes:** separate logical/physical tables, class-scoped dedup, reference constraints, idempotent keys, and orphan/reference integrity checks (T4/T5).
 - **Private-data leakage:** no private samples/artifacts, redacted summaries, safety scans, restricted source tables, and contact-product deferral (all).
-- **Incomplete E3 dependencies:** E3-T5 remains blocked only by E3-T2, E3-T3, and E3-T4. E2-T5 is already satisfied through PR #42.
+- **Incomplete E3 dependencies:** E3-T2 and E3-T4 are complete. E3-T3 completion awaits revised spike/plan approval; E3-T5 remains blocked by that gate. E2-T5 is already satisfied through PR #42.
 - **No backup:** report/retain ADR-015 risk; E3 does not add destructive rollback or recovery claims.
 
 ## Invalidation triggers
@@ -154,15 +157,15 @@ Return to this plan for material changes to task sequence/dependencies, migratio
 
 ## Approval checklist
 
-- [x] E3 spike revision 3 has durable owner approval and remains current.
-- [x] E3-T2 through E3-T5 revision 2 are promoted under `tasks/` and locked into `task_sequence`.
+- [ ] E3 spike revision 4 has durable owner approval and remains current.
+- [x] E3-T2 revision 2, E3-T3 revision 3, E3-T4 revision 2, and E3-T5 revision 3 are authoritative under `tasks/` and locked into `task_sequence`.
 - [x] The T2 → {T3, T4} → T5 order and cross-epic gates are explicit and acyclic; T4 is not serialized behind T3.
 - [x] Architecture, migrations, transactions, cache/storage contracts, tests, security, operations, rollout, and rollback are explicit.
-- [x] ADR-021 remains proposed; D-002 remains deferred; hosted comparison remains a hard E3-T3 completion gate; B-008 remains unresolved.
-- [x] No E3-T2 through E3-T5 implementation code has been written.
-- [x] `revision` is the material plan being submitted (3).
+- [x] ADR-021 is accepted for historical use only; D-002 remains deferred; Geoapify-only quality/review evidence belongs to E3-T5.
+- [x] E3-T2 through E3-T4 implementation history is preserved; no E3-T5 implementation code has been written.
+- [x] `revision` is the material plan being submitted (4).
 - [x] `status` is `awaiting_approval` and approval remains `pending`.
 
 ## Owner decision
 
-Pending. Only a durable owner-authored approval reference for **IMPLEMENTATION_PLAN.md revision 3** belongs next. Approval would authorize implementation under each task’s dependency/start gates. It would not accept ADR-021, resolve D-002, waive the E3-T3 hosted comparison, or start code without dedicated task branches.
+Pending. Only durable owner-authored approval of **SPIKE.md revision 4** and then **IMPLEMENTATION_PLAN.md revision 4** belongs next. Plan approval would permit E3-T3 completion reconciliation and E3-T5 implementation under their task/dependency/branch gates. It would not resolve D-002, authorize recurring geocoding or production import, or waive the dedicated E3-T5 branch.
