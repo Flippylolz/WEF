@@ -32,6 +32,8 @@ documentation under `AI/workflow/` when they are relevant to a change.
 - Open pull requests against `main` unless an approved stacked change must
   target its immediate parent branch.
 - Use the GitHub CLI (`gh`) to create and manage pull requests.
+- Run `gh` commands with escalated access outside the sandbox so the GitHub CLI
+  can read credentials from the system keychain.
 - Do not merge while any required CI check is pending, failing, cancelled, or
   missing. Merge only after every required check has completed successfully.
 - Do not merge a pull request unless the user explicitly requests the merge and
