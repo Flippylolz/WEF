@@ -34,7 +34,11 @@ make format-check lint typecheck test contract-check
 make build
 ```
 
-The real PostGIS test runs only with an explicit disposable `TEST_DATABASE_URL`. Static API documentation is generated as an artifact and is not served by the production API.
+`make test` automatically uses `TEST_DATABASE_URL` from the environment and
+fails immediately with a configuration error when it is missing. The URL must
+point to a disposable PostGIS database; CI configures one for every run. Static
+API documentation is generated as an artifact and is not served by the
+production API.
 
 `make help` lists the exact command façade. The Makefile delegates to uv, pnpm, and Docker; it does not select environments or contain application logic.
 

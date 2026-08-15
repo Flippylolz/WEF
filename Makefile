@@ -54,6 +54,12 @@ typecheck: ## Run static type checks.
 	$(PNPM) --filter web typecheck
 
 test: ## Run synthetic backend/frontend tests.
+	@if [ -z "$${TEST_DATABASE_URL:-}" ]; then \
+		printf '%s\n' \
+			'error: TEST_DATABASE_URL is required for make test.' \
+			'Export it with a disposable PostGIS URL before running the suite.' >&2; \
+		exit 2; \
+	fi
 	$(BACKEND) pytest --cov=wef_backend --cov-branch --cov-report=term-missing
 	$(PNPM) --filter web test
 
