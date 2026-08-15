@@ -19,6 +19,29 @@ require_directory() {
   [ -d "$1" ] || fail "required directory is missing"
 }
 
+prepare_runtime_directories() {
+  for directory in \
+    "$WEF_ROOT/media" \
+    "$WEF_ROOT/media/originals" \
+    "$WEF_ROOT/media/public" \
+    "$WEF_ROOT/media/reports"; do
+    [ ! -L "$directory" ] || fail "runtime directory must not be a symlink: $directory"
+    if [ -e "$directory" ] && [ ! -d "$directory" ]; then
+      fail "runtime path must be a directory: $directory"
+    fi
+  done
+
+  mkdir -p \
+    "$WEF_ROOT/media/originals" \
+    "$WEF_ROOT/media/public" \
+    "$WEF_ROOT/media/reports"
+  chmod 0750 \
+    "$WEF_ROOT/media" \
+    "$WEF_ROOT/media/originals" \
+    "$WEF_ROOT/media/public" \
+    "$WEF_ROOT/media/reports"
+}
+
 initialize_release_context() {
   [ "$#" -eq 5 ] || fail "expected root, release directory, config file, SHA, and port"
 

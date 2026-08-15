@@ -213,12 +213,13 @@ On a successful push to `main`:
 13. Validate configuration, atomically activate the release secret/config directory, and delete temporary transfer files on success or failure.
 14. Pull the new image digests before changing running services.
 15. Record the current release as `previous_release`.
-16. Verify database connectivity, disk headroom, and configuration.
-17. Run the operator-only Geoapify readiness command from the production host. It consumes one public-fixture request and fails closed without logging the key or provider payload.
-18. Run forward-compatible Alembic migrations from the new backend image.
-19. Start/update services with the new explicit release SHA/digests.
-20. Wait for API readiness and test the public web, API, map shell, and a media URL.
-21. Mark the release successful and retain redacted deployment logs.
+16. Converge the required persistent media storage directories, rejecting symlinks and non-directory paths before any migration or application replacement.
+17. Verify database connectivity, disk headroom, and configuration.
+18. Run the operator-only Geoapify readiness command from the production host. It consumes one public-fixture request and fails closed without logging the key or provider payload.
+19. Run forward-compatible Alembic migrations from the new backend image.
+20. Start/update services with the new explicit release SHA/digests.
+21. Wait for API readiness and test the public web, API, map shell, and a media URL.
+22. Mark the release successful and retain redacted deployment logs.
 
 The same workflow supports `workflow_dispatch` with an explicit tested SHA for the [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) rehearsal and owner-authorized emergency deployment. Its explicit rollback-rehearsal input requires a different active SHA, lets the candidate pass real smoke, then injects a reviewed health-gate failure. Exit `42` counts as rehearsal success only after previous-release smoke, failure-state recording, and non-interference verification pass.
 

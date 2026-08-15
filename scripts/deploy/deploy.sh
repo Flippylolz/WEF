@@ -13,6 +13,8 @@ require_directory "$WEF_ROOT/state"
 exec 9>"$WEF_ROOT/state/deploy.lock"
 flock -n 9 || fail "another WEF deployment holds the host lock"
 
+prepare_runtime_directories
+
 "$SCRIPT_DIR/preflight.sh" \
   "$WEF_ROOT" \
   "$WEF_RELEASE_DIR" \
