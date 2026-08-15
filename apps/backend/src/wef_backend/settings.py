@@ -1,9 +1,10 @@
 """Runtime settings loaded only by the composition root."""
 
+from decimal import Decimal
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +29,9 @@ class Settings(BaseSettings):
     historical_channel_type: str = "public_channel"
     historical_channel_name: str | None = "El Estate | Покупка Варшава"
     ingestion_report_path: Path = Path("/app/media/reports/e2-dry-run")
+    geoapify_api_key: SecretStr | None = None
+    geoapify_requests_per_second: Decimal = Field(default=Decimal(4), gt=0, le=5)
+    geoapify_daily_quota: int = Field(default=2_700, ge=1, le=3_000)
     allow_synthetic_seed: bool = False
     session_ttl_seconds: int = Field(default=43_200, ge=60, le=2_592_000)
     bootstrap_owner_username: str | None = None

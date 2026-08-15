@@ -16,6 +16,7 @@ from scripts.deploy.validate_release import (
 
 DATABASE_IDENTIFIER = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,62}$")
 SAFE_PASSWORD = re.compile(r"^[A-Za-z0-9_.~!%^*+:/=,?-]{24,128}$")
+SAFE_PROVIDER_KEY = re.compile(r"^[A-Za-z0-9._-]{20,200}$")
 ALLOWED_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
 
 
@@ -45,6 +46,7 @@ def build_values(
     database = required_environment("POSTGRES_DB")
     username = required_environment("POSTGRES_USER")
     password = required_environment("POSTGRES_PASSWORD")
+    geoapify_api_key = required_environment("WEF_GEOAPIFY_API_KEY")
     if not DATABASE_IDENTIFIER.fullmatch(database) or not DATABASE_IDENTIFIER.fullmatch(
         username,
     ):
@@ -52,6 +54,9 @@ def build_values(
         raise ValueError(msg)
     if not SAFE_PASSWORD.fullmatch(password):
         msg = "database password is not safe for a Compose environment file"
+        raise ValueError(msg)
+    if not SAFE_PROVIDER_KEY.fullmatch(geoapify_api_key):
+        msg = "Geoapify API key is not safe for a Compose environment file"
         raise ValueError(msg)
     log_level = required_environment("WEF_LOG_LEVEL").upper()
     if log_level not in ALLOWED_LOG_LEVELS:
@@ -73,6 +78,7 @@ def build_values(
         "WEF_DATABASE_URL": (
             f"postgresql+asyncpg://{encoded_username}:{encoded_password}@db:5432/{encoded_database}"
         ),
+        "WEF_GEOAPIFY_API_KEY": geoapify_api_key,
         "WEF_LOG_LEVEL": log_level,
         "WEF_PUBLIC_PORT": str(context.release.public_port),
         "WEF_RELEASE_DIR": str(context.release.release_dir),

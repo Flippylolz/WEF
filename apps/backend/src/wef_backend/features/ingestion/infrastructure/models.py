@@ -6,6 +6,8 @@ from datetime import datetime  # noqa: TC003 - SQLAlchemy resolves mapped annota
 from decimal import Decimal  # noqa: TC003 - SQLAlchemy resolves mapped annotations
 from uuid import UUID  # noqa: TC003 - SQLAlchemy resolves mapped annotations
 
+from geoalchemy2 import Geometry
+from geoalchemy2.elements import WKBElement  # noqa: TC002 - resolved by SQLAlchemy
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
@@ -234,3 +236,105 @@ class IngestRunRow(IngestionBase):
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     release_sha: Mapped[str | None] = mapped_column(String(64))
     error_summary: Mapped[str | None] = mapped_column(Text)
+
+
+class GeocodeResultRow(IngestionBase):
+    """Provider-neutral durable query cache and audit result."""
+
+    __tablename__ = "geocode_results"
+    __table_args__ = (
+        CheckConstraint(
+            "precision IN ('building', 'street', 'district', 'city', 'unknown')",
+            name="ck_geocode_results_precision",
+        ),
+        CheckConstraint(
+            "confidence >= 0 AND confidence <= 1",
+            name="ck_geocode_results_confidence",
+        ),
+        CheckConstraint(
+            "(point IS NULL) = (within_scope IS NULL OR error_code IS NOT NULL)",
+            name="ck_geocode_results_point_scope",
+        ),
+        Index("ix_geocode_results_provider_attempted", "provider", "attempted_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    query_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    query_original: Mapped[str] = mapped_column(String(240))
+    query_normalized: Mapped[str] = mapped_column(String(240))
+    normalizer_version: Mapped[str] = mapped_column(String(40))
+    scope_version: Mapped[str] = mapped_column(String(40))
+    request_version: Mapped[str] = mapped_column(String(40))
+    provider: Mapped[str] = mapped_column(String(24))
+    provider_result_id: Mapped[str | None] = mapped_column(String(240))
+    point: Mapped[WKBElement | None] = mapped_column(
+        Geometry(geometry_type="POINT", srid=4326, spatial_index=False),
+    )
+    display_name: Mapped[str | None] = mapped_column(String(320))
+    precision: Mapped[str] = mapped_column(String(16))
+    confidence: Mapped[Decimal] = mapped_column(Numeric(5, 4))
+    within_scope: Mapped[bool | None]
+    response_json: Mapped[object] = mapped_column(JSONB)
+    attribution_text: Mapped[str] = mapped_column(String(320))
+    attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(32))
+
+
+class GeocodeMissClaimRow(IngestionBase):
+    """Fenced cross-process ownership of an identical cache miss."""
+
+    __tablename__ = "geocode_miss_claims"
+    __table_args__ = (
+        CheckConstraint("fencing_token > 0", name="ck_geocode_claims_positive_fence"),
+        Index("ix_geocode_claims_lease_expiry", "lease_expires_at"),
+    )
+
+    query_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    owner_id: Mapped[str] = mapped_column(String(64))
+    fencing_token: Mapped[int] = mapped_column(BigInteger)
+    claimed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    lease_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    completed_geocode_result_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("geocode_results.id", ondelete="SET NULL"),
+    )
+
+
+class LocationGeocodeSelectionRow(IngestionBase):
+    """Append-only location review and selected-result lineage."""
+
+    __tablename__ = "location_geocode_selections"
+    __table_args__ = (
+        UniqueConstraint(
+            "location_id",
+            "selection_version",
+            name="uq_location_geocode_selection_version",
+        ),
+        CheckConstraint("selection_version > 0", name="ck_location_selections_version"),
+        CheckConstraint(
+            "from_state IN ('accepted', 'needs_review', 'rejected', 'ungeocoded')",
+            name="ck_location_selections_from_state",
+        ),
+        CheckConstraint(
+            "to_state IN ('accepted', 'needs_review', 'rejected', 'ungeocoded')",
+            name="ck_location_selections_to_state",
+        ),
+        Index("ix_location_geocode_selections_location", "location_id", "decided_at"),
+        Index("ix_location_geocode_selections_result", "geocode_result_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    location_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
+    geocode_result_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("geocode_results.id", ondelete="RESTRICT"),
+    )
+    from_state: Mapped[str] = mapped_column(String(16))
+    to_state: Mapped[str] = mapped_column(String(16))
+    reason_code: Mapped[str] = mapped_column(String(40))
+    actor_type: Mapped[str] = mapped_column(String(32))
+    actor_id: Mapped[str | None] = mapped_column(String(160))
+    review_policy_version: Mapped[str] = mapped_column(String(40))
+    selection_version: Mapped[int] = mapped_column(Integer)
+    decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

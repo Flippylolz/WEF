@@ -77,6 +77,7 @@ source_modules =
 forbidden_modules =
     fastapi
     geoalchemy2
+    httpx
     ijson
     pydantic
     pydantic_settings

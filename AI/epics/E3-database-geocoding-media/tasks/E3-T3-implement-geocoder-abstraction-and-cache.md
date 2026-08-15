@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E3-T3
 epic: E3
 title: "Implement geocoder abstraction and cache"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: L
@@ -23,23 +23,26 @@ spike_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-14T00:42:00Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 3
+  verified_by: "Codex (owner-authorized)"
+  verified_at: "2026-08-15T06:29:24Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Codex (owner-authorized)"
+  verified_at: "2026-08-15T06:29:24Z"
+  evidence:
+    - "E2-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/36"
+    - "E3-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/11"
+    - "E3-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/53 | squash 0016a7a"
 branch:
   required: true
-  name: null
+  name: feature/E3-T3-geocoder-cache
   task_id: E3-T3
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-15T06:29:24Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/59"
 completion:
   completed_by: null
   completed_at: null
@@ -54,7 +57,7 @@ invalidation:
 
 # E3-T3: Implement geocoder abstraction and cache
 
-> Promoted after owner-approved spike revision 3. Status remains `draft` until implementation-plan revision 3 is owner-approved and remaining gates are satisfied. No code may start from this file yet.
+> In progress under owner-approved spike and implementation-plan revision 3 on the dedicated E3-T3 branch. Hosted comparison evidence remains a hard completion gate.
 
 ## Outcome
 
@@ -140,16 +143,16 @@ Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLA
 - [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references the owner-approved current spike revision 3 and is `satisfied`.
-- [ ] `implementation_gate` references the owner-approved current implementation-plan revision containing this task ID/current revision, and is `satisfied`.
-- [ ] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is a valid stacked ancestor; every deferred gate required for start is resolved per the approved plan.
-- [ ] Scope and acceptance criteria match the approved plan.
+- [x] `implementation_gate` references the owner-approved current implementation-plan revision containing this task ID/current revision, and is `satisfied`.
+- [x] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is a valid stacked ancestor; every deferred gate required for start is resolved per the approved plan.
+- [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] One new branch contains this task ID.
+- [x] The branch contains this task only; the pull request will be recorded after creation.
+- [x] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
 
 ## Done checklist
 

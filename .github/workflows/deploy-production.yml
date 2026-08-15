@@ -326,6 +326,7 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_USER: ${{ vars.POSTGRES_USER }}
           WEF_ALLOW_SYNTHETIC_SEED: ${{ needs.resolve.outputs.seed_rehearsal }}
+          WEF_GEOAPIFY_API_KEY: ${{ secrets.WEF_GEOAPIFY_API_KEY }}
           WEF_LOG_LEVEL: ${{ vars.WEF_LOG_LEVEL }}
         run: |
           set -euo pipefail

@@ -58,6 +58,7 @@ class LocationRow(CatalogBase):
     display_address: Mapped[str] = mapped_column(String(240))
     normalized_address: Mapped[str] = mapped_column(String(240))
     normalized_address_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    selected_geocode_result_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))
     district: Mapped[str | None] = mapped_column(String(64))
     city: Mapped[str] = mapped_column(String(80), default="Warszawa")
     country_code: Mapped[str] = mapped_column(String(2), default="PL")

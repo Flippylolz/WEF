@@ -233,6 +233,19 @@ services:
     networks:
       - application
 
+  geocoder-check:
+    profiles:
+      - operator
+    image: wef-backend:local
+    build: *backend-build
+    command: ["wef-geocoder-check"]
+    environment:
+      WEF_ENV: development
+      WEF_GEOAPIFY_API_KEY: ${WEF_GEOAPIFY_API_KEY:-}
+    restart: "no"
+    networks:
+      - provider-egress
+
   seed:
     profiles:
       - operator
@@ -252,6 +265,7 @@ networks:
   application:
     internal: true
   edge:
+  provider-egress:
 
 volumes:
   db_data:

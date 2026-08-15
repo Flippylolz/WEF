@@ -62,6 +62,7 @@ def release_environment() -> dict[str, str]:
         "WEF_BACKEND_IMAGE": BACKEND_IMAGE,
         "WEF_BIND_ADDRESS": "0.0.0.0",
         "WEF_DATABASE_URL": ("postgresql+asyncpg://wef:fixture-password@db:5432/wef"),
+        "WEF_GEOAPIFY_API_KEY": "fixture-geoapify-key-0123456789",
         "WEF_LOG_LEVEL": "info",
         "WEF_PUBLIC_PORT": "3100",
         "WEF_RELEASE_DIR": str(RELEASE_DIR),
@@ -114,12 +115,14 @@ def assert_topology(model: dict[str, Any]) -> None:
         "db",
         "db-permissions",
         "edge",
+        "geocoder-check",
         "migrate",
         "seed",
         "web",
     }
     assert all("build" not in service for service in services.values())
     assert services["api"]["image"] == BACKEND_IMAGE
+    assert services["geocoder-check"]["image"] == BACKEND_IMAGE
     assert services["migrate"]["image"] == BACKEND_IMAGE
     assert services["seed"]["image"] == BACKEND_IMAGE
     assert services["web"]["image"] == WEB_IMAGE
@@ -144,13 +147,22 @@ def assert_topology(model: dict[str, Any]) -> None:
 
     networks = cast("dict[str, dict[str, Any]]", model["networks"])
     assert networks["application"]["internal"] is True
+    assert networks["provider-egress"].get("internal", False) is False
     assert services["db"]["networks"] == {"application": None}
+    assert services["geocoder-check"]["networks"] == {"provider-egress": None}
+    assert services["geocoder-check"]["profiles"] == ["operator"]
+    assert services["geocoder-check"]["environment"] == {
+        "WEF_ENV": "production",
+        "WEF_GEOAPIFY_API_KEY": "fixture-geoapify-key-0123456789",
+    }
+    assert "WEF_GEOAPIFY_API_KEY" not in services["api"]["environment"]
+    assert "WEF_GEOAPIFY_API_KEY" not in services["web"]["environment"]
     assert set(services["edge"]["networks"]) == {"application", "edge"}
     assert services["edge"]["user"] == "1000:1000"
     assert services["edge"]["cap_drop"] == ["ALL"]
     assert services["edge"]["cap_add"] == ["NET_BIND_SERVICE"]
 
-    for name in ("api", "migrate", "seed", "web"):
+    for name in ("api", "geocoder-check", "migrate", "seed", "web"):
         service = services[name]
         assert service["read_only"] is True
         assert service["security_opt"] == ["no-new-privileges:true"]

@@ -97,6 +97,7 @@ def main() -> int:
             "WEF_BACKEND_IMAGE": "wef-backend:local",
             "WEF_BIND_ADDRESS": "127.0.0.1",
             "WEF_DATABASE_URL": ("postgresql+asyncpg://wef:runtime-proof-password@db:5432/wef"),
+            "WEF_GEOAPIFY_API_KEY": "fixture-geoapify-key-0123456789",
             "WEF_LOG_LEVEL": "info",
             "WEF_PUBLIC_PORT": str(public_port),
             "WEF_RELEASE_DIR": str(release_dir),
