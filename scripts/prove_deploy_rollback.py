@@ -277,6 +277,11 @@ def main() -> int:
         assert read_state(root / "state/current.json")["release_sha"] == HEALTHY_SHA
         assert (root / "releases/current").resolve() == healthy_dir.resolve()
         assert (root / "secrets/current").resolve() == healthy_config.parent.resolve()
+        for relative in ("media/originals", "media/public", "media/reports"):
+            runtime_directory = root / relative
+            assert runtime_directory.is_dir()
+            assert not runtime_directory.is_symlink()
+            assert runtime_directory.stat().st_mode & 0o777 == 0o750
 
         unhealthy_dir, unhealthy_config = prepare_release(root, UNHEALTHY_SHA)
         unhealthy = run_deploy(
