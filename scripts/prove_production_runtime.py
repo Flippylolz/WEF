@@ -82,6 +82,7 @@ def main() -> int:
         config_dir = root / "secrets" / "releases" / RELEASE_SHA
         for relative in ("postgres", "media", "caddy-data", "state"):
             (root / relative).mkdir(parents=True)
+        (root / "media/public").mkdir(parents=True)
         release_dir.mkdir(parents=True)
         config_dir.mkdir(parents=True)
         shutil.copy2(REPOSITORY_ROOT / "infra/compose.production.yaml", release_dir)

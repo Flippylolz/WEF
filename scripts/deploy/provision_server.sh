@@ -39,6 +39,9 @@ mkdir -p \
   "$WEF_ROOT/secrets/releases" \
   "$WEF_ROOT/postgres" \
   "$WEF_ROOT/media" \
+  "$WEF_ROOT/media/originals" \
+  "$WEF_ROOT/media/public" \
+  "$WEF_ROOT/media/reports" \
   "$WEF_ROOT/imports/incoming" \
   "$WEF_ROOT/imports/extracted" \
   "$WEF_ROOT/caddy-data" \
@@ -49,6 +52,9 @@ chmod 0750 \
   "$WEF_ROOT" \
   "$WEF_ROOT/releases" \
   "$WEF_ROOT/media" \
+  "$WEF_ROOT/media/originals" \
+  "$WEF_ROOT/media/public" \
+  "$WEF_ROOT/media/reports" \
   "$WEF_ROOT/imports" \
   "$WEF_ROOT/imports/incoming" \
   "$WEF_ROOT/imports/extracted" \

@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     geoapify_api_key: SecretStr | None = None
     geoapify_requests_per_second: Decimal = Field(default=Decimal(4), gt=0, le=5)
     geoapify_daily_quota: int = Field(default=2_700, ge=1, le=3_000)
+    restricted_originals_path: Path = Path("/app/media/originals")
+    public_derivatives_path: Path = Path("/app/media/public")
+    media_max_bytes: int = Field(default=52_428_800, ge=1)
+    media_max_pixels: int = Field(default=40_000_000, ge=1)
     allow_synthetic_seed: bool = False
     session_ttl_seconds: int = Field(default=43_200, ge=60, le=2_592_000)
     bootstrap_owner_username: str | None = None

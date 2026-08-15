@@ -105,7 +105,7 @@ Current interim Caddy:
 
 - On port 3100, serves same-origin HTTP for anonymous smoke/browsing only.
 - Routes `/api/*` to FastAPI and all other application routes to Next.js.
-- Serves `/media/*` from the media volume mounted read-only.
+- Serves `/media/*` only from the dedicated public-derivative subtree mounted read-only; source media, restricted originals, and reports are absent from API/edge mounts.
 - Remains an implementation fact until the approved E7-T10 live migration; historical Caddy verification evidence is not rewritten as Nginx evidence.
 
 Target Nginx/Certbot edge:
@@ -320,7 +320,7 @@ Practices:
 
 PostgreSQL/PostGIS is the canonical store for source messages/revisions, normalized locations, developments, offers, geocode cache, media metadata, ingest runs, and Telegram checkpoints. It runs in WEF's own container and writes to `/home/nuc/wef/postgres/`; it never shares the existing AI Forecast PostgreSQL container.
 
-Binary photos/videos and generated derivatives live under `/home/nuc/wef/media/` and are referenced by opaque database storage keys. Historical import files may be transferred under `/home/nuc/wef/imports/`, mounted read-only, and removed independently after verified import.
+Restricted originals live under `/home/nuc/wef/media/originals/`; generated public derivatives live under `/home/nuc/wef/media/public/`; reports live under `/home/nuc/wef/media/reports/`. Only `media/public` is mounted into API/edge containers. Every stored object is referenced by an opaque database key. Historical import files may be transferred under `/home/nuc/wef/imports/`, mounted read-only only into operator commands, and removed independently after verified import.
 
 The live Telegram worker writes a database transaction before advancing its checkpoint, so container restart/redeploy does not lose acknowledged state. Its session secret persists separately under `/home/nuc/wef/secrets/` and is not part of the database or repository.
 

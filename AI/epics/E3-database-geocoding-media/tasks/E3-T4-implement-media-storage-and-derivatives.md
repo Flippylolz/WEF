@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E3-T4
 epic: E3
 title: "Implement media storage and derivatives"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: L
@@ -23,23 +23,26 @@ spike_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-14T00:42:00Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 3
+  verified_by: "Codex (owner-authorized)"
+  verified_at: "2026-08-15T06:42:59Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Codex (owner-authorized)"
+  verified_at: "2026-08-15T06:42:59Z"
+  evidence:
+    - "E2-T3 | done | merged PR https://github.com/Flippylolz/WEF/pull/37"
+    - "E3-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/11"
+    - "E3-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/53 | squash 0016a7a"
 branch:
   required: true
-  name: null
+  name: feature/E3-T4-media-storage
   task_id: E3-T4
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-15T06:42:59Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/60"
 completion:
   completed_by: null
   completed_at: null
@@ -54,7 +57,7 @@ invalidation:
 
 # E3-T4: Implement media storage and derivatives
 
-> Promoted after owner-approved spike revision 3. Status remains `draft` until implementation-plan revision 3 is owner-approved and remaining gates are satisfied. No code may start from this file yet.
+> In progress under owner-approved spike and implementation-plan revision 3 on the dedicated E3-T4 branch. The review branch is stacked on E3-T3 by current owner directive; T4 retains no task dependency on geocoding.
 
 ## Outcome
 
@@ -89,19 +92,19 @@ Verify source media and publish replay-safe public derivatives while preserving 
 
 ## Acceptance criteria
 
-- [ ] Traversal, absolute, symlink, non-regular, missing, changed, oversized, over-pixel, unsupported, signature/MIME-mismatched, and corrupt inputs receive stable versioned reasons without escaping the source root.
-- [ ] Traversal, symlink, non-regular, oversized-by-safe-metadata, unsupported-descriptor, missing, and analogous pre-read rejections persist an unread status/sentinel/reason with nullable checksum; tests prove the adapter never opens or hashes those unsafe bytes.
-- [ ] Missing, rejected, unsupported, and unassociated original outcomes remain queryable with deterministic attempt/reason/version semantics; replay does not erase history or create duplicate terminal attempts.
-- [ ] Every original attempt retains its non-negative E2 media index, including unassociated outcomes; two identical descriptors at different source ordinals never collapse.
-- [ ] Every attempt references T2's immutable initial/current source snapshot. Safely readable inputs persist observed checksum; same-descriptor content replacement or an unread input later becoming readable creates a new replay identity and auditable attempt.
-- [ ] Every derivative variant has independent auditable attempt/status/failure history; a failed thumbnail does not alter the original's stored disposition, and retry/version changes append rather than overwrite.
-- [ ] Successful writes stream checksums and publish complete bytes atomically to opaque versioned restricted-original/public-derivative keys; interrupted writes expose no partial public file.
-- [ ] Equal bytes deduplicate physically within `restricted_original` or `public_derivative`, never across those classes; assets reference restricted objects and derivatives reference public objects through tested constraints.
-- [ ] E2 association rules and confidence survive unchanged, including a tested `explicit_group` association.
-- [ ] Generated thumbnails are bounded, correctly oriented, transformation-versioned, and free of EXIF/GPS/XMP/comments.
-- [ ] Public URLs and edge responses reveal no source/host path, use verified content types plus `nosniff`, and can resolve only keys beneath the derivative subtree.
-- [ ] Tests prove the source and originals mounts are absent from API/edge containers and production runtime layers.
-- [ ] Disk full, checksum mismatch, replacement race, decode failure, and database failure leave reconciled disposition/history and bounded reportable cleanup.
+- [x] Traversal, absolute, symlink, non-regular, missing, changed, oversized, over-pixel, unsupported, signature/MIME-mismatched, and corrupt inputs receive stable versioned reasons without escaping the source root.
+- [x] Traversal, symlink, non-regular, oversized-by-safe-metadata, unsupported-descriptor, missing, and analogous pre-read rejections persist an unread status/sentinel/reason with nullable checksum; tests prove the adapter never opens or hashes those unsafe bytes.
+- [x] Missing, rejected, unsupported, and unassociated original outcomes remain queryable with deterministic attempt/reason/version semantics; replay does not erase history or create duplicate terminal attempts.
+- [x] Every original attempt retains its non-negative E2 media index, including unassociated outcomes; two identical descriptors at different source ordinals never collapse.
+- [x] Every attempt references T2's immutable initial/current source snapshot. Safely readable inputs persist observed checksum; same-descriptor content replacement or an unread input later becoming readable creates a new replay identity and auditable attempt.
+- [x] Every derivative variant has independent auditable attempt/status/failure history; a failed thumbnail does not alter the original's stored disposition, and retry/version changes append rather than overwrite.
+- [x] Successful writes stream checksums and publish complete bytes atomically to opaque versioned restricted-original/public-derivative keys; interrupted writes expose no partial public file.
+- [x] Equal bytes deduplicate physically within `restricted_original` or `public_derivative`, never across those classes; assets reference restricted objects and derivatives reference public objects through tested constraints.
+- [x] E2 association rules and confidence survive unchanged, including a tested `explicit_group` association.
+- [x] Generated thumbnails are bounded, correctly oriented, transformation-versioned, and free of EXIF/GPS/XMP/comments.
+- [x] Public URLs and edge responses reveal no source/host path, use verified content types plus `nosniff`, and can resolve only keys beneath the derivative subtree.
+- [x] Tests prove the source and originals mounts are absent from API/edge containers and production runtime layers.
+- [x] Disk full, checksum mismatch, replacement race, decode failure, and database failure leave reconciled disposition/history and bounded reportable cleanup.
 
 ## Test plan
 
@@ -140,19 +143,19 @@ Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLA
 - [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references the owner-approved current spike revision 3 and is `satisfied`.
-- [ ] `implementation_gate` references the owner-approved current implementation-plan revision containing this task ID/current revision, and is `satisfied`.
-- [ ] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is a valid stacked ancestor; every deferred gate required for start is resolved per the approved plan.
-- [ ] Scope and acceptance criteria match the approved plan.
+- [x] `implementation_gate` references the owner-approved current implementation-plan revision containing this task ID/current revision, and is `satisfied`.
+- [x] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is a valid stacked ancestor; every deferred gate required for start is resolved per the approved plan.
+- [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] One new branch contains this task ID.
+- [x] The branch contains this task only above its review-stack base; the pull request will be recorded after creation.
+- [x] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
+- [x] Acceptance criteria pass.
 - [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.

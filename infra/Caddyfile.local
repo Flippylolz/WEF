@@ -10,6 +10,19 @@
 		reverse_proxy api:8000
 	}
 
+	@hiddenMedia path_regexp hidden (^|/)\.
+	handle @hiddenMedia {
+		respond 404
+	}
+
+	header /media/* X-Content-Type-Options "nosniff"
+	handle_path /media/* {
+		root * /srv/media
+		file_server {
+			hide .*
+		}
+	}
+
 	handle {
 		reverse_proxy web:3000
 	}

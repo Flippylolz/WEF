@@ -10,6 +10,14 @@ from wef_backend.features.ingestion.infrastructure.geocoder_adapters import (
     HTTPXJSONTransport,
     ProviderPolicy,
 )
+from wef_backend.features.ingestion.infrastructure.media_filesystem import (
+    LocalMediaStorage,
+    MediaDerivativeError,
+)
+from wef_backend.features.ingestion.infrastructure.media_repository import (
+    MediaPersistenceError,
+    SQLAlchemyMediaRepository,
+)
 from wef_backend.features.ingestion.infrastructure.report_writer import (
     AtomicReportWriter,
     ReportPaths,
@@ -27,10 +35,14 @@ __all__ = [
     "FixtureGeocoder",
     "HTTPXJSONTransport",
     "HostedGeocoder",
+    "LocalMediaStorage",
+    "MediaDerivativeError",
+    "MediaPersistenceError",
     "ProviderPolicy",
     "ReportPaths",
     "ReportWriteError",
     "SQLAlchemyGeocodeStore",
+    "SQLAlchemyMediaRepository",
     "StaleGeocodeClaimError",
     "TelegramDesktopExportAdapter",
     "TelegramExportScan",
