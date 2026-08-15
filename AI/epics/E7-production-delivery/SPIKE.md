@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E7
 title: "Docker/GitHub production delivery research"
-status: awaiting_approval
+status: approved
 revision: 4
 owner: owner
 research_only: true
@@ -12,11 +12,11 @@ domain_docs: [operations, governance, security, data, ingestion]
 proposed_task_ids: [E7-T1, E7-T2, E7-T3, E7-T4, E7-T5, E7-T6, E7-T7, E7-T8, E7-T9, E7-T10]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-15T16:49:02Z"
+  approved_revision: 4
+  evidence: "Owner reviewed the E7 revision-4 spike PR, replied LGTM, and explicitly directed both prepared PRs to merge in the Codex task"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -26,7 +26,7 @@ invalidation:
 
 # Spike: Docker/GitHub production delivery
 
-> Revision 4 is completed research awaiting owner approval. It prioritizes the verified historical snapshot transfer while preserving the revision-3 shared-edge design. It authorizes no production code, transfer tooling, bundle creation, server mutation, or data activation.
+> Revision 4 is owner-approved research. It prioritizes the verified historical snapshot transfer while preserving the revision-3 shared-edge design. Spike approval authorizes task refinement and implementation planning only; it authorizes no production code, transfer tooling, bundle creation, server mutation, or data activation.
 
 ## Revision 4 change control
 
@@ -203,8 +203,8 @@ Return to the spike for a raw-production reimport, direct live restore, whole-da
 - [x] ADR-019 is honored: E7-T6 stages but does not publicly activate historical data.
 - [x] E7-T8/E7-T9 pause and later revalidation are explicit.
 - [x] No production code, executable proof, transfer bundle, private row/media content, or server mutation was created during this spike.
-- [ ] Owner explicitly approves E7 SPIKE revision 4.
+- [x] Owner explicitly approves E7 SPIKE revision 4.
 
 ## Owner decision
 
-Pending. Approval must name E7 SPIKE revision 4. Spike approval will authorize proposed-task refinement/promotion and implementation planning only; it will not authorize code, bundle creation, transfer, candidate restore, or production mutation.
+Flippylolz approved E7 SPIKE revision 4 on 2026-08-15 by reviewing the prepared revision-4 PR, replying `LGTM`, and explicitly directing both prepared PRs to merge. This authorizes proposed-task refinement/promotion and implementation planning only; it does not authorize code, bundle creation, transfer, candidate restore, or production mutation.

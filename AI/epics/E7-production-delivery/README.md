@@ -18,7 +18,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 ## Approval state
 
 - Epic workspace status: `planning`; the anonymous rehearsal remains complete while historical snapshot transfer is prioritized.
-- [Spike](SPIKE.md): `awaiting_approval`, revision 4, researching selective E3-T5 snapshot transfer and non-public production candidate staging.
+- [Spike](SPIKE.md): `approved`, revision 4, selecting selective E3-T5 snapshot transfer and non-public production candidate staging.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 3 is invalidated for non-done work; no replacement plan may be prepared until spike revision 4 is approved.
 - E7-T1 through E7-T4 remain `done`; E7-T8/E7-T9 are paused and invalidated, E7-T6 remains proposed pending spike approval/refinement, and E7-T10 remains proposed behind D-009. E7-T5 remains deferred and E7-T7 remains proposed.
 
