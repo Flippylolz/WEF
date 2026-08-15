@@ -9,7 +9,7 @@
 
 This is a low-volume backend workload. A free hosted production allowance is operationally safer than running a search index on the current shared 8 GB NUC.
 
-Provider selection remains deferred by [D-002](../decisions/deferred/D-002-recurring-geocoding-provider.md). [ADR-021](../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) remains a proposed historical-path decision; approved E3 spike revision 3 does not accept it. [E8-T4](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) still revalidates recurring use.
+[ADR-021](../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) selects Geoapify for the historical import through the owner's merged [PR #59](https://github.com/Flippylolz/WEF/pull/59). Recurring selection remains deferred by [D-002](../decisions/deferred/D-002-recurring-geocoding-provider.md), and [E8-T4](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) must revalidate recurring use.
 
 ## Recommended MVP: Geoapify free
 
@@ -46,7 +46,7 @@ Official [pricing](https://locationiq.com/pricing) and [caching policy](https://
 - Limited commercial use with a prominent LocationIQ attribution link.
 - Response data may be stored indefinitely, but free-account request/response caching is limited to 48 hours.
 
-LocationIQ remains a comparator only if its result quality is equal or better and the account/terms in force at selection time permit the durable result/cache behavior approved for ingestion.
+LocationIQ remains an available adapter, but it is not a mandatory historical comparator. Its account/cache terms must be re-evaluated before any future activation.
 
 ## Public Nominatim
 
@@ -102,9 +102,9 @@ Photon is useful for search-as-you-type, but the additional search engine and me
 
 Pelias would consume the NUC's entire nominal RAM budget before existing applications. It is rejected for the current host/MVP.
 
-## Provider selection test
+## Historical quality and review test
 
-Before committing to Geoapify or LocationIQ:
+During E3-T5, before any historical result becomes a visible pin:
 
 1. Build a redacted fixture of 30–50 manually verified Warsaw addresses:
    - Exact building/street.
@@ -113,12 +113,12 @@ Before committing to Geoapify or LocationIQ:
    - Cyrillic street prefix/transliteration.
    - Misspellings and ambiguous streets.
    - Out-of-Warsaw negative cases.
-2. Query providers through the common interface.
-3. Compare correct point, precision, district/city, false-positive rate, latency, and attribution/terms.
-4. Select one primary provider and retain cached fixture responses for deterministic tests.
+2. Query Geoapify through the common interface and durable cache.
+3. Reconcile precision, accepted/rejected/out-of-area/unresolved results, latency, current terms, and attribution in aggregate/redacted evidence.
+4. Manually review uncertain results and retain selected-result/review lineage; private addresses and provider payloads remain outside Git and CI.
 
 Provider choice must be configuration, not branching business logic.
 
 ## Recommendation
 
-Pending owner approval of ADR-021, evaluate Geoapify first for the historical import and LocationIQ as the terms-compatible comparator. Select neither until the owner-reviewed Warsaw fixture and then-current terms pass. Approved E3 spike revision 3 does not accept ADR-021 or resolve D-002. Consider public Nominatim, at most, as a potential small one-time fallback only if its policy permits the specific use and every condition is met. Defer self-hosting until usage or provider terms justify a separate benchmark/host.
+Use Geoapify for the historical import under ADR-021, with Geoapify-only aggregate quality evidence and explicit manual review in E3-T5. This does not resolve D-002 or authorize recurring production use; E8-T4 must revalidate current quota, terms, quality, and fallback behavior. Consider public Nominatim, at most, as a potential small one-time fallback only if its policy permits the specific use and every condition is met. Defer self-hosting until usage or provider terms justify a separate benchmark/host.

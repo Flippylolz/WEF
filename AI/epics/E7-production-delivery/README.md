@@ -67,7 +67,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 ## Deferred/proposed tasks
 
 - [E7-T5: Future backup and restore capability](proposed-tasks/E7-T5-future-backup-and-restore-capability.md) — `deferred`, P2/L, M3
-- [E7-T6: Transfer and import the historical dataset](proposed-tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `proposed`, P1/L, M3
+- [E7-T6: Transfer the verified historical snapshot to production](proposed-tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `proposed` revision 2, P1/L, M3; consumes E3-T5 materialized state without rerunning geocoding/media processing
 - [E7-T7: Enable production registration and contact reveal](proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`, P1/M, M3
 - [E7-T10: Roll out and verify shared TLS](proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) — `proposed`, P1/M, M3
 

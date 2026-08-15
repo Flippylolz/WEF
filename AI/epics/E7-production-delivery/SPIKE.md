@@ -112,7 +112,7 @@ Revision 2 promoted E7-T1 through E7-T4 as an ordered stack for the anonymous sy
 3. E7-T3 publishes SHA-tagged application images and adds a main-only/manual, merged-PR/enable-gated, locked GitHub deployment workflow with complete atomic configuration transfer.
 4. E7-T4 performs a healthy release and deliberate unhealthy-release rollback rehearsal before enabling automatic deployment.
 
-Keep E7-T5 deferred. Keep E7-T6 historical transfer/import and E7-T7 HTTPS/auth/contact activation proposed; neither belongs in the anonymous synthetic overnight slice.
+Keep E7-T5 deferred. Keep E7-T6 verified historical snapshot transfer and E7-T7 HTTPS/auth/contact activation proposed; neither belongs in the anonymous synthetic overnight slice. E7-T6 revision 2 requires later spike/plan approval before promotion.
 
 Revision 3 adds this ordered shared-edge sequence:
 
@@ -129,7 +129,7 @@ E7-T8 depends on completed E7-T4. E7-T9 stacks on E7-T8. E7-T10 remains proposed
 - [E7-T3: Implement GitHub image and deployment workflows](tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — promote after E7-T2.
 - [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — promote after E7-T3.
 - [E7-T5: Future backup and restore capability](proposed-tasks/E7-T5-future-backup-and-restore-capability.md) — deferred until its named trigger.
-- [E7-T6: Transfer and import the historical dataset](proposed-tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — candidate boundary for spike refinement.
+- [E7-T6: Transfer the verified historical snapshot to production](proposed-tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — revision 2 candidate requires later spike/plan refinement; it transfers materialized E3-T5 state without provider/media reprocessing.
 - [E7-T7: Enable production registration and contact reveal](proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — candidate boundary for spike refinement.
 - [E7-T8: Build isolated shared Nginx TLS topology](tasks/E7-T8-build-shared-nginx-tls-ingress.md) — first revision 3 implementation task.
 - [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — stack after E7-T8.
