@@ -113,6 +113,16 @@ class GeocodeStorePort(Protocol):
         """Reconcile one possibly ambiguous provider result durably."""
         ...
 
+    async def abandon_miss(
+        self,
+        key: GeocodeCacheKey,
+        *,
+        claim: MissClaim,
+        now: datetime,
+    ) -> None:
+        """Release a still-owned incomplete miss after provider failure or pause."""
+        ...
+
     async def select_for_location(
         self,
         *,
@@ -189,7 +199,11 @@ class ResolveGeocode:
             raise CacheWaitExpiredError(message)
 
         attempted_at = self.clock()
-        result = await self.geocoder.geocode(query)
+        try:
+            result = await self.geocoder.geocode(query)
+        except Exception:
+            await self.store.abandon_miss(key, claim=claim, now=self.clock())
+            raise
         expires_at = _result_expiry(result, attempted_at)
         cached = await self.store.complete_miss(
             key,

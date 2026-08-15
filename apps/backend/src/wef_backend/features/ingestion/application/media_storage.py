@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
@@ -110,7 +111,8 @@ class ProcessMedia:
 
     async def __call__(self, item: MediaWorkItem) -> MediaProcessResult:
         """Keep original disposition independent from derivative failures."""
-        observation = self.filesystem.observe_and_store(
+        observation = await asyncio.to_thread(
+            self.filesystem.observe_and_store,
             item.descriptor,
             item.expected_checksum_sha256,
         )
@@ -119,7 +121,10 @@ class ProcessMedia:
         derivative_failure: ObservationReason | None = None
         if observation.original is not None:
             try:
-                derivatives = self.filesystem.create_derivatives(observation.original)
+                derivatives = await asyncio.to_thread(
+                    self.filesystem.create_derivatives,
+                    observation.original,
+                )
             except RuntimeError as error:
                 reason = getattr(error, "reason", ObservationReason.DECODE_FAILED)
                 derivative_failure = (
