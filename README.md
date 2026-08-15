@@ -34,11 +34,12 @@ make format-check lint typecheck test contract-check
 make build
 ```
 
-`make test` uses an exported `TEST_DATABASE_URL` first, then reads it from the
-ignored repository `.env` file. It fails immediately with a configuration error
-when neither source provides the variable. The URL must point to a disposable
-PostGIS database; CI configures one for every run. Static API documentation is
-generated as an artifact and is not served by the production API.
+`make test` is fully containerized. It starts the local Compose PostGIS service,
+recreates a reserved `wef_test` database alongside the persistent development
+database, and runs the backend and frontend suites in development containers.
+No test database URL or host language runtime is required. Static API
+documentation is generated as an artifact and is not served by the production
+API.
 
 `make help` lists the exact command façade. The Makefile delegates to uv, pnpm, and Docker; it does not select environments or contain application logic.
 

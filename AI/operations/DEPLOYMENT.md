@@ -36,7 +36,7 @@ Expected operator flows:
 docker compose up --build
 docker compose run --rm importer import dry-run --source /source/result.json
 docker compose run --rm importer import historical --source /source/result.json
-docker compose run --rm api pytest
+make test
 ```
 
 Exact service/command names are finalized during implementation, but no workflow may copy the full export into an image layer.

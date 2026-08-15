@@ -54,22 +54,10 @@ typecheck: ## Run static type checks.
 	$(PNPM) --filter web typecheck
 
 test: ## Run synthetic backend/frontend tests.
-	@test_database_url="$${TEST_DATABASE_URL:-}"; \
-	if [ -z "$$test_database_url" ] && [ -f .env ]; then \
-		test_database_url="$$( \
-			$(BACKEND) dotenv --file ../../.env get TEST_DATABASE_URL \
-			2>/dev/null || true \
-		)"; \
-	fi; \
-	if [ -z "$$test_database_url" ]; then \
-		printf '%s\n' \
-			'error: TEST_DATABASE_URL is required for make test.' \
-			'Export it or add it to the ignored repository .env file.' >&2; \
-		exit 2; \
-	fi; \
-	TEST_DATABASE_URL="$$test_database_url" \
-		$(BACKEND) pytest --cov=wef_backend --cov-branch --cov-report=term-missing
-	$(PNPM) --filter web test
+	$(COMPOSE) --profile test up --detach --wait db
+	$(COMPOSE) --profile test run --rm --no-deps test-db-reset
+	$(COMPOSE) --profile test run --rm --no-deps --build backend-test
+	$(COMPOSE) --profile test run --rm --no-deps --build frontend-test
 
 contract-generate: ## Generate committed API contracts.
 	$(BACKEND) wef-export-openapi
