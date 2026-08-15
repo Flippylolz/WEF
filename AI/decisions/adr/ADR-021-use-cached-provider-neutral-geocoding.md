@@ -11,12 +11,12 @@ resolves: []
 
 # ADR-021: Use cached provider-neutral geocoding with Geoapify first
 
-- Status: **proposed** by [E3 spike revision 3](../../epics/E3-database-geocoding-media/SPIKE.md); pending owner approval and not implementation authority.
+- Status: **proposed** by [E3 spike revision 3](../../epics/E3-database-geocoding-media/SPIKE.md). Spike revision 3 is approved for planning/promotion only and does **not** accept this ADR. Still pending owner ADR approval and not implementation authority.
 - Proposed decision: keep geocoding behind an inward-owned provider port and persistent versioned cache. Evaluate Geoapify first for the historical import, retain LocationIQ as a comparator, and select/activate neither until the reviewed Warsaw fixture and then-current terms pass.
 - Architecture rationale: provider-specific request/response shapes must not become domain contracts; cached results and explicit review permit deterministic replay and prevent page-view geocoding.
 - Quality gate: compare both hosted providers through the same interface on an owner-reviewed, redacted 30–50-address Warsaw fixture. Record building/street/district precision, correct-point rate, out-of-area false positives, latency, terms, and attribution. Missing credentials/fixture block the comparison and are not acceptance evidence.
 - Review safety: provider success never implies acceptance. Out-of-scope, low-precision, ambiguous, or low-confidence results remain unresolved/reviewable; a selected public pin must retain auditable result/review lineage.
-- Cache uncertainty: a unique cache key may not prevent concurrent duplicate misses. A later plan must choose and verify cross-process miss ownership without holding a database transaction during provider I/O.
+- Cache uncertainty: a unique cache key may not prevent concurrent duplicate misses. A later plan must choose and verify cross-process miss ownership with healthy concurrency and ambiguous-retry reconciliation, without holding a database transaction during provider I/O and without promising an impossible at-most-once network call.
 - Operations: provider keys remain backend/operator secrets, CI remains network-free, quota exhaustion defers work, and paid-plan activation requires a separate owner decision.
 - Recurring ingestion: D-002 remains deferred. E8-T4 must revalidate quota, terms, quality, and fallback behavior before recurring use even if this candidate is later accepted for the historical path.
 

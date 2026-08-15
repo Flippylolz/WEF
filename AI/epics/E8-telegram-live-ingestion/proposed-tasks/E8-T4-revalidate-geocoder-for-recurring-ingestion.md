@@ -51,7 +51,7 @@ The following definition preserves the original E8-T4 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E3-T3](../../E3-database-geocoding-media/proposed-tasks/E3-T3-implement-geocoder-abstraction-and-cache.md)
+- Task dependencies: [E3-T3](../../E3-database-geocoding-media/tasks/E3-T3-implement-geocoder-abstraction-and-cache.md)
 - Deferred-decision gates: [D-002](../../../decisions/deferred/D-002-recurring-geocoding-provider.md).
 - Milestone: [M4](../../../milestones/M4-live-telegram-updates.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Ingestion](../../../ingestion/README.md), [Data](../../../data/README.md), [Operations](../../../operations/README.md), [Security](../../../security/README.md).
