@@ -248,7 +248,10 @@ def issue_fixture_certificates(edge_root: Path) -> None:
             check=False,
         )
         if result.returncode != 0:
-            message = result.stderr.strip() or result.stdout.strip()
+            # Registry pull progress dominates compose output; the decisive
+            # error is always at the end.
+            combined = (result.stderr + result.stdout).strip().splitlines()
+            message = "\n".join(combined[-30:])
             raise ProofError(f"issuance failed: {message}")
     for hostname in (WEF_HOST, FORECAST_HOST):
         lineage = edge_root / "letsencrypt" / "live" / hostname
