@@ -77,9 +77,7 @@ def read_edge_state(edge_root: Path) -> EdgeState | None:
     ):
         msg = "edge state has an invalid shape"
         raise TypeError(msg)
-    return EdgeState(
-        raw["current_release"], raw["active_config"], raw.get("previous_release")
-    )
+    return EdgeState(raw["current_release"], raw["active_config"], raw.get("previous_release"))
 
 
 def write_edge_state(edge_root: Path, state: EdgeState) -> None:
