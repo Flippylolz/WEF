@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T8
 epic: E7
 title: "Build isolated shared Nginx TLS topology"
-status: in_progress
+status: done
 revision: 2
 priority: P1
 size: M
@@ -42,10 +42,15 @@ branch:
   created_at: "2026-08-15T15:19:18Z"
   pull_request: null
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode agent (owner-directed)"
+  completed_at: "2026-08-16T04:54:20Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/TBD"
+  evidence:
+    - "make shared-edge-proof | passed 2026-08-16 | scripts.prove_shared_edge_topology (compose policy, determinism, boundary ownership, secret exclusion, renderer negatives) and scripts.prove_shared_edge_runtime (nginx -t positive/negative, two-host TLS routing, proxy headers, hidden paths, security headers, 413 body limit, activation/rollback, renewal dry run with explicit deploy hook, failed-renewal and failed-validation no-reload proofs)"
+    - "python3 -m unittest scripts.test_shared_edge_render scripts.test_shared_edge_release | 20 tests OK"
+    - "make format-check lint typecheck test contract-check compose-config production-proof | all passed"
+    - "Empirical note recorded for E7-T9/E7-T10: certbot renew --dry-run forces the Let's Encrypt staging server unless --server is passed explicitly; the renewal orchestrator therefore passes --deploy-hook explicitly alongside --run-deploy-hooks in dry runs"
+    - "No production mutation: proofs use reserved .test hostnames, a local Pebble ACME server, temporary edge roots, and high local ports; the deploy workflow and compose.production.yaml are untouched"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -93,14 +98,14 @@ Provide a separately managed Nginx/Certbot edge topology whose two-host routing,
 
 ## Acceptance criteria
 
-- [ ] Shared-edge Compose renders deterministically with pinned images, a dedicated project/network, persistent Certbot state, bounded logs, health checks, and least privilege.
-- [ ] HTTP-only bootstrap serves only ACME challenge traffic and does not redirect before both TLS routes are available.
-- [ ] Generated fixture configuration has distinct WEF and AI Forecast virtual hosts, correct proxy headers/timeouts/body limits, conservative security headers, and no committed production hostname.
-- [ ] `nginx -t` passes for valid bootstrap/TLS fixtures and rejects missing certificates, duplicate names, unsafe paths, and invalid configuration before reload.
-- [ ] Renewal uses saved webroot settings, persistent state, unattended execution, a passing dry run, and a success-only validated graceful reload hook.
-- [ ] Secrets, private keys, ACME account data, generated production environments, and unreviewed host output are excluded from Git, logs, artifacts, and image layers.
-- [ ] Local failure tests prove invalid config, failed renewal, failed reload validation, and unavailable fixture upstreams do not replace the last valid configuration.
-- [ ] No production/server/network mutation occurs.
+- [x] Shared-edge Compose renders deterministically with pinned images, a dedicated project/network, persistent Certbot state, bounded logs, health checks, and least privilege.
+- [x] HTTP-only bootstrap serves only ACME challenge traffic and does not redirect before both TLS routes are available.
+- [x] Generated fixture configuration has distinct WEF and AI Forecast virtual hosts, correct proxy headers/timeouts/body limits, conservative security headers, and no committed production hostname.
+- [x] `nginx -t` passes for valid bootstrap/TLS fixtures and rejects missing certificates, duplicate names, unsafe paths, and invalid configuration before reload.
+- [x] Renewal uses saved webroot settings, persistent state, unattended execution, a passing dry run, and a success-only validated graceful reload hook.
+- [x] Secrets, private keys, ACME account data, generated production environments, and unreviewed host output are excluded from Git, logs, artifacts, and image layers.
+- [x] Local failure tests prove invalid config, failed renewal, failed reload validation, and unavailable fixture upstreams do not replace the last valid configuration.
+- [x] No production/server/network mutation occurs.
 
 ## Test plan
 
@@ -128,6 +133,6 @@ This task is inert. Roll back by reverting its dedicated PR; it creates no produ
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

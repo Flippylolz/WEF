@@ -1,0 +1,30 @@
+pid /var/run/nginx-edge.pid;
+error_log /dev/stderr warn;
+worker_processes auto;
+
+events {
+    worker_connections 256;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    access_log /dev/stdout;
+    server_tokens off;
+
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        # ACME HTTP-01 challenges are served from the Certbot webroot.
+        location ^~ /.well-known/acme-challenge/ {
+            root /etc/nginx-edge/webroot;
+            default_type text/plain;
+        }
+
+        # No proxying and no redirect until both TLS routes are activated.
+        location / {
+            return 404;
+        }
+    }
+}

@@ -1,0 +1,104 @@
+name: wef-shared-edge
+
+x-logging: &edge-logging
+  driver: json-file
+  options:
+    max-file: "3"
+    max-size: 10m
+
+x-edge-security: &edge-security
+  read_only: true
+  init: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+
+services:
+  nginx:
+    image: nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    user: "1000:1000"
+    entrypoint:
+      [
+        "nginx",
+        "-c",
+        "/etc/nginx-edge/current/active.conf",
+        "-g",
+        "daemon off;",
+      ]
+    <<: *edge-security
+    cap_add:
+      - NET_BIND_SERVICE
+    tmpfs:
+      - /var/cache/nginx:rw,noexec,nosuid,size=64m,mode=1777
+      - /var/run:rw,noexec,nosuid,size=1m,mode=1777
+    restart: unless-stopped
+    stop_grace_period: 15s
+    cpus: "0.25"
+    mem_limit: 256m
+    mem_reservation: 32m
+    pids_limit: 128
+    logging: *edge-logging
+    ports:
+      - "${WEF_EDGE_BIND_ADDRESS:-0.0.0.0}:${WEF_EDGE_HTTP_PORT:-80}:80"
+      - "${WEF_EDGE_BIND_ADDRESS:-0.0.0.0}:${WEF_EDGE_HTTPS_PORT:-443}:443"
+    volumes:
+      - type: bind
+        source: ${WEF_SHARED_EDGE_ROOT:?WEF_SHARED_EDGE_ROOT is required}
+        target: /etc/nginx-edge
+        read_only: true
+        bind:
+          create_host_path: false
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 80"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    networks:
+      - edge
+
+  certbot:
+    profiles:
+      - renew
+    image: certbot/certbot:v4.2.0@sha256:9626d72120577cf72da4fc7948806e9993598981720a4cbe04340a502468d67b
+    <<: *edge-security
+    restart: "no"
+    cpus: "0.25"
+    mem_limit: 128m
+    pids_limit: 64
+    logging: *edge-logging
+    volumes:
+      - type: bind
+        source: ${WEF_SHARED_EDGE_ROOT:?WEF_SHARED_EDGE_ROOT is required}/letsencrypt
+        target: /etc/letsencrypt
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${WEF_SHARED_EDGE_ROOT:?WEF_SHARED_EDGE_ROOT is required}/webroot
+        target: /var/www/certbot
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${WEF_SHARED_EDGE_ROOT:?WEF_SHARED_EDGE_ROOT is required}/state
+        target: /var/lib/wef-edge
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${WEF_SHARED_EDGE_ROOT:?WEF_SHARED_EDGE_ROOT is required}/hooks
+        target: /edge-hooks
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: tmpfs
+        target: /var/log/letsencrypt
+        tmpfs:
+          size: 16m
+    networks:
+      - edge
+
+networks:
+  edge:
+    name: wef-edge

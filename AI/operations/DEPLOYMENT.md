@@ -46,7 +46,7 @@ Exact service/command names are finalized during implementation, but no workflow
 Production services:
 
 - `caddy` (current interim): configurable `WEF_PUBLIC_PORT`, initially `3100/TCP`, for the bounded anonymous rehearsal.
-- `nginx` plus `certbot` (target shared edge): standard 80/443 ingress with free automatically renewed TLS for WEF and the existing AI Forecast service; built through [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md), automated by [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md), and activated only by gated [E7-T10](../epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md).
+- `nginx` plus `certbot` (target shared edge): standard 80/443 ingress with free automatically renewed TLS for WEF and the existing AI Forecast service. The inert topology is built and proven through [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) in the dedicated `wef-shared-edge` Compose project (`infra/compose.shared-edge.yaml` plus proof-only `infra/compose.shared-edge-fixtures.yaml`); cutover is automated by [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md), and activation happens only through gated [E7-T10](../epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md). Ordinary `wef-production` releases neither deploy nor remove the shared edge.
 - `web`: internal port only.
 - `api`: internal port only.
 - `db`: an application-owned PostgreSQL/PostGIS container on the internal network only, with a persistent host-backed volume.
@@ -81,7 +81,8 @@ Image requirements:
 - `infra/compose.yaml`: shared service definitions usable locally.
 - `infra/compose.production.yaml`: production images, restart policy, resources, networks, volumes, and hardened settings.
 - `infra/Caddyfile.production`: implemented interim same-origin WEF routes.
-- Target shared-edge Nginx server blocks and Certbot renewal configuration are introduced by E7-T8 and validated independently from ordinary WEF releases.
+- `infra/compose.shared-edge.yaml`: the separately managed `wef-shared-edge` project (Nginx plus Certbot) with a fixed-name `wef-edge` network owned by the edge boundary. `infra/compose.shared-edge-fixtures.yaml` is a proof-only override (fixture upstreams and local Pebble ACME) that must never be combined with a production edge deployment.
+- `infra/nginx/` owns the HTTP-only ACME bootstrap template (`bootstrap.conf.in`), the generated two-host TLS template (`tls.conf.in`), and the Certbot deploy hook (`deploy-hook.sh`). `scripts/deploy/shared_edge_render.py` renders deterministic validated releases, `scripts/deploy/shared_edge_release.py` validates (`nginx -t` as the serving UID) and atomically activates/rolls back `current`/`previous` pointers, and `scripts/deploy/shared_edge_renew.sh` performs unattended renewal with the success-only validated reload chain. `make shared-edge-proof` proves the topology and runtime behavior locally; the proofs also run as part of `make production-proof` in CI.
 - A checked-in `.env.example`: names and safe descriptions only.
 - Non-secret production values live in GitHub Actions variables and sensitive values in GitHub Actions secrets. Each deploy transfers complete validated configuration to `/home/nuc/wef/secrets/releases/<git-sha>/` with mode `0600` and atomically updates `/home/nuc/wef/secrets/current`.
 
@@ -91,7 +92,7 @@ Persistent paths:
 - `/home/nuc/wef/media/`.
 - `/home/nuc/wef/imports/` for operator-staged source data mounted read-only into importer runs.
 - `/home/nuc/wef/caddy-data/`.
-- A dedicated shared-edge root for Nginx configuration/logs and persistent Certbot `/etc/letsencrypt` state; E7-T8 defines the boundary, E7-T10 confirms its live path, and it is not deleted with `/home/nuc/wef`.
+- A dedicated shared-edge root (operator-selected at edge deployment; `WEF_SHARED_EDGE_ROOT` must be supplied explicitly because it has no default) holding rendered releases with `current`/`previous` pointers, the ACME webroot, complete persistent Certbot `/etc/letsencrypt` state, deploy-hook state, and bounded edge logs. E7-T8 defines the boundary, E7-T10 confirms its live path, and it is not deleted with `/home/nuc/wef`.
 - `/home/nuc/wef/releases/` for release metadata and Compose manifests.
 - `/home/nuc/wef/secrets/releases/<git-sha>/` plus `secrets/current` for complete deploy-managed service configuration, including the future Telegram session.
 

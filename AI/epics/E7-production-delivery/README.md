@@ -17,10 +17,10 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 
 ## Approval state
 
-- Epic workspace status: `ready`; the anonymous rehearsal is complete and the shared-edge topology task may start.
+- Epic workspace status: `ready`; the anonymous rehearsal is complete, the inert shared-edge topology is built, and the cutover-automation task may start once its dependency is merged.
 - [Spike](SPIKE.md): `approved`, revision 3.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, sequencing E7-T8 and E7-T9.
-- E7-T1 through E7-T4 are `done`; E7-T8 is `ready`, E7-T9 is promoted but dependency-blocked, and E7-T10 remains proposed behind D-009. E7-T5 remains deferred and E7-T6/T7 remain proposed.
+- E7-T1 through E7-T4 and E7-T8 are `done`; E7-T9 is promoted but dependency-blocked, and E7-T10 remains proposed behind D-009. E7-T5 remains deferred and E7-T6/T7 remain proposed.
 
 ## Milestones
 
@@ -61,8 +61,8 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - [E7-T2: Provision and verify supplied server](tasks/E7-T2-provision-and-verify-supplied-server.md) — `done`, P0/M, M3
 - [E7-T3: Implement GitHub image and deployment workflows](tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `done`, P0/L, M3
 - [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — `done`, P0/M, M3
-- [E7-T8: Build isolated shared Nginx TLS topology](tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `ready`, P1/M, M3
-- [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `draft`, P1/L, M3
+- [E7-T8: Build isolated shared Nginx TLS topology](tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `done`, P1/M, M3
+- [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `draft`, P1/L, M3; dependency E7-T8 satisfied by this change
 
 ## Deferred/proposed tasks
 

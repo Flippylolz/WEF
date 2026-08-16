@@ -1,0 +1,96 @@
+# Proof-only override for infra/compose.shared-edge.yaml. It adds local
+# fixture upstreams, the internal proof network, and a local Pebble ACME
+# server so the shared edge can be validated without production mutation.
+# Never combine this file with a production edge deployment.
+name: wef-shared-edge
+
+x-fixture-security: &fixture-security
+  read_only: true
+  init: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+
+x-fixture-logging: &fixture-logging
+  driver: json-file
+  options:
+    max-file: "3"
+    max-size: 10m
+
+x-fixture: &fixture
+  image: python:3.13-alpine@sha256:540c7d91f98ff6880174c40e99067bf5941eb54d818a7a5e094d188b196a934d
+  entrypoint: ["python3", "/fixture/header_echo_server.py"]
+  <<: *fixture-security
+  restart: unless-stopped
+  cpus: "0.10"
+  mem_limit: 64m
+  pids_limit: 32
+  logging: *fixture-logging
+  volumes:
+    - type: bind
+      source: ${WEF_SHARED_EDGE_FIXTURES:?WEF_SHARED_EDGE_FIXTURES is required}
+      target: /fixture
+      read_only: true
+      bind:
+        create_host_path: false
+  networks:
+    - upstreams
+
+services:
+  nginx:
+    networks:
+      - upstreams
+
+  certbot:
+    environment:
+      REQUESTS_CA_BUNDLE: /edge-fixtures/pebble.minica.crt
+    volumes:
+      - type: bind
+        source: ${WEF_SHARED_EDGE_FIXTURES:?WEF_SHARED_EDGE_FIXTURES is required}/pebble.minica.crt
+        target: /edge-fixtures/pebble.minica.crt
+        read_only: true
+        bind:
+          create_host_path: false
+
+  fixture-wef-api:
+    <<: *fixture
+    environment:
+      FIXTURE_NAME: wef-api
+
+  fixture-wef-media:
+    <<: *fixture
+    environment:
+      FIXTURE_NAME: wef-media
+
+  fixture-wef-web:
+    <<: *fixture
+    environment:
+      FIXTURE_NAME: wef-web
+
+  fixture-forecast:
+    <<: *fixture
+    environment:
+      FIXTURE_NAME: forecast
+
+  pebble:
+    image: ghcr.io/letsencrypt/pebble:latest@sha256:ddf230642b1a584f519f32e347de1b05a6e4c1f6c35c1863b33effeab5f78199
+    command: ["-strict"]
+    environment:
+      PEBBLE_VA_ALWAYS_VALID: "1"
+      PEBBLE_VA_NOSLEEP: "1"
+      PEBBLE_WFE_NONCEREJECT: "0"
+    <<: *fixture-security
+    restart: unless-stopped
+    cpus: "0.25"
+    mem_limit: 128m
+    pids_limit: 64
+    logging: *fixture-logging
+    networks:
+      - edge
+
+networks:
+  upstreams:
+    internal: true
