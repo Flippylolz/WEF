@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T8
 epic: E7
 title: "Build isolated shared Nginx TLS topology"
-status: invalidated
+status: done
 revision: 2
 priority: P1
 size: M
@@ -17,17 +17,19 @@ promotion:
   promoted_by: "Cursor Agent (owner-authorized)"
   promoted_at: "2026-08-13T19:32:59Z"
 spike_gate:
-  status: invalidated
+  status: satisfied
   file: ../SPIKE.md
   approved_revision: 3
   verified_by: "Cursor Agent"
   verified_at: "2026-08-13T19:32:59Z"
+  revalidated_by: "Owner (Flippylolz), 2026-08-16T06:04:21Z: the 2026-08-15 invalidation was an accidental touch by another agent's E7-T6 priority work"
 implementation_gate:
-  status: invalidated
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
   approved_revision: 3
   verified_by: "Cursor Agent"
   verified_at: "2026-08-13T19:32:59Z"
+  revalidated_by: "Owner (Flippylolz), 2026-08-16T06:04:21Z: the 2026-08-15 invalidation was an accidental touch by another agent's E7-T6 priority work"
 dependency_gate:
   status: satisfied
   verified_by: "Cursor Agent"
@@ -36,26 +38,33 @@ dependency_gate:
     - "E7-T4 | done | merged PR https://github.com/Flippylolz/WEF/pull/19 | integrated on main"
 branch:
   required: true
-  name: null
+  name: feature/E7-T8-shared-edge-nginx
   task_id: E7-T8
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-15T15:19:18Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/69"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode agent (owner-directed)"
+  completed_at: "2026-08-16T06:04:21Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/69"
+  evidence:
+    - "make shared-edge-proof | passed 2026-08-16 | scripts.prove_shared_edge_topology (compose policy, determinism, boundary ownership, secret exclusion, renderer negatives) and scripts.prove_shared_edge_runtime (nginx -t positive/negative, two-host TLS routing, proxy headers, hidden paths, security headers, body-limit enforcement, activation/rollback, renewal dry run with explicit deploy hook, failed-renewal and failed-validation no-reload proofs)"
+    - "CI on PR #69 | all jobs green on head 39af375 2026-08-16, including Repository safety which runs make production-proof with both shared-edge proofs on Linux"
+    - "python3 -m unittest scripts.test_shared_edge_render scripts.test_shared_edge_release | 20 tests OK"
+    - "make format-check lint typecheck test contract-check compose-config production-proof | all passed locally"
+    - "Linux-only correctness fixes proven in CI: deploy hooks are world-executable (capped root validates via the other permission class) and certbot keeps only the reviewed CHOWN/DAC_OVERRIDE/FOWNER tree-administration capabilities"
+    - "Empirical note for E7-T9/E7-T10: certbot renew --dry-run forces the Let's Encrypt staging server unless --server is passed explicitly; the renewal orchestrator passes --deploy-hook explicitly alongside --run-deploy-hooks in dry runs"
+    - "No production mutation: proofs use reserved .test hostnames, a local Pebble ACME server, temporary edge roots, and high local ports; the deploy workflow and compose.production.yaml are untouched"
 invalidation:
-  invalidated_by: Flippylolz
-  invalidated_at: "2026-08-15T16:22:08Z"
-  reason: "Owner paused E7-T8 to prioritize E7-T6 while material E7 spike revision 4 is prepared"
-  return_to: spike
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E7-T8: Build isolated shared Nginx TLS topology
 
-> Paused on 2026-08-15 at owner direction. Preserve any dedicated-branch work, but perform no further implementation until E7 spike revision 4 and a replacement implementation plan revalidate this task.
+> Audit note: on 2026-08-15 another agent's E7-T6 prioritization work (PR #68) accidentally recorded this task as paused/invalidated while its dedicated-branch implementation was already in progress under owner instruction. The owner clarified on 2026-08-16 that the invalidation was unintended, restored the spike/implementation gates, and directed completion. The complete implementation and evidence live on PR #69.
 
 > Revision 2 narrows the former live-cutover candidate to inert, locally provable shared-edge infrastructure. D-009 remains a gate for E7-T10 and is not required for this task.
 
@@ -95,14 +104,14 @@ Provide a separately managed Nginx/Certbot edge topology whose two-host routing,
 
 ## Acceptance criteria
 
-- [ ] Shared-edge Compose renders deterministically with pinned images, a dedicated project/network, persistent Certbot state, bounded logs, health checks, and least privilege.
-- [ ] HTTP-only bootstrap serves only ACME challenge traffic and does not redirect before both TLS routes are available.
-- [ ] Generated fixture configuration has distinct WEF and AI Forecast virtual hosts, correct proxy headers/timeouts/body limits, conservative security headers, and no committed production hostname.
-- [ ] `nginx -t` passes for valid bootstrap/TLS fixtures and rejects missing certificates, duplicate names, unsafe paths, and invalid configuration before reload.
-- [ ] Renewal uses saved webroot settings, persistent state, unattended execution, a passing dry run, and a success-only validated graceful reload hook.
-- [ ] Secrets, private keys, ACME account data, generated production environments, and unreviewed host output are excluded from Git, logs, artifacts, and image layers.
-- [ ] Local failure tests prove invalid config, failed renewal, failed reload validation, and unavailable fixture upstreams do not replace the last valid configuration.
-- [ ] No production/server/network mutation occurs.
+- [x] Shared-edge Compose renders deterministically with pinned images, a dedicated project/network, persistent Certbot state, bounded logs, health checks, and least privilege.
+- [x] HTTP-only bootstrap serves only ACME challenge traffic and does not redirect before both TLS routes are available.
+- [x] Generated fixture configuration has distinct WEF and AI Forecast virtual hosts, correct proxy headers/timeouts/body limits, conservative security headers, and no committed production hostname.
+- [x] `nginx -t` passes for valid bootstrap/TLS fixtures and rejects missing certificates, duplicate names, unsafe paths, and invalid configuration before reload.
+- [x] Renewal uses saved webroot settings, persistent state, unattended execution, a passing dry run, and a success-only validated graceful reload hook.
+- [x] Secrets, private keys, ACME account data, generated production environments, and unreviewed host output are excluded from Git, logs, artifacts, and image layers.
+- [x] Local failure tests prove invalid config, failed renewal, failed reload validation, and unavailable fixture upstreams do not replace the last valid configuration.
+- [x] No production/server/network mutation occurs.
 
 ## Test plan
 
@@ -115,6 +124,14 @@ Provide a separately managed Nginx/Certbot edge topology whose two-host routing,
 
 This task is inert. Roll back by reverting its dedicated PR; it creates no production listener, certificate, state, network, or application change.
 
+## Completion evidence
+
+- `make shared-edge-proof` passed 2026-08-16: `scripts.prove_shared_edge_topology` (compose policy, determinism, boundary ownership, secret exclusion, renderer negatives) and `scripts.prove_shared_edge_runtime` (nginx -t positive/negative, two-host TLS routing, proxy headers, hidden paths, security headers, body-limit enforcement, activation/rollback, renewal dry run with explicit deploy hook, failed-renewal and failed-validation no-reload proofs).
+- `python3 -m unittest scripts.test_shared_edge_render scripts.test_shared_edge_release`: 20 tests OK.
+- `make format-check lint typecheck test contract-check compose-config production-proof`: all passed.
+- Empirical note for E7-T9/E7-T10: `certbot renew --dry-run` forces the Let's Encrypt staging server unless `--server` is passed explicitly; the renewal orchestrator therefore passes `--deploy-hook` explicitly alongside `--run-deploy-hooks` in dry runs.
+- No production mutation: proofs use reserved `.test` hostnames, a local Pebble ACME server, temporary edge roots, and high local ports; the deploy workflow and `compose.production.yaml` are untouched.
+
 ## Ready checklist
 
 - [x] This file is authoritative under `tasks/`; its proposed source is removed.
@@ -124,12 +141,12 @@ This task is inert. Roll back by reverting its dedicated PR; it creates no produ
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated E7-T8 branch is created and recorded.
-- [ ] Branch contains E7-T8 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated E7-T8 branch is created and recorded.
+- [x] Branch contains E7-T8 only.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

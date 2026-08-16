@@ -8,7 +8,7 @@ BACKEND := $(UV) --directory apps/backend run
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install format format-check lint typecheck test coverage contract-generate contract-check build build-development compose-config production-proof production-runtime-proof up down ps logs importer-dry-run import-dry-run import-persist import-geocode import-media import-verify import-run seed-m1
+.PHONY: help install format format-check lint typecheck test coverage contract-generate contract-check build build-development compose-config production-proof production-runtime-proof shared-edge-proof up down ps logs importer-dry-run import-dry-run import-persist import-geocode import-media import-verify import-run seed-m1
 
 IMPORT_BATCH_SIZE ?= 200
 IMPORT_GEOCODE_BATCH_SIZE ?= 25
@@ -111,11 +111,17 @@ build-development: ## Build development images.
 
 compose-config: ## Validate the fully rendered local Compose model.
 	$(COMPOSE) --profile operator config --quiet
+	WEF_SHARED_EDGE_ROOT=/tmp/wef-edge-proof/root \
+		WEF_SHARED_EDGE_FIXTURES=$(CURDIR)/infra/nginx/fixtures \
+		WEF_EDGE_HTTP_PORT=18080 WEF_EDGE_HTTPS_PORT=18443 \
+		$(COMPOSE) --file infra/compose.shared-edge.yaml \
+		--file infra/compose.shared-edge-fixtures.yaml --profile renew config --quiet
 
 production-proof: ## Prove production topology and deployment safety.
 	python3 -m scripts.prove_production_topology
 	python3 -m scripts.prove_deploy_rollback
 	python3 -m scripts.prove_release_workflow
+	$(MAKE) shared-edge-proof
 	for script in scripts/deploy/*.sh; do sh -n "$$script"; done
 	shellcheck scripts/deploy/*.sh
 	$(DOCKER) run --rm \
@@ -123,6 +129,10 @@ production-proof: ## Prove production topology and deployment safety.
 		--entrypoint caddy \
 		caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d \
 		validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+shared-edge-proof: ## Prove the inert shared Nginx/Certbot edge locally.
+	python3 -m scripts.prove_shared_edge_topology
+	python3 -m scripts.prove_shared_edge_runtime
 
 production-runtime-proof: ## Recreate production services and prove persistence.
 	python3 -m scripts.prove_production_runtime
