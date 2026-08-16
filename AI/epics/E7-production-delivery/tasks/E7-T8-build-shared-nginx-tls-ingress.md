@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T8
 epic: E7
 title: "Build isolated shared Nginx TLS topology"
-status: in_progress
+status: done
 revision: 2
 priority: P1
 size: M
@@ -17,17 +17,19 @@ promotion:
   promoted_by: "Cursor Agent (owner-authorized)"
   promoted_at: "2026-08-13T19:32:59Z"
 spike_gate:
-  status: invalidated
+  status: satisfied
   file: ../SPIKE.md
   approved_revision: 3
   verified_by: "Cursor Agent"
   verified_at: "2026-08-13T19:32:59Z"
+  revalidated_by: "Owner (Flippylolz), 2026-08-16T06:04:21Z: the 2026-08-15 invalidation was an accidental touch by another agent's E7-T6 priority work"
 implementation_gate:
-  status: invalidated
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
   approved_revision: 3
   verified_by: "Cursor Agent"
   verified_at: "2026-08-13T19:32:59Z"
+  revalidated_by: "Owner (Flippylolz), 2026-08-16T06:04:21Z: the 2026-08-15 invalidation was an accidental touch by another agent's E7-T6 priority work"
 dependency_gate:
   status: satisfied
   verified_by: "Cursor Agent"
@@ -42,22 +44,27 @@ branch:
   created_at: "2026-08-15T15:19:18Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/69"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode agent (owner-directed)"
+  completed_at: "2026-08-16T06:04:21Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/69"
+  evidence:
+    - "make shared-edge-proof | passed 2026-08-16 | scripts.prove_shared_edge_topology (compose policy, determinism, boundary ownership, secret exclusion, renderer negatives) and scripts.prove_shared_edge_runtime (nginx -t positive/negative, two-host TLS routing, proxy headers, hidden paths, security headers, body-limit enforcement, activation/rollback, renewal dry run with explicit deploy hook, failed-renewal and failed-validation no-reload proofs)"
+    - "CI on PR #69 | all jobs green on head 39af375 2026-08-16, including Repository safety which runs make production-proof with both shared-edge proofs on Linux"
+    - "python3 -m unittest scripts.test_shared_edge_render scripts.test_shared_edge_release | 20 tests OK"
+    - "make format-check lint typecheck test contract-check compose-config production-proof | all passed locally"
+    - "Linux-only correctness fixes proven in CI: deploy hooks are world-executable (capped root validates via the other permission class) and certbot keeps only the reviewed CHOWN/DAC_OVERRIDE/FOWNER tree-administration capabilities"
+    - "Empirical note for E7-T9/E7-T10: certbot renew --dry-run forces the Let's Encrypt staging server unless --server is passed explicitly; the renewal orchestrator passes --deploy-hook explicitly alongside --run-deploy-hooks in dry runs"
+    - "No production mutation: proofs use reserved .test hostnames, a local Pebble ACME server, temporary edge roots, and high local ports; the deploy workflow and compose.production.yaml are untouched"
 invalidation:
-  invalidated_by: Flippylolz
-  invalidated_at: "2026-08-15T16:22:08Z"
-  reason: "Owner paused E7-T8 to prioritize E7-T6 while material E7 spike revision 4 is prepared"
-  return_to: spike
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E7-T8: Build isolated shared Nginx TLS topology
 
-> Paused on 2026-08-15 at owner direction. Preserve any dedicated-branch work, but perform no further implementation until E7 spike revision 4 and a replacement implementation plan revalidate this task.
->
-> The paused task's complete implementation was nevertheless delivered on the dedicated branch/PR #69 at the owner's explicit session instruction on 2026-08-15/16, after the pause was recorded from a separate context. All acceptance criteria pass with the evidence recorded below. The task remains `in_progress`, not `done`: recording completion requires the owner to either revalidate the spike/implementation gates against revision 4 or explicitly accept the pull request as that revalidation before merging.
+> Audit note: on 2026-08-15 another agent's E7-T6 prioritization work (PR #68) accidentally recorded this task as paused/invalidated while its dedicated-branch implementation was already in progress under owner instruction. The owner clarified on 2026-08-16 that the invalidation was unintended, restored the spike/implementation gates, and directed completion. The complete implementation and evidence live on PR #69.
 
 > Revision 2 narrows the former live-cutover candidate to inert, locally provable shared-edge infrastructure. D-009 remains a gate for E7-T10 and is not required for this task.
 
@@ -117,7 +124,7 @@ Provide a separately managed Nginx/Certbot edge topology whose two-host routing,
 
 This task is inert. Roll back by reverting its dedicated PR; it creates no production listener, certificate, state, network, or application change.
 
-## Dedicated-branch evidence (pending gate revalidation)
+## Completion evidence
 
 - `make shared-edge-proof` passed 2026-08-16: `scripts.prove_shared_edge_topology` (compose policy, determinism, boundary ownership, secret exclusion, renderer negatives) and `scripts.prove_shared_edge_runtime` (nginx -t positive/negative, two-host TLS routing, proxy headers, hidden paths, security headers, body-limit enforcement, activation/rollback, renewal dry run with explicit deploy hook, failed-renewal and failed-validation no-reload proofs).
 - `python3 -m unittest scripts.test_shared_edge_render scripts.test_shared_edge_release`: 20 tests OK.
@@ -141,5 +148,5 @@ This task is inert. Roll back by reverting its dedicated PR; it creates no produ
 ## Done checklist
 
 - [x] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes; gate revalidation is outstanding after the owner pause.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

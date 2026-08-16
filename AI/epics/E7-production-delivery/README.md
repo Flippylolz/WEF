@@ -20,8 +20,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - Epic workspace status: `planning`; the anonymous rehearsal remains complete while historical snapshot transfer is prioritized.
 - [Spike](SPIKE.md): `approved`, revision 4, selecting selective E3-T5 snapshot transfer and non-public production candidate staging.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 3 is invalidated for non-done work; no replacement plan may be prepared until spike revision 4 is approved.
-- E7-T1 through E7-T4 remain `done`; E7-T8/E7-T9 are paused and invalidated, E7-T6 remains proposed pending spike approval/refinement, and E7-T10 remains proposed behind D-009. E7-T5 remains deferred and E7-T7 remains proposed.
-- E7-T8's complete implementation exists on dedicated branch/PR #69 under the owner's separate session instruction; its merge requires the owner to revalidate the paused gates or explicitly accept the pull request as that revalidation.
+- E7-T1 through E7-T4 and E7-T8 are `done`; E7-T8's 2026-08-15 invalidation was an accidental touch by another agent's E7-T6 priority work and was restored by the owner on 2026-08-16 (completion on PR #69). E7-T9 remains paused/invalidated, E7-T6 remains proposed pending spike approval/refinement, and E7-T10 remains proposed behind D-009. E7-T5 remains deferred and E7-T7 remains proposed.
 
 ## Milestones
 
@@ -62,8 +61,8 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - [E7-T2: Provision and verify supplied server](tasks/E7-T2-provision-and-verify-supplied-server.md) — `done`, P0/M, M3
 - [E7-T3: Implement GitHub image and deployment workflows](tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `done`, P0/L, M3
 - [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — `done`, P0/M, M3
-- [E7-T8: Build isolated shared Nginx TLS topology](tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `in_progress` on PR #69 (paused gates; complete implementation awaiting owner revalidation), P1/M, M3
-- [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `invalidated`/paused, P1/L, M3
+- [E7-T8: Build isolated shared Nginx TLS topology](tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `done` through PR #69 (gates restored by owner after an accidental invalidation), P1/M, M3
+- [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `invalidated`/paused; dependency E7-T8 is now satisfied but its own gates await the owner's call, P1/L, M3
 
 ## Deferred/proposed tasks
 
