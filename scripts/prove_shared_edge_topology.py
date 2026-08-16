@@ -186,6 +186,9 @@ def assert_edge_compose_policy(model: dict[str, Any]) -> None:
     assert "/var/run" in tmpfs_targets, "nginx pid dir must be tmpfs"
     assert "healthcheck" in nginx, "nginx must have a health check"
     assert certbot["cap_drop"] == ["ALL"], "certbot must drop all capabilities"
+    assert certbot["cap_add"] == ["CHOWN", "DAC_OVERRIDE", "FOWNER"], (
+        "certbot keeps only the reviewed tree-administration capabilities"
+    )
     assert certbot["read_only"] is True, "certbot root filesystem must be read-only"
     published_ports = {
         str(port["published"]) for service in services.values() for port in service.get("ports", [])

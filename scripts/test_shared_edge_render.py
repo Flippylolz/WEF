@@ -130,7 +130,7 @@ class WriteReleaseTests(unittest.TestCase):
                     f"{name} must render deterministically",
                 )
             hook = first / HOOK_FILENAME
-            self.assertTrue(hook.stat().st_mode & 0o111, "hook must be executable")
+            self.assertEqual(hook.stat().st_mode & 0o777, 0o755, "hook must be world-executable")
 
     def test_rejects_non_empty_release_directories(self) -> None:
         with TemporaryDirectory() as directory:

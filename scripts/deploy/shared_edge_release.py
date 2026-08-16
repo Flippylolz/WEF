@@ -267,7 +267,8 @@ def activate_release(
         raise SharedEdgeReleaseError(msg)
     hooks_target = edge_root / "hooks" / "deploy-hook.sh"
     shutil.copyfile(hook_source, hooks_target)
-    hooks_target.chmod(hook_source.stat().st_mode)
+    # World-executable for the same capped-root validation as the release.
+    hooks_target.chmod(0o755)
     set_active_config(release_dir, config)
     _swap_symlink(edge_root / CURRENT_LINK, f"releases/{release_name}")
     if reload_callback is not None:

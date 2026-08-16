@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import re
-import stat
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -210,8 +209,9 @@ def write_release(
         target.write_text(rendered[target.name], encoding="utf-8")
     hook_target = output_dir / HOOK_FILENAME
     hook_target.write_bytes(hook_source.read_bytes())
-    executable = hook_target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP
-    hook_target.chmod(executable)
+    # World-executable: hook validation runs as a capped root that does not
+    # own the edge tree and therefore checks the "other" permission class.
+    hook_target.chmod(0o755)
     written.append(hook_target)
     return written
 

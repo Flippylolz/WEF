@@ -65,6 +65,14 @@ services:
       - renew
     image: certbot/certbot:v4.2.0@sha256:9626d72120577cf72da4fc7948806e9993598981720a4cbe04340a502468d67b
     <<: *edge-security
+    # Reviewed exceptions: the deploy hook administrates permissions and
+    # ownership across the operator-owned edge tree (chgrp of private keys
+    # to the edge group, chmod of the managed certificate tree, marker
+    # writes in the shared state directory).
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
     restart: "no"
     cpus: "0.25"
     mem_limit: 128m
