@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E7
 title: "Docker/GitHub production delivery implementation plan"
-status: awaiting_approval
+status: approved
 revision: 4
 owner: owner
 spike_revision: 4
@@ -11,11 +11,11 @@ task_sequence:
     revision: 3
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-16T21:43:56Z"
+  approved_revision: 4
+  evidence: "Owner (Flippylolz) explicitly approved E7 IMPLEMENTATION_PLAN revision 4 by name on 2026-08-16 in the owner-directed ZCode session, authorizing only E7-T6 revision 3 after this documentation PR merges"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -25,7 +25,7 @@ invalidation:
 
 # Implementation Plan: Verified historical snapshot transfer into a non-public production candidate
 
-> Revision 4 is prepared under approved [spike revision 4](SPIKE.md) after revision 3 was invalidated for non-done work. It authorizes only E7-T6 revision 3 and only after this revision is explicitly owner-approved. No production code exists yet for this scope.
+> Revision 4 was explicitly owner-approved on 2026-08-16 under approved [spike revision 4](SPIKE.md) after revision 3 was invalidated for non-done work. It authorizes only E7-T6 revision 3; E7-T6 must still satisfy its dependency gate before implementation starts.
 
 ## Approved spike baseline
 
@@ -111,8 +111,8 @@ Return to the spike for a raw-production reimport, direct live-database restore,
 - [x] Deferred decisions required for implementation are resolved (D-002 is not a gate because no provider call is made; D-009 gates only E7-T10).
 - [x] No production or disposable proof code has been written for this scope.
 - [x] `revision` 4 represents the material plan being submitted.
-- [x] `status` is `awaiting_approval` and approval remains `pending`.
+- [x] `revision` 4 was submitted as `awaiting_approval` with approval `pending`, then explicitly owner-approved on 2026-08-16 and recorded as `approved` for this same revision.
 
 ## Owner decision
 
-Approval must explicitly name E7 IMPLEMENTATION_PLAN revision 4 and will be recorded only in the YAML `approval` object. It authorizes only E7-T6 revision 3 as sequenced here; E7-T6 must still satisfy its dependency gate (E3-T5 `done`), pass through `ready` on its dedicated branch, and complete the definition of done. E7-T9 revalidation, E7-T10, E7-T7, and E7-T11 remain outside this approval.
+Flippylolz explicitly approved E7 IMPLEMENTATION_PLAN revision 4 by name on 2026-08-16 in the owner-directed ZCode session; the decision is recorded in the YAML `approval` object above. It authorizes only E7-T6 revision 3 as sequenced here; E7-T6 must still satisfy its dependency gate (E3-T5 `done`), pass through `ready` on its dedicated branch, and complete the definition of done. E7-T9 revalidation, E7-T10, E7-T7, and E7-T11 remain outside this approval.

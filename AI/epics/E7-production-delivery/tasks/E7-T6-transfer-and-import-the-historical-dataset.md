@@ -23,11 +23,11 @@ spike_gate:
   verified_by: "ZCode agent (owner-directed)"
   verified_at: "2026-08-16T21:35:12Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 4
+  verified_by: "ZCode agent (owner-directed)"
+  verified_at: "2026-08-16T21:43:56Z"
 dependency_gate:
   status: blocked
   verified_by: null
@@ -155,7 +155,7 @@ Execution order: terminal-state check → bundle → local verification → tran
 - [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references owner-approved spike revision 4 and is `satisfied`.
-- [ ] `implementation_gate` references the owner-approved current implementation-plan revision containing E7-T6 revision 3 and is `satisfied` (blocked while revision 4 awaits approval).
+- [x] `implementation_gate` references the owner-approved implementation-plan revision 4 (approved 2026-08-16, containing E7-T6 revision 3) and is `satisfied`.
 - [ ] Every dependency is `done` with `dependency_gate: satisfied` (E7-T2 and E7-T4 are `done`; E3-T5 implementation PRs #65/#66 are merged but its completion record is still pending, so the gate stays `blocked` until E3-T5 records `done`).
 - [ ] Scope and acceptance criteria match the approved plan.
 

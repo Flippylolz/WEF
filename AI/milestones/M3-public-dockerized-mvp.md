@@ -40,7 +40,7 @@ The responsive map experience is production-deployed from GitHub with persistent
 - [E7-T3: Implement GitHub image and deployment workflows](../epics/E7-production-delivery/tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `done`
 - [E7-T4: Implement health verification and rollback](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) — `done`
 - [E7-T5: Future backup and restore capability](../epics/E7-production-delivery/proposed-tasks/E7-T5-future-backup-and-restore-capability.md) — `deferred`
-- [E7-T6: Transfer the verified historical snapshot into a non-public production candidate](../epics/E7-production-delivery/tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `draft` revision 3 (promoted; implementation gate pending plan revision 4 approval)
+- [E7-T6: Transfer the verified historical snapshot into a non-public production candidate](../epics/E7-production-delivery/tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `draft` revision 3 (promoted; implementation gate satisfied by approved plan revision 4, dependency gate pending E3-T5 completion)
 - [E7-T7: Enable production registration and contact reveal](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`
 - [E7-T8: Build isolated shared Nginx TLS topology](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `done`
 - [E7-T9: Implement reversible shared-edge cutover](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `draft`
