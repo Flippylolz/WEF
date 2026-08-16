@@ -441,6 +441,27 @@ def merged_compose_file(workspace: Path) -> Path:
     return merged
 
 
+def pull_proof_images() -> None:
+    """Pull every pinned proof image, retrying transient registry errors."""
+    services = [
+        "nginx",
+        "certbot",
+        "pebble",
+        "fixture-wef-api",
+        "fixture-wef-media",
+        "fixture-wef-web",
+        "fixture-forecast",
+    ]
+    result = compose(["pull", "--quiet", *services], check=False)
+    for _ in range(3):
+        if result.returncode == 0:
+            return
+        time.sleep(10)
+        result = compose(["pull", "--quiet", *services], check=False)
+    message = result.stderr.strip() or result.stdout.strip()
+    raise ProofError(f"could not pull the pinned proof images: {message}")
+
+
 def main() -> int:
     """Run the complete local shared-edge lifecycle proof."""
     global CURRENT_EDGE_ROOT  # noqa: PLW0603
@@ -459,6 +480,7 @@ def main() -> int:
             edge_root / "releases" / "r-002",
         )
         assert_static_validation(edge_root)
+        pull_proof_images()
 
         compose(
             [
