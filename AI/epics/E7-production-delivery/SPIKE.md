@@ -172,7 +172,7 @@ The later activation task should briefly pause writers, revalidate candidate fre
 ## Task-boundary recommendation
 
 - Keep E7-T1 through E7-T4 `done` as historical facts.
-- Refine and promote [E7-T6 revision 2](proposed-tasks/E7-T6-transfer-and-import-the-historical-dataset.md) after spike approval as bundle creation, resumable transfer, candidate clone/load/media staging, and non-public reconciliation only.
+- Refine and promote [E7-T6 revision 2](tasks/E7-T6-transfer-and-import-the-historical-dataset.md) after spike approval as bundle creation, resumable transfer, candidate clone/load/media staging, and non-public reconciliation only.
 - Keep E7-T8/E7-T9 paused/invalidated until the revision-4 spike and later implementation plan revalidate their place in the sequence.
 - Keep E7-T10 proposed behind D-009 and the E7-T8/E7-T9 chain.
 - Keep E7-T7 proposed behind its E6 security dependencies and E7-T10.
