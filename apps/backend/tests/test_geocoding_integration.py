@@ -203,3 +203,28 @@ async def test_claim_lease_takeover_fences_stale_owner() -> None:
     )
     assert await first.get_cached(key) is not None
     await database.engine.dispose()
+
+
+async def test_abandoned_claim_can_be_reclaimed_before_original_expiry() -> None:
+    """A controlled provider pause releases its miss without a lease delay."""
+    database, _ = await _prepare()
+    first = SQLAlchemyGeocodeStore(database.session_factory)
+    second = SQLAlchemyGeocodeStore(database.session_factory)
+    query = normalize_geocode_query("ul. Wstrzymana 1")
+    key = GeocodeCacheKey(GeocodeProvider.FIXTURE, query.normalized)
+    original = await first.claim_miss(
+        key,
+        owner_id="owner-one",
+        now=NOW,
+        lease_expires_at=NOW + timedelta(minutes=5),
+    )
+    await first.abandon_miss(key, claim=original, now=NOW + timedelta(seconds=1))
+    reclaimed = await second.claim_miss(
+        key,
+        owner_id="owner-two",
+        now=NOW + timedelta(seconds=1),
+        lease_expires_at=NOW + timedelta(minutes=5),
+    )
+    assert reclaimed.disposition is ClaimDisposition.OWNER
+    assert reclaimed.fencing_token == original.fencing_token + 1
+    await database.engine.dispose()

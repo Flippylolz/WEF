@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from wef_backend.features.ingestion.domain import MediaDisposition, SourceIdentity
     from wef_backend.features.ingestion.domain.geocoding import NormalizedGeocodeQuery
 
-PIPELINE_VERSION = "e3-complete-v1"
+PIPELINE_VERSION = "e3-complete-v2"
 PrepareProgress = Callable[[int], None]
 
 

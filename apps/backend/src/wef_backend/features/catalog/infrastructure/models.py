@@ -54,9 +54,9 @@ class LocationRow(CatalogBase):
     )
 
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
-    display_name: Mapped[str] = mapped_column(String(160))
-    display_address: Mapped[str] = mapped_column(String(240))
-    normalized_address: Mapped[str] = mapped_column(String(240))
+    display_name: Mapped[str] = mapped_column(Text)
+    display_address: Mapped[str] = mapped_column(Text)
+    normalized_address: Mapped[str] = mapped_column(Text)
     normalized_address_hash: Mapped[str] = mapped_column(String(64), unique=True)
     selected_geocode_result_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))
     district: Mapped[str | None] = mapped_column(String(64))

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T9
 epic: E7
 title: "Implement reversible shared-edge cutover"
-status: draft
+status: invalidated
 revision: 1
 priority: P1
 size: L
@@ -17,13 +17,13 @@ promotion:
   promoted_by: "Cursor Agent (owner-authorized)"
   promoted_at: "2026-08-13T19:32:59Z"
 spike_gate:
-  status: satisfied
+  status: invalidated
   file: ../SPIKE.md
   approved_revision: 3
   verified_by: "Cursor Agent"
   verified_at: "2026-08-13T19:32:59Z"
 implementation_gate:
-  status: satisfied
+  status: invalidated
   file: ../IMPLEMENTATION_PLAN.md
   approved_revision: 3
   verified_by: "Cursor Agent"
@@ -46,13 +46,15 @@ completion:
   pull_request: null
   evidence: []
 invalidation:
-  invalidated_by: null
-  invalidated_at: null
-  reason: null
-  return_to: null
+  invalidated_by: Flippylolz
+  invalidated_at: "2026-08-15T16:22:08Z"
+  reason: "Owner paused the shared-edge sequence to prioritize E7-T6 while material E7 spike revision 4 is prepared"
+  return_to: spike
 ---
 
 # E7-T9: Implement reversible shared-edge cutover
+
+> Paused before implementation. E7 spike revision 4 and a replacement implementation plan must revalidate this task after the prioritized E7-T6 boundary is approved.
 
 ## Outcome
 

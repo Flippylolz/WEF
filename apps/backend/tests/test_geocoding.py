@@ -189,6 +189,7 @@ class FakeStore:
     claims: list[ClaimDisposition] = field(default_factory=lambda: [ClaimDisposition.OWNER])
     claim_calls: int = 0
     completions: int = 0
+    abandonments: int = 0
     selections: list[tuple[UUID, ReviewDecision]] = field(default_factory=list)
 
     async def get_cached(self, _: GeocodeCacheKey) -> CachedGeocode | None:
@@ -229,6 +230,17 @@ class FakeStore:
         self.completions += 1
         self.cached = CachedGeocode(uuid4(), result, expires_at)
         return self.cached
+
+    async def abandon_miss(
+        self,
+        _: GeocodeCacheKey,
+        *,
+        claim: MissClaim,
+        now: datetime,
+    ) -> None:
+        """Record release of an incomplete owned miss."""
+        del claim, now
+        self.abandonments += 1
 
     async def select_for_location(
         self,
@@ -292,6 +304,27 @@ async def test_resolution_waits_for_owner_or_fails_within_bound() -> None:
             clock=lambda: NOW,
             wait_attempts=2,
         )(source_query="Marszałkowska 1")
+
+
+async def test_resolution_abandons_owned_miss_when_provider_pauses() -> None:
+    """A provider exception releases cache ownership for immediate resume."""
+
+    class PausingGeocoder:
+        @property
+        def provider(self) -> GeocodeProvider:
+            return GeocodeProvider.FIXTURE
+
+        async def geocode(self, _: NormalizedGeocodeQuery) -> GeocodeResult:
+            message = "pause"
+            raise RuntimeError(message)
+
+    store = FakeStore()
+    with pytest.raises(RuntimeError, match="pause"):
+        await ResolveGeocode(store, PausingGeocoder(), clock=lambda: NOW)(
+            source_query="Marszałkowska 1"
+        )
+    assert store.abandonments == 1
+    assert store.completions == 0
 
 
 @dataclass

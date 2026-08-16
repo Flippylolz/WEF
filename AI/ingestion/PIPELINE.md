@@ -186,8 +186,10 @@ For each media descriptor:
 - Verify the file exists and is a regular file.
 - Stream SHA-256 calculation.
 - Detect/validate MIME type and metadata.
+- Telegram `photo` and thumbnail descriptors may infer a supported image MIME candidate from their relative suffix only; signature and decoder validation must still confirm the bytes before storage.
 - Enforce configurable file-size and supported-type limits.
 - Copy atomically to a temporary destination and rename on completion.
+- Process media with bounded four-way filesystem/decode concurrency while retaining per-item transactions and batch checkpoints.
 - Derive an opaque, checksum-based storage key.
 - Create source ownership and offer-association records separately.
 

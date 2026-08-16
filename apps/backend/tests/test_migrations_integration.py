@@ -157,3 +157,36 @@ async def test_clean_upgrade_and_seed_replay_converge() -> None:
             )
             await connection.execute(text("DROP TABLE IF EXISTS e0_proof_estates"))
         await database.engine.dispose()
+
+
+async def test_location_source_text_columns_are_unbounded() -> None:
+    """Latest migration removes presentation-sized source text limits."""
+    assert TEST_DATABASE_URL is not None
+    settings = Settings(
+        env="test",
+        database_url=TEST_DATABASE_URL,
+        alembic_config=Path("alembic.ini"),
+    )
+    database = create_database_resources(TEST_DATABASE_URL)
+    try:
+        await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
+        async with database.session_factory() as session:
+            columns = (
+                await session.execute(
+                    text(
+                        "SELECT column_name, data_type "
+                        "FROM information_schema.columns "
+                        "WHERE table_schema = 'public' "
+                        "AND table_name = 'locations' "
+                        "AND column_name IN "
+                        "('display_name', 'display_address', 'normalized_address')"
+                    ),
+                )
+            ).all()
+        assert {tuple(row) for row in columns} == {
+            ("display_name", "text"),
+            ("display_address", "text"),
+            ("normalized_address", "text"),
+        }
+    finally:
+        await database.engine.dispose()
