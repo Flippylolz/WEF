@@ -40,11 +40,11 @@ branch:
   task_id: E7-T8
   one_task_only: true
   created_at: "2026-08-15T15:19:18Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/69"
 completion:
   completed_by: "ZCode agent (owner-directed)"
   completed_at: "2026-08-16T04:54:20Z"
-  pull_request: "https://github.com/Flippylolz/WEF/pull/TBD"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/69"
   evidence:
     - "make shared-edge-proof | passed 2026-08-16 | scripts.prove_shared_edge_topology (compose policy, determinism, boundary ownership, secret exclusion, renderer negatives) and scripts.prove_shared_edge_runtime (nginx -t positive/negative, two-host TLS routing, proxy headers, hidden paths, security headers, 413 body limit, activation/rollback, renewal dry run with explicit deploy hook, failed-renewal and failed-validation no-reload proofs)"
     - "python3 -m unittest scripts.test_shared_edge_render scripts.test_shared_edge_release | 20 tests OK"
