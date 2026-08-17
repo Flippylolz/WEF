@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E3
 title: "Database, geocoding, and media pipeline"
-status: in_progress
+status: done
 milestones: [M1, M2]
 owner: owner
 spike: SPIKE.md
@@ -17,10 +17,10 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 
 ## Approval state
 
-- Epic workspace status: `in_progress`; owner-approved plan revision 4 revalidates merged E3-T3 and authorizes quota-aware, resumable E3-T5 implementation.
-- [Spike](SPIKE.md): `awaiting_approval`, revision 4; historical revision 3 remains the prior approval record.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `awaiting_approval`, revision 4; historical revision 3 remains the authorization record for completed E3-T2/T4 and merged T3 implementation.
-- E3-T1, E3-T2, and E3-T4 are `done`. E3-T3 revision 3 and E3-T5 revision 3 are invalidated pending revised approvals; T5 adds quota-aware resumable Geoapify batches.
+- Epic workspace status: `done`; owner-approved spike/plan revision 4 revalidated merged E3-T3 and authorized quota-aware, resumable E3-T5, which completed locally through PRs #65/#66.
+- [Spike](SPIKE.md): `approved`, revision 4 (Flippylolz, 2026-08-15).
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 4 (Flippylolz, 2026-08-15).
+- E3-T1 through E3-T5 are `done`: E3-T3 revision 3 completed after revision-4 gate revalidation (PR #59), and E3-T5 revision 3 completed the full local import/review with terminal reconciliation (PRs #65/#66). No production mutation occurred; the materialized snapshot is consumed by E7-T6.
 
 ## Milestones
 
@@ -50,9 +50,9 @@ idempotent canonical data and web-safe media with reviewed map coordinates.
 
 - [E3-T1: Create M1 schema, migrations, and deterministic seed](tasks/E3-T1-create-schema-and-migrations.md) — `done`, P0/L, M1
 - [E3-T2: Implement idempotent persistence and reprocessing](tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md) — `done`, P0/L, M1; PR #53
-- [E3-T3: Implement geocoder abstraction and cache](tasks/E3-T3-implement-geocoder-abstraction-and-cache.md) — `invalidated` revision 3, P0/L, M1; merged implementation PR #59, completion awaits revised approval; quality review moved to T5
+- [E3-T3: Implement geocoder abstraction and cache](tasks/E3-T3-implement-geocoder-abstraction-and-cache.md) — `done` revision 3, P0/L, M1; merged implementation PR #59; revision-4 gates revalidated 2026-08-15; quality review moved to T5
 - [E3-T4: Implement media storage and derivatives](tasks/E3-T4-implement-media-storage-and-derivatives.md) — `done`, P0/L, M2; PR #60
-- [E3-T5: Import and review the complete dataset](tasks/E3-T5-import-and-review-the-complete-dataset.md) — `invalidated` revision 3, P0/L, M2; pending revision 4 approvals and T3 completion; owns quota-aware resumable Geoapify batches
+- [E3-T5: Import and review the complete dataset](tasks/E3-T5-import-and-review-the-complete-dataset.md) — `done` revision 3, P0/L, M2; PRs #65/#66 with terminal local reconciliation; owner-directed completion recorded 2026-08-17
 
 ## Proposed tasks
 
