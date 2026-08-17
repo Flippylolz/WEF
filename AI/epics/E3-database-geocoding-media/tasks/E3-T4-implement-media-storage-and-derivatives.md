@@ -127,7 +127,7 @@ Verify source media and publish replay-safe public derivatives while preserving 
 ## Approval and start boundary
 
 - Spike/implementation gates were satisfied for revision 3, dependencies were complete, and the dedicated E3-T4 branch merged through PR #60.
-- Production snapshot transfer/import remains outside this completed task; proposed E7-T6 revision 2 owns materialized database/media delivery.
+- Production snapshot transfer/import remains outside this completed task; E7-T6 revision 3 owns materialized database/media delivery into a non-public production candidate.
 
 ## Affected modules and contracts
 

@@ -108,7 +108,7 @@ E3-T2 and E3-T4 are done. Revised E3-T3 completion plus spike/plan revision 4 ap
 - [ ] Stored originals remain restricted; public integrity checks cover only derivatives, and the API/edge cannot resolve an original key/path.
 - [ ] A second complete run has identical non-timing terminal state and performs no avoidable hosted geocode or media copy; a multi-day continuation reaches the same state as one uninterrupted run.
 - [ ] Leakage tests prove contacts/`ContactSpan` values, source text/paths, provider secrets/responses, and media bytes remain absent from committed evidence, routine logs, CI artifacts, and images.
-- [ ] Local completion does not mutate production, enable inventory, delete seeds, or claim backup/recovery. Proposed [E7-T6 revision 2](../../E7-production-delivery/proposed-tasks/E7-T6-transfer-and-import-the-historical-dataset.md) later transfers the verified materialized database/media snapshot without rerunning this pipeline.
+- [ ] Local completion does not mutate production, enable inventory, delete seeds, or claim backup/recovery. Promoted-draft [E7-T6 revision 3](../../E7-production-delivery/tasks/E7-T6-transfer-and-import-the-historical-dataset.md) later transfers the verified materialized database/media snapshot without rerunning this pipeline.
 
 ## Test plan
 
@@ -127,7 +127,7 @@ E3-T2 and E3-T4 are done. Revised E3-T3 completion plus spike/plan revision 4 ap
 
 - Spike and implementation gates are satisfied by explicit owner approval of revision 4 artifacts and revised E3-T3 completion reconciliation.
 - This task started from then-current `main` on dedicated branch `feature/E3-T5-resumable-import`; draft PR #65 targets `main` while the private import/review remains pending.
-- Production transfer/activation remains proposed E7-T6 revision 2. It consumes the materialized local snapshot and must not rerun hosted geocoding or media transformations. E3-T5 authorizes only the approved local staged import and aggregate/redacted evidence.
+- Production transfer remains promoted-draft [E7-T6 revision 3](../../E7-production-delivery/tasks/E7-T6-transfer-and-import-the-historical-dataset.md), and public activation remains proposed E7-T11 behind the ADR-019 gates. Both consume the materialized local snapshot and must not rerun hosted geocoding or media transformations. E3-T5 authorizes only the approved local staged import and aggregate/redacted evidence.
 
 ## Affected modules and contracts
 
@@ -139,7 +139,7 @@ Material departures from the owner-approved plan revision invalidate the affecte
 
 ## Rollout and rollback
 
-Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md): dedicated branch from then-current `main`, PR targeting `main`, forward-only migrations, schema-compatible rollback only, no destructive data recovery claims. Production snapshot transfer remains proposed E7-T6 revision 2.
+Follow the task sequence entry in [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md): dedicated branch from then-current `main`, PR targeting `main`, forward-only migrations, schema-compatible rollback only, no destructive data recovery claims. Production snapshot transfer remains promoted-draft E7-T6 revision 3.
 
 ## Ready checklist
 
