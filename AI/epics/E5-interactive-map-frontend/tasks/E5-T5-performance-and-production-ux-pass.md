@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E5-T5
 epic: E5
 title: "Performance and production UX pass"
-status: draft
+status: in_progress
 revision: 2
 priority: P1
 size: M
@@ -29,13 +29,15 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-13T19:30:00Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Cursor Agent (autonomous epic mission)"
+  verified_at: "2026-08-19T19:32:00Z"
+  evidence:
+    - "E5-T4 merged via PR #82"
+    - "E4-T4 merged via PR #83"
 branch:
   required: true
-  name: null
+  name: cursor/feat-e5-t5-performance-ux-0c74
   task_id: E5-T5
   one_task_only: true
   created_at: null

@@ -15,8 +15,10 @@ import {
   type ViewStateChangeEvent,
 } from "react-map-gl/maplibre";
 
-import type { LocationMap } from "@/lib/catalog-api";
 import { boundedWarsawViewport, parseBbox } from "@/lib/map-search-params";
+
+import type { LocationMap } from "@/lib/catalog-api";
+import { recordMapConstruction } from "@/lib/map-lifecycle";
 
 const MAP_STYLE =
   process.env.NEXT_PUBLIC_MAP_STYLE_URL?.trim() ||
@@ -148,6 +150,10 @@ export function WarsawMap({
   const suppressNextMoveEnd = useRef(false);
   const lastReportedViewport = useRef<string | null>(null);
   const initialBounds = parseBbox(bbox);
+
+  useEffect(() => {
+    recordMapConstruction();
+  }, []);
 
   useEffect(() => {
     failureHandler.current = onFailure;

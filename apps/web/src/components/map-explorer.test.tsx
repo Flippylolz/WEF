@@ -8,6 +8,7 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
+import { useEffect, useState, type ComponentType } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MapExplorer } from "@/components/map-explorer";
@@ -55,8 +56,16 @@ vi.mock("next/navigation", async () => {
   };
 });
 
+const mapMountCount = vi.hoisted(() => ({ value: 0 }));
+
 vi.mock("next/dynamic", () => ({
-  default: () =>
+  default: (
+    loader: () => Promise<{
+      WarsawMap?: unknown;
+      OfferDetailDrawer?: unknown;
+      default?: unknown;
+    }>,
+  ) => {
     function FakeMap({
       onFailure,
       onSelect,
@@ -66,6 +75,10 @@ vi.mock("next/dynamic", () => ({
       onSelect: (locationId: string) => void;
       onViewportChange: (bbox: string) => void;
     }) {
+      useEffect(() => {
+        mapMountCount.value += 1;
+      }, []);
+
       return (
         <div data-testid="map">
           <button type="button" onClick={onFailure}>
@@ -91,7 +104,35 @@ vi.mock("next/dynamic", () => ({
           </button>
         </div>
       );
-    },
+    }
+
+    if (loader.toString().includes("warsaw-map")) {
+      return FakeMap;
+    }
+
+    return function DynamicComponent(props: Record<string, unknown>) {
+      const [Resolved, setResolved] = useState<ComponentType<
+        Record<string, unknown>
+      > | null>(null);
+
+      useEffect(() => {
+        void loader().then((module) => {
+          const candidate =
+            typeof module === "function"
+              ? module
+              : "OfferDetailDrawer" in module
+                ? module.OfferDetailDrawer
+                : module.default;
+          setResolved(
+            () => candidate as ComponentType<Record<string, unknown>>,
+          );
+        });
+      }, []);
+
+      if (!Resolved) return null;
+      return <Resolved {...props} />;
+    };
+  },
 }));
 
 function renderExplorer() {
@@ -196,6 +237,7 @@ describe("MapExplorer", () => {
   });
 
   beforeEach(() => {
+    mapMountCount.value = 0;
     navigation.pathname = "/";
     navigation.search = "";
     navigation.listeners.clear();
@@ -565,13 +607,60 @@ describe("MapExplorer", () => {
       }),
     );
 
-    expect(
-      await screen.findByTestId("offer-detail-overlay"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId("offer-detail-overlay")).toBeInTheDocument();
+    });
     expect(screen.getByText("Masked public text only.")).toBeInTheDocument();
     expect(catalogApi.fetchOfferDetail).toHaveBeenCalledWith(
       "20000000-0000-4000-8000-000000000001",
       { signal: expect.any(AbortSignal) },
     );
+  });
+
+  it("does not fetch offer detail before explicit offer selection", async () => {
+    const fetchOfferDetail = vi.spyOn(catalogApi, "fetchOfferDetail");
+    renderExplorer();
+    await screen.findByRole("button", {
+      name: /Synthetic Central Residence/,
+    });
+    expect(fetchOfferDetail).not.toHaveBeenCalled();
+  });
+
+  it("keeps a single map mount across viewport and filter changes", async () => {
+    const user = userEvent.setup();
+    renderExplorer();
+    await screen.findByTestId("map");
+    expect(mapMountCount.value).toBe(1);
+
+    await user.click(screen.getByRole("button", { name: "move-map" }));
+    await waitFor(() => expect(navigation.replace).toHaveBeenCalled());
+    expect(mapMountCount.value).toBe(1);
+
+    await user.click(screen.getByRole("button", { name: "return-map" }));
+    await waitFor(() =>
+      expect(navigation.replace.mock.calls.length).toBeGreaterThan(1),
+    );
+    expect(mapMountCount.value).toBe(1);
+  });
+
+  it("retries the map after a load failure without losing the list", async () => {
+    const user = userEvent.setup();
+    renderExplorer();
+    await screen.findByRole("button", {
+      name: /Synthetic Central Residence/,
+    });
+
+    await user.click(screen.getByRole("button", { name: "fail-map" }));
+    expect(await screen.findByText("mapUnavailable")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "retryMap" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("map")).toBeInTheDocument();
+    });
+    expect(mapMountCount.value).toBe(2);
+    expect(
+      screen.getByRole("button", { name: /Synthetic Central Residence/ }),
+    ).toBeInTheDocument();
   });
 });

@@ -12,7 +12,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { MapFilterControls } from "@/components/map-filter-controls";
 import { LiveAnnouncement } from "@/components/live-announcement";
-import { OfferDetailDrawer } from "@/components/offer-detail-drawer";
 import { UserToolbar } from "@/components/user-toolbar";
 
 import {
@@ -53,6 +52,14 @@ const WarsawMap = dynamic(
     ssr: false,
     loading: () => <div className="map-placeholder" aria-hidden="true" />,
   },
+);
+
+const OfferDetailDrawer = dynamic(
+  () =>
+    import("@/components/offer-detail-drawer").then(
+      (module) => module.OfferDetailDrawer,
+    ),
+  { ssr: false },
 );
 
 type OfferState =
@@ -278,6 +285,11 @@ export function MapExplorer() {
     setSelectedOfferMatchesFilters(null);
   }
 
+  function retryMap() {
+    setMapFailed(false);
+    void mapQuery.refetch();
+  }
+
   const offers: OfferState =
     selectedId === null
       ? { status: "idle" }
@@ -306,9 +318,13 @@ export function MapExplorer() {
             <div className="map-fallback" role="status">
               <strong>{t("mapUnavailable")}</strong>
               <span>{t("listStillAvailable")}</span>
+              <button type="button" onClick={retryMap}>
+                {t("retryMap")}
+              </button>
             </div>
           ) : map ? (
             <WarsawMap
+              key="warsaw-map"
               bbox={searchState.bbox}
               data={map}
               selectedId={selectedId}
@@ -325,7 +341,14 @@ export function MapExplorer() {
               role={mapQuery.isError ? "alert" : "status"}
             >
               <strong>{mapQuery.isError ? t("error") : t("loading")}</strong>
-              {mapQuery.isError ? <span>{t("filtersPreserved")}</span> : null}
+              {mapQuery.isError ? (
+                <>
+                  <span>{t("filtersPreserved")}</span>
+                  <button type="button" onClick={retryMap}>
+                    {t("retryMap")}
+                  </button>
+                </>
+              ) : null}
             </div>
           )}
           {!sidebarOpen && !isMobile ? (
@@ -490,6 +513,9 @@ export function MapExplorer() {
         matchesFilters={selectedOfferMatchesFilters}
         detailQuery={offerDetailQuery}
         onClose={closeOfferDetail}
+        onRetry={
+          selectedOfferId ? () => void offerDetailQuery.refetch() : undefined
+        }
         returnFocusRef={offerTriggerRef}
       />
     </section>

@@ -76,6 +76,7 @@
     "mapLoading": "Loading interactive map…",
     "mapUnavailable": "The interactive map could not load.",
     "listStillAvailable": "Use the location list to continue browsing.",
+    "retryMap": "Retry map",
     "locationsLabel": "Warsaw locations and offers",
     "locationsEyebrow": "Warsaw",
     "locationsTitle": "Grouped locations",
@@ -148,5 +149,10 @@
     "mobileShowResults": "Show {count, plural, one {# location} other {# locations}}",
     "mobileFullList": "Full list",
     "mobileShowMap": "Show map"
+  },
+  "errors": {
+    "segmentTitle": "This view could not be loaded",
+    "segmentBody": "Something went wrong while rendering this page. Your URL filters should still be preserved.",
+    "retry": "Try again"
   }
 }

@@ -20,7 +20,7 @@ a responsive, accessible map/list/detail experience over dated offers.
 - Epic workspace status: `ready`; E5-T1 and E5-T2 are complete and the full remaining sequence is approved.
 - [Spike](SPIKE.md): `approved`, revision 3.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, sequencing E5-T2 through E5-T5 after the documentation branch.
-- E5-T1 through E5-T4 are `done` (E5-T4 merged via PR #82); E5-T5 is ready to start once E4-T4 lands.
+- E5-T1 through E5-T4 are `done` (E5-T4 merged via PR #82); E5-T5 is `in_progress` on branch `cursor/feat-e5-t5-performance-ux-0c74` after E4-T4 (PR #83).
 
 ## Milestones
 
