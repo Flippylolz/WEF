@@ -24,6 +24,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `ready`; spike revision 2 approved (PR #49), plan revision 2 approved (PR #50); E6-T4 done through PR #51; 6 proposed/blocked; milestones M3.
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `ready`; spike revision 4 and plan revision 4 approved; 11 tasks (5 done, 1 promoted draft, 1 invalidated/paused, 3 proposed, 1 deferred); milestone M3.
 - [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; 5 tasks (5 proposed); milestones M4.
+- [E9 — Account registration modal](E9-account-registration-modal/README.md) — `ready`; E9-T1 implements the registration/login modal against E6-T4; milestone M3.
 
 The original E0/E1/E3/E4/E5-T1/E7 ordered stack is merged and reconciled against successful integrated `main` CI. E2-T1 and later E3–E5/E7 work retain approved current gates or remain proposed/ready. E6 is selected with spike revision 2 awaiting owner approval; E8 is selected for research with no implementation permission. New work must pass its dedicated pull-request CI before merge.
 
