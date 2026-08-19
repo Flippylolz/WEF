@@ -121,20 +121,24 @@ type WarsawMapProps = {
   bbox: string;
   data: LocationMap;
   selectedId: string | null;
+  highlightedId?: string | null;
   loadingLabel: string;
   onSelect: (locationId: string) => void;
   onFailure: () => void;
   onViewportChange: (bbox: string) => void;
+  reduceMotion?: boolean;
 };
 
 export function WarsawMap({
   bbox,
   data,
   selectedId,
+  highlightedId = null,
   loadingLabel,
   onSelect,
   onFailure,
   onViewportChange,
+  reduceMotion = false,
 }: WarsawMapProps) {
   const geojson = data as FeatureCollection<Point>;
   const [mapReady, setMapReady] = useState(false);
@@ -185,7 +189,11 @@ export function WarsawMap({
           : null;
       if (!source || !coordinates) return;
       const zoom = await source.getClusterExpansionZoom(clusterId);
-      event.target.easeTo({ center: coordinates, zoom });
+      event.target.easeTo({
+        center: coordinates,
+        zoom,
+        duration: reduceMotion ? 0 : undefined,
+      });
       return;
     }
 
@@ -280,6 +288,21 @@ export function WarsawMap({
                 "circle-radius": 18,
                 "circle-stroke-color": "#17201b",
                 "circle-stroke-width": 3,
+              }}
+            />
+          ) : null}
+          {highlightedId && highlightedId !== selectedId ? (
+            <Layer
+              id="location-highlighted"
+              type="circle"
+              source="locations"
+              filter={["==", ["id"], highlightedId]}
+              paint={{
+                "circle-color": "transparent",
+                "circle-radius": 16,
+                "circle-stroke-color": "#2b7d58",
+                "circle-stroke-width": 2,
+                "circle-stroke-opacity": 0.95,
               }}
             />
           ) : null}

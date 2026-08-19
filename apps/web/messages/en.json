@@ -142,6 +142,11 @@
     "detailSourceActionLabel": "Source action",
     "detailOpenTelegram": "Open in Telegram",
     "detailSourceFallback": "Telegram source recorded on {date}. No verified public link is available.",
-    "detailSourceFallbackWithId": "Telegram source {id} recorded on {date}. No verified public link is available."
+    "detailSourceFallbackWithId": "Telegram source {id} recorded on {date}. No verified public link is available.",
+    "locationSelectedAnnouncement": "Selected {name}.",
+    "mobileResultsBarLabel": "Mobile results",
+    "mobileShowResults": "Show {count, plural, one {# location} other {# locations}}",
+    "mobileFullList": "Full list",
+    "mobileShowMap": "Show map"
   }
 }

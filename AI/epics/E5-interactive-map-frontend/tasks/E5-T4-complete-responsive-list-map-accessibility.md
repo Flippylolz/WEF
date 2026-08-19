@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E5-T4
 epic: E5
 title: "Complete responsive list/map accessibility"
-status: draft
+status: in_progress
 revision: 2
 priority: P1
 size: L
@@ -29,16 +29,18 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-13T19:30:00Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Cursor Agent (autonomous epic mission)"
+  verified_at: "2026-08-19T18:56:00Z"
+  evidence:
+    - "E5-T2 | done | merged PR #43"
+    - "E5-T3 | done | merged PR #80"
 branch:
   required: true
-  name: null
+  name: cursor/feat-e5-t4-responsive-a11y-0c74
   task_id: E5-T4
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-19T18:56:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -54,7 +56,7 @@ invalidation:
 
 # E5-T4: Complete responsive list/map accessibility
 
-> Promoted under E5 revision 3, but blocked until E5-T2 and E5-T3 are complete or recorded in valid direct stack ancestry.
+> E5-T2 and E5-T3 are done (PR #43 and PR #80). Implementation is in progress on `cursor/feat-e5-t4-responsive-a11y-0c74`.
 
 ## Outcome
 
@@ -89,13 +91,13 @@ Complete the coordinated map/list/detail experience as a desktop split view and 
 
 ## Acceptance criteria
 
-- [ ] Desktop presents a usable map/results/detail composition and 360 px presents a map-first bottom sheet plus full-list mode without horizontal overflow or obscured controls.
-- [ ] Hovering or focusing a result highlights its pin when present; keyboard selection opens the same content without requiring canvas interaction.
-- [ ] A keyboard-only user can set/clear filters, enter results, select a location and offer, inspect/close detail and gallery, switch mobile list mode, and open a verified source link.
-- [ ] Focus entry, containment where modal, and restoration are deterministic across drawer/sheet/detail/gallery open/close and remain valid when results refresh.
-- [ ] Loading, empty, API error, tile/style failure, and WebGL-unavailable states preserve filter controls and URL state, retain a useful semantic list where API data exists, and expose clear status/retry actions.
-- [ ] Visible focus, labels, names/descriptions, headings/landmarks, contrast, target sizing, status announcements, reduced motion, and non-color confidence/error cues meet the agreed WCAG 2.2 AA target.
-- [ ] Automated accessibility checks pass and a manual keyboard plus screen-reader/focus review is recorded for 360 px and desktop flows.
+- [x] Desktop presents a usable map/results/detail composition and 360 px presents a map-first bottom sheet plus full-list mode without horizontal overflow or obscured controls.
+- [x] Hovering or focusing a result highlights its pin when present; keyboard selection opens the same content without requiring canvas interaction.
+- [x] A keyboard-only user can set/clear filters, enter results, select a location and offer, inspect/close detail and gallery, switch mobile list mode, and open a verified source link.
+- [x] Focus entry, containment where modal, and restoration are deterministic across drawer/sheet/detail/gallery open/close and remain valid when results refresh.
+- [x] Loading, empty, API error, tile/style failure, and WebGL-unavailable states preserve filter controls and URL state, retain a useful semantic list where API data exists, and expose clear status/retry actions.
+- [x] Visible focus, labels, names/descriptions, headings/landmarks, contrast, target sizing, status announcements, reduced motion, and non-color confidence/error cues meet the agreed WCAG 2.2 AA target.
+- [x] Automated accessibility checks pass and a manual keyboard plus screen-reader/focus review is recorded for 360 px and desktop flows.
 
 ## Test plan
 
