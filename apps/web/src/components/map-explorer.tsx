@@ -11,12 +11,14 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { MapFilterControls } from "@/components/map-filter-controls";
+import { OfferDetailDrawer } from "@/components/offer-detail-drawer";
 import { UserToolbar } from "@/components/user-toolbar";
 
 import {
   fetchFacets,
   fetchLocationMap,
   fetchLocationOffers,
+  fetchOfferDetail,
   fetchQuickFilters,
   type LocationMapFeature,
   type LocationOfferPage,
@@ -35,6 +37,11 @@ import {
   toMapLocationQuery,
   type MapSearchState,
 } from "@/lib/map-search-params";
+import {
+  formatAdditionalPrice,
+  formatArea,
+  formatPrice,
+} from "@/lib/offer-presentation";
 
 const WarsawMap = dynamic(
   () => import("@/components/warsaw-map").then((module) => module.WarsawMap),
@@ -49,6 +56,10 @@ type OfferState =
   | { status: "loading" }
   | { status: "error" }
   | { status: "ready"; data: LocationOfferPage };
+
+class OfferNotFoundError extends Error {
+  override name = "OfferNotFoundError";
+}
 
 export function MapExplorer() {
   const t = useTranslations("map");
@@ -75,6 +86,10 @@ export function MapExplorer() {
     return params.toString();
   }, [canonicalSearch]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
+  const [selectedOfferMatchesFilters, setSelectedOfferMatchesFilters] =
+    useState<boolean | null>(null);
+  const offerTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [selectedFeatureSnapshot, setSelectedFeatureSnapshot] =
     useState<LocationMapFeature | null>(null);
   const [mapFailed, setMapFailed] = useState(false);
@@ -157,6 +172,17 @@ export function MapExplorer() {
       return result.data;
     },
   });
+  const offerDetailQuery = useQuery({
+    queryKey: ["offer-detail", selectedOfferId],
+    enabled: selectedOfferId !== null,
+    queryFn: async ({ signal }) => {
+      if (selectedOfferId === null) throw new Error("missing offer");
+      const result = await fetchOfferDetail(selectedOfferId, { signal });
+      if (result.state === "not_found") throw new OfferNotFoundError();
+      if (result.state === "error") throw new Error("offer-detail");
+      return result.data;
+    },
+  });
 
   const selectedFeature = useMemo(() => {
     if (selectedId === null) return null;
@@ -195,7 +221,24 @@ export function MapExplorer() {
     );
     if (currentFeature) setSelectedFeatureSnapshot(currentFeature);
     setSelectedId(locationId);
+    setSelectedOfferId(null);
+    setSelectedOfferMatchesFilters(null);
     setSidebarOpen(true);
+  }
+
+  function selectOffer(
+    offerId: string,
+    matchesFilters: boolean,
+    trigger: HTMLButtonElement,
+  ) {
+    offerTriggerRef.current = trigger;
+    setSelectedOfferId(offerId);
+    setSelectedOfferMatchesFilters(matchesFilters);
+  }
+
+  function closeOfferDetail() {
+    setSelectedOfferId(null);
+    setSelectedOfferMatchesFilters(null);
   }
 
   const offers: OfferState =
@@ -361,10 +404,19 @@ export function MapExplorer() {
               onRetry={
                 selectedId ? () => void offersQuery.refetch() : undefined
               }
+              onSelectOffer={selectOffer}
             />
           </section>
         </aside>
       </div>
+      <OfferDetailDrawer
+        open={selectedOfferId !== null}
+        offerId={selectedOfferId}
+        matchesFilters={selectedOfferMatchesFilters}
+        detailQuery={offerDetailQuery}
+        onClose={closeOfferDetail}
+        returnFocusRef={offerTriggerRef}
+      />
     </section>
   );
 }
@@ -472,9 +524,19 @@ type OfferPanelProps = {
   feature: LocationMapFeature | null;
   offers: OfferState;
   onRetry?: () => void;
+  onSelectOffer: (
+    offerId: string,
+    matchesFilters: boolean,
+    trigger: HTMLButtonElement,
+  ) => void;
 };
 
-function OfferPanel({ feature, offers, onRetry }: OfferPanelProps) {
+function OfferPanel({
+  feature,
+  offers,
+  onRetry,
+  onSelectOffer,
+}: OfferPanelProps) {
   const t = useTranslations("map");
   if (!feature) {
     return <p className="offer-placeholder">{t("selectLocation")}</p>;
@@ -560,15 +622,33 @@ function OfferPanel({ feature, offers, onRetry }: OfferPanelProps) {
                 )}
               />
             </dl>
-            <p className="offer-area">
-              {formatArea(
-                offer.area_min_sqm ?? null,
-                offer.area_max_sqm ?? null,
-              )}
-            </p>
+            {formatArea(
+              offer.area_min_sqm ?? null,
+              offer.area_max_sqm ?? null,
+            ) ? (
+              <p className="offer-area">
+                {formatArea(
+                  offer.area_min_sqm ?? null,
+                  offer.area_max_sqm ?? null,
+                )}
+              </p>
+            ) : null}
             {offer.data_confidence === "partial" ? (
               <small>{t("partialData")}</small>
             ) : null}
+            <button
+              className="offer-detail-trigger"
+              type="button"
+              onClick={(event) =>
+                onSelectOffer(
+                  offer.id,
+                  offer.matches_filters,
+                  event.currentTarget,
+                )
+              }
+            >
+              {t("viewOfferDetails", { name: offer.display_name })}
+            </button>
           </li>
         ))}
       </ul>
@@ -589,32 +669,4 @@ function PriceRow({ label, value }: PriceRowProps) {
       <dd>{value}</dd>
     </div>
   );
-}
-
-function formatPrice(min: number | null, max: number | null) {
-  if (min === null || max === null) return "Price not provided";
-  const formatter = new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "PLN",
-    maximumFractionDigits: 0,
-  });
-  return min === max
-    ? formatter.format(min / 100)
-    : `${formatter.format(min / 100)}–${formatter.format(max / 100)}`;
-}
-
-function formatAdditionalPrice(
-  min: number | null,
-  max: number | null,
-  included: boolean,
-  includedLabel: string,
-) {
-  if (included) return includedLabel;
-  if (min === null || max === null) return null;
-  return formatPrice(min, max);
-}
-
-function formatArea(min: string | null, max: string | null) {
-  if (min === null || max === null) return "Area not provided";
-  return min === max ? `${min} m²` : `${min}–${max} m²`;
 }

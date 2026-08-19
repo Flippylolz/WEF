@@ -507,4 +507,71 @@ describe("MapExplorer", () => {
 
     expect(observedSignal?.aborted).toBe(true);
   });
+
+  it("loads offer detail after explicit offer selection", async () => {
+    const user = userEvent.setup();
+    const offerDetail: catalogApi.OfferDetail = {
+      id: "20000000-0000-4000-8000-000000000001",
+      content_type: "development",
+      market_type: "primary",
+      display_name: "development · primary",
+      data_confidence: "complete",
+      published_at: "2026-08-01T10:00:00Z",
+      currency: "PLN",
+      price_min_minor: 80_000_000,
+      price_max_minor: 125_000_000,
+      parking_price_min_minor: 4_500_000,
+      parking_price_max_minor: 4_500_000,
+      parking_included_in_price: false,
+      storage_price_min_minor: null,
+      storage_price_max_minor: null,
+      storage_included_in_price: true,
+      area_min_sqm: "35.00",
+      area_max_sqm: "71.50",
+      rooms_min: 1,
+      rooms_max: 3,
+      floor_label: null,
+      delivery_label: "Synthetic delivery",
+      public_source_text: "Masked public text only.",
+      parser_version: "synthetic-m1-v1",
+      location: {
+        id: "10000000-0000-4000-8000-000000000001",
+        display_name: "Synthetic Central Residence",
+        display_address: "Synthetic address, Warsaw",
+        district: "srodmiescie",
+        coordinate_precision: "district",
+        confidence: "low",
+      },
+      development: null,
+      field_confidence: [],
+      media: [],
+      source_message_id: null,
+      verified_source_url: null,
+      source_history: [],
+    };
+    vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
+      state: "ready",
+      data: offerDetail,
+    });
+    renderExplorer();
+    await user.click(
+      await screen.findByRole("button", {
+        name: /Synthetic Central Residence/,
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: /viewOfferDetails/,
+      }),
+    );
+
+    expect(
+      await screen.findByTestId("offer-detail-overlay"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Masked public text only.")).toBeInTheDocument();
+    expect(catalogApi.fetchOfferDetail).toHaveBeenCalledWith(
+      "20000000-0000-4000-8000-000000000001",
+      { signal: expect.any(AbortSignal) },
+    );
+  });
 });

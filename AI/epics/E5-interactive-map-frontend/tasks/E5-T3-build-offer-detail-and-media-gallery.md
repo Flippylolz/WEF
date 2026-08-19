@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E5-T3
 epic: E5
 title: "Build offer detail and media gallery"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: L
@@ -29,17 +29,19 @@ implementation_gate:
   verified_by: "Cursor Agent"
   verified_at: "2026-08-13T19:30:00Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Cursor Agent (autonomous epic mission)"
+  verified_at: "2026-08-19T18:40:00Z"
+  evidence:
+    - "E4-T3 | done | merged PR https://github.com/Flippylolz/WEF/pull/78"
+    - "E5-T1 | done | merged on main before E5-T2"
 branch:
   required: true
-  name: null
+  name: feat/E5-T3-offer-detail-ui
   task_id: E5-T3
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-19T18:40:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/80"
 completion:
   completed_by: null
   completed_at: null
@@ -54,7 +56,7 @@ invalidation:
 
 # E5-T3: Build offer detail and media gallery
 
-> Promoted under E5 revision 3, but blocked until E4-T3 is complete or recorded as a valid ancestor pull request. E5-T1 is already done.
+> E4-T3 is done (PR #78). E5-T1 and E5-T2 are done. Implementation is in progress on `feat/E5-T3-offer-detail-ui`.
 
 ## Outcome
 
@@ -92,15 +94,15 @@ Add a responsive, accessible offer-detail drawer/sheet that renders dated struct
 
 ## Acceptance criteria
 
-- [ ] Selecting an offer loads its generated-contract detail without adding full detail/media to the initial map or location-offer payload.
-- [ ] Publication date is prominent and no copy claims that an imported offer is currently available, active, or for sale now.
-- [ ] Typed fields, separate apartment/parking/storage values and included states, backend-owned confidence/caveats, masked public text, and source history render without client-side semantic recomputation.
-- [ ] Matching offers remain distinguished from additional non-matching related posts.
-- [ ] Images load thumbnail-first/full-on-demand with preserved aspect ratio, useful alternative text, keyboard next/previous/close, and deterministic missing-file placeholders.
-- [ ] Supported videos use native controls; unsupported or missing media does not break layout or keyboard flow.
-- [ ] `Open in Telegram` appears only for a backend-supplied verified HTTPS URL and uses safe external-link attributes; missing links show a useful non-link fallback.
-- [ ] Loading, empty, not-found, API error, and rapid offer-switch states remain accessible and do not expose raw responses, internal URLs, paths, contacts, or payloads.
-- [ ] Detail closes with focus restored to the invoking offer control and remains usable at 360 px and desktop widths.
+- [x] Selecting an offer loads its generated-contract detail without adding full detail/media to the initial map or location-offer payload.
+- [x] Publication date is prominent and no copy claims that an imported offer is currently available, active, or for sale now.
+- [x] Typed fields, separate apartment/parking/storage values and included states, backend-owned confidence/caveats, masked public text, and source history render without client-side semantic recomputation.
+- [x] Matching offers remain distinguished from additional non-matching related posts.
+- [x] Images load thumbnail-first/full-on-demand with preserved aspect ratio, useful alternative text, keyboard next/previous/close, and deterministic missing-file placeholders.
+- [x] Supported videos use native controls; unsupported or missing media does not break layout or keyboard flow.
+- [x] `Open in Telegram` appears only for a backend-supplied verified HTTPS URL and uses safe external-link attributes; missing links show a useful non-link fallback.
+- [x] Loading, empty, not-found, API error, and rapid offer-switch states remain accessible and do not expose raw responses, internal URLs, paths, contacts, or payloads.
+- [x] Detail closes with focus restored to the invoking offer control and remains usable at 360 px and desktop widths.
 
 ## Test plan
 
@@ -124,14 +126,14 @@ Web-only additive behavior after E4-T3. Roll back the E5-T3 web commit/image to 
 
 - [x] This file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
 - [x] Promotion, spike revision 3, and implementation-plan revision 3 are recorded.
-- [ ] E4-T3 is complete or a valid direct ancestor PR is recorded; dependency gate is `satisfied` or `stacked`.
-- [ ] Status moves to `ready` only after every gate is valid.
+- [x] E4-T3 is complete or a valid direct ancestor PR is recorded; dependency gate is `satisfied` or `stacked`.
+- [x] Status moves to `ready` only after every gate is valid.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated E5-T3 branch is created from the current E5-T2 branch after green parent CI and required E4 ancestry refresh.
-- [ ] Branch/PR contain E5-T3 only and metadata is recorded before `in_progress`.
+- [x] Status passed through `ready`.
+- [x] Dedicated E5-T3 branch is created from the current E5-T2 branch after green parent CI and required E4 ancestry refresh.
+- [x] Branch/PR contain E5-T3 only and metadata is recorded before `in_progress`.
 
 ## Done checklist
 
