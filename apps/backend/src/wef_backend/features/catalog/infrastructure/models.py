@@ -21,6 +21,9 @@ from sqlalchemy import (
     Uuid,
     func,
 )
+from sqlalchemy import (
+    text as sa_text,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -151,6 +154,20 @@ class OfferRow(CatalogBase):
         ),
         Index("ix_offers_location", "location_id"),
         Index("ix_offers_publication", "visibility", "published_at", "id"),
+        Index(
+            "ix_offers_location_visible_published",
+            "location_id",
+            "visibility",
+            "published_at",
+            "id",
+        ),
+        Index(
+            "ix_offers_visible_price_range",
+            "visibility",
+            "price_min_minor",
+            "price_max_minor",
+            postgresql_where=sa_text("visibility = 'visible'"),
+        ),
         Index("ix_offers_filter_groups", "content_type", "market_type"),
     )
 
