@@ -20,7 +20,7 @@ a responsive, accessible map/list/detail experience over dated offers.
 - Epic workspace status: `ready`; E5-T1 and E5-T2 are complete and the full remaining sequence is approved.
 - [Spike](SPIKE.md): `approved`, revision 3.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, sequencing E5-T2 through E5-T5 after the documentation branch.
-- E5-T1 and E5-T2 are `done` (E5-T2 merged via PR #43 with post-merge fix PR #47); E5-T3 is `in_progress` on branch `feat/E5-T3-offer-detail-ui`; E5-T4 and E5-T5 remain promoted/`draft` behind E5-T3/E4-T4 dependency gates.
+- E5-T1 through E5-T3 are `done` (E5-T3 merged via PR #80); E5-T4 and E5-T5 remain promoted/`draft` with E5-T4 ready to start and E5-T5 blocked on E5-T4/E4-T4.
 
 ## Milestones
 
@@ -46,8 +46,8 @@ a responsive, accessible map/list/detail experience over dated offers.
 
 - [E5-T1: Build map shell and grouped pin interaction](tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — `done`, P0/L, M1
 - [E5-T2: Add URL-backed filters and viewport querying](tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md) — `done`, P0/L, M1
-- [E5-T3: Build offer detail and media gallery](tasks/E5-T3-build-offer-detail-and-media-gallery.md) — `in_progress`, P0/L, M3; branch `feat/E5-T3-offer-detail-ui`
-- [E5-T4: Complete responsive list/map accessibility](tasks/E5-T4-complete-responsive-list-map-accessibility.md) — `draft`, P1/L, M3; blocked on E5-T3 (E5-T2 is complete)
+- [E5-T3: Build offer detail and media gallery](tasks/E5-T3-build-offer-detail-and-media-gallery.md) — `done`, P0/L, M3; merged PR #80
+- [E5-T4: Complete responsive list/map accessibility](tasks/E5-T4-complete-responsive-list-map-accessibility.md) — `draft`, P1/L, M3; E5-T2 and E5-T3 satisfied — ready to start
 - [E5-T5: Performance and production UX pass](tasks/E5-T5-performance-and-production-ux-pass.md) — `draft`, P1/M, M3; blocked on E5-T4/E4-T4
 
 ## Cross-epic dependencies
