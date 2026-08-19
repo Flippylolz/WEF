@@ -15,9 +15,7 @@ class FavoriteLocationRow(IdentityBase):
     """One starred catalog location for an account."""
 
     __tablename__ = "favorite_locations"
-    __table_args__ = (
-        Index("ix_favorite_locations_user_created", "user_id", "created_at"),
-    )
+    __table_args__ = (Index("ix_favorite_locations_user_created", "user_id", "created_at"),)
 
     user_id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True),
