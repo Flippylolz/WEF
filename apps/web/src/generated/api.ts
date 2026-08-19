@@ -285,6 +285,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quick-filters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List server-defined quick filter presets
+         * @description Return the supported quick-filter identifiers and label keys.
+         */
+        get: operations["listQuickFilters"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -671,6 +691,24 @@ export interface components {
             title: string;
             /** Type */
             type: string;
+        };
+        /**
+         * QuickFilterListResponse
+         * @description Supported quick filter presets in stable order.
+         */
+        QuickFilterListResponse: {
+            /** Items */
+            items: components["schemas"]["QuickFilterPresetResponse"][];
+        };
+        /**
+         * QuickFilterPresetResponse
+         * @description One server-defined quick filter preset.
+         */
+        QuickFilterPresetResponse: {
+            /** Id */
+            id: string;
+            /** Label Key */
+            label_key: string;
         };
         /**
          * RegisterRequest
@@ -1126,6 +1164,7 @@ export interface operations {
                 price_min?: number | null;
                 published_from?: string | null;
                 published_to?: string | null;
+                quick_filter?: string | null;
                 rooms?: number[];
             };
             header?: never;
@@ -1178,6 +1217,7 @@ export interface operations {
                 price_min?: number | null;
                 published_from?: string | null;
                 published_to?: string | null;
+                quick_filter?: string | null;
                 rooms?: number[];
             };
             header?: {
@@ -1211,6 +1251,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+        };
+    };
+    listQuickFilters: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickFilterListResponse"];
                 };
             };
         };

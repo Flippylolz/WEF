@@ -955,6 +955,44 @@
         "title": "ProblemResponse",
         "type": "object"
       },
+      "QuickFilterListResponse": {
+        "additionalProperties": false,
+        "description": "Supported quick filter presets in stable order.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/QuickFilterPresetResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "QuickFilterListResponse",
+        "type": "object"
+      },
+      "QuickFilterPresetResponse": {
+        "additionalProperties": false,
+        "description": "One server-defined quick filter preset.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label_key": {
+            "title": "Label Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label_key"
+        ],
+        "title": "QuickFilterPresetResponse",
+        "type": "object"
+      },
       "RegisterRequest": {
         "additionalProperties": false,
         "description": "Strict registration syntax.",
@@ -1597,6 +1635,24 @@
           },
           {
             "in": "query",
+            "name": "quick_filter",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 32,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Quick Filter"
+            }
+          },
+          {
+            "in": "query",
             "name": "include_non_matching",
             "required": false,
             "schema": {
@@ -1860,6 +1916,24 @@
             }
           },
           {
+            "in": "query",
+            "name": "quick_filter",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 32,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Quick Filter"
+            }
+          },
+          {
             "in": "header",
             "name": "if-none-match",
             "required": false,
@@ -1904,6 +1978,28 @@
         "summary": "Query grouped map locations",
         "tags": [
           "map"
+        ]
+      }
+    },
+    "/api/v1/quick-filters": {
+      "get": {
+        "description": "Return the supported quick-filter identifiers and label keys.",
+        "operationId": "listQuickFilters",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuickFilterListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List server-defined quick filter presets",
+        "tags": [
+          "filters"
         ]
       }
     }
