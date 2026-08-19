@@ -67,9 +67,7 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     app.add_exception_handler(RateLimitExceededError, rate_limit_handler)
 
     if services is not None:
-        app.middleware("http")(
-            build_public_rate_limit_middleware(services.public_rate_limiter)
-        )
+        app.middleware("http")(build_public_rate_limit_middleware(services.public_rate_limiter))
         app.state.list_estates = services.list_estates
         app.state.query_map = services.query_map
         app.state.query_facets = services.query_facets
