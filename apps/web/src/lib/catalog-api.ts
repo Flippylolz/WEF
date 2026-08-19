@@ -21,7 +21,9 @@ export type OfferDetail =
 
 type Ready<T> = { state: "ready"; data: T };
 type Failed = { state: "error" };
+type NotFound = { state: "not_found" };
 export type ApiResult<T> = Ready<T> | Failed;
+export type OfferDetailResult = Ready<OfferDetail> | NotFound | Failed;
 type Fetcher = (request: Request) => Promise<Response>;
 type RequestOptions = {
   fetcher?: Fetcher;
@@ -151,7 +153,7 @@ export async function fetchLocationOffers(
 export async function fetchOfferDetail(
   offerId: string,
   options: RequestOptions = {},
-): Promise<ApiResult<OfferDetail>> {
+): Promise<OfferDetailResult> {
   try {
     const { data, error, response } = await client(options.fetcher).GET(
       "/api/v1/offers/{offer_id}",
@@ -161,6 +163,9 @@ export async function fetchOfferDetail(
         ...(options.signal ? { signal: options.signal } : {}),
       },
     );
+    if (response.status === 404) {
+      return { state: "not_found" };
+    }
     if (!response.ok || error !== undefined || data === undefined) {
       return { state: "error" };
     }
