@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
+import structlog
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 
@@ -11,9 +12,11 @@ from wef_backend.composition import AppServices, build_services
 from wef_backend.errors import (
     AuthProblemError,
     QueryValidationError,
+    RateLimitExceededError,
     ResourceNotFoundError,
     auth_problem_handler,
     query_validation_handler,
+    rate_limit_handler,
     request_validation_handler,
     resource_not_found_handler,
 )
@@ -29,6 +32,7 @@ from wef_backend.features.identity.interface.favorites_router import (
     router as favorites_router,
 )
 from wef_backend.health import router as health_router
+from wef_backend.middleware.public_rate_limit import build_public_rate_limit_middleware
 
 
 def create_http_app(services: AppServices | None = None) -> FastAPI:
@@ -60,6 +64,7 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     app.add_exception_handler(QueryValidationError, query_validation_handler)
     app.add_exception_handler(ResourceNotFoundError, resource_not_found_handler)
     app.add_exception_handler(AuthProblemError, auth_problem_handler)
+    app.add_exception_handler(RateLimitExceededError, rate_limit_handler)
 
     @app.middleware("http")
     async def attach_request_identity(
@@ -68,11 +73,16 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     ) -> Response:
         """Attach one safe correlation identifier to every response."""
         request.state.request_id = uuid4()
+        structlog.contextvars.clear_contextvars()
+        structlog.contextvars.bind_contextvars(
+            request_id=str(request.state.request_id),
+        )
         response = await call_next(request)
         response.headers["X-Request-ID"] = str(request.state.request_id)
         return response
 
     if services is not None:
+        app.middleware("http")(build_public_rate_limit_middleware(services.public_rate_limiter))
         app.state.list_estates = services.list_estates
         app.state.query_map = services.query_map
         app.state.query_facets = services.query_facets

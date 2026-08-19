@@ -126,9 +126,14 @@ async def test_grouped_map_query_semantics_and_performance() -> None:
 
         await seed(*m1_fixture())
         await service(MapFilters(bbox=WARSAW))
-        started_at = perf_counter()
-        await service(MapFilters(bbox=WARSAW, rooms=(2,), price_max=120_000_000))
-        assert perf_counter() - started_at < 0.5
+        timings: list[float] = []
+        for _ in range(20):
+            started_at = perf_counter()
+            await service(MapFilters(bbox=WARSAW, rooms=(2,), price_max=120_000_000))
+            timings.append(perf_counter() - started_at)
+        timings.sort()
+        p95_index = max(0, int(len(timings) * 0.95) - 1)
+        assert timings[p95_index] < 0.5
 
         async with database.session_factory() as session:
             plan = (
