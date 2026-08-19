@@ -11,7 +11,9 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MapExplorer } from "@/components/map-explorer";
+import * as authApi from "@/lib/auth-api";
 import * as catalogApi from "@/lib/catalog-api";
+import * as favoritesApi from "@/lib/favorites-api";
 
 const navigation = vi.hoisted(() => ({
   listeners: new Set<() => void>(),
@@ -216,6 +218,13 @@ describe("MapExplorer", () => {
     vi.spyOn(catalogApi, "fetchLocationOffers").mockResolvedValue({
       state: "ready",
       data: offerPage,
+    });
+    vi.spyOn(authApi, "fetchCurrentAccount").mockResolvedValue({
+      state: "error",
+    });
+    vi.spyOn(favoritesApi, "fetchFavorites").mockResolvedValue({
+      state: "ready",
+      data: { items: [] },
     });
   });
 

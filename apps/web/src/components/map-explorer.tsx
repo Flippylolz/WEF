@@ -1,12 +1,17 @@
 "use client";
 
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { MapFilterControls } from "@/components/map-filter-controls";
+import { UserToolbar } from "@/components/user-toolbar";
 
 import {
   fetchFacets,
@@ -16,6 +21,12 @@ import {
   type LocationMapFeature,
   type LocationOfferPage,
 } from "@/lib/catalog-api";
+import {
+  addFavorite,
+  fetchFavorites,
+  removeFavorite,
+} from "@/lib/favorites-api";
+import { fetchCurrentAccount } from "@/lib/auth-api";
 import {
   DEFAULT_MAP_SEARCH_STATE,
   normalizeBbox,
@@ -41,6 +52,7 @@ type OfferState =
 
 export function MapExplorer() {
   const t = useTranslations("map");
+  const queryClient = useQueryClient();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -102,6 +114,28 @@ export function MapExplorer() {
       return result.data.items;
     },
   });
+  const accountQuery = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: async ({ signal }) => {
+      const result = await fetchCurrentAccount({ signal });
+      if (result.state === "error") throw new Error("auth");
+      return result.data;
+    },
+  });
+  const signedIn = accountQuery.isSuccess && accountQuery.data !== null;
+  const favoritesQuery = useQuery({
+    queryKey: ["favorites"],
+    enabled: signedIn,
+    queryFn: async ({ signal }) => {
+      const result = await fetchFavorites({ signal });
+      if (result.state === "error") throw new Error("favorites");
+      return result.data.items;
+    },
+  });
+  const favoriteIds = useMemo(
+    () => new Set((favoritesQuery.data ?? []).map((item) => item.location_id)),
+    [favoritesQuery.data],
+  );
   const mapQuery = useQuery({
     queryKey: ["location-map", canonicalSearch],
     queryFn: async ({ signal }) => {
@@ -176,6 +210,7 @@ export function MapExplorer() {
 
   return (
     <section className="map-explorer-shell" aria-label={t("explorerLabel")}>
+      <UserToolbar onSelectFavorite={selectLocation} />
       <div
         className={`map-explorer${sidebarOpen ? "" : " map-explorer-collapsed"}`}
       >
@@ -301,7 +336,20 @@ export function MapExplorer() {
                     key={feature.id}
                     feature={feature}
                     selected={feature.id === selectedId}
+                    starred={favoriteIds.has(feature.id)}
+                    showStar={signedIn}
                     onSelect={selectLocation}
+                    onToggleStar={async () => {
+                      const starred = favoriteIds.has(feature.id);
+                      const result = starred
+                        ? await removeFavorite(feature.id)
+                        : await addFavorite(feature.id);
+                      if (result.state === "ready") {
+                        await queryClient.invalidateQueries({
+                          queryKey: ["favorites"],
+                        });
+                      }
+                    }}
                   />
                 ))}
               </ul>
@@ -364,32 +412,58 @@ function href(pathname: string, search: string) {
 type LocationButtonProps = {
   feature: LocationMapFeature;
   selected: boolean;
+  starred: boolean;
+  showStar: boolean;
   onSelect: (id: string) => void;
+  onToggleStar: () => void;
 };
 
-function LocationButton({ feature, selected, onSelect }: LocationButtonProps) {
+function LocationButton({
+  feature,
+  selected,
+  starred,
+  showStar,
+  onSelect,
+  onToggleStar,
+}: LocationButtonProps) {
   const t = useTranslations("map");
   const properties = feature.properties;
   return (
     <li>
-      <button
-        className="location-button"
-        type="button"
-        aria-pressed={selected}
-        onClick={() => onSelect(feature.id)}
-      >
-        <span>
-          <strong>{properties.display_name}</strong>
-          <small>{properties.display_address}</small>
-        </span>
-        <span className="pin-count">
-          {properties.matching_offer_count}
-          <span className="sr-only"> {t("matchingOffers")}</span>
-        </span>
-        {properties.confidence === "low" ? (
-          <span className="confidence-note">{t("lowConfidence")}</span>
+      <div className="location-button-row">
+        <button
+          className="location-button"
+          type="button"
+          aria-pressed={selected}
+          onClick={() => onSelect(feature.id)}
+        >
+          <span>
+            <strong>{properties.display_name}</strong>
+            <small>{properties.display_address}</small>
+          </span>
+          <span className="pin-count">
+            {properties.matching_offer_count}
+            <span className="sr-only"> {t("matchingOffers")}</span>
+          </span>
+          {properties.confidence === "low" ? (
+            <span className="confidence-note">{t("lowConfidence")}</span>
+          ) : null}
+        </button>
+        {showStar ? (
+          <button
+            className={`location-star-button${starred ? " location-star-button-active" : ""}`}
+            type="button"
+            aria-label={starred ? t("unstarLocation") : t("starLocation")}
+            aria-pressed={starred}
+            onClick={(event) => {
+              event.stopPropagation();
+              void onToggleStar();
+            }}
+          >
+            ★
+          </button>
         ) : null}
-      </button>
+      </div>
     </li>
   );
 }

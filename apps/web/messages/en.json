@@ -25,6 +25,14 @@
     "passwordMax": "Password must be at most 256 characters.",
     "passwordMismatch": "Passwords do not match."
   },
+  "favorites": {
+    "eyebrow": "Saved",
+    "title": "Starred locations",
+    "close": "Close favorites",
+    "openList": "Open starred locations",
+    "loading": "Loading starred locations…",
+    "empty": "You have not starred any locations yet."
+  },
   "home": {
     "title": "Apartments and houses for sale in Warsaw",
     "subtitle": "Browse dated apartment and house offers across Warsaw. All current records are clearly synthetic MVP fixtures."
@@ -95,6 +103,8 @@
     "quickFiltersLoading": "Loading quick filters…",
     "quickFilter": {
       "last_day": "Last 24 hours"
-    }
+    },
+    "starLocation": "Star this location",
+    "unstarLocation": "Remove this location from favorites"
   }
 }

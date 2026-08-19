@@ -176,6 +176,67 @@
         "title": "EstatesResponse",
         "type": "object"
       },
+      "FavoriteListResponse": {
+        "additionalProperties": false,
+        "description": "Account favorites newest-first.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FavoriteLocationResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "FavoriteListResponse",
+        "type": "object"
+      },
+      "FavoriteLocationResponse": {
+        "additionalProperties": false,
+        "description": "One starred location summary.",
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "display_address": {
+            "title": "Display Address",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "location_id": {
+            "format": "uuid",
+            "title": "Location Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "location_id",
+          "display_name",
+          "display_address",
+          "district",
+          "created_at"
+        ],
+        "title": "FavoriteLocationResponse",
+        "type": "object"
+      },
       "FilterFacetsResponse": {
         "additionalProperties": false,
         "description": "Canonical visible options and dataset bounds.",
@@ -1365,6 +1426,112 @@
         "summary": "Deprecated E0 synthetic estate proof",
         "tags": [
           "estates"
+        ]
+      }
+    },
+    "/api/v1/favorites": {
+      "get": {
+        "description": "Return starred locations with public labels.",
+        "operationId": "listFavoriteLocations",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FavoriteListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          }
+        },
+        "summary": "List starred locations for the account",
+        "tags": [
+          "favorites"
+        ]
+      }
+    },
+    "/api/v1/favorites/{location_id}": {
+      "delete": {
+        "description": "Remove one starred location idempotently.",
+        "operationId": "removeFavoriteLocation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "location_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Location Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove one starred location",
+        "tags": [
+          "favorites"
+        ]
+      },
+      "put": {
+        "description": "Star one accepted in-scope location.",
+        "operationId": "addFavoriteLocation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "location_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Location Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "404": {
+            "description": "The location is absent or not public."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Star one location",
+        "tags": [
+          "favorites"
         ]
       }
     },
