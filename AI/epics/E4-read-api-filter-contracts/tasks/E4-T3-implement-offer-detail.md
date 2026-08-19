@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E4-T3
 epic: E4
 title: "Implement offer detail"
-status: in_progress
+status: done
 revision: 1
 priority: P0
 size: M
@@ -41,12 +41,14 @@ branch:
   task_id: E4-T3
   one_task_only: true
   created_at: "2026-08-19T18:30:00Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/78"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-19T18:29:08Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/78"
+  evidence:
+    - "Merged https://github.com/Flippylolz/WEF/pull/78 at fb68b0a with green CI (Backend, Frontend and contract, Repository safety, Runtime images)"
+    - "make lint, typecheck, test, contract-check passed locally before merge"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -75,11 +77,11 @@ Expose `GET /api/v1/offers/{offer_id}` with dated typed fields, server-masked pu
 
 ## Acceptance criteria
 
-- [ ] `GET /api/v1/offers/{offer_id}` returns the public detail schema for visible offers on accepted in-scope locations and 404 otherwise.
-- [ ] Responses include masked public source text, field confidence, location summary, optional development summary, ordered media metadata/URLs, source history, and verified source URL only when configured.
-- [ ] No raw payload, local path, dedicated contact field, excerpt-only text, or unverified Telegram link is exposed.
-- [ ] Missing media/link/source-lineage cases remain valid responses on synthetic M1 seed data.
-- [ ] OpenAPI, generated TypeScript types, and catalog client helper are updated and checked in CI.
+- [x] `GET /api/v1/offers/{offer_id}` returns the public detail schema for visible offers on accepted in-scope locations and 404 otherwise.
+- [x] Responses include masked public source text, field confidence, location summary, optional development summary, ordered media metadata/URLs, source history, and verified source URL only when configured.
+- [x] No raw payload, local path, dedicated contact field, excerpt-only text, or unverified Telegram link is exposed.
+- [x] Missing media/link/source-lineage cases remain valid responses on synthetic M1 seed data.
+- [x] OpenAPI, generated TypeScript types, and catalog client helper are updated and checked in CI.
 
 ## Test plan
 
@@ -103,6 +105,6 @@ Expose `GET /api/v1/offers/{offer_id}` with dated typed fields, server-masked pu
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
