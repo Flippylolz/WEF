@@ -21,9 +21,7 @@ class QuickFilterPreset:
 
 def list_quick_filter_presets() -> tuple[QuickFilterPreset, ...]:
     """Return every supported quick filter in stable display order."""
-    return (
-        QuickFilterPreset(id="last_day", label_key="quickFilter.last_day"),
-    )
+    return (QuickFilterPreset(id="last_day", label_key="quickFilter.last_day"),)
 
 
 def resolve_quick_filter_published_from(*, preset_id: str, now: datetime) -> datetime:
