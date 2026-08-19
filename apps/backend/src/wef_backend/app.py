@@ -20,6 +20,7 @@ from wef_backend.errors import (
 from wef_backend.features.catalog.interface import (
     facets_router,
     locations_router,
+    offers_router,
 )
 from wef_backend.features.catalog.interface import router as catalog_router
 from wef_backend.features.estates.interface import router as estates_router
@@ -51,6 +52,7 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     app.include_router(catalog_router)
     app.include_router(facets_router)
     app.include_router(locations_router)
+    app.include_router(offers_router)
     app.include_router(estates_router)
     app.include_router(identity_router)
     app.include_router(favorites_router)
@@ -75,6 +77,7 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
         app.state.query_map = services.query_map
         app.state.query_facets = services.query_facets
         app.state.browse_location_offers = services.browse_location_offers
+        app.state.get_offer_detail = services.get_offer_detail
         app.state.is_ready = services.is_ready
         app.state.identity = services.identity
         app.state.favorites = services.favorites

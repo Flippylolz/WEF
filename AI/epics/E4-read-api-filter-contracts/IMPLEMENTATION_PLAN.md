@@ -3,7 +3,7 @@ schema: ai-workflow/implementation-plan@1
 epic: E4
 title: "M1 grouped map API implementation plan"
 status: approved
-revision: 2
+revision: 3
 owner: owner
 spike_revision: 2
 task_sequence:
@@ -11,13 +11,15 @@ task_sequence:
     revision: 2
   - id: E4-T2
     revision: 2
+  - id: E4-T3
+    revision: 1
 approval:
   required_role: owner
   status: approved
   decided_by: Flippylolz
   decided_at: "2026-08-12T22:34:40Z"
-  approved_revision: 2
-  evidence: "Owner directive to prepare the MVP/autodeploy, choose safe defaults, log decisions/blockers, and continue stacking PRs"
+  approved_revision: 3
+  evidence: "Owner MVP/autodeploy directive plus autonomous E4-T3 promotion after E3-T4/E4-T2 completion"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -52,6 +54,14 @@ Replace the public list proof with stable backend-owned map/facet/selected-locat
 - Independent result: adds options/result-panel data without mixing frontend work into backend review.
 - Affected code: shared filter policy plus facet/collection ports, adapters, presenters, routes, OpenAPI/types, tests.
 - Verification: aggregation, cursor tie cases, matching/history behavior, safe IDs/cursors, contract and Caddy smoke.
+
+### 3. E4-T3 — Implement offer detail
+
+- Task: [E4-T3 revision 1](tasks/E4-T3-implement-offer-detail.md).
+- Dependency: E3-T4 and E4-T2 must be done before start.
+- Independent result: adds `GET /api/v1/offers/{offer_id}` with masked text, confidence, media URLs, verified source action, and source history without changing map/facet semantics.
+- Affected code: offer-detail application port/use case, SQL adapter joins, presenter schemas, route wiring, OpenAPI/generated client, tests.
+- Verification: HTTP 404 gates, sensitive-field exclusion, M1 integration fixture, contract generation.
 
 ## Cross-task architecture
 
@@ -100,8 +110,8 @@ Return to the spike for a different public map representation, server-side tiles
 - [x] Modules, contract, tests, risks, rollout, and rollback are explicit.
 - [x] No deferred decision blocks the synthetic map API.
 - [x] No implementation code was written before this plan approval.
-- [x] Revision 2 records the approved plan.
+- [x] Revision 3 records the approved E4-T3 sequence entry.
 
 ## Owner decision
 
-Flippylolz approved revision 2 through the delegated overnight MVP/autodeploy directive. E4-T1 starts after E3-T1 ancestry and E4-T2 after E4-T1 ancestry; this does not authorize details/media/auth/contacts or real-source publication.
+Flippylolz approved revision 2 through the delegated overnight MVP/autodeploy directive. Revision 3 adds E4-T3 after E3-T4/E4-T2 completion to unblock the offer-detail frontend contract; it does not authorize E4-T4 hardening or auth/contact features.

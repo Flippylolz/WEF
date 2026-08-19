@@ -14,6 +14,7 @@ from wef_backend.features.catalog.application import (
     MapQueryResult,
     OfferDataConfidence,
 )
+from wef_backend.features.catalog.application.offer_detail import OfferDetailDTO
 from wef_backend.features.catalog.application.quick_filters import QuickFilterPreset
 from wef_backend.features.catalog.domain import ContentType, MarketType
 
@@ -152,6 +153,102 @@ class LocationOfferPageResponse(BaseModel):
     next_cursor: str | None
 
 
+class LocationSummaryResponse(BaseModel):
+    """Public location context for one offer."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    display_name: str
+    display_address: str
+    district: str | None
+    coordinate_precision: str
+    confidence: ConfidenceIndicator
+
+
+class DevelopmentSummaryResponse(BaseModel):
+    """Named development context when evidenced for the location."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    display_name: str
+    name_confidence: ConfidenceIndicator
+
+
+class FieldConfidenceEntryResponse(BaseModel):
+    """One backend-owned field confidence indicator."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    field: str
+    confidence: ConfidenceIndicator
+
+
+class OfferMediaResponse(BaseModel):
+    """Ordered public media metadata for one associated asset."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    media_asset_id: UUID
+    position: int = Field(ge=0)
+    media_type: Literal["image", "video"]
+    mime_type: str
+    width: int | None = Field(default=None, ge=1)
+    height: int | None = Field(default=None, ge=1)
+    duration_seconds: int | None = Field(default=None, ge=0)
+    thumbnail_url: str | None
+    content_url: str | None
+
+
+class SourceHistoryEntryResponse(BaseModel):
+    """One related source revision without exposing raw text."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_message_id: UUID
+    relationship: str
+    published_at: datetime
+    edited_at: datetime | None
+
+
+class OfferDetailResponse(BaseModel):
+    """Full public offer detail with masked text and verified source action."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    content_type: ContentType
+    market_type: MarketType
+    display_name: str
+    data_confidence: OfferDataConfidence
+    published_at: datetime
+    currency: str | None
+    price_min_minor: int | None = Field(default=None, ge=0)
+    price_max_minor: int | None = Field(default=None, ge=0)
+    parking_price_min_minor: int | None = Field(default=None, ge=0)
+    parking_price_max_minor: int | None = Field(default=None, ge=0)
+    parking_included_in_price: bool = False
+    storage_price_min_minor: int | None = Field(default=None, ge=0)
+    storage_price_max_minor: int | None = Field(default=None, ge=0)
+    storage_included_in_price: bool = False
+    area_min_sqm: Decimal | None = Field(default=None, gt=0)
+    area_max_sqm: Decimal | None = Field(default=None, gt=0)
+    rooms_min: int | None = Field(default=None, ge=0)
+    rooms_max: int | None = Field(default=None, ge=0)
+    floor_label: str | None
+    delivery_label: str | None
+    public_source_text: str
+    parser_version: str
+    location: LocationSummaryResponse
+    development: DevelopmentSummaryResponse | None
+    field_confidence: tuple[FieldConfidenceEntryResponse, ...]
+    media: tuple[OfferMediaResponse, ...]
+    source_message_id: UUID | None
+    verified_source_url: str | None
+    source_history: tuple[SourceHistoryEntryResponse, ...]
+
+
 def present_location_map(
     result: MapQueryResult,
     *,
@@ -255,5 +352,80 @@ def present_quick_filters(
         items=tuple(
             QuickFilterPresetResponse(id=preset.id, label_key=preset.label_key)
             for preset in presets
+        ),
+    )
+
+
+def present_offer_detail(detail: OfferDetailDTO) -> OfferDetailResponse:
+    """Present one public offer detail without exposing persistence internals."""
+    return OfferDetailResponse(
+        id=detail.id,
+        content_type=detail.content_type,
+        market_type=detail.market_type,
+        display_name=detail.display_name,
+        data_confidence=detail.data_confidence,
+        published_at=detail.published_at,
+        currency=detail.currency,
+        price_min_minor=detail.price_min_minor,
+        price_max_minor=detail.price_max_minor,
+        parking_price_min_minor=detail.parking_price_min_minor,
+        parking_price_max_minor=detail.parking_price_max_minor,
+        parking_included_in_price=detail.parking_included_in_price,
+        storage_price_min_minor=detail.storage_price_min_minor,
+        storage_price_max_minor=detail.storage_price_max_minor,
+        storage_included_in_price=detail.storage_included_in_price,
+        area_min_sqm=detail.area_min_sqm,
+        area_max_sqm=detail.area_max_sqm,
+        rooms_min=detail.rooms_min,
+        rooms_max=detail.rooms_max,
+        floor_label=detail.floor_label,
+        delivery_label=detail.delivery_label,
+        public_source_text=detail.public_source_text,
+        parser_version=detail.parser_version,
+        location=LocationSummaryResponse(
+            id=detail.location.id,
+            display_name=detail.location.display_name,
+            display_address=detail.location.display_address,
+            district=detail.location.district,
+            coordinate_precision=detail.location.coordinate_precision,
+            confidence=detail.location.confidence,
+        ),
+        development=(
+            DevelopmentSummaryResponse(
+                id=detail.development.id,
+                display_name=detail.development.display_name,
+                name_confidence=detail.development.name_confidence,
+            )
+            if detail.development is not None
+            else None
+        ),
+        field_confidence=tuple(
+            FieldConfidenceEntryResponse(field=field, confidence=confidence)
+            for field, confidence in detail.field_confidence
+        ),
+        media=tuple(
+            OfferMediaResponse(
+                media_asset_id=item.media_asset_id,
+                position=item.position,
+                media_type=item.media_type,
+                mime_type=item.mime_type,
+                width=item.width,
+                height=item.height,
+                duration_seconds=item.duration_seconds,
+                thumbnail_url=item.thumbnail_url,
+                content_url=item.content_url,
+            )
+            for item in detail.media
+        ),
+        source_message_id=detail.source_message_id,
+        verified_source_url=detail.verified_source_url,
+        source_history=tuple(
+            SourceHistoryEntryResponse(
+                source_message_id=item.source_message_id,
+                relationship=item.relationship,
+                published_at=item.published_at,
+                edited_at=item.edited_at,
+            )
+            for item in detail.source_history
         ),
     )

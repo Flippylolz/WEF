@@ -32,7 +32,7 @@ The complete export is parsed with reconciled reports, locations are geocoded/re
 ### [E4: Read API and filter contracts](../epics/E4-read-api-filter-contracts/README.md)
 
 - [E4-T2: Implement facets and location offer collection](../epics/E4-read-api-filter-contracts/tasks/E4-T2-implement-facets-and-location-offer-collection.md) — promoted for M1, still reused by M2
-- [E4-T3: Implement offer detail](../epics/E4-read-api-filter-contracts/proposed-tasks/E4-T3-implement-offer-detail.md) — `proposed`
+- [E4-T3: Implement offer detail](../epics/E4-read-api-filter-contracts/tasks/E4-T3-implement-offer-detail.md) — `in_progress`
 - [E4-T4: Harden API behavior and performance](../epics/E4-read-api-filter-contracts/proposed-tasks/E4-T4-harden-api-behavior-and-performance.md) — `proposed`
 
 Cancelled and deferred candidates remain linked for traceability but are not completion requirements unless an approved revision restores them to required scope.

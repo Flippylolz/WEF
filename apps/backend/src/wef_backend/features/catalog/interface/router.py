@@ -29,10 +29,12 @@ from wef_backend.features.catalog.interface.presenter import (
     FilterFacetsResponse,
     LocationMapResponse,
     LocationOfferPageResponse,
+    OfferDetailResponse,
     QuickFilterListResponse,
     present_facets,
     present_location_map,
     present_location_offer_page,
+    present_offer_detail,
     present_quick_filters,
 )
 
@@ -103,6 +105,7 @@ class LocationOfferQueryParams(MapQueryParams):
 router = APIRouter(prefix="/api/v1/map", tags=["map"])
 facets_router = APIRouter(prefix="/api/v1", tags=["filters"])
 locations_router = APIRouter(prefix="/api/v1/locations", tags=["locations"])
+offers_router = APIRouter(prefix="/api/v1/offers", tags=["offers"])
 
 
 @router.get(
@@ -199,3 +202,22 @@ async def list_location_offers(
     if not page.location_exists:
         raise ResourceNotFoundError
     return present_location_offer_page(page)
+
+
+@offers_router.get(
+    "/{offer_id}",
+    operation_id="getOfferDetail",
+    summary="Get one public offer detail",
+    responses={
+        404: {
+            "model": NotFoundProblemResponse,
+            "description": "The offer is absent or not public.",
+        },
+    },
+)
+async def get_offer_detail(offer_id: UUID, request: Request) -> OfferDetailResponse:
+    """Return dated fields, masked text, media, confidence, and verified source action."""
+    detail = await request.app.state.get_offer_detail(offer_id)
+    if detail is None:
+        raise ResourceNotFoundError
+    return present_offer_detail(detail)

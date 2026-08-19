@@ -12,6 +12,7 @@ from wef_backend.features.catalog.application import (
     OfferBrowseRecord,
     OfferBrowseSnapshot,
     OfferCursor,
+    OfferDetailRecord,
 )
 from wef_backend.features.estates.application import EstateRecord
 from wef_backend.features.identity.application.favorites import (
@@ -89,6 +90,18 @@ class FakeCatalogBrowse:
             matching_count=self.matching_count,
             total_count=self.total_count,
         )
+
+
+@dataclass(frozen=True, slots=True)
+class FakeOfferDetailQuery:
+    """In-memory offer detail query adapter."""
+
+    record: OfferDetailRecord | None = None
+
+    async def query_offer_detail(self, offer_id: object) -> OfferDetailRecord | None:
+        """Return one deterministic offer detail record."""
+        del offer_id
+        return self.record
 
 
 def empty_facet_snapshot() -> FacetSnapshot:

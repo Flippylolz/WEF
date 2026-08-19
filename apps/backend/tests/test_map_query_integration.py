@@ -17,6 +17,7 @@ from wef_backend.database import create_database_resources
 from wef_backend.features.catalog.application import (
     BoundingBox,
     BrowseLocationOffers,
+    GetOfferDetail,
     MapFilters,
     QueryFacets,
     QueryMapLocations,
@@ -30,6 +31,7 @@ from wef_backend.features.catalog.infrastructure import (
     SQLAlchemyCatalogBrowseAdapter,
     SQLAlchemyCatalogSeedAdapter,
     SQLAlchemyMapQueryAdapter,
+    SQLAlchemyOfferDetailAdapter,
 )
 from wef_backend.migration import alembic_command, alembic_config
 from wef_backend.settings import Settings
@@ -231,6 +233,47 @@ async def test_facets_offer_context_and_cursor_ties() -> None:
     finally:
         await seed(*m1_fixture())
         await database.engine.dispose()
+
+
+async def test_offer_detail_returns_m1_fixture_without_sensitive_fields() -> None:
+    """Prove visible seeded offers load masked text and omit source lineage when absent."""
+    assert TEST_DATABASE_URL is not None
+    settings = Settings(
+        env="test",
+        database_url=TEST_DATABASE_URL,
+        alembic_config=Path("alembic.ini"),
+    )
+    await asyncio.to_thread(alembic_command.upgrade, alembic_config(settings), "head")
+    database = create_database_resources(TEST_DATABASE_URL)
+    seed = SeedM1Catalog(
+        SQLAlchemyCatalogSeedAdapter(database.session_factory),
+        environment="test",
+    )
+    await seed(*m1_fixture())
+    service = GetOfferDetail(SQLAlchemyOfferDetailAdapter(database.session_factory))
+
+    try:
+        async with database.session_factory() as session, session.begin():
+            await session.execute(
+                update(OfferRow)
+                .where(OfferRow.id == UUID("20000000-0000-4000-8000-000000000003"))
+                .values(visibility="hidden"),
+            )
+        detail = await service(UUID("20000000-0000-4000-8000-000000000002"))
+        missing = await service(UUID("20000000-0000-4000-8000-000000000099"))
+        hidden = await service(UUID("20000000-0000-4000-8000-000000000003"))
+    finally:
+        await seed(*m1_fixture())
+        await database.engine.dispose()
+
+    assert missing is None
+    assert hidden is None
+    assert detail is not None
+    assert detail.public_source_text == "Synthetic two-room unit fixture."
+    assert detail.verified_source_url is None
+    assert detail.source_history == ()
+    assert detail.media == ()
+    assert detail.location.display_name == "Synthetic Central Residence"
 
 
 async def _hide_out_of_scope_and_unreviewed_rows(

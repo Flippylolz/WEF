@@ -13,6 +13,7 @@ from tests.fakes import (
     FakeCatalogBrowse,
     FakeEstateQuery,
     FakeMapQuery,
+    FakeOfferDetailQuery,
     always_ready,
     build_favorites_service,
     build_identity_service,
@@ -24,11 +25,17 @@ from wef_backend.app import create_http_app
 from wef_backend.composition import AppServices, ReadyCheck
 from wef_backend.features.catalog.application import (
     BrowseLocationOffers,
+    ConfidenceIndicator,
     FacetSnapshot,
+    GetOfferDetail,
     MapLocationRecord,
     OfferBrowseRecord,
     QueryFacets,
     QueryMapLocations,
+)
+from wef_backend.features.catalog.application.offer_detail import (
+    LocationSummaryDTO,
+    OfferDetailRecord,
 )
 from wef_backend.features.catalog.domain import ContentType, MarketType
 from wef_backend.features.estates.application import EstateRecord, ListEstates
@@ -43,6 +50,7 @@ def create_test_app(ready_check: ReadyCheck = always_ready) -> FastAPI:
         query_map=QueryMapLocations(FakeMapQuery()),
         query_facets=QueryFacets(browse),
         browse_location_offers=BrowseLocationOffers(browse),
+        get_offer_detail=GetOfferDetail(FakeOfferDetailQuery()),
         is_ready=ready_check,
         close=close_nothing,
         identity=build_identity_service(),
@@ -300,3 +308,69 @@ async def test_runtime_docs_routes_are_absent_but_offline_schema_works() -> None
         schema["paths"]["/api/v1/locations/{location_id}/offers"]["get"]["operationId"]
         == "listLocationOffers"
     )
+    assert schema["paths"]["/api/v1/offers/{offer_id}"]["get"]["operationId"] == "getOfferDetail"
+
+
+async def test_offer_detail_hides_absence_and_excludes_sensitive_fields() -> None:
+    """Return safe not-found behavior and only masked public source text."""
+    app = create_test_app()
+    app.state.get_offer_detail = GetOfferDetail(FakeOfferDetailQuery(record=None))
+
+    async with api_client(app) as client:
+        not_found = await client.get(
+            "/api/v1/offers/20000000-0000-4000-8000-000000000099",
+        )
+
+    assert not_found.status_code == status.HTTP_404_NOT_FOUND
+    assert not_found.json()["code"] == "not_found"
+
+    detail_record = OfferDetailRecord(
+        id=UUID("20000000-0000-4000-8000-000000000002"),
+        content_type=ContentType.UNIT,
+        market_type=MarketType.SECONDARY,
+        published_at=datetime(2026, 7, 18, 9, 30, tzinfo=UTC),
+        currency="PLN",
+        price_min_minor=105_000_000,
+        price_max_minor=105_000_000,
+        parking_price_min_minor=None,
+        parking_price_max_minor=None,
+        parking_included_in_price=False,
+        storage_price_min_minor=None,
+        storage_price_max_minor=None,
+        storage_included_in_price=False,
+        area_min_sqm=Decimal("48.20"),
+        area_max_sqm=Decimal("48.20"),
+        rooms_min=2,
+        rooms_max=2,
+        floor_label="Synthetic floor 4",
+        delivery_label=None,
+        public_source_text="Masked public text only.",
+        parser_version="synthetic-m1-v1",
+        location=LocationSummaryDTO(
+            id=UUID("10000000-0000-4000-8000-000000000001"),
+            display_name="Synthetic Central Residence",
+            display_address="Synthetic address 1",
+            district="srodmiescie",
+            coordinate_precision="building",
+            confidence=ConfidenceIndicator.HIGH,
+        ),
+        development=None,
+        field_confidence=(),
+        media=(),
+        source_message_id=None,
+        verified_source_url=None,
+        source_history=(),
+    )
+    app.state.get_offer_detail = GetOfferDetail(FakeOfferDetailQuery(record=detail_record))
+
+    async with api_client(app) as client:
+        response = await client.get("/api/v1/offers/20000000-0000-4000-8000-000000000002")
+
+    payload = response.json()
+    assert response.status_code == status.HTTP_200_OK
+    assert payload["public_source_text"] == "Masked public text only."
+    assert payload["verified_source_url"] is None
+    assert payload["media"] == []
+    assert "source_text_excerpt" not in response.text
+    assert "raw_payload" not in response.text
+    assert "text_original" not in response.text
