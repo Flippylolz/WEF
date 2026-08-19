@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { MapExplorer } from "@/components/map-explorer";
 import { QueryProvider } from "@/components/query-provider";
+import { UserToolbar } from "@/components/user-toolbar";
 
 export default async function Home() {
   const t = await getTranslations("home");
@@ -15,6 +16,7 @@ export default async function Home() {
         <p className="subtitle">{t("subtitle")}</p>
       </header>
       <QueryProvider>
+        <UserToolbar />
         <Suspense
           fallback={
             <p className="state-message" role="status">

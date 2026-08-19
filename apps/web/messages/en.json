@@ -1,4 +1,30 @@
 {
+  "auth": {
+    "toolbarLabel": "Account actions",
+    "eyebrow": "Account",
+    "loginTitle": "Sign in",
+    "registerTitle": "Create account",
+    "signedInTitle": "Your account",
+    "close": "Close dialog",
+    "usernameLabel": "Username",
+    "usernameHint": "3–64 characters; letters, numbers, underscore, or hyphen.",
+    "passwordLabel": "Password",
+    "passwordHint": "At least 10 characters.",
+    "confirmPasswordLabel": "Confirm password",
+    "roleLabel": "Role",
+    "loginAction": "Sign in",
+    "registerAction": "Create account",
+    "logoutAction": "Sign out",
+    "loginFailed": "Sign in failed. Check your username and password.",
+    "registerFailed": "Registration failed. The username may already be taken.",
+    "loginAfterRegisterFailed": "Account created, but automatic sign-in failed. Try signing in manually.",
+    "usernameMin": "Username must be at least 3 characters.",
+    "usernameMax": "Username must be at most 64 characters.",
+    "usernamePattern": "Username may contain only letters, numbers, underscores, and hyphens.",
+    "passwordMin": "Password must be at least 10 characters.",
+    "passwordMax": "Password must be at most 256 characters.",
+    "passwordMismatch": "Passwords do not match."
+  },
   "home": {
     "title": "Apartments and houses for sale in Warsaw",
     "subtitle": "Browse dated apartment and house offers across Warsaw. All current records are clearly synthetic MVP fixtures."
