@@ -149,6 +149,8 @@ jobs:
     name: Coverage badge
     needs: [backend, frontend]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Download coverage reports
@@ -157,16 +159,24 @@ jobs:
           pattern: "*-coverage-${{ github.sha }}"
           path: tmp/coverage
           merge-multiple: true
-      - name: Verify repository coverage badge
+      - name: Render coverage badge
         run: |
           python3 scripts/render_coverage_badge.py \
             --backend tmp/coverage/backend-coverage.json \
             --frontend tmp/coverage/coverage-summary.json \
-            --output tmp/coverage.svg
-          if ! cmp --silent .github/badges/coverage.svg tmp/coverage.svg; then
-            echo "Coverage badge is stale; run 'make coverage' and commit the result."
-            exit 1
+            --output .github/badges/coverage.svg
+      - name: Publish coverage badge on main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          if git diff --quiet -- .github/badges/coverage.svg; then
+            echo "Coverage badge already matches CI."
+            exit 0
           fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/badges/coverage.svg
+          git commit -m "chore: refresh coverage badge [skip ci]"
+          git push
 
   repository:
     name: Repository safety
