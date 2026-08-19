@@ -46,7 +46,7 @@ a responsive, accessible map/list/detail experience over dated offers.
 
 - [E5-T1: Build map shell and grouped pin interaction](tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md) — `done`, P0/L, M1
 - [E5-T2: Add URL-backed filters and viewport querying](tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md) — `done`, P0/L, M1
-- [E5-T3: Build offer detail and media gallery](tasks/E5-T3-build-offer-detail-and-media-gallery.md) — `draft`, P0/L, M3; blocked on E4-T3
+- [E5-T3: Build offer detail and media gallery](tasks/E5-T3-build-offer-detail-and-media-gallery.md) — `draft`, P0/L, M3; E4-T3 done — ready to start
 - [E5-T4: Complete responsive list/map accessibility](tasks/E5-T4-complete-responsive-list-map-accessibility.md) — `draft`, P1/L, M3; blocked on E5-T3 (E5-T2 is complete)
 - [E5-T5: Performance and production UX pass](tasks/E5-T5-performance-and-production-ux-pass.md) — `draft`, P1/M, M3; blocked on E5-T4/E4-T4
 
