@@ -26,7 +26,7 @@ help: ## List supported commands.
 		'make lint               Run backend/frontend and architecture lint' \
 		'make typecheck          Run strict Python and TypeScript checks' \
 		'make test               Run backend/frontend tests' \
-		'make coverage           Run tests and refresh the repository coverage badge' \
+		'make coverage           Run tests and refresh the coverage badge locally' \
 		'make contract-generate  Export OpenAPI and generated TypeScript' \
 		'make contract-check     Verify OpenAPI, generated types, and static docs' \
 		'make build              Build production runtime images' \

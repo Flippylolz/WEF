@@ -43,7 +43,8 @@ database, and runs the backend and frontend suites in development containers.
 No test database URL or host language runtime is required. Static API
 documentation is generated as an artifact and is not served by the production
 API. `make coverage` runs both test suites with line and branch measurement and
-refreshes the badge above; CI rejects a stale badge.
+refreshes the badge above for local preview; CI renders the badge from uploaded
+coverage artifacts and publishes it automatically on `main`.
 
 `make help` lists the exact command façade. The Makefile delegates to uv, pnpm, and Docker; it does not select environments or contain application logic.
 
