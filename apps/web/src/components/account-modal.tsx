@@ -7,11 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import type { Account } from "@/lib/auth-api";
-import {
-  loginAccount,
-  logoutAccount,
-  registerAccount,
-} from "@/lib/auth-api";
+import { loginAccount, logoutAccount, registerAccount } from "@/lib/auth-api";
 
 const usernameSchema = z
   .string()
@@ -294,7 +290,14 @@ type FieldProps = {
   inputProps: ComponentProps<"input">;
 };
 
-function Field({ id, label, hint, type = "text", error, inputProps }: FieldProps) {
+function Field({
+  id,
+  label,
+  hint,
+  type = "text",
+  error,
+  inputProps,
+}: FieldProps) {
   return (
     <label className="form-field" htmlFor={id}>
       <span>{label}</span>

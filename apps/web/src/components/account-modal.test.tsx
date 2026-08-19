@@ -67,8 +67,6 @@ describe("AccountModal", () => {
     await user.type(screen.getByLabelText("passwordLabel"), "longenough123");
     await user.click(screen.getByRole("button", { name: "loginAction" }));
 
-    await waitFor(() =>
-      expect(onAuthenticated).toHaveBeenCalledWith(account),
-    );
+    await waitFor(() => expect(onAuthenticated).toHaveBeenCalledWith(account));
   });
 });
