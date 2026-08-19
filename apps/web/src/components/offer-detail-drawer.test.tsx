@@ -178,9 +178,8 @@ describe("OfferDetailDrawer", () => {
     });
     renderDrawer();
 
-    expect(await screen.findByText("detailNotFound")).toHaveAttribute(
-      "role",
-      "alert",
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "detailNotFound",
     );
   });
 

@@ -62,7 +62,14 @@ export function OfferMediaGallery({ detail, media }: OfferMediaGalleryProps) {
                 >
                   {item.media_type === "image" ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={displayUrl} alt={alt} loading="lazy" />
+                    <img
+                      src={displayUrl}
+                      alt={alt}
+                      loading="lazy"
+                      decoding="async"
+                      width={160}
+                      height={120}
+                    />
                   ) : (
                     <span className="offer-media-video-badge">
                       {t("detailVideoBadge")}
@@ -153,6 +160,13 @@ function OfferMediaSlide({ item, alt }: OfferMediaSlideProps) {
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img className="offer-media-full" src={displayUrl} alt={alt} />
+    <img
+      className="offer-media-full"
+      src={displayUrl}
+      alt={alt}
+      decoding="async"
+      width={960}
+      height={720}
+    />
   );
 }

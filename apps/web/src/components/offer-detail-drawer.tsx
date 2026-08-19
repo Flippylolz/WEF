@@ -21,6 +21,7 @@ export type OfferDetailDrawerProps = {
   matchesFilters: boolean | null;
   detailQuery: UseQueryResult<OfferDetail, Error>;
   onClose: () => void;
+  onRetry?: () => void;
   returnFocusRef: React.RefObject<HTMLButtonElement | null>;
 };
 
@@ -30,6 +31,7 @@ export function OfferDetailDrawer({
   matchesFilters,
   detailQuery,
   onClose,
+  onRetry,
   returnFocusRef,
 }: OfferDetailDrawerProps) {
   const t = useTranslations("map");
@@ -98,11 +100,18 @@ export function OfferDetailDrawer({
         ) : null}
 
         {detailQuery.isError ? (
-          <p className="offer-detail-status state-error" role="alert">
-            {detailQuery.error?.name === "OfferNotFoundError"
-              ? t("detailNotFound")
-              : t("detailError")}
-          </p>
+          <div className="offer-detail-status state-error" role="alert">
+            <p>
+              {detailQuery.error?.name === "OfferNotFoundError"
+                ? t("detailNotFound")
+                : t("detailError")}
+            </p>
+            {onRetry ? (
+              <button type="button" onClick={onRetry}>
+                {t("retry")}
+              </button>
+            ) : null}
+          </div>
         ) : null}
 
         {detailQuery.isSuccess && detail && !showStaleDetail ? (
