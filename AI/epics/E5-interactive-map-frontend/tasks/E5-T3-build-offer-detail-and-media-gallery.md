@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E5-T3
 epic: E5
 title: "Build offer detail and media gallery"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: L
@@ -43,10 +43,12 @@ branch:
   created_at: "2026-08-19T18:40:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/80"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-19T18:47:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/80"
+  evidence:
+    - "Merged https://github.com/Flippylolz/WEF/pull/80 at d5c48f9 with green CI"
+    - "make lint, typecheck, test passed locally before merge"
 invalidation:
   invalidated_by: null
   invalidated_at: null
