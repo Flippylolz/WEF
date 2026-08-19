@@ -20,6 +20,8 @@ from sqlalchemy import (
     Text,
     Uuid,
     func,
+)
+from sqlalchemy import (
     text as sa_text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
