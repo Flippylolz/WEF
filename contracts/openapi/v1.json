@@ -2055,6 +2055,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "The query is malformed."
           }
         },
         "summary": "Get canonical visible filter facets",
@@ -2722,6 +2732,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "The query is malformed."
           }
         },
         "summary": "List server-defined quick filter presets",
