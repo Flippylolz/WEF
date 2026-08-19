@@ -125,6 +125,31 @@
         "title": "CoordinatesResponse",
         "type": "object"
       },
+      "DevelopmentSummaryResponse": {
+        "additionalProperties": false,
+        "description": "Named development context when evidenced for the location.",
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name_confidence": {
+            "$ref": "#/components/schemas/ConfidenceIndicator"
+          }
+        },
+        "required": [
+          "id",
+          "display_name",
+          "name_confidence"
+        ],
+        "title": "DevelopmentSummaryResponse",
+        "type": "object"
+      },
       "EstateResponse": {
         "additionalProperties": false,
         "description": "Public representation of one synthetic estate.",
@@ -235,6 +260,25 @@
           "created_at"
         ],
         "title": "FavoriteLocationResponse",
+        "type": "object"
+      },
+      "FieldConfidenceEntryResponse": {
+        "additionalProperties": false,
+        "description": "One backend-owned field confidence indicator.",
+        "properties": {
+          "confidence": {
+            "$ref": "#/components/schemas/ConfidenceIndicator"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "confidence"
+        ],
+        "title": "FieldConfidenceEntryResponse",
         "type": "object"
       },
       "FilterFacetsResponse": {
@@ -600,6 +644,53 @@
         "title": "LocationOfferPageResponse",
         "type": "object"
       },
+      "LocationSummaryResponse": {
+        "additionalProperties": false,
+        "description": "Public location context for one offer.",
+        "properties": {
+          "confidence": {
+            "$ref": "#/components/schemas/ConfidenceIndicator"
+          },
+          "coordinate_precision": {
+            "title": "Coordinate Precision",
+            "type": "string"
+          },
+          "display_address": {
+            "title": "Display Address",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "display_name",
+          "display_address",
+          "district",
+          "coordinate_precision",
+          "confidence"
+        ],
+        "title": "LocationSummaryResponse",
+        "type": "object"
+      },
       "LoginRequest": {
         "additionalProperties": false,
         "description": "Strict login syntax.",
@@ -722,6 +813,381 @@
         ],
         "title": "OfferDataConfidence",
         "type": "string"
+      },
+      "OfferDetailResponse": {
+        "additionalProperties": false,
+        "description": "Full public offer detail with masked text and verified source action.",
+        "properties": {
+          "area_max_sqm": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Max Sqm"
+          },
+          "area_min_sqm": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Min Sqm"
+          },
+          "content_type": {
+            "$ref": "#/components/schemas/ContentType"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "data_confidence": {
+            "$ref": "#/components/schemas/OfferDataConfidence"
+          },
+          "delivery_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Label"
+          },
+          "development": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DevelopmentSummaryResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "field_confidence": {
+            "items": {
+              "$ref": "#/components/schemas/FieldConfidenceEntryResponse"
+            },
+            "title": "Field Confidence",
+            "type": "array"
+          },
+          "floor_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Floor Label"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationSummaryResponse"
+          },
+          "market_type": {
+            "$ref": "#/components/schemas/MarketType"
+          },
+          "media": {
+            "items": {
+              "$ref": "#/components/schemas/OfferMediaResponse"
+            },
+            "title": "Media",
+            "type": "array"
+          },
+          "parking_included_in_price": {
+            "default": false,
+            "title": "Parking Included In Price",
+            "type": "boolean"
+          },
+          "parking_price_max_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parking Price Max Minor"
+          },
+          "parking_price_min_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parking Price Min Minor"
+          },
+          "parser_version": {
+            "title": "Parser Version",
+            "type": "string"
+          },
+          "price_max_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Max Minor"
+          },
+          "price_min_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Min Minor"
+          },
+          "public_source_text": {
+            "title": "Public Source Text",
+            "type": "string"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "rooms_max": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rooms Max"
+          },
+          "rooms_min": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rooms Min"
+          },
+          "source_history": {
+            "items": {
+              "$ref": "#/components/schemas/SourceHistoryEntryResponse"
+            },
+            "title": "Source History",
+            "type": "array"
+          },
+          "source_message_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Message Id"
+          },
+          "storage_included_in_price": {
+            "default": false,
+            "title": "Storage Included In Price",
+            "type": "boolean"
+          },
+          "storage_price_max_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Price Max Minor"
+          },
+          "storage_price_min_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Price Min Minor"
+          },
+          "verified_source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified Source Url"
+          }
+        },
+        "required": [
+          "id",
+          "content_type",
+          "market_type",
+          "display_name",
+          "data_confidence",
+          "published_at",
+          "currency",
+          "floor_label",
+          "delivery_label",
+          "public_source_text",
+          "parser_version",
+          "location",
+          "development",
+          "field_confidence",
+          "media",
+          "source_message_id",
+          "verified_source_url",
+          "source_history"
+        ],
+        "title": "OfferDetailResponse",
+        "type": "object"
+      },
+      "OfferMediaResponse": {
+        "additionalProperties": false,
+        "description": "Ordered public media metadata for one associated asset.",
+        "properties": {
+          "content_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Url"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "media_asset_id": {
+            "format": "uuid",
+            "title": "Media Asset Id",
+            "type": "string"
+          },
+          "media_type": {
+            "enum": [
+              "image",
+              "video"
+            ],
+            "title": "Media Type",
+            "type": "string"
+          },
+          "mime_type": {
+            "title": "Mime Type",
+            "type": "string"
+          },
+          "position": {
+            "minimum": 0.0,
+            "title": "Position",
+            "type": "integer"
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          }
+        },
+        "required": [
+          "media_asset_id",
+          "position",
+          "media_type",
+          "mime_type",
+          "thumbnail_url",
+          "content_url"
+        ],
+        "title": "OfferMediaResponse",
+        "type": "object"
       },
       "OfferSummaryResponse": {
         "additionalProperties": false,
@@ -1076,6 +1542,46 @@
           "password"
         ],
         "title": "RegisterRequest",
+        "type": "object"
+      },
+      "SourceHistoryEntryResponse": {
+        "additionalProperties": false,
+        "description": "One related source revision without exposing raw text.",
+        "properties": {
+          "edited_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited At"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "relationship": {
+            "title": "Relationship",
+            "type": "string"
+          },
+          "source_message_id": {
+            "format": "uuid",
+            "title": "Source Message Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_message_id",
+          "relationship",
+          "published_at",
+          "edited_at"
+        ],
+        "title": "SourceHistoryEntryResponse",
         "type": "object"
       },
       "ValidationError": {
@@ -2145,6 +2651,60 @@
         "summary": "Query grouped map locations",
         "tags": [
           "map"
+        ]
+      }
+    },
+    "/api/v1/offers/{offer_id}": {
+      "get": {
+        "description": "Return dated fields, masked text, media, confidence, and verified source action.",
+        "operationId": "getOfferDetail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundProblemResponse"
+                }
+              }
+            },
+            "description": "The offer is absent or not public."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get one public offer detail",
+        "tags": [
+          "offers"
         ]
       }
     },

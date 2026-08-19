@@ -17,10 +17,10 @@ stable, efficient public endpoints that implement filter semantics once.
 
 ## Approval state
 
-- Epic workspace status: `done`; the approved M1 map/facet sequence is complete and later detail/hardening candidates remain proposed (unactionable).
+- Epic workspace status: `ready`; E4-T1/T2 are `done`; E4-T3 is `in_progress`; E4-T4 remains proposed.
 - [Spike](SPIKE.md): `approved`, revision 2.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2, sequencing E4-T1 then E4-T2.
-- E4-T1 and E4-T2 are `done`; E4-T3/T4 remain proposed.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, sequencing E4-T1, E4-T2, then E4-T3.
+- E4-T1 and E4-T2 are `done`; E4-T3 is promoted and in progress; E4-T4 remains proposed.
 - Epic completion evidence: E4-T1 merged via https://github.com/Flippylolz/WEF/pull/12 and E4-T2 merged via https://github.com/Flippylolz/WEF/pull/13 on the integrated `main` stack; no open branches or PRs carry E4 implementation work.
 
 ## Milestones
@@ -50,10 +50,10 @@ stable, efficient public endpoints that implement filter semantics once.
 
 - [E4-T1: Implement map query service and GeoJSON endpoint](tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md) — `done`, P0/L, M1
 - [E4-T2: Implement facets and location offer collection](tasks/E4-T2-implement-facets-and-location-offer-collection.md) — `done`, P0/M, M1
+- [E4-T3: Implement offer detail](tasks/E4-T3-implement-offer-detail.md) — `in_progress`, P0/M, M2
 
 ## Proposed tasks
 
-- [E4-T3: Implement offer detail](proposed-tasks/E4-T3-implement-offer-detail.md) — `proposed`, P0/M, M2
 - [E4-T4: Harden API behavior and performance](proposed-tasks/E4-T4-harden-api-behavior-and-performance.md) — `proposed`, P1/M, M2
 
 ## Cross-epic dependencies

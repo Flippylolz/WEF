@@ -10,12 +10,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from wef_backend.database import create_database_resources
 from wef_backend.features.catalog.application import (
     BrowseLocationOffers,
+    GetOfferDetail,
     QueryFacets,
     QueryMapLocations,
 )
 from wef_backend.features.catalog.infrastructure import (
     SQLAlchemyCatalogBrowseAdapter,
     SQLAlchemyMapQueryAdapter,
+    SQLAlchemyOfferDetailAdapter,
 )
 from wef_backend.features.estates.application import ListEstates
 from wef_backend.features.estates.infrastructure import RetiredEstateQueryAdapter
@@ -61,6 +63,7 @@ class AppServices:
     query_map: QueryMapLocations
     query_facets: QueryFacets
     browse_location_offers: BrowseLocationOffers
+    get_offer_detail: GetOfferDetail
     is_ready: ReadyCheck
     close: ResourceCloser
     identity: IdentityService
@@ -74,6 +77,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
     database = create_database_resources(runtime_settings.database_url)
     map_adapter = SQLAlchemyMapQueryAdapter(database.session_factory)
     browse_adapter = SQLAlchemyCatalogBrowseAdapter(database.session_factory)
+    offer_detail_adapter = SQLAlchemyOfferDetailAdapter(database.session_factory)
     identity_store = SQLAlchemyIdentityStore(database.session_factory)
     favorite_store = SQLAlchemyFavoriteStore(database.session_factory)
     hasher = PwdlibPasswordHasher()
@@ -103,6 +107,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
         query_map=QueryMapLocations(map_adapter),
         query_facets=QueryFacets(browse_adapter),
         browse_location_offers=BrowseLocationOffers(browse_adapter),
+        get_offer_detail=GetOfferDetail(offer_detail_adapter),
         is_ready=database_is_ready,
         close=database.engine.dispose,
         identity=IdentityService(

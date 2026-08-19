@@ -27,6 +27,16 @@ from wef_backend.features.catalog.application.map_query import (
     MapQuerySnapshot,
     QueryMapLocations,
 )
+from wef_backend.features.catalog.application.offer_detail import (
+    GetOfferDetail,
+    OfferDetailDTO,
+    OfferDetailQueryPort,
+    OfferDetailRecord,
+    OfferMediaDTO,
+    build_public_media_url,
+    build_verified_source_url,
+    confidence_indicator_from_score,
+)
 from wef_backend.features.catalog.application.seed_m1 import (
     CatalogSeedPort,
     ProductionSeedError,
@@ -45,6 +55,7 @@ __all__ = [
     "CursorError",
     "FacetQueryPort",
     "FacetSnapshot",
+    "GetOfferDetail",
     "LocationOfferPage",
     "LocationOfferQueryPort",
     "MapFilterError",
@@ -58,6 +69,10 @@ __all__ = [
     "OfferBrowseSnapshot",
     "OfferCursor",
     "OfferDataConfidence",
+    "OfferDetailDTO",
+    "OfferDetailQueryPort",
+    "OfferDetailRecord",
+    "OfferMediaDTO",
     "OfferSummaryDTO",
     "ProductionSeedError",
     "QueryFacets",
@@ -66,4 +81,7 @@ __all__ = [
     "SeedM1Catalog",
     "SeedOffer",
     "SeedResult",
+    "build_public_media_url",
+    "build_verified_source_url",
+    "confidence_indicator_from_score",
 ]

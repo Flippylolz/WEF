@@ -11,6 +11,9 @@ from wef_backend.features.catalog.infrastructure.models import (
     LocationRow,
     OfferRow,
 )
+from wef_backend.features.catalog.infrastructure.offer_detail_adapter import (
+    SQLAlchemyOfferDetailAdapter,
+)
 from wef_backend.features.catalog.infrastructure.seed_adapter import (
     SQLAlchemyCatalogSeedAdapter,
 )
@@ -22,4 +25,5 @@ __all__ = [
     "SQLAlchemyCatalogBrowseAdapter",
     "SQLAlchemyCatalogSeedAdapter",
     "SQLAlchemyMapQueryAdapter",
+    "SQLAlchemyOfferDetailAdapter",
 ]

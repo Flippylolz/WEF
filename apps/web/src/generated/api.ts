@@ -329,6 +329,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/offers/{offer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get one public offer detail
+         * @description Return dated fields, masked text, media, confidence, and verified source action.
+         */
+        get: operations["getOfferDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/quick-filters": {
         parameters: {
             query?: never;
@@ -416,6 +436,20 @@ export interface components {
             longitude: number;
         };
         /**
+         * DevelopmentSummaryResponse
+         * @description Named development context when evidenced for the location.
+         */
+        DevelopmentSummaryResponse: {
+            /** Display Name */
+            display_name: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            name_confidence: components["schemas"]["ConfidenceIndicator"];
+        };
+        /**
          * EstateResponse
          * @description Public representation of one synthetic estate.
          */
@@ -463,6 +497,15 @@ export interface components {
              * Format: uuid
              */
             location_id: string;
+        };
+        /**
+         * FieldConfidenceEntryResponse
+         * @description One backend-owned field confidence indicator.
+         */
+        FieldConfidenceEntryResponse: {
+            confidence: components["schemas"]["ConfidenceIndicator"];
+            /** Field */
+            field: string;
         };
         /**
          * FilterFacetsResponse
@@ -593,6 +636,26 @@ export interface components {
             total_count: number;
         };
         /**
+         * LocationSummaryResponse
+         * @description Public location context for one offer.
+         */
+        LocationSummaryResponse: {
+            confidence: components["schemas"]["ConfidenceIndicator"];
+            /** Coordinate Precision */
+            coordinate_precision: string;
+            /** Display Address */
+            display_address: string;
+            /** Display Name */
+            display_name: string;
+            /** District */
+            district: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /**
          * LoginRequest
          * @description Strict login syntax.
          */
@@ -658,6 +721,109 @@ export interface components {
          * @enum {string}
          */
         OfferDataConfidence: "partial" | "complete";
+        /**
+         * OfferDetailResponse
+         * @description Full public offer detail with masked text and verified source action.
+         */
+        OfferDetailResponse: {
+            /** Area Max Sqm */
+            area_max_sqm?: string | null;
+            /** Area Min Sqm */
+            area_min_sqm?: string | null;
+            content_type: components["schemas"]["ContentType"];
+            /** Currency */
+            currency: string | null;
+            data_confidence: components["schemas"]["OfferDataConfidence"];
+            /** Delivery Label */
+            delivery_label: string | null;
+            development: components["schemas"]["DevelopmentSummaryResponse"] | null;
+            /** Display Name */
+            display_name: string;
+            /** Field Confidence */
+            field_confidence: components["schemas"]["FieldConfidenceEntryResponse"][];
+            /** Floor Label */
+            floor_label: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            location: components["schemas"]["LocationSummaryResponse"];
+            market_type: components["schemas"]["MarketType"];
+            /** Media */
+            media: components["schemas"]["OfferMediaResponse"][];
+            /**
+             * Parking Included In Price
+             * @default false
+             */
+            parking_included_in_price: boolean;
+            /** Parking Price Max Minor */
+            parking_price_max_minor?: number | null;
+            /** Parking Price Min Minor */
+            parking_price_min_minor?: number | null;
+            /** Parser Version */
+            parser_version: string;
+            /** Price Max Minor */
+            price_max_minor?: number | null;
+            /** Price Min Minor */
+            price_min_minor?: number | null;
+            /** Public Source Text */
+            public_source_text: string;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Rooms Max */
+            rooms_max?: number | null;
+            /** Rooms Min */
+            rooms_min?: number | null;
+            /** Source History */
+            source_history: components["schemas"]["SourceHistoryEntryResponse"][];
+            /** Source Message Id */
+            source_message_id: string | null;
+            /**
+             * Storage Included In Price
+             * @default false
+             */
+            storage_included_in_price: boolean;
+            /** Storage Price Max Minor */
+            storage_price_max_minor?: number | null;
+            /** Storage Price Min Minor */
+            storage_price_min_minor?: number | null;
+            /** Verified Source Url */
+            verified_source_url: string | null;
+        };
+        /**
+         * OfferMediaResponse
+         * @description Ordered public media metadata for one associated asset.
+         */
+        OfferMediaResponse: {
+            /** Content Url */
+            content_url: string | null;
+            /** Duration Seconds */
+            duration_seconds?: number | null;
+            /** Height */
+            height?: number | null;
+            /**
+             * Media Asset Id
+             * Format: uuid
+             */
+            media_asset_id: string;
+            /**
+             * Media Type
+             * @enum {string}
+             */
+            media_type: "image" | "video";
+            /** Mime Type */
+            mime_type: string;
+            /** Position */
+            position: number;
+            /** Thumbnail Url */
+            thumbnail_url: string | null;
+            /** Width */
+            width?: number | null;
+        };
         /**
          * OfferSummaryResponse
          * @description Dated selected-location offer summary.
@@ -790,6 +956,26 @@ export interface components {
             password: string;
             /** Username */
             username: string;
+        };
+        /**
+         * SourceHistoryEntryResponse
+         * @description One related source revision without exposing raw text.
+         */
+        SourceHistoryEntryResponse: {
+            /** Edited At */
+            edited_at: string | null;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Relationship */
+            relationship: string;
+            /**
+             * Source Message Id
+             * Format: uuid
+             */
+            source_message_id: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -1428,6 +1614,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+        };
+    };
+    getOfferDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfferDetailResponse"];
+                };
+            };
+            /** @description The offer is absent or not public. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotFoundProblemResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
