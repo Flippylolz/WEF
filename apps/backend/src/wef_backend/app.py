@@ -66,6 +66,20 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     app.add_exception_handler(AuthProblemError, auth_problem_handler)
     app.add_exception_handler(RateLimitExceededError, rate_limit_handler)
 
+    if services is not None:
+        app.middleware("http")(
+            build_public_rate_limit_middleware(services.public_rate_limiter)
+        )
+        app.state.list_estates = services.list_estates
+        app.state.query_map = services.query_map
+        app.state.query_facets = services.query_facets
+        app.state.browse_location_offers = services.browse_location_offers
+        app.state.get_offer_detail = services.get_offer_detail
+        app.state.is_ready = services.is_ready
+        app.state.identity = services.identity
+        app.state.favorites = services.favorites
+        app.state.auth_cookie_secure = services.auth_cookie_secure
+
     @app.middleware("http")
     async def attach_request_identity(
         request: Request,
@@ -80,18 +94,6 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
         response = await call_next(request)
         response.headers["X-Request-ID"] = str(request.state.request_id)
         return response
-
-    if services is not None:
-        app.middleware("http")(build_public_rate_limit_middleware(services.public_rate_limiter))
-        app.state.list_estates = services.list_estates
-        app.state.query_map = services.query_map
-        app.state.query_facets = services.query_facets
-        app.state.browse_location_offers = services.browse_location_offers
-        app.state.get_offer_detail = services.get_offer_detail
-        app.state.is_ready = services.is_ready
-        app.state.identity = services.identity
-        app.state.favorites = services.favorites
-        app.state.auth_cookie_secure = services.auth_cookie_secure
 
     return app
 

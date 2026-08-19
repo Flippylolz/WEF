@@ -5,7 +5,9 @@ from __future__ import annotations
 import hashlib
 from typing import TYPE_CHECKING, Protocol
 
-from wef_backend.errors import RateLimitExceededError
+from fastapi.responses import JSONResponse
+
+from wef_backend.errors import ThrottleProblemResponse
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -40,6 +42,24 @@ def _limit_for_path(path: str) -> tuple[str, int, int] | None:
     return None
 
 
+def _throttle_response(request: Request) -> JSONResponse:
+    problem = ThrottleProblemResponse(
+        type="https://wef.invalid/problems/rate-limited",
+        title="Too many requests",
+        status=429,
+        code="rate_limited",
+        request_id=request.state.request_id,
+        detail="Try again later.",
+        instance=request.url.path,
+    )
+    return JSONResponse(
+        status_code=429,
+        content=problem.model_dump(mode="json"),
+        media_type="application/problem+json",
+        headers={"X-Request-ID": str(request.state.request_id)},
+    )
+
+
 def build_public_rate_limit_middleware(
     limiter: RateLimiter,
 ) -> Callable[
@@ -57,7 +77,7 @@ def build_public_rate_limit_middleware(
             prefix, limit, window = matched
             key = f"{prefix}:{_client_key(request)}"
             if not limiter.allow(key, limit=limit, window_seconds=window):
-                raise RateLimitExceededError
+                return _throttle_response(request)
         return await call_next(request)
 
     return enforce_public_rate_limit
