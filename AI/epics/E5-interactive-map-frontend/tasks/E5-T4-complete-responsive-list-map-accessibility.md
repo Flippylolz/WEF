@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E5-T4
 epic: E5
 title: "Complete responsive list/map accessibility"
-status: in_progress
+status: done
 revision: 2
 priority: P1
 size: L
@@ -43,10 +43,12 @@ branch:
   created_at: "2026-08-19T18:56:00Z"
   pull_request: null
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-19T19:08:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/82"
+  evidence:
+    - "Merged https://github.com/Flippylolz/WEF/pull/82 with green CI"
+    - "Accessibility walkthrough recorded in E5-T4-A11Y-WALKTHROUGH.md"
 invalidation:
   invalidated_by: null
   invalidated_at: null
