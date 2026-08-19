@@ -24,6 +24,10 @@ const facets: FilterFacets = {
   published_to: "2026-12-31T00:00:00Z",
 };
 
+const defaultQuickFilters = [
+  { id: "last_day", label_key: "quickFilter.last_day" },
+];
+
 describe("MapFilterControls", () => {
   afterEach(cleanup);
 
@@ -35,6 +39,8 @@ describe("MapFilterControls", () => {
         facets={facets}
         facetsError={false}
         facetsLoading={false}
+        quickFilters={defaultQuickFilters}
+        quickFiltersLoading={false}
         state={DEFAULT_MAP_SEARCH_STATE}
         onApply={onApply}
         onClear={vi.fn()}
@@ -96,6 +102,8 @@ describe("MapFilterControls", () => {
         facets={null}
         facetsError
         facetsLoading={false}
+        quickFilters={[]}
+        quickFiltersLoading={false}
         state={{
           ...DEFAULT_MAP_SEARCH_STATE,
           districts: ["srodmiescie"],
@@ -112,12 +120,42 @@ describe("MapFilterControls", () => {
     expect(onClear).toHaveBeenCalledOnce();
   });
 
+  it("applies a quick filter preset without manual publication dates", async () => {
+    const user = userEvent.setup();
+    const onApply = vi.fn();
+    render(
+      <MapFilterControls
+        facets={facets}
+        facetsError={false}
+        facetsLoading={false}
+        quickFilters={defaultQuickFilters}
+        quickFiltersLoading={false}
+        state={DEFAULT_MAP_SEARCH_STATE}
+        onApply={onApply}
+        onClear={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "quickFilter.last_day" }),
+    );
+    await user.click(screen.getByRole("button", { name: "applyFilters" }));
+
+    expect(onApply).toHaveBeenCalledWith({
+      ...DEFAULT_MAP_SEARCH_STATE,
+      quickFilter: "last_day",
+      publishedFrom: null,
+    });
+  });
+
   it("renders only facet-provided options while facets are unavailable", () => {
     render(
       <MapFilterControls
         facets={null}
         facetsError={false}
         facetsLoading
+        quickFilters={[]}
+        quickFiltersLoading={false}
         state={DEFAULT_MAP_SEARCH_STATE}
         onApply={vi.fn()}
         onClear={vi.fn()}

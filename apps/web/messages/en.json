@@ -90,6 +90,11 @@
     "partialData": "Some structured values were not provided.",
     "panelLabel": "Filters and results",
     "hidePanel": "Hide panel",
-    "showPanel": "Show panel"
+    "showPanel": "Show panel",
+    "quickFiltersLabel": "Quick filters",
+    "quickFiltersLoading": "Loading quick filters…",
+    "quickFilter": {
+      "last_day": "Last 24 hours"
+    }
   }
 }

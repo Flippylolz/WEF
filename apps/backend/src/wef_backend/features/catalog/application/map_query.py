@@ -107,6 +107,7 @@ class MapFilters:
     content_types: tuple[ContentType, ...] = ()
     published_from: datetime | None = None
     published_to: datetime | None = None
+    quick_filter: str | None = None
 
     def __post_init__(self) -> None:
         """Reject contradictory ranges and unsafe repeated groups."""
@@ -131,6 +132,9 @@ class MapFilters:
         ):
             message = "published_from must not exceed published_to"
             raise MapFilterError(message)
+        if self.quick_filter is not None and self.published_from is None:
+            message = "quick_filter requires a resolved published_from"
+            raise MapFilterError(message)
         if len(self.rooms) > _MAX_ROOM_VALUES or len(self.districts) > _MAX_DISTRICT_VALUES:
             message = "too many repeated filter values"
             raise MapFilterError(message)
@@ -148,6 +152,7 @@ class MapFilters:
             "price_min": self.price_min,
             "published_from": (self.published_from.isoformat() if self.published_from else None),
             "published_to": self.published_to.isoformat() if self.published_to else None,
+            "quick_filter": self.quick_filter,
             "rooms": sorted(set(self.rooms)),
         }
         return json.dumps(payload, separators=(",", ":"), sort_keys=True)

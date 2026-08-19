@@ -12,6 +12,7 @@ import {
   fetchFacets,
   fetchLocationMap,
   fetchLocationOffers,
+  fetchQuickFilters,
   type LocationMapFeature,
   type LocationOfferPage,
 } from "@/lib/catalog-api";
@@ -91,6 +92,14 @@ export function MapExplorer() {
       const result = await fetchFacets({ signal });
       if (result.state === "error") throw new Error("facets");
       return result.data;
+    },
+  });
+  const quickFiltersQuery = useQuery({
+    queryKey: ["quick-filters"],
+    queryFn: async ({ signal }) => {
+      const result = await fetchQuickFilters({ signal });
+      if (result.state === "error") throw new Error("quick-filters");
+      return result.data.items;
     },
   });
   const mapQuery = useQuery({
@@ -224,6 +233,8 @@ export function MapExplorer() {
             facets={facetsQuery.data ?? null}
             facetsError={facetsQuery.isError}
             facetsLoading={facetsQuery.isPending}
+            quickFilters={quickFiltersQuery.data ?? []}
+            quickFiltersLoading={quickFiltersQuery.isPending}
             state={searchState}
             onApply={(nextState) =>
               navigate({ ...nextState, bbox: searchState.bbox }, "push")

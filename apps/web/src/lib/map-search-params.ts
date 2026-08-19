@@ -26,6 +26,7 @@ export type MapSearchState = {
   contentTypes: ContentType[];
   publishedFrom: string | null;
   publishedTo: string | null;
+  quickFilter: string | null;
 };
 
 export const DEFAULT_MAP_SEARCH_STATE: MapSearchState = {
@@ -40,6 +41,7 @@ export const DEFAULT_MAP_SEARCH_STATE: MapSearchState = {
   contentTypes: DEFAULT_CONTENT_TYPES,
   publishedFrom: null,
   publishedTo: null,
+  quickFilter: null,
 };
 
 const MARKET_TYPES = new Set<MarketType>(["primary", "secondary", "unknown"]);
@@ -87,7 +89,13 @@ export function parseMapSearchParams(
         : parsedContentTypes,
     publishedFrom: parseTimestamp(searchParams.get("published_from"), false),
     publishedTo: parseTimestamp(searchParams.get("published_to"), true),
+    quickFilter: parseQuickFilter(searchParams.get("quick_filter")),
   };
+}
+
+function parseQuickFilter(value: string | null) {
+  const parsed = value?.trim();
+  return parsed ? parsed : null;
 }
 
 export function serializeMapSearchState(state: MapSearchState) {
@@ -106,6 +114,7 @@ export function serializeMapSearchState(state: MapSearchState) {
   }
   appendText(params, "published_from", state.publishedFrom);
   appendText(params, "published_to", state.publishedTo);
+  appendText(params, "quick_filter", state.quickFilter);
 
   return params.toString();
 }
@@ -129,6 +138,7 @@ export function toMapLocationQuery(state: MapSearchState): MapLocationQuery {
       ? {}
       : { published_from: state.publishedFrom }),
     ...(state.publishedTo === null ? {} : { published_to: state.publishedTo }),
+    ...(state.quickFilter === null ? {} : { quick_filter: state.quickFilter }),
   };
 }
 

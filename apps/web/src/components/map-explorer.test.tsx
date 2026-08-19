@@ -209,6 +209,10 @@ describe("MapExplorer", () => {
       state: "ready",
       data: facets,
     });
+    vi.spyOn(catalogApi, "fetchQuickFilters").mockResolvedValue({
+      state: "ready",
+      data: { items: [{ id: "last_day", label_key: "quickFilter.last_day" }] },
+    });
     vi.spyOn(catalogApi, "fetchLocationOffers").mockResolvedValue({
       state: "ready",
       data: offerPage,
