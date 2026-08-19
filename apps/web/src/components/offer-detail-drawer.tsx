@@ -81,7 +81,9 @@ export function OfferDetailDrawer({
           <div>
             <p className="eyebrow">{t("detailEyebrow")}</p>
             <h2 id={titleId}>
-              {detail && !showStaleDetail ? detail.display_name : t("detailLoadingTitle")}
+              {detail && !showStaleDetail
+                ? detail.display_name
+                : t("detailLoadingTitle")}
             </h2>
           </div>
           <button ref={closeButtonRef} type="button" onClick={onClose}>
@@ -104,10 +106,7 @@ export function OfferDetailDrawer({
         ) : null}
 
         {detailQuery.isSuccess && detail && !showStaleDetail ? (
-          <OfferDetailContent
-            detail={detail}
-            matchesFilters={matchesFilters}
-          />
+          <OfferDetailContent detail={detail} matchesFilters={matchesFilters} />
         ) : null}
       </aside>
     </div>
@@ -119,9 +118,15 @@ type OfferDetailContentProps = {
   matchesFilters: boolean | null;
 };
 
-function OfferDetailContent({ detail, matchesFilters }: OfferDetailContentProps) {
+function OfferDetailContent({
+  detail,
+  matchesFilters,
+}: OfferDetailContentProps) {
   const t = useTranslations("map");
-  const area = formatArea(detail.area_min_sqm ?? null, detail.area_max_sqm ?? null);
+  const area = formatArea(
+    detail.area_min_sqm ?? null,
+    detail.area_max_sqm ?? null,
+  );
   const rooms = formatRooms(detail.rooms_min ?? null, detail.rooms_max ?? null);
   const verifiedLink = isSafeExternalUrl(detail.verified_source_url)
     ? detail.verified_source_url
@@ -135,18 +140,29 @@ function OfferDetailContent({ detail, matchesFilters }: OfferDetailContentProps)
             {formatPublishedDate(detail.published_at)}
           </time>
         </p>
-        <p className="offer-detail-disclaimer">{t("detailAvailabilityDisclaimer")}</p>
+        <p className="offer-detail-disclaimer">
+          {t("detailAvailabilityDisclaimer")}
+        </p>
         {matchesFilters === false ? (
           <p className="nonmatching-note">{t("nonMatchingOffer")}</p>
         ) : null}
       </section>
 
       <dl className="offer-detail-fields">
-        <DetailRow label={t("contentTypeLabel")} value={t(`contentType.${detail.content_type}`)} />
-        <DetailRow label={t("marketTypeLabel")} value={t(`marketType.${detail.market_type}`)} />
+        <DetailRow
+          label={t("contentTypeLabel")}
+          value={t(`contentType.${detail.content_type}`)}
+        />
+        <DetailRow
+          label={t("marketTypeLabel")}
+          value={t(`marketType.${detail.market_type}`)}
+        />
         <DetailRow
           label={t("apartmentPrice")}
-          value={formatPrice(detail.price_min_minor ?? null, detail.price_max_minor ?? null)}
+          value={formatPrice(
+            detail.price_min_minor ?? null,
+            detail.price_max_minor ?? null,
+          )}
         />
         <DetailRow
           label={t("parkingPrice")}
@@ -169,7 +185,10 @@ function OfferDetailContent({ detail, matchesFilters }: OfferDetailContentProps)
         <DetailRow label={t("detailAreaLabel")} value={area} />
         <DetailRow label={t("detailRoomsLabel")} value={rooms} />
         <DetailRow label={t("detailFloorLabel")} value={detail.floor_label} />
-        <DetailRow label={t("detailDeliveryLabel")} value={detail.delivery_label} />
+        <DetailRow
+          label={t("detailDeliveryLabel")}
+          value={detail.delivery_label}
+        />
       </dl>
 
       {detail.data_confidence === "partial" ? (

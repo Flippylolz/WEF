@@ -622,9 +622,15 @@ function OfferPanel({
                 )}
               />
             </dl>
-            {formatArea(offer.area_min_sqm ?? null, offer.area_max_sqm ?? null) ? (
+            {formatArea(
+              offer.area_min_sqm ?? null,
+              offer.area_max_sqm ?? null,
+            ) ? (
               <p className="offer-area">
-                {formatArea(offer.area_min_sqm ?? null, offer.area_max_sqm ?? null)}
+                {formatArea(
+                  offer.area_min_sqm ?? null,
+                  offer.area_max_sqm ?? null,
+                )}
               </p>
             ) : null}
             {offer.data_confidence === "partial" ? (
@@ -634,7 +640,11 @@ function OfferPanel({
               className="offer-detail-trigger"
               type="button"
               onClick={(event) =>
-                onSelectOffer(offer.id, offer.matches_filters, event.currentTarget)
+                onSelectOffer(
+                  offer.id,
+                  offer.matches_filters,
+                  event.currentTarget,
+                )
               }
             >
               {t("viewOfferDetails", { name: offer.display_name })}

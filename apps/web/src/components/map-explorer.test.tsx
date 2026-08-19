@@ -565,7 +565,9 @@ describe("MapExplorer", () => {
       }),
     );
 
-    expect(await screen.findByTestId("offer-detail-overlay")).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("offer-detail-overlay"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Masked public text only.")).toBeInTheDocument();
     expect(catalogApi.fetchOfferDetail).toHaveBeenCalledWith(
       "20000000-0000-4000-8000-000000000001",

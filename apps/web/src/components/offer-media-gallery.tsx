@@ -70,7 +70,11 @@ export function OfferMediaGallery({ detail, media }: OfferMediaGalleryProps) {
                   )}
                 </button>
               ) : (
-                <div className="offer-media-missing" role="img" aria-label={alt}>
+                <div
+                  className="offer-media-missing"
+                  role="img"
+                  aria-label={alt}
+                >
                   {t("detailMissingMedia")}
                 </div>
               )}
@@ -87,7 +91,11 @@ export function OfferMediaGallery({ detail, media }: OfferMediaGalleryProps) {
           aria-label={t("detailMediaLightbox")}
         >
           <div className="offer-media-lightbox-toolbar">
-            <button type="button" onClick={showPrevious} disabled={activeIndex === 0}>
+            <button
+              type="button"
+              onClick={showPrevious}
+              disabled={activeIndex === 0}
+            >
               {t("detailMediaPrevious")}
             </button>
             <span>
@@ -107,7 +115,10 @@ export function OfferMediaGallery({ detail, media }: OfferMediaGalleryProps) {
               {t("detailClose")}
             </button>
           </div>
-          <OfferMediaSlide item={media[activeIndex]!} alt={mediaAltText(detail, activeIndex, media.length)} />
+          <OfferMediaSlide
+            item={media[activeIndex]!}
+            alt={mediaAltText(detail, activeIndex, media.length)}
+          />
         </div>
       ) : null}
     </>
@@ -129,7 +140,12 @@ function OfferMediaSlide({ item, alt }: OfferMediaSlideProps) {
 
   if (item.media_type === "video") {
     return (
-      <video className="offer-media-video" controls preload="metadata" aria-label={alt}>
+      <video
+        className="offer-media-video"
+        controls
+        preload="metadata"
+        aria-label={alt}
+      >
         <source src={displayUrl} type={item.mime_type} />
       </video>
     );

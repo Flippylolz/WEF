@@ -14,17 +14,15 @@ describe("offer-presentation", () => {
   it("formats prices and areas without inventing values", () => {
     expect(formatPrice(80_000_000, 80_000_000)).toContain("800");
     expect(formatPrice(null, 80_000_000)).toBeNull();
-    expect(
-      formatAdditionalPrice(1_000_000, 1_000_000, true, "Included"),
-    ).toBe("Included");
+    expect(formatAdditionalPrice(1_000_000, 1_000_000, true, "Included")).toBe(
+      "Included",
+    );
     expect(formatArea("35.00", "71.50")).toBe("35.00–71.50 m²");
     expect(formatArea(null, "71.50")).toBeNull();
   });
 
   it("accepts only verified https source links", () => {
-    expect(
-      isSafeExternalUrl("https://t.me/elestate_warszawa/42"),
-    ).toBe(true);
+    expect(isSafeExternalUrl("https://t.me/elestate_warszawa/42")).toBe(true);
     expect(isSafeExternalUrl("http://example.test/offer")).toBe(false);
     expect(isSafeExternalUrl("javascript:alert(1)")).toBe(false);
     expect(isSafeExternalUrl(null)).toBe(false);
@@ -48,9 +46,9 @@ describe("offer-presentation", () => {
         2,
       ),
     ).toContain("media 1 of 2");
-    expect(
-      pickMediaDisplayUrl("/media/thumb.webp", "/media/full.jpg"),
-    ).toBe("/media/full.jpg");
+    expect(pickMediaDisplayUrl("/media/thumb.webp", "/media/full.jpg")).toBe(
+      "/media/full.jpg",
+    );
     expect(pickMediaDisplayUrl("/media/thumb.webp", null)).toBe(
       "/media/thumb.webp",
     );

@@ -41,7 +41,8 @@ export function formatPublishedDate(value: string) {
 }
 
 export function isSafeExternalUrl(value: string | null | undefined) {
-  if (value === null || value === undefined || value.trim() === "") return false;
+  if (value === null || value === undefined || value.trim() === "")
+    return false;
   try {
     const parsed = new URL(value);
     return parsed.protocol === "https:";

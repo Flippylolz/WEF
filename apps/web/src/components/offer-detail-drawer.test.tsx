@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
@@ -9,12 +13,13 @@ import type { OfferDetail } from "@/lib/catalog-api";
 import * as catalogApi from "@/lib/catalog-api";
 
 vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string, values?: Record<string, string | number>) => {
-    if (values) {
-      return `${key}:${JSON.stringify(values)}`;
-    }
-    return key;
-  },
+  useTranslations:
+    () => (key: string, values?: Record<string, string | number>) => {
+      if (values) {
+        return `${key}:${JSON.stringify(values)}`;
+      }
+      return key;
+    },
 }));
 
 const detail: OfferDetail = {
@@ -137,17 +142,19 @@ describe("OfferDetailDrawer", () => {
     });
     renderDrawer();
 
-    expect(await screen.findByText("development · primary")).toBeInTheDocument();
+    expect(
+      await screen.findByText("development · primary"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Masked public text only.")).toBeInTheDocument();
-    expect(screen.getByText("detailAvailabilityDisclaimer")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "detailOpenTelegram" })).toHaveAttribute(
-      "href",
-      "https://t.me/elestate_warszawa/42",
-    );
-    expect(screen.getByRole("link", { name: "detailOpenTelegram" })).toHaveAttribute(
-      "rel",
-      "noopener noreferrer",
-    );
+    expect(
+      screen.getByText("detailAvailabilityDisclaimer"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "detailOpenTelegram" }),
+    ).toHaveAttribute("href", "https://t.me/elestate_warszawa/42");
+    expect(
+      screen.getByRole("link", { name: "detailOpenTelegram" }),
+    ).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it("shows non-link fallback when verified url is absent", async () => {
@@ -157,8 +164,12 @@ describe("OfferDetailDrawer", () => {
     });
     renderDrawer();
 
-    expect(await screen.findByText(/detailSourceFallbackWithId/)).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "detailOpenTelegram" })).not.toBeInTheDocument();
+    expect(
+      await screen.findByText(/detailSourceFallbackWithId/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "detailOpenTelegram" }),
+    ).not.toBeInTheDocument();
   });
 
   it("announces not-found without leaking payloads", async () => {
@@ -167,7 +178,10 @@ describe("OfferDetailDrawer", () => {
     });
     renderDrawer();
 
-    expect(await screen.findByText("detailNotFound")).toHaveAttribute("role", "alert");
+    expect(await screen.findByText("detailNotFound")).toHaveAttribute(
+      "role",
+      "alert",
+    );
   });
 
   it("closes from escape and restores focus to the trigger", async () => {
@@ -186,13 +200,15 @@ describe("OfferDetailDrawer", () => {
           open={open}
           offerId={detail.id}
           matchesFilters={false}
-          detailQuery={{
-            data: detail,
-            error: null,
-            isError: false,
-            isPending: false,
-            isSuccess: true,
-          } as never}
+          detailQuery={
+            {
+              data: detail,
+              error: null,
+              isError: false,
+              isPending: false,
+              isSuccess: true,
+            } as never
+          }
           onClose={() => setOpen(false)}
           returnFocusRef={{ current: trigger }}
         />
@@ -202,7 +218,9 @@ describe("OfferDetailDrawer", () => {
     render(<ClosableDrawer />);
     await userEvent.keyboard("{Escape}");
     await waitFor(() =>
-      expect(screen.queryByTestId("offer-detail-overlay")).not.toBeInTheDocument(),
+      expect(
+        screen.queryByTestId("offer-detail-overlay"),
+      ).not.toBeInTheDocument(),
     );
     await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
