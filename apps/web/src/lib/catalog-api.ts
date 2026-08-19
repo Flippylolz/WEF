@@ -8,6 +8,9 @@ export type { MapLocationQuery } from "@/lib/map-search-params";
 
 export type FilterFacets =
   paths["/api/v1/filter-facets"]["get"]["responses"][200]["content"]["application/json"];
+export type QuickFilterList =
+  paths["/api/v1/quick-filters"]["get"]["responses"][200]["content"]["application/json"];
+export type QuickFilterPreset = QuickFilterList["items"][number];
 export type LocationMap =
   paths["/api/v1/map/locations"]["get"]["responses"][200]["content"]["application/json"];
 export type LocationMapFeature = LocationMap["features"][number];
@@ -67,6 +70,26 @@ export async function fetchLocationMap(
       };
     });
     return { state: "ready", data: { ...data, features } };
+  } catch {
+    return { state: "error" };
+  }
+}
+
+export async function fetchQuickFilters(
+  options: RequestOptions = {},
+): Promise<ApiResult<QuickFilterList>> {
+  try {
+    const { data, error, response } = await client(options.fetcher).GET(
+      "/api/v1/quick-filters",
+      {
+        cache: "no-store",
+        ...(options.signal ? { signal: options.signal } : {}),
+      },
+    );
+    if (!response.ok || error !== undefined || data === undefined) {
+      return { state: "error" };
+    }
+    return { state: "ready", data };
   } catch {
     return { state: "error" };
   }

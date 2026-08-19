@@ -3,7 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useMemo, useState, type ReactNode } from "react";
 
-import type { FilterFacets } from "@/lib/catalog-api";
+import { QuickFilterBar } from "@/components/quick-filter-bar";
+
+import type { FilterFacets, QuickFilterPreset } from "@/lib/catalog-api";
 import type {
   ContentType,
   MapSearchState,
@@ -14,6 +16,8 @@ type MapFilterControlsProps = {
   facets: FilterFacets | null;
   facetsError: boolean;
   facetsLoading: boolean;
+  quickFilters: QuickFilterPreset[];
+  quickFiltersLoading: boolean;
   state: MapSearchState;
   onApply: (state: MapSearchState) => void;
   onClear: () => void;
@@ -24,6 +28,8 @@ export function MapFilterControls({
   facets,
   facetsError,
   facetsLoading,
+  quickFilters,
+  quickFiltersLoading,
   state,
   onApply,
   onClear,
@@ -78,6 +84,19 @@ export function MapFilterControls({
           {collapseControl}
         </div>
       </div>
+
+      <QuickFilterBar
+        presets={quickFilters}
+        selectedId={draft.quickFilter}
+        loading={quickFiltersLoading}
+        onSelect={(presetId) =>
+          setDraft((current) => ({
+            ...current,
+            quickFilter: presetId,
+            publishedFrom: presetId ? null : current.publishedFrom,
+          }))
+        }
+      />
 
       <div className="filter-grid">
         <FilterRange label={t("priceLabel")}>
@@ -234,6 +253,7 @@ export function MapFilterControls({
                 setDraft((current) => ({
                   ...current,
                   publishedFrom: dateTimeValue(event.target.value, false),
+                  quickFilter: null,
                 }))
               }
             />
@@ -249,6 +269,7 @@ export function MapFilterControls({
                 setDraft((current) => ({
                   ...current,
                   publishedTo: dateTimeValue(event.target.value, true),
+                  quickFilter: null,
                 }))
               }
             />

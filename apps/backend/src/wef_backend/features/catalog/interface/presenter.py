@@ -14,6 +14,7 @@ from wef_backend.features.catalog.application import (
     MapQueryResult,
     OfferDataConfidence,
 )
+from wef_backend.features.catalog.application.quick_filters import QuickFilterPreset
 from wef_backend.features.catalog.domain import ContentType, MarketType
 
 
@@ -92,6 +93,23 @@ class FilterFacetsResponse(BaseModel):
     area_max_sqm: Decimal | None
     published_from: datetime | None
     published_to: datetime | None
+
+
+class QuickFilterPresetResponse(BaseModel):
+    """One server-defined quick filter preset."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    label_key: str
+
+
+class QuickFilterListResponse(BaseModel):
+    """Supported quick filter presets in stable order."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: tuple[QuickFilterPresetResponse, ...]
 
 
 class OfferSummaryResponse(BaseModel):
@@ -226,4 +244,16 @@ def present_location_offer_page(
         matching_count=page.matching_count,
         total_count=page.total_count,
         next_cursor=page.next_cursor,
+    )
+
+
+def present_quick_filters(
+    presets: tuple[QuickFilterPreset, ...],
+) -> QuickFilterListResponse:
+    """Present quick-filter metadata without client-side preset lists."""
+    return QuickFilterListResponse(
+        items=tuple(
+            QuickFilterPresetResponse(id=preset.id, label_key=preset.label_key)
+            for preset in presets
+        ),
     )

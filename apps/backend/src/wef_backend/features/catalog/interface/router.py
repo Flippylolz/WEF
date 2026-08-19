@@ -1,6 +1,6 @@
 """HTTP adapter for the grouped map query."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
@@ -14,26 +14,38 @@ from wef_backend.errors import (
     QueryValidationError,
     ResourceNotFoundError,
 )
-from wef_backend.features.catalog.application import (
+from wef_backend.features.catalog.application.browse_catalog import CursorError
+from wef_backend.features.catalog.application.map_query import (
     BoundingBox,
-    CursorError,
     MapFilterError,
     MapFilters,
+)
+from wef_backend.features.catalog.application.quick_filters import (
+    apply_quick_filter,
+    list_quick_filter_presets,
 )
 from wef_backend.features.catalog.domain import ContentType, MarketType
 from wef_backend.features.catalog.interface.presenter import (
     FilterFacetsResponse,
     LocationMapResponse,
     LocationOfferPageResponse,
+    QuickFilterListResponse,
     present_facets,
     present_location_map,
     present_location_offer_page,
+    present_quick_filters,
 )
 
 RoomValue = Annotated[int, Field(ge=0, le=20)]
 DistrictValue = Annotated[
     str,
     StringConstraints(strip_whitespace=True, min_length=1, max_length=80),
+]
+
+
+QuickFilterValue = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=32),
 ]
 
 
@@ -53,11 +65,12 @@ class MapQueryParams(BaseModel):
     content_type: list[ContentType] = Field(default_factory=list, max_length=5)
     published_from: datetime | None = None
     published_to: datetime | None = None
+    quick_filter: QuickFilterValue | None = None
 
-    def to_filters(self) -> MapFilters:
+    def to_filters(self, *, now: datetime | None = None) -> MapFilters:
         """Translate validated HTTP syntax to the application DTO."""
         try:
-            return MapFilters(
+            filters = MapFilters(
                 bbox=BoundingBox.parse(self.bbox),
                 price_min=self.price_min,
                 price_max=self.price_max,
@@ -69,6 +82,11 @@ class MapQueryParams(BaseModel):
                 content_types=tuple(self.content_type),
                 published_from=self.published_from,
                 published_to=self.published_to,
+            )
+            return apply_quick_filter(
+                filters,
+                preset_id=self.quick_filter,
+                now=now or datetime.now(tz=UTC),
             )
         except MapFilterError as error:
             raise QueryValidationError(str(error)) from error
@@ -125,6 +143,16 @@ def _etag_matches(if_none_match: str | None, etag: str) -> bool:
         return False
     values = {item.strip() for item in if_none_match.split(",")[:20]}
     return "*" in values or etag in values
+
+
+@facets_router.get(
+    "/quick-filters",
+    operation_id="listQuickFilters",
+    summary="List server-defined quick filter presets",
+)
+async def get_quick_filters() -> QuickFilterListResponse:
+    """Return the supported quick-filter identifiers and label keys."""
+    return present_quick_filters(list_quick_filter_presets())
 
 
 @facets_router.get(
