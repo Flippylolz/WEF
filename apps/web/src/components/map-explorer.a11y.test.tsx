@@ -103,9 +103,10 @@ describe("MapExplorer accessibility", () => {
       </QueryClientProvider>,
     );
 
-    await screen.findByRole("button", {
+    expect(await screen.findByRole("button", {
       name: /Synthetic Central Residence/,
-    });
-    expect(await axe(container)).toHaveNoViolations();
+    }));
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
   });
 });
