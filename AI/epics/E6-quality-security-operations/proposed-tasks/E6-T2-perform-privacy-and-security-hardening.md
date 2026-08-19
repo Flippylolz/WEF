@@ -52,7 +52,7 @@ The following definition preserves the original E6-T2 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E3-T4](../../E3-database-geocoding-media/tasks/E3-T4-implement-media-storage-and-derivatives.md), [E4-T3](../../E4-read-api-filter-contracts/proposed-tasks/E4-T3-implement-offer-detail.md), [E5-T3](../../E5-interactive-map-frontend/tasks/E5-T3-build-offer-detail-and-media-gallery.md)
+- Task dependencies: [E3-T4](../../E3-database-geocoding-media/tasks/E3-T4-implement-media-storage-and-derivatives.md), [E4-T3](../../E4-read-api-filter-contracts/tasks/E4-T3-implement-offer-detail.md), [E5-T3](../../E5-interactive-map-frontend/tasks/E5-T3-build-offer-detail-and-media-gallery.md)
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Product](../../../product/README.md), [Security](../../../security/README.md), [Operations](../../../operations/README.md), [Governance](../../../governance/README.md), [Contracts](../../../contracts/README.md).
 
