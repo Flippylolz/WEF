@@ -1,5 +1,6 @@
 """Identity infrastructure adapters."""
 
+from wef_backend.features.identity.infrastructure.favorite_store import SQLAlchemyFavoriteStore
 from wef_backend.features.identity.infrastructure.models import (
     IdentityBase,
     SessionRow,
@@ -17,6 +18,7 @@ __all__ = [
     "IdentityBase",
     "MemoryRateLimiter",
     "PwdlibPasswordHasher",
+    "SQLAlchemyFavoriteStore",
     "SQLAlchemyIdentityStore",
     "SecretsTokenService",
     "SessionRow",

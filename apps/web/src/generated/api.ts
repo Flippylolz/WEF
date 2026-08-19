@@ -185,6 +185,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List starred locations for the account
+         * @description Return starred locations with public labels.
+         */
+        get: operations["listFavoriteLocations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/favorites/{location_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Star one location
+         * @description Star one accepted in-scope location.
+         */
+        put: operations["addFavoriteLocation"];
+        post?: never;
+        /**
+         * Remove one starred location
+         * @description Remove one starred location idempotently.
+         */
+        delete: operations["removeFavoriteLocation"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/filter-facets": {
         parameters: {
             query?: never;
@@ -392,6 +436,33 @@ export interface components {
         EstatesResponse: {
             /** Items */
             items: components["schemas"]["EstateResponse"][];
+        };
+        /**
+         * FavoriteListResponse
+         * @description Account favorites newest-first.
+         */
+        FavoriteListResponse: {
+            /** Items */
+            items: components["schemas"]["FavoriteLocationResponse"][];
+        };
+        /**
+         * FavoriteLocationResponse
+         * @description One starred location summary.
+         */
+        FavoriteLocationResponse: {
+            /** Created At */
+            created_at: string;
+            /** Display Address */
+            display_address: string;
+            /** Display Name */
+            display_name: string;
+            /** District */
+            district: string | null;
+            /**
+             * Location Id
+             * Format: uuid
+             */
+            location_id: string;
         };
         /**
          * FilterFacetsResponse
@@ -1077,6 +1148,112 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EstatesResponse"];
+                };
+            };
+        };
+    };
+    listFavoriteLocations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FavoriteListResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    addFavoriteLocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                location_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The location is absent or not public. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    removeFavoriteLocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                location_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

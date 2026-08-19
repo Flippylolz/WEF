@@ -14,6 +14,13 @@ from wef_backend.features.catalog.application import (
     OfferCursor,
 )
 from wef_backend.features.estates.application import EstateRecord
+from wef_backend.features.identity.application.favorites import (
+    AddFavoriteLocation,
+    FavoriteLocationView,
+    FavoriteService,
+    ListFavoriteLocations,
+    RemoveFavoriteLocation,
+)
 from wef_backend.features.identity.application.identity import (
     AccountView,
     AuthenticateAccount,
@@ -308,6 +315,57 @@ def build_identity_service(
         disable_account=DisableOwnAccount(store, clock),
         delete_account=DeleteOwnAccount(store, clock),
         rate_limiter=rate_limiter or FakeRateLimiter(),
+    )
+
+
+@dataclass
+class FakeFavoriteStore:
+    """In-memory favorite store for HTTP tests."""
+
+    items: dict[tuple[UUID, UUID], FavoriteLocationView] = field(default_factory=dict)
+    public_locations: set[UUID] = field(default_factory=set)
+
+    async def list_favorites(self, user_id: UUID) -> tuple[FavoriteLocationView, ...]:
+        """Return favorites newest-first for one account."""
+        return tuple(
+            item
+            for (owner, _), item in sorted(
+                self.items.items(),
+                key=lambda entry: entry[1].created_at,
+                reverse=True,
+            )
+            if owner == user_id
+        )
+
+    async def add_favorite(self, user_id: UUID, location_id: UUID) -> bool:
+        """Star one public location when present in the fake catalog."""
+        if location_id not in self.public_locations:
+            return False
+        key = (user_id, location_id)
+        if key not in self.items:
+            self.items[key] = FavoriteLocationView(
+                location_id=location_id,
+                display_name="Sample",
+                display_address="Sample address",
+                district="wola",
+                created_at="2026-08-19T12:00:00+00:00",
+            )
+        return True
+
+    async def remove_favorite(self, user_id: UUID, location_id: UUID) -> None:
+        """Remove one starred location idempotently."""
+        self.items.pop((user_id, location_id), None)
+
+
+def build_favorites_service(
+    store: FakeFavoriteStore | None = None,
+) -> FavoriteService:
+    """Compose one favorites service fully backed by fakes."""
+    favorite_store = store or FakeFavoriteStore()
+    return FavoriteService(
+        list_favorites=ListFavoriteLocations(favorite_store),
+        add_favorite=AddFavoriteLocation(favorite_store),
+        remove_favorite=RemoveFavoriteLocation(favorite_store),
     )
 
 

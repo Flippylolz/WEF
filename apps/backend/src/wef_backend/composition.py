@@ -30,10 +30,17 @@ from wef_backend.features.identity.application import (
     ResolveSession,
     RevokeAllAccountSessions,
 )
+from wef_backend.features.identity.application.favorites import (
+    AddFavoriteLocation,
+    FavoriteService,
+    ListFavoriteLocations,
+    RemoveFavoriteLocation,
+)
 from wef_backend.features.identity.infrastructure import (
     MemoryRateLimiter,
     PwdlibPasswordHasher,
     SecretsTokenService,
+    SQLAlchemyFavoriteStore,
     SQLAlchemyIdentityStore,
     SystemClock,
 )
@@ -57,6 +64,7 @@ class AppServices:
     is_ready: ReadyCheck
     close: ResourceCloser
     identity: IdentityService
+    favorites: FavoriteService
     auth_cookie_secure: bool
 
 
@@ -67,6 +75,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
     map_adapter = SQLAlchemyMapQueryAdapter(database.session_factory)
     browse_adapter = SQLAlchemyCatalogBrowseAdapter(database.session_factory)
     identity_store = SQLAlchemyIdentityStore(database.session_factory)
+    favorite_store = SQLAlchemyFavoriteStore(database.session_factory)
     hasher = PwdlibPasswordHasher()
     tokens = SecretsTokenService()
     clock = SystemClock()
@@ -112,6 +121,11 @@ def build_services(settings: Settings | None = None) -> AppServices:
             disable_account=DisableOwnAccount(identity_store, clock),
             delete_account=DeleteOwnAccount(identity_store, clock),
             rate_limiter=MemoryRateLimiter(),
+        ),
+        favorites=FavoriteService(
+            list_favorites=ListFavoriteLocations(favorite_store),
+            add_favorite=AddFavoriteLocation(favorite_store),
+            remove_favorite=RemoveFavoriteLocation(favorite_store),
         ),
         auth_cookie_secure=runtime_settings.env == "production",
     )
