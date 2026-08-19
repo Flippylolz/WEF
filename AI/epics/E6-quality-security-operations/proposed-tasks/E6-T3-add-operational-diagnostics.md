@@ -48,7 +48,7 @@ The following definition preserves the original E6-T3 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E3-T2](../../E3-database-geocoding-media/tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md), [E4-T4](../../E4-read-api-filter-contracts/proposed-tasks/E4-T4-harden-api-behavior-and-performance.md)
+- Task dependencies: [E3-T2](../../E3-database-geocoding-media/tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md), [E4-T4](../../E4-read-api-filter-contracts/tasks/E4-T4-harden-api-behavior-and-performance.md)
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Product](../../../product/README.md), [Security](../../../security/README.md), [Operations](../../../operations/README.md), [Governance](../../../governance/README.md), [Contracts](../../../contracts/README.md).
 

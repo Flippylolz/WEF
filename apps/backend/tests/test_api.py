@@ -40,6 +40,8 @@ from wef_backend.features.catalog.application.offer_detail import (
 from wef_backend.features.catalog.domain import ContentType, MarketType
 from wef_backend.features.estates.application import EstateRecord, ListEstates
 from wef_backend.features.estates.domain import Availability, GeoPoint
+from wef_backend.features.identity.infrastructure.security import MemoryRateLimiter
+from wef_backend.middleware.public_rate_limit import RateLimiter
 
 
 def create_test_app(
@@ -48,8 +50,6 @@ def create_test_app(
     public_rate_limiter: RateLimiter | None = None,
 ) -> FastAPI:
     """Build an isolated app with no database resources."""
-    from wef_backend.features.identity.infrastructure.security import MemoryRateLimiter
-
     browse = FakeCatalogBrowse(facets=empty_facet_snapshot())
     services = AppServices(
         list_estates=ListEstates(FakeEstateQuery(records=())),

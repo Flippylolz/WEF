@@ -1,12 +1,16 @@
+"""In-process rate limiting for bounded public catalog read endpoints."""
+
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Awaitable, Callable
-from typing import Protocol
-
-from fastapi import Request, Response
+from typing import TYPE_CHECKING, Protocol
 
 from wef_backend.errors import RateLimitExceededError
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    from fastapi import Request, Response
 
 _PUBLIC_READ_LIMITS: tuple[tuple[str, int, int], ...] = (
     ("/api/v1/map/locations", 120, 60),
