@@ -57,6 +57,10 @@ class AuthProblemError(Exception):
         super().__init__(detail)
 
 
+class RateLimitExceededError(Exception):
+    """Raised when a public read endpoint exceeds its in-process allowance."""
+
+
 class AuthProblemResponse(BaseModel):
     """Stable authentication problem envelope without credentials."""
 
@@ -70,6 +74,21 @@ class AuthProblemResponse(BaseModel):
     detail: str
     instance: str
     kind: Literal["auth"] = "auth"
+
+
+class ThrottleProblemResponse(BaseModel):
+    """Stable throttle envelope without client identity reflection."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: str
+    title: str
+    status: int
+    code: str
+    request_id: UUID
+    detail: str
+    instance: str
+    kind: Literal["rate_limited"] = "rate_limited"
 
 
 async def auth_problem_handler(request: Request, error: Exception) -> JSONResponse:
@@ -86,6 +105,24 @@ async def auth_problem_handler(request: Request, error: Exception) -> JSONRespon
     )
     return JSONResponse(
         status_code=problem_error.status_code,
+        content=problem.model_dump(mode="json"),
+        media_type="application/problem+json",
+    )
+
+
+async def rate_limit_handler(request: Request, _: Exception) -> JSONResponse:
+    """Present one bounded public-read throttle response."""
+    problem = ThrottleProblemResponse(
+        type="https://wef.invalid/problems/rate-limited",
+        title="Too many requests",
+        status=429,
+        code="rate_limited",
+        request_id=request.state.request_id,
+        detail="Try again later.",
+        instance=request.url.path,
+    )
+    return JSONResponse(
+        status_code=429,
         content=problem.model_dump(mode="json"),
         media_type="application/problem+json",
     )

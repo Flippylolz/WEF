@@ -152,9 +152,16 @@ def _etag_matches(if_none_match: str | None, etag: str) -> bool:
     "/quick-filters",
     operation_id="listQuickFilters",
     summary="List server-defined quick filter presets",
+    responses={
+        422: {
+            "model": ProblemResponse,
+            "description": "The query is malformed.",
+        },
+    },
 )
-async def get_quick_filters() -> QuickFilterListResponse:
+async def get_quick_filters(response: Response) -> QuickFilterListResponse:
     """Return the supported quick-filter identifiers and label keys."""
+    response.headers["Cache-Control"] = "public, max-age=60"
     return present_quick_filters(list_quick_filter_presets())
 
 
@@ -162,9 +169,16 @@ async def get_quick_filters() -> QuickFilterListResponse:
     "/filter-facets",
     operation_id="getFilterFacets",
     summary="Get canonical visible filter facets",
+    responses={
+        422: {
+            "model": ProblemResponse,
+            "description": "The query is malformed.",
+        },
+    },
 )
-async def get_filter_facets(request: Request) -> FilterFacetsResponse:
+async def get_filter_facets(request: Request, response: Response) -> FilterFacetsResponse:
     """Return canonical options and visible dataset bounds."""
+    response.headers["Cache-Control"] = "public, max-age=60"
     return present_facets(await request.app.state.query_facets())
 
 

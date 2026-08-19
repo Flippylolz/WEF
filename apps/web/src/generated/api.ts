@@ -1462,6 +1462,15 @@ export interface operations {
                     "application/json": components["schemas"]["FilterFacetsResponse"];
                 };
             };
+            /** @description The query is malformed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
         };
     };
     getLiveness: {
@@ -1674,6 +1683,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuickFilterListResponse"];
+                };
+            };
+            /** @description The query is malformed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };

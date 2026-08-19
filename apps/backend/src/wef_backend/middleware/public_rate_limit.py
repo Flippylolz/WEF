@@ -1,0 +1,83 @@
+"""In-process rate limiting for bounded public catalog read endpoints."""
+
+from __future__ import annotations
+
+import hashlib
+from typing import TYPE_CHECKING, Protocol
+
+from fastapi.responses import JSONResponse
+
+from wef_backend.errors import ThrottleProblemResponse
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    from fastapi import Request, Response
+
+_PUBLIC_READ_LIMITS: tuple[tuple[str, int, int], ...] = (
+    ("/api/v1/map/locations", 120, 60),
+    ("/api/v1/filter-facets", 60, 60),
+    ("/api/v1/quick-filters", 60, 60),
+    ("/api/v1/locations/", 90, 60),
+    ("/api/v1/offers/", 90, 60),
+)
+
+
+class RateLimiter(Protocol):
+    """Minimal throttle contract shared by production and test doubles."""
+
+    def allow(self, key: str, *, limit: int, window_seconds: int) -> bool:
+        """Return whether one request is allowed inside the window."""
+
+
+def _client_key(request: Request) -> str:
+    host = request.client.host if request.client else "anonymous"
+    return hashlib.sha256(host.encode()).hexdigest()[:16]
+
+
+def _limit_for_path(path: str) -> tuple[str, int, int] | None:
+    for prefix, limit, window in _PUBLIC_READ_LIMITS:
+        if path == prefix or path.startswith(prefix):
+            return prefix, limit, window
+    return None
+
+
+def _throttle_response(request: Request) -> JSONResponse:
+    problem = ThrottleProblemResponse(
+        type="https://wef.invalid/problems/rate-limited",
+        title="Too many requests",
+        status=429,
+        code="rate_limited",
+        request_id=request.state.request_id,
+        detail="Try again later.",
+        instance=request.url.path,
+    )
+    return JSONResponse(
+        status_code=429,
+        content=problem.model_dump(mode="json"),
+        media_type="application/problem+json",
+        headers={"X-Request-ID": str(request.state.request_id)},
+    )
+
+
+def build_public_rate_limit_middleware(
+    limiter: RateLimiter,
+) -> Callable[
+    [Request, Callable[[Request], Awaitable[Response]]],
+    Awaitable[Response],
+]:
+    """Return middleware that throttles bounded public catalog reads."""
+
+    async def enforce_public_rate_limit(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
+        matched = _limit_for_path(request.url.path)
+        if matched is not None:
+            prefix, limit, window = matched
+            key = f"{prefix}:{_client_key(request)}"
+            if not limiter.allow(key, limit=limit, window_seconds=window):
+                return _throttle_response(request)
+        return await call_next(request)
+
+    return enforce_public_rate_limit

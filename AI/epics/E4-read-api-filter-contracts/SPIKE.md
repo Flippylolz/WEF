@@ -91,7 +91,7 @@ For the synthetic MVP, E3-T1 is sufficient because its fixture coordinates are e
 - [E4-T1: Implement map query service and GeoJSON endpoint](tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md) — promote for M1.
 - [E4-T2: Implement facets and location offer collection](tasks/E4-T2-implement-facets-and-location-offer-collection.md) — promote as the E4-T1 child needed by the M1 filter/result panel.
 - [E4-T3: Implement offer detail](tasks/E4-T3-implement-offer-detail.md) — promoted; implementation in progress on PR #78.
-- [E4-T4: Harden API behavior and performance](proposed-tasks/E4-T4-harden-api-behavior-and-performance.md) — keep proposed.
+- [E4-T4: Harden API behavior and performance](tasks/E4-T4-harden-api-behavior-and-performance.md) — promoted for M2 hardening.
 
 Only promoted E4-T1 and E4-T2 may appear in implementation-plan revision 2.
 

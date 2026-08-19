@@ -40,9 +40,15 @@ from wef_backend.features.catalog.application.offer_detail import (
 from wef_backend.features.catalog.domain import ContentType, MarketType
 from wef_backend.features.estates.application import EstateRecord, ListEstates
 from wef_backend.features.estates.domain import Availability, GeoPoint
+from wef_backend.features.identity.infrastructure.security import MemoryRateLimiter
+from wef_backend.middleware.public_rate_limit import RateLimiter
 
 
-def create_test_app(ready_check: ReadyCheck = always_ready) -> FastAPI:
+def create_test_app(
+    ready_check: ReadyCheck = always_ready,
+    *,
+    public_rate_limiter: RateLimiter | None = None,
+) -> FastAPI:
     """Build an isolated app with no database resources."""
     browse = FakeCatalogBrowse(facets=empty_facet_snapshot())
     services = AppServices(
@@ -56,6 +62,7 @@ def create_test_app(ready_check: ReadyCheck = always_ready) -> FastAPI:
         identity=build_identity_service(),
         favorites=build_favorites_service(),
         auth_cookie_secure=False,
+        public_rate_limiter=public_rate_limiter or MemoryRateLimiter(),
     )
     return create_http_app(services)
 
@@ -374,3 +381,55 @@ async def test_offer_detail_hides_absence_and_excludes_sensitive_fields() -> Non
     assert "source_text_excerpt" not in response.text
     assert "raw_payload" not in response.text
     assert "text_original" not in response.text
+
+
+async def test_error_responses_include_request_id_header() -> None:
+    """Problem responses carry the same correlation id as success responses."""
+    app = create_test_app()
+    app.state.browse_location_offers = BrowseLocationOffers(
+        FakeCatalogBrowse(facets=empty_facet_snapshot(), location_exists=False),
+    )
+
+    async with api_client(app) as client:
+        response = await client.get(
+            "/api/v1/locations/10000000-0000-4000-8000-000000000099/offers",
+            params={"bbox": "20.9,52.1,21.2,52.4"},
+        )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.headers["x-request-id"] == response.json()["request_id"]
+
+
+async def test_public_read_rate_limit_returns_safe_throttle() -> None:
+    """Blocked public reads return a bounded throttle problem without reflection."""
+
+    class BlockAll:
+        def allow(self, key: str, *, limit: int, window_seconds: int) -> bool:
+            del key, limit, window_seconds
+            return False
+
+    app = create_test_app(public_rate_limiter=BlockAll())
+
+    async with api_client(app) as client:
+        response = await client.get(
+            "/api/v1/map/locations",
+            params={"bbox": "20.9,52.1,21.2,52.4"},
+        )
+
+    assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+    payload = response.json()
+    assert payload["code"] == "rate_limited"
+    assert response.headers["content-type"].startswith("application/problem+json")
+    assert response.headers["x-request-id"] == payload["request_id"]
+    assert "127.0.0.1" not in response.text
+
+
+async def test_filter_facets_are_short_cacheable() -> None:
+    """Canonical facets advertise a short public cache lifetime."""
+    app = create_test_app()
+
+    async with api_client(app) as client:
+        response = await client.get("/api/v1/filter-facets")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.headers["cache-control"] == "public, max-age=60"

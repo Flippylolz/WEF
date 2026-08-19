@@ -46,6 +46,7 @@ from wef_backend.features.identity.infrastructure import (
     SQLAlchemyIdentityStore,
     SystemClock,
 )
+from wef_backend.middleware.public_rate_limit import RateLimiter
 from wef_backend.migration import EXPECTED_DATABASE_REVISION
 from wef_backend.settings import Settings, load_settings
 
@@ -69,6 +70,7 @@ class AppServices:
     identity: IdentityService
     favorites: FavoriteService
     auth_cookie_secure: bool
+    public_rate_limiter: RateLimiter
 
 
 def build_services(settings: Settings | None = None) -> AppServices:
@@ -133,4 +135,5 @@ def build_services(settings: Settings | None = None) -> AppServices:
             remove_favorite=RemoveFavoriteLocation(favorite_store),
         ),
         auth_cookie_secure=runtime_settings.env == "production",
+        public_rate_limiter=MemoryRateLimiter(),
     )
