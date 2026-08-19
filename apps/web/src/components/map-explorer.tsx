@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { MapFilterControls } from "@/components/map-filter-controls";
+import { LiveAnnouncement } from "@/components/live-announcement";
 import { OfferDetailDrawer } from "@/components/offer-detail-drawer";
 import { UserToolbar } from "@/components/user-toolbar";
 
@@ -42,6 +43,9 @@ import {
   formatArea,
   formatPrice,
 } from "@/lib/offer-presentation";
+import { useMediaQuery, usePrefersReducedMotion } from "@/lib/use-media-query";
+
+type MobilePanelMode = "map" | "sheet" | "full";
 
 const WarsawMap = dynamic(
   () => import("@/components/warsaw-map").then((module) => module.WarsawMap),
@@ -94,6 +98,14 @@ export function MapExplorer() {
     useState<LocationMapFeature | null>(null);
   const [mapFailed, setMapFailed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobilePanelMode, setMobilePanelMode] =
+    useState<MobilePanelMode>("map");
+  const [highlightedLocationId, setHighlightedLocationId] = useState<
+    string | null
+  >(null);
+  const [liveAnnouncement, setLiveAnnouncement] = useState<string | null>(null);
+  const isMobile = useMediaQuery("(max-width: 56rem)");
+  const reduceMotion = usePrefersReducedMotion();
   const viewportTimer = useRef<number | null>(null);
   const cancelViewportUpdate = useCallback(() => {
     if (viewportTimer.current !== null) {
@@ -112,6 +124,20 @@ export function MapExplorer() {
   useEffect(() => {
     return cancelViewportUpdate;
   }, [cancelViewportUpdate]);
+
+  const panelOpen = isMobile ? mobilePanelMode !== "map" : sidebarOpen;
+
+  function openMobileSheet() {
+    setMobilePanelMode("sheet");
+  }
+
+  function openMobileFullList() {
+    setMobilePanelMode("full");
+  }
+
+  function closeMobilePanel() {
+    setMobilePanelMode("map");
+  }
 
   const facetsQuery = useQuery({
     queryKey: ["filter-facets"],
@@ -219,11 +245,22 @@ export function MapExplorer() {
     const currentFeature = mapQuery.data?.features.find(
       (feature) => feature.id === locationId,
     );
-    if (currentFeature) setSelectedFeatureSnapshot(currentFeature);
+    if (currentFeature) {
+      setSelectedFeatureSnapshot(currentFeature);
+      setLiveAnnouncement(
+        t("locationSelectedAnnouncement", {
+          name: currentFeature.properties.display_name,
+        }),
+      );
+    }
     setSelectedId(locationId);
     setSelectedOfferId(null);
     setSelectedOfferMatchesFilters(null);
-    setSidebarOpen(true);
+    if (isMobile) {
+      openMobileSheet();
+    } else {
+      setSidebarOpen(true);
+    }
   }
 
   function selectOffer(
@@ -250,13 +287,20 @@ export function MapExplorer() {
           ? { status: "error" }
           : { status: "ready", data: offersQuery.data };
   const map = mapQuery.data;
+  const explorerClassName = [
+    "map-explorer",
+    !isMobile && !sidebarOpen ? "map-explorer-collapsed" : "",
+    isMobile ? "map-explorer-mobile" : "",
+    isMobile ? `map-panel-${mobilePanelMode}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <section className="map-explorer-shell" aria-label={t("explorerLabel")}>
+      <LiveAnnouncement message={liveAnnouncement} />
       <UserToolbar onSelectFavorite={selectLocation} />
-      <div
-        className={`map-explorer${sidebarOpen ? "" : " map-explorer-collapsed"}`}
-      >
+      <div className={explorerClassName}>
         <div className="map-region">
           {mapFailed ? (
             <div className="map-fallback" role="status">
@@ -268,10 +312,12 @@ export function MapExplorer() {
               bbox={searchState.bbox}
               data={map}
               selectedId={selectedId}
+              highlightedId={highlightedLocationId}
               loadingLabel={t("mapLoading")}
               onSelect={selectLocation}
               onFailure={() => setMapFailed(true)}
               onViewportChange={handleViewportChange}
+              reduceMotion={reduceMotion}
             />
           ) : (
             <div
@@ -282,7 +328,7 @@ export function MapExplorer() {
               {mapQuery.isError ? <span>{t("filtersPreserved")}</span> : null}
             </div>
           )}
-          {!sidebarOpen ? (
+          {!sidebarOpen && !isMobile ? (
             <button
               className="sidebar-toggle sidebar-toggle-floating"
               type="button"
@@ -295,6 +341,19 @@ export function MapExplorer() {
               <ChevronLeftIcon />
             </button>
           ) : null}
+          {isMobile && mobilePanelMode === "map" ? (
+            <div
+              className="mobile-results-bar"
+              role="region"
+              aria-label={t("mobileResultsBarLabel")}
+            >
+              <button type="button" onClick={openMobileSheet}>
+                {t("mobileShowResults", {
+                  count: map?.meta.feature_count ?? 0,
+                })}
+              </button>
+            </div>
+          ) : null}
           <p className="map-attribution">
             © OpenFreeMap · © OpenStreetMap contributors
           </p>
@@ -302,10 +361,22 @@ export function MapExplorer() {
 
         <aside
           id="explorer-sidebar"
-          className={`explorer-sidebar${sidebarOpen ? "" : " explorer-sidebar-collapsed"}`}
+          className={`explorer-sidebar${panelOpen ? "" : " explorer-sidebar-collapsed"}`}
           aria-label={t("panelLabel")}
-          inert={!sidebarOpen}
+          inert={!panelOpen}
         >
+          {isMobile ? (
+            <div className="mobile-panel-toolbar">
+              {mobilePanelMode === "sheet" ? (
+                <button type="button" onClick={openMobileFullList}>
+                  {t("mobileFullList")}
+                </button>
+              ) : null}
+              <button type="button" onClick={closeMobilePanel}>
+                {t("mobileShowMap")}
+              </button>
+            </div>
+          ) : null}
           <MapFilterControls
             key={filtersOnlySearch}
             facets={facetsQuery.data ?? null}
@@ -319,17 +390,19 @@ export function MapExplorer() {
             }
             onClear={() => navigate(DEFAULT_MAP_SEARCH_STATE, "push")}
             collapseControl={
-              <button
-                className="sidebar-toggle"
-                type="button"
-                aria-label={t("hidePanel")}
-                title={t("hidePanel")}
-                aria-expanded={sidebarOpen}
-                aria-controls="explorer-sidebar"
-                onClick={() => setSidebarOpen(false)}
-              >
-                <ChevronRightIcon />
-              </button>
+              isMobile ? null : (
+                <button
+                  className="sidebar-toggle"
+                  type="button"
+                  aria-label={t("hidePanel")}
+                  title={t("hidePanel")}
+                  aria-expanded={sidebarOpen}
+                  aria-controls="explorer-sidebar"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <ChevronRightIcon />
+                </button>
+              )
             }
           />
 
@@ -379,9 +452,11 @@ export function MapExplorer() {
                     key={feature.id}
                     feature={feature}
                     selected={feature.id === selectedId}
+                    highlighted={feature.id === highlightedLocationId}
                     starred={favoriteIds.has(feature.id)}
                     showStar={signedIn}
                     onSelect={selectLocation}
+                    onHighlight={setHighlightedLocationId}
                     onToggleStar={async () => {
                       const starred = favoriteIds.has(feature.id);
                       const result = starred
@@ -464,18 +539,22 @@ function href(pathname: string, search: string) {
 type LocationButtonProps = {
   feature: LocationMapFeature;
   selected: boolean;
+  highlighted: boolean;
   starred: boolean;
   showStar: boolean;
   onSelect: (id: string) => void;
+  onHighlight: (id: string | null) => void;
   onToggleStar: () => void;
 };
 
 function LocationButton({
   feature,
   selected,
+  highlighted,
   starred,
   showStar,
   onSelect,
+  onHighlight,
   onToggleStar,
 }: LocationButtonProps) {
   const t = useTranslations("map");
@@ -484,10 +563,14 @@ function LocationButton({
     <li>
       <div className="location-button-row">
         <button
-          className="location-button"
+          className={`location-button${highlighted ? " location-button-highlighted" : ""}`}
           type="button"
           aria-pressed={selected}
           onClick={() => onSelect(feature.id)}
+          onFocus={() => onHighlight(feature.id)}
+          onBlur={() => onHighlight(null)}
+          onMouseEnter={() => onHighlight(feature.id)}
+          onMouseLeave={() => onHighlight(null)}
         >
           <span>
             <strong>{properties.display_name}</strong>
