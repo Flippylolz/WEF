@@ -224,3 +224,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: E4-T3/E5-T3 done; lower pyramid layers already exist; AD-009 continue authority.
 - Safety limit: synthetic fixtures only; Chromium-only; no live historical content assertions; no production dependency additions beyond Playwright test tooling (devDependency).
 - Reversal: remove Playwright CI job and web e2e tooling; unit/contract/a11y layers remain.
+
+## AD-029: Sequence E1-T6 Dependabot update PRs (plan revision 5)
+
+- Time: 2026-08-20.
+- Prompt avoided: leave Dependabot unconfigured after M3 quality/favorites work, or also ship the merge controller in the same change.
+- Selected approach: approve E1 plan revision 5; promote E1-T6 only; add weekly npm/pip/docker/github-actions Dependabot config with patch/minor grouping and bounded open PRs; keep E1-T7 proposed.
+- Rationale: E1 spike revision 2 already bounded this work; E1-T1/E1-T4 are done; REPOSITORY_RULES require the config; AD-009 continue authority.
+- Safety limit: no merge-controller workflow, no PR checkout/execution, no dependency upgrades in the configuration PR itself.
+- Reversal: remove `.github/dependabot.yml` and demote E1-T6 if ecosystems/grouping policy change.
