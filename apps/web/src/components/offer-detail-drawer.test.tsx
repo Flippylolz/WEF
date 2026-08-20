@@ -9,8 +9,10 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { OfferDetailDrawer } from "@/components/offer-detail-drawer";
+import type { Account } from "@/lib/auth-api";
 import type { OfferDetail } from "@/lib/catalog-api";
 import * as catalogApi from "@/lib/catalog-api";
+import * as contactsApi from "@/lib/contacts-api";
 
 vi.mock("next-intl", () => ({
   useTranslations:
@@ -20,6 +22,10 @@ vi.mock("next-intl", () => ({
       }
       return key;
     },
+}));
+
+vi.mock("@/lib/contacts-api", () => ({
+  revealOfferContacts: vi.fn(),
 }));
 
 const detail: OfferDetail = {
@@ -82,6 +88,15 @@ const detail: OfferDetail = {
   ],
 };
 
+const signedInAccount: Account = {
+  id: "00000000-0000-4000-8000-000000000001",
+  username: "warsaw",
+  role: "user",
+  must_change_password: false,
+  created_at: "2026-01-01T00:00:00Z",
+  last_login_at: null,
+};
+
 class OfferNotFoundError extends Error {
   override name = "OfferNotFoundError";
 }
@@ -89,11 +104,17 @@ class OfferNotFoundError extends Error {
 function DrawerHarness({
   offerId,
   matchesFilters = true,
+  account = null,
   onClose = () => undefined,
+  onRequestSignIn = () => undefined,
+  onRequestPasswordChange = () => undefined,
 }: {
   offerId: string;
   matchesFilters?: boolean;
+  account?: Account | null;
   onClose?: () => void;
+  onRequestSignIn?: () => void;
+  onRequestPasswordChange?: () => void;
 }) {
   const returnFocusRef = { current: document.createElement("button") };
   const detailQuery = useQuery({
@@ -112,19 +133,29 @@ function DrawerHarness({
       offerId={offerId}
       matchesFilters={matchesFilters}
       detailQuery={detailQuery}
+      account={account}
       onClose={onClose}
+      onRequestSignIn={onRequestSignIn}
+      onRequestPasswordChange={onRequestPasswordChange}
       returnFocusRef={returnFocusRef}
     />
   );
 }
 
-function renderDrawer(offerId = detail.id) {
+function renderDrawer(
+  offerId = detail.id,
+  options: {
+    account?: Account | null;
+    onRequestSignIn?: () => void;
+    onRequestPasswordChange?: () => void;
+  } = {},
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <DrawerHarness offerId={offerId} />
+      <DrawerHarness offerId={offerId} {...options} />
     </QueryClientProvider>,
   );
 }
@@ -183,6 +214,121 @@ describe("OfferDetailDrawer", () => {
     );
   });
 
+  it("asks anonymous users to sign in instead of revealing", async () => {
+    const onRequestSignIn = vi.fn();
+    vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
+      state: "ready",
+      data: detail,
+    });
+    renderDrawer(detail.id, { onRequestSignIn });
+
+    expect(
+      await screen.findByText("detailRevealSignInRequired"),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "detailRevealSignInAction" }),
+    );
+    expect(onRequestSignIn).toHaveBeenCalled();
+    expect(contactsApi.revealOfferContacts).not.toHaveBeenCalled();
+  });
+
+  it("blocks reveal until forced password change completes", async () => {
+    const onRequestPasswordChange = vi.fn();
+    vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
+      state: "ready",
+      data: detail,
+    });
+    renderDrawer(detail.id, {
+      account: { ...signedInAccount, must_change_password: true },
+      onRequestPasswordChange,
+    });
+
+    expect(
+      await screen.findByText("detailRevealPasswordRequired"),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "detailRevealPasswordAction" }),
+    );
+    expect(onRequestPasswordChange).toHaveBeenCalled();
+    expect(contactsApi.revealOfferContacts).not.toHaveBeenCalled();
+  });
+
+  it("reveals contacts only after an explicit click", async () => {
+    vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
+      state: "ready",
+      data: detail,
+    });
+    vi.mocked(contactsApi.revealOfferContacts).mockResolvedValue({
+      state: "ready",
+      data: {
+        contacts: [
+          {
+            kind: "phone",
+            value: "+48111222333",
+            masked_value: "+48***333",
+          },
+        ],
+      },
+    });
+    renderDrawer(detail.id, { account: signedInAccount });
+
+    expect(
+      await screen.findByRole("button", { name: "detailRevealContacts" }),
+    ).toBeInTheDocument();
+    expect(contactsApi.revealOfferContacts).not.toHaveBeenCalled();
+    expect(screen.queryByText("+48111222333")).not.toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "detailRevealContacts" }),
+    );
+
+    expect(await screen.findByText("+48111222333")).toBeInTheDocument();
+    expect(contactsApi.revealOfferContacts).toHaveBeenCalledWith(detail.id);
+  });
+
+  it("shows rate-limit and unavailable errors from reveal", async () => {
+    vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
+      state: "ready",
+      data: detail,
+    });
+    vi.mocked(contactsApi.revealOfferContacts)
+      .mockResolvedValueOnce({
+        state: "error",
+        code: "rate_limited",
+      })
+      .mockResolvedValueOnce({
+        state: "error",
+        code: "unavailable",
+      })
+      .mockResolvedValueOnce({
+        state: "error",
+        code: "forbidden",
+      });
+    renderDrawer(detail.id, { account: signedInAccount });
+
+    const reveal = await screen.findByRole("button", {
+      name: "detailRevealContacts",
+    });
+    await userEvent.click(reveal);
+    expect(
+      await screen.findByText("detailRevealError.rate_limited"),
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "detailRevealContacts" }),
+    );
+    expect(
+      await screen.findByText("detailRevealError.unavailable"),
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "detailRevealContacts" }),
+    );
+    expect(
+      await screen.findByText("detailRevealError.forbidden"),
+    ).toBeInTheDocument();
+  });
+
   it("closes from escape and restores focus to the trigger", async () => {
     vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
       state: "ready",
@@ -208,7 +354,10 @@ describe("OfferDetailDrawer", () => {
               isSuccess: true,
             } as never
           }
+          account={null}
           onClose={() => setOpen(false)}
+          onRequestSignIn={() => undefined}
+          onRequestPasswordChange={() => undefined}
           returnFocusRef={{ current: trigger }}
         />
       );

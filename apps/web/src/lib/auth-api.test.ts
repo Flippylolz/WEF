@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  changePassword,
   fetchCurrentAccount,
   loginAccount,
   logoutAccount,
   registerAccount,
+  revokeAllSessions,
 } from "@/lib/auth-api";
 
 const account = {
@@ -61,5 +63,33 @@ describe("auth-api", () => {
     );
     const result = await logoutAccount({ fetcher });
     expect(result).toEqual({ state: "error", message: "Unavailable." });
+  });
+
+  it("changes password and revokes all sessions", async () => {
+    const fetcher = vi.fn(async (request: Request) => {
+      expect(request.credentials).toBe("include");
+      expect(request.headers.get("Content-Type")).toBe("application/json");
+      if (request.url.endsWith("/api/v1/auth/password")) {
+        return new Response(null, { status: 204 });
+      }
+      if (request.url.endsWith("/api/v1/auth/sessions/revoke-all")) {
+        return new Response(null, { status: 204 });
+      }
+      throw new Error(`unexpected ${request.url}`);
+    });
+
+    await expect(
+      changePassword(
+        {
+          current_password: "longenough123",
+          new_password: "newlongenough456",
+        },
+        { fetcher },
+      ),
+    ).resolves.toEqual({ state: "ready", data: null });
+    await expect(revokeAllSessions({ fetcher })).resolves.toEqual({
+      state: "ready",
+      data: null,
+    });
   });
 });

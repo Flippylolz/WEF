@@ -1,16 +1,27 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AccountModal } from "@/components/account-modal";
 
 const loginAccount = vi.fn();
+const changePassword = vi.fn();
+const revokeAllSessions = vi.fn();
+const logoutAccount = vi.fn();
 
 vi.mock("@/lib/auth-api", () => ({
   fetchCurrentAccount: vi.fn(),
   loginAccount: (...args: unknown[]) => loginAccount(...args),
   registerAccount: vi.fn(),
-  logoutAccount: vi.fn(),
+  logoutAccount: (...args: unknown[]) => logoutAccount(...args),
+  changePassword: (...args: unknown[]) => changePassword(...args),
+  revokeAllSessions: (...args: unknown[]) => revokeAllSessions(...args),
 }));
 
 vi.mock("next-intl", () => ({
@@ -27,6 +38,11 @@ const account = {
 };
 
 describe("AccountModal", () => {
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
   it("validates registration fields before submit", async () => {
     const user = userEvent.setup();
     render(
@@ -68,5 +84,100 @@ describe("AccountModal", () => {
     await user.click(screen.getByRole("button", { name: "loginAction" }));
 
     await waitFor(() => expect(onAuthenticated).toHaveBeenCalledWith(account));
+  });
+
+  it("forces password change when must_change_password is set", async () => {
+    render(
+      <AccountModal
+        open
+        account={{ ...account, must_change_password: true }}
+        initialMode="account"
+        onClose={() => undefined}
+        onAuthenticated={() => undefined}
+        onLoggedOut={() => undefined}
+      />,
+    );
+
+    expect(screen.getByText("forcedPasswordTitle")).toBeInTheDocument();
+    expect(screen.getByLabelText("currentPasswordLabel")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "revokeSessionsAction" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("changes password and reports logout", async () => {
+    const user = userEvent.setup();
+    const onLoggedOut = vi.fn();
+    const onNotice = vi.fn();
+    changePassword.mockResolvedValue({ state: "ready", data: null });
+
+    render(
+      <AccountModal
+        open
+        account={account}
+        initialMode="account"
+        onClose={() => undefined}
+        onAuthenticated={() => undefined}
+        onLoggedOut={onLoggedOut}
+        onNotice={onNotice}
+      />,
+    );
+
+    const dialog = screen.getByRole("dialog");
+    await user.click(
+      within(dialog).getByRole("button", { name: "changePasswordAction" }),
+    );
+    const current = dialog.querySelector(
+      "#current-password",
+    ) as HTMLInputElement;
+    const next = dialog.querySelector("#new-password") as HTMLInputElement;
+    const confirm = dialog.querySelector(
+      "#confirm-new-password",
+    ) as HTMLInputElement;
+    await user.type(current, "longenough123");
+    await user.type(next, "newlongenough456");
+    await user.type(confirm, "newlongenough456");
+    await user.click(
+      within(dialog).getByRole("button", { name: "changePasswordAction" }),
+    );
+
+    await waitFor(() => {
+      expect(changePassword).toHaveBeenCalledWith({
+        current_password: "longenough123",
+        new_password: "newlongenough456",
+      });
+      expect(onNotice).toHaveBeenCalledWith("passwordChangedNotice");
+      expect(onLoggedOut).toHaveBeenCalled();
+    });
+  });
+
+  it("revokes all sessions and reports logout", async () => {
+    const user = userEvent.setup();
+    const onLoggedOut = vi.fn();
+    const onNotice = vi.fn();
+    revokeAllSessions.mockResolvedValue({ state: "ready", data: null });
+
+    render(
+      <AccountModal
+        open
+        account={account}
+        initialMode="account"
+        onClose={() => undefined}
+        onAuthenticated={() => undefined}
+        onLoggedOut={onLoggedOut}
+        onNotice={onNotice}
+      />,
+    );
+
+    const dialog = screen.getByRole("dialog");
+    await user.click(
+      within(dialog).getByRole("button", { name: "revokeSessionsAction" }),
+    );
+
+    await waitFor(() => {
+      expect(revokeAllSessions).toHaveBeenCalled();
+      expect(onNotice).toHaveBeenCalledWith("sessionsRevokedNotice");
+      expect(onLoggedOut).toHaveBeenCalled();
+    });
   });
 });

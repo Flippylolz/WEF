@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E6-T6
 epic: E6
 title: "Implement English i18n and restricted-action UX"
-status: ready
+status: in_progress
 revision: 1
 priority: P1
 size: L
@@ -41,8 +41,8 @@ branch:
   name: feat/E6-T6-restricted-action-ux
   task_id: E6-T6
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-20T11:35:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/113"
 completion:
   completed_by: null
   completed_at: null

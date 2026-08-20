@@ -2,24 +2,41 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { AccountModal } from "@/components/account-modal";
+import {
+  AccountModal,
+  type AccountModalMode,
+} from "@/components/account-modal";
 import { FavoritesPanel } from "@/components/favorites-panel";
 import { fetchCurrentAccount, type Account } from "@/lib/auth-api";
 import { fetchFavorites } from "@/lib/favorites-api";
 
-type UserToolbarProps = {
-  onSelectFavorite?: (locationId: string) => void;
+export type AuthIntent = {
+  mode: AccountModalMode;
 };
 
-export function UserToolbar({ onSelectFavorite }: UserToolbarProps) {
+export type AuthOpener = (intent: AuthIntent) => void;
+
+type UserToolbarProps = {
+  onSelectFavorite?: (locationId: string) => void;
+  onRegisterAuthOpener?: (open: AuthOpener) => void;
+  onAccountChange?: (account: Account | null) => void;
+};
+
+export function UserToolbar({
+  onSelectFavorite,
+  onRegisterAuthOpener,
+  onAccountChange,
+}: UserToolbarProps) {
   const t = useTranslations("auth");
   const tf = useTranslations("favorites");
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"login" | "register">("login");
+  const [modalMode, setModalMode] = useState<AccountModalMode>("login");
+  const [notice, setNotice] = useState<string | null>(null);
+  const [dismissedForcedPrompt, setDismissedForcedPrompt] = useState(false);
 
   const accountQuery = useQuery({
     queryKey: ["auth", "me"],
@@ -32,10 +49,32 @@ export function UserToolbar({ onSelectFavorite }: UserToolbarProps) {
 
   const account = accountQuery.data;
   const signedIn = accountQuery.isSuccess && account !== null;
+  const forcedChange = Boolean(account?.must_change_password);
+  const open = modalOpen || (forcedChange && !dismissedForcedPrompt);
+  const mode: AccountModalMode = forcedChange
+    ? "password"
+    : modalMode === "register" && !account
+      ? "register"
+      : account
+        ? modalMode === "password"
+          ? "password"
+          : "account"
+        : modalMode === "register"
+          ? "register"
+          : "login";
+
+  useEffect(() => {
+    onRegisterAuthOpener?.((intent) => {
+      setNotice(null);
+      setDismissedForcedPrompt(false);
+      setModalMode(intent.mode);
+      setModalOpen(true);
+    });
+  }, [onRegisterAuthOpener]);
 
   const favoritesQuery = useQuery({
     queryKey: ["favorites"],
-    enabled: signedIn,
+    enabled: signedIn && !forcedChange,
     queryFn: async ({ signal }) => {
       const result = await fetchFavorites({ signal });
       if (result.state === "error") throw new Error("favorites");
@@ -43,13 +82,16 @@ export function UserToolbar({ onSelectFavorite }: UserToolbarProps) {
     },
   });
 
-  function openModal(mode: "login" | "register") {
-    setModalMode(mode);
+  function openModal(nextMode: AccountModalMode) {
+    setNotice(null);
+    setDismissedForcedPrompt(false);
+    setModalMode(nextMode);
     setModalOpen(true);
   }
 
   function setAccount(next: Account | null) {
     queryClient.setQueryData(["auth", "me"], next);
+    onAccountChange?.(next);
     if (next === null) {
       queryClient.removeQueries({ queryKey: ["favorites"] });
     }
@@ -60,20 +102,22 @@ export function UserToolbar({ onSelectFavorite }: UserToolbarProps) {
       <div className="user-toolbar" aria-label={t("toolbarLabel")}>
         {signedIn ? (
           <>
-            <button
-              className="button-secondary user-toolbar-button user-toolbar-star"
-              type="button"
-              aria-label={tf("openList")}
-              title={tf("openList")}
-              onClick={() => setFavoritesOpen(true)}
-            >
-              ★
-            </button>
+            {!forcedChange ? (
+              <button
+                className="button-secondary user-toolbar-button user-toolbar-star"
+                type="button"
+                aria-label={tf("openList")}
+                title={tf("openList")}
+                onClick={() => setFavoritesOpen(true)}
+              >
+                ★
+              </button>
+            ) : null}
             <button
               className="button-secondary user-toolbar-button"
               type="button"
               aria-haspopup="dialog"
-              onClick={() => openModal("login")}
+              onClick={() => openModal(forcedChange ? "password" : "account")}
             >
               {account?.username}
             </button>
@@ -98,15 +142,35 @@ export function UserToolbar({ onSelectFavorite }: UserToolbarProps) {
         )}
       </div>
       <AccountModal
-        open={modalOpen}
+        open={open}
         account={account}
-        initialMode={modalMode}
-        onClose={() => setModalOpen(false)}
+        initialMode={mode}
+        notice={notice}
+        onClose={() => {
+          setModalOpen(false);
+          setNotice(null);
+          if (forcedChange) {
+            setDismissedForcedPrompt(true);
+          }
+        }}
         onAuthenticated={(next) => {
           setAccount(next);
+          setNotice(null);
+          setDismissedForcedPrompt(false);
+          if (next.must_change_password) {
+            setModalMode("password");
+            setModalOpen(true);
+            return;
+          }
           setModalOpen(false);
         }}
-        onLoggedOut={() => setAccount(null)}
+        onLoggedOut={() => {
+          setAccount(null);
+          setDismissedForcedPrompt(false);
+          setModalMode("login");
+          setModalOpen(true);
+        }}
+        onNotice={setNotice}
       />
       <FavoritesPanel
         open={favoritesOpen}
