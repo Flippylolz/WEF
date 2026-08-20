@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E8
 title: "Future Telegram live ingestion"
-status: selected
+status: ready
 milestones: [M4]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,11 @@ new, edited, and deleted channel posts are processed safely without changing pub
 
 ## Approval state
 
-- Epic workspace status: `selected`.
-- [Spike](SPIKE.md): `awaiting_approval`, revision 2, owner approval pending, completed research only, no code.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `draft`, revision 1, blocked with no approved spike revision and no executable task sequence.
-- Every file in `proposed-tasks/` is non-actionable. No implementation, scaffold, migration, infrastructure change, generated executable artifact, or proof code is approved.
-- No `tasks/` directory exists; it may be created only when an approved candidate is promoted after spike approval.
+- Epic workspace status: `ready`.
+- [Spike](SPIKE.md): `approved`, revision 2 (AD-031).
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 1; authorizes E8-T1 only.
+- [E8-T1](tasks/E8-T1-confirm-channel-identity-and-access.md): promoted, `in_progress`.
+- E8-T2–T5 remain proposed until later plan revisions.
 
 ## Milestones
 
@@ -46,9 +46,12 @@ new, edited, and deleted channel posts are processed safely without changing pub
 - [D-002](../../decisions/deferred/D-002-recurring-geocoding-provider.md)
 - [D-003](../../decisions/deferred/D-003-telegram-channel-access.md)
 
+## Tasks
+
+- [E8-T1: Confirm channel identity and access](tasks/E8-T1-confirm-channel-identity-and-access.md) — `in_progress`, P2/S, M4
+
 ## Proposed tasks
 
-- [E8-T1: Confirm channel identity and access](proposed-tasks/E8-T1-confirm-channel-identity-and-access.md) — `proposed`, P2/S, M4
 - [E8-T2: Implement secure Telethon session and backfill](proposed-tasks/E8-T2-implement-secure-telethon-session-and-backfill.md) — `proposed`, P2/L, M4
 - [E8-T3: Implement live new/edit/delete processing](proposed-tasks/E8-T3-implement-live-new-edit-delete-processing.md) — `proposed`, P2/L, M4
 - [E8-T4: Revalidate geocoder for recurring ingestion](proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — `proposed`, P2/M, M4
@@ -59,8 +62,6 @@ new, edited, and deleted channel posts are processed safely without changing pub
 - Incoming: E8-T2 depends on E3-T2.
 - Incoming: E8-T4 depends on E3-T3.
 
-The exact normalized dependency and traceability registry is maintained in the [epics index](../README.md). Each workflow candidate is authoritative only in the single linked `proposed-tasks/` file above; its `legacy-roadmap:*` source value records non-path provenance.
-
 ## Lifecycle
 
-Follow the [approval-gated workflow](../../workflow/README.md), [proposed-task schema](../../workflow/templates/PROPOSED_TASK.md), [implementation-plan schema](../../workflow/templates/IMPLEMENTATION_PLAN.md), and [definition of done](../../workflow/DEFINITION_OF_DONE.md). Priority, roadmap order, or epic selection never bypasses owner approvals, promotion, completed dependencies, or one-branch-per-task gates.
+Follow the [approval-gated workflow](../../workflow/README.md). Live worker enablement remains E8-T5 after secrets and D-003/D-002 gates.

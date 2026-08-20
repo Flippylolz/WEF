@@ -23,7 +23,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `done`; spike/plan revision 3; E5-T1–T5 done; milestones M1, M3.
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `done`; spike revision 2 / plan revision 8; E6-T1–T7 done; milestones M3.
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `done`; spike revision 4 / plan revision 9; E7-T1–T4 and E7-T6–T11 done, E7-T5 deferred; milestone M3.
-- [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; spike `awaiting_approval`; 5 tasks (5 proposed); milestones M4.
+- [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `ready`; spike revision 2 approved (AD-031); plan revision 1 authorizes E8-T1 `in_progress`; T2–T5 proposed; milestones M4.
 - [E9 — Account registration modal](E9-account-registration-modal/README.md) — `done`; E9-T1 done; milestone M3.
 - [E10 — Property favorites](E10-property-favorites/README.md) — `done`; E10-T1 done; milestone M3.
 - [E11 — Scalable quick filters](E11-scalable-quick-filters/README.md) — `done`; E11-T1 done; milestone M3.
@@ -133,7 +133,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E7-T11](E7-production-delivery/tasks/E7-T11-activate-the-verified-historical-candidate.md): `done` through PRs #127/#128 + live activation 2026-08-20; ADR-019 public-activation boundary; task dependencies `E7-T6, E7-T7, E7-T10`; M3; requirements `P-001, P-002, P-005, P-007`; decisions `ADR-008, ADR-010, ADR-014, ADR-015, ADR-019, ADR-020`.
 ### E8
 
-- [E8-T1](E8-telegram-live-ingestion/proposed-tasks/E8-T1-confirm-channel-identity-and-access.md): task dependencies `none`; deferred gates D-003; milestone prerequisite M3; M4; requirements `P-006`; decisions `ADR-006`.
+- [E8-T1](E8-telegram-live-ingestion/tasks/E8-T1-confirm-channel-identity-and-access.md): promoted/`in_progress` revision 1; task dependencies `none`; deferred gates D-003 (public identity resolved; live secrets open); milestone prerequisite M3; M4; requirements `P-006`; decisions `ADR-006`.
 - [E8-T2](E8-telegram-live-ingestion/proposed-tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): task dependencies `E8-T1, E3-T2, E8-T4`; M4; requirements `P-006, P-007`; decisions `ADR-005, ADR-006, ADR-007`.
 - [E8-T3](E8-telegram-live-ingestion/proposed-tasks/E8-T3-implement-live-new-edit-delete-processing.md): task dependencies `E8-T2, E8-T4`; M4; requirements `P-006, P-007`; decisions `ADR-003, ADR-005, ADR-006, ADR-007`.
 - [E8-T4](E8-telegram-live-ingestion/proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md): task dependencies `E3-T3`; deferred gates D-002; M4; requirements `P-001, P-007`; decisions `ADR-005, ADR-006`.

@@ -50,7 +50,7 @@ The following definition preserves the original E8-T2 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E8-T1](E8-T1-confirm-channel-identity-and-access.md), [E3-T2](../../E3-database-geocoding-media/tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md), [E8-T4](E8-T4-revalidate-geocoder-for-recurring-ingestion.md)
+- Task dependencies: [E8-T1](../tasks/E8-T1-confirm-channel-identity-and-access.md), [E3-T2](../../E3-database-geocoding-media/tasks/E3-T2-implement-idempotent-persistence-and-reprocessing.md), [E8-T4](E8-T4-revalidate-geocoder-for-recurring-ingestion.md)
 - Milestone: [M4](../../../milestones/M4-live-telegram-updates.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Ingestion](../../../ingestion/README.md), [Data](../../../data/README.md), [Operations](../../../operations/README.md), [Security](../../../security/README.md).
 

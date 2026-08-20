@@ -2,18 +2,20 @@
 schema: ai-workflow/implementation-plan@1
 epic: E8
 title: "Future Telegram live ingestion implementation plan"
-status: draft
+status: approved
 revision: 1
 owner: owner
-spike_revision: null
-task_sequence: []
+spike_revision: 2
+task_sequence:
+  - id: E8-T1
+    revision: 1
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Cursor Agent (autonomous epic mission under AD-009 continue)"
+  decided_at: "2026-08-20T19:44:19Z"
+  approved_revision: 1
+  evidence: "AD-031; spike revision 2 approved; E8-T1 only; no Telethon/live worker enablement"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -23,48 +25,42 @@ invalidation:
 
 # Implementation Plan: Future Telegram live ingestion
 
-## Blocked state
-
-This artifact is deliberately blocked and incomplete. It cannot be completed, changed to `awaiting_approval`, or approved until [SPIKE.md](SPIKE.md) is explicitly owner-approved for its current revision and approved candidates have been moved—not copied—from `proposed-tasks/` to `tasks/` with valid promotion metadata.
-
-No proposed task is an executable sequence entry. `spike_revision` remains `null`, `task_sequence` remains empty, approval is pending, and no implementation is authorized.
+> Revision 1 authorizes **only E8-T1 revision 1** after spike revision 2.
+> It does not authorize Telethon, worker Compose enablement, geocoder revalidation, or live production activation.
 
 ## Intended scope and outcome
 
-If the spike and promoted scope are later approved, this plan must preserve the epic outcome:
-
-> new, edited, and deleted channel posts are processed safely without changing public contracts.
-
-The approved spike will determine binding inclusions, exclusions, architecture/contract constraints, and any changed task boundaries.
+Preserve the epic outcome: new, edited, and deleted channel posts are processed safely without changing public contracts. This revision only establishes the non-secret channel identity contract, operating-owner decision, worker-only secret paths, and a redacted verification command.
 
 ## Ordered task sequence
 
-Blocked: there are no promoted tasks. Files under `proposed-tasks/` are planning inputs only and cannot be listed here as executable work.
+1. [E8-T1: Confirm channel identity and access](tasks/E8-T1-confirm-channel-identity-and-access.md) — promoted, `in_progress`.
 
-## Required planning after spike approval
+Later revisions will promote/sequence E8-T4 → E8-T2 → E8-T3 → E8-T5 per the approved spike.
 
-Before this plan may request owner approval, it must:
+## Modules and contracts
 
-1. reference the owner-approved current spike revision;
-2. sequence only promoted `tasks/` definitions with their current revisions;
-3. explain independent review boundaries and dependency evidence for every task;
-4. document affected modules, public/persisted contracts, transaction and dependency direction;
-5. map acceptance to unit, integration, contract, migration, end-to-end, accessibility, security, build, and operational checks as applicable;
-6. specify data/migration compatibility, idempotency, release order, health checks, rollout, rollback, and recovery limits;
-7. resolve required deferred decisions and preserve accepted single-host/backup constraints; and
-8. enumerate concrete risks, mitigations, owners, and invalidation triggers.
+- `wef_backend.features.ingestion.domain.telegram_channel`
+- `wef_backend.features.ingestion.application.telegram_channel_verify`
+- `wef_backend.features.ingestion.infrastructure.public_http`
+- `wef_backend.telegram_channel_command` (`wef-verify-telegram-channel`)
+- Settings: `WEF_TELEGRAM_CHANNEL_*` identity fields and `WEF_TELEGRAM_*_FILE` secret paths
+- No public OpenAPI change; no schema migration
+
+## Tests and checks
+
+- Unit tests for identity URLs, secret mode inspection, and verification status transitions
+- `make lint` / typecheck / backend tests for the touched modules
+
+## Rollout and limits
+
+- No production worker enablement
+- No Telegram credentials in the repository
+- Live Telethon resolve remains blocked until owner secrets exist and E8-T2 ships the client
 
 ## Approval checklist
 
-- [ ] The referenced spike revision has explicit owner approval and remains valid.
-- [ ] Every sequence entry is a promoted task with complete acceptance criteria and traceability.
-- [ ] Dependencies are complete, acyclic, and enforceable task by task.
-- [ ] Modules, contracts, tests, migrations, risks, rollout, and rollback are explicit.
-- [ ] Deferred decisions required for implementation are resolved.
-- [x] No proposed task appears as an executable sequence.
-- [x] No production or disposable proof code is authorized by this draft.
-- [ ] Status is `awaiting_approval` and approval remains `pending`.
-
-## Owner decision
-
-There is nothing to approve yet. After the spike and promotion gates are satisfied and this artifact is materially completed, the owner may decide only the recorded current revision. Individual task dependency, state, and one-branch-per-task gates would still apply.
+- [x] Spike revision 2 is approved (AD-031).
+- [x] Sequence contains only promoted E8-T1.
+- [x] No proposed task appears as executable work.
+- [x] Safety limit: no Telethon dependency, no worker Compose profile enablement.
