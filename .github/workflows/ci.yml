@@ -193,7 +193,7 @@ jobs:
           uv --directory apps/backend run ruff format --check ../../scripts
           uv --directory apps/backend run ruff check ../../scripts
           uv --directory apps/backend run mypy --strict ../../scripts
-          python3 -m unittest scripts.test_render_coverage_badge scripts.test_shared_edge_render scripts.test_shared_edge_release
+          python3 -m unittest scripts.test_render_coverage_badge scripts.test_shared_edge_render scripts.test_shared_edge_release scripts.test_transfer_foundation
       - name: Relative Markdown links
         run: python3 scripts/check_markdown_links.py
       - name: Local Compose model
