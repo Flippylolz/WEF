@@ -289,6 +289,7 @@ jobs:
           cp scripts/transfer_bundle.py "$RUNNER_TEMP/release/scripts/"
           cp scripts/transfer_remote.py "$RUNNER_TEMP/release/scripts/"
           cp scripts/transfer_candidate.py "$RUNNER_TEMP/release/scripts/"
+          cp scripts/transfer_restore.py "$RUNNER_TEMP/release/scripts/"
           touch "$RUNNER_TEMP/release/scripts/__init__.py"
           python3 -m scripts.deploy.create_release_manifest \
             "$RUNNER_TEMP/release/release-manifest.json" \
