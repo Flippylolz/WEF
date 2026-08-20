@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E6-T7
 epic: E6
 title: "Implement owner administration console"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: L
@@ -43,10 +43,14 @@ branch:
   created_at: "2026-08-20T12:00:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/116"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-20T12:40:27Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/116"
+  evidence:
+    - "E6-T7 branch feat/E6-T7-owner-admin-console squash-merged via https://github.com/Flippylolz/WEF/pull/116 (squash aadfe34); one task per branch/PR"
+    - "Starlette Admin at /admin with owner AuthProvider on wef_session; audited interactors for disable/reactivate/revoke/force-reset; reveal and admin audit views; migration 20260820_0012; WEF_ADMIN_SESSION_SECRET required in production"
+    - "CSRF forms, origin/mutation rate guards, Cache-Control no-store, last-owner protection; pytest unit/API/integration coverage; CI green on merge"
+    - "Production HTTPS enablement of admin/registration/reveal remains E7-T7 after E7-T10/D-009; deploy requires GitHub secret WEF_ADMIN_SESSION_SECRET"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -82,11 +86,11 @@ Starlette Admin at `/admin` provides the owner-only console so authorized operat
 
 ## Acceptance criteria
 
-- [ ] No owner credential is hardcoded; bootstrap remains one-time/idempotent and its operator secret is rotated after success.
-- [ ] Non-owner users cannot access any admin route/action.
-- [ ] Generic admin forms never expose or write password hashes, session tokens, encrypted/plain contacts, or secrets.
-- [ ] Every owner mutation uses an application interactor and writes a redacted `AdminAuditEvent`.
-- [ ] CSRF/origin, rate-limit, no-store, and last-owner protections are covered by tests.
+- [x] No owner credential is hardcoded; bootstrap remains one-time/idempotent and its operator secret is rotated after success.
+- [x] Non-owner users cannot access any admin route/action.
+- [x] Generic admin forms never expose or write password hashes, session tokens, encrypted/plain contacts, or secrets.
+- [x] Every owner mutation uses an application interactor and writes a redacted `AdminAuditEvent`.
+- [x] CSRF/origin, rate-limit, no-store, and last-owner protections are covered by tests.
 
 ## Rollback
 

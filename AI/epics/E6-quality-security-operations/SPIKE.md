@@ -113,7 +113,7 @@ These are verified facts about the repository, not evidence that any E6 acceptan
 | E6-T2 privacy/security hardening | E3-T4, E4-T3, E5-T3 | blocked (all proposed/draft) |
 | E6-T3 diagnostics | E3-T2, E4-T4 | blocked (both proposed) |
 | E6-T6 i18n/restricted UX | E5-T3, E6-T4, E6-T5 | **done** (PR #113) |
-| E6-T7 owner console | E6-T4, E6-T5 | unblocked; sequenced by plan revision 5 |
+| E6-T7 owner console | E6-T4, E6-T5 | done (PR #116) |
 
 E3-T2–T5 remain behind implementation-plan revision 3 awaiting owner approval (PR #46); E4-T3/T4 and E5-T3–T5 remain proposed/draft. The `stacked` dependency gate cannot unlock them because their E4/E5 dependency branches do not exist.
 
@@ -146,7 +146,7 @@ This recommendation is submitted for owner approval and does not authorize any p
 - [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — boundary confirmed and actionable; promoted and the first implementation-plan sequence entry.
 - [E6-T5: Implement contact masking, encryption, reveal, and audit](tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `done`; plan revision 3.
 - [E6-T6: Implement English i18n and restricted-action UX](tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — `done`; plan revision 4.
-- [E6-T7: Implement owner administration console](tasks/E6-T7-implement-owner-administration-console.md) — promoted/`ready`; dependencies satisfied; plan revision 5.
+- [E6-T7: Implement owner administration console](tasks/E6-T7-implement-owner-administration-console.md) — `done`; plan revision 5.
 
 No candidate above may appear in an executable implementation-plan sequence while it remains under `proposed-tasks/`.
 
