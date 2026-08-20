@@ -176,6 +176,15 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no production auth enablement; no Starlette Admin in this task; revealed contacts stay in memory only.
 - Reversal: revise/reapprove plan revision 4 and demote E6-T6 if UX scope changes materially.
 
+## AD-025: Activate verified historical candidate after E7-T7 (E7-T11)
+
+- Time: 2026-08-20.
+- Prompt avoided: leave historical data non-public indefinitely after ADR-019 gates, or activate without atomic DB+media+config / identity freshness.
+- Selected approach: approve E7 plan revision 9; promote E7-T11; migrate candidate to production schema head; sync production identities/sessions; atomically switch `WEF_DATABASE_URL` and media roots under `deploy.lock` with rollback of the previous complete configuration.
+- Rationale: E7-T6/T10/T7 done; spike revision 4 already describes this activation boundary; AD-009 continue authority.
+- Safety limit: no destructive cleanup; no bulk `needs_review`→`visible`; no Forecast TLS; no public historical exposure on `:3100` as the entry.
+- Reversal: restore previous production.env DB URL and media directory pointers; retain candidate and prior `wef` database.
+
 ## AD-024: Enable sensitive WEF features after live HTTPS (E7-T7)
 
 - Time: 2026-08-20.

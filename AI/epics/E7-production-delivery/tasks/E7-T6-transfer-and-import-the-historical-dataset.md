@@ -154,7 +154,7 @@ Live production evidence (2026-08-20):
 
 ## Out of scope
 
-- Public historical-data activation, release-pointer switching, and every ADR-019 HTTPS/sensitive-feature gate: proposed [E7-T11](../proposed-tasks/E7-T11-activate-the-verified-historical-candidate.md) owns them after E7-T10 and E7-T7.
+- Public historical-data activation, release-pointer switching, and every ADR-019 HTTPS/sensitive-feature gate: [E7-T11](E7-T11-activate-the-verified-historical-candidate.md) owns them after E7-T10 and E7-T7.
 - E7-T9/E7-T10 shared-edge work, E7-T7 sensitive features, backups/recovery claims (ADR-015), destructive cleanup of retained old/candidate state, and any provider/parser/transform execution.
 - Changes to public API contracts, the persisted application schema (the candidate migrates only to the already-released head), or unrelated NUC projects.
 
