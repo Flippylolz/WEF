@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T7
 epic: E7
 title: "Enable production registration and contact reveal"
-status: in_progress
+status: done
 revision: 3
 priority: P1
 size: M
@@ -45,17 +45,18 @@ branch:
   task_id: E7-T7
   one_task_only: true
   created_at: "2026-08-20T14:43:16Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/123"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
-invalidation:
-  invalidated_by: null
-  invalidated_at: null
-  reason: null
-  return_to: null
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-20T15:30:24Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/123"
+  evidence:
+    - "Enablement: merged https://github.com/Flippylolz/WEF/pull/123 (contact keys + proxy trust + owner bootstrap)"
+    - "Admin edge route: merged https://github.com/Flippylolz/WEF/pull/124; live Nginx /admin → API"
+    - "Reveal missing-offer 404: merged https://github.com/Flippylolz/WEF/pull/125"
+    - "Deploy runs: 32383014398, 32384778680, 32385169695 succeeded; owner bootstrap once; bootstrap GitHub secrets removed"
+    - "HTTPS smoke: register/login Secure cookies; owner password change; /admin/users; reveal unknown offer → 404"
+    - "Plain :3100 /api/v1/auth/me → 401 (Secure cookies do not stick); Forecast :3000 → 200"
 ---
 
 # E7-T7: Enable production registration and contact reveal
@@ -80,17 +81,18 @@ Enable secure public registration/login/password change, owner administration at
 
 - `scripts/deploy/build_release_config.py`, `validate_release.py`, `.github/workflows/deploy-production.yml`
 - `infra/compose.production.yaml`, `apps/backend` CLI/proxy trust, owner bootstrap command
+- Shared-edge `/admin` routing (`infra/nginx/tls*.conf.in`, Caddyfiles)
 - Operations/security docs and B-002
 
 ## Acceptance criteria
 
-- [ ] Secure public/admin cookies work on the public HTTPS origin.
-- [ ] Username registration/login/password change and forced owner reset work on HTTPS.
-- [ ] Owner console `/admin` works after one-time bootstrap.
-- [ ] Plain HTTP (`:3100`) cannot establish/reuse a production Secure auth/admin session or reveal contacts.
-- [ ] Reveal/admin audits contain required account/action metadata without contact/IP/user-agent/password/token data.
-- [ ] Anonymous browsing remains available if authentication/admin is degraded.
-- [ ] No bootstrap passwords or contact keys are committed.
+- [x] Secure public/admin cookies work on the public HTTPS origin.
+- [x] Username registration/login/password change and forced owner reset work on HTTPS.
+- [x] Owner console `/admin` works after one-time bootstrap.
+- [x] Plain HTTP (`:3100`) cannot establish/reuse a production Secure auth/admin session or reveal contacts.
+- [x] Reveal/admin audits contain required account/action metadata without contact/IP/user-agent/password/token data.
+- [x] Anonymous browsing remains available if authentication/admin is degraded.
+- [x] No bootstrap passwords or contact keys are committed.
 
 ## Rollback
 

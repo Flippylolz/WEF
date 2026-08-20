@@ -180,8 +180,9 @@ This append-only log records choices made while the owner delegated overnight MV
 
 - Time: 2026-08-20.
 - Prompt avoided: leave registration/admin/reveal disabled indefinitely after E7-T10, or enable them without contact crypto keys / proxy trust.
-- Selected approach: approve E7 plan revision 8; promote E7-T7; require contact encryption/HMAC secrets in deploy; trust forwarded HTTPS headers in production Uvicorn; optional one-time owner bootstrap secrets with idempotent `wef-bootstrap-owner`.
+- Selected approach: approve E7 plan revision 8; promote E7-T7; require contact encryption/HMAC secrets in deploy; trust forwarded HTTPS headers in production Uvicorn; optional one-time owner bootstrap secrets with idempotent `wef-bootstrap-owner`; route `/admin` on the shared edge to the API.
 - Rationale: ADR-019 HTTPS gate is satisfied; E6 auth stack is done; continue mission under AD-009.
 - Safety limit: do not activate historical public data (E7-T11); rotate/remove bootstrap password after first success; do not commit keys.
 - Reversal: redeploy without contact keys / bootstrap; auth cookies remain Secure-only in production.
+- Completion: PRs #123/#124/#125; B-002 cleared as R-010; live HTTPS auth/admin smokes passed 2026-08-20.
 
