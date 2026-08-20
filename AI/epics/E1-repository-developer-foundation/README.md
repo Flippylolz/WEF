@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E1
 title: "Repository and developer foundation"
-status: in_progress
+status: done
 milestones: [M1]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,11 @@ a reproducible monorepo that cannot accidentally commit or package the source ar
 
 ## Approval state
 
-- Epic workspace status: `in_progress`; revision 4–5 tasks are `done`; revision 6 authorizes the Dependabot merge controller.
+- Epic workspace status: `done`; every task in the approved implementation-plan sequence through revision 6 is merged with reconciled completion evidence.
 - [Spike](SPIKE.md): `approved`, revision 2, explicitly approved by the owner, research only, no code. It defines separate ownership and branches for repository safety, application Dockerfiles/Make targets, and local Compose.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 6, authorizing E1-T7 only.
-- E1-T1, E1-T2, E1-T4, E1-T3, and E1-T6 are `done`.
-- E1-T5 remains cancelled; E1-T7 is promoted/`in_progress`.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 6 (Dependabot merge controller); prior revision 5 authorized Dependabot update PRs.
+- E1-T1, E1-T2, E1-T4, E1-T3, E1-T6, and E1-T7 are `done`.
+- E1-T5 remains cancelled.
 
 ## Milestones
 
@@ -54,7 +54,7 @@ a reproducible monorepo that cannot accidentally commit or package the source ar
 - [E1-T3: Add local Docker Compose](tasks/E1-T3-add-local-docker-compose.md) — promoted, `done`, P0/M, M1
 - [E1-T5: Configure protected-main governance](proposed-tasks/E1-T5-configure-protected-main-governance.md) — `cancelled`, P0/M, M1
 - [E1-T6: Configure Dependabot update pull requests](tasks/E1-T6-configure-dependabot-update-pull-requests.md) — promoted, `done`, P0/M, M1
-- [E1-T7: Implement scheduled Dependabot merge controller](tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — promoted, `in_progress`, P0/M, M1
+- [E1-T7: Implement scheduled Dependabot merge controller](tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — promoted, `done`, P0/M, M1
 
 ## Cross-epic dependencies
 

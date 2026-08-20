@@ -243,3 +243,4 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: E1-T6 done; REPOSITORY_RULES already specify this compensating control under ADR-017; AD-009 continue authority.
 - Safety limit: never checkout PR heads; never `--admin`; majors/indirect/human commits remain ineligible.
 - Reversal: disable/delete `dependabot-merge.yml` and demote E1-T7 if gating policy changes.
+- Completion: PR #148 merged; Dependabot already opened grouped patch/minor and separate major PRs after E1-T6.
