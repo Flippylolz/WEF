@@ -43,7 +43,7 @@ The responsive map experience is production-deployed from GitHub with persistent
 - [E7-T6: Transfer the verified historical snapshot into a non-public production candidate](../epics/E7-production-delivery/tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `done` (PRs #88–#104); non-public candidate verified on NUC; public activation is E7-T11
 - [E7-T7: Enable production registration and contact reveal](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`
 - [E7-T8: Build isolated shared Nginx TLS topology](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `done`
-- [E7-T9: Implement reversible shared-edge cutover](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `invalidated`/paused; [proposed plan revision 5](../epics/E7-production-delivery/PROPOSED_IMPLEMENTATION_PLAN-revision-5.md) awaits owner approval
+- [E7-T9: Implement reversible shared-edge cutover](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `done` (PRs #106/#107); live rollout is E7-T10 behind D-009
 - [E7-T10: Roll out and verify shared TLS](../epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) — `proposed`
 - [E7-T11: Activate the verified historical candidate publicly](../epics/E7-production-delivery/proposed-tasks/E7-T11-activate-the-verified-historical-candidate.md) — `proposed`
 
