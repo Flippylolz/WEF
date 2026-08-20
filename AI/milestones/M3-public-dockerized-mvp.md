@@ -41,7 +41,7 @@ The responsive map experience is production-deployed from GitHub with persistent
 - [E7-T4: Implement health verification and rollback](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) — `done`
 - [E7-T5: Future backup and restore capability](../epics/E7-production-delivery/proposed-tasks/E7-T5-future-backup-and-restore-capability.md) — `deferred`
 - [E7-T6: Transfer the verified historical snapshot into a non-public production candidate](../epics/E7-production-delivery/tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `done` (PRs #88–#104); non-public candidate verified on NUC; public activation is E7-T11
-- [E7-T7: Enable production registration and contact reveal](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`
+- [E7-T7: Enable production registration and contact reveal](../epics/E7-production-delivery/tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `in_progress`
 - [E7-T8: Build isolated shared Nginx TLS topology](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `done`
 - [E7-T9: Implement reversible shared-edge cutover](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `done` (PRs #106/#107)
 - [E7-T10: Roll out and verify WEF-only shared TLS](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) — `done` (PR #121 + live cutover 2026-08-20); Forecast stays on `:3000`

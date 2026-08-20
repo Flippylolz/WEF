@@ -176,12 +176,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no production auth enablement; no Starlette Admin in this task; revealed contacts stay in memory only.
 - Reversal: revise/reapprove plan revision 4 and demote E6-T6 if UX scope changes materially.
 
-## AD-023: Execute live WEF-only shared TLS cutover after tooling merge
+## AD-024: Enable sensitive WEF features after live HTTPS (E7-T7)
 
 - Time: 2026-08-20.
-- Prompt avoided: wait for another owner sync before binding Nginx on 80/443, or enable E7-T7 auth features as part of the TLS cutover.
-- Selected approach: merge WEF-only shared-edge tooling (PR #121); set missing GitHub Actions secret `WEF_ADMIN_SESSION_SECRET` so production deploys can build release config; on the NUC create `/home/nuc/wef-shared-edge`, issue production Let's Encrypt for `2fa54e2405.duckdns.org`, activate `tls` then `tls-redirect`, keep Caddy `:3100` and Forecast `:3000`, install daily `shared_edge_renew.sh` cron.
-- Rationale: plan revision 7 and AD-022 authorized WEF-only live cutover once tooling merged; public 80/443 already forwarded; autonomous mission continues without owner sync when evidence supports safe defaults.
-- Safety limit: do not enable registration/admin/reveal (E7-T7); do not remove `:3100`/`:3000`; do not commit certs/ACME material; re-attach WEF upstream aliases after container recreate until cutover overlay is default.
-- Reversal: activate bootstrap or stop `wef-shared-edge` and use Caddy `:3100`; leave Forecast untouched.
+- Prompt avoided: leave registration/admin/reveal disabled indefinitely after E7-T10, or enable them without contact crypto keys / proxy trust.
+- Selected approach: approve E7 plan revision 8; promote E7-T7; require contact encryption/HMAC secrets in deploy; trust forwarded HTTPS headers in production Uvicorn; optional one-time owner bootstrap secrets with idempotent `wef-bootstrap-owner`.
+- Rationale: ADR-019 HTTPS gate is satisfied; E6 auth stack is done; continue mission under AD-009.
+- Safety limit: do not activate historical public data (E7-T11); rotate/remove bootstrap password after first success; do not commit keys.
+- Reversal: redeploy without contact keys / bootstrap; auth cookies remain Secure-only in production.
 

@@ -44,10 +44,23 @@ async def bootstrap() -> None:
         await database.engine.dispose()
 
 
-def main() -> None:
+def main() -> int:
     """Run the async bootstrap from a synchronous console entry point."""
     try:
         asyncio.run(bootstrap())
     except BootstrapOwnerError as error:
+        if str(error) == "owner already exists":
+            sys.stdout.write(
+                json.dumps(
+                    {
+                        "bootstrapped": False,
+                        "reason": "owner_already_exists",
+                    },
+                    sort_keys=True,
+                )
+                + "\n",
+            )
+            return 0
         sys.stderr.write(f"{error}\n")
         raise SystemExit(2) from None
+    return 0

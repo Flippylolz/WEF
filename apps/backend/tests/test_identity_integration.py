@@ -1,6 +1,7 @@
 """Identity persistence and migration checks against disposable PostGIS."""
 
 import asyncio
+import json
 import os
 from pathlib import Path
 
@@ -192,25 +193,34 @@ async def _purge_identity_tables(database_url: str) -> None:
         await database.engine.dispose()
 
 
-def test_owner_command_entry_points(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The bootstrap command refuses missing credentials and succeeds once."""
+def test_owner_command_entry_points(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The bootstrap command refuses missing credentials and is idempotent."""
     assert TEST_DATABASE_URL is not None
     monkeypatch.setenv("WEF_DATABASE_URL", TEST_DATABASE_URL)
     monkeypatch.setenv("WEF_ENV", "test")
     monkeypatch.delenv("WEF_BOOTSTRAP_OWNER_USERNAME", raising=False)
     monkeypatch.delenv("WEF_BOOTSTRAP_OWNER_PASSWORD", raising=False)
+    asyncio.run(_purge_identity_tables(TEST_DATABASE_URL))
+
     with pytest.raises(SystemExit) as missing:
         owner_command.main()
     assert missing.value.code == 2
 
-    asyncio.run(_purge_identity_tables(TEST_DATABASE_URL))
-
     monkeypatch.setenv("WEF_BOOTSTRAP_OWNER_USERNAME", "commandowner")
     monkeypatch.setenv("WEF_BOOTSTRAP_OWNER_PASSWORD", "commandsecret123")
-    owner_command.main()
+    assert owner_command.main() == 0
+    first = json.loads(capsys.readouterr().out)
+    assert first["bootstrapped"] is True
+    assert first["username"] == "commandowner"
 
     monkeypatch.setenv("WEF_BOOTSTRAP_OWNER_USERNAME", "secondowner")
     monkeypatch.setenv("WEF_BOOTSTRAP_OWNER_PASSWORD", "commandsecret456")
-    with pytest.raises(SystemExit) as repeat:
-        owner_command.main()
-    assert repeat.value.code == 2
+    assert owner_command.main() == 0
+    repeat = json.loads(capsys.readouterr().out)
+    assert repeat == {
+        "bootstrapped": False,
+        "reason": "owner_already_exists",
+    }

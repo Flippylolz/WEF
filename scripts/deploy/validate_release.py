@@ -15,6 +15,7 @@ DIGEST_IMAGE_PATTERN = re.compile(
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 PROVIDER_KEY_PATTERN = re.compile(r"^[A-Za-z0-9._-]{20,200}$")
 ADMIN_SESSION_SECRET_PATTERN = re.compile(r"^[A-Za-z0-9._-]{32,200}$")
+CONTACT_KEY_PATTERN = re.compile(r"^[A-Fa-f0-9]{64}$")
 FORBIDDEN_VALUE_FRAGMENTS = ("change-me", "changeme", "local-only", "replace-for", "dev-only")
 MIN_PUBLIC_PORT = 1024
 MAX_PUBLIC_PORT = 65535
@@ -27,6 +28,8 @@ REQUIRED_KEYS = frozenset(
         "WEF_ALLOW_SYNTHETIC_SEED",
         "WEF_BACKEND_IMAGE",
         "WEF_BIND_ADDRESS",
+        "WEF_CONTACT_ENCRYPTION_KEY",
+        "WEF_CONTACT_HMAC_KEY",
         "WEF_DATABASE_URL",
         "WEF_GEOAPIFY_API_KEY",
         "WEF_LOG_LEVEL",
@@ -165,6 +168,22 @@ def _validate_runtime_boundaries(
         raise ReleaseConfigurationError(msg)
     if not ADMIN_SESSION_SECRET_PATTERN.fullmatch(values["WEF_ADMIN_SESSION_SECRET"]):
         msg = "admin session secret has an unsafe release format"
+        raise ReleaseConfigurationError(msg)
+    _validate_contact_keys(values)
+
+
+def _validate_contact_keys(values: dict[str, str]) -> None:
+    """Require distinct 32-byte hex contact encryption and HMAC keys."""
+    encryption_key = values["WEF_CONTACT_ENCRYPTION_KEY"]
+    hmac_key = values["WEF_CONTACT_HMAC_KEY"]
+    if not CONTACT_KEY_PATTERN.fullmatch(encryption_key):
+        msg = "contact encryption key must be 32-byte hex"
+        raise ReleaseConfigurationError(msg)
+    if not CONTACT_KEY_PATTERN.fullmatch(hmac_key):
+        msg = "contact HMAC key must be 32-byte hex"
+        raise ReleaseConfigurationError(msg)
+    if encryption_key == hmac_key:
+        msg = "contact encryption and HMAC keys must be distinct"
         raise ReleaseConfigurationError(msg)
 
 

@@ -31,7 +31,7 @@ invalidation:
 
 - [E7-T8](tasks/E7-T8-build-shared-nginx-tls-ingress.md) and [E7-T9](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) are `done` (PRs #69, #106–#108). Inert topology and reversible cutover automation exist with fixture proofs only.
 - Live NUC mutation, real DNS/ACME, and public 80/443 cutover remain blocked on [D-009](../../decisions/deferred/D-009-shared-tls-hostnames-and-forwarding.md).
-- [E7-T7](proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) and [E7-T11](proposed-tasks/E7-T11-activate-the-verified-historical-candidate.md) stay proposed behind E7-T10 plus their other gates.
+- [E7-T7](tasks/E7-T7-enable-production-registration-and-contact-reveal.md) and [E7-T11](proposed-tasks/E7-T11-activate-the-verified-historical-candidate.md) stay proposed behind E7-T10 plus their other gates.
 
 ## Approved spike baseline
 

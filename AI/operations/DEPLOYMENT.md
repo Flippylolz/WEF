@@ -115,7 +115,7 @@ Target Nginx/Certbot edge:
 - Certbot obtains free Let's Encrypt certificates, persists its complete state, renews unattended, and reloads Nginx only after successful renewal.
 - HTTP redirects to HTTPS only after both application routes and certificates pass external smoke checks.
 - [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) owns inert topology; [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) owns cutover/rollback automation; [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) owns DNS/router confirmation, live AI Forecast/WEF cutover, Caddy removal, renewal proof, monitoring, and rollback.
-- [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables authentication/contact reveal only after the E7-T10 HTTPS gate.
+- [E7-T7](../epics/E7-production-delivery/tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables authentication/contact reveal only after the E7-T10 HTTPS gate.
 - Full topology, certificate lifecycle, and evidence requirements are in [Nginx and TLS target](NGINX_TLS.md).
 
 Both current and target edges:
