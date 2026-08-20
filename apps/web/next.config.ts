@@ -23,6 +23,13 @@ for (const asset of ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"]) {
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // TypeScript 7 has no stable JS API yet. Keep `typescript` aliased to
+  // @typescript/typescript6 for eslint/openapi-typescript/Next API mode, and
+  // provide tsc via @typescript/native (typescript@7). Force API mode so Next
+  // does not require typescript/bin/tsc from the aliased package.
+  experimental: {
+    useTypeScriptCli: false,
+  },
   // pnpm nests helpers under the monorepo store; Node 22 resolves the ESM
   // export branch that NFT otherwise omits from standalone traces.
   outputFileTracingRoot: monorepoRoot,
