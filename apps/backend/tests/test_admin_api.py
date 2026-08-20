@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from re import search
 
-from httpx import ASGITransport, AsyncClient
+from httpx import ASGITransport, AsyncClient, Response
 
 from tests.fakes import (
     FakeCatalogBrowse,
@@ -80,7 +80,7 @@ async def _login_with_csrf(
     *,
     username: str,
     password: str,
-) -> object:
+) -> Response:
     login_page = await client.get("/admin/login")
     assert login_page.status_code == 200
     return await client.post(
