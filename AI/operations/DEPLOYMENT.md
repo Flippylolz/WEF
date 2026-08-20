@@ -261,6 +261,11 @@ Deployment succeeds only when:
 - A browser smoke check initializes MapLibre and loads the configured style/tile origin without Content Security Policy violations.
 - A known test media asset is retrievable with the expected content type.
 - The release SHA in web/API responses or diagnostics matches the manifest.
+- Operators collect a redacted host summary with
+  `python3 -m scripts.deploy.operator_diagnostics --root /home/nuc/wef`
+  (release, last deploy failure, disk usage, last successful import aggregates).
+  Never paste diagnostics that still contain secrets; the command redacts known
+  sensitive keys, but review before sharing.
 - The configured public MapLibre style document is reachable and has valid version/source/layer structure.
 
 Health scripts use fixed, non-sensitive test data.

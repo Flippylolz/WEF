@@ -176,7 +176,17 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no production auth enablement; no Starlette Admin in this task; revealed contacts stay in memory only.
 - Reversal: revise/reapprove plan revision 4 and demote E6-T6 if UX scope changes materially.
 
+## AD-027: Add operational diagnostics after E6-T2 (E6-T3)
+
+- Time: 2026-08-20.
+- Prompt avoided: leave operators without release/failure/disk/import visibility after public launch, or expand into Playwright (E6-T1) in the same plan.
+- Selected approach: approve E6 plan revision 7; promote E6-T3; ship host `operator_diagnostics.py` plus configured structlog access logs with redaction proofs.
+- Rationale: E6-T3 dependencies and E6-T2 are done; spike revision 2 already identified unconfigured structlog; AD-009 continue authority.
+- Safety limit: no source text/contacts/secrets in diagnostics or logs; no metrics SaaS; no backups; E6-T1 remains separate.
+- Reversal: prior API image and ignore/remove diagnostics script; state files unchanged.
+
 ## AD-026: Harden privacy/security after historical public activation (E6-T2)
+
 
 - Time: 2026-08-20.
 - Prompt avoided: leave HSTS deferred indefinitely after verified TLS, or expand into E6-T1/T3 Playwright/diagnostics in the same plan.
