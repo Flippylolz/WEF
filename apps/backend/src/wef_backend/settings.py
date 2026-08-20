@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     bootstrap_owner_password: str | None = None
     contact_encryption_key: SecretStr | None = None
     contact_hmac_key: SecretStr | None = None
+    admin_session_secret: SecretStr | None = None
 
 
 def load_settings() -> Settings:

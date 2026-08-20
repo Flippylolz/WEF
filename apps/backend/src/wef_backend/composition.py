@@ -8,6 +8,20 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from wef_backend.database import create_database_resources
+from wef_backend.features.admin.application import (
+    AdminService,
+    DisableUser,
+    ForceResetUserPassword,
+    ListAdminAccounts,
+    ListAdminAudits,
+    ListRevealAudits,
+    ReactivateUser,
+    RevokeUserSessions,
+)
+from wef_backend.features.admin.infrastructure import (
+    SQLAlchemyAdminAuditStore,
+    SQLAlchemyRevealAuditReader,
+)
 from wef_backend.features.catalog.application import (
     BrowseLocationOffers,
     GetOfferDetail,
@@ -80,7 +94,9 @@ class AppServices:
     identity: IdentityService
     favorites: FavoriteService
     contacts: ContactService
+    admin: AdminService
     auth_cookie_secure: bool
+    admin_session_secret: str
     public_rate_limiter: RateLimiter
 
 
@@ -110,6 +126,16 @@ def build_services(settings: Settings | None = None) -> AppServices:
         ),
     )
     contact_rate_limiter = MemoryRateLimiter()
+    admin_audit_store = SQLAlchemyAdminAuditStore(database.session_factory)
+    reveal_audit_reader = SQLAlchemyRevealAuditReader(database.session_factory)
+    admin_secret = (
+        runtime_settings.admin_session_secret.get_secret_value()
+        if runtime_settings.admin_session_secret is not None
+        else "dev-only-admin-session-secret"
+    )
+    if runtime_settings.env == "production" and runtime_settings.admin_session_secret is None:
+        msg = "WEF_ADMIN_SESSION_SECRET is required in production"
+        raise RuntimeError(msg)
 
     async def database_is_ready() -> bool:
         try:
@@ -168,6 +194,21 @@ def build_services(settings: Settings | None = None) -> AppServices:
             ),
             rate_limiter=contact_rate_limiter,
         ),
+        admin=AdminService(
+            list_accounts=ListAdminAccounts(identity_store),
+            disable_user=DisableUser(identity_store, admin_audit_store, clock),
+            reactivate_user=ReactivateUser(identity_store, admin_audit_store, clock),
+            revoke_user_sessions=RevokeUserSessions(identity_store, admin_audit_store),
+            force_reset_password=ForceResetUserPassword(
+                identity_store,
+                admin_audit_store,
+                hasher,
+                clock,
+            ),
+            list_reveal_audits=ListRevealAudits(reveal_audit_reader),
+            list_admin_audits=ListAdminAudits(admin_audit_store),
+        ),
         auth_cookie_secure=runtime_settings.env == "production",
+        admin_session_secret=admin_secret,
         public_rate_limiter=MemoryRateLimiter(),
     )

@@ -20,6 +20,7 @@ from wef_backend.errors import (
     request_validation_handler,
     resource_not_found_handler,
 )
+from wef_backend.features.admin.interface import build_admin
 from wef_backend.features.catalog.interface import (
     facets_router,
     locations_router,
@@ -79,7 +80,15 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
         app.state.identity = services.identity
         app.state.favorites = services.favorites
         app.state.contacts = services.contacts
+        app.state.admin = services.admin
         app.state.auth_cookie_secure = services.auth_cookie_secure
+        admin = build_admin(
+            secret_key=services.admin_session_secret,
+            identity=services.identity,
+            admin=services.admin,
+            cookie_secure=services.auth_cookie_secure,
+        )
+        admin.mount_to(app)
 
     @app.middleware("http")
     async def attach_request_identity(
@@ -94,6 +103,8 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
         )
         response = await call_next(request)
         response.headers["X-Request-ID"] = str(request.state.request_id)
+        if request.url.path.startswith("/admin"):
+            response.headers["Cache-Control"] = "no-store"
         return response
 
     return app

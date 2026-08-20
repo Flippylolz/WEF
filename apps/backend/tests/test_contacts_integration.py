@@ -186,6 +186,7 @@ async def _purge_contact_tables(database_url: str) -> None:
     try:
         async with database.session_factory() as session:
             for table in (
+                "admin_audit_events",
                 "contact_reveals",
                 "contact_points",
                 "auth_sessions",

@@ -94,6 +94,7 @@ def main() -> int:
             "POSTGRES_DB": "wef",
             "POSTGRES_PASSWORD": "runtime-proof-password",
             "POSTGRES_USER": "wef",
+            "WEF_ADMIN_SESSION_SECRET": "runtime-proof-admin-session-secret-0123456789",
             "WEF_ALLOW_SYNTHETIC_SEED": "true",
             "WEF_BACKEND_IMAGE": "wef-backend:local",
             "WEF_BIND_ADDRESS": "127.0.0.1",

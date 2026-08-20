@@ -14,7 +14,8 @@ DIGEST_IMAGE_PATTERN = re.compile(
 )
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 PROVIDER_KEY_PATTERN = re.compile(r"^[A-Za-z0-9._-]{20,200}$")
-FORBIDDEN_VALUE_FRAGMENTS = ("change-me", "changeme", "local-only", "replace-for")
+ADMIN_SESSION_SECRET_PATTERN = re.compile(r"^[A-Za-z0-9._-]{32,200}$")
+FORBIDDEN_VALUE_FRAGMENTS = ("change-me", "changeme", "local-only", "replace-for", "dev-only")
 MIN_PUBLIC_PORT = 1024
 MAX_PUBLIC_PORT = 65535
 REQUIRED_KEYS = frozenset(
@@ -22,6 +23,7 @@ REQUIRED_KEYS = frozenset(
         "POSTGRES_DB",
         "POSTGRES_PASSWORD",
         "POSTGRES_USER",
+        "WEF_ADMIN_SESSION_SECRET",
         "WEF_ALLOW_SYNTHETIC_SEED",
         "WEF_BACKEND_IMAGE",
         "WEF_BIND_ADDRESS",
@@ -160,6 +162,9 @@ def _validate_runtime_boundaries(
         raise ReleaseConfigurationError(msg)
     if not PROVIDER_KEY_PATTERN.fullmatch(values["WEF_GEOAPIFY_API_KEY"]):
         msg = "Geoapify API key has an unsafe release format"
+        raise ReleaseConfigurationError(msg)
+    if not ADMIN_SESSION_SECRET_PATTERN.fullmatch(values["WEF_ADMIN_SESSION_SECRET"]):
+        msg = "admin session secret has an unsafe release format"
         raise ReleaseConfigurationError(msg)
 
 

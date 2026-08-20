@@ -98,6 +98,14 @@ class IdentityStore(Protocol):
         """Return the account with the given identifier."""
         ...
 
+    async def list_accounts(self, *, limit: int = 100) -> tuple[Account, ...]:
+        """Return recent non-deleted accounts for owner administration."""
+        ...
+
+    async def count_active_owners(self) -> int:
+        """Count active, non-deleted owner accounts."""
+        ...
+
     async def update_account(self, account: Account) -> None:
         """Persist mutable account fields including password state."""
         ...

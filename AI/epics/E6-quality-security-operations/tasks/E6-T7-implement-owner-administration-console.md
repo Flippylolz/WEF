@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E6-T7
 epic: E6
 title: "Implement owner administration console"
-status: ready
+status: in_progress
 revision: 1
 priority: P1
 size: L
@@ -40,8 +40,8 @@ branch:
   name: feat/E6-T7-owner-admin-console
   task_id: E6-T7
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-20T12:00:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/116"
 completion:
   completed_by: null
   completed_at: null

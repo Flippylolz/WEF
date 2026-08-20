@@ -123,6 +123,33 @@ class SQLAlchemyIdentityStore(IdentityStore):
             )
             return None if row is None else _to_account(row)
 
+    async def list_accounts(self, *, limit: int = 100) -> tuple[Account, ...]:
+        """Return recent non-deleted accounts for owner administration."""
+        async with self._session_factory() as session:
+            rows = (
+                await session.scalars(
+                    select(UserRow)
+                    .where(UserRow.deleted_at.is_(None))
+                    .order_by(UserRow.created_at.desc())
+                    .limit(limit),
+                )
+            ).all()
+        return tuple(_to_account(row) for row in rows)
+
+    async def count_active_owners(self) -> int:
+        """Count active, non-deleted owner accounts."""
+        async with self._session_factory() as session:
+            rows = (
+                await session.scalars(
+                    select(UserRow.id).where(
+                        UserRow.role == UserRole.OWNER.value,
+                        UserRow.is_active.is_(True),
+                        UserRow.deleted_at.is_(None),
+                    ),
+                )
+            ).all()
+        return len(rows)
+
     async def update_account(self, account: Account) -> None:
         """Persist mutable account fields including password state."""
         async with self._session_factory() as session:

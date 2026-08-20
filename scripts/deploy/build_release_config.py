@@ -47,6 +47,7 @@ def build_values(
     username = required_environment("POSTGRES_USER")
     password = required_environment("POSTGRES_PASSWORD")
     geoapify_api_key = required_environment("WEF_GEOAPIFY_API_KEY")
+    admin_session_secret = required_environment("WEF_ADMIN_SESSION_SECRET")
     if not DATABASE_IDENTIFIER.fullmatch(database) or not DATABASE_IDENTIFIER.fullmatch(
         username,
     ):
@@ -57,6 +58,9 @@ def build_values(
         raise ValueError(msg)
     if not SAFE_PROVIDER_KEY.fullmatch(geoapify_api_key):
         msg = "Geoapify API key is not safe for a Compose environment file"
+        raise ValueError(msg)
+    if not re.fullmatch(r"^[A-Za-z0-9._-]{32,200}$", admin_session_secret):
+        msg = "admin session secret is not safe for a Compose environment file"
         raise ValueError(msg)
     log_level = required_environment("WEF_LOG_LEVEL").upper()
     if log_level not in ALLOWED_LOG_LEVELS:
@@ -70,6 +74,7 @@ def build_values(
         "POSTGRES_DB": database,
         "POSTGRES_PASSWORD": password,
         "POSTGRES_USER": username,
+        "WEF_ADMIN_SESSION_SECRET": admin_session_secret,
         "WEF_ALLOW_SYNTHETIC_SEED": required_environment(
             "WEF_ALLOW_SYNTHETIC_SEED",
         ),

@@ -15,6 +15,7 @@ from tests.fakes import (
     FakeMapQuery,
     FakeOfferDetailQuery,
     always_ready,
+    build_admin_service,
     build_contact_service,
     build_favorites_service,
     build_identity_service,
@@ -63,7 +64,9 @@ def create_test_app(
         identity=build_identity_service(),
         favorites=build_favorites_service(),
         contacts=build_contact_service(),
+        admin=build_admin_service(),
         auth_cookie_secure=False,
+        admin_session_secret="test-admin-session-secret",
         public_rate_limiter=public_rate_limiter or MemoryRateLimiter(),
     )
     return create_http_app(services)

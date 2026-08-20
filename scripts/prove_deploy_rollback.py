@@ -171,6 +171,7 @@ def prepare_release(root: Path, release_sha: str) -> tuple[Path, Path]:
         "POSTGRES_DB": "wef",
         "POSTGRES_PASSWORD": "proof-password",
         "POSTGRES_USER": "wef",
+        "WEF_ADMIN_SESSION_SECRET": "rollback-proof-admin-session-secret-0123456789",
         "WEF_ALLOW_SYNTHETIC_SEED": "true",
         "WEF_BACKEND_IMAGE": "wef-backend:local",
         "WEF_BIND_ADDRESS": "127.0.0.1",

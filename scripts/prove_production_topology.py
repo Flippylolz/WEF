@@ -63,6 +63,7 @@ def release_environment() -> dict[str, str]:
         "POSTGRES_DB": "wef",
         "POSTGRES_PASSWORD": "fixture-password",
         "POSTGRES_USER": "wef",
+        "WEF_ADMIN_SESSION_SECRET": "fixture-admin-session-secret-0123456789abcdef",
         "WEF_ALLOW_SYNTHETIC_SEED": "false",
         "WEF_BACKEND_IMAGE": BACKEND_IMAGE,
         "WEF_BIND_ADDRESS": "0.0.0.0",
