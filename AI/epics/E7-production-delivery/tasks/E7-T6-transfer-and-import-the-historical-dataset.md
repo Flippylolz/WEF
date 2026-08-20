@@ -77,8 +77,9 @@ Cloud-testable repository slices merged on `main` (task remains `in_progress`):
 | Candidate config | [#90](https://github.com/Flippylolz/WEF/pull/90) | Checksum-scoped candidate paths, loopback verification env builder + 5 tests |
 | Transfer remote | [#93](https://github.com/Flippylolz/WEF/pull/93) | Transfer plan, rsync command builder, server dry-run gates |
 | macOS remote path/rsync fix | [#95](https://github.com/Flippylolz/WEF/pull/95) | Linux remote paths without local resolve; openrsync-compatible rsync-plan |
+| Candidate verify | (this branch) | Manifest/media reconcile CLI, loopback `compose.candidate.yaml`, release packaging of transfer tooling |
 
-Remaining for full E7-T6 acceptance: non-public candidate verification release, reconciliation gates, and loopback health/privacy proofs.
+Remaining for full E7-T6 acceptance: start the loopback candidate stack on the NUC, prove health/privacy against E3-T5 aggregates, then mark the task `done`.
 
 Live production evidence (2026-08-20): bundle rsync verified on NUC; production backfill created `wef_hist_candidate` with E3-T5 terminal counts (27,170 messages, 2,999 offers, 792 locations) and staged 24,532 + 49,059 media files under `candidates/<checksum>/media/` while public `wef` remained at 0 source messages.
 

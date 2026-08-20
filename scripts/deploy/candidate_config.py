@@ -61,13 +61,21 @@ class CandidateContext:
     test_mode: bool = False
 
 
+def _normalize_wef_root(root: Path) -> Path:
+    """Normalize one WEF root without resolving remote Linux paths on macOS hosts."""
+    posix = root.as_posix()
+    if posix.startswith("/"):
+        return Path(posix.rstrip("/") or "/")
+    return root.resolve()
+
+
 def candidate_paths(root: Path, bundle_checksum: str) -> CandidatePaths:
     """Return the canonical checksum-scoped candidate media roots."""
     _validate_bundle_checksum(bundle_checksum)
-    resolved = root.resolve()
-    candidate_root = resolved / "candidates" / bundle_checksum
+    normalized = _normalize_wef_root(root)
+    candidate_root = normalized / "candidates" / bundle_checksum
     return CandidatePaths(
-        root=resolved,
+        root=normalized,
         bundle_checksum=bundle_checksum,
         restricted_originals=candidate_root / "media" / "originals",
         public_derivatives=candidate_root / "media" / "public",
@@ -112,7 +120,7 @@ def build_candidate_values(
         "WEF_CANDIDATE_VERIFY_BIND_ADDRESS": "127.0.0.1",
         "WEF_CANDIDATE_VERIFY_PORT": str(context.verify_port),
         "WEF_MIGRATION_HEAD": MIGRATION_HEAD,
-        "WEF_ROOT": str(context.root),
+        "WEF_ROOT": str(paths.root),
         "WEF_WEB_IMAGE": context.web_image,
     }
     validate_candidate_environment(values, context)
@@ -149,13 +157,14 @@ def _validate_identity(values: dict[str, str], context: CandidateContext) -> Non
     if values["WEF_CANDIDATE_BUNDLE_CHECKSUM"] != context.bundle_checksum:
         msg = "candidate bundle checksum does not match deployment context"
         raise CandidateConfigurationError(msg)
-    if values["WEF_ROOT"] != str(context.root):
+    expected_root = str(_normalize_wef_root(context.root))
+    if values["WEF_ROOT"] != expected_root:
         msg = "candidate root does not match deployment context"
         raise CandidateConfigurationError(msg)
     if values["WEF_MIGRATION_HEAD"] != MIGRATION_HEAD:
         msg = "candidate migration head does not match the released bundle head"
         raise CandidateConfigurationError(msg)
-    if not context.test_mode and context.root != Path("/home/nuc/wef"):
+    if not context.test_mode and expected_root != "/home/nuc/wef":
         msg = "production root must be /home/nuc/wef"
         raise CandidateConfigurationError(msg)
 
@@ -208,8 +217,8 @@ def _validate_bundle_checksum(value: str) -> None:
 
 
 def _validate_containment(path: Path, root: Path) -> None:
-    resolved = path.resolve()
-    root_resolved = root.resolve()
-    if resolved == root_resolved or root_resolved not in resolved.parents:
+    normalized_path = _normalize_wef_root(path)
+    normalized_root = _normalize_wef_root(root)
+    if normalized_path == normalized_root or normalized_root not in normalized_path.parents:
         msg = "candidate path must stay beneath the WEF root"
         raise CandidateConfigurationError(msg)
