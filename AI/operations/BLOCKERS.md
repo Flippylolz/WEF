@@ -4,20 +4,13 @@ This append-only log records blockers that could not be safely resolved autonomo
 
 ## Active blockers
 
-### B-009: D-009 shared TLS hostnames and forwarding (E7-T10)
+### B-002: Production authentication / sensitive-feature gate
 
-- Impact: live shared Nginx/Certbot cutover (E7-T10) can proceed once plan revision 7 is approved and WEF-only edge tooling lands; E7-T7/E7-T11 still wait on completed HTTPS.
-- Current state (2026-08-20): [D-009](../decisions/deferred/D-009-shared-tls-hostnames-and-forwarding.md) is **resolved** — WEF hostname `2fa54e2405.duckdns.org`; Forecast stays on public `:3000` only; Funbox forwards 80/443 to the NUC. Public `:80`/`:443` time out until Nginx binds (expected). Proposed [E7 plan revision 7](../epics/E7-production-delivery/PROPOSED_IMPLEMENTATION_PLAN-revision-7.md) awaits approval.
-- Needed from owner: approve E7 implementation-plan revision 7 and authorize live E7-T10 WEF-only cutover.
-- Safe workaround until cutover: anonymous HTTP on `:3100`; keep auth/admin/reveal disabled (B-002).
-- Related: B-002 remains until E7-T7 after verified WEF HTTPS.
-
-### B-002: Production HTTPS/authentication gate
-
-- Impact: registration, sessions, owner administration, and contact reveal must remain disabled on interim HTTP port 3100.
-- Current state: the router forwards 3100; standard HTTPS/domain certificate routing is not approved/configured. E7-T9 cutover automation is ready in-repo; live TLS still waits on B-009/D-009 then E7-T10.
-- Needed from owner: resolve D-009 (hostnames/DNS/80+443 forwarding) when ready for shared TLS; E7-T7 enables sensitive features after that HTTPS gate.
-- Safe workaround: deploy anonymous browsing/API only.
+- Impact: registration, sessions, owner administration, and contact reveal must remain disabled until E7-T7 after verified HTTPS.
+- Current state (2026-08-20): **E7-T10 live WEF HTTPS is complete** on `https://2fa54e2405.duckdns.org` (Nginx/Certbot). Caddy `:3100` retained as rollback; Forecast stays on `:3000`.
+- Needed from owner: none for HTTPS; E7-T7 enables sensitive features when ready.
+- Safe workaround: anonymous browsing/API on HTTPS; keep auth/admin/reveal disabled until E7-T7.
+- Related: B-009 resolved via D-009 + E7-T10.
 
 ### B-003: Telegram client credentials/session
 
@@ -45,6 +38,11 @@ This append-only log records blockers that could not be safely resolved autonomo
 - Safe workaround: one-task PRs, stable CI checks, base-first stack merging, and main-SHA deploy verification.
 
 ## Resolved during overnight work
+
+### R-009 / B-009: D-009 shared TLS hostnames and forwarding (E7-T10)
+
+- Resolution: D-009 resolved WEF-only on `2fa54e2405.duckdns.org` (PR #119); plan revision 7 + tooling (PR #120/#121); live NUC cutover 2026-08-20 with production Let's Encrypt, HTTP→HTTPS redirect, renew dry-run, Forecast `:3000` unchanged.
+- Effect: E7-T7/E7-T11 may proceed behind remaining auth/activation gates; anonymous HTTPS is the public WEF entry.
 
 ### R-006 / B-008: Historical geocoder selection
 

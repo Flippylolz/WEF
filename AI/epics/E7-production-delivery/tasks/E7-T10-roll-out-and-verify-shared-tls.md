@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T10
 epic: E7
 title: "Roll out and verify WEF-only shared TLS"
-status: in_progress
+status: done
 revision: 2
 priority: P1
 size: M
@@ -43,15 +43,16 @@ branch:
   created_at: "2026-08-20T13:59:05Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/121"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
-invalidation:
-  invalidated_by: null
-  invalidated_at: null
-  reason: null
-  return_to: null
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-20T14:22:18Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/121"
+  evidence:
+    - "Tooling: merged https://github.com/Flippylolz/WEF/pull/121 (optional Forecast vhost; WEF-only production render)"
+    - "Live NUC: wef-shared-edge on /home/nuc/wef-shared-edge; release r-20260820-wef-only; config tls-redirect"
+    - "Production Let's Encrypt cert CN/SAN 2fa54e2405.duckdns.org; issuer YE2; expiry 2026-11-18"
+    - "External smoke: https://2fa54e2405.duckdns.org/ and /api/v1/health/ready → 200; http→https 301; Forecast :3000 and Caddy :3100 → 200"
+    - "certbot renew --dry-run succeeded; daily cron 04:15 UTC via shared_edge_renew.sh"
+    - "Inventories: /home/nuc/wef/state/e7-t10/inventory-before.json and inventory-after.json (on NUC, not committed)"
 ---
 
 # E7-T10: Roll out and verify WEF-only shared TLS
@@ -84,17 +85,24 @@ Activate and verify the shared Nginx/Certbot edge for **WEF** on `2fa54e2405.duc
 
 ## Acceptance criteria
 
-- [ ] D-009 remains resolved; staging/production ACME for `2fa54e2405.duckdns.org` succeeds.
-- [ ] Nginx owns public 80/443; every reload follows passing config validation.
-- [ ] WEF has a valid public certificate chain and correct web/API/media upstreams through HTTPS.
-- [ ] HTTP redirects to `https://2fa54e2405.duckdns.org` only after WEF HTTPS smoke passes.
-- [ ] Certbot renew `--dry-run` and success-only deploy hook reload pass.
-- [ ] WEF web/API/media/release-marker smoke passes without exposing Next.js/FastAPI ports.
-- [ ] AI Forecast remains healthy on `:3000`; image/data/API unchanged.
-- [ ] Before/after inventory shows DuckDNS, WireGuard, PostgreSQL, WEF persistence, and unrelated workloads unchanged.
-- [ ] Failures abort/roll back without taking Forecast offline.
-- [ ] No certificate private keys, ACME account material, or generated production edge secrets are committed.
+- [x] D-009 remains resolved; staging/production ACME for `2fa54e2405.duckdns.org` succeeds.
+- [x] Nginx owns public 80/443; every reload follows passing config validation.
+- [x] WEF has a valid public certificate chain and correct web/API/media upstreams through HTTPS.
+- [x] HTTP redirects to `https://2fa54e2405.duckdns.org` only after WEF HTTPS smoke passes.
+- [x] Certbot renew `--dry-run` and success-only deploy hook reload pass.
+- [x] WEF web/API/media/release-marker smoke passes without exposing Next.js/FastAPI ports.
+- [x] AI Forecast remains healthy on `:3000`; image/data/API unchanged.
+- [x] Before/after inventory shows DuckDNS, WireGuard, PostgreSQL, WEF persistence, and unrelated workloads unchanged.
+- [x] Failures abort/roll back without taking Forecast offline.
+- [x] No certificate private keys, ACME account material, or generated production edge secrets are committed.
 
 ## Rollback
 
 Restore previous validated Nginx config or drop back to Caddy `:3100` for WEF; leave Forecast `:3000` untouched. Preserve cert state unless a separate owner cleanup is approved.
+
+## Live cutover notes (2026-08-20)
+
+- Shared-edge root: `/home/nuc/wef-shared-edge/root` (outside `/home/nuc/wef` cleanup boundary).
+- Ops copy of templates/scripts: `/home/nuc/wef-shared-edge/ops` (synced from main after PR #121).
+- WEF upstreams joined to `wef-edge` as `wef-api` / `wef-web`; `wef-media` via dedicated media-edge container. After a WEF container recreate, run `/home/nuc/wef-shared-edge/ops/reconnect-wef-upstreams.sh` until cutover overlay is the default deploy path.
+- Caddy on `:3100` intentionally retained as rollback.

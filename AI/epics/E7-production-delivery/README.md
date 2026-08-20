@@ -64,7 +64,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - [E7-T8: Build isolated shared Nginx TLS topology](tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `done` through PR #69 (gates restored by owner after an accidental invalidation), P1/M, M3
 - [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `done` through PRs #106/#107
 - [E7-T6: Transfer the verified historical snapshot into a non-public production candidate](tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `done` through PRs #88–#104, P1/L, M3
-- [E7-T10: Roll out and verify WEF-only shared TLS](tasks/E7-T10-roll-out-and-verify-shared-tls.md) — `ready`, P1/M, M3; plan revision 7; Forecast stays on `:3000`
+- [E7-T10: Roll out and verify WEF-only shared TLS](tasks/E7-T10-roll-out-and-verify-shared-tls.md) — `done` through PR #121 + live NUC cutover 2026-08-20; Forecast stays on `:3000`
 
 ## Deferred/proposed tasks
 
