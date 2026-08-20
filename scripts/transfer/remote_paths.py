@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from pathlib import Path
 
 CHECKSUM_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 DEFAULT_WEF_ROOT = "/home/nuc/wef"
@@ -33,13 +30,22 @@ def _validate_checksum(bundle_checksum: str) -> None:
         raise RemotePathError(msg)
 
 
+def _normalize_remote_root(root: Path) -> Path:
+    """Normalize one remote absolute POSIX path without local filesystem resolution."""
+    posix = root.as_posix()
+    if not posix.startswith("/"):
+        msg = "remote WEF root must be an absolute POSIX path"
+        raise RemotePathError(msg)
+    return Path(posix.rstrip("/") or "/")
+
+
 def remote_bundle_paths(root: Path, bundle_checksum: str) -> RemoteBundlePaths:
     """Return canonical incoming and extracted paths for one bundle."""
     _validate_checksum(bundle_checksum)
-    resolved = root.resolve()
+    normalized = _normalize_remote_root(root)
     return RemoteBundlePaths(
-        root=resolved,
+        root=normalized,
         bundle_checksum=bundle_checksum,
-        incoming_dir=resolved / "imports" / "incoming" / bundle_checksum,
-        extracted_dir=resolved / "imports" / "extracted" / bundle_checksum,
+        incoming_dir=normalized / "imports" / "incoming" / bundle_checksum,
+        extracted_dir=normalized / "imports" / "extracted" / bundle_checksum,
     )
