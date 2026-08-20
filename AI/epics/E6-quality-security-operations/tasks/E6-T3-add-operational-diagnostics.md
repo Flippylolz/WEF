@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E6-T3
 epic: E6
 title: "Add operational diagnostics"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -41,12 +41,17 @@ branch:
   task_id: E6-T3
   one_task_only: true
   created_at: "2026-08-20T16:34:05Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/133"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-20T17:11:41Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/133"
+  evidence:
+    - "Merged https://github.com/Flippylolz/WEF/pull/133 (operator diagnostics + structlog access logs + WEF_RELEASE_SHA)"
+    - "Post-activation deploys unblocked by https://github.com/Flippylolz/WEF/pull/134; production release 11dd20b… live with WEF_RELEASE_SHA on API"
+    - "Live operator_diagnostics JSON: release 11dd20b…, last_failure health_verification, disk ~5.5% used, last_successful_import e3-complete-v2 checksum prefix 2399a88c7025 (no source content)"
+    - "Live API access logs emit http_request with method/path/status/duration_ms/release_sha/request_id; redaction unit tests cover passwords/tokens/source keys"
+    - "Shared-edge reconnect after deploy restored HTTPS /api/v1/health/live → 200"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -78,9 +83,9 @@ An operator can identify the active release, last deploy failure stage/reason, d
 
 ## Acceptance criteria
 
-- [ ] An operator can identify release, failed stage/reason, disk usage, and last successful import without reading source content.
-- [ ] Structured logs carry request/release correlation without secrets, contacts, or source text.
-- [ ] Negative redaction tests cover passwords, tokens, and source payloads.
+- [x] An operator can identify release, failed stage/reason, disk usage, and last successful import without reading source content.
+- [x] Structured logs carry request/release correlation without secrets, contacts, or source text.
+- [x] Negative redaction tests cover passwords, tokens, and source payloads.
 
 ## Dependencies and gates
 
@@ -92,6 +97,7 @@ An operator can identify the active release, last deploy failure stage/reason, d
 
 - Host disk stats and DB queries must fail closed with explicit errors, never partial secret leakage.
 - Do not mount restricted originals into the API for diagnostics.
+- Post-E7-T11 media symlinks require the deploy-gate allowance from PR #134 for subsequent releases.
 
 ## Rollback
 
