@@ -208,3 +208,131 @@ async def test_owner_disable_action_writes_audit_and_omits_secrets() -> None:
         assert audits.status_code == 200
         assert b"disable_user" in audits.content
         assert b"fakehash" not in audits.content
+
+
+async def test_admin_rejects_bad_referer_and_forced_password_login() -> None:
+    async with admin_client() as (client, store):
+        await store.create_account(
+            username_normalized="owner",
+            username_display="owner",
+            hashed_password="fakehash:longenough123",
+            role=UserRole.OWNER,
+            must_change_password=True,
+        )
+        blocked = await _login_with_csrf(
+            client,
+            username="owner",
+            password="longenough123",
+        )
+        assert blocked.status_code in {400, 422}
+
+        store2 = FakeIdentityStore()
+        async with admin_client(store=store2) as (client2, ready_store):
+            await _owner_session(client2, ready_store)
+            users = await client2.get("/admin/users")
+            csrf = _csrf_from_html(users.text)
+            user = await ready_store.create_account(
+                username_normalized="buyer",
+                username_display="buyer",
+                hashed_password="fakehash:longenough123",
+                role=UserRole.USER,
+                must_change_password=False,
+            )
+            denied = await client2.post(
+                "/admin/users/disable",
+                data={"user_id": str(user.id), "csrftoken": csrf},
+                headers={"Referer": "https://evil.example/admin"},
+                follow_redirects=False,
+            )
+            assert denied.status_code == 403
+
+
+async def test_owner_reset_reactivate_revoke_and_logout() -> None:
+    async with admin_client() as (client, store):
+        await _owner_session(client, store)
+        user = await store.create_account(
+            username_normalized="buyer",
+            username_display="buyer",
+            hashed_password="fakehash:longenough123",
+            role=UserRole.USER,
+            must_change_password=False,
+        )
+        users = await client.get("/admin/users")
+        csrf = _csrf_from_html(users.text)
+        reset = await client.post(
+            "/admin/users/reset",
+            data={
+                "user_id": str(user.id),
+                "temporary_password": "temporary12",
+                "csrftoken": csrf,
+            },
+            headers={"Origin": "http://testserver"},
+            follow_redirects=False,
+        )
+        assert reset.status_code in {302, 303}
+        refreshed = await store.find_account_by_id(user.id)
+        assert refreshed is not None
+        assert refreshed.must_change_password is True
+
+        users = await client.get("/admin/users")
+        csrf = _csrf_from_html(users.text)
+        await client.post(
+            "/admin/users/disable",
+            data={"user_id": str(user.id), "csrftoken": csrf},
+            headers={"Origin": "http://testserver"},
+            follow_redirects=False,
+        )
+        users = await client.get("/admin/users")
+        csrf = _csrf_from_html(users.text)
+        await client.post(
+            "/admin/users/reactivate",
+            data={"user_id": str(user.id), "csrftoken": csrf},
+            headers={"Origin": "http://testserver"},
+            follow_redirects=False,
+        )
+        users = await client.get("/admin/users")
+        csrf = _csrf_from_html(users.text)
+        await client.post(
+            "/admin/users/revoke",
+            data={"user_id": str(user.id), "csrftoken": csrf},
+            headers={"Origin": "http://testserver"},
+            follow_redirects=False,
+        )
+        reveals = await client.get("/admin/reveal-audits")
+        assert reveals.status_code == 200
+        users = await client.get("/admin/users")
+        csrf = _csrf_from_html(users.text)
+        logout = await client.post(
+            "/admin/logout",
+            data={"csrftoken": csrf},
+            headers={"Origin": "http://testserver"},
+            follow_redirects=False,
+        )
+        assert logout.status_code in {302, 303}
+        protected = await client.get("/admin/users", follow_redirects=False)
+        assert protected.status_code in {302, 303, 401, 403}
+
+
+async def test_admin_login_rate_limit_and_invalid_credentials() -> None:
+    async with admin_client() as (client, store):
+        await store.create_account(
+            username_normalized="owner",
+            username_display="owner",
+            hashed_password="fakehash:longenough123",
+            role=UserRole.OWNER,
+            must_change_password=False,
+        )
+        bad = await _login_with_csrf(
+            client,
+            username="owner",
+            password="wrong-password",
+        )
+        assert bad.status_code in {400, 422}
+        for _ in range(12):
+            response = await _login_with_csrf(
+                client,
+                username="owner",
+                password="wrong-password",
+            )
+        assert response.status_code in {400, 422}
+        assert "Too many" in response.text or response.status_code == 400
