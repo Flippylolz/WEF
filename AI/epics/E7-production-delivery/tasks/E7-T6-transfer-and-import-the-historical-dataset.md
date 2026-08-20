@@ -38,10 +38,10 @@ dependency_gate:
     - "E7-T4 | done | merged on main"
 branch:
   required: true
-  name: cursor/feat-e7-t6-transfer-foundation-0c74
+  name: cursor/feat-e7-t6-bundle-packaging-0c74
   task_id: E7-T6
   one_task_only: true
-  created_at: "2026-08-20T01:30:00Z"
+  created_at: "2026-08-20T02:45:00Z"
   pull_request: null
 completion:
   completed_by: null
