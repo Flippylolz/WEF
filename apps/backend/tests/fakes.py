@@ -15,6 +15,7 @@ from wef_backend.features.catalog.application import (
     OfferDetailRecord,
 )
 from wef_backend.features.contacts.application.reveal import (
+    ContactCipher,
     ContactCryptoUnavailableError,
     ContactService,
     PersistOfferContacts,
@@ -475,12 +476,12 @@ class FakeContactStore:
 def build_contact_service(
     *,
     store: FakeContactStore | None = None,
-    cipher: FakeContactCipher | None = None,
+    cipher: ContactCipher | None = None,
     rate_limiter: FakeRateLimiter | None = None,
 ) -> ContactService:
     """Compose one contact service fully backed by fakes."""
     contact_store = store or FakeContactStore()
-    contact_cipher = cipher or FakeContactCipher()
+    contact_cipher: ContactCipher = cipher or FakeContactCipher()
     limiter = rate_limiter or FakeRateLimiter()
     return ContactService(
         persist=PersistOfferContacts(contact_store, contact_cipher),
