@@ -40,11 +40,13 @@ initialize_release_context \
   "$WEF_RELEASE_SHA" \
   "$WEF_PUBLIC_PORT"
 
-production_compose up --detach --wait db api web edge
+production_compose up --detach --wait db
+bring_up_application_services
 "$SCRIPT_DIR/smoke.sh" \
   "http://127.0.0.1:$WEF_PUBLIC_PORT" \
   "$WEF_RELEASE_SHA" \
   "https://tiles.openfreemap.org/styles/liberty"
+smoke_public_https_origin
 
 python3 "$SCRIPT_DIR/release_state.py" write \
   "$WEF_ROOT/state/current.json" \

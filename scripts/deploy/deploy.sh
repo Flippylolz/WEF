@@ -53,11 +53,12 @@ if [ -f "$current_state" ]; then
 fi
 
 candidate_healthy=0
-if production_compose up --detach --wait api web edge &&
+if bring_up_application_services &&
   "$SCRIPT_DIR/smoke.sh" \
     "http://127.0.0.1:$WEF_PUBLIC_PORT" \
     "$WEF_RELEASE_SHA" \
-    "https://tiles.openfreemap.org/styles/liberty"; then
+    "https://tiles.openfreemap.org/styles/liberty" &&
+  smoke_public_https_origin; then
   candidate_healthy=1
 fi
 

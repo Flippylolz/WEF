@@ -431,7 +431,11 @@ def recreate_application(context: ActivationContext, values: dict[str, str]) -> 
 
 def reconnect_shared_edge() -> None:
     """Attach recreated WEF containers to the shared Nginx network when present."""
-    script = Path("/home/nuc/wef-shared-edge/ops/reconnect-wef-upstreams.sh")
+    release_script = Path(
+        "/home/nuc/wef/releases/current/scripts/deploy/reconnect-wef-upstreams.sh",
+    )
+    ops_script = Path("/home/nuc/wef-shared-edge/ops/reconnect-wef-upstreams.sh")
+    script = release_script if release_script.is_file() else ops_script
     if script.is_file():
         _run(["bash", str(script)])
 

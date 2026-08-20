@@ -283,6 +283,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/release/scripts"
           cp infra/compose.production.yaml "$RUNNER_TEMP/release/"
           cp infra/compose.production-cutover.yaml "$RUNNER_TEMP/release/"
+          cp infra/compose.production-shared-edge.yaml "$RUNNER_TEMP/release/"
           cp infra/compose.candidate.yaml "$RUNNER_TEMP/release/"
           cp infra/Caddyfile.production "$RUNNER_TEMP/release/"
           mkdir -p "$RUNNER_TEMP/release/nginx"

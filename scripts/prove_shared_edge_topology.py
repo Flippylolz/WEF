@@ -235,7 +235,7 @@ def assert_edge_compose_policy(model: dict[str, Any]) -> None:
 
 
 def assert_edge_boundary_ownership() -> None:
-    """Prove ordinary WEF releases never own or reference the edge boundary."""
+    """Prove ordinary WEF releases never own or tear down the edge project."""
     production = PRODUCTION_COMPOSE_FILE.read_text(encoding="utf-8")
     assert EDGE_NETWORK_NAME not in production, (
         "the production project must not own the shared edge network"
@@ -248,7 +248,23 @@ def assert_edge_boundary_ownership() -> None:
     assert "shared-edge" not in manifest_text, "ordinary WEF releases must not ship the shared edge"
     deploy = REPOSITORY_ROOT / "scripts" / "deploy" / "deploy.sh"
     deploy_text = deploy.read_text(encoding="utf-8")
-    assert "shared-edge" not in deploy_text, "ordinary WEF deploys must not manage the shared edge"
+    assert "compose.shared-edge" not in deploy_text, (
+        "ordinary WEF deploys must not manage the shared-edge Compose project"
+    )
+    assert "bring_up_application_services" in deploy_text
+    assert "smoke_public_https_origin" in deploy_text
+    common = (REPOSITORY_ROOT / "scripts" / "deploy" / "production-common.sh").read_text(
+        encoding="utf-8"
+    )
+    assert "reconnect_shared_edge_upstreams" in common
+    assert "compose.production-shared-edge.yaml" in common
+    reconnect = REPOSITORY_ROOT / "scripts" / "deploy" / "reconnect-wef-upstreams.sh"
+    assert reconnect.is_file(), "reconnect script must ship in application releases"
+    reconnect_text = reconnect.read_text(encoding="utf-8")
+    assert "nginx -s reload" in reconnect_text
+    assert "wef-media" in reconnect_text
+    assert "compose.shared-edge" not in reconnect_text
+    assert "docker compose" not in reconnect_text
 
 
 def assert_script_safety() -> None:

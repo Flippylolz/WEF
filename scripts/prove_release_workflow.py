@@ -60,6 +60,7 @@ def assert_workflow_boundaries() -> None:
     assert "sha256sum --check SHA256SUMS" in source
     assert "StrictHostKeyChecking=yes" in source
     assert "compose.candidate.yaml" in source
+    assert "compose.production-shared-edge.yaml" in source
     assert "scripts/transfer_candidate.py" in source
     assert all(
         "secrets." not in line for line in source.splitlines() if line.lstrip().startswith("if:")
