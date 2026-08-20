@@ -44,6 +44,14 @@ class DeploySharedEdgeReconnectTests(unittest.TestCase):
         self.assertNotIn("caddy-rehearsal", text)
         self.assertNotIn("profiles:", text)
 
+    def test_renew_script_hups_nginx_after_validation(self) -> None:
+        renew = REPOSITORY_ROOT / "scripts" / "deploy" / "shared_edge_renew.sh"
+        text = renew.read_text(encoding="utf-8")
+        self.assertIn("nginx -t", text)
+        self.assertIn("kill -s HUP nginx", text)
+        self.assertNotIn("nginx -s reload", text)
+        self.assertLess(text.index("nginx -t"), text.index("kill -s HUP nginx"))
+
 
 if __name__ == "__main__":
     unittest.main()

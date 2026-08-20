@@ -62,8 +62,9 @@ if ! docker run --rm --user 1000:1000 \
 fi
 
 printf 'shared_edge_renew: reloading nginx...\n'
-if ! docker compose --file "$compose_file" exec -T nginx \
-  nginx -c /etc/nginx-edge/current/active.conf -s reload; then
+# Non-root shared-edge nginx leaves /run/nginx.pid empty, so pid-file reload
+# fails. Signal HUP on the running container instead (same as reconnect/activate).
+if ! docker compose --file "$compose_file" kill -s HUP nginx; then
   printf 'shared_edge_renew: graceful reload failed\n' >&2
   exit 1
 fi

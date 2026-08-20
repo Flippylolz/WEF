@@ -486,6 +486,8 @@ def assert_image_pin_consistency() -> None:
         encoding="utf-8"
     )
     assert NGINX_IMAGE in renew, "renew tool must use the pinned image"
+    assert "kill -s HUP nginx" in renew, "renew must HUP nginx rather than nginx -s reload"
+    assert "nginx -s reload" not in renew, "renew must not use nginx -s reload"
 
 
 def main() -> int:
