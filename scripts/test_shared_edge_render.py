@@ -158,6 +158,9 @@ class WriteReleaseTests(unittest.TestCase):
             redirect = (first / TLS_REDIRECT_CONFIG).read_text(encoding="utf-8")
             self.assertIn("return 404", tls)
             self.assertIn("return 301 https://$host$request_uri;", redirect)
+            self.assertIn("location /admin {", tls)
+            self.assertIn("location /admin {", redirect)
+            self.assertIn("proxy_pass http://fixture-wef-api:8080;", tls)
 
     def test_rejects_non_empty_release_directories(self) -> None:
         with TemporaryDirectory() as directory:

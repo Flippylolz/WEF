@@ -10,6 +10,10 @@
 		reverse_proxy api:8000
 	}
 
+	handle /admin* {
+		reverse_proxy api:8000
+	}
+
 	@hiddenMedia path_regexp hidden (^|/)\.
 	handle @hiddenMedia {
 		respond 404

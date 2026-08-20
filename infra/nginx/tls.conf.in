@@ -69,6 +69,15 @@ http {
             proxy_set_header X-Forwarded-Proto $scheme;
         }
 
+        # Owner console is Starlette Admin on the API, not the Next.js app.
+        location /admin {
+            proxy_pass http://{{WEF_API_UPSTREAM}};
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
         location /media/ {
             proxy_pass http://{{WEF_MEDIA_UPSTREAM}};
             proxy_set_header Host $host;
