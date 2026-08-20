@@ -51,12 +51,8 @@ class MediaPointerTests(unittest.TestCase):
         checksum = "a" * 64
         with TemporaryDirectory() as directory:
             root = Path(directory)
-            candidate_public = (
-                root / "candidates" / checksum / "media" / "public"
-            )
-            candidate_originals = (
-                root / "candidates" / checksum / "media" / "originals"
-            )
+            candidate_public = root / "candidates" / checksum / "media" / "public"
+            candidate_originals = root / "candidates" / checksum / "media" / "originals"
             candidate_public.mkdir(parents=True)
             candidate_originals.mkdir(parents=True)
             (candidate_public / "marker.txt").write_text("public", encoding="utf-8")
