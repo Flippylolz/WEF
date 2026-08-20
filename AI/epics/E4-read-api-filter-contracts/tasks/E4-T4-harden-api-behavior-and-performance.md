@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E4-T4
 epic: E4
 title: "Harden API behavior and performance"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -43,12 +43,15 @@ branch:
   task_id: E4-T4
   one_task_only: true
   created_at: "2026-08-19T19:10:00Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/83"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-19T19:34:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/83"
+  evidence:
+    - "Merged https://github.com/Flippylolz/WEF/pull/83 with green CI"
+    - "Performance evidence in E4-T4-PERFORMANCE.md"
+    - "Public rate-limit middleware, request correlation, facet cache headers"
 invalidation:
   invalidated_by: null
   invalidated_at: null
