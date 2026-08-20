@@ -160,7 +160,9 @@ class WriteReleaseTests(unittest.TestCase):
             self.assertIn("return 301 https://$host$request_uri;", redirect)
             self.assertIn("location /admin {", tls)
             self.assertIn("location /admin {", redirect)
-            self.assertIn("proxy_pass http://fixture-wef-api:8080;", tls)
+            self.assertIn('set $wef_api_upstream "fixture-wef-api:8080";', tls)
+            self.assertIn("proxy_pass http://$wef_api_upstream;", tls)
+            self.assertIn("resolver 127.0.0.11 valid=10s ipv6=off;", tls)
 
     def test_rejects_non_empty_release_directories(self) -> None:
         with TemporaryDirectory() as directory:
