@@ -19,8 +19,8 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 
 - Epic workspace status: `ready`; D-009 resolved as WEF-only TLS; E7-T10 promoted under plan revision 7.
 - [Spike](SPIKE.md): `approved`, revision 4.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 9 `approved`; sequences only E7-T11 revision 1 (historical public activation).
-- E7-T1 through E7-T4, E7-T6, E7-T7, E7-T8, E7-T9, and E7-T10 are `done`. E7-T5 remains deferred; E7-T11 is `in_progress` under plan revision 9.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 9 `approved` and executed; E7-T11 historical public activation is `done`.
+- E7-T1 through E7-T4, E7-T6, E7-T7, E7-T8, E7-T9, E7-T10, and E7-T11 are `done`. E7-T5 remains deferred.
 
 ## Milestones
 
@@ -66,7 +66,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - [E7-T6: Transfer the verified historical snapshot into a non-public production candidate](tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `done` through PRs #88–#104, P1/L, M3
 - [E7-T10: Roll out and verify WEF-only shared TLS](tasks/E7-T10-roll-out-and-verify-shared-tls.md) — `done` through PR #121 + live NUC cutover 2026-08-20; Forecast stays on `:3000`
 - [E7-T7: Enable production registration and contact reveal](tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `done` through PRs #123/#124/#125/#126; plan revision 8
-- [E7-T11: Activate the verified historical candidate publicly](tasks/E7-T11-activate-the-verified-historical-candidate.md) — `in_progress`, P1/M, M3; plan revision 9
+- [E7-T11: Activate the verified historical candidate publicly](tasks/E7-T11-activate-the-verified-historical-candidate.md) — `done` through PRs #127/#128 + live NUC activation 2026-08-20; plan revision 9
 
 ## Deferred/proposed tasks
 

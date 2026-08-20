@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T11
 epic: E7
 title: "Activate the verified historical candidate publicly"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -42,17 +42,18 @@ branch:
   task_id: E7-T11
   one_task_only: true
   created_at: "2026-08-20T15:40:00Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/127"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
-invalidation:
-  invalidated_by: null
-  invalidated_at: null
-  reason: null
-  return_to: null
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-20T16:11:40Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/127"
+  evidence:
+    - "Tooling: merged https://github.com/Flippylolz/WEF/pull/127 (activation under deploy.lock) and https://github.com/Flippylolz/WEF/pull/128 (media-edge remount + /media alias + map/media smoke)"
+    - "Live activation: POSTGRES_DB/WEF_DATABASE_URL → wef_hist_candidate; media/public+originals symlinked to candidates/2399a88c…/media/*; state/historical-activation.json status=activated"
+    - "Counts: 2999 offers (5 visible), 792 locations, 5 users, 49059 public derivatives; map FeatureCollection features=4; public derivative HTTPS 200"
+    - "Privacy: /media/.env → 404; restricted originals not published; Forecast :3000 and Caddy :3100 → 200"
+    - "Inventories (NUC, not committed): /home/nuc/wef/state/e7-t11/inventory-before.json, inventory-after.json, post-activation-smoke.json, activate-result.json"
+    - "Rollback material retained: wef DB, media/*.pre-historical-activation, candidate tree; cleanup needs separate owner authorization (ADR-015)"
 ---
 
 # E7-T11: Activate the verified historical candidate publicly
@@ -82,13 +83,13 @@ Atomically activate the E7-T6-verified, non-public historical candidate as the p
 
 ## Acceptance criteria
 
-- [ ] Activation occurs only after E7-T6 is `done`, E7-T10 has verified public HTTPS, and E7-T7 has enabled the sensitive-feature gates, satisfying ADR-019.
-- [ ] Candidate freshness is revalidated (or identity synced / candidate rebuilt) immediately before activation, and production identities/sessions are preserved through cutover.
-- [ ] The database, media roots, and release pointers activate as one validated atomic unit under the deployment lock, with current/previous pointers recorded.
-- [ ] Public HTTPS/API/media smokes pass, every accepted visible pin and public derivative reference resolves, and restricted originals, source text, contacts, and credentials remain non-public.
-- [ ] Any failed gate restores the previous complete configuration without deleting application, candidate, or certificate state, and the public release never serves a partially activated configuration.
-- [ ] Before/after inventories prove unrelated NUC projects and listeners unchanged, and no historical data was publicly visible before this task's activation.
-- [ ] Retained old/candidate state is described only as rollback material; cleanup requires separate owner authorization.
+- [x] Activation occurs only after E7-T6 is `done`, E7-T10 has verified public HTTPS, and E7-T7 has enabled the sensitive-feature gates, satisfying ADR-019.
+- [x] Candidate freshness is revalidated (or identity synced / candidate rebuilt) immediately before activation, and production identities/sessions are preserved through cutover.
+- [x] The database, media roots, and release pointers activate as one validated atomic unit under the deployment lock, with current/previous pointers recorded.
+- [x] Public HTTPS/API/media smokes pass, every accepted visible pin and public derivative reference resolves, and restricted originals, source text, contacts, and credentials remain non-public.
+- [x] Any failed gate restores the previous complete configuration without deleting application, candidate, or certificate state, and the public release never serves a partially activated configuration.
+- [x] Before/after inventories prove unrelated NUC projects and listeners unchanged, and no historical data was publicly visible before this task's activation.
+- [x] Retained old/candidate state is described only as rollback material; cleanup requires separate owner authorization.
 
 ## Dependencies and gates
 
@@ -102,6 +103,7 @@ Atomically activate the E7-T6-verified, non-public historical candidate as the p
 
 - Identity/session drift between the staged candidate clone and activation time is the main correctness risk; schema migrate + identity sync (or rebuild) is mandatory.
 - Activation must never expose historical data over the interim HTTP endpoint as the public entry.
+- First activate attempt rolled back on HTTPS smoke 504 before shared-edge reconnect; second activate succeeded after reconnect + smoke retry. Media-edge required remount after symlink cutover (#128).
 - Material changes to scope, dependencies, acceptance, security, deployment, or rollback require workflow revalidation and approval.
 
 ## Rollback
