@@ -47,7 +47,7 @@ class FakeCurl:
 class HttpsSmokeTests(unittest.TestCase):
     def test_accepts_fixture_routes(self) -> None:
         target = fixture_target()
-        responses = {
+        responses: dict[str, tuple[int, dict[str, str], str]] = {
             f"https://{target.wef_hostname}:{target.https_port}/": (
                 200,
                 {},
@@ -73,7 +73,7 @@ class HttpsSmokeTests(unittest.TestCase):
 
     def test_rejects_failed_status(self) -> None:
         target = fixture_target()
-        responses = {
+        responses: dict[str, tuple[int, dict[str, str], str]] = {
             f"https://{target.wef_hostname}:{target.https_port}/": (500, {}, "{}"),
             f"https://{target.wef_hostname}:{target.https_port}/api/v1/health/ready": (
                 200,
