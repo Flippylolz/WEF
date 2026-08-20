@@ -3,19 +3,19 @@ schema: ai-workflow/implementation-plan@1
 epic: E6
 title: "Quality, security, and operations implementation plan"
 status: approved
-revision: 4
+revision: 5
 owner: owner
 spike_revision: 2
 task_sequence:
-  - id: E6-T6
+  - id: E6-T7
     revision: 1
 approval:
   required_role: owner
   status: approved
   decided_by: Flippylolz
-  decided_at: "2026-08-20T11:27:24Z"
-  approved_revision: 4
-  evidence: "Owner continue / autonomous epic mission (AD-009); E5-T3/E6-T4/E6-T5 done on main; E9 registration modal already present—E6-T6 completes password/session/reveal UX and i18n"
+  decided_at: "2026-08-20T11:51:18Z"
+  approved_revision: 5
+  evidence: "Owner continue / autonomous epic mission (AD-009); E6-T4/E6-T5 done on main; E6-T6 done; AUTH_ADMIN_CONTACTS + spike already select Starlette Admin for E6-T7"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -23,60 +23,64 @@ invalidation:
   return_to: null
 ---
 
-# Implementation Plan: E6-T6 English i18n and restricted-action UX
+# Implementation Plan: E6-T7 owner administration console
 
 ## Approved spike baseline
 
 - [Spike revision 2](SPIKE.md) remains owner-approved.
 - Binding docs: [AUTH_ADMIN_CONTACTS](../../security/AUTH_ADMIN_CONTACTS.md), ADR-011/012/016.
-- E9-T1 already delivered register/login modal; this plan sequences only the remaining E6-T6 acceptance surface.
+- Identity sessions (E6-T4) and contact reveal/audit persistence (E6-T5) are on `main`; this plan sequences only the owner console.
 
 ## Scope and outcome
 
-Complete restricted-action frontend UX: password change (including forced `must_change_password`), session revocation, English i18n for auth/reveal/error strings, and an explicit audited contact-reveal control on offer detail with return-to-offer after anonymous sign-in. No production auth enablement (E7-T7).
+Deliver the Starlette Admin owner console at `/admin` with custom owner auth, audited interactors for account/session/password-reset and reveal-audit inspection, and hardening (CSRF/origin, rate limits, no-store, last-owner, sensitive-field bans). No production HTTPS enablement (E7-T7).
 
 ## Ordered task sequence
 
-1. [E6-T6: Implement English i18n and restricted-action UX](tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — revision 1.
-   - Independently reviewable: web-only (plus message catalogs); reuses existing OpenAPI `revealOfferContacts` / auth password/session paths.
-   - Dependencies: E5-T3, E6-T4, E6-T5 — all `done`.
-   - Affected modules: `apps/web` account modal/toolbar, offer detail drawer, auth/contacts API clients, `messages/en.json`, vitest coverage.
-   - Tests: reveal requires click; anonymous opens sign-in and returns to offer; must_change blocks reveal; rate-limit/error states; no revealed plaintext in query cache; a11y smoke for new controls.
-   - Out of scope: Starlette Admin (E6-T7), HTTPS activation (E7-T7).
+1. [E6-T7: Implement owner administration console](tasks/E6-T7-implement-owner-administration-console.md) — revision 1.
+   - Independently reviewable: backend-only admin mount + interactors/tests; public OpenAPI unchanged.
+   - Dependencies: E6-T4, E6-T5 — both `done`.
+   - Affected modules: Starlette Admin integration, identity/admin application layer, migrations if `AdminAuditEvent` storage is incomplete, pytest coverage.
+   - Tests: non-owner denied; CSRF/origin failures; last-owner protection; forms never expose hashes/tokens/contacts; mutations write redacted audit events.
+   - Out of scope: Next.js admin UI, E6-T1/T2/T3, production auth enablement (E7-T7).
 
-Only E6-T6 is sequenced. E6-T7 remains proposed until a later plan revision.
+Only E6-T7 is sequenced. Remaining proposed E6 tasks stay proposed until a later plan revision.
 
 ## Cross-task architecture
 
-- Reveal plaintext stays in component memory only (`useState`); never `react-query` cache or `localStorage`.
-- API calls use `cache: "no-store"`; backend already sends `Cache-Control: no-store, private`.
-- Lift or share a thin auth-UI intent so offer detail can request login/register with return focus on the same offer.
+- Admin HTML is owned by Starlette Admin; Next.js does not duplicate CRUD.
+- All mutations go through owner-authorized application interactors (never generic `ModelView` writes of sensitive fields).
+- Session cookie flags and origin/CSRF checks align with the existing identity mutation middleware pattern.
+- `/admin` stays off the public OpenAPI surface.
 
 ## Security and privacy
 
-- Do not prefetch reveal on drawer open or hover.
-- Forced-password-change users are directed only to password change/logout.
-- Prefer generic client messages; do not surface raw backend contact material in error text.
+- Non-owners receive generic denial; no contact ciphertext/plaintext via admin forms or audit screens.
+- Force-reset sets `must_change_password` and never logs temporary passwords.
+- Admin responses use `Cache-Control: no-store`.
+- Feature remains inert on plain HTTP until E7-T7 enables auth in production.
 
 ## Test and verification strategy
 
-- Vitest component tests; existing web typecheck/lint/build CI gates.
-- No backend contract change expected; if OpenAPI untouched, skip contract regen.
+- Backend pytest for authz, CSRF/origin, IDOR, last-owner, and audit redaction.
+- Existing backend lint/type/coverage CI gates; no frontend contract regen expected.
 
 ## Operations, rollout, and rollback
 
-- Frontend image redeploy; no migration.
-- Feature remains inert on plain HTTP until E7-T7 enables auth in production.
+- Backend image redeploy; document one-time bootstrap secret rotation after first owner creation.
+- Rollback: previous backend image; optional ignore of new audit rows.
 
 ## Risks and mitigations
 
-- Scope creep into owner console: explicitly out of scope.
-- Duplicate auth modal ownership with E9: extend existing `AccountModal`/`UserToolbar` rather than a second stack.
+- Admin frameworks tempting generic CRUD: explicitly ban sensitive model fields and require interactors.
+- Dependency addition (`starlette-admin`): already selected by approved spike / AUTH_ADMIN_CONTACTS; pin via lockfile.
+- Scope creep into E6-T1/T2/T3: keep out of this sequence.
 
 ## Invalidation triggers
 
-- Material change to reveal authorization or public auth contracts.
-- Requirement to ship a second locale (beyond English keys) in this task.
+- Material change to owner authorization or admin capability list in AUTH_ADMIN_CONTACTS.
+- Requirement to put `/admin` on the public OpenAPI contract.
+- Need to adopt a different admin framework than Starlette Admin.
 
 ## Approval checklist
 

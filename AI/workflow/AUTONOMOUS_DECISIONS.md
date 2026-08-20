@@ -176,4 +176,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no production auth enablement; no Starlette Admin in this task; revealed contacts stay in memory only.
 - Reversal: revise/reapprove plan revision 4 and demote E6-T6 if UX scope changes materially.
 
+## AD-021: Sequence E6-T7 owner admin console after E6-T6
+
+- Time: 2026-08-20.
+- Prompt avoided: wait for D-009/E7-T10 before the owner console, or fold E6-T1/T2/T3 into the same change.
+- Selected approach: approve E6 implementation-plan revision 5 and promote E6-T7 only; use Starlette Admin at `/admin` as already selected by AUTH_ADMIN_CONTACTS and the approved spike.
+- Rationale: E6-T4/E6-T5 dependencies are satisfied; E6-T6 is done; owner console is the remaining E6 auth/admin M3 gap before E7-T7.
+- Safety limit: no production auth enablement; no generic sensitive ModelView CRUD; `/admin` stays off public OpenAPI; `starlette-admin` addition stays within the approved spike selection.
+- Reversal: revise/reapprove plan revision 5 and demote E6-T7 if admin framework or capability scope changes materially.
+
 
