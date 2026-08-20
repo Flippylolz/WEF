@@ -38,16 +38,19 @@ dependency_gate:
     - "E7-T4 | done | merged on main"
 branch:
   required: true
-  name: cursor/feat-e7-t6-candidate-config-0c74
+  name: cursor/doc-e7-t6-slice-progress-0c74
   task_id: E7-T6
   one_task_only: true
-  created_at: "2026-08-20T02:55:00Z"
+  created_at: "2026-08-20T03:05:00Z"
   pull_request: null
 completion:
   completed_by: null
   completed_at: null
   pull_request: null
-  evidence: []
+  evidence:
+    - "Slice 1 foundation merged via https://github.com/Flippylolz/WEF/pull/88"
+    - "Slice 2 bundle packaging merged via https://github.com/Flippylolz/WEF/pull/89"
+    - "Slice 3 candidate config merged via https://github.com/Flippylolz/WEF/pull/90"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -62,6 +65,18 @@ invalidation:
 ## Outcome
 
 Transfer the verified E3-T5 terminal database state and application-owned media into a checksum-addressed candidate database and versioned media roots on the supplied NUC, and prove complete reconciliation without re-running parsing, hosted geocoding, manual review, source-media copying, or derivative generation, and without exposing historical data publicly.
+
+## Implementation progress
+
+Cloud-testable repository slices merged on `main` (task remains `in_progress`):
+
+| Slice | PR | Scope |
+|-------|-----|-------|
+| Foundation | [#88](https://github.com/Flippylolz/WEF/pull/88) | Manifest, dry-run, conflict/checkpoint/path helpers + 11 unit tests |
+| Bundle packaging | [#89](https://github.com/Flippylolz/WEF/pull/89) | Source layout, pack/verify, CLI + 5 integration tests |
+| Candidate config | [#90](https://github.com/Flippylolz/WEF/pull/90) | Checksum-scoped candidate paths, loopback verification env builder + 5 tests |
+
+Remaining for full E7-T6 acceptance: rsync/SSH transfer, server-side dry run, candidate DB clone/load, media staging, and non-public reconciliation on the NUC.
 
 ## Scope
 
@@ -159,7 +174,7 @@ Execution order: terminal-state check → bundle → local verification → tran
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references owner-approved spike revision 4 and is `satisfied`.
 - [x] `implementation_gate` references the owner-approved implementation-plan revision 4 (approved 2026-08-16, containing E7-T6 revision 3) and is `satisfied`.
-- [ ] Every dependency is `done` with `dependency_gate: satisfied` (E7-T2 and E7-T4 are `done`; E3-T5 implementation PRs #65/#66 are merged but its completion record is still pending, so the gate stays `blocked` until E3-T5 records `done`).
+- [x] Every dependency is `done` with `dependency_gate: satisfied`.
 - [ ] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
