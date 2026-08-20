@@ -3,19 +3,19 @@ schema: ai-workflow/implementation-plan@1
 epic: E7
 title: "Docker/GitHub production delivery implementation plan"
 status: approved
-revision: 4
+revision: 5
 owner: owner
 spike_revision: 4
 task_sequence:
-  - id: E7-T6
-    revision: 3
+  - id: E7-T9
+    revision: 1
 approval:
   required_role: owner
   status: approved
   decided_by: Flippylolz
-  decided_at: "2026-08-16T21:43:56Z"
-  approved_revision: 4
-  evidence: "Owner (Flippylolz) explicitly approved E7 IMPLEMENTATION_PLAN revision 4 by name on 2026-08-16 in the owner-directed ZCode session, authorizing only E7-T6 revision 3 after this documentation PR merges"
+  decided_at: "2026-08-20T10:00:00Z"
+  approved_revision: 5
+  evidence: "Owner continue directive after E7-T6 completion; proposed revision 5 merged through feat/e7-t9-cutover-slice1"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -23,11 +23,49 @@ invalidation:
   return_to: null
 ---
 
-# Implementation Plan: Verified historical snapshot transfer into a non-public production candidate
+# Implementation Plan: Reversible shared-edge cutover automation
 
-> Revision 4 was explicitly owner-approved on 2026-08-16 under approved [spike revision 4](SPIKE.md) after revision 3 was invalidated for non-done work. It authorizes only E7-T6 revision 3; E7-T6 must still satisfy its dependency gate before implementation starts.
+> Revision 5 authorizes only E7-T9 revision 1 after E7-T6 completion. Revision 4 remains the historical approval for the completed transfer task.
 
 ## Approved spike baseline
+
+- [Spike revision 4](SPIKE.md) remains current. E7-T6 is `done`; the owner pause on E7-T9 is satisfied.
+- E7-T1 through E7-T4, E7-T6, and E7-T8 are `done`. E7-T5 stays deferred, E7-T7/E7-T10/E7-T11 stay proposed behind their gates.
+- D-009 still gates only E7-T10 live rollout.
+
+## Scope and outcome
+
+Deliver locally proven, host-safe automation that can move WEF and AI Forecast behind the isolated shared edge in independently verified stages and restore the previous validated configuration/listeners on failure. Repository changes only; server execution belongs to E7-T10 after D-009 resolution.
+
+## Ordered task sequence
+
+### 1. E7-T9 — Implement reversible shared-edge cutover
+
+- Task: [E7-T9 revision 1](tasks/E7-T9-implement-reversible-shared-edge-cutover.md).
+- Dependencies: E7-T8 `done`.
+- Affected modules/contracts: cutover compose overlay, `scripts/deploy/shared_edge_*` preflight/inventory/activate/smoke/rollback helpers; existing Caddy `:3100` rehearsal remains rollback material.
+- Tests: unit/static gates, fixture integration proofs, production topology proof extensions, forbidden-command scans.
+- Rollout: inert automation only; revert the dedicated PR to roll back repository changes.
+
+## Cross-task architecture
+
+- WEF cleanup must not remove the external edge network; edge cleanup must not run WEF or AI Forecast Compose commands.
+- AI Forecast routing uses only its retained host `:3000` listener through explicit Linux host-gateway mapping.
+- Never switch current pointers or redirects until config validation and both upstream health checks pass.
+
+## Invalidation triggers
+
+Return to the spike for live DNS/ACME, public listener mutation, or cross-project ownership changes. Return to this plan for material cutover stage or rollback boundary changes.
+
+## Owner decision
+
+Flippylolz authorized resumption through the 2026-08-20 continue directive after E7-T6 completion. Revision 5 authorizes E7-T9 revision 1 only; E7-T10, E7-T7, and E7-T11 remain outside this approval.
+
+## Historical note: revision 4 (E7-T6, complete)
+
+The sections below record the completed E7-T6 approval baseline for audit only.
+
+## Approved spike baseline (revision 4)
 
 - [Spike revision 4](SPIKE.md) was explicitly approved by Flippylolz on 2026-08-15 (revision-4 PR review, `LGTM`, and merge direction). It selects the verified E3-T5 materialized-snapshot transfer with an immutable selective bundle, resumable checksummed transfer, a cloned production candidate database, versioned media roots, and complete non-public reconciliation.
 - Binding spike constraints: never transfer the raw export, source-relative media, detailed reports, credentials, `.env`, provider keys, or the local PostgreSQL volume; make zero hosted provider calls, zero parsing, zero source-media copies, and zero derivative transformations; abort on any same-key/different-content conflict; leave production identities/sessions and unrelated NUC workloads unchanged; keep the result non-public under ADR-019.

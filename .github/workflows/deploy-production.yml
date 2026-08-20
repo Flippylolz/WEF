@@ -282,8 +282,11 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/release/scripts"
           cp infra/compose.production.yaml "$RUNNER_TEMP/release/"
+          cp infra/compose.production-cutover.yaml "$RUNNER_TEMP/release/"
           cp infra/compose.candidate.yaml "$RUNNER_TEMP/release/"
           cp infra/Caddyfile.production "$RUNNER_TEMP/release/"
+          mkdir -p "$RUNNER_TEMP/release/nginx"
+          cp infra/nginx/media-edge.conf "$RUNNER_TEMP/release/nginx/"
           cp -R scripts/deploy "$RUNNER_TEMP/release/scripts/"
           cp -R scripts/transfer "$RUNNER_TEMP/release/scripts/"
           cp scripts/transfer_bundle.py "$RUNNER_TEMP/release/scripts/"

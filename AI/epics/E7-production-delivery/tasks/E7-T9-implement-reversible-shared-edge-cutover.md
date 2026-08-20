@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T9
 epic: E7
 title: "Implement reversible shared-edge cutover"
-status: invalidated
+status: in_progress
 revision: 1
 priority: P1
 size: L
@@ -17,28 +17,29 @@ promotion:
   promoted_by: "Cursor Agent (owner-authorized)"
   promoted_at: "2026-08-13T19:32:59Z"
 spike_gate:
-  status: invalidated
+  status: satisfied
   file: ../SPIKE.md
-  approved_revision: 3
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-13T19:32:59Z"
+  approved_revision: 4
+  verified_by: "Cursor Agent (autonomous epic mission)"
+  verified_at: "2026-08-20T10:00:00Z"
 implementation_gate:
-  status: invalidated
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 3
-  verified_by: "Cursor Agent"
-  verified_at: "2026-08-13T19:32:59Z"
+  approved_revision: 5
+  verified_by: "Cursor Agent (autonomous epic mission)"
+  verified_at: "2026-08-20T10:00:00Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Cursor Agent (autonomous epic mission)"
+  verified_at: "2026-08-20T10:00:00Z"
+  evidence:
+    - "E7-T8 | done | PR #69"
 branch:
   required: true
-  name: null
+  name: feat/e7-t9-cutover-slice1
   task_id: E7-T9
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-20T10:00:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -46,15 +47,26 @@ completion:
   pull_request: null
   evidence: []
 invalidation:
-  invalidated_by: Flippylolz
-  invalidated_at: "2026-08-15T16:22:08Z"
-  reason: "Owner paused the shared-edge sequence to prioritize E7-T6 while material E7 spike revision 4 is prepared"
-  return_to: spike
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
+restoration:
+  restored_by: "Cursor Agent (autonomous epic mission)"
+  restored_at: "2026-08-20T10:00:00Z"
+  reason: "E7-T6 boundary complete; owner continue directive resumes shared-edge sequence under implementation plan revision 5"
 ---
 
 # E7-T9: Implement reversible shared-edge cutover
 
-> Paused before implementation. E7 spike revision 4 and a replacement implementation plan must revalidate this task after the prioritized E7-T6 boundary is approved.
+> Restored on 2026-08-20 after E7-T6 completion. Slice 1 adds the cutover compose overlay, shared-edge preflight/inventory scaffolding, and production topology proof extensions.
+
+## Implementation progress
+
+| Slice | Scope | Status |
+|-------|-------|--------|
+| 1 | `compose.production-cutover.yaml`, `media-edge.conf`, `shared_edge_preflight.py`, `shared_edge_inventory.py`, topology proof | in progress |
+| 2 | Staged activate orchestrator, redirect gate, fixture smokes, failure injection | pending |
 
 ## Outcome
 

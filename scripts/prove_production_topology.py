@@ -21,6 +21,7 @@ from scripts.deploy.release_state import (
     read_state,
     write_state,
 )
+from scripts.deploy.shared_edge_preflight import validate_cutover_compose_text
 from scripts.deploy.validate_release import (
     ReleaseConfigurationError,
     ReleaseContext,
@@ -30,6 +31,7 @@ from scripts.deploy.validate_release import (
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.production.yaml"
 CANDIDATE_COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.candidate.yaml"
+CUTOVER_COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.production-cutover.yaml"
 LOCAL_COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.yaml"
 RELEASE_SHA = "a" * 40
 WEF_ROOT = Path("/home/nuc/wef")
@@ -439,12 +441,90 @@ def assert_candidate_topology(model: dict[str, Any]) -> None:
     assert "web" in web_networks["application"].get("aliases", [])
 
 
+def render_cutover_compose(
+    environment: dict[str, str],
+    *,
+    include_caddy_rehearsal: bool = False,
+) -> dict[str, Any]:
+    """Render the production cutover overlay merged with the rehearsal manifest."""
+    docker = shutil.which("docker")
+    if docker is None:
+        msg = "docker is required to prove cutover topology"
+        raise RuntimeError(msg)
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as env_file:
+        for key, value in sorted(environment.items()):
+            env_file.write(f"{key}={value}\n")
+        env_file.flush()
+        command = [
+            docker,
+            "compose",
+            "--env-file",
+            env_file.name,
+            "--file",
+            str(COMPOSE_FILE),
+            "--file",
+            str(CUTOVER_COMPOSE_FILE),
+        ]
+        if include_caddy_rehearsal:
+            command += ["--profile", "caddy-rehearsal"]
+        command += ["config", "--format", "json"]
+        result = subprocess.run(  # noqa: S603 - executable resolved from trusted PATH
+            command,
+            check=True,
+            cwd=REPOSITORY_ROOT,
+            capture_output=True,
+            text=True,
+        )
+    return cast("dict[str, Any]", json.loads(result.stdout))
+
+
+def assert_cutover_topology(model: dict[str, Any]) -> None:
+    """Prove the cutover overlay keeps Caddy rollback material and joins wef-edge only."""
+    services = cast("dict[str, dict[str, Any]]", model["services"])
+    assert "edge" not in services, "default cutover must not publish Caddy"
+    assert "media-edge" in services, "cutover model must add a dedicated media upstream"
+    networks = cast("dict[str, Any]", model.get("networks", {}))
+    shared_edge = networks["shared_edge"]
+    assert shared_edge.get("external") is True
+    assert shared_edge.get("name") == "wef-edge"
+    api_networks = services["api"].get("networks", {})
+    web_networks = services["web"].get("networks", {})
+    media_networks = services["media-edge"].get("networks", {})
+    assert "shared_edge" in api_networks
+    assert "shared_edge" in web_networks
+    assert "shared_edge" in media_networks
+    assert api_networks["shared_edge"].get("aliases") == ["wef-api"]
+    assert web_networks["shared_edge"].get("aliases") == ["wef-web"]
+    assert media_networks["shared_edge"].get("aliases") == ["wef-media"]
+    assert "application" in api_networks
+    assert "application" in web_networks
+    mounts = {
+        volume["target"]: volume for volume in services["media-edge"].get("volumes", [])
+    }
+    assert mounts["/srv/media"]["read_only"] is True
+    assert mounts["/etc/nginx/nginx.conf"]["read_only"] is True
+    cutover_text = CUTOVER_COMPOSE_FILE.read_text(encoding="utf-8")
+    validate_cutover_compose_text(cutover_text)
+
+
+def assert_cutover_rollback_topology(model: dict[str, Any]) -> None:
+    """Prove Caddy rollback remains available behind the caddy-rehearsal profile."""
+    services = cast("dict[str, dict[str, Any]]", model["services"])
+    edge = services["edge"]
+    assert edge.get("profiles") == ["caddy-rehearsal"], "Caddy must stay behind caddy-rehearsal"
+    assert edge.get("ports"), "Caddy rollback must still publish the rehearsal port"
+
+
 def main() -> int:
     """Run the production topology proof."""
     environment = release_environment()
     model = render_compose(environment)
     assert_topology(model)
     assert_candidate_topology(render_candidate_compose(candidate_environment()))
+    assert_cutover_topology(render_cutover_compose(environment))
+    assert_cutover_rollback_topology(
+        render_cutover_compose(environment, include_caddy_rehearsal=True)
+    )
     assert_local_media_boundary(render_local_compose())
     assert_negative_configuration_gate()
     assert_script_safety()
