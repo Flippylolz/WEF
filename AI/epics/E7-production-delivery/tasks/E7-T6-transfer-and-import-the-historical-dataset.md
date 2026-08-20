@@ -84,7 +84,7 @@ Cloud-testable repository slices merged on `main` (task remains `in_progress`):
 | Candidate verify | [#96](https://github.com/Flippylolz/WEF/pull/96) | Manifest/media reconcile CLI, loopback `compose.candidate.yaml`, release packaging of transfer tooling |
 | Candidate edge publish | [#97](https://github.com/Flippylolz/WEF/pull/97) | Non-internal `verify` network so `127.0.0.1:13100` publishes |
 
-Remaining for full E7-T6 acceptance: formalize staging-table restore/conflict preflight and checkpointed FK-safe load as repository-owned tooling (current candidate load was an operational SSH rehearsal), then record task `done`.
+Remaining for full E7-T6 acceptance: wire restore-preflight into an operator-facing DB load path against live Postgres (planning/checkpoint helpers are repository-owned), then record task `done`.
 
 Live production evidence (2026-08-20):
 
