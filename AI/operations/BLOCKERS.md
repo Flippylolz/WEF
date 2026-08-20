@@ -7,12 +7,13 @@ This append-only log records blockers that could not be safely resolved autonomo
 ### B-009: D-009 shared TLS hostnames and forwarding (E7-T10)
 
 - Impact: live shared Nginx/Certbot cutover (E7-T10), production registration/reveal enablement (E7-T7), and historical-candidate public activation (E7-T11) cannot proceed.
-- Current state (2026-08-20): E7-T8/E7-T9 repository automation is `done` with fixture proofs only. NUC still serves WEF on Caddy `:3100` and AI Forecast on `:3000`; no host listeners on 80/443. External HTTP to the DuckDNS name on port 80 may reach WEF via router remap to `:3100`, which is **not** ACME HTTP-01 / Nginx ownership.
+- Current state (2026-08-20): E7-T8/E7-T9 repository automation is `done` with fixture proofs only. Owner nominated `2fa54e2405.duckdns.org` for TLS, but external probes still show WEF on Caddy `:3100`, Forecast on `:3000`, public `:80` empty-reply, and public `:443` terminating on the Orange Funbox (not NUC Nginx). That is **not** ACME HTTP-01 / shared-edge readiness.
 - Needed from owner (see [D-009](../decisions/deferred/D-009-shared-tls-hostnames-and-forwarding.md)):
-  1. Approve two stable public hostnames (recommended: keep `2fa54e2405.duckdns.org` for Forecast; register a second DuckDNS name for WEF), **or** prove a path-prefix design for both apps.
+  1. Approve two stable public hostnames (recommended: keep `2fa54e2405.duckdns.org` for Forecast; register a second DuckDNS name for WEF), **or** prove a path-prefix design for both apps — and say which name is WEF vs Forecast.
   2. Confirm both DNS records resolve to the NUC public address.
-  3. Confirm router/firewall forwards public TCP **80 and 443** to the NUC so Nginx can terminate TLS (not merely remap 80→3100).
-- Safe workaround: continue anonymous HTTP rehearsal on `:3100`; implement E6 contact/auth code paths without production activation; do not register DuckDNS names or mutate router/ACME autonomously.
+  3. Confirm router/firewall forwards public TCP **80 and 443** to the NUC so Nginx can terminate TLS (not Funbox `:443`, and not merely remap 80→3100).
+  4. Approve E7 implementation-plan revision 6 so E7-T10 may be promoted after D-009 resolves.
+- Safe workaround: continue anonymous HTTP rehearsal on `:3100`; keep auth/admin/reveal disabled until E7-T7 after HTTPS; do not register DuckDNS names or mutate router/ACME autonomously.
 - Related: B-002 remains the broader auth-on-HTTPS gate; B-009 is the concrete D-009 input gate for E7-T10.
 
 ### B-002: Production HTTPS/authentication gate
