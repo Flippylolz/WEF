@@ -138,7 +138,7 @@ class TransferFoundationTests(unittest.TestCase):
         self.assertEqual(summary.minimum_headroom_bytes, 1250)
 
     def test_forbidden_bundle_path_fragments(self) -> None:
-        self.assertTrue(forbidden_bundle_path("/tmp/raw-export/part.sql"))
+        self.assertTrue(forbidden_bundle_path("imports/raw-export/part.sql"))
         self.assertFalse(forbidden_bundle_path("bundle/database.sql"))
 
     def test_checkpoint_resume_advances_batches(self) -> None:
