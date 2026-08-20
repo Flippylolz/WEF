@@ -26,6 +26,14 @@ resolved_by: []
   - E7-T9 `done` (PRs #106–#108): reversible cutover/preflight/smoke/rollback automation; no live NUC mutation.
   - NUC check: WEF on `:3100`, Forecast on `:3000`, no host listeners on 80/443; public `:80` remap to WEF (if present) is not Nginx ACME readiness.
   - Proposed E7 plan revision 6 sequences only E7-T10 after this decision resolves; see [PROPOSED_IMPLEMENTATION_PLAN-revision-6](../../epics/E7-production-delivery/PROPOSED_IMPLEMENTATION_PLAN-revision-6.md) and operations [B-009](../../operations/BLOCKERS.md).
+- Owner progress (2026-08-20, not yet resolved):
+  - Owner nominated existing `2fa54e2405.duckdns.org` for public TLS attachment.
+  - External verification the same day:
+    - DNS A `2fa54e2405.duckdns.org` → `79.184.170.100`.
+    - `:3100` serves WEF (Caddy); `:3000` serves AI Forecast.
+    - Public `:80` accepts TCP then returns an empty reply (not Nginx/ACME HTTP-01).
+    - Public `:443` presents Orange Funbox certificate `CN=0827A8-Funbox7-…` / SAN `192.168.1.1` (router HTTPS), not a NUC/Nginx certificate.
+  - Still required before `status: resolved`: second distinct hostname (or proven path-prefix), router/firewall forwarding of public TCP 80 **and** 443 to the NUC (not Funbox termination), and recorded assignment of which name is WEF vs Forecast.
 - Owner checklist to resolve:
   - [ ] Two hostnames approved (or path-prefix alternative proven).
   - [ ] DNS A/AAAA for both names → NUC public IP verified from outside the LAN.
