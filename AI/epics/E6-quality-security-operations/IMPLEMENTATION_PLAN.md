@@ -65,4 +65,4 @@ Return to the spike if hardening requires a new auth model, contact plaintext in
 
 ## Owner decision
 
-Flippylolz authorized continuation after E7-T11 (chat continue 2026-08-20). Revision 6 sequences E6-T2 revision 1 only.
+Flippylolz authorized continuation after E7-T11 (chat continue 2026-08-20). Revision 6 sequences E6-T2 revision 1 only; executed via PRs #130/#131 and live HSTS apply on 2026-08-20.

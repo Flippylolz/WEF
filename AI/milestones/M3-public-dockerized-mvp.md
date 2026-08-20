@@ -27,7 +27,7 @@ The responsive map experience is production-deployed from GitHub with persistent
 ### [E6: Quality, security, and operations](../epics/E6-quality-security-operations/README.md)
 
 - [E6-T1: Complete automated test pyramid](../epics/E6-quality-security-operations/proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — `proposed`
-- [E6-T2: Perform privacy and security hardening](../epics/E6-quality-security-operations/tasks/E6-T2-perform-privacy-and-security-hardening.md) — `in_progress` (plan revision 6)
+- [E6-T2: Perform privacy and security hardening](../epics/E6-quality-security-operations/tasks/E6-T2-perform-privacy-and-security-hardening.md) — `done` (PRs #130/#131)
 - [E6-T3: Add operational diagnostics](../epics/E6-quality-security-operations/proposed-tasks/E6-T3-add-operational-diagnostics.md) — `proposed`
 - [E6-T4: Implement in-house registration and sessions](../epics/E6-quality-security-operations/tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `done` (PR #51); production activation remains E7-T7
 - [E6-T5: Implement contact masking, encryption, reveal, and audit](../epics/E6-quality-security-operations/tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `done`
