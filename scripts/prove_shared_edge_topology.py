@@ -17,6 +17,7 @@ from scripts.deploy.shared_edge_render import (
     HOOK_FILENAME,
     ISSUANCE_FILENAME,
     TLS_CONFIG,
+    TLS_REDIRECT_CONFIG,
     EdgeConfiguration,
     SharedEdgeRenderError,
     write_release,
@@ -181,6 +182,9 @@ def assert_edge_compose_policy(model: dict[str, Any]) -> None:
     assert nginx["read_only"] is True, "nginx root filesystem must be read-only"
     assert nginx["init"] is True, "nginx must run with init"
     assert "no-new-privileges:true" in nginx["security_opt"], "nginx no-new-privs"
+    assert "host.docker.internal=host-gateway" in nginx.get("extra_hosts", []), (
+        "nginx must map host.docker.internal through the Linux host-gateway"
+    )
     tmpfs_targets = {entry.split(":")[0] for entry in nginx["tmpfs"]}
     assert "/var/cache/nginx" in tmpfs_targets, "nginx temp dir must be tmpfs"
     assert "/var/run" in tmpfs_targets, "nginx pid dir must be tmpfs"
@@ -277,7 +281,13 @@ def assert_renderer_positive() -> dict[str, str]:
         write_release(fixture_configuration(), first)
         write_release(fixture_configuration(), second)
         rendered: dict[str, str] = {}
-        for name in (BOOTSTRAP_CONFIG, TLS_CONFIG, ISSUANCE_FILENAME, HOOK_FILENAME):
+        for name in (
+            BOOTSTRAP_CONFIG,
+            TLS_CONFIG,
+            TLS_REDIRECT_CONFIG,
+            ISSUANCE_FILENAME,
+            HOOK_FILENAME,
+        ):
             first_bytes = (first / name).read_bytes()
             second_bytes = (second / name).read_bytes()
             assert first_bytes == second_bytes, f"{name} render is not deterministic"
@@ -286,7 +296,7 @@ def assert_renderer_positive() -> dict[str, str]:
 
 
 def assert_generated_configuration_policy(rendered: dict[str, str]) -> None:
-    """Assert bootstrap and TLS fixture configuration invariants."""
+    """Assert bootstrap, TLS, and redirect fixture configuration invariants."""
     bootstrap = rendered[BOOTSTRAP_CONFIG]
     assert "proxy_pass" not in bootstrap, "bootstrap must not proxy traffic"
     assert "301" not in bootstrap and "302" not in bootstrap, "no redirects"
@@ -303,6 +313,14 @@ def assert_generated_configuration_policy(rendered: dict[str, str]) -> None:
     assert "X-Forwarded-Proto" in tls, "forwarded-proto header missing"
     assert "ssl_protocols TLSv1.2 TLSv1.3;" in tls, "TLS protocol policy missing"
     assert "Content-Security-Policy" in tls, "WEF security headers missing"
+    assert "return 404" in tls, "tls stage must keep HTTP non-ACME as 404"
+    assert "return 301" not in tls, "tls stage must not enable redirects"
+    redirect = rendered[TLS_REDIRECT_CONFIG]
+    assert "return 301 https://$host$request_uri;" in redirect, "redirect stage missing"
+    assert "return 404" not in redirect.split("location / {", 1)[1].split("}", 1)[0], (
+        "redirect HTTP / must not keep 404"
+    )
+    assert "/.well-known/acme-challenge/" in redirect, "redirect must keep ACME"
     issuance = rendered[ISSUANCE_FILENAME]
     assert "--webroot" in issuance, "issuance must use webroot"
     assert "--non-interactive" in issuance, "issuance must be unattended"

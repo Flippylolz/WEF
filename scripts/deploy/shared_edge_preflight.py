@@ -186,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--edge-root", type=Path, required=True)
     parser.add_argument("--release-name", required=True)
-    parser.add_argument("--config", choices=("bootstrap", "tls"), default="tls")
+    parser.add_argument("--config", choices=("bootstrap", "tls", "tls-redirect"), default="tls")
     parser.add_argument("--upstream-network", default=EDGE_NETWORK_NAME)
     parser.add_argument("--edge-http-port", type=int, default=DEFAULT_HTTP_PORT)
     parser.add_argument("--edge-https-port", type=int, default=DEFAULT_HTTPS_PORT)

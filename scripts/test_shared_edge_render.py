@@ -13,6 +13,7 @@ from scripts.deploy.shared_edge_render import (
     HOOK_FILENAME,
     ISSUANCE_FILENAME,
     TLS_CONFIG,
+    TLS_REDIRECT_CONFIG,
     EdgeConfiguration,
     SharedEdgeRenderError,
     render_template,
@@ -116,11 +117,20 @@ class WriteReleaseTests(unittest.TestCase):
             write_release(fixture_configuration(), second)
             self.assertEqual(
                 sorted(path.name for path in written_first),
-                sorted([BOOTSTRAP_CONFIG, TLS_CONFIG, ISSUANCE_FILENAME, HOOK_FILENAME]),
+                sorted(
+                    [
+                        BOOTSTRAP_CONFIG,
+                        TLS_CONFIG,
+                        TLS_REDIRECT_CONFIG,
+                        ISSUANCE_FILENAME,
+                        HOOK_FILENAME,
+                    ]
+                ),
             )
             for name in (
                 BOOTSTRAP_CONFIG,
                 TLS_CONFIG,
+                TLS_REDIRECT_CONFIG,
                 ISSUANCE_FILENAME,
                 HOOK_FILENAME,
             ):
@@ -131,6 +141,10 @@ class WriteReleaseTests(unittest.TestCase):
                 )
             hook = first / HOOK_FILENAME
             self.assertEqual(hook.stat().st_mode & 0o777, 0o755, "hook must be world-executable")
+            tls = (first / TLS_CONFIG).read_text(encoding="utf-8")
+            redirect = (first / TLS_REDIRECT_CONFIG).read_text(encoding="utf-8")
+            self.assertIn("return 404", tls)
+            self.assertIn("return 301 https://$host$request_uri;", redirect)
 
     def test_rejects_non_empty_release_directories(self) -> None:
         with TemporaryDirectory() as directory:

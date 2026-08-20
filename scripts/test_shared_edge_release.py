@@ -49,11 +49,13 @@ class ActiveConfigTests(unittest.TestCase):
         self.release = self.root / "releases" / "r-001"
         write_release(fixture_configuration(), self.release)
 
-    def test_switches_between_bootstrap_and_tls(self) -> None:
+    def test_switches_between_bootstrap_tls_and_redirect(self) -> None:
         set_active_config(self.release, "bootstrap")
         self.assertEqual(read_active_config(self.release), "bootstrap")
         set_active_config(self.release, "tls")
         self.assertEqual(read_active_config(self.release), "tls")
+        set_active_config(self.release, "tls-redirect")
+        self.assertEqual(read_active_config(self.release), "tls-redirect")
 
     def test_rejects_unknown_configuration_names(self) -> None:
         with self.assertRaises(SharedEdgeReleaseError):
