@@ -265,9 +265,7 @@ def build_batch_insert_sql(
         for key in keys:
             values = decode_row_key(table, key)
             tuples.append(f"({', '.join(_sql_literal(value) for value in values)})")
-        predicate = (
-            f"({', '.join(f's.{column}' for column in columns)}) IN ({', '.join(tuples)})"
-        )
+        predicate = f"({', '.join(f's.{column}' for column in columns)}) IN ({', '.join(tuples)})"
 
     return (
         f"INSERT INTO {target_schema}.{table}\n"
