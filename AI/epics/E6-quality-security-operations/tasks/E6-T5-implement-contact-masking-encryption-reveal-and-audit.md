@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E6-T5
 epic: E6
 title: "Implement contact masking, encryption, reveal, and audit"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: L
@@ -43,12 +43,16 @@ branch:
   task_id: E6-T5
   one_task_only: true
   created_at: "2026-08-20T10:44:13Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/110"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-20T11:22:38Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/110"
+  evidence:
+    - "E6-T5 branch feat/E6-T5-contact-masking-reveal squash-merged via https://github.com/Flippylolz/WEF/pull/110 (squash 8caa674); one task per branch/PR"
+    - "Added cryptography AES-GCM + HMAC contact cipher, contact_points/contact_reveals migration 20260820_0011, ingest persist wiring, POST /api/v1/offers/{id}/contacts/reveal with no-store and minimized audit"
+    - "CI green on merge: Backend, Frontend/contract, Repository safety, Runtime images, Coverage badge (run 32363285174)"
+    - "Production registration/reveal activation remains E7-T7 after E7-T10/D-009; keys WEF_CONTACT_ENCRYPTION_KEY / WEF_CONTACT_HMAC_KEY fail closed when unset"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -91,13 +95,13 @@ Server-side contact encryption/masking and an authenticated audited reveal endpo
 
 ## Acceptance criteria
 
-- [ ] Anonymous map/detail/source responses contain no raw extracted phone/handle.
-- [ ] Active users not awaiting forced password change can reveal only contacts for visible offers.
-- [ ] Anonymous, disabled, forced-password-change, rate-limited, and IDOR attempts fail without leakage.
-- [ ] Audit records user/offer/request/outcome/timestamp but never contact, IP/hash, or user-agent.
-- [ ] Reveal responses carry `Cache-Control: no-store, private`.
-- [ ] OpenAPI change is additive; frontend client regenerates; CI format/lint/type/test/contract gates pass.
-- [ ] `EXPECTED_DATABASE_REVISION` matches the new migration head.
+- [x] Anonymous map/detail/source responses contain no raw extracted phone/handle.
+- [x] Active users not awaiting forced password change can reveal only contacts for visible offers.
+- [x] Anonymous, disabled, forced-password-change, rate-limited, and IDOR attempts fail without leakage.
+- [x] Audit records user/offer/request/outcome/timestamp but never contact, IP/hash, or user-agent.
+- [x] Reveal responses carry `Cache-Control: no-store, private`.
+- [x] OpenAPI change is additive; frontend client regenerates; CI format/lint/type/test/contract gates pass.
+- [x] `EXPECTED_DATABASE_REVISION` matches the new migration head.
 
 ## Test plan
 

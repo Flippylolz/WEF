@@ -17,7 +17,7 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 
 ## Approval state
 
-- Epic workspace status: `ready`; E6-T4 is `done`; E6-T5 is promoted/`ready` under implementation-plan revision 3.
+- Epic workspace status: `ready`; E6-T4 and E6-T5 are `done`. Next actionable E6 candidates are E6-T6/E6-T7 once sequenced by a plan revision.
 - [Spike](SPIKE.md): `approved`, revision 2 (PR #49, squash cd2ad36).
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3 (`spike_revision: 2`), sequencing E6-T5 only after E4-T3/E6-T4 completion.
 - Remaining candidates in `proposed-tasks/` stay non-actionable until their dependencies and a future plan revision.
@@ -50,7 +50,7 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 ## Promoted tasks
 
 - [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `done`, P1/L, M3; merged via PR #51
-- [E6-T5: Implement contact masking, encryption, reveal, and audit](tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `ready`, P1/L, M3; plan revision 3
+- [E6-T5: Implement contact masking, encryption, reveal, and audit](tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `done`, P1/L, M3; merged via PR #110
 
 ## Proposed tasks
 
