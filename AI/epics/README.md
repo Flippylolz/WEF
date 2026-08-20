@@ -81,7 +81,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E1-T3](E1-repository-developer-foundation/tasks/E1-T3-add-local-docker-compose.md): promoted/done revision 2; satisfied dependency `E1-T2`; M1; requirements `none`; decisions `ADR-005, ADR-008, ADR-010, ADR-018`.
 - [E1-T5](E1-repository-developer-foundation/proposed-tasks/E1-T5-configure-protected-main-governance.md): task dependencies `none`; deferred gates D-007; M1; requirements `none`; decisions `ADR-009, ADR-017`.
 - [E1-T6](E1-repository-developer-foundation/tasks/E1-T6-configure-dependabot-update-pull-requests.md): task dependencies `E1-T1, E1-T4`; M1; requirements `none`; decisions `ADR-017`.
-- [E1-T7](E1-repository-developer-foundation/proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md): task dependencies `E1-T4, E1-T6`; M1; requirements `none`; decisions `ADR-017`.
+- [E1-T7](E1-repository-developer-foundation/tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md): task dependencies `E1-T4, E1-T6`; M1; requirements `none`; decisions `ADR-017`.
 ### E2
 
 - [E2-T1](E2-historical-export-parser-audit/tasks/E2-T1-implement-source-adapter-and-fixture-corpus.md): promoted/done revision 2 through [PR #33](https://github.com/Flippylolz/WEF/pull/33); satisfied dependency `E1-T2` and approved spike/implementation gates; M1; requirements `P-006, P-007`; decisions `ADR-006, ADR-012`.

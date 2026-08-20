@@ -39,9 +39,13 @@ class DependabotConfigTests(unittest.TestCase):
         self.assertGreaterEqual(self.raw.count("- patch"), 5)
         self.assertNotRegex(self.raw, r"(?m)^\s*- major\s*$")
 
-    def test_merge_controller_workflow_absent(self) -> None:
+    def test_merge_controller_workflow_present_with_no_pr_checkout_of_head(self) -> None:
         workflow = REPOSITORY_ROOT / ".github" / "workflows" / "dependabot-merge.yml"
-        self.assertFalse(workflow.exists())
+        self.assertTrue(workflow.is_file())
+        text = workflow.read_text(encoding="utf-8")
+        self.assertIn("ref: ${{ github.event.repository.default_branch }}", text)
+        self.assertNotIn("pull_request_target", text)
+        self.assertIn("cancel-in-progress: false", text)
 
 
 if __name__ == "__main__":

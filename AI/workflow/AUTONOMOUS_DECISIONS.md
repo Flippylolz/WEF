@@ -234,3 +234,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no merge-controller workflow, no PR checkout/execution, no dependency upgrades in the configuration PR itself.
 - Reversal: remove `.github/dependabot.yml` and demote E1-T6 if ecosystems/grouping policy change.
 - Completion: PR #140 merged; vulnerability alerts + automated security fixes enabled on the repository.
+
+## AD-030: Sequence E1-T7 Dependabot merge controller (plan revision 6)
+
+- Time: 2026-08-20.
+- Prompt avoided: leave owner-labeled Dependabot PRs manual forever after E1-T6, or check out/execute PR code with a write token.
+- Selected approach: approve E1 plan revision 6; promote E1-T7; add a 15-minute/manual default-branch controller with required-check allowlist, owner `automerge` actor gate, bot-only patch/minor rules, refetch, and `--match-head-commit` squash merge.
+- Rationale: E1-T6 done; REPOSITORY_RULES already specify this compensating control under ADR-017; AD-009 continue authority.
+- Safety limit: never checkout PR heads; never `--admin`; majors/indirect/human commits remain ineligible.
+- Reversal: disable/delete `dependabot-merge.yml` and demote E1-T7 if gating policy changes.

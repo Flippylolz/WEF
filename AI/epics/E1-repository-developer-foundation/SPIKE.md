@@ -125,9 +125,9 @@ This recommendation is complete for owner review but does not authorize any prop
 - [E1-T3: Add local Docker Compose](tasks/E1-T3-add-local-docker-compose.md) — promoted; PostGIS/API/web/optional-edge/importer topology and real Compose Make targets.
 - [E1-T5: Configure protected-main governance](proposed-tasks/E1-T5-configure-protected-main-governance.md) — cancelled traceability only.
 - [E1-T6: Configure Dependabot update pull requests](tasks/E1-T6-configure-dependabot-update-pull-requests.md) — promoted under implementation-plan revision 5.
-- [E1-T7: Implement scheduled Dependabot merge controller](proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — candidate boundary for spike refinement.
+- [E1-T7: Implement scheduled Dependabot merge controller](tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — promoted under implementation-plan revision 6.
 
-E1-T1, E1-T2, E1-T4, and E1-T3 are promoted in implementation-plan revision 4. E1-T5 remains cancelled; E1-T6 is promoted in revision 5; E1-T7 remains non-actionable under `proposed-tasks/`.
+E1-T1, E1-T2, E1-T4, and E1-T3 are promoted in implementation-plan revision 4. E1-T5 remains cancelled; E1-T6 and E1-T7 are promoted in revisions 5–6.
 
 ## Risks and open questions
 
