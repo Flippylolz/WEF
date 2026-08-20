@@ -36,7 +36,7 @@ dependency_gate:
     - "E7-T8 | done | PR #69"
 branch:
   required: true
-  name: feat/e7-t9-cutover-slice1
+  name: feat/e7-t9-cutover-slice2
   task_id: E7-T9
   one_task_only: true
   created_at: "2026-08-20T10:00:00Z"
@@ -65,8 +65,8 @@ restoration:
 
 | Slice | Scope | Status |
 |-------|-------|--------|
-| 1 | `compose.production-cutover.yaml`, `media-edge.conf`, `shared_edge_preflight.py`, `shared_edge_inventory.py`, topology proof | in progress |
-| 2 | Staged activate orchestrator, redirect gate, fixture smokes, failure injection | pending |
+| 1 | `compose.production-cutover.yaml`, `media-edge.conf`, `shared_edge_preflight.py`, `shared_edge_inventory.py`, topology proof | done (#106) |
+| 2 | `tls-redirect` config, smoke helpers, staged cutover orchestrator, runtime failure injection, host-gateway | in progress |
 
 ## Outcome
 

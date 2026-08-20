@@ -20,7 +20,8 @@ NGINX_IMAGE = (
     "nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236"
 )
 RELEASE_NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{0,62}$")
-CONFIG_NAMES = ("bootstrap", "tls")
+CONFIG_NAMES = ("bootstrap", "tls", "tls-redirect")
+TLS_CONFIG_NAMES = frozenset({"tls", "tls-redirect"})
 STATE_FILENAME = "edge-state.json"
 CURRENT_LINK = "current"
 PREVIOUS_LINK = "previous"
@@ -199,14 +200,22 @@ def validate_release_config(
         raise SharedEdgeReleaseError(msg)
 
 
-def extract_upstreams(edge_root: Path, release_name: str) -> list[str]:
+def extract_upstreams(
+    edge_root: Path,
+    release_name: str,
+    *,
+    config: str = "tls",
+) -> list[str]:
     """Return the unique upstream targets referenced by a rendered config."""
-    release_dir = _resolve_release_dir(edge_root, release_name)
-    tls_conf = release_dir / "tls.conf"
-    if not tls_conf.is_file():
-        msg = f"configuration file is missing: {tls_conf}"
+    if config not in TLS_CONFIG_NAMES:
+        msg = f"upstreams are only defined for TLS configurations: {config!r}"
         raise SharedEdgeReleaseError(msg)
-    text = tls_conf.read_text(encoding="utf-8")
+    release_dir = _resolve_release_dir(edge_root, release_name)
+    conf_path = release_dir / f"{config}.conf"
+    if not conf_path.is_file():
+        msg = f"configuration file is missing: {conf_path}"
+        raise SharedEdgeReleaseError(msg)
+    text = conf_path.read_text(encoding="utf-8")
     return sorted(set(PROXY_UPSTREAM_PATTERN.findall(text)))
 
 
@@ -251,14 +260,18 @@ def activate_release(
 ) -> EdgeState:
     """Validate, switch to, and record one edge release configuration."""
     release_dir = _resolve_release_dir(edge_root, release_name)
+    needs_upstreams = config in TLS_CONFIG_NAMES
     validate_release_config(
         edge_root,
         release_name,
         config,
-        upstream_network=upstream_network if config == "tls" else None,
+        upstream_network=upstream_network if needs_upstreams else None,
     )
-    if config == "tls":
-        verify_upstreams(extract_upstreams(edge_root, release_name), upstream_network)
+    if needs_upstreams:
+        verify_upstreams(
+            extract_upstreams(edge_root, release_name, config=config),
+            upstream_network,
+        )
     previous_state = read_edge_state(edge_root)
     previous_release = previous_state["current_release"] if previous_state else None
     hook_source = release_dir / "deploy-hook.sh"
@@ -296,11 +309,12 @@ def rollback_release(edge_root: Path, *, upstream_network: str = "wef-edge") -> 
     previous_release = state["previous_release"]
     release_dir = _resolve_release_dir(edge_root, previous_release)
     config = read_active_config(release_dir)
+    needs_upstreams = config in TLS_CONFIG_NAMES
     validate_release_config(
         edge_root,
         previous_release,
         config,
-        upstream_network=upstream_network if config == "tls" else None,
+        upstream_network=upstream_network if needs_upstreams else None,
     )
     _swap_symlink(edge_root / CURRENT_LINK, f"releases/{previous_release}")
     _swap_symlink(edge_root / PREVIOUS_LINK, f"releases/{state['current_release']}")

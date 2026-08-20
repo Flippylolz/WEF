@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 from typing import Any, cast
 
+from scripts.deploy.shared_edge_cutover import CutoverContext, run_cutover_stages
 from scripts.deploy.shared_edge_release import (
     SharedEdgeReleaseError,
     activate_release,
@@ -26,6 +27,7 @@ from scripts.deploy.shared_edge_release import (
     verify_upstreams,
 )
 from scripts.deploy.shared_edge_render import write_release
+from scripts.deploy.shared_edge_smoke import build_fixture_smoke_target
 from scripts.prove_shared_edge_topology import (
     EDGE_COMPOSE_FILE,
     FIXTURE_IMAGE,
@@ -271,9 +273,14 @@ def assert_bootstrap_behaviour(edge_root: Path) -> None:
     )
     if status != 200 or body != "proof-ok":
         raise ProofError("ACME challenge was not served from the webroot")
-    status, headers, _ = curl(f"http://127.0.0.1:{HTTP_PORT}/")
-    if status != 404 or "location" in headers:
-        raise ProofError("bootstrap must answer 404 without redirect")
+    deadline = time.monotonic() + 20.0
+    while True:
+        status, headers, _ = curl(f"http://127.0.0.1:{HTTP_PORT}/")
+        if status == 404 and "location" not in headers:
+            return
+        if time.monotonic() > deadline:
+            raise ProofError("bootstrap must answer 404 without redirect")
+        time.sleep(1)
 
 
 def fetch_pebble_root(workspace: Path) -> Path:
@@ -402,6 +409,26 @@ def wait_for_upstream(upstream: str, *, timeout: float = 30.0) -> None:
             time.sleep(2)
         else:
             return
+
+
+def assert_redirect_behaviour(root_cert: Path) -> None:
+    """Prove HTTP redirects while HTTPS routes remain healthy."""
+    wef_http = f"{WEF_HOST}:{HTTP_PORT}:127.0.0.1"
+    forecast_http = f"{FORECAST_HOST}:{HTTP_PORT}:127.0.0.1"
+    for hostname, resolve in ((WEF_HOST, wef_http), (FORECAST_HOST, forecast_http)):
+        status, headers, _ = curl(
+            f"http://{hostname}:{HTTP_PORT}/",
+            resolve=resolve,
+        )
+        if status != 301:
+            raise ProofError(f"{hostname} HTTP must redirect with 301, got {status}")
+        location = headers.get("location", "")
+        if not location.startswith(f"https://{hostname}"):
+            raise ProofError(f"{hostname} redirect Location is unsafe: {location!r}")
+    status, _, body = curl(f"http://127.0.0.1:{HTTP_PORT}/.well-known/acme-challenge/proof-token")
+    if status != 200 or body != "proof-ok":
+        raise ProofError("ACME challenge must remain reachable after redirect activation")
+    assert_tls_behaviour(root_cert, body_limit="1m")
 
 
 def assert_state(edge_root: Path, current: str, config: str) -> None:
@@ -572,6 +599,81 @@ def main() -> int:
         rollback_release(edge_root, upstream_network=UPSTREAM_NETWORK)
         graceful_reload()
         assert_state(edge_root, "r-001", "tls")
+        assert_tls_behaviour(root_cert, body_limit="1m")
+
+        # Redirect is a gated stage after both HTTPS routes already pass.
+        challenge_dir = edge_root / "webroot" / ".well-known" / "acme-challenge"
+        challenge_dir.mkdir(parents=True, exist_ok=True)
+        (challenge_dir / "proof-token").write_text("proof-ok", encoding="utf-8")
+        cutover = run_cutover_stages(
+            CutoverContext(
+                edge_root=edge_root,
+                release_name="r-001",
+                smoke_target=build_fixture_smoke_target(
+                    http_port=HTTP_PORT,
+                    https_port=HTTPS_PORT,
+                ),
+                curl=curl,
+                upstream_network=UPSTREAM_NETWORK,
+                cacert=root_cert,
+                reload_callback=graceful_reload,
+            )
+        )
+        if cutover.state["active_config"] != "tls-redirect":
+            raise ProofError("cutover must finish on tls-redirect")
+        assert_state(edge_root, "r-001", "tls-redirect")
+        assert_redirect_behaviour(root_cert)
+
+        compose(["stop", "fixture-forecast"])
+        try:
+            activate_release(
+                edge_root,
+                "r-002",
+                "tls-redirect",
+                upstream_network=UPSTREAM_NETWORK,
+                reload_callback=None,
+            )
+        except SharedEdgeReleaseError:
+            pass
+        else:
+            raise ProofError("redirect activation must fail while Forecast is down")
+        assert_state(edge_root, "r-001", "tls-redirect")
+        compose(["start", "fixture-forecast"])
+        wait_for_upstream("fixture-forecast:8080")
+
+        broken_redirect = edge_root / "releases" / "r-bad-redirect"
+        shutil.copytree(edge_root / "releases" / "r-001", broken_redirect)
+        redirect_conf = broken_redirect / "tls-redirect.conf"
+        redirect_conf.write_text(
+            redirect_conf.read_text(encoding="utf-8")
+            + "\n        bogus_directive_for_proof definitely_broken;\n",
+            encoding="utf-8",
+        )
+        try:
+            activate_release(
+                edge_root,
+                "r-bad-redirect",
+                "tls-redirect",
+                upstream_network=UPSTREAM_NETWORK,
+                reload_callback=graceful_reload,
+            )
+        except SharedEdgeReleaseError:
+            pass
+        else:
+            raise ProofError("invalid tls-redirect must not activate")
+        assert_state(edge_root, "r-001", "tls-redirect")
+        assert_redirect_behaviour(root_cert)
+
+        # Drop redirect by switching active.conf back to tls on the same release.
+        activate_release(
+            edge_root,
+            "r-001",
+            "tls",
+            upstream_network=UPSTREAM_NETWORK,
+            reload_callback=graceful_reload,
+        )
+        assert_state(edge_root, "r-001", "tls")
+        assert_bootstrap_behaviour(edge_root)
         assert_tls_behaviour(root_cert, body_limit="1m")
 
         marker = edge_root / "state" / "reload-requested"

@@ -17,10 +17,12 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 TEMPLATES_DIR = REPOSITORY_ROOT / "infra" / "nginx"
 BOOTSTRAP_TEMPLATE = "bootstrap.conf.in"
 TLS_TEMPLATE = "tls.conf.in"
+TLS_REDIRECT_TEMPLATE = "tls-redirect.conf.in"
 HOOK_FILENAME = "deploy-hook.sh"
 ISSUANCE_FILENAME = "certbot-issuance.txt"
 BOOTSTRAP_CONFIG = "bootstrap.conf"
 TLS_CONFIG = "tls.conf"
+TLS_REDIRECT_CONFIG = "tls-redirect.conf"
 FIXTURE_TLD = ".test"
 FIXTURE_ACME_SERVER = "https://pebble:14000/dir"
 PRODUCTION_ACME_SERVER = "https://acme-v02.api.letsencrypt.org/directory"
@@ -197,9 +199,12 @@ def write_release(
     validate_release_dir(output_dir)
     bootstrap_template = (templates_dir / BOOTSTRAP_TEMPLATE).read_text(encoding="utf-8")
     tls_template = (templates_dir / TLS_TEMPLATE).read_text(encoding="utf-8")
+    tls_redirect_template = (templates_dir / TLS_REDIRECT_TEMPLATE).read_text(encoding="utf-8")
+    replacements = tls_replacements(config)
     rendered = {
         BOOTSTRAP_CONFIG: render_template(bootstrap_template, {}),
-        TLS_CONFIG: render_template(tls_template, tls_replacements(config)),
+        TLS_CONFIG: render_template(tls_template, replacements),
+        TLS_REDIRECT_CONFIG: render_template(tls_redirect_template, replacements),
         ISSUANCE_FILENAME: render_issuance_commands(config),
     }
     hook_source = templates_dir / HOOK_FILENAME
