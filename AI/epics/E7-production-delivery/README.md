@@ -20,7 +20,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - Epic workspace status: `ready`; the anonymous rehearsal remains complete while historical snapshot transfer is prioritized.
 - [Spike](SPIKE.md): `approved`, revision 4, selecting selective E3-T5 snapshot transfer and non-public production candidate staging.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 4 `approved` by Flippylolz on 2026-08-16; it sequences only E7-T6 revision 3.
-- E7-T1 through E7-T4, E7-T6, and E7-T8 are `done`; E7-T8's 2026-08-15 invalidation was an accidental touch by another agent's E7-T6 priority work and was restored by the owner on 2026-08-16 (completion on PR #69). E7-T6 completed on 2026-08-20 through PRs #88–#104 with a verified non-public candidate on the NUC (`wef_hist_candidate`, loopback `:13100`). E7-T9 remains paused/invalidated pending owner revalidation and [implementation plan revision 5](PROPOSED_IMPLEMENTATION_PLAN-revision-5.md) approval. E7-T11 is proposed for the ADR-019-gated public activation, and E7-T10 remains proposed behind D-009. E7-T5 remains deferred and E7-T7 remains proposed.
+- E7-T1 through E7-T4, E7-T6, E7-T8, and E7-T9 are `done`; E7-T8's 2026-08-15 invalidation was an accidental touch by another agent's E7-T6 priority work and was restored by the owner on 2026-08-16 (completion on PR #69). E7-T6 completed on 2026-08-20 through PRs #88–#104 with a verified non-public candidate on the NUC (`wef_hist_candidate`, loopback `:13100`). E7-T9 completed through PRs #106/#107 with fixture-proven cutover automation (no live NUC mutation). E7-T11 is proposed for the ADR-019-gated public activation, and E7-T10 remains proposed behind D-009. E7-T5 remains deferred and E7-T7 remains proposed.
 
 ## Milestones
 
@@ -62,7 +62,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - [E7-T3: Implement GitHub image and deployment workflows](tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `done`, P0/L, M3
 - [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — `done`, P0/M, M3
 - [E7-T8: Build isolated shared Nginx TLS topology](tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `done` through PR #69 (gates restored by owner after an accidental invalidation), P1/M, M3
-- [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `in_progress` slice 1 on feat/e7-t9-cutover-slice1; dependency E7-T8 satisfied, P1/L, M3
+- [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `done` through PRs #106/#107; live rollout remains E7-T10, P1/L, M3
 - [E7-T6: Transfer the verified historical snapshot into a non-public production candidate](tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `done` through PRs #88–#104, P1/L, M3
 
 ## Deferred/proposed tasks

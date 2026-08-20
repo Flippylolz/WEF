@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T9
 epic: E7
 title: "Implement reversible shared-edge cutover"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: L
@@ -40,12 +40,15 @@ branch:
   task_id: E7-T9
   one_task_only: true
   created_at: "2026-08-20T10:00:00Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/107"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-20T10:32:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/107"
+  evidence:
+    - "Slice 1 cutover compose/preflight/inventory merged via https://github.com/Flippylolz/WEF/pull/106"
+    - "Slice 2 tls-redirect, smoke, cutover orchestrator, host-gateway merged via https://github.com/Flippylolz/WEF/pull/107"
+    - "make production-proof / shared-edge runtime proof: redirect gate, Forecast-down refusal, invalid redirect refusal, drop-back to tls"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -59,14 +62,14 @@ restoration:
 
 # E7-T9: Implement reversible shared-edge cutover
 
-> Restored on 2026-08-20 after E7-T6 completion. Slice 1 adds the cutover compose overlay, shared-edge preflight/inventory scaffolding, and production topology proof extensions.
+> Restored and completed on 2026-08-20 after E7-T6. Inert automation only; live NUC cutover remains E7-T10 behind D-009.
 
 ## Implementation progress
 
 | Slice | Scope | Status |
 |-------|-------|--------|
 | 1 | `compose.production-cutover.yaml`, `media-edge.conf`, `shared_edge_preflight.py`, `shared_edge_inventory.py`, topology proof | done (#106) |
-| 2 | `tls-redirect` config, smoke helpers, staged cutover orchestrator, runtime failure injection, host-gateway | in progress |
+| 2 | `tls-redirect` config, smoke helpers, staged cutover orchestrator, runtime failure injection, host-gateway | done (#107) |
 
 ## Outcome
 
@@ -104,15 +107,15 @@ Provide locally proven, host-safe automation that can move WEF and AI Forecast b
 
 ## Acceptance criteria
 
-- [ ] WEF has a validated private-upstream cutover variant while the existing Caddy rehearsal remains a complete rollback path.
-- [ ] AI Forecast routing uses only its retained host listener and no command targets its Compose project/resources.
-- [ ] Complete edge release config is validated, transferred with restrictive modes, and atomically activated through auditable current/previous state.
-- [ ] Preflight aborts before mutation on occupied ports, missing paths/networks/certificates, invalid Nginx config, unhealthy upstreams, or unexpected inventory changes.
-- [ ] Independent WEF web/API/media/release-marker and AI Forecast frontend/API smokes pass through fixture host routes.
-- [ ] HTTP redirects activate only after both HTTPS routes are healthy.
-- [ ] Deliberate invalid config and unavailable WEF/AI upstream failures restore the previous validated edge release and leave both application states unchanged.
-- [ ] Before/after evidence proves DuckDNS, WireGuard, PostgreSQL, WEF persistence, AI Forecast resources, and unrelated Docker resources are unchanged.
-- [ ] No production/server/network mutation occurs.
+- [x] WEF has a validated private-upstream cutover variant while the existing Caddy rehearsal remains a complete rollback path.
+- [x] AI Forecast routing uses only its retained host listener and no command targets its Compose project/resources.
+- [x] Complete edge release config is validated, transferred with restrictive modes, and atomically activated through auditable current/previous state.
+- [x] Preflight aborts before mutation on occupied ports, missing paths/networks/certificates, invalid Nginx config, unhealthy upstreams, or unexpected inventory changes.
+- [x] Independent WEF web/API/media/release-marker and AI Forecast frontend/API smokes pass through fixture host routes.
+- [x] HTTP redirects activate only after both HTTPS routes are healthy.
+- [x] Deliberate invalid config and unavailable WEF/AI upstream failures restore the previous validated edge release and leave both application states unchanged.
+- [x] Before/after evidence proves DuckDNS, WireGuard, PostgreSQL, WEF persistence, AI Forecast resources, and unrelated Docker resources are unchanged.
+- [x] No production/server/network mutation occurs.
 
 ## Test plan
 
@@ -129,17 +132,17 @@ This task creates inert automation and fixture evidence only. Revert its dedicat
 
 - [x] This file is authoritative under `tasks/`; no proposed duplicate exists.
 - [x] Promotion and current spike/implementation gates are recorded.
-- [ ] E7-T8 has an open ancestor PR recorded by a stacked dependency gate or is done.
+- [x] E7-T8 has an open ancestor PR recorded by a stacked dependency gate or is done.
 - [x] D-009 is absent because live rollout belongs to E7-T10.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] Dedicated E7-T9 branch is created and recorded.
-- [ ] Branch contains E7-T9 only.
+- [x] Status passed through `ready`.
+- [x] Dedicated E7-T9 branch is created and recorded.
+- [x] The branch and pull request contain this task only.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
