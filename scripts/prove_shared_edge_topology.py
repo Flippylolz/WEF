@@ -261,7 +261,8 @@ def assert_edge_boundary_ownership() -> None:
     reconnect = REPOSITORY_ROOT / "scripts" / "deploy" / "reconnect-wef-upstreams.sh"
     assert reconnect.is_file(), "reconnect script must ship in application releases"
     reconnect_text = reconnect.read_text(encoding="utf-8")
-    assert "nginx -s reload" in reconnect_text
+    assert "docker kill -s HUP" in reconnect_text
+    assert "nginx -s reload" not in reconnect_text
     assert "wef-media" in reconnect_text
     assert "compose.shared-edge" not in reconnect_text
     assert "docker compose" not in reconnect_text

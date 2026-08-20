@@ -20,7 +20,8 @@ class DeploySharedEdgeReconnectTests(unittest.TestCase):
         self.assertIn("wef-api", text)
         self.assertIn("wef-web", text)
         self.assertIn("wef-media", text)
-        self.assertIn("nginx -s reload", text)
+        self.assertIn("docker kill -s HUP", text)
+        self.assertNotIn("nginx -s reload", text)
         self.assertNotIn("docker compose", text)
 
     def test_deploy_requires_public_https_after_bring_up(self) -> None:
