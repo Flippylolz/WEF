@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { MapFilterControls } from "@/components/map-filter-controls";
 import { LiveAnnouncement } from "@/components/live-announcement";
-import { UserToolbar } from "@/components/user-toolbar";
+import { UserToolbar, type AuthOpener } from "@/components/user-toolbar";
 
 import {
   fetchFacets,
@@ -111,6 +111,10 @@ export function MapExplorer() {
     string | null
   >(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState<string | null>(null);
+  const openAuthRef = useRef<AuthOpener>(() => undefined);
+  const registerAuthOpener = useCallback((open: AuthOpener) => {
+    openAuthRef.current = open;
+  }, []);
   const isMobile = useMediaQuery("(max-width: 56rem)");
   const reduceMotion = usePrefersReducedMotion();
   const viewportTimer = useRef<number | null>(null);
@@ -311,7 +315,10 @@ export function MapExplorer() {
   return (
     <section className="map-explorer-shell" aria-label={t("explorerLabel")}>
       <LiveAnnouncement message={liveAnnouncement} />
-      <UserToolbar onSelectFavorite={selectLocation} />
+      <UserToolbar
+        onSelectFavorite={selectLocation}
+        onRegisterAuthOpener={registerAuthOpener}
+      />
       <div className={explorerClassName}>
         <div className="map-region">
           {mapFailed ? (
@@ -512,9 +519,14 @@ export function MapExplorer() {
         offerId={selectedOfferId}
         matchesFilters={selectedOfferMatchesFilters}
         detailQuery={offerDetailQuery}
+        account={accountQuery.data}
         onClose={closeOfferDetail}
         onRetry={
           selectedOfferId ? () => void offerDetailQuery.refetch() : undefined
+        }
+        onRequestSignIn={() => openAuthRef.current({ mode: "login" })}
+        onRequestPasswordChange={() =>
+          openAuthRef.current({ mode: "password" })
         }
         returnFocusRef={offerTriggerRef}
       />

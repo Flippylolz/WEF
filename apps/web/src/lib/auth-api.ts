@@ -110,6 +110,54 @@ export async function logoutAccount(
     const { error, response } = await client(options.fetcher).POST(
       "/api/v1/auth/logout",
       {
+        headers: { "Content-Type": "application/json" },
+        body: {} as never,
+        bodySerializer: () => "{}",
+        cache: "no-store",
+        ...(options.signal ? { signal: options.signal } : {}),
+      },
+    );
+    if (!response.ok || error !== undefined) {
+      return { state: "error", message: problemMessage(error) };
+    }
+    return { state: "ready", data: null };
+  } catch {
+    return { state: "error" };
+  }
+}
+
+export async function changePassword(
+  payload: { current_password: string; new_password: string },
+  options: RequestOptions = {},
+): Promise<AuthResult<null>> {
+  try {
+    const { error, response } = await client(options.fetcher).POST(
+      "/api/v1/auth/password",
+      {
+        body: payload,
+        cache: "no-store",
+        ...(options.signal ? { signal: options.signal } : {}),
+      },
+    );
+    if (!response.ok || error !== undefined) {
+      return { state: "error", message: problemMessage(error) };
+    }
+    return { state: "ready", data: null };
+  } catch {
+    return { state: "error" };
+  }
+}
+
+export async function revokeAllSessions(
+  options: RequestOptions = {},
+): Promise<AuthResult<null>> {
+  try {
+    const { error, response } = await client(options.fetcher).POST(
+      "/api/v1/auth/sessions/revoke-all",
+      {
+        headers: { "Content-Type": "application/json" },
+        body: {} as never,
+        bodySerializer: () => "{}",
         cache: "no-store",
         ...(options.signal ? { signal: options.signal } : {}),
       },
