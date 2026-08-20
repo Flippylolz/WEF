@@ -404,10 +404,13 @@ def assert_candidate_topology(model: dict[str, Any]) -> None:
     """Prove loopback-only candidate verification boundaries."""
     assert model["name"] == "wef-candidate"
     services = cast("dict[str, dict[str, Any]]", model["services"])
-    assert set(services) == {"api", "web", "edge"}
-    assert "provider-egress" not in model.get("networks", {})
-    assert "verify" in model.get("networks", {})
-    edge_ports = services["edge"].get("ports", [])
+    assert set(services) == {"candidate-api", "candidate-web", "candidate-edge"}
+    networks = cast("dict[str, Any]", model.get("networks", {}))
+    assert "provider-egress" not in networks
+    assert "verify" in networks
+    assert "application" in networks
+    assert "production_db" in networks
+    edge_ports = services["candidate-edge"].get("ports", [])
     assert edge_ports
     published = edge_ports[0]
     assert published["host_ip"] == "127.0.0.1"
@@ -416,15 +419,24 @@ def assert_candidate_topology(model: dict[str, Any]) -> None:
         name: {volume["target"]: volume for volume in service.get("volumes", [])}
         for name, service in services.items()
     }
-    assert mounts["api"]["/app/media/public"]["read_only"] is True
-    assert mounts["edge"]["/srv/media"]["read_only"] is True
+    assert mounts["candidate-api"]["/app/media/public"]["read_only"] is True
+    assert mounts["candidate-edge"]["/srv/media"]["read_only"] is True
     forbidden = {"/source", "/app/media/originals", "/srv/originals"}
-    assert forbidden.isdisjoint(mounts["api"])
-    assert forbidden.isdisjoint(mounts["edge"])
-    assert "provider-egress" not in services["api"].get("networks", {})
-    assert "verify" in services["edge"].get("networks", {})
-    assert "verify" not in services["api"].get("networks", {})
-    assert "verify" not in services["web"].get("networks", {})
+    assert forbidden.isdisjoint(mounts["candidate-api"])
+    assert forbidden.isdisjoint(mounts["candidate-edge"])
+    api_networks = services["candidate-api"].get("networks", {})
+    web_networks = services["candidate-web"].get("networks", {})
+    edge_networks = services["candidate-edge"].get("networks", {})
+    assert "provider-egress" not in api_networks
+    assert "production_db" in api_networks
+    assert "production_db" not in web_networks
+    assert "production_db" not in edge_networks
+    assert "verify" in edge_networks
+    assert "verify" not in api_networks
+    assert "verify" not in web_networks
+    # Private aliases keep Caddyfile hostnames without colliding on production DNS.
+    assert "api" in api_networks["application"].get("aliases", [])
+    assert "web" in web_networks["application"].get("aliases", [])
 
 
 def main() -> int:

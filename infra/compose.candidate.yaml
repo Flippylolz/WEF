@@ -22,7 +22,9 @@ x-backend-environment: &backend-environment
   WEF_LOG_LEVEL: ${WEF_LOG_LEVEL:-info}
 
 services:
-  api:
+  # Named distinctly so joining wef-production_application does not steal
+  # production DNS names "api" / "web". Private alias "api" keeps Caddyfile.
+  candidate-api:
     image: ${WEF_BACKEND_IMAGE:?WEF_BACKEND_IMAGE digest is required}
     environment: *backend-environment
     <<: *application-security
@@ -43,9 +45,12 @@ services:
     expose:
       - "8000"
     networks:
-      - application
+      application:
+        aliases:
+          - api
+      production_db:
 
-  web:
+  candidate-web:
     image: ${WEF_WEB_IMAGE:?WEF_WEB_IMAGE digest is required}
     environment:
       WEF_API_URL: http://api:8000
@@ -59,7 +64,7 @@ services:
     pids_limit: 192
     logging: *candidate-logging
     depends_on:
-      api:
+      candidate-api:
         condition: service_healthy
     healthcheck:
       test:
@@ -76,9 +81,11 @@ services:
     expose:
       - "3000"
     networks:
-      - application
+      application:
+        aliases:
+          - web
 
-  edge:
+  candidate-edge:
     image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
     user: "1000:1000"
     environment:
@@ -102,9 +109,9 @@ services:
     pids_limit: 128
     logging: *candidate-logging
     depends_on:
-      api:
+      candidate-api:
         condition: service_healthy
-      web:
+      candidate-web:
         condition: service_healthy
     ports:
       - "${WEF_CANDIDATE_VERIFY_BIND_ADDRESS:?WEF_CANDIDATE_VERIFY_BIND_ADDRESS is required}:${WEF_CANDIDATE_VERIFY_PORT:?WEF_CANDIDATE_VERIFY_PORT is required}:8080"
@@ -140,11 +147,12 @@ services:
       retries: 20
       start_period: 10s
     networks:
-      - application
-      - verify
+      application:
+      verify:
 
 networks:
   application:
+  production_db:
     external: true
     name: wef-production_application
   verify:
