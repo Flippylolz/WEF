@@ -1,6 +1,6 @@
 """Tests for shared-edge cutover preflight gates."""
 
-# ruff: noqa: D102, PT009, PT027, S101
+# ruff: noqa: D101, D102, PT027
 
 from __future__ import annotations
 
