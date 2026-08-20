@@ -167,3 +167,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no live shared-edge cutover, no autonomous DuckDNS registration, no E7-T7 enablement until HTTPS; `cryptography` addition stays within the E0 spike selection for E6-T5.
 - Reversal: revise/reapprove E6 plan revision 3 and demote E6-T5 if contact encryption/reveal scope changes; resolve D-009 before approving E7 plan revision 6.
 
+## AD-020: Sequence E6-T6 restricted-action UX after E6-T5
+
+- Time: 2026-08-20.
+- Prompt avoided: wait for D-009/E7-T10 before frontend reveal UX, or fold owner console into the same change.
+- Selected approach: approve E6 implementation-plan revision 4 and promote E6-T6 only; extend the existing E9 account modal and offer detail drawer; keep E6-T7 proposed.
+- Rationale: E5-T3/E6-T4/E6-T5 are done; AUTH_ADMIN_CONTACTS frontend behavior is the next M3 gap; live TLS remains an owner-input gate.
+- Safety limit: no production auth enablement; no Starlette Admin in this task; revealed contacts stay in memory only.
+- Reversal: revise/reapprove plan revision 4 and demote E6-T6 if UX scope changes materially.
+
+
