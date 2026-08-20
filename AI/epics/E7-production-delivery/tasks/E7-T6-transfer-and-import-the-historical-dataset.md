@@ -55,6 +55,7 @@ completion:
     - "macOS remote path/rsync fix merged via https://github.com/Flippylolz/WEF/pull/95"
     - "Candidate reconcile + loopback compose merged via https://github.com/Flippylolz/WEF/pull/96"
     - "Candidate edge publish network fix merged via https://github.com/Flippylolz/WEF/pull/97"
+    - "Restore preflight planning merged via https://github.com/Flippylolz/WEF/pull/99"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -83,8 +84,9 @@ Cloud-testable repository slices merged on `main` (task remains `in_progress`):
 | macOS remote path/rsync fix | [#95](https://github.com/Flippylolz/WEF/pull/95) | Linux remote paths without local resolve; openrsync-compatible rsync-plan |
 | Candidate verify | [#96](https://github.com/Flippylolz/WEF/pull/96) | Manifest/media reconcile CLI, loopback `compose.candidate.yaml`, release packaging of transfer tooling |
 | Candidate edge publish | [#97](https://github.com/Flippylolz/WEF/pull/97) | Non-internal `verify` network so `127.0.0.1:13100` publishes |
+| Restore preflight | [#99](https://github.com/Flippylolz/WEF/pull/99) | Conflict-gated FK-safe batch planning + `restore-preflight` CLI |
 
-Remaining for full E7-T6 acceptance: wire restore-preflight into an operator-facing DB load path against live Postgres (planning/checkpoint helpers are repository-owned), then record task `done`.
+Remaining for full E7-T6 acceptance: wire restore-preflight into an operator-facing DB load path against live Postgres, then record task `done`.
 
 Live production evidence (2026-08-20):
 
