@@ -48,7 +48,7 @@ class PostgresRestoreTests(unittest.TestCase):
 
     def test_snapshot_export_sql_uses_primary_key_projection(self) -> None:
         single = build_snapshot_export_sql(table="locations", schema="public")
-        self.assertIn("row_data.id::text", single)
+        self.assertIn("t.id::text", single)
         composite = build_snapshot_export_sql(table="offer_media", schema="wef_restore_staging")
         self.assertIn("jsonb_build_array", composite)
 
