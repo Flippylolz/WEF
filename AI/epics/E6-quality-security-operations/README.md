@@ -17,11 +17,10 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 
 ## Approval state
 
-- Epic workspace status: `ready`; E6-T4 is complete and no further E6 task is actionable until its E3/E4/E5 dependencies complete.
-- [Spike](SPIKE.md): `approved`, revision 2 (PR #49, squash cd2ad36). It records the 2026-08-14 repository survey, the E6 dependency reality (only E6-T4 is actionable), and recommends the project-owned `pwdlib[argon2]` identity implementation for E6-T4.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2 (`spike_revision: 2`, PR #50, squash bd4d34f), sequencing E6-T4 only.
-- E6-T4 is `done` (merged via PR #51, squash 6607f96); remaining candidates stay blocked on E3/E4/E5 dependencies.
-- Every remaining file in `proposed-tasks/` is non-actionable. No implementation beyond the approved E6-T4 sequence is approved.
+- Epic workspace status: `ready`; E6-T4 is `done`; E6-T5 is promoted/`ready` under implementation-plan revision 3.
+- [Spike](SPIKE.md): `approved`, revision 2 (PR #49, squash cd2ad36).
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3 (`spike_revision: 2`), sequencing E6-T5 only after E4-T3/E6-T4 completion.
+- Remaining candidates in `proposed-tasks/` stay non-actionable until their dependencies and a future plan revision.
 
 ## Milestones
 
@@ -51,13 +50,13 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 ## Promoted tasks
 
 - [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `done`, P1/L, M3; merged via PR #51
+- [E6-T5: Implement contact masking, encryption, reveal, and audit](tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `ready`, P1/L, M3; plan revision 3
 
 ## Proposed tasks
 
-- [E6-T1: Complete automated test pyramid](proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — `proposed`, P1/L, M3; blocked on E4-T3/E5-T3
+- [E6-T1: Complete automated test pyramid](proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — `proposed`, P1/L, M3; blocked on E4-T3/E5-T3 (re-check gates)
 - [E6-T2: Perform privacy and security hardening](proposed-tasks/E6-T2-perform-privacy-and-security-hardening.md) — `proposed`, P1/M, M3; blocked on E3-T4/E4-T3/E5-T3
 - [E6-T3: Add operational diagnostics](proposed-tasks/E6-T3-add-operational-diagnostics.md) — `proposed`, P1/M, M3; blocked on E3-T2/E4-T4
-- [E6-T5: Implement contact masking, encryption, reveal, and audit](proposed-tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `proposed`, P1/L, M3; blocked on E4-T3 and E6-T4
 - [E6-T6: Implement English i18n and restricted-action UX](proposed-tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — `proposed`, P1/L, M3; blocked on E5-T3/E6-T4/E6-T5
 - [E6-T7: Implement owner administration console](proposed-tasks/E6-T7-implement-owner-administration-console.md) — `proposed`, P1/L, M3; blocked on E6-T4/E6-T5
 
@@ -82,9 +81,3 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 - Outgoing: E7-T7 depends on E6-T5.
 - Outgoing: E7-T7 depends on E6-T6.
 - Outgoing: E7-T7 depends on E6-T7.
-
-The exact normalized dependency and traceability registry is maintained in the [epics index](../README.md). Each workflow candidate is authoritative only in the single linked `proposed-tasks/` file above; its `legacy-roadmap:*` source value records non-path provenance.
-
-## Lifecycle
-
-Follow the [approval-gated workflow](../../workflow/README.md), [proposed-task schema](../../workflow/templates/PROPOSED_TASK.md), [implementation-plan schema](../../workflow/templates/IMPLEMENTATION_PLAN.md), and [definition of done](../../workflow/DEFINITION_OF_DONE.md). Priority, roadmap order, or epic selection never bypasses owner approvals, promotion, completed dependencies, or one-branch-per-task gates.

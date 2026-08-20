@@ -3,19 +3,19 @@ schema: ai-workflow/implementation-plan@1
 epic: E6
 title: "Quality, security, and operations implementation plan"
 status: approved
-revision: 2
+revision: 3
 owner: owner
 spike_revision: 2
 task_sequence:
-  - id: E6-T4
+  - id: E6-T5
     revision: 1
 approval:
   required_role: owner
   status: approved
   decided_by: Flippylolz
-  decided_at: "2026-08-14T21:30:59Z"
-  approved_revision: 2
-  evidence: "Plan PR https://github.com/Flippylolz/WEF/pull/50 merged after green CI (squash bd4d34f) under the owner's 2026-08-14 session directive to take E6 and proceed through stacked PRs"
+  decided_at: "2026-08-20T10:40:42Z"
+  approved_revision: 3
+  evidence: "Owner continue / autonomous epic mission directive (AD-009); E4-T3 and E6-T4 are done on main, unblocking E6-T5 while E7-T10 remains gated by D-009"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -23,70 +23,72 @@ invalidation:
   return_to: null
 ---
 
-# Implementation Plan: E6-T4 in-house registration and sessions
+# Implementation Plan: E6-T5 contact masking, encryption, reveal, and audit
 
 ## Approved spike baseline
 
-- [Spike revision 2](SPIKE.md) is owner-approved (PR #49, squash cd2ad36) and current.
-- Binding decisions: project-owned identity module with `pwdlib[argon2]` and opaque database sessions (FastAPI Users and email-first identity rejected); only E6-T4 is actionable in this cycle; E6-T1/T2/T3/T5/T6/T7 remain under `proposed-tasks/` unactionable until their E3/E4/E5 dependencies complete.
+- [Spike revision 2](SPIKE.md) remains owner-approved and current.
+- Binding decisions: [ADR-011](../../decisions/adr/ADR-011-accounts-gate-contact-reveal.md), [ADR-012](../../decisions/adr/ADR-012-backend-centric-modular-monolith.md), [ADR-016](../../decisions/adr/ADR-016-pseudonymous-accounts-owner-console.md); security contract [AUTH_ADMIN_CONTACTS](../../security/AUTH_ADMIN_CONTACTS.md); data model `ContactPoint` / `ContactReveal` in [DATA_MODEL](../../contracts/DATA_MODEL.md).
+- E0 spike locks `cryptography` for authenticated contact encryption/HMAC primitives; adding that production dependency is in-scope for this plan (no alternate crypto library).
 
 ## Scope and outcome
 
-Deliver the first E6 slice toward "production behavior is tested, privacy-aware, observable, and recoverable": pseudonymous username/password registration, login/logout, password change, session revocation, forced-password-change state, and owner bootstrap, with anonymous browsing untouched. E7-T7 later activates registration in production.
+Deliver server-side contact persistence and the authenticated no-store reveal mutation so anonymous map/detail/source responses never contain raw phones/handles, while active accounts can reveal only contacts for publicly visible offers under rate limits and minimized audit. Production enablement of registration/reveal remains [E7-T7](../E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) after HTTPS.
 
 ## Ordered task sequence
 
-1. [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — revision 1.
-   - Independently reviewable: one new `identity` feature, one additive migration, additive OpenAPI paths; no existing catalog contract changes.
-   - Dependencies: E1-T2 (done), E3-T1 (done); dependency gate satisfied with evidence recorded in the task file.
-   - Affected modules/contracts: `features/identity/`, `composition.py`, `app.py` middleware, new Alembic revision, `contracts/openapi/v1.json`, regenerated `apps/web/src/generated/api.ts`.
-   - Tests: unit (hashing/tokens/state machine), integration (flows against disposable PostGIS), contract (deterministic export + codegen + oasdiff), security (redaction, anti-enumeration, CSRF/origin, rate limits).
-   - Migration: additive `users`/`sessions`; `EXPECTED_DATABASE_REVISION` advances; rollback is redeploy-previous (additive tables remain unused).
-   - Risks and mitigations are recorded in the task file and below.
+1. [E6-T5: Implement contact masking, encryption, reveal, and audit](tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — revision 1.
+   - Independently reviewable: new `contacts` feature (or equivalent modular slice), additive `contact_points` / `contact_reveals` migration, ingestion persist of encrypted contacts + masked public text, `POST /api/v1/offers/{offer_id}/contacts/reveal`, OpenAPI + frontend codegen, unit/integration/security tests.
+   - Dependencies: E2-T2, E3-T1, E4-T3, E6-T4 — all `done` on integrated main.
+   - Affected modules/contracts: `features/contacts/` (or co-located ports under catalog/identity per import-linter), ingestion persistence adapter, composition/settings secrets, Alembic head, `contracts/openapi/v1.json`, `apps/web/src/generated/api.ts`, AUTH_ADMIN_CONTACTS/DATA_MODEL alignment notes if needed.
+   - Tests: masking fixtures; AES-GCM encrypt/decrypt + HMAC fingerprint stability; reveal authz (anonymous/disabled/forced-change/IDOR/rate-limit); audit minimization (no plaintext/IP/UA); OpenAPI additive-only; no secret leakage in logs.
+   - Migration: additive tables; `EXPECTED_DATABASE_REVISION` advances; rollback is redeploy-previous (unused tables remain).
+   - Secrets: `WEF_CONTACT_ENCRYPTION_KEY` and `WEF_CONTACT_HMAC_KEY` (or equivalent) via settings; never committed; tests use ephemeral keys.
 
-Only E6-T4 is sequenced. No proposed task appears here; later E6 candidates are re-sequenced by a future material plan revision after their dependencies complete.
+Only E6-T5 is sequenced. E6-T1/T2/T3/T6/T7 remain proposed until their own plan revisions.
 
 ## Cross-task architecture
 
-- The `identity` feature follows the same domain → application → interface/infrastructure direction as `catalog`/`ingestion`, enforced by import-linter; domain/application layers import no fastapi/sqlalchemy/pydantic.
-- Authorization decisions live in application interactors; routes only transport. Session lookup is a composition-root-wired adapter, mirroring the existing `app.state` pattern.
-- The task adds no domain rules that duplicate catalog logic; no frontend domain state is introduced (E6-T6 owns restricted-action UX).
+- Reuse E6-T4 `_require_account`, origin/CSRF JSON guards, and `MemoryRateLimiter` patterns; authorization stays in application interactors.
+- Reveal may call catalog visibility (same `OfferVisibility.VISIBLE` gate as offer detail); do not leak existence of non-visible offers beyond public masking.
+- Ingestion already extracts `ContactSpan` and builds `source_text_public_masked`; this task materializes `ContactPoint` rows and keeps public APIs on masked text only.
+- Frontend reveal UX is out of scope (E6-T6). Owner audit console is out of scope (E6-T7).
 
 ## Data and migrations
 
-- One new Alembic revision creating `users` (unique username, Argon2 hash, `role`, `status`, forced-change flag) and `sessions` (token hash, user reference, expiry, revocation).
-- Opaque random tokens; only their hashes persist. Migration is additive and replay-safe; integration tests replay it from the current baseline.
-- Rollback boundary: redeploy the previous image; readiness's `EXPECTED_DATABASE_REVISION` gate restores consistency. ADR-015 applies: no backup/recovery guarantee is claimed for persisted account rows.
+- One Alembic revision creating `contact_points` and `contact_reveals` per DATA_MODEL.
+- Ciphertext + keyed fingerprint + safe `masked_value`; plaintext never indexed.
+- Reveal audit outcomes: `allowed`, `rate_limited`, `forbidden`, `unavailable`.
 
 ## Security and privacy
 
-- Argon2 via `pwdlib` with current recommended parameters; anti-enumeration on register/login; cookies HttpOnly/Secure/SameSite; origin/CSRF checks on state-changing routes; per-account/per-IP auth rate limits; one-time owner bootstrap from an Actions secret (ADR-014 ownership).
-- Negative tests prove passwords, hashes, tokens, and cookies never appear in logs or public responses. No email/verification surface exists (ADR-016).
-- No contact data is touched by this task (E6-T5 scope).
+- AES-GCM via `cryptography`; HMAC-SHA256 fingerprints with a distinct key.
+- `Cache-Control: no-store, private` on reveal responses.
+- Auth/reveal remain disabled on plain HTTP until E7-T7 (ADR-019 / ADR-011 production gate).
+- Negative tests prove ciphertext/keys/plaintext never appear in public responses or structured logs.
 
 ## Test and verification strategy
 
-- Acceptance maps to the task's test plan: pytest unit suites, PostGIS integration flows, deterministic OpenAPI export diff, frontend codegen/lint/docs, oasdiff non-breaking proof, CI architecture/coverage/audit gates.
-- CI remains the merge gate; no dedicated production verification is claimed by this task (E7-T7/T10 own activation and live verification).
+- Pytest unit + PostGIS integration + contract export/codegen/oasdiff additive proof.
+- CI remains the merge gate; no live production reveal activation.
 
 ## Operations, rollout, and rollback
 
-- Deploy follows the existing Actions-owned migrate-then-serve flow; the readiness revision gate blocks serving before migration completes.
-- Owner bootstrap is an explicit manual operator command; its secret stays in GitHub Actions secrets and is never logged.
-- Rollback is image redeploy; no persistent NUC data is described as backed up (ADR-015 deferral).
+- Migrate-then-serve via existing readiness revision gate.
+- Configure contact keys in deployment secrets before E7-T7; until then the feature may refuse reveal safely when keys are absent.
+- Rollback: previous image; additive tables unused.
 
 ## Risks and mitigations
 
-- Session/cookie abuse without TLS: cookies are Secure; auth admin actions stay disabled on plain HTTP; production activation is E7-T7.
-- Rate-limit state growth: bounded design with documented limits; PostgreSQL-backed counters or explicit in-memory bounds.
-- Bootstrap secret leakage: one-time command, no-owner precondition, no logging of secret material, CI secret-exclusion assertions extended if needed.
-- Scope creep toward E6-T5/T6/T7: explicitly out of scope in the task file.
+- Missing keys in rehearsal: fail closed on encrypt/reveal; do not write plaintext.
+- Scope creep to E6-T6/T7 or E7-T7: explicitly out of scope.
+- Dependency on historical contact density: synthetic and fixture offers cover acceptance; full historical backfill of contact_points may occur on next import/replay without blocking API merge.
 
 ## Invalidation triggers
 
-- Completion or re-scope of E3/E4/E5 blocking dependencies that changes E6 sequencing.
-- Any persisted/public contract change in the identity surface beyond this plan.
-- A material security-model change (session model, cookie transport, owner bootstrap ownership).
+- Material change to reveal authorization, encryption algorithm, or public contact contracts.
+- New deferred decision blocking contact storage.
+- Re-scope that merges owner console or frontend reveal UX into this task.
 
 ## Approval checklist
 
@@ -94,11 +96,11 @@ Only E6-T4 is sequenced. No proposed task appears here; later E6 candidates are 
 - [x] Every sequence entry is a promoted task with complete acceptance criteria and traceability.
 - [x] Dependencies are complete, acyclic, and enforceable task by task.
 - [x] Affected modules, contracts, tests, migrations, risks, rollout, and rollback are explicit.
-- [x] Deferred decisions required for implementation are resolved.
-- [x] No production or disposable proof code has been written.
+- [x] Deferred decisions required for implementation are resolved (none for E6-T5).
+- [x] No production or disposable proof code has been written in this plan PR.
 - [x] `revision` represents the material plan being submitted.
-- [x] `status` is `awaiting_approval` and approval remains `pending`.
+- [x] Approval recorded under the owner continue / AD-009 autonomous directive.
 
 ## Owner decision
 
-The owner records the decision only in the YAML `approval` object. Approval authorizes the recorded plan revision, not blanket epic implementation: each task must still satisfy promotion, dependency, state, and one-branch-per-task gates.
+The owner records the decision only in the YAML `approval` object. Approval authorizes this plan revision, not blanket epic implementation: E6-T5 still requires promotion, dependency, branch, and evidence gates.
