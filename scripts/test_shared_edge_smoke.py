@@ -71,6 +71,31 @@ class HttpsSmokeTests(unittest.TestCase):
         }
         smoke_https_routes(FakeCurl(responses), target)
 
+    def test_accepts_wef_only_routes(self) -> None:
+        target = SmokeTarget(
+            wef_hostname="wef.test",
+            http_port=18080,
+            https_port=18443,
+        )
+        responses: dict[str, tuple[int, dict[str, str], str]] = {
+            f"https://{target.wef_hostname}:{target.https_port}/": (
+                200,
+                {},
+                json.dumps({"fixture": "wef-web"}),
+            ),
+            f"https://{target.wef_hostname}:{target.https_port}/api/v1/health/ready": (
+                200,
+                {},
+                json.dumps({"fixture": "wef-api"}),
+            ),
+            f"https://{target.wef_hostname}:{target.https_port}/media/derivatives/x.webp": (
+                200,
+                {},
+                json.dumps({"fixture": "wef-media"}),
+            ),
+        }
+        smoke_https_routes(FakeCurl(responses), target)
+
     def test_rejects_failed_status(self) -> None:
         target = fixture_target()
         responses: dict[str, tuple[int, dict[str, str], str]] = {

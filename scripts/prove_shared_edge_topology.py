@@ -328,6 +328,28 @@ def assert_generated_configuration_policy(rendered: dict[str, str]) -> None:
     assert "duckdns" not in issuance, "no production hostname in issuance"
 
 
+def assert_wef_only_renderer() -> None:
+    """Prove WEF-only releases omit Forecast TLS and issuance."""
+    with tempfile.TemporaryDirectory() as workspace:
+        target = Path(workspace) / "r-wef-only"
+        write_release(
+            EdgeConfiguration(
+                wef_hostname="wef.test",
+                wef_api_upstream="fixture-wef-api:8080",
+                wef_media_upstream="fixture-wef-media:8080",
+                wef_web_upstream="fixture-wef-web:8080",
+                fixture_mode=True,
+            ),
+            target,
+        )
+        tls = (target / TLS_CONFIG).read_text(encoding="utf-8")
+        issuance = (target / ISSUANCE_FILENAME).read_text(encoding="utf-8")
+        assert "server_name wef.test;" in tls, "WEF virtual host missing"
+        assert "server_name forecast.test;" not in tls, "forecast vhost must be absent"
+        assert issuance.count("certbot certonly") == 1, "WEF-only issuance is one cert"
+        assert "forecast.test" not in issuance, "forecast must not appear in issuance"
+
+
 def assert_renderer_negative() -> None:
     """Prove the renderer rejects unsafe or non-deterministic inputs."""
     with tempfile.TemporaryDirectory() as workspace:
@@ -449,6 +471,7 @@ def main() -> int:
     assert_infra_secret_exclusion()
     rendered = assert_renderer_positive()
     assert_generated_configuration_policy(rendered)
+    assert_wef_only_renderer()
     assert_renderer_negative()
     assert_image_pin_consistency()
     print("shared-edge topology proof: all assertions passed")

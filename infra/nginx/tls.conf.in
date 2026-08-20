@@ -85,30 +85,5 @@ http {
             proxy_set_header X-Forwarded-Proto $scheme;
         }
     }
-
-    server {
-        listen 443 ssl;
-        listen [::]:443 ssl;
-        http2 on;
-        server_name {{FORECAST_HOSTNAME}};
-
-        ssl_certificate /etc/nginx-edge/letsencrypt/live/{{FORECAST_HOSTNAME}}/fullchain.pem;
-        ssl_certificate_key /etc/nginx-edge/letsencrypt/live/{{FORECAST_HOSTNAME}}/privkey.pem;
-
-        add_header X-Content-Type-Options "nosniff" always;
-        add_header X-Frame-Options "DENY" always;
-        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-
-        location ~ (^|/)\. {
-            return 404;
-        }
-
-        location / {
-            proxy_pass http://{{FORECAST_UPSTREAM}};
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
-    }
+{{FORECAST_SERVER_BLOCK}}
 }

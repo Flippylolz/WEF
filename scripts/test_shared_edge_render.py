@@ -104,6 +104,19 @@ class ValidateConfigurationTests(unittest.TestCase):
         with self.assertRaises(SharedEdgeRenderError):
             validate_configuration(configuration)
 
+    def test_accepts_wef_only_configuration(self) -> None:
+        configuration = fixture_configuration(
+            forecast_hostname=None,
+            forecast_upstream=None,
+        )
+        validate_configuration(configuration)
+
+    def test_rejects_partial_forecast_configuration(self) -> None:
+        with self.assertRaises(SharedEdgeRenderError):
+            validate_configuration(fixture_configuration(forecast_upstream=None))
+        with self.assertRaises(SharedEdgeRenderError):
+            validate_configuration(fixture_configuration(forecast_hostname=None))
+
 
 class WriteReleaseTests(unittest.TestCase):
     """Verify deterministic release directory production."""
@@ -173,6 +186,26 @@ class WriteReleaseTests(unittest.TestCase):
             issuance = (target / ISSUANCE_FILENAME).read_text(encoding="utf-8")
             self.assertIn("https://pebble:14000/dir", issuance)
             self.assertNotIn("letsencrypt.org", issuance)
+
+    def test_writes_wef_only_release_without_forecast_vhost(self) -> None:
+        with TemporaryDirectory() as directory:
+            target = Path(directory) / "r-wef-only"
+            write_release(
+                fixture_configuration(
+                    forecast_hostname=None,
+                    forecast_upstream=None,
+                ),
+                target,
+            )
+            tls = (target / TLS_CONFIG).read_text(encoding="utf-8")
+            redirect = (target / TLS_REDIRECT_CONFIG).read_text(encoding="utf-8")
+            issuance = (target / ISSUANCE_FILENAME).read_text(encoding="utf-8")
+            self.assertIn("server_name wef.test;", tls)
+            self.assertNotIn("server_name forecast.test;", tls)
+            self.assertNotIn("forecast.test", redirect)
+            self.assertIn("-d wef.test", issuance)
+            self.assertNotIn("forecast.test", issuance)
+            self.assertEqual(issuance.count("certbot certonly"), 1)
 
 
 if __name__ == "__main__":
