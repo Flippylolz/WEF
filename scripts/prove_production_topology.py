@@ -29,10 +29,12 @@ from scripts.deploy.validate_release import (
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.production.yaml"
+CANDIDATE_COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.candidate.yaml"
 LOCAL_COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.yaml"
 RELEASE_SHA = "a" * 40
 WEF_ROOT = Path("/home/nuc/wef")
 RELEASE_DIR = WEF_ROOT / "releases" / RELEASE_SHA
+BUNDLE_CHECKSUM = "2399a88c70253c3f34b6ab73c423e094e7eb5f179ee9392b87ed715a74c6649d"
 BACKEND_IMAGE = (
     "ghcr.io/flippylolz/wef-backend"
     "@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -351,11 +353,82 @@ def assert_inventory_non_interference_gate() -> None:
         raise AssertionError(msg)
 
 
+def candidate_environment() -> dict[str, str]:
+    """Return complete non-sensitive candidate verification configuration."""
+    candidate_media = WEF_ROOT / "candidates" / BUNDLE_CHECKSUM / "media"
+    return {
+        **release_environment(),
+        "WEF_CANDIDATE_BUNDLE_CHECKSUM": BUNDLE_CHECKSUM,
+        "WEF_CANDIDATE_DATABASE_URL": (
+            "postgresql+asyncpg://wef:fixture-password@db:5432/wef_hist_candidate"
+        ),
+        "WEF_CANDIDATE_PUBLIC_DERIVATIVES_PATH": str(candidate_media / "public"),
+        "WEF_CANDIDATE_RESTRICTED_ORIGINALS_PATH": str(candidate_media / "originals"),
+        "WEF_CANDIDATE_VERIFY_BIND_ADDRESS": "127.0.0.1",
+        "WEF_CANDIDATE_VERIFY_PORT": "13100",
+        "WEF_MIGRATION_HEAD": "20260815_0008",
+    }
+
+
+def render_candidate_compose(environment: dict[str, str]) -> dict[str, Any]:
+    """Render candidate Compose as JSON without emitting substituted values."""
+    docker = shutil.which("docker")
+    if docker is None:
+        msg = "docker is required to prove candidate topology"
+        raise RuntimeError(msg)
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as env_file:
+        for key, value in sorted(environment.items()):
+            env_file.write(f"{key}={value}\n")
+        env_file.flush()
+        result = subprocess.run(  # noqa: S603 - executable resolved from trusted PATH
+            [
+                docker,
+                "compose",
+                "--env-file",
+                env_file.name,
+                "--file",
+                str(CANDIDATE_COMPOSE_FILE),
+                "config",
+                "--format",
+                "json",
+            ],
+            check=True,
+            cwd=REPOSITORY_ROOT,
+            capture_output=True,
+            text=True,
+        )
+    return cast("dict[str, Any]", json.loads(result.stdout))
+
+
+def assert_candidate_topology(model: dict[str, Any]) -> None:
+    """Prove loopback-only candidate verification boundaries."""
+    assert model["name"] == "wef-candidate"
+    services = cast("dict[str, dict[str, Any]]", model["services"])
+    assert set(services) == {"api", "web", "edge"}
+    assert "provider-egress" not in model.get("networks", {})
+    edge_ports = services["edge"].get("ports", [])
+    assert edge_ports
+    published = edge_ports[0]
+    assert published["host_ip"] == "127.0.0.1"
+    assert str(published["published"]) == "13100"
+    mounts = {
+        name: {volume["target"]: volume for volume in service.get("volumes", [])}
+        for name, service in services.items()
+    }
+    assert mounts["api"]["/app/media/public"]["read_only"] is True
+    assert mounts["edge"]["/srv/media"]["read_only"] is True
+    forbidden = {"/source", "/app/media/originals", "/srv/originals"}
+    assert forbidden.isdisjoint(mounts["api"])
+    assert forbidden.isdisjoint(mounts["edge"])
+    assert "provider-egress" not in services["api"].get("networks", {})
+
+
 def main() -> int:
     """Run the production topology proof."""
     environment = release_environment()
     model = render_compose(environment)
     assert_topology(model)
+    assert_candidate_topology(render_candidate_compose(candidate_environment()))
     assert_local_media_boundary(render_local_compose())
     assert_negative_configuration_gate()
     assert_script_safety()

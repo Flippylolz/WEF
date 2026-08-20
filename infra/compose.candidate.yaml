@@ -1,0 +1,148 @@
+name: wef-candidate
+
+x-logging: &candidate-logging
+  driver: json-file
+  options:
+    max-file: "3"
+    max-size: 10m
+
+x-application-security: &application-security
+  read_only: true
+  init: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=64m
+
+x-backend-environment: &backend-environment
+  WEF_DATABASE_URL: ${WEF_CANDIDATE_DATABASE_URL:?WEF_CANDIDATE_DATABASE_URL is required}
+  WEF_ENV: production
+  WEF_LOG_LEVEL: ${WEF_LOG_LEVEL:-info}
+
+services:
+  api:
+    image: ${WEF_BACKEND_IMAGE:?WEF_BACKEND_IMAGE digest is required}
+    environment: *backend-environment
+    <<: *application-security
+    restart: unless-stopped
+    stop_grace_period: 15s
+    cpus: "1.00"
+    mem_limit: 768m
+    mem_reservation: 128m
+    pids_limit: 256
+    logging: *candidate-logging
+    volumes:
+      - type: bind
+        source: ${WEF_CANDIDATE_PUBLIC_DERIVATIVES_PATH:?WEF_CANDIDATE_PUBLIC_DERIVATIVES_PATH is required}
+        target: /app/media/public
+        read_only: true
+        bind:
+          create_host_path: false
+    expose:
+      - "8000"
+    networks:
+      - application
+
+  web:
+    image: ${WEF_WEB_IMAGE:?WEF_WEB_IMAGE digest is required}
+    environment:
+      WEF_API_URL: http://api:8000
+      WEF_RELEASE_SHA: ${WEF_RELEASE_SHA:?WEF_RELEASE_SHA is required}
+    <<: *application-security
+    restart: unless-stopped
+    stop_grace_period: 15s
+    cpus: "0.75"
+    mem_limit: 512m
+    mem_reservation: 64m
+    pids_limit: 192
+    logging: *candidate-logging
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+    expose:
+      - "3000"
+    networks:
+      - application
+
+  edge:
+    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    user: "1000:1000"
+    environment:
+      WEF_RELEASE_SHA: ${WEF_RELEASE_SHA:?WEF_RELEASE_SHA is required}
+    read_only: true
+    init: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /config:rw,noexec,nosuid,size=16m
+      - /tmp:rw,noexec,nosuid,size=16m
+    restart: unless-stopped
+    stop_grace_period: 15s
+    cpus: "0.25"
+    mem_limit: 256m
+    mem_reservation: 32m
+    pids_limit: 128
+    logging: *candidate-logging
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    ports:
+      - "${WEF_CANDIDATE_VERIFY_BIND_ADDRESS:?WEF_CANDIDATE_VERIFY_BIND_ADDRESS is required}:${WEF_CANDIDATE_VERIFY_PORT:?WEF_CANDIDATE_VERIFY_PORT is required}:8080"
+    volumes:
+      - type: bind
+        source: ${WEF_RELEASE_DIR:?WEF_RELEASE_DIR is required}/Caddyfile.production
+        target: /etc/caddy/Caddyfile
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${WEF_CANDIDATE_PUBLIC_DERIVATIVES_PATH:?WEF_CANDIDATE_PUBLIC_DERIVATIVES_PATH is required}
+        target: /srv/media
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${WEF_ROOT:?WEF_ROOT is required}/caddy-data-candidate
+        target: /data
+        bind:
+          create_host_path: true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--spider",
+          "http://127.0.0.1:8080/api/v1/health/ready",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    networks:
+      - application
+
+networks:
+  application:
+    external: true
+    name: wef-production_application
