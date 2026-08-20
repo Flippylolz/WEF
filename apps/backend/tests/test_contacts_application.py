@@ -22,12 +22,20 @@ from wef_backend.features.contacts.infrastructure.crypto import (
 )
 
 
+def test_mask_empty_and_short_values() -> None:
+    """Short or empty contacts collapse to opaque fillers."""
+    assert mask_contact_value(ContactKind.PHONE, "") == "••••"
+    assert mask_contact_value(ContactKind.PHONE, "12") == "••••"
+    assert mask_contact_value(ContactKind.TELEGRAM, "@a") == "@••••"
+    assert normalize_contact_value(ContactKind.TELEGRAM, "Agent") == "@agent"
+
+
 def test_mask_phone_and_telegram() -> None:
     """Public masks never echo the full contact value."""
     phone = mask_contact_value(ContactKind.PHONE, "+48123456789")
     handle = mask_contact_value(ContactKind.TELEGRAM, "@agent_warsaw")
     assert "+48123456789" not in phone
-    assert "789"[-2:] in phone or phone.endswith("89")
+    assert phone.endswith("89")
     assert "@agent_warsaw" not in handle
     assert handle.startswith("@ag")
 
@@ -111,6 +119,40 @@ async def test_reveal_forced_password_and_rate_limit() -> None:
     assert all("value" not in str(item) or "enc:" not in str(item) for item in store.audits)
 
 
+async def test_reveal_unavailable_when_decrypt_fails() -> None:
+    """Corrupt ciphertext fails closed as unavailable."""
+    offer_id = uuid4()
+    cipher = FakeContactCipher()
+    store = FakeContactStore(visible_offers={offer_id})
+    records = build_contact_records(
+        cipher,
+        offer_id=offer_id,
+        source_message_id=None,
+        contacts=(ContactInput(kind=ContactKind.PHONE, value="+48123456789"),),
+    )
+    broken = records[0]
+    store.contacts[offer_id] = [
+        type(broken)(
+            id=broken.id,
+            offer_id=broken.offer_id,
+            source_message_id=broken.source_message_id,
+            kind=broken.kind,
+            value_ciphertext="not-enc",
+            masked_value=broken.masked_value,
+            fingerprint_hmac=broken.fingerprint_hmac,
+            is_revealable=True,
+        ),
+    ]
+    reveal = RevealOfferContacts(store, cipher, FakeRateLimiter())
+    result = await reveal(
+        user_id=uuid4(),
+        offer_id=offer_id,
+        request_id=uuid4(),
+        must_change_password=False,
+    )
+    assert result.outcome is RevealOutcome.UNAVAILABLE
+
+
 async def test_build_contact_records_requires_keys() -> None:
     """Missing crypto keys fail closed before persistence."""
     cipher = FakeContactCipher(available=False)
@@ -121,3 +163,17 @@ async def test_build_contact_records_requires_keys() -> None:
             source_message_id=None,
             contacts=(ContactInput(kind=ContactKind.TELEGRAM, value="@x"),),
         )
+
+
+def test_decode_secret_key_rejects_bad_material() -> None:
+    """Invalid key encodings fail closed."""
+    assert decode_secret_key(None) is None
+    assert decode_secret_key("   ") is None
+    with pytest.raises(Exception, match="contact key"):
+        decode_secret_key("not-a-key!!!")
+    key = decode_secret_key("ee" * 32)
+    assert key is not None
+    cipher = AesGcmContactCipher(encryption_key=key, hmac_key=None)
+    assert cipher.available is False
+    with pytest.raises(Exception, match="unavailable"):
+        cipher.encrypt("x")
