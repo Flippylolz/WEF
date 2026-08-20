@@ -267,7 +267,7 @@ def write_release(
     return written
 
 
-def parse_configuration(argv: list[str] | None) -> tuple[EdgeConfiguration, Path]:
+def parse_configuration(argv: list[str] | None) -> tuple[EdgeConfiguration, Path, Path]:
     """Parse and validate renderer arguments into configuration and target."""
     parser = argparse.ArgumentParser(description="Render a deterministic shared-edge release.")
     parser.add_argument("--wef-hostname", required=True)
@@ -299,14 +299,14 @@ def parse_configuration(argv: list[str] | None) -> tuple[EdgeConfiguration, Path
         email=arguments.email,
         fixture_mode=arguments.fixture_mode,
     )
-    return config, arguments.output_dir
+    return config, arguments.output_dir, arguments.templates_dir
 
 
 def main(argv: list[str] | None = None) -> int:
     """Render one validated shared-edge release from CLI arguments."""
-    config, output_dir = parse_configuration(argv)
+    config, output_dir, templates_dir = parse_configuration(argv)
     try:
-        written = write_release(config, output_dir)
+        written = write_release(config, output_dir, templates_dir=templates_dir)
     except SharedEdgeRenderError as error:
         print(f"shared_edge_render: {error}", file=sys.stderr)
         return 1
