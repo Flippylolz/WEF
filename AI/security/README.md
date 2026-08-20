@@ -13,6 +13,6 @@ This domain owns identity, sessions, authorization, contact protection, reveal a
 - The fixed `owner` role alone administers users, session revocation, forced password resets, and reveal audits through the server-rendered owner console.
 - Public responses mask contacts. A separate authenticated endpoint performs authorized, rate-limited, audited reveal.
 - Passwords, hashes, session tokens, decrypted contacts, secrets, and owner bootstrap credentials never appear in source, images, logs, public responses, or generic admin forms.
-- User/admin authentication and contact reveal remain disabled until HTTPS and required secrets are in place.
+- User/admin authentication and contact reveal are enabled on the verified HTTPS origin after E7-T7; plain `:3100` remains a Secure-cookie-incompatible rollback path.
 
 Security-affecting changes require an accepted decision, threat-appropriate tests, redacted audit behavior, and explicit traceability to product and contract requirements.

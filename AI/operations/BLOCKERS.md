@@ -4,14 +4,6 @@ This append-only log records blockers that could not be safely resolved autonomo
 
 ## Active blockers
 
-### B-002: Production authentication / sensitive-feature gate
-
-- Impact: registration, sessions, owner administration, and contact reveal must remain disabled until E7-T7 after verified HTTPS.
-- Current state (2026-08-20): **E7-T10 live WEF HTTPS is complete** on `https://2fa54e2405.duckdns.org` (Nginx/Certbot). Caddy `:3100` retained as rollback; Forecast stays on `:3000`.
-- Needed from owner: none for HTTPS; E7-T7 enables sensitive features when ready.
-- Safe workaround: anonymous browsing/API on HTTPS; keep auth/admin/reveal disabled until E7-T7.
-- Related: B-009 resolved via D-009 + E7-T10.
-
 ### B-003: Telegram client credentials/session
 
 - Impact: live channel ingestion cannot run.
@@ -39,10 +31,15 @@ This append-only log records blockers that could not be safely resolved autonomo
 
 ## Resolved during overnight work
 
+### R-010 / B-002: Production authentication / sensitive-feature gate (E7-T7)
+
+- Resolution: E7-T7 enabled registration/sessions/admin/contact reveal on `https://2fa54e2405.duckdns.org` after E7-T10 HTTPS (PRs #123/#124/#125). Contact crypto keys in deploy; Uvicorn trusts forwarded proto; owner bootstrapped once then bootstrap secrets removed; `/admin` routed to API; `:3100` cannot hold Secure sessions; Forecast `:3000` unchanged.
+- Effect: E7-T11 may proceed behind the remaining historical public-activation gate.
+
 ### R-009 / B-009: D-009 shared TLS hostnames and forwarding (E7-T10)
 
 - Resolution: D-009 resolved WEF-only on `2fa54e2405.duckdns.org` (PR #119); plan revision 7 + tooling (PR #120/#121); live NUC cutover 2026-08-20 with production Let's Encrypt, HTTP→HTTPS redirect, renew dry-run, Forecast `:3000` unchanged.
-- Effect: E7-T7/E7-T11 may proceed behind remaining auth/activation gates; anonymous HTTPS is the public WEF entry.
+- Effect: E7-T11 may proceed behind the remaining historical public-activation gate; anonymous HTTPS plus E7-T7 auth are live on the public WEF entry.
 
 ### R-006 / B-008: Historical geocoder selection
 
