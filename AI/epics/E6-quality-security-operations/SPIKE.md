@@ -141,7 +141,7 @@ This recommendation is submitted for owner approval and does not authorize any p
 ## Proposed task boundaries
 
 - [E6-T1: Complete automated test pyramid](proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — boundary confirmed; blocked on E4-T3/E5-T3.
-- [E6-T2: Perform privacy and security hardening](proposed-tasks/E6-T2-perform-privacy-and-security-hardening.md) — boundary confirmed; blocked on E3-T4/E4-T3/E5-T3.
+- [E6-T2: Perform privacy and security hardening](tasks/E6-T2-perform-privacy-and-security-hardening.md) — promoted under plan revision 6; dependencies E3-T4/E4-T3/E5-T3 done.
 - [E6-T3: Add operational diagnostics](proposed-tasks/E6-T3-add-operational-diagnostics.md) — boundary confirmed; blocked on E3-T2/E4-T4.
 - [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — boundary confirmed and actionable; promoted and the first implementation-plan sequence entry.
 - [E6-T5: Implement contact masking, encryption, reveal, and audit](tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `done`; plan revision 3.
