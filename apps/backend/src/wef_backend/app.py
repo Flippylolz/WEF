@@ -34,11 +34,18 @@ from wef_backend.features.identity.interface.favorites_router import (
     router as favorites_router,
 )
 from wef_backend.health import router as health_router
+from wef_backend.logging_config import build_access_log_middleware, configure_logging
 from wef_backend.middleware.public_rate_limit import build_public_rate_limit_middleware
+from wef_backend.settings import load_settings
 
 
 def create_http_app(services: AppServices | None = None) -> FastAPI:
     """Create the transport app, optionally with explicitly supplied services."""
+    settings = load_settings()
+    configure_logging(
+        level=settings.log_level,
+        json_logs=settings.env == "production",
+    )
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -89,6 +96,10 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
             cookie_secure=services.auth_cookie_secure,
         )
         admin.mount_to(app)
+
+    app.middleware("http")(
+        build_access_log_middleware(release_sha=settings.release_sha),
+    )
 
     @app.middleware("http")
     async def attach_request_identity(

@@ -178,6 +178,7 @@ def assert_topology(model: dict[str, Any]) -> None:  # noqa: PLR0915
     assert services["seed"]["image"] == BACKEND_IMAGE
     assert services["web"]["image"] == WEB_IMAGE
     assert services["web"]["environment"]["WEF_RELEASE_SHA"] == RELEASE_SHA
+    assert services["api"]["environment"]["WEF_RELEASE_SHA"] == RELEASE_SHA
     permissions = services["db-permissions"]
     assert permissions["image"] == services["db"]["image"]
     assert permissions["profiles"] == ["operator"]

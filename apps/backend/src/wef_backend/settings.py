@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     contact_encryption_key: SecretStr | None = None
     contact_hmac_key: SecretStr | None = None
     admin_session_secret: SecretStr | None = None
+    release_sha: str | None = None
 
 
 def load_settings() -> Settings:
