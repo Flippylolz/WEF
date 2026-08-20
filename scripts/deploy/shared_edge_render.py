@@ -267,7 +267,7 @@ def write_release(
     return written
 
 
-def parse_configuration(argv: list[str] | None) -> tuple[EdgeConfiguration, Path]:
+def parse_configuration(argv: list[str] | None) -> tuple[EdgeConfiguration, Path, Path]:
     """Parse and validate renderer arguments into configuration and target."""
     parser = argparse.ArgumentParser(description="Render a deterministic shared-edge release.")
     parser.add_argument("--wef-hostname", required=True)
