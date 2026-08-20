@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime  # noqa: TC003
 from uuid import UUID  # noqa: TC003
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, Uuid, func
+from sqlalchemy import DateTime, Index, String, Uuid, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -23,15 +23,9 @@ class AdminAuditEventRow(AdminBase):
     )
 
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
-    owner_user_id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        ForeignKey("users.id", ondelete="RESTRICT"),
-    )
-    target_user_id: Mapped[UUID | None] = mapped_column(
-        Uuid(as_uuid=True),
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True,
-    )
+    # Cross-feature FKs live in Alembic only (separate DeclarativeBase metadata).
+    owner_user_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
+    target_user_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True)
     target_type: Mapped[str | None] = mapped_column(String(64))
     target_id: Mapped[str | None] = mapped_column(String(64))
     action: Mapped[str] = mapped_column(String(64))
