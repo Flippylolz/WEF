@@ -178,12 +178,13 @@ def build_snapshot_export_sql(
 ) -> str:
     """Return SQL exporting one keyed snapshot map as JSON."""
     _validate_table_schema(table, schema)
-    payload = _row_payload_expression(table, "row_data")
-    key_expr = _key_projection(table, "row_data")
+    payload = _row_payload_expression(table, "t")
+    key_expr = _key_projection(table, "t")
     return (
         "SELECT COALESCE("
-        f"jsonb_object_agg(key_value, {payload}), '{{}}'::jsonb)::text "
-        f"FROM (SELECT {key_expr} AS key_value, t AS row_data FROM {schema}.{table} t) keyed;"
+        f"jsonb_object_agg(key_value, payload), '{{}}'::jsonb)::text "
+        f"FROM (SELECT {key_expr} AS key_value, {payload} AS payload "
+        f"FROM {schema}.{table} t) keyed;"
     )
 
 
