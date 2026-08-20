@@ -1080,10 +1080,16 @@ input:focus-visible {
 }
 
 .account-modal {
+  /* Native dialog centering; Tailwind preflight resets margin and shifts the panel. */
+  position: fixed;
+  inset: 0;
+  margin: auto;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   padding: 0;
   width: min(calc(100vw - 2rem), 28rem);
+  max-height: min(90vh, 40rem);
+  overflow: auto;
   background: var(--surface);
   color: var(--foreground);
   box-shadow: 0 1rem 2.5rem rgb(23 32 27 / 18%);

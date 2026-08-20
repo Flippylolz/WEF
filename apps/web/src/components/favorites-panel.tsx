@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { FavoriteLocation } from "@/lib/favorites-api";
 
@@ -11,6 +11,7 @@ type FavoritesPanelProps = {
   loading: boolean;
   onClose: () => void;
   onSelect: (locationId: string) => void;
+  onRemove: (locationId: string) => Promise<boolean>;
 };
 
 export function FavoritesPanel({
@@ -19,15 +20,25 @@ export function FavoritesPanel({
   loading,
   onClose,
   onSelect,
+  onRemove,
 }: FavoritesPanelProps) {
   const t = useTranslations("favorites");
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState(false);
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      setPendingId(null);
+      setRemoveError(false);
+    }
   }, [open]);
 
   return (
@@ -64,23 +75,48 @@ export function FavoritesPanel({
           <ul className="favorites-list">
             {items.map((item) => (
               <li key={item.location_id}>
-                <button
-                  className="location-button"
-                  type="button"
-                  onClick={() => {
-                    onSelect(item.location_id);
-                    onClose();
-                  }}
-                >
-                  <span>
-                    <strong>{item.display_name}</strong>
-                    <small>{item.display_address}</small>
-                  </span>
-                </button>
+                <div className="location-button-row">
+                  <button
+                    className="location-button"
+                    type="button"
+                    onClick={() => {
+                      onSelect(item.location_id);
+                      onClose();
+                    }}
+                  >
+                    <span>
+                      <strong>{item.display_name}</strong>
+                      <small>{item.display_address}</small>
+                    </span>
+                  </button>
+                  <button
+                    className="location-star-button location-star-button-active"
+                    type="button"
+                    aria-label={t("remove", { name: item.display_name })}
+                    aria-pressed="true"
+                    disabled={pendingId === item.location_id}
+                    onClick={() => {
+                      void (async () => {
+                        setRemoveError(false);
+                        setPendingId(item.location_id);
+                        const removed = await onRemove(item.location_id);
+                        setPendingId(null);
+                        if (!removed) setRemoveError(true);
+                      })();
+                    }}
+                  >
+                    ★
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         )}
+        {removeError ? (
+          <p className="account-modal-notice" role="alert">
+            {t("removeFailed")}
+          </p>
+        ) : null}
       </div>
     </dialog>
   );

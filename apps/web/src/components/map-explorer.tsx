@@ -185,7 +185,10 @@ export function MapExplorer() {
     },
   });
   const favoriteIds = useMemo(
-    () => new Set((favoritesQuery.data ?? []).map((item) => item.location_id)),
+    () =>
+      new Set(
+        (favoritesQuery.data ?? []).map((item) => String(item.location_id)),
+      ),
     [favoritesQuery.data],
   );
   const mapQuery = useQuery({
@@ -483,15 +486,16 @@ export function MapExplorer() {
                     feature={feature}
                     selected={feature.id === selectedId}
                     highlighted={feature.id === highlightedLocationId}
-                    starred={favoriteIds.has(feature.id)}
+                    starred={favoriteIds.has(String(feature.id))}
                     showStar={signedIn}
                     onSelect={selectLocation}
                     onHighlight={setHighlightedLocationId}
                     onToggleStar={async () => {
-                      const starred = favoriteIds.has(feature.id);
+                      const locationId = String(feature.id);
+                      const starred = favoriteIds.has(locationId);
                       const result = starred
-                        ? await removeFavorite(feature.id)
-                        : await addFavorite(feature.id);
+                        ? await removeFavorite(locationId)
+                        : await addFavorite(locationId);
                       if (result.state === "ready") {
                         await queryClient.invalidateQueries({
                           queryKey: ["favorites"],

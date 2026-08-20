@@ -10,7 +10,7 @@ import {
 } from "@/components/account-modal";
 import { FavoritesPanel } from "@/components/favorites-panel";
 import { fetchCurrentAccount, type Account } from "@/lib/auth-api";
-import { fetchFavorites } from "@/lib/favorites-api";
+import { fetchFavorites, removeFavorite } from "@/lib/favorites-api";
 
 export type AuthIntent = {
   mode: AccountModalMode;
@@ -178,6 +178,12 @@ export function UserToolbar({
         loading={favoritesQuery.isPending}
         onClose={() => setFavoritesOpen(false)}
         onSelect={(locationId) => onSelectFavorite?.(locationId)}
+        onRemove={async (locationId) => {
+          const result = await removeFavorite(locationId);
+          if (result.state !== "ready") return false;
+          await queryClient.invalidateQueries({ queryKey: ["favorites"] });
+          return true;
+        }}
       />
     </>
   );

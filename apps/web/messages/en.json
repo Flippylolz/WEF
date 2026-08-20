@@ -45,7 +45,9 @@
     "close": "Close favorites",
     "openList": "Open starred locations",
     "loading": "Loading starred locations…",
-    "empty": "You have not starred any locations yet."
+    "empty": "You have not starred any locations yet.",
+    "remove": "Remove {name} from starred locations",
+    "removeFailed": "Could not remove that starred location. Try again."
   },
   "home": {
     "title": "Apartments and houses for sale in Warsaw",
