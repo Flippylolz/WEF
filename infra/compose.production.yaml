@@ -17,6 +17,7 @@ x-application-security: &application-security
     - /tmp:rw,noexec,nosuid,size=64m
 
 x-backend-environment: &backend-environment
+  WEF_ADMIN_SESSION_SECRET: ${WEF_ADMIN_SESSION_SECRET:?WEF_ADMIN_SESSION_SECRET is required}
   WEF_DATABASE_URL: ${WEF_DATABASE_URL:?WEF_DATABASE_URL is required}
   WEF_ENV: production
   WEF_LOG_LEVEL: ${WEF_LOG_LEVEL:-info}

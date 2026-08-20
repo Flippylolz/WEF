@@ -226,9 +226,7 @@ class FakeIdentityStore:
         return sum(
             1
             for account in self.accounts.values()
-            if account.role is UserRole.OWNER
-            and account.is_active
-            and account.deleted_at is None
+            if account.role is UserRole.OWNER and account.is_active and account.deleted_at is None
         )
 
     async def update_account(self, account: Account) -> None:
