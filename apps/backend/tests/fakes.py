@@ -4,6 +4,18 @@ from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
+from wef_backend.features.admin.application.admin_ops import (
+    AdminAuditEvent,
+    AdminService,
+    DisableUser,
+    ForceResetUserPassword,
+    ListAdminAccounts,
+    ListAdminAudits,
+    ListRevealAudits,
+    ReactivateUser,
+    RevealAuditSummary,
+    RevokeUserSessions,
+)
 from wef_backend.features.catalog.application import (
     FacetSnapshot,
     MapFilters,
@@ -201,6 +213,22 @@ class FakeIdentityStore:
         return next(
             (a for a in self.accounts.values() if a.id == account_id),
             None,
+        )
+
+    async def list_accounts(self, *, limit: int = 100) -> tuple[Account, ...]:
+        """Return recent non-deleted in-memory accounts."""
+        accounts = [a for a in self.accounts.values() if a.deleted_at is None]
+        accounts.sort(key=lambda item: item.created_at, reverse=True)
+        return tuple(accounts[:limit])
+
+    async def count_active_owners(self) -> int:
+        """Count active non-deleted owners in memory."""
+        return sum(
+            1
+            for account in self.accounts.values()
+            if account.role is UserRole.OWNER
+            and account.is_active
+            and account.deleted_at is None
         )
 
     async def update_account(self, account: Account) -> None:
@@ -487,6 +515,59 @@ def build_contact_service(
         persist=PersistOfferContacts(contact_store, contact_cipher),
         reveal=RevealOfferContacts(contact_store, contact_cipher, limiter),
         rate_limiter=limiter,
+    )
+
+
+@dataclass
+class FakeAdminAuditStore:
+    """In-memory admin audit store."""
+
+    events: list[AdminAuditEvent] = field(default_factory=list)
+
+    async def record(self, event: AdminAuditEvent) -> None:
+        self.events.append(event)
+
+    async def list_recent(self, *, limit: int = 100) -> tuple[AdminAuditEvent, ...]:
+        return tuple(reversed(self.events[-limit:]))
+
+
+@dataclass
+class FakeRevealAuditReader:
+    """In-memory reveal audit reader."""
+
+    rows: list[RevealAuditSummary] = field(default_factory=list)
+
+    async def list_recent(self, *, limit: int = 100) -> tuple[RevealAuditSummary, ...]:
+        return tuple(self.rows[:limit])
+
+
+def build_admin_service(
+    *,
+    store: FakeIdentityStore | None = None,
+    audits: FakeAdminAuditStore | None = None,
+    reveals: FakeRevealAuditReader | None = None,
+    hasher: FakeHasher | None = None,
+    clock: FakeClock | None = None,
+) -> AdminService:
+    """Compose one admin service fully backed by fakes."""
+    identity_store = store or FakeIdentityStore()
+    audit_store = audits or FakeAdminAuditStore()
+    reveal_reader = reveals or FakeRevealAuditReader()
+    password_hasher = hasher or FakeHasher()
+    time_source = clock or FakeClock()
+    return AdminService(
+        list_accounts=ListAdminAccounts(identity_store),
+        disable_user=DisableUser(identity_store, audit_store, time_source),
+        reactivate_user=ReactivateUser(identity_store, audit_store, time_source),
+        revoke_user_sessions=RevokeUserSessions(identity_store, audit_store),
+        force_reset_password=ForceResetUserPassword(
+            identity_store,
+            audit_store,
+            password_hasher,
+            time_source,
+        ),
+        list_reveal_audits=ListRevealAudits(reveal_reader),
+        list_admin_audits=ListAdminAudits(audit_store),
     )
 
 

@@ -144,3 +144,30 @@ forbidden_modules =
     pydantic
     pydantic_settings
     sqlalchemy
+
+[importlinter:contract:admin-infrastructure-layers]
+name = Admin infrastructure implements inward contracts
+type = layers
+layers =
+    wef_backend.features.admin.infrastructure
+    wef_backend.features.admin.application
+
+[importlinter:contract:admin-interface-layers]
+name = Admin interface depends inward
+type = layers
+layers =
+    wef_backend.features.admin.interface
+    wef_backend.features.admin.application
+
+[importlinter:contract:admin-core-framework-independence]
+name = Admin application is framework independent
+type = forbidden
+source_modules =
+    wef_backend.features.admin.application
+forbidden_modules =
+    fastapi
+    geoalchemy2
+    pydantic
+    pydantic_settings
+    sqlalchemy
+    starlette_admin
