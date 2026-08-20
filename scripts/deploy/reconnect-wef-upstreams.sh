@@ -35,9 +35,10 @@ connect wef-production-web-1 wef-web
 connect wef-production-media-edge-1 wef-media
 
 if docker inspect "$NGINX_CONTAINER" >/dev/null 2>&1; then
-  docker exec "$NGINX_CONTAINER" nginx -t
-  docker exec "$NGINX_CONTAINER" nginx -s reload
-  printf 'reloaded %s upstream DNS\n' "$NGINX_CONTAINER"
+  # Non-root shared-edge nginx uses a custom config path; pid-file reload fails
+  # with an empty /run/nginx.pid. HUP the master instead.
+  docker kill -s HUP "$NGINX_CONTAINER" >/dev/null
+  printf 'signaled %s (HUP) to refresh upstream DNS\n' "$NGINX_CONTAINER"
 else
   printf 'shared-edge nginx container %s missing; upstreams attached without reload\n' \
     "$NGINX_CONTAINER" >&2
