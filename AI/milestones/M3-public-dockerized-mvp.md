@@ -1,7 +1,7 @@
 ---
 id: M3
 title: "Public Dockerized MVP"
-status: in_progress
+status: done
 ---
 
 # M3: Public Dockerized MVP
@@ -51,13 +51,15 @@ Cancelled and deferred candidates remain linked for traceability but are not com
 
 ## Exit evidence
 
-- [ ] Responsive map/list/detail and restricted-action flows satisfy accessibility, privacy, security, and performance evidence.
-- [ ] Immutable images deploy from GitHub to the isolated NUC topology with complete validated configuration and no host interference.
-- [ ] Health verification and compatible application rollback are rehearsed; release SHA/digests/migration revision are auditable.
-- [ ] HTTPS-gated registration, owner administration, and contact reveal pass production smoke/security checks while anonymous browsing remains available.
-- [ ] Shared Nginx serves independently healthy WEF and AI Forecast HTTPS hostnames, and Certbot renewal/reload/expiry monitoring plus rollback evidence pass.
-- [ ] Every required task has been promoted, approved, dependency-gated, implemented on its dedicated branch, and completed with definition-of-done evidence.
+- [x] Responsive map/list/detail and restricted-action flows satisfy accessibility, privacy, security, and performance evidence. — E5-T3/T4/T5 + E6-T1 Playwright critical path (PR #136) + E6-T2/T6; favorites unstar/modal fix PRs #138/#139.
+- [x] Immutable images deploy from GitHub to the isolated NUC topology with complete validated configuration and no host interference. — E7-T1–T3 + live `Release and deploy production` to `/home/nuc/wef` (`wef-production`, port `3100`).
+- [x] Health verification and compatible application rollback are rehearsed; release SHA/digests/migration revision are auditable. — E7-T4 + operator diagnostics (E6-T3); live `current.json` release SHA + `/api/v1/health/live`.
+- [x] HTTPS-gated registration, owner administration, and contact reveal pass production smoke/security checks while anonymous browsing remains available. — E7-T7 + E6-T4/T5/T7; live HTTPS site after E7-T10.
+- [x] Shared Nginx serves independently healthy WEF and AI Forecast HTTPS hostnames, and Certbot renewal/reload/expiry monitoring plus rollback evidence pass. — E7-T8–T10; Forecast remains on `:3000`; post-recreate reconnect via `wef-shared-edge/ops/reconnect-wef-upstreams.sh`.
+- [x] Every required task has been promoted, approved, dependency-gated, implemented on its dedicated branch, and completed with definition-of-done evidence. — Required E5/E6/E7 M3 tasks `done`; E7-T5 remains deferred (ADR-015).
+
+Recorded 2026-08-20 after live HTTPS `200` and health `live` reconfirmation (shared-edge upstream reconnect after container recreate).
 
 ## Status rule
 
-`in_progress` records the approved anonymous production-rehearsal sequence only; it grants no permission for still-proposed public-launch tasks. Change this milestone to `done` only when all required exit evidence and task completion records exist under the [workflow](../workflow/README.md).
+`done` means every required exit-evidence checkbox above is satisfied under the [workflow](../workflow/README.md). E7-T5 backups remain deferred and are not an M3 gate. E8 live Telegram ingestion remains blocked on spike approval (M4).
