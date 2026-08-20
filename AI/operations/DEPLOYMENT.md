@@ -46,7 +46,7 @@ Exact service/command names are finalized during implementation, but no workflow
 Production services:
 
 - `caddy` (current interim): configurable `WEF_PUBLIC_PORT`, initially `3100/TCP`, for the bounded anonymous rehearsal.
-- `nginx` plus `certbot` (target shared edge): standard 80/443 ingress with free automatically renewed TLS for WEF and the existing AI Forecast service. The inert topology is built and proven through [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) in the dedicated `wef-shared-edge` Compose project (`infra/compose.shared-edge.yaml` plus proof-only `infra/compose.shared-edge-fixtures.yaml`); cutover is automated by [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md), and activation happens only through gated [E7-T10](../epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md). Ordinary `wef-production` releases neither deploy nor remove the shared edge.
+- `nginx` plus `certbot` (target shared edge): standard 80/443 ingress with free automatically renewed TLS for WEF and the existing AI Forecast service. The inert topology is built and proven through [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) in the dedicated `wef-shared-edge` Compose project (`infra/compose.shared-edge.yaml` plus proof-only `infra/compose.shared-edge-fixtures.yaml`); cutover is automated by [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md), and activation happens only through gated [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md). Ordinary `wef-production` releases neither deploy nor remove the shared edge.
 - `web`: internal port only.
 - `api`: internal port only.
 - `db`: an application-owned PostgreSQL/PostGIS container on the internal network only, with a persistent host-backed volume.
@@ -114,7 +114,7 @@ Target Nginx/Certbot edge:
 - Nginx owns standard ports 80/443 and routes separate hostnames to private WEF and AI Forecast upstreams.
 - Certbot obtains free Let's Encrypt certificates, persists its complete state, renews unattended, and reloads Nginx only after successful renewal.
 - HTTP redirects to HTTPS only after both application routes and certificates pass external smoke checks.
-- [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) owns inert topology; [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) owns cutover/rollback automation; [E7-T10](../epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) owns DNS/router confirmation, live AI Forecast/WEF cutover, Caddy removal, renewal proof, monitoring, and rollback.
+- [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) owns inert topology; [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) owns cutover/rollback automation; [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) owns DNS/router confirmation, live AI Forecast/WEF cutover, Caddy removal, renewal proof, monitoring, and rollback.
 - [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables authentication/contact reveal only after the E7-T10 HTTPS gate.
 - Full topology, certificate lifecycle, and evidence requirements are in [Nginx and TLS target](NGINX_TLS.md).
 

@@ -37,7 +37,7 @@ invalidation:
 
 - [Spike revision 4](SPIKE.md) remains current and preserves the revision-3 shared-edge design.
 - Binding constraints unchanged: no live NUC mutation, no real DNS/ACME, no public 80/443 checks, no router/firewall changes, and no removal of application-port forwarding in this task.
-- [D-009](../../decisions/deferred/D-009-shared-tls-hostnames-and-forwarding.md) still gates only [E7-T10](proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md).
+- [D-009](../../decisions/deferred/D-009-shared-tls-hostnames-and-forwarding.md) still gates only [E7-T10](tasks/E7-T10-roll-out-and-verify-shared-tls.md).
 
 ## Scope and outcome
 

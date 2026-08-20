@@ -17,10 +17,10 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 
 ## Approval state
 
-- Epic workspace status: `ready`; the anonymous rehearsal remains complete while historical snapshot transfer is prioritized.
-- [Spike](SPIKE.md): `approved`, revision 4, selecting selective E3-T5 snapshot transfer and non-public production candidate staging.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 4 `approved` by Flippylolz on 2026-08-16; it sequences only E7-T6 revision 3.
-- E7-T1 through E7-T4, E7-T6, E7-T8, and E7-T9 are `done`; E7-T8's 2026-08-15 invalidation was an accidental touch by another agent's E7-T6 priority work and was restored by the owner on 2026-08-16 (completion on PR #69). E7-T6 completed on 2026-08-20 through PRs #88–#104 with a verified non-public candidate on the NUC (`wef_hist_candidate`, loopback `:13100`). E7-T9 completed through PRs #106/#107 with fixture-proven cutover automation (no live NUC mutation). E7-T11 is proposed for the ADR-019-gated public activation, and E7-T10 remains proposed behind D-009 ([proposed plan revision 6](PROPOSED_IMPLEMENTATION_PLAN-revision-6.md), operations B-009). E7-T5 remains deferred and E7-T7 remains proposed.
+- Epic workspace status: `ready`; D-009 resolved as WEF-only TLS; E7-T10 promoted under plan revision 7.
+- [Spike](SPIKE.md): `approved`, revision 4.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 7 `approved`; sequences only E7-T10 revision 2 (WEF-only shared TLS; Forecast stays on `:3000`).
+- E7-T1 through E7-T4, E7-T6, E7-T8, and E7-T9 are `done`. E7-T10 is `ready`. E7-T5 remains deferred; E7-T7 and E7-T11 remain proposed behind HTTPS/ADR-019 gates.
 
 ## Milestones
 
@@ -62,14 +62,14 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - [E7-T3: Implement GitHub image and deployment workflows](tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `done`, P0/L, M3
 - [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — `done`, P0/M, M3
 - [E7-T8: Build isolated shared Nginx TLS topology](tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `done` through PR #69 (gates restored by owner after an accidental invalidation), P1/M, M3
-- [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `done` through PRs #106/#107; live rollout remains E7-T10, P1/L, M3
+- [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `done` through PRs #106/#107
 - [E7-T6: Transfer the verified historical snapshot into a non-public production candidate](tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `done` through PRs #88–#104, P1/L, M3
+- [E7-T10: Roll out and verify WEF-only shared TLS](tasks/E7-T10-roll-out-and-verify-shared-tls.md) — `ready`, P1/M, M3; plan revision 7; Forecast stays on `:3000`
 
 ## Deferred/proposed tasks
 
 - [E7-T5: Future backup and restore capability](proposed-tasks/E7-T5-future-backup-and-restore-capability.md) — `deferred`, P2/L, M3
 - [E7-T7: Enable production registration and contact reveal](proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`, P1/M, M3
-- [E7-T10: Roll out and verify shared TLS](proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) — `proposed`, P1/M, M3; gated by D-009 / B-009; sequenced by [proposed plan revision 6](PROPOSED_IMPLEMENTATION_PLAN-revision-6.md)
 - [E7-T11: Activate the verified historical candidate publicly](proposed-tasks/E7-T11-activate-the-verified-historical-candidate.md) — `proposed` revision 1, P1/M, M3; ADR-019 activation boundary behind E7-T6, E7-T10, and E7-T7
 
 ## Cross-epic dependencies

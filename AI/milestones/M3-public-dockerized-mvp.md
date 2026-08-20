@@ -44,7 +44,7 @@ The responsive map experience is production-deployed from GitHub with persistent
 - [E7-T7: Enable production registration and contact reveal](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`
 - [E7-T8: Build isolated shared Nginx TLS topology](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `done`
 - [E7-T9: Implement reversible shared-edge cutover](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `done` (PRs #106/#107); live rollout is E7-T10 behind D-009
-- [E7-T10: Roll out and verify shared TLS](../epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) — `proposed`
+- [E7-T10: Roll out and verify shared TLS](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) — `proposed`
 - [E7-T11: Activate the verified historical candidate publicly](../epics/E7-production-delivery/proposed-tasks/E7-T11-activate-the-verified-historical-candidate.md) — `proposed`
 
 Cancelled and deferred candidates remain linked for traceability but are not completion requirements unless an approved revision restores them to required scope.

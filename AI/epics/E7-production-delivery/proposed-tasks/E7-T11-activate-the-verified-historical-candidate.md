@@ -61,7 +61,7 @@ Atomically activate the E7-T6-verified, non-public historical candidate as the p
 ## Dependencies and gates
 
 - [E7-T6](../tasks/E7-T6-transfer-and-import-the-historical-dataset.md) must be `done` with a fully verified non-public candidate.
-- [E7-T10](../proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) must be `done` so public traffic uses the verified shared Nginx HTTPS edge, not interim HTTP.
+- [E7-T10](../tasks/E7-T10-roll-out-and-verify-shared-tls.md) must be `done` so public traffic uses the verified shared Nginx HTTPS edge, not interim HTTP.
 - [E7-T7](../proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) must be `done` to satisfy the ADR-019 sensitive-feature gate.
 - Promotion requires a current owner-approved E7 implementation-plan revision containing E7-T11.
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).

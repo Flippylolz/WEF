@@ -46,7 +46,7 @@ Execute the live shared-edge migration on the NUC so WEF and AI Forecast termina
 
 ### 1. E7-T10 — Roll out and verify shared TLS
 
-- Task: [E7-T10](proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) (promote only after this plan is approved and D-009 is resolved).
+- Task: [E7-T10](tasks/E7-T10-roll-out-and-verify-shared-tls.md) (promote only after this plan is approved and D-009 is resolved).
 - Independently reviewable: live inventory/preflight, staging then production ACME, staged cutover (`tls → https-smoke → redirect → redirect-smoke`), dual-origin verification, and documented rollback to the previous validated listeners.
 - Dependencies: E7-T9 `done`; deferred gate D-009 resolved with evidence recorded in the decision file.
 - Affected modules/contracts: no public API contract change; production Compose/edge release activation on the NUC; operations docs and blocker log updates.
