@@ -406,6 +406,7 @@ def assert_candidate_topology(model: dict[str, Any]) -> None:
     services = cast("dict[str, dict[str, Any]]", model["services"])
     assert set(services) == {"api", "web", "edge"}
     assert "provider-egress" not in model.get("networks", {})
+    assert "verify" in model.get("networks", {})
     edge_ports = services["edge"].get("ports", [])
     assert edge_ports
     published = edge_ports[0]
@@ -421,6 +422,9 @@ def assert_candidate_topology(model: dict[str, Any]) -> None:
     assert forbidden.isdisjoint(mounts["api"])
     assert forbidden.isdisjoint(mounts["edge"])
     assert "provider-egress" not in services["api"].get("networks", {})
+    assert "verify" in services["edge"].get("networks", {})
+    assert "verify" not in services["api"].get("networks", {})
+    assert "verify" not in services["web"].get("networks", {})
 
 
 def main() -> int:
