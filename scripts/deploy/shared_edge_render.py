@@ -95,11 +95,14 @@ def validate_configuration(config: EdgeConfiguration) -> None:
         fixture_mode=config.fixture_mode,
         label="WEF hostname",
     )
-    if (config.forecast_hostname is None) != (config.forecast_upstream is None):
-        msg = "forecast hostname and upstream must both be set or both omitted"
-        raise SharedEdgeRenderError(msg)
-    if config.forecast_hostname is not None:
-        assert config.forecast_upstream is not None
+    if config.forecast_hostname is None:
+        if config.forecast_upstream is not None:
+            msg = "forecast hostname and upstream must both be set or both omitted"
+            raise SharedEdgeRenderError(msg)
+    else:
+        if config.forecast_upstream is None:
+            msg = "forecast hostname and upstream must both be set or both omitted"
+            raise SharedEdgeRenderError(msg)
         validate_hostname(
             config.forecast_hostname,
             fixture_mode=config.fixture_mode,
