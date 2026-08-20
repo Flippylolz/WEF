@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T10
 epic: E7
 title: "Roll out and verify WEF-only shared TLS"
-status: ready
+status: in_progress
 revision: 2
 priority: P1
 size: M
@@ -40,7 +40,7 @@ branch:
   name: feat/E7-T10-wef-only-shared-tls
   task_id: E7-T10
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-20T13:59:05Z"
   pull_request: null
 completion:
   completed_by: null

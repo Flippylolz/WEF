@@ -34,9 +34,9 @@ class SmokeTarget:
     """Host-header and listener coordinates for one smoke pass."""
 
     wef_hostname: str
-    forecast_hostname: str
     http_port: int
     https_port: int
+    forecast_hostname: str | None = None
     bind_address: str = "127.0.0.1"
 
 
@@ -62,10 +62,9 @@ def smoke_https_routes(
     cacert: Path | None = None,
     expect_fixture_bodies: bool = True,
 ) -> None:
-    """Prove WEF web/API/media and Forecast HTTPS routes through the edge."""
+    """Prove WEF web/API/media and optional Forecast HTTPS routes through the edge."""
     wef_resolve = _resolve(target.wef_hostname, target.https_port, target.bind_address)
-    forecast_resolve = _resolve(target.forecast_hostname, target.https_port, target.bind_address)
-    checks = (
+    checks: list[tuple[str, str, str]] = [
         (f"https://{target.wef_hostname}:{target.https_port}/", wef_resolve, "wef-web"),
         (
             f"https://{target.wef_hostname}:{target.https_port}/api/v1/health/ready",
@@ -77,8 +76,20 @@ def smoke_https_routes(
             wef_resolve,
             "wef-media",
         ),
-        (f"https://{target.forecast_hostname}:{target.https_port}/", forecast_resolve, "forecast"),
-    )
+    ]
+    if target.forecast_hostname is not None:
+        forecast_resolve = _resolve(
+            target.forecast_hostname,
+            target.https_port,
+            target.bind_address,
+        )
+        checks.append(
+            (
+                f"https://{target.forecast_hostname}:{target.https_port}/",
+                forecast_resolve,
+                "forecast",
+            ),
+        )
     for url, resolve, fixture_name in checks:
         status, _headers, body = curl(url, resolve=resolve, cacert=cacert)
         if status != 200:
@@ -147,7 +158,8 @@ def smoke_both_https_and_redirects(
         expect_fixture_bodies=expect_fixture_bodies,
     )
     smoke_http_redirect(curl, target, hostname=target.wef_hostname)
-    smoke_http_redirect(curl, target, hostname=target.forecast_hostname)
+    if target.forecast_hostname is not None:
+        smoke_http_redirect(curl, target, hostname=target.forecast_hostname)
 
 
 def build_fixture_smoke_target(

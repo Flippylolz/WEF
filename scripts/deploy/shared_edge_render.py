@@ -18,6 +18,7 @@ TEMPLATES_DIR = REPOSITORY_ROOT / "infra" / "nginx"
 BOOTSTRAP_TEMPLATE = "bootstrap.conf.in"
 TLS_TEMPLATE = "tls.conf.in"
 TLS_REDIRECT_TEMPLATE = "tls-redirect.conf.in"
+FORECAST_VHOST_TEMPLATE = "forecast-vhost.conf.in"
 HOOK_FILENAME = "deploy-hook.sh"
 ISSUANCE_FILENAME = "certbot-issuance.txt"
 BOOTSTRAP_CONFIG = "bootstrap.conf"
@@ -47,11 +48,11 @@ class EdgeConfiguration:
     """Validated, non-secret inputs for one shared-edge release."""
 
     wef_hostname: str
-    forecast_hostname: str
     wef_api_upstream: str
     wef_media_upstream: str
     wef_web_upstream: str
-    forecast_upstream: str
+    forecast_hostname: str | None = None
+    forecast_upstream: str | None = None
     client_max_body_size: str = "1m"
     acme_server: str | None = None
     email: str | None = None
@@ -63,6 +64,11 @@ class EdgeConfiguration:
         if self.acme_server is not None:
             return self.acme_server
         return FIXTURE_ACME_SERVER if self.fixture_mode else PRODUCTION_ACME_SERVER
+
+    @property
+    def includes_forecast(self) -> bool:
+        """Report whether this release terminates Forecast TLS."""
+        return self.forecast_hostname is not None
 
 
 def validate_hostname(name: str, *, fixture_mode: bool, label: str) -> None:
@@ -89,19 +95,24 @@ def validate_configuration(config: EdgeConfiguration) -> None:
         fixture_mode=config.fixture_mode,
         label="WEF hostname",
     )
-    validate_hostname(
-        config.forecast_hostname,
-        fixture_mode=config.fixture_mode,
-        label="AI Forecast hostname",
-    )
-    if config.wef_hostname == config.forecast_hostname:
-        msg = "WEF and AI Forecast hostnames must be distinct"
+    if (config.forecast_hostname is None) != (config.forecast_upstream is None):
+        msg = "forecast hostname and upstream must both be set or both omitted"
         raise SharedEdgeRenderError(msg)
+    if config.forecast_hostname is not None:
+        assert config.forecast_upstream is not None
+        validate_hostname(
+            config.forecast_hostname,
+            fixture_mode=config.fixture_mode,
+            label="AI Forecast hostname",
+        )
+        if config.wef_hostname == config.forecast_hostname:
+            msg = "WEF and AI Forecast hostnames must be distinct"
+            raise SharedEdgeRenderError(msg)
+        validate_upstream(config.forecast_upstream, "AI Forecast upstream")
     for label, value in (
         ("WEF API upstream", config.wef_api_upstream),
         ("WEF media upstream", config.wef_media_upstream),
         ("WEF web upstream", config.wef_web_upstream),
-        ("AI Forecast upstream", config.forecast_upstream),
     ):
         validate_upstream(value, label)
     if not BODY_SIZE_PATTERN.fullmatch(config.client_max_body_size):
@@ -133,12 +144,31 @@ def render_template(template: str, replacements: Mapping[str, str]) -> str:
     return rendered
 
 
-def tls_replacements(config: EdgeConfiguration) -> dict[str, str]:
-    """Return the strict placeholder set for the TLS template."""
+def tls_replacements(
+    config: EdgeConfiguration,
+    *,
+    templates_dir: Path = TEMPLATES_DIR,
+) -> dict[str, str]:
+    """Return the strict placeholder set for the TLS templates."""
+    forecast_block = ""
+    if config.forecast_hostname is not None and config.forecast_upstream is not None:
+        forecast_template = (templates_dir / FORECAST_VHOST_TEMPLATE).read_text(
+            encoding="utf-8",
+        )
+        forecast_block = render_template(
+            forecast_template,
+            {
+                "FORECAST_HOSTNAME": config.forecast_hostname,
+                "FORECAST_UPSTREAM": config.forecast_upstream,
+            },
+        )
+        if not forecast_block.startswith("\n"):
+            forecast_block = "\n" + forecast_block
+        if not forecast_block.endswith("\n"):
+            forecast_block += "\n"
     return {
         "CLIENT_MAX_BODY_SIZE": config.client_max_body_size,
-        "FORECAST_HOSTNAME": config.forecast_hostname,
-        "FORECAST_UPSTREAM": config.forecast_upstream,
+        "FORECAST_SERVER_BLOCK": forecast_block,
         "WEF_API_UPSTREAM": config.wef_api_upstream,
         "WEF_HOSTNAME": config.wef_hostname,
         "WEF_MEDIA_UPSTREAM": config.wef_media_upstream,
@@ -151,6 +181,9 @@ def render_issuance_commands(config: EdgeConfiguration) -> str:
     account_flags = (
         "--register-unsafely-without-email" if config.email is None else f"--email {config.email}"
     )
+    hostnames = [config.wef_hostname]
+    if config.forecast_hostname is not None:
+        hostnames.append(config.forecast_hostname)
     lines = [
         "# Non-interactive webroot issuance rendered by shared_edge_render.py.",
         "# Run inside the certbot service of the shared-edge project, never on the host.",
@@ -166,7 +199,7 @@ def render_issuance_commands(config: EdgeConfiguration) -> str:
         f" -d {hostname}"
         f" --server {config.resolved_acme_server}"
         " --deploy-hook /edge-hooks/deploy-hook.sh"
-        for hostname in sorted((config.wef_hostname, config.forecast_hostname))
+        for hostname in sorted(hostnames)
     )
     return "\n".join(lines) + "\n"
 
@@ -200,7 +233,7 @@ def write_release(
     bootstrap_template = (templates_dir / BOOTSTRAP_TEMPLATE).read_text(encoding="utf-8")
     tls_template = (templates_dir / TLS_TEMPLATE).read_text(encoding="utf-8")
     tls_redirect_template = (templates_dir / TLS_REDIRECT_TEMPLATE).read_text(encoding="utf-8")
-    replacements = tls_replacements(config)
+    replacements = tls_replacements(config, templates_dir=templates_dir)
     rendered = {
         BOOTSTRAP_CONFIG: render_template(bootstrap_template, {}),
         TLS_CONFIG: render_template(tls_template, replacements),
@@ -225,11 +258,11 @@ def parse_configuration(argv: list[str] | None) -> tuple[EdgeConfiguration, Path
     """Parse and validate renderer arguments into configuration and target."""
     parser = argparse.ArgumentParser(description="Render a deterministic shared-edge release.")
     parser.add_argument("--wef-hostname", required=True)
-    parser.add_argument("--forecast-hostname", required=True)
+    parser.add_argument("--forecast-hostname", default=None)
     parser.add_argument("--wef-api-upstream", required=True)
     parser.add_argument("--wef-media-upstream", required=True)
     parser.add_argument("--wef-web-upstream", required=True)
-    parser.add_argument("--forecast-upstream", required=True)
+    parser.add_argument("--forecast-upstream", default=None)
     parser.add_argument("--client-max-body-size", default="1m")
     parser.add_argument("--email", default=None)
     parser.add_argument("--acme-server", default=PRODUCTION_ACME_SERVER)
