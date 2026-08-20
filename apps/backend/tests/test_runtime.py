@@ -144,6 +144,30 @@ def test_serve_uses_uvicorn_application_factory(
     assert invocation["application"] == "wef_backend.app:create_app"
     assert invocation["factory"] is True
     assert invocation["port"] == 8123
+    assert invocation["proxy_headers"] is True
+    assert invocation["forwarded_allow_ips"] == "127.0.0.1"
+
+
+def test_serve_trusts_forwarded_headers_in_production(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Production API peers are Docker networks, so trust all forwarded peers."""
+    invocation: dict[str, Any] = {}
+
+    def fake_run(application: str, **options: object) -> None:
+        invocation["application"] = application
+        invocation.update(options)
+
+    monkeypatch.setattr(
+        cli,
+        "load_settings",
+        lambda: Settings(port=8123, env="production"),
+    )
+    monkeypatch.setattr("wef_backend.cli.uvicorn.run", fake_run)
+
+    cli.serve()
+
+    assert invocation["forwarded_allow_ips"] == "*"
 
 
 def test_alembic_config_uses_runtime_database_url() -> None:

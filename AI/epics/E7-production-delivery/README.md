@@ -20,7 +20,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - Epic workspace status: `ready`; D-009 resolved as WEF-only TLS; E7-T10 promoted under plan revision 7.
 - [Spike](SPIKE.md): `approved`, revision 4.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 7 `approved`; sequences only E7-T10 revision 2 (WEF-only shared TLS; Forecast stays on `:3000`).
-- E7-T1 through E7-T4, E7-T6, E7-T8, and E7-T9 are `done`. E7-T10 is `ready`. E7-T5 remains deferred; E7-T7 and E7-T11 remain proposed behind HTTPS/ADR-019 gates.
+- E7-T1 through E7-T4, E7-T6, E7-T8, E7-T9, and E7-T10 are `done`. E7-T7 is `in_progress` under plan revision 8. E7-T5 remains deferred; E7-T11 remains proposed behind the E7-T7 sensitive-feature gate.
 
 ## Milestones
 
@@ -69,7 +69,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 ## Deferred/proposed tasks
 
 - [E7-T5: Future backup and restore capability](proposed-tasks/E7-T5-future-backup-and-restore-capability.md) — `deferred`, P2/L, M3
-- [E7-T7: Enable production registration and contact reveal](proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`, P1/M, M3
+- [E7-T7: Enable production registration and contact reveal](tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `in_progress`, P1/M, M3; plan revision 8
 - [E7-T11: Activate the verified historical candidate publicly](proposed-tasks/E7-T11-activate-the-verified-historical-candidate.md) — `proposed` revision 1, P1/M, M3; ADR-019 activation boundary behind E7-T6, E7-T10, and E7-T7
 
 ## Cross-epic dependencies

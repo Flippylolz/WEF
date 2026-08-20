@@ -48,6 +48,8 @@ def build_values(
     password = required_environment("POSTGRES_PASSWORD")
     geoapify_api_key = required_environment("WEF_GEOAPIFY_API_KEY")
     admin_session_secret = required_environment("WEF_ADMIN_SESSION_SECRET")
+    contact_encryption_key = required_environment("WEF_CONTACT_ENCRYPTION_KEY")
+    contact_hmac_key = required_environment("WEF_CONTACT_HMAC_KEY")
     if not DATABASE_IDENTIFIER.fullmatch(database) or not DATABASE_IDENTIFIER.fullmatch(
         username,
     ):
@@ -61,6 +63,15 @@ def build_values(
         raise ValueError(msg)
     if not re.fullmatch(r"^[A-Za-z0-9._-]{32,200}$", admin_session_secret):
         msg = "admin session secret is not safe for a Compose environment file"
+        raise ValueError(msg)
+    if not re.fullmatch(r"^[A-Fa-f0-9]{64}$", contact_encryption_key):
+        msg = "contact encryption key must be 32-byte hex"
+        raise ValueError(msg)
+    if not re.fullmatch(r"^[A-Fa-f0-9]{64}$", contact_hmac_key):
+        msg = "contact HMAC key must be 32-byte hex"
+        raise ValueError(msg)
+    if contact_encryption_key == contact_hmac_key:
+        msg = "contact encryption and HMAC keys must be distinct"
         raise ValueError(msg)
     log_level = required_environment("WEF_LOG_LEVEL").upper()
     if log_level not in ALLOWED_LOG_LEVELS:
@@ -80,6 +91,8 @@ def build_values(
         ),
         "WEF_BACKEND_IMAGE": context.backend_image,
         "WEF_BIND_ADDRESS": context.bind_address,
+        "WEF_CONTACT_ENCRYPTION_KEY": contact_encryption_key,
+        "WEF_CONTACT_HMAC_KEY": contact_hmac_key,
         "WEF_DATABASE_URL": (
             f"postgresql+asyncpg://{encoded_username}:{encoded_password}@db:5432/{encoded_database}"
         ),
@@ -91,6 +104,17 @@ def build_values(
         "WEF_ROOT": str(context.release.root),
         "WEF_WEB_IMAGE": context.web_image,
     }
+    bootstrap_username = os.environ.get("WEF_BOOTSTRAP_OWNER_USERNAME", "").strip()
+    bootstrap_password = os.environ.get("WEF_BOOTSTRAP_OWNER_PASSWORD", "").strip()
+    if bootstrap_username or bootstrap_password:
+        if not bootstrap_username or not bootstrap_password:
+            msg = "bootstrap owner username and password must both be set or both omitted"
+            raise ValueError(msg)
+        if len(bootstrap_username) < 3 or len(bootstrap_password) < 10:
+            msg = "bootstrap owner credentials do not meet minimum length"
+            raise ValueError(msg)
+        values["WEF_BOOTSTRAP_OWNER_USERNAME"] = bootstrap_username
+        values["WEF_BOOTSTRAP_OWNER_PASSWORD"] = bootstrap_password
     validate_environment(values, context.release)
     return values
 

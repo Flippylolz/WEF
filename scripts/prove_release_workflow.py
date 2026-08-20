@@ -44,6 +44,8 @@ def assert_workflow_boundaries() -> None:
     assert "PUBLIC_PORT: ${{ vars.WEF_PUBLIC_PORT }}" in source
     assert "WEF_GEOAPIFY_API_KEY: ${{ secrets.WEF_GEOAPIFY_API_KEY }}" in source
     assert "WEF_ADMIN_SESSION_SECRET: ${{ secrets.WEF_ADMIN_SESSION_SECRET }}" in source
+    assert "WEF_CONTACT_ENCRYPTION_KEY: ${{ secrets.WEF_CONTACT_ENCRYPTION_KEY }}" in source
+    assert "WEF_CONTACT_HMAC_KEY: ${{ secrets.WEF_CONTACT_HMAC_KEY }}" in source
     assert "WEF_RELEASE_SHA=${{ needs.resolve.outputs.release_sha }}" in source
     assert "env -u TEST_DATABASE_URL make test" in source
     deploy_script = (REPOSITORY_ROOT / "scripts/deploy/deploy.sh").read_text(encoding="utf-8")
@@ -110,6 +112,8 @@ def assert_release_configuration() -> None:
         "POSTGRES_USER": "wef",
         "WEF_ADMIN_SESSION_SECRET": "fixture-admin-session-secret-0123456789abcdef",
         "WEF_ALLOW_SYNTHETIC_SEED": "false",
+        "WEF_CONTACT_ENCRYPTION_KEY": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "WEF_CONTACT_HMAC_KEY": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
         "WEF_GEOAPIFY_API_KEY": "fixture-geoapify-key-0123456789",
         "WEF_LOG_LEVEL": "INFO",
     }
