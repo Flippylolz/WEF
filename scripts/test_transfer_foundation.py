@@ -97,7 +97,9 @@ class TransferFoundationTests(unittest.TestCase):
         self.assertEqual(summary.new, 1)
 
     def test_classify_row_outcomes(self) -> None:
-        existing = {("offers", "1"): {"price": 1}}
+        existing: dict[tuple[str, object], object] = {
+            ("offers", "1"): {"price": 1},
+        }
         self.assertEqual(
             classify_row(key=("offers", "1"), existing=existing, incoming={"price": 1}),
             ConflictClass.IDENTICAL,
