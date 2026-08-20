@@ -51,6 +51,10 @@ completion:
     - "Slice 1 foundation merged via https://github.com/Flippylolz/WEF/pull/88"
     - "Slice 2 bundle packaging merged via https://github.com/Flippylolz/WEF/pull/89"
     - "Slice 3 candidate config merged via https://github.com/Flippylolz/WEF/pull/90"
+    - "Slice 4 transfer remote merged via https://github.com/Flippylolz/WEF/pull/93"
+    - "macOS remote path/rsync fix merged via https://github.com/Flippylolz/WEF/pull/95"
+    - "Candidate reconcile + loopback compose merged via https://github.com/Flippylolz/WEF/pull/96"
+    - "Candidate edge publish network fix merged via https://github.com/Flippylolz/WEF/pull/97"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -77,11 +81,17 @@ Cloud-testable repository slices merged on `main` (task remains `in_progress`):
 | Candidate config | [#90](https://github.com/Flippylolz/WEF/pull/90) | Checksum-scoped candidate paths, loopback verification env builder + 5 tests |
 | Transfer remote | [#93](https://github.com/Flippylolz/WEF/pull/93) | Transfer plan, rsync command builder, server dry-run gates |
 | macOS remote path/rsync fix | [#95](https://github.com/Flippylolz/WEF/pull/95) | Linux remote paths without local resolve; openrsync-compatible rsync-plan |
-| Candidate verify | (this branch) | Manifest/media reconcile CLI, loopback `compose.candidate.yaml`, release packaging of transfer tooling |
+| Candidate verify | [#96](https://github.com/Flippylolz/WEF/pull/96) | Manifest/media reconcile CLI, loopback `compose.candidate.yaml`, release packaging of transfer tooling |
+| Candidate edge publish | [#97](https://github.com/Flippylolz/WEF/pull/97) | Non-internal `verify` network so `127.0.0.1:13100` publishes |
 
-Remaining for full E7-T6 acceptance: start the loopback candidate stack on the NUC, prove health/privacy against E3-T5 aggregates, then mark the task `done`.
+Remaining for full E7-T6 acceptance: formalize staging-table restore/conflict preflight and checkpointed FK-safe load as repository-owned tooling (current candidate load was an operational SSH rehearsal), then record task `done`.
 
-Live production evidence (2026-08-20): bundle rsync verified on NUC; production backfill created `wef_hist_candidate` with E3-T5 terminal counts (27,170 messages, 2,999 offers, 792 locations) and staged 24,532 + 49,059 media files under `candidates/<checksum>/media/` while public `wef` remained at 0 source messages.
+Live production evidence (2026-08-20):
+
+- Bundle rsync verified on NUC; `wef_hist_candidate` holds E3-T5 terminal counts (27,170 messages, 2,999 offers, 792 locations) with 24,532 + 49,059 staged media files.
+- `transfer_candidate reconcile` allowed against the incoming bundle; public `wef` remains at 0 source messages / 5 synthetic visible offers.
+- Loopback candidate stack `wef-candidate` is healthy on `http://127.0.0.1:13100` (`live`/`ready`); candidate API uses `wef_hist_candidate` with no `provider-egress` network.
+- Map APIs both show 5 visible offers because the transferred snapshot keeps 2,994 offers as `needs_review` (only 5 `visible`); historical rows are present in the candidate DB but not public-map-eligible until later activation/review gates.
 
 ## Scope
 
