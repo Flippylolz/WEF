@@ -141,8 +141,10 @@ services:
       start_period: 10s
     networks:
       - application
+      - verify
 
 networks:
   application:
     external: true
     name: wef-production_application
+  verify:
