@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     session_ttl_seconds: int = Field(default=43_200, ge=60, le=2_592_000)
     bootstrap_owner_username: str | None = None
     bootstrap_owner_password: str | None = None
+    contact_encryption_key: SecretStr | None = None
+    contact_hmac_key: SecretStr | None = None
 
 
 def load_settings() -> Settings:

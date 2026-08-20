@@ -13,6 +13,10 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from wef_backend.database import create_database_resources
+from wef_backend.features.contacts.infrastructure import (
+    AesGcmContactCipher,
+    decode_secret_key,
+)
 from wef_backend.features.ingestion.application.complete_import import (
     PIPELINE_VERSION,
     CompleteImportStage,
@@ -570,7 +574,22 @@ async def run_import(args: argparse.Namespace, settings: Settings) -> dict[str, 
     prepared = await asyncio.to_thread(_prepare, settings)
     database = create_database_resources(settings.database_url)
     repository = SQLAlchemyCompleteImportRepository(database.session_factory)
-    persistence = SQLAlchemyIngestionPersistence(database.session_factory)
+    contact_cipher = AesGcmContactCipher(
+        encryption_key=decode_secret_key(
+            settings.contact_encryption_key.get_secret_value()
+            if settings.contact_encryption_key is not None
+            else None,
+        ),
+        hmac_key=decode_secret_key(
+            settings.contact_hmac_key.get_secret_value()
+            if settings.contact_hmac_key is not None
+            else None,
+        ),
+    )
+    persistence = SQLAlchemyIngestionPersistence(
+        database.session_factory,
+        contact_cipher=contact_cipher,
+    )
     try:
         if args.command == "dry-run":
             return await _dry_run(prepared, repository)

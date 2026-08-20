@@ -19,6 +19,16 @@ from wef_backend.features.catalog.infrastructure import (
     SQLAlchemyMapQueryAdapter,
     SQLAlchemyOfferDetailAdapter,
 )
+from wef_backend.features.contacts.application import (
+    ContactService,
+    PersistOfferContacts,
+    RevealOfferContacts,
+)
+from wef_backend.features.contacts.infrastructure import (
+    AesGcmContactCipher,
+    SQLAlchemyContactStore,
+    decode_secret_key,
+)
 from wef_backend.features.estates.application import ListEstates
 from wef_backend.features.estates.infrastructure import RetiredEstateQueryAdapter
 from wef_backend.features.identity.application import (
@@ -69,6 +79,7 @@ class AppServices:
     close: ResourceCloser
     identity: IdentityService
     favorites: FavoriteService
+    contacts: ContactService
     auth_cookie_secure: bool
     public_rate_limiter: RateLimiter
 
@@ -82,9 +93,23 @@ def build_services(settings: Settings | None = None) -> AppServices:
     offer_detail_adapter = SQLAlchemyOfferDetailAdapter(database.session_factory)
     identity_store = SQLAlchemyIdentityStore(database.session_factory)
     favorite_store = SQLAlchemyFavoriteStore(database.session_factory)
+    contact_store = SQLAlchemyContactStore(database.session_factory)
     hasher = PwdlibPasswordHasher()
     tokens = SecretsTokenService()
     clock = SystemClock()
+    contact_cipher = AesGcmContactCipher(
+        encryption_key=decode_secret_key(
+            runtime_settings.contact_encryption_key.get_secret_value()
+            if runtime_settings.contact_encryption_key is not None
+            else None,
+        ),
+        hmac_key=decode_secret_key(
+            runtime_settings.contact_hmac_key.get_secret_value()
+            if runtime_settings.contact_hmac_key is not None
+            else None,
+        ),
+    )
+    contact_rate_limiter = MemoryRateLimiter()
 
     async def database_is_ready() -> bool:
         try:
@@ -133,6 +158,15 @@ def build_services(settings: Settings | None = None) -> AppServices:
             list_favorites=ListFavoriteLocations(favorite_store),
             add_favorite=AddFavoriteLocation(favorite_store),
             remove_favorite=RemoveFavoriteLocation(favorite_store),
+        ),
+        contacts=ContactService(
+            persist=PersistOfferContacts(contact_store, contact_cipher),
+            reveal=RevealOfferContacts(
+                contact_store,
+                contact_cipher,
+                contact_rate_limiter,
+            ),
+            rate_limiter=contact_rate_limiter,
         ),
         auth_cookie_secure=runtime_settings.env == "production",
         public_rate_limiter=MemoryRateLimiter(),

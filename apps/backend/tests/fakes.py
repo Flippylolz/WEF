@@ -14,6 +14,18 @@ from wef_backend.features.catalog.application import (
     OfferCursor,
     OfferDetailRecord,
 )
+from wef_backend.features.contacts.application.reveal import (
+    ContactCipher,
+    ContactCryptoUnavailableError,
+    ContactService,
+    PersistOfferContacts,
+    RevealOfferContacts,
+)
+from wef_backend.features.contacts.domain.model import (
+    ContactKind,
+    ContactPointRecord,
+    RevealOutcome,
+)
 from wef_backend.features.estates.application import EstateRecord
 from wef_backend.features.identity.application.favorites import (
     AddFavoriteLocation,
@@ -379,6 +391,102 @@ def build_favorites_service(
         list_favorites=ListFavoriteLocations(favorite_store),
         add_favorite=AddFavoriteLocation(favorite_store),
         remove_favorite=RemoveFavoriteLocation(favorite_store),
+    )
+
+
+@dataclass
+class FakeContactCipher:
+    """Deterministic reversible stand-in for AES-GCM."""
+
+    available: bool = True
+
+    def encrypt(self, plaintext: str) -> str:
+        """Prefix plaintext so tests can spot accidental leakage."""
+        if not self.available:
+            message = "contact encryption key is unavailable"
+            raise ContactCryptoUnavailableError(message)
+        return f"enc:{plaintext}"
+
+    def decrypt(self, ciphertext: str) -> str:
+        """Strip the fake prefix."""
+        if not self.available or not ciphertext.startswith("enc:"):
+            message = "contact ciphertext is invalid"
+            raise ContactCryptoUnavailableError(message)
+        return ciphertext.removeprefix("enc:")
+
+    def fingerprint(self, *, kind: ContactKind, normalized_value: str) -> str:
+        """Return a deterministic fake fingerprint."""
+        if not self.available:
+            message = "contact HMAC key is unavailable"
+            raise ContactCryptoUnavailableError(message)
+        return f"fp:{kind.value}:{normalized_value}"
+
+
+@dataclass
+class FakeContactStore:
+    """In-memory contact points and reveal audits for HTTP tests."""
+
+    contacts: dict[UUID, list[ContactPointRecord]] = field(default_factory=dict)
+    visible_offers: set[UUID] = field(default_factory=set)
+    audits: list[dict[str, object]] = field(default_factory=list)
+
+    async def replace_offer_contacts(
+        self,
+        *,
+        offer_id: UUID,
+        source_message_id: UUID | None,
+        contacts: tuple[ContactPointRecord, ...],
+    ) -> None:
+        """Replace contacts for one offer."""
+        del source_message_id
+        self.contacts[offer_id] = list(contacts)
+
+    async def list_revealable_for_offer(
+        self,
+        offer_id: UUID,
+    ) -> tuple[ContactPointRecord, ...]:
+        """Return revealable contacts for one offer."""
+        return tuple(item for item in self.contacts.get(offer_id, []) if item.is_revealable)
+
+    async def offer_is_publicly_visible(self, offer_id: UUID) -> bool:
+        """Report whether the offer is in the visible set."""
+        return offer_id in self.visible_offers
+
+    async def record_reveal(
+        self,
+        *,
+        user_id: UUID,
+        offer_id: UUID,
+        source_message_id: UUID | None,
+        request_id: UUID,
+        outcome: RevealOutcome,
+    ) -> None:
+        """Append one minimized audit row."""
+        self.audits.append(
+            {
+                "user_id": user_id,
+                "offer_id": offer_id,
+                "source_message_id": source_message_id,
+                "request_id": request_id,
+                "outcome": outcome.value,
+            },
+        )
+
+
+def build_contact_service(
+    *,
+    store: FakeContactStore | None = None,
+    cipher: ContactCipher | None = None,
+    rate_limiter: FakeRateLimiter | None = None,
+) -> ContactService:
+    """Compose one contact service fully backed by fakes."""
+    contact_store = store or FakeContactStore()
+    contact_cipher: ContactCipher = cipher or FakeContactCipher()
+    limiter = rate_limiter or FakeRateLimiter()
+    return ContactService(
+        persist=PersistOfferContacts(contact_store, contact_cipher),
+        reveal=RevealOfferContacts(contact_store, contact_cipher, limiter),
+        rate_limiter=limiter,
     )
 
 

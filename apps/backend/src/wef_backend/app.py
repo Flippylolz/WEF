@@ -26,6 +26,7 @@ from wef_backend.features.catalog.interface import (
     offers_router,
 )
 from wef_backend.features.catalog.interface import router as catalog_router
+from wef_backend.features.contacts.interface import contacts_router
 from wef_backend.features.estates.interface import router as estates_router
 from wef_backend.features.identity.interface import identity_router
 from wef_backend.features.identity.interface.favorites_router import (
@@ -60,6 +61,7 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     app.include_router(estates_router)
     app.include_router(identity_router)
     app.include_router(favorites_router)
+    app.include_router(contacts_router)
     app.add_exception_handler(RequestValidationError, request_validation_handler)
     app.add_exception_handler(QueryValidationError, query_validation_handler)
     app.add_exception_handler(ResourceNotFoundError, resource_not_found_handler)
@@ -76,6 +78,7 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
         app.state.is_ready = services.is_ready
         app.state.identity = services.identity
         app.state.favorites = services.favorites
+        app.state.contacts = services.contacts
         app.state.auth_cookie_secure = services.auth_cookie_secure
 
     @app.middleware("http")

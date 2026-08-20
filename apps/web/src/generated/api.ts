@@ -349,6 +349,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/offers/{offer_id}/contacts/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal contacts for one visible offer
+         * @description Decrypt contacts after session, visibility, and rate-limit checks.
+         */
+        post: operations["revealOfferContacts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/quick-filters": {
         parameters: {
             query?: never;
@@ -956,6 +976,29 @@ export interface components {
             password: string;
             /** Username */
             username: string;
+        };
+        /**
+         * RevealContactsResponse
+         * @description Authorized reveal body without source text.
+         */
+        RevealContactsResponse: {
+            /** Contacts */
+            contacts: components["schemas"]["RevealedContactResponse"][];
+        };
+        /**
+         * RevealedContactResponse
+         * @description One plaintext contact returned only after authorization.
+         */
+        RevealedContactResponse: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "phone" | "telegram";
+            /** Masked Value */
+            masked_value: string;
+            /** Value */
+            value: string;
         };
         /**
          * SourceHistoryEntryResponse
@@ -1664,6 +1707,79 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    revealOfferContacts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevealContactsResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The account cannot reveal contacts. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The offer is absent or not publicly visible. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Mutations require a JSON content type. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too many reveal attempts from this account. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Contact reveal is temporarily unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

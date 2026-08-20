@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E6-T5
 epic: E6
 title: "Implement contact masking, encryption, reveal, and audit"
-status: ready
+status: in_progress
 revision: 1
 priority: P1
 size: L
@@ -42,7 +42,7 @@ branch:
   name: feat/E6-T5-contact-masking-reveal
   task_id: E6-T5
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-20T10:44:13Z"
   pull_request: null
 completion:
   completed_by: null
