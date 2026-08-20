@@ -29,6 +29,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Copied MapLibre runtime assets (see next.config.ts).
+    "public/vendor/**",
   ]),
 ]);
 
