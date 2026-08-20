@@ -17,9 +17,9 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 
 ## Approval state
 
-- Epic workspace status: `ready`; E6-T4, E6-T5, and E6-T6 are `done`; next sequenced work needs a plan revision (E6-T7 or other proposed tasks).
+- Epic workspace status: `ready`; E6-T4/T5/T6 are `done`; E6-T7 is promoted/`ready` under implementation-plan revision 5.
 - [Spike](SPIKE.md): `approved`, revision 2 (PR #49, squash cd2ad36).
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 4 (`spike_revision: 2`); sequenced E6-T6 is complete.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 5 (`spike_revision: 2`), sequencing E6-T7 only.
 - Remaining candidates in `proposed-tasks/` stay non-actionable until their dependencies and a future plan revision.
 
 ## Milestones
@@ -52,13 +52,13 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 - [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `done`, P1/L, M3; merged via PR #51
 - [E6-T5: Implement contact masking, encryption, reveal, and audit](tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `done`, P1/L, M3; merged via PR #110
 - [E6-T6: Implement English i18n and restricted-action UX](tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — `done`, P1/L, M3; merged via PR #113
+- [E6-T7: Implement owner administration console](tasks/E6-T7-implement-owner-administration-console.md) — `ready`, P1/L, M3; plan revision 5
 
 ## Proposed tasks
 
 - [E6-T1: Complete automated test pyramid](proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — `proposed`, P1/L, M3; blocked on E4-T3/E5-T3 (re-check gates)
 - [E6-T2: Perform privacy and security hardening](proposed-tasks/E6-T2-perform-privacy-and-security-hardening.md) — `proposed`, P1/M, M3; blocked on E3-T4/E4-T3/E5-T3
 - [E6-T3: Add operational diagnostics](proposed-tasks/E6-T3-add-operational-diagnostics.md) — `proposed`, P1/M, M3; blocked on E3-T2/E4-T4
-- [E6-T7: Implement owner administration console](proposed-tasks/E6-T7-implement-owner-administration-console.md) — `proposed`, P1/L, M3; blocked on E6-T4/E6-T5 (await plan revision)
 
 ## Cross-epic dependencies
 
