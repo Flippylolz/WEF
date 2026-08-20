@@ -136,11 +136,7 @@ def unrelated_containers(inventory: dict[str, Any]) -> dict[str, dict[str, Any]]
     """Return containers outside the WEF and shared-edge namespaces."""
     containers = indexed(inventory["containers"], "name")
     prefixes = ("wef-production-", "wef-candidate-", "wef-shared-edge-")
-    return {
-        name: value
-        for name, value in containers.items()
-        if not name.startswith(prefixes)
-    }
+    return {name: value for name, value in containers.items() if not name.startswith(prefixes)}
 
 
 def forecast_containers(inventory: dict[str, Any]) -> dict[str, dict[str, Any]]:

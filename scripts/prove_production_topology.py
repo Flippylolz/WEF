@@ -498,9 +498,7 @@ def assert_cutover_topology(model: dict[str, Any]) -> None:
     assert media_networks["shared_edge"].get("aliases") == ["wef-media"]
     assert "application" in api_networks
     assert "application" in web_networks
-    mounts = {
-        volume["target"]: volume for volume in services["media-edge"].get("volumes", [])
-    }
+    mounts = {volume["target"]: volume for volume in services["media-edge"].get("volumes", [])}
     assert mounts["/srv/media"]["read_only"] is True
     assert mounts["/etc/nginx/nginx.conf"]["read_only"] is True
     cutover_text = CUTOVER_COMPOSE_FILE.read_text(encoding="utf-8")
