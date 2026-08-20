@@ -372,7 +372,9 @@ def migrate_candidate(context: ActivationContext, values: dict[str, str]) -> Non
     )
 
 
-def resolve_compose_files(context: ActivationContext, values: dict[str, str]) -> tuple[Path, Path | None]:
+def resolve_compose_files(
+    context: ActivationContext, values: dict[str, str]
+) -> tuple[Path, Path | None]:
     """Return base production compose and optional shared-edge cutover overlay."""
     compose_file = Path(values["WEF_RELEASE_DIR"]) / "compose.production.yaml"
     if not compose_file.is_file():
