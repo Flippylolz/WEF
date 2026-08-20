@@ -17,9 +17,9 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 
 ## Approval state
 
-- Epic workspace status: `ready`; E6-T4/T5/T6 are `done`; E6-T7 is promoted/`ready` under implementation-plan revision 5.
+- Epic workspace status: `ready`; E6-T4/T5/T6/T7 are `done`; remaining E6-T1/T2/T3 stay proposed pending dependencies and a future plan revision.
 - [Spike](SPIKE.md): `approved`, revision 2 (PR #49, squash cd2ad36).
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 5 (`spike_revision: 2`), sequencing E6-T7 only.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 5 (`spike_revision: 2`); sequenced E6-T7 is complete.
 - Remaining candidates in `proposed-tasks/` stay non-actionable until their dependencies and a future plan revision.
 
 ## Milestones
@@ -52,7 +52,7 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 - [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `done`, P1/L, M3; merged via PR #51
 - [E6-T5: Implement contact masking, encryption, reveal, and audit](tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `done`, P1/L, M3; merged via PR #110
 - [E6-T6: Implement English i18n and restricted-action UX](tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — `done`, P1/L, M3; merged via PR #113
-- [E6-T7: Implement owner administration console](tasks/E6-T7-implement-owner-administration-console.md) — `ready`, P1/L, M3; plan revision 5
+- [E6-T7: Implement owner administration console](tasks/E6-T7-implement-owner-administration-console.md) — `done`, P1/L, M3; merged via PR #116
 
 ## Proposed tasks
 
