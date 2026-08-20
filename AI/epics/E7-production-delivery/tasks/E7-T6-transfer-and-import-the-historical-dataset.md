@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E7-T6
 epic: E7
 title: "Transfer the verified historical snapshot into a non-public production candidate"
-status: draft
+status: in_progress
 revision: 3
 priority: P1
 size: L
@@ -29,16 +29,19 @@ implementation_gate:
   verified_by: "ZCode agent (owner-directed)"
   verified_at: "2026-08-16T21:43:56Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Cursor Agent (autonomous epic mission)"
+  verified_at: "2026-08-20T01:30:00Z"
+  evidence:
+    - "E3-T5 | done | PRs #65/#66"
+    - "E7-T2 | done | merged on main"
+    - "E7-T4 | done | merged on main"
 branch:
   required: true
-  name: null
+  name: cursor/feat-e7-t6-transfer-foundation-0c74
   task_id: E7-T6
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-20T01:30:00Z"
   pull_request: null
 completion:
   completed_by: null
