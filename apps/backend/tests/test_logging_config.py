@@ -5,6 +5,7 @@ from wef_backend.logging_config import scrub_event_dict, scrub_log_value
 
 def test_scrub_log_value_masks_secret_substrings() -> None:
     scrubbed = scrub_log_value("password=super-secret token:abc Authorization: Bearer xyz")
+    assert isinstance(scrubbed, str)
     assert "super-secret" not in scrubbed
     assert "abc" not in scrubbed
     assert "xyz" not in scrubbed

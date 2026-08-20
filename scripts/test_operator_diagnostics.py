@@ -26,10 +26,13 @@ class RedactionTests(unittest.TestCase):
                 "source_text_excerpt": "private",
             },
         )
+        nested = payload["nested"]
+        self.assertIsInstance(nested, dict)
+        assert isinstance(nested, dict)
         self.assertEqual(payload["release_sha"], "abc")
         self.assertEqual(payload["database_url"], "***")
-        self.assertEqual(payload["nested"]["password"], "***")
-        self.assertEqual(payload["nested"]["ok"], 1)
+        self.assertEqual(nested["password"], "***")
+        self.assertEqual(nested["ok"], 1)
         self.assertEqual(payload["source_text_excerpt"], "***")
 
 

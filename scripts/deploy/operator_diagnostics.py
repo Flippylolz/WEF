@@ -8,10 +8,11 @@ import json
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 
 class OperatorDiagnosticsError(RuntimeError):
@@ -52,20 +53,25 @@ def _read_json(path: Path) -> dict[str, Any] | None:
     return payload
 
 
-def redact_mapping(value: object) -> object:
+def _redact_value(value: object) -> object:
     """Recursively drop sensitive keys from nested JSON-like values."""
-    if isinstance(value, dict):
-        redacted: dict[str, object] = {}
-        for key, item in value.items():
-            lowered = str(key).lower()
-            if any(fragment in lowered for fragment in SENSITIVE_KEY_FRAGMENTS):
-                redacted[str(key)] = "***"
-                continue
-            redacted[str(key)] = redact_mapping(item)
-        return redacted
+    if isinstance(value, Mapping):
+        return redact_mapping({str(key): item for key, item in value.items()})
     if isinstance(value, list):
-        return [redact_mapping(item) for item in value]
+        return [_redact_value(item) for item in value]
     return value
+
+
+def redact_mapping(value: Mapping[str, object]) -> dict[str, object]:
+    """Recursively drop sensitive keys from a mapping."""
+    redacted: dict[str, object] = {}
+    for key, item in value.items():
+        lowered = str(key).lower()
+        if any(fragment in lowered for fragment in SENSITIVE_KEY_FRAGMENTS):
+            redacted[str(key)] = "***"
+            continue
+        redacted[str(key)] = _redact_value(item)
+    return redacted
 
 
 def disk_usage_for(path: Path) -> DiskUsage:
@@ -98,14 +104,17 @@ def load_last_failure(root: Path) -> dict[str, Any] | None:
     failure = _read_json(root / "state" / "last-failure.json")
     if failure is None:
         return None
-    return redact_mapping(
-        {
-            "candidate_release_sha": failure.get("candidate_release_sha"),
-            "failure_reason": failure.get("failure_reason"),
-            "recorded_at": failure.get("recorded_at"),
-            "restored_release_sha": failure.get("restored_release_sha"),
-        },
-    )
+    return {
+        str(key): item
+        for key, item in redact_mapping(
+            {
+                "candidate_release_sha": failure.get("candidate_release_sha"),
+                "failure_reason": failure.get("failure_reason"),
+                "recorded_at": failure.get("recorded_at"),
+                "restored_release_sha": failure.get("restored_release_sha"),
+            },
+        ).items()
+    }
 
 
 def query_last_successful_import(
@@ -195,7 +204,7 @@ def collect_diagnostics(
             database=database,
             postgres_user=postgres_user,
         )
-    return cast("dict[str, Any]", redact_mapping(payload))
+    return {str(key): item for key, item in redact_mapping(payload).items()}
 
 
 def main(argv: list[str] | None = None) -> int:
