@@ -9,7 +9,6 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     DateTime,
-    ForeignKey,
     Index,
     String,
     Text,
@@ -43,10 +42,8 @@ class ContactPointRow(ContactsBase):
     )
 
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
-    offer_id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        ForeignKey("offers.id", ondelete="CASCADE"),
-    )
+    # Cross-feature FKs live in Alembic only (separate DeclarativeBase metadata).
+    offer_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
     source_message_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))
     kind: Mapped[str] = mapped_column(String(16))
     value_ciphertext: Mapped[str] = mapped_column(Text)
@@ -77,14 +74,8 @@ class ContactRevealRow(ContactsBase):
     )
 
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
-    user_id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        ForeignKey("users.id", ondelete="CASCADE"),
-    )
-    offer_id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        ForeignKey("offers.id", ondelete="CASCADE"),
-    )
+    user_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
+    offer_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
     source_message_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))
     contact_set_version: Mapped[str] = mapped_column(String(32))
     revealed_at: Mapped[datetime] = mapped_column(

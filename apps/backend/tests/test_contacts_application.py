@@ -169,8 +169,8 @@ def test_decode_secret_key_rejects_bad_material() -> None:
     """Invalid key encodings fail closed."""
     assert decode_secret_key(None) is None
     assert decode_secret_key("   ") is None
-    with pytest.raises(Exception, match="contact key"):
-        decode_secret_key("not-a-key!!!")
+    with pytest.raises(Exception, match="32 bytes"):
+        decode_secret_key("too-short")
     key = decode_secret_key("ee" * 32)
     assert key is not None
     cipher = AesGcmContactCipher(encryption_key=key, hmac_key=None)
