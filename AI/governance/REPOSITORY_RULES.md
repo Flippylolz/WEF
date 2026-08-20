@@ -186,7 +186,7 @@ Create `.github/workflows/dependabot-merge.yml` with:
 A pull request is eligible only when all conditions are true:
 
 1. It is open, non-draft, targets `main`, and belongs to this repository.
-2. Its author is exactly `dependabot[bot]` and its head branch starts with `dependabot/`.
+2. Its author is `dependabot[bot]` or the GitHub GraphQL form `app/dependabot`, and its head branch starts with `dependabot/`.
 3. It has the exact `automerge` label.
 4. The current `automerge` label was applied by an allowlisted owner, initially `Flippylolz`; an automatically or collaborator-applied label is insufficient.
 5. Dependabot metadata classifies it as a direct patch/minor update. Major updates never auto-merge.
