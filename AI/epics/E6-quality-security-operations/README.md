@@ -17,9 +17,9 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 
 ## Approval state
 
-- Epic workspace status: `ready`; E6-T2/T3/T4/T5/T6/T7 are `done`; E6-T1 stays proposed.
+- Epic workspace status: `ready`; E6-T2/T3/T4/T5/T6/T7 are `done`; E6-T1 is `in_progress` under plan revision 8.
 - [Spike](SPIKE.md): `approved`, revision 2 (PR #49, squash cd2ad36).
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 7 (`spike_revision: 2`); E6-T3 completed under this revision.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 8 (`spike_revision: 2`); sequences E6-T1.
 - Remaining candidates in `proposed-tasks/` stay non-actionable until their dependencies and a future plan revision.
 
 ## Milestones
@@ -56,7 +56,7 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 
 ## Proposed tasks
 
-- [E6-T1: Complete automated test pyramid](proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — `proposed`, P1/L, M3
+- [E6-T1: Complete automated test pyramid](tasks/E6-T1-complete-automated-test-pyramid.md) — `in_progress`, P1/L, M3; plan revision 8
 - [E6-T2: Perform privacy and security hardening](tasks/E6-T2-perform-privacy-and-security-hardening.md) — `done` through PRs #130/#131; plan revision 6
 - [E6-T3: Add operational diagnostics](tasks/E6-T3-add-operational-diagnostics.md) — `done` through PRs #133/#134; plan revision 7
 

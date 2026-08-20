@@ -215,3 +215,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Reversal: redeploy without contact keys / bootstrap; auth cookies remain Secure-only in production.
 - Completion: PRs #123/#124/#125; B-002 cleared as R-010; live HTTPS auth/admin smokes passed 2026-08-20.
 
+
+## AD-028: Sequence E6-T1 Playwright critical path (plan revision 8)
+
+- Time: 2026-08-20.
+- Prompt avoided: leave the spike-confirmed browser/e2e gap open after E6-T3, or expand into multi-browser load/Dependabot scope.
+- Selected approach: approve E6 plan revision 8; promote E6-T1; add Chromium Playwright with route-mocked synthetic fixtures for pin/list/detail and error/missing-link states; wire CI.
+- Rationale: E4-T3/E5-T3 done; lower pyramid layers already exist; AD-009 continue authority.
+- Safety limit: synthetic fixtures only; Chromium-only; no live historical content assertions; no production dependency additions beyond Playwright test tooling (devDependency).
+- Reversal: remove Playwright CI job and web e2e tooling; unit/contract/a11y layers remain.

@@ -8,7 +8,7 @@ BACKEND := $(UV) --directory apps/backend run
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install format format-check lint typecheck test coverage contract-generate contract-check build build-development compose-config production-proof production-runtime-proof shared-edge-proof up down ps logs importer-dry-run import-dry-run import-persist import-geocode import-media import-verify import-run seed-m1
+.PHONY: help install format format-check lint typecheck test test-e2e coverage contract-generate contract-check build build-development compose-config production-proof production-runtime-proof shared-edge-proof up down ps logs importer-dry-run import-dry-run import-persist import-geocode import-media import-verify import-run seed-m1
 
 IMPORT_BATCH_SIZE ?= 200
 IMPORT_GEOCODE_BATCH_SIZE ?= 25
@@ -26,6 +26,7 @@ help: ## List supported commands.
 		'make lint               Run backend/frontend and architecture lint' \
 		'make typecheck          Run strict Python and TypeScript checks' \
 		'make test               Run backend/frontend tests' \
+		'make test-e2e           Run Playwright Chromium critical-path tests' \
 		'make coverage           Run tests and refresh the coverage badge locally' \
 		'make contract-generate  Export OpenAPI and generated TypeScript' \
 		'make contract-check     Verify OpenAPI, generated types, and static docs' \
@@ -73,6 +74,11 @@ test: ## Run synthetic backend/frontend tests.
 	$(COMPOSE) --profile test run --rm --no-deps test-db-reset
 	$(COMPOSE) --profile test run --rm --no-deps --build backend-test
 	$(COMPOSE) --profile test run --rm --no-deps --build frontend-test
+
+test-e2e: ## Run Playwright Chromium critical-path tests (map canvas disabled).
+	$(PNPM) --filter web test:e2e:install
+	NEXT_PUBLIC_WEF_DISABLE_MAP=1 $(PNPM) --filter web build
+	$(PNPM) --filter web test:e2e
 
 coverage: ## Run branch-aware coverage and refresh the README badge.
 	mkdir -p "$(CURDIR)/tmp/coverage/backend" "$(CURDIR)/tmp/coverage/frontend"
