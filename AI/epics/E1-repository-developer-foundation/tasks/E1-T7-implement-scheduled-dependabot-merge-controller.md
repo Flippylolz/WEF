@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E1-T7
 epic: E1
 title: "Implement scheduled Dependabot merge controller"
-status: in_progress
+status: done
 revision: 1
 priority: P0
 size: M
@@ -41,12 +41,16 @@ branch:
   task_id: E1-T7
   one_task_only: true
   created_at: "2026-08-20T18:01:53Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/148"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-20T18:08:55Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/148"
+  evidence:
+    - "Merged https://github.com/Flippylolz/WEF/pull/148 (workflow + controller + required-checks allowlist + tests)"
+    - "CI all green on PR #148"
+    - "Dependabot already opened grouped patch/minor and separate major PRs after E1-T6"
+    - "Controller merges only after owner applies automerge; majors remain manual"
 invalidation:
   invalidated_by: null
   invalidated_at: null
