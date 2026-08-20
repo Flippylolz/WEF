@@ -15,6 +15,7 @@ from tests.fakes import (
     FakeMapQuery,
     FakeOfferDetailQuery,
     always_ready,
+    build_contact_service,
     build_favorites_service,
     build_identity_service,
     close_nothing,
@@ -61,6 +62,7 @@ def create_test_app(
         close=close_nothing,
         identity=build_identity_service(),
         favorites=build_favorites_service(),
+        contacts=build_contact_service(),
         auth_cookie_secure=False,
         public_rate_limiter=public_rate_limiter or MemoryRateLimiter(),
     )

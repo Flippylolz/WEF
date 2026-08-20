@@ -1544,6 +1544,53 @@
         "title": "RegisterRequest",
         "type": "object"
       },
+      "RevealContactsResponse": {
+        "additionalProperties": false,
+        "description": "Authorized reveal body without source text.",
+        "properties": {
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/RevealedContactResponse"
+            },
+            "title": "Contacts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "contacts"
+        ],
+        "title": "RevealContactsResponse",
+        "type": "object"
+      },
+      "RevealedContactResponse": {
+        "additionalProperties": false,
+        "description": "One plaintext contact returned only after authorization.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "phone",
+              "telegram"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "masked_value": {
+            "title": "Masked Value",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "value",
+          "masked_value"
+        ],
+        "title": "RevealedContactResponse",
+        "type": "object"
+      },
       "SourceHistoryEntryResponse": {
         "additionalProperties": false,
         "description": "One related source revision without exposing raw text.",
@@ -2715,6 +2762,68 @@
         "summary": "Get one public offer detail",
         "tags": [
           "offers"
+        ]
+      }
+    },
+    "/api/v1/offers/{offer_id}/contacts/reveal": {
+      "post": {
+        "description": "Decrypt contacts after session, visibility, and rate-limit checks.",
+        "operationId": "revealOfferContacts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevealContactsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "403": {
+            "description": "The account cannot reveal contacts."
+          },
+          "404": {
+            "description": "The offer is absent or not publicly visible."
+          },
+          "415": {
+            "description": "Mutations require a JSON content type."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Too many reveal attempts from this account."
+          },
+          "503": {
+            "description": "Contact reveal is temporarily unavailable."
+          }
+        },
+        "summary": "Reveal contacts for one visible offer",
+        "tags": [
+          "contacts"
         ]
       }
     },

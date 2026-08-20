@@ -12,9 +12,17 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import func, select, text, update
+from sqlalchemy import delete, func, select, text, update
 
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
+from wef_backend.features.contacts.application.reveal import (
+    ContactCipher,
+    ContactCryptoUnavailableError,
+    ContactInput,
+    build_contact_records,
+)
+from wef_backend.features.contacts.domain.model import ContactKind as StoredContactKind
+from wef_backend.features.contacts.infrastructure.models import ContactPointRow
 from wef_backend.features.ingestion.application.persistence import (
     IngestionPersistencePort,
     MessageOutcome,
@@ -96,9 +104,15 @@ class _MessageResult:
 class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
     """Ingestion persistence with advisory complete-run exclusion."""
 
-    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
-        """Store the lazy session factory used for bounded transactions."""
+    def __init__(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+        *,
+        contact_cipher: ContactCipher | None = None,
+    ) -> None:
+        """Store the lazy session factory and optional contact cipher."""
         self._session_factory = session_factory
+        self._contact_cipher = contact_cipher
 
     def run_lock(self, source_key: str) -> RunLock:
         """Hold one session-level advisory lock for the complete run."""
@@ -555,7 +569,55 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                 extraction_json=json.loads(build_extraction_json(listing)),
             ),
         )
+        await self._persist_contacts(
+            session,
+            offer_id=offer_id,
+            source_message_id=message_id,
+            listing=listing,
+        )
         return existing_offer_id is None
+
+    async def _persist_contacts(
+        self,
+        session: AsyncSession,
+        *,
+        offer_id: UUID,
+        source_message_id: UUID,
+        listing: ListingCandidate,
+    ) -> None:
+        """Encrypt and replace contact points on the active offer session."""
+        if self._contact_cipher is None:
+            return
+        contacts = tuple(
+            ContactInput(kind=StoredContactKind(span.kind.value), value=span.value)
+            for span in listing.contacts
+        )
+        try:
+            records = build_contact_records(
+                self._contact_cipher,
+                offer_id=offer_id,
+                source_message_id=source_message_id,
+                contacts=contacts,
+            )
+        except ContactCryptoUnavailableError:
+            # Fail closed: keep masked public text, skip ciphertext until keys exist.
+            return
+        await session.execute(
+            delete(ContactPointRow).where(ContactPointRow.offer_id == offer_id),
+        )
+        for item in records:
+            session.add(
+                ContactPointRow(
+                    id=item.id,
+                    offer_id=item.offer_id,
+                    source_message_id=item.source_message_id,
+                    kind=item.kind.value,
+                    value_ciphertext=item.value_ciphertext,
+                    masked_value=item.masked_value,
+                    fingerprint_hmac=item.fingerprint_hmac,
+                    is_revealable=item.is_revealable,
+                ),
+            )
 
     async def finish_run(
         self,

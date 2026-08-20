@@ -114,3 +114,33 @@ forbidden_modules =
     pydantic
     pydantic_settings
     sqlalchemy
+
+[importlinter:contract:contacts-infrastructure-layers]
+name = Contacts infrastructure implements inward contracts
+type = layers
+layers =
+    wef_backend.features.contacts.infrastructure
+    wef_backend.features.contacts.application
+    wef_backend.features.contacts.domain
+
+[importlinter:contract:contacts-interface-layers]
+name = Contacts interface depends inward
+type = layers
+layers =
+    wef_backend.features.contacts.interface
+    wef_backend.features.contacts.application
+    wef_backend.features.contacts.domain
+
+[importlinter:contract:contacts-core-framework-independence]
+name = Contacts core is framework independent
+type = forbidden
+source_modules =
+    wef_backend.features.contacts.domain
+    wef_backend.features.contacts.application
+forbidden_modules =
+    cryptography
+    fastapi
+    geoalchemy2
+    pydantic
+    pydantic_settings
+    sqlalchemy
