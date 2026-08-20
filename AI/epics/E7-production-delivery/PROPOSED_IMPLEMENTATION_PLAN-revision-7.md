@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E7
 title: "WEF-only shared TLS after D-009 (Forecast stays on :3000)"
-status: awaiting_approval
+status: approved
 revision: 7
 owner: owner
 spike_revision: 4
@@ -11,11 +11,11 @@ task_sequence:
     revision: 2
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-08-20T13:45:55Z"
+  approved_revision: 7
+  evidence: "Promoted into IMPLEMENTATION_PLAN.md revision 7; owner continue after D-009 WEF-only resolution"
 invalidation:
   invalidated_by: null
   invalidated_at: null

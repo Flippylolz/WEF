@@ -17,10 +17,10 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 
 ## Approval state
 
-- Epic workspace status: `ready`; the anonymous rehearsal remains complete while historical snapshot transfer is prioritized.
-- [Spike](SPIKE.md): `approved`, revision 4, selecting selective E3-T5 snapshot transfer and non-public production candidate staging.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 4 `approved` by Flippylolz on 2026-08-16; it sequences only E7-T6 revision 3.
-- E7-T1 through E7-T4, E7-T6, E7-T8, and E7-T9 are `done`; E7-T8's 2026-08-15 invalidation was an accidental touch by another agent's E7-T6 priority work and was restored by the owner on 2026-08-16 (completion on PR #69). E7-T6 completed on 2026-08-20 through PRs #88–#104 with a verified non-public candidate on the NUC (`wef_hist_candidate`, loopback `:13100`). E7-T9 completed through PRs #106/#107 with fixture-proven cutover automation (no live NUC mutation). E7-T11 is proposed for the ADR-019-gated public activation, and E7-T10 remains proposed behind D-009 ([proposed plan revision 6](PROPOSED_IMPLEMENTATION_PLAN-revision-6.md), operations B-009). E7-T5 remains deferred and E7-T7 remains proposed.
+- Epic workspace status: `ready`; D-009 resolved as WEF-only TLS; E7-T10 promoted under plan revision 7.
+- [Spike](SPIKE.md): `approved`, revision 4.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 7 `approved`; sequences only E7-T10 revision 2 (WEF-only shared TLS; Forecast stays on `:3000`).
+- E7-T1 through E7-T4, E7-T6, E7-T8, and E7-T9 are `done`. E7-T10 is `ready`. E7-T5 remains deferred; E7-T7 and E7-T11 remain proposed behind HTTPS/ADR-019 gates.
 
 ## Milestones
 
