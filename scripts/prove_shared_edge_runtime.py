@@ -368,9 +368,16 @@ def assert_tls_behaviour(root_cert: Path, *, body_limit: str) -> None:
         resolve=wef_resolve,
         cacert=root_cert,
     )
-    for header in ("content-security-policy", "x-frame-options", "x-content-type-options"):
+    for header in (
+        "content-security-policy",
+        "x-frame-options",
+        "x-content-type-options",
+        "strict-transport-security",
+    ):
         if header not in headers:
             raise ProofError(f"security header {header} is missing")
+    if "max-age=" not in headers.get("strict-transport-security", ""):
+        raise ProofError("HSTS max-age is missing")
     with tempfile.NamedTemporaryFile(delete=False) as oversize:
         oversize.write(b"x" * (1536 * 1024))
         oversize_path = Path(oversize.name)

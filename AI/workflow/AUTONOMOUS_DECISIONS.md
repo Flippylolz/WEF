@@ -176,7 +176,17 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no production auth enablement; no Starlette Admin in this task; revealed contacts stay in memory only.
 - Reversal: revise/reapprove plan revision 4 and demote E6-T6 if UX scope changes materially.
 
+## AD-026: Harden privacy/security after historical public activation (E6-T2)
+
+- Time: 2026-08-20.
+- Prompt avoided: leave HSTS deferred indefinitely after verified TLS, or expand into E6-T1/T3 Playwright/diagnostics in the same plan.
+- Selected approach: approve E6 plan revision 6; promote E6-T2; enable HSTS on the WEF HTTPS shared-edge vhost; prove docs/OpenAPI denial, contact/media boundaries, and refresh synthetic-only public copy; keep E6-T1/T3 for later revisions.
+- Rationale: E6-T2 dependencies and E7-T10/T7/T11 are done; DEPLOYMENT.md gated HSTS on verified certs; AD-009 continue authority.
+- Safety limit: no `preload`; no HSTS on `:3100`; no bulk visibility promotion; no Forecast TLS; no OpenAPI exposure in production.
+- Reversal: restore previous shared-edge release without HSTS; revert public copy with prior web image.
+
 ## AD-025: Activate verified historical candidate after E7-T7 (E7-T11)
+
 
 - Time: 2026-08-20.
 - Prompt avoided: leave historical data non-public indefinitely after ADR-019 gates, or activate without atomic DB+media+config / identity freshness.

@@ -313,6 +313,12 @@ def assert_generated_configuration_policy(rendered: dict[str, str]) -> None:
     assert "X-Forwarded-Proto" in tls, "forwarded-proto header missing"
     assert "ssl_protocols TLSv1.2 TLSv1.3;" in tls, "TLS protocol policy missing"
     assert "Content-Security-Policy" in tls, "WEF security headers missing"
+    assert "Strict-Transport-Security" in tls, "WEF HSTS header missing"
+    assert 'Strict-Transport-Security "max-age=31536000"' in tls, "WEF HSTS max-age missing"
+    assert "preload" not in tls.lower().split("strict-transport-security", 1)[-1].split(
+        "\n",
+        1,
+    )[0], "HSTS preload requires separate approval"
     assert "return 404" in tls, "tls stage must keep HTTP non-ACME as 404"
     assert "return 301" not in tls, "tls stage must not enable redirects"
     redirect = rendered[TLS_REDIRECT_CONFIG]
