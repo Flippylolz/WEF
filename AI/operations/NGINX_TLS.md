@@ -8,7 +8,7 @@ This is the approved target architecture from [ADR-020](../decisions/adr/ADR-020
 
 - Nginx Open Source is the only public web server and reverse proxy on NUC ports 80/443 for WEF.
 - Initial E7-T10 cutover terminates TLS for the WEF hostname only; Forecast remains on public host port 3000 (Forecast vhost stays optional in the renderer for fixtures/future use).
-- Nginx routes WEF web, `/api/*`, `/admin*`, and `/media/*` traffic to private WEF upstreams (`/admin` to the API owner console).
+- Nginx routes WEF web, `/api/*`, `/admin*`, and `/media/*` traffic to private WEF upstreams (`/admin` to the API owner console) via Docker DNS variable `proxy_pass` so recreates do not leave stale upstream IPs.
 - Next.js, FastAPI, PostgreSQL, and workers are not public after the verified WEF cutover; Forecast continues on its existing `:3000` listener until a later owner-approved Forecast TLS task.
 - The shared edge has its own project/path, configuration lifecycle, persistent certificate state, bounded logs, health checks, and rollback boundary; ordinary WEF releases do not own it.
 

@@ -43,6 +43,10 @@ http {
     proxy_read_timeout 60s;
     proxy_send_timeout 60s;
 
+    # Docker embedded DNS: variable proxy_pass re-resolves after WEF recreates.
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    resolver_timeout 5s;
+
     server {
         listen 443 ssl default_server;
         listen [::]:443 ssl default_server;
@@ -63,7 +67,8 @@ http {
         }
 
         location /api/ {
-            proxy_pass http://{{WEF_API_UPSTREAM}};
+            set $wef_api_upstream "{{WEF_API_UPSTREAM}}";
+            proxy_pass http://$wef_api_upstream;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -72,7 +77,8 @@ http {
 
         # Owner console is Starlette Admin on the API, not the Next.js app.
         location /admin {
-            proxy_pass http://{{WEF_API_UPSTREAM}};
+            set $wef_api_upstream "{{WEF_API_UPSTREAM}}";
+            proxy_pass http://$wef_api_upstream;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -80,7 +86,8 @@ http {
         }
 
         location /media/ {
-            proxy_pass http://{{WEF_MEDIA_UPSTREAM}};
+            set $wef_media_upstream "{{WEF_MEDIA_UPSTREAM}}";
+            proxy_pass http://$wef_media_upstream;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -88,7 +95,8 @@ http {
         }
 
         location / {
-            proxy_pass http://{{WEF_WEB_UPSTREAM}};
+            set $wef_web_upstream "{{WEF_WEB_UPSTREAM}}";
+            proxy_pass http://$wef_web_upstream;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

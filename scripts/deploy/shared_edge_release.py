@@ -25,7 +25,9 @@ TLS_CONFIG_NAMES = frozenset({"tls", "tls-redirect"})
 STATE_FILENAME = "edge-state.json"
 CURRENT_LINK = "current"
 PREVIOUS_LINK = "previous"
-PROXY_UPSTREAM_PATTERN = re.compile(r"proxy_pass http://([a-z0-9_.-]+:[0-9]{1,5});")
+PROXY_UPSTREAM_PATTERN = re.compile(
+    r'(?:proxy_pass http://|set \$[a-z0-9_]+ ")([a-z0-9_.-]+:[0-9]{1,5})(?:;|")'
+)
 EDGE_MOUNT = "/etc/nginx-edge"
 EDGE_UID = "1000:1000"
 
