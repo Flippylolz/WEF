@@ -23,6 +23,7 @@ import { recordMapConstruction } from "@/lib/map-lifecycle";
 const MAP_STYLE =
   process.env.NEXT_PUBLIC_MAP_STYLE_URL?.trim() ||
   "https://tiles.openfreemap.org/styles/liberty";
+const MAP_DISABLED = process.env.NEXT_PUBLIC_WEF_DISABLE_MAP === "1";
 const MAPLIBRE_WORKER = "/vendor/maplibre/maplibre-gl-worker.mjs";
 const DISTRICT_BOUNDARIES = "/data/warsaw-districts.geojson";
 const MAP_LOAD_TIMEOUT_MS = 15_000;
@@ -160,6 +161,12 @@ export function WarsawMap({
   }, [onFailure]);
 
   useEffect(() => {
+    if (!MAP_DISABLED) return;
+    failureHandler.current();
+  }, []);
+
+  useEffect(() => {
+    if (MAP_DISABLED) return;
     const timeout = window.setTimeout(() => {
       if (!mapLoaded.current) failureHandler.current();
     }, MAP_LOAD_TIMEOUT_MS);
@@ -167,6 +174,7 @@ export function WarsawMap({
   }, []);
 
   useEffect(() => {
+    if (MAP_DISABLED) return;
     if (!mapReady) return;
     const bounds = parseBbox(bbox);
     if (bounds === null) return;
@@ -180,6 +188,10 @@ export function WarsawMap({
       { duration: 0, padding: 32 },
     );
   }, [bbox, mapReady]);
+
+  if (MAP_DISABLED) {
+    return null;
+  }
 
   async function handleClick(event: MapLayerMouseEvent) {
     const feature = event.features?.[0];
@@ -257,6 +269,9 @@ export function WarsawMap({
         onLoad={() => {
           mapLoaded.current = true;
           setMapReady(true);
+        }}
+        onError={() => {
+          failureHandler.current();
         }}
         cursor="pointer"
         attributionControl={false}

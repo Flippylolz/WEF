@@ -1,3 +1,7 @@
 .next
 coverage
 src/generated/api.ts
+public/vendor
+test-results
+playwright-report
+blob-report
