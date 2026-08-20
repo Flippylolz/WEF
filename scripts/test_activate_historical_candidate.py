@@ -9,8 +9,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from scripts.deploy.activate_historical_candidate import (
+    ActivationContext,
     HistoricalActivationError,
     point_media_roots,
+    redact_database_url,
+    resolve_compose_files,
     restore_media_roots,
     rewrite_database_url,
     update_environment_values,
@@ -25,6 +28,12 @@ class RewriteDatabaseUrlTests(unittest.TestCase):
             rewrite_database_url(url, "wef_hist_candidate"),
             "postgresql+asyncpg://wef:secret@db:5432/wef_hist_candidate",
         )
+
+    def test_redacts_password(self) -> None:
+        redacted = redact_database_url(
+            "postgresql+asyncpg://wef:secret@db:5432/wef",
+        )
+        self.assertEqual(redacted, "postgresql+asyncpg://wef:***@db:5432/wef")
 
     def test_rejects_unsafe_names(self) -> None:
         with self.assertRaises(HistoricalActivationError):
@@ -44,6 +53,29 @@ class UpdateEnvironmentTests(unittest.TestCase):
         self.assertEqual(updated["POSTGRES_DB"], "wef_hist_candidate")
         self.assertIn("/wef_hist_candidate", updated["WEF_DATABASE_URL"])
         self.assertEqual(values["POSTGRES_DB"], "wef")
+
+
+class ComposeResolutionTests(unittest.TestCase):
+    def test_resolves_optional_cutover_overlay(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            release = root / "releases" / "current"
+            release.mkdir(parents=True)
+            base = release / "compose.production.yaml"
+            cutover = release / "compose.production-cutover.yaml"
+            base.write_text("services: {}\n", encoding="utf-8")
+            cutover.write_text("services: {}\n", encoding="utf-8")
+            context = ActivationContext(
+                root=root,
+                config_file=root / "production.env",
+                bundle_checksum="a" * 64,
+            )
+            resolved_base, resolved_cutover = resolve_compose_files(
+                context,
+                {"WEF_RELEASE_DIR": str(release)},
+            )
+            self.assertEqual(resolved_base, base)
+            self.assertEqual(resolved_cutover, cutover)
 
 
 class MediaPointerTests(unittest.TestCase):
