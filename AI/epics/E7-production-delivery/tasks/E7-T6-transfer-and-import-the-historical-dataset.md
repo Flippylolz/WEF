@@ -58,6 +58,8 @@ completion:
     - "Restore preflight planning merged via https://github.com/Flippylolz/WEF/pull/99"
     - "Postgres staging restore/load operator tooling merged via https://github.com/Flippylolz/WEF/pull/101"
     - "Live snapshot export fix merged via https://github.com/Flippylolz/WEF/pull/102"
+    - "Task completion record merged via https://github.com/Flippylolz/WEF/pull/103"
+    - "Candidate compose DNS isolation fix merged via https://github.com/Flippylolz/WEF/pull/104 after deploy smoke caught production edge proxying to candidate web"
     - "NUC bundle rsync verified; wef_hist_candidate holds E3-T5 terminal counts with staged media"
     - "transfer_restore live preflight allowed (0 new rows, all identical) on 2026-08-20"
     - "transfer_candidate reconcile allowed; public wef remains 0 source_messages"
@@ -93,6 +95,8 @@ Cloud-testable repository slices merged on `main` (task `done`):
 | Restore preflight | [#99](https://github.com/Flippylolz/WEF/pull/99) | Conflict-gated FK-safe batch planning + `restore-preflight` CLI |
 | Postgres restore/load | [#101](https://github.com/Flippylolz/WEF/pull/101) | Staging schema, live snapshot export, checkpointed batch INSERT, `transfer_restore` CLI |
 | Snapshot export fix | [#102](https://github.com/Flippylolz/WEF/pull/102) | Live Postgres preflight subquery fix found during NUC verification |
+| Completion record | [#103](https://github.com/Flippylolz/WEF/pull/103) | Task `done` with NUC verification evidence |
+| Candidate DNS isolation | [#104](https://github.com/Flippylolz/WEF/pull/104) | Stop candidate `api`/`web` aliases from colliding on `wef-production_application` |
 
 Live production evidence (2026-08-20):
 
@@ -101,6 +105,7 @@ Live production evidence (2026-08-20):
 - Loopback candidate stack `wef-candidate` is healthy on `http://127.0.0.1:13100` (`live`/`ready`); candidate API uses `wef_hist_candidate` with no `provider-egress` network.
 - `transfer_restore preflight --container wef-production-db-1 --database wef_hist_candidate` allowed on staging reload rehearsal (0 new rows, all identical).
 - Map APIs both show 5 visible offers because the transferred snapshot keeps 2,994 offers as `needs_review` (only 5 `visible`); historical rows are present in the candidate DB but not public-map-eligible until later activation/review gates.
+- Production release `8b798cf` (PR #104) deploy succeeded; public `:3100` and loopback `:13100` both `ready`; production edge resolves `web`/`api` to production containers only.
 
 ## Scope
 

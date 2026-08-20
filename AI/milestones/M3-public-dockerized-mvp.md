@@ -21,15 +21,15 @@ The responsive map experience is production-deployed from GitHub with persistent
 
 ### [E5: Interactive map frontend](../epics/E5-interactive-map-frontend/README.md)
 
-- [E5-T3: Build offer detail and media gallery](../epics/E5-interactive-map-frontend/tasks/E5-T3-build-offer-detail-and-media-gallery.md) — promoted, `draft`, blocked on E4-T3
-- [E5-T4: Complete responsive list/map accessibility](../epics/E5-interactive-map-frontend/tasks/E5-T4-complete-responsive-list-map-accessibility.md) — promoted, `draft`, blocked on E5-T2/E5-T3
-- [E5-T5: Performance and production UX pass](../epics/E5-interactive-map-frontend/tasks/E5-T5-performance-and-production-ux-pass.md) — promoted, `draft`, blocked on E5-T4/E4-T4
+- [E5-T3: Build offer detail and media gallery](../epics/E5-interactive-map-frontend/tasks/E5-T3-build-offer-detail-and-media-gallery.md) — `done`
+- [E5-T4: Complete responsive list/map accessibility](../epics/E5-interactive-map-frontend/tasks/E5-T4-complete-responsive-list-map-accessibility.md) — `done`
+- [E5-T5: Performance and production UX pass](../epics/E5-interactive-map-frontend/tasks/E5-T5-performance-and-production-ux-pass.md) — `done`
 ### [E6: Quality, security, and operations](../epics/E6-quality-security-operations/README.md)
 
 - [E6-T1: Complete automated test pyramid](../epics/E6-quality-security-operations/proposed-tasks/E6-T1-complete-automated-test-pyramid.md) — `proposed`
 - [E6-T2: Perform privacy and security hardening](../epics/E6-quality-security-operations/proposed-tasks/E6-T2-perform-privacy-and-security-hardening.md) — `proposed`
 - [E6-T3: Add operational diagnostics](../epics/E6-quality-security-operations/proposed-tasks/E6-T3-add-operational-diagnostics.md) — `proposed`
-- [E6-T4: Implement in-house registration and sessions](../epics/E6-quality-security-operations/tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `draft` (promoted; implementation gate pending plan approval)
+- [E6-T4: Implement in-house registration and sessions](../epics/E6-quality-security-operations/tasks/E6-T4-implement-in-house-registration-and-sessions.md) — `done` (PR #51); production activation remains E7-T7
 - [E6-T5: Implement contact masking, encryption, reveal, and audit](../epics/E6-quality-security-operations/proposed-tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — `proposed`
 - [E6-T6: Implement English i18n and restricted-action UX](../epics/E6-quality-security-operations/proposed-tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — `proposed`
 - [E6-T7: Implement owner administration console](../epics/E6-quality-security-operations/proposed-tasks/E6-T7-implement-owner-administration-console.md) — `proposed`
@@ -40,10 +40,10 @@ The responsive map experience is production-deployed from GitHub with persistent
 - [E7-T3: Implement GitHub image and deployment workflows](../epics/E7-production-delivery/tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `done`
 - [E7-T4: Implement health verification and rollback](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) — `done`
 - [E7-T5: Future backup and restore capability](../epics/E7-production-delivery/proposed-tasks/E7-T5-future-backup-and-restore-capability.md) — `deferred`
-- [E7-T6: Transfer the verified historical snapshot into a non-public production candidate](../epics/E7-production-delivery/tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `draft` revision 3 (promoted; implementation gate satisfied by approved plan revision 4, dependency gate pending E3-T5 completion)
+- [E7-T6: Transfer the verified historical snapshot into a non-public production candidate](../epics/E7-production-delivery/tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `done` (PRs #88–#104); non-public candidate verified on NUC; public activation is E7-T11
 - [E7-T7: Enable production registration and contact reveal](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) — `proposed`
 - [E7-T8: Build isolated shared Nginx TLS topology](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `done`
-- [E7-T9: Implement reversible shared-edge cutover](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `draft`
+- [E7-T9: Implement reversible shared-edge cutover](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `invalidated`/paused; [proposed plan revision 5](../epics/E7-production-delivery/PROPOSED_IMPLEMENTATION_PLAN-revision-5.md) awaits owner approval
 - [E7-T10: Roll out and verify shared TLS](../epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) — `proposed`
 - [E7-T11: Activate the verified historical candidate publicly](../epics/E7-production-delivery/proposed-tasks/E7-T11-activate-the-verified-historical-candidate.md) — `proposed`
 
