@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E6-T2
 epic: E6
 title: "Perform privacy and security hardening"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -42,12 +42,17 @@ branch:
   task_id: E6-T2
   one_task_only: true
   created_at: "2026-08-20T16:17:08Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/130"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-20T16:29:20Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/130"
+  evidence:
+    - "Merged https://github.com/Flippylolz/WEF/pull/130 (HSTS + promotion + public copy) and https://github.com/Flippylolz/WEF/pull/131 (smoke/SPIKE CI follow-up)"
+    - "Live NUC shared edge: Strict-Transport-Security max-age=31536000 on HTTPS; no preload; :3100 unchanged; Forecast :3000 → 200"
+    - "Docs/OpenAPI /api/docs|/api/redoc|/api/openapi.json → 404; /media/.env → 404; CSP/XFO/nosniff retained"
+    - "pip-audit and pnpm audit --prod --audit-level high: no known high vulnerabilities"
+    - "Home subtitle updated for post-activation honesty; production smoke asserts new marker"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -82,12 +87,12 @@ Close residual privacy and security gaps on the live HTTPS WEF origin after E7-T
 
 ## Acceptance criteria
 
-- [ ] Production clients cannot access raw payloads, file paths, secrets, database, or worker through the public edge.
-- [ ] Production returns 404 for OpenAPI/Swagger UI/ReDoc routes and runtime images contain no documentation generators/assets.
-- [ ] Anonymous clients cannot retrieve raw phone/contact data; authenticated reveal follows AUTH_ADMIN_CONTACTS.
-- [ ] HTTPS responses include HSTS plus existing CSP/Referrer-Policy/X-Content-Type-Options/X-Frame-Options.
-- [ ] High-severity dependency findings are resolved or explicitly accepted in task evidence.
-- [ ] Public marketing copy no longer claims the catalog is synthetic-only after historical activation.
+- [x] Production clients cannot access raw payloads, file paths, secrets, database, or worker through the public edge.
+- [x] Production returns 404 for OpenAPI/Swagger UI/ReDoc routes and runtime images contain no documentation generators/assets.
+- [x] Anonymous clients cannot retrieve raw phone/contact data; authenticated reveal follows AUTH_ADMIN_CONTACTS.
+- [x] HTTPS responses include HSTS plus existing CSP/Referrer-Policy/X-Content-Type-Options/X-Frame-Options.
+- [x] High-severity dependency findings are resolved or explicitly accepted in task evidence.
+- [x] Public marketing copy no longer claims the catalog is synthetic-only after historical activation.
 
 ## Dependencies and gates
 
