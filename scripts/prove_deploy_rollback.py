@@ -128,7 +128,7 @@ PY
   */)
     short_sha=$(printf '%.7s' "$WEF_RELEASE_SHA")
     page='<h1>Apartments and houses for sale in Warsaw</h1>'
-    page="${page}<p>synthetic MVP fixtures</p>"
+    page="${page}<p>reviewed historical inventory is live</p>"
     page="${page}<div>version: <code>${short_sha}</code></div>"
     printf '%s\\n' "$page" > "$output"
     ;;
