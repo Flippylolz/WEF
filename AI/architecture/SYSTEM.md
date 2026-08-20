@@ -49,7 +49,7 @@ flowchart LR
     github -->|"Immutable images over SSH deploy"| server
 ```
 
-OpenFreeMap and the geocoder are external dependencies, not containers owned by this project. All project-owned runtime processes are containerized. The implemented anonymous rehearsal still uses Caddy on port 3100. [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) owns inert shared-edge topology, [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) owns cutover automation, and [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) owns the live Nginx/Certbot migration; [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables sensitive WEF behavior only after that HTTPS gate.
+OpenFreeMap and the geocoder are external dependencies, not containers owned by this project. All project-owned runtime processes are containerized. The implemented anonymous rehearsal still uses Caddy on port 3100. [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) owns inert shared-edge topology, [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) owns cutover automation, and [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) owns the live Nginx/Certbot migration; [E7-T7](../epics/E7-production-delivery/tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables sensitive WEF behavior only after that HTTPS gate.
 
 ## Technology stack
 

@@ -276,4 +276,4 @@ Registration, login, admin, and contact reveal remain disabled until:
 - Masking is tested against source fixtures.
 - Reveal rate limits/audit behavior are confirmed.
 
-[E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) provides the verified live Nginx HTTPS origin after E7-T8/E7-T9 topology and automation; [E7-T7](../epics/E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) is the subsequent production enablement task.
+[E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) provides the verified live Nginx HTTPS origin after E7-T8/E7-T9 topology and automation; [E7-T7](../epics/E7-production-delivery/tasks/E7-T7-enable-production-registration-and-contact-reveal.md) is the subsequent production enablement task.
