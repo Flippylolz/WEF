@@ -19,17 +19,39 @@ require_directory() {
   [ -d "$1" ] || fail "required directory is missing"
 }
 
+require_plain_runtime_directory() {
+  directory="$1"
+  [ ! -L "$directory" ] || fail "runtime directory must not be a symlink: $directory"
+  if [ -e "$directory" ] && [ ! -d "$directory" ]; then
+    fail "runtime path must be a directory: $directory"
+  fi
+}
+
+require_media_tree_directory() {
+  directory="$1"
+  expected_leaf="$2"
+  if [ -L "$directory" ]; then
+    root_resolved=$(readlink -f "$WEF_ROOT") || fail "unable to resolve WEF root: $WEF_ROOT"
+    target=$(readlink -f "$directory") || fail "unable to resolve media symlink: $directory"
+    case "$target" in
+      "$root_resolved"/candidates/*/media/"$expected_leaf") ;;
+      *)
+        fail "media symlink must resolve under candidates/*/media/$expected_leaf: $directory"
+        ;;
+    esac
+    [ -d "$target" ] || fail "media symlink target must be a directory: $directory"
+    return 0
+  fi
+  if [ -e "$directory" ] && [ ! -d "$directory" ]; then
+    fail "runtime path must be a directory: $directory"
+  fi
+}
+
 prepare_runtime_directories() {
-  for directory in \
-    "$WEF_ROOT/media" \
-    "$WEF_ROOT/media/originals" \
-    "$WEF_ROOT/media/public" \
-    "$WEF_ROOT/media/reports"; do
-    [ ! -L "$directory" ] || fail "runtime directory must not be a symlink: $directory"
-    if [ -e "$directory" ] && [ ! -d "$directory" ]; then
-      fail "runtime path must be a directory: $directory"
-    fi
-  done
+  require_plain_runtime_directory "$WEF_ROOT/media"
+  require_plain_runtime_directory "$WEF_ROOT/media/reports"
+  require_media_tree_directory "$WEF_ROOT/media/originals" originals
+  require_media_tree_directory "$WEF_ROOT/media/public" public
 
   mkdir -p \
     "$WEF_ROOT/media/originals" \

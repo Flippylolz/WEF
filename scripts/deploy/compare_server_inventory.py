@@ -26,6 +26,14 @@ EXPECTED_WEF_PATHS = {
     "/home/nuc/wef/logs": 0o750,
 }
 
+# After E7-T11 activation, public/originals may be symlinks into candidates/*/media/*.
+ACTIVATED_MEDIA_SYMLINK_PATHS = frozenset(
+    {
+        "/home/nuc/wef/media/originals",
+        "/home/nuc/wef/media/public",
+    },
+)
+
 
 class InventoryMismatchError(RuntimeError):
     """Raised when provisioning changed a non-WEF resource."""
@@ -75,8 +83,15 @@ def validate_expected_paths(inventory: dict[str, Any]) -> None:
         allowed_uids = {inventory["uid"]}
         if path == "/home/nuc/wef/postgres":
             allowed_uids.add(999)
+        kind = metadata["kind"]
+        if path in ACTIVATED_MEDIA_SYMLINK_PATHS and kind == "symlink":
+            # Symlink mode bits are platform-defined; ownership must still match the operator.
+            if metadata["uid"] not in allowed_uids:
+                msg = f"WEF path metadata is unsafe: {path}"
+                raise InventoryMismatchError(msg)
+            continue
         if (
-            metadata["kind"] != "directory"
+            kind != "directory"
             or metadata["mode"] != expected_mode
             or metadata["uid"] not in allowed_uids
         ):
