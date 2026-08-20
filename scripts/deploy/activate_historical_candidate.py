@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from urllib.parse import quote, urlparse, urlunparse
@@ -77,6 +78,26 @@ def database_name_from_url(database_url: str) -> str:
         msg = "database URL path must contain a safe database name"
         raise HistoricalActivationError(msg)
     return name
+
+
+def redact_database_url(database_url: str) -> str:
+    """Hide credentials when emitting activation evidence."""
+    parsed = urlparse(database_url)
+    if parsed.password is None:
+        return database_url
+    host = parsed.hostname or ""
+    if parsed.port is not None:
+        host = f"{host}:{parsed.port}"
+    user = parsed.username or ""
+    netloc = f"{user}:***@{host}" if user else f"***@{host}"
+    return urlunparse(parsed._replace(netloc=netloc))
+
+
+def pointers_for_evidence(pointers: ActivationPointers) -> dict[str, str | None]:
+    """Return activation pointers safe for logs and state files."""
+    payload = asdict(pointers)
+    payload["database_url"] = redact_database_url(pointers.database_url)
+    return payload
 
 
 def update_environment_values(
@@ -351,21 +372,34 @@ def migrate_candidate(context: ActivationContext, values: dict[str, str]) -> Non
     )
 
 
-def recreate_application(context: ActivationContext, values: dict[str, str]) -> None:
-    """Recreate API/web/edge/media-edge against the active env file."""
+def resolve_compose_files(context: ActivationContext, values: dict[str, str]) -> tuple[Path, Path | None]:
+    """Return base production compose and optional shared-edge cutover overlay."""
     compose_file = Path(values["WEF_RELEASE_DIR"]) / "compose.production.yaml"
     if not compose_file.is_file():
         compose_file = context.root / "releases" / "current" / "compose.production.yaml"
+    if not compose_file.is_file():
+        msg = f"compose.production.yaml not found: {compose_file}"
+        raise HistoricalActivationError(msg)
+    cutover = compose_file.parent / "compose.production-cutover.yaml"
+    return compose_file, cutover if cutover.is_file() else None
+
+
+def recreate_application(context: ActivationContext, values: dict[str, str]) -> None:
+    """Recreate API/web/edge/media-edge and reconnect shared edge upstreams."""
+    compose_file, cutover = resolve_compose_files(context, values)
+    common = [
+        "docker",
+        "compose",
+        "--project-name",
+        context.compose_project,
+        "--env-file",
+        str(context.config_file),
+        "-f",
+        str(compose_file),
+    ]
     _run(
         [
-            "docker",
-            "compose",
-            "--project-name",
-            context.compose_project,
-            "--env-file",
-            str(context.config_file),
-            "-f",
-            str(compose_file),
+            *common,
             "up",
             "--detach",
             "--force-recreate",
@@ -375,22 +409,79 @@ def recreate_application(context: ActivationContext, values: dict[str, str]) -> 
             "edge",
         ],
     )
+    if cutover is not None:
+        # media-edge only exists on the cutover overlay; recreate after media
+        # symlinks change so Docker remounts the candidate public tree.
+        _run(
+            [
+                *common,
+                "-f",
+                str(cutover),
+                "up",
+                "--detach",
+                "--force-recreate",
+                "--wait",
+                "media-edge",
+            ],
+        )
+    reconnect_shared_edge()
 
 
-def smoke_public_https(base_url: str = "https://2fa54e2405.duckdns.org") -> None:
-    """Fail closed unless public HTTPS health and estates respond."""
+def reconnect_shared_edge() -> None:
+    """Attach recreated WEF containers to the shared Nginx network when present."""
+    script = Path("/home/nuc/wef-shared-edge/ops/reconnect-wef-upstreams.sh")
+    if script.is_file():
+        _run(["bash", str(script)])
+
+
+def _probe_public_https(base_url: str, root: Path) -> str | None:
+    """Return an error string when a public smoke probe fails, else None."""
     live = _run(["curl", "-fsS", f"{base_url}/api/v1/health/live"])
     if "live" not in live.stdout:
-        msg = f"live health unexpected: {live.stdout!r}"
-        raise HistoricalActivationError(msg)
+        return f"live health unexpected: {live.stdout!r}"
     ready = _run(["curl", "-fsS", f"{base_url}/api/v1/health/ready"])
     if "ready" not in ready.stdout:
-        msg = f"ready health unexpected: {ready.stdout!r}"
-        raise HistoricalActivationError(msg)
-    estates = _run(["curl", "-fsS", f"{base_url}/api/v1/estates?limit=5"])
-    if not estates.stdout.strip():
-        msg = "estates smoke failed"
-        raise HistoricalActivationError(msg)
+        return f"ready health unexpected: {ready.stdout!r}"
+    locations = _run(
+        [
+            "curl",
+            "-fsS",
+            f"{base_url}/api/v1/map/locations?bbox=20.9,52.1,21.2,52.4",
+        ],
+    )
+    if "FeatureCollection" not in locations.stdout:
+        return "map locations smoke failed"
+    public = root / "media" / "public"
+    sample = next(public.rglob("*.webp"), None) or next(public.rglob("*.jpg"), None)
+    if sample is None:
+        return "no public derivative sample found for media smoke"
+    relative = sample.resolve().relative_to(public.resolve()).as_posix()
+    media = _run(
+        ["curl", "-fsS", "-o", "/dev/null", "-w", "%{http_code}", f"{base_url}/media/{relative}"],
+    )
+    if media.stdout.strip() != "200":
+        return f"public media smoke failed: HTTP {media.stdout.strip()}"
+    return None
+
+
+def smoke_public_https(
+    root: Path,
+    base_url: str = "https://2fa54e2405.duckdns.org",
+    *,
+    attempts: int = 12,
+    delay_seconds: float = 5.0,
+) -> None:
+    """Fail closed unless public HTTPS health, map pins, and media respond."""
+    last_error = "unknown smoke failure"
+    for attempt in range(1, attempts + 1):
+        last_error = _probe_public_https(base_url, root) or ""
+        if not last_error:
+            return
+        if attempt == attempts:
+            break
+        time.sleep(delay_seconds)
+    msg = f"public HTTPS smoke failed after {attempts} attempts: {last_error}"
+    raise HistoricalActivationError(msg)
 
 
 def activate(context: ActivationContext, *, dry_run: bool = False) -> dict[str, object]:
@@ -405,7 +496,7 @@ def activate(context: ActivationContext, *, dry_run: bool = False) -> dict[str, 
     public_fp = identity_fingerprint(context, context.public_database)
     candidate_fp = identity_fingerprint(context, context.candidate_database)
     plan = {
-        "before": asdict(before),
+        "before": pointers_for_evidence(before),
         "bundle_checksum": context.bundle_checksum,
         "candidate_database": context.candidate_database,
         "public_identity_fingerprint": public_fp,
@@ -447,7 +538,7 @@ def activate(context: ActivationContext, *, dry_run: bool = False) -> dict[str, 
         )
         try:
             recreate_application(context, updated)
-            smoke_public_https()
+            smoke_public_https(context.root)
         except Exception:
             write_environment(context.config_file, values)
             restore_media_roots(context.root, backup_suffix=backup_suffix)
@@ -457,7 +548,7 @@ def activate(context: ActivationContext, *, dry_run: bool = False) -> dict[str, 
         after = current_pointers(context.config_file, context.root)
         result = {
             **plan,
-            "after": asdict(after),
+            "after": pointers_for_evidence(after),
             "backup_suffix": backup_suffix,
             "status": "activated",
         }
