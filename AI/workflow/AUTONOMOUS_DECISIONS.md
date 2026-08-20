@@ -176,12 +176,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no production auth enablement; no Starlette Admin in this task; revealed contacts stay in memory only.
 - Reversal: revise/reapprove plan revision 4 and demote E6-T6 if UX scope changes materially.
 
-## AD-022: Resolve D-009 as WEF-only TLS; Forecast stays on :3000
+## AD-023: Execute live WEF-only shared TLS cutover after tooling merge
 
 - Time: 2026-08-20.
-- Prompt avoided: invent a second DuckDNS name for Forecast, force path-prefix multiplexing, or refuse WEF HTTPS until Forecast also has a hostname.
-- Selected approach: record owner decision that `2fa54e2405.duckdns.org` is the WEF TLS hostname; AI Forecast remains publicly reachable on port 3000 only; amend ADR-020 for this initial cutover; open E7 plan revision 7 for WEF-only E7-T10.
-- Rationale: owner explicit chat direction; Funbox already forwards 80/443 to the NUC; dual-hostname Forecast TLS is not required for WEF HTTPS or subsequent E7-T7.
-- Safety limit: no live NUC cutover until plan revision 7 is approved and WEF-only shared-edge tooling/tests merge; do not disable Forecast :3000; do not enable sensitive WEF features until E7-T7.
-- Reversal: restore dual-hostname D-009/ADR-020 requirements via a new owner decision and plan revision before moving Forecast behind Nginx.
+- Prompt avoided: wait for another owner sync before binding Nginx on 80/443, or enable E7-T7 auth features as part of the TLS cutover.
+- Selected approach: merge WEF-only shared-edge tooling (PR #121); set missing GitHub Actions secret `WEF_ADMIN_SESSION_SECRET` so production deploys can build release config; on the NUC create `/home/nuc/wef-shared-edge`, issue production Let's Encrypt for `2fa54e2405.duckdns.org`, activate `tls` then `tls-redirect`, keep Caddy `:3100` and Forecast `:3000`, install daily `shared_edge_renew.sh` cron.
+- Rationale: plan revision 7 and AD-022 authorized WEF-only live cutover once tooling merged; public 80/443 already forwarded; autonomous mission continues without owner sync when evidence supports safe defaults.
+- Safety limit: do not enable registration/admin/reveal (E7-T7); do not remove `:3100`/`:3000`; do not commit certs/ACME material; re-attach WEF upstream aliases after container recreate until cutover overlay is default.
+- Reversal: activate bootstrap or stop `wef-shared-edge` and use Caddy `:3100`; leave Forecast untouched.
 
