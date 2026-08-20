@@ -34,13 +34,6 @@ export function FavoritesPanel({
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
-  useEffect(() => {
-    if (!open) {
-      setPendingId(null);
-      setRemoveError(false);
-    }
-  }, [open]);
-
   return (
     <dialog
       ref={dialogRef}
@@ -48,9 +41,15 @@ export function FavoritesPanel({
       aria-labelledby="favorites-panel-title"
       onCancel={(event) => {
         event.preventDefault();
+        setPendingId(null);
+        setRemoveError(false);
         onClose();
       }}
-      onClose={onClose}
+      onClose={() => {
+        setPendingId(null);
+        setRemoveError(false);
+        onClose();
+      }}
     >
       <div className="account-modal-panel">
         <header className="account-modal-header">
