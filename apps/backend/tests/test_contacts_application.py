@@ -170,12 +170,20 @@ def test_decode_secret_key_rejects_bad_material() -> None:
     assert decode_secret_key(None) is None
     assert decode_secret_key("   ") is None
     with pytest.raises(Exception, match="contact key"):
-        decode_secret_key("too-short")
-    with pytest.raises(Exception, match="contact key"):
-        decode_secret_key("!!!")
+        decode_secret_key("YWJj")
     key = decode_secret_key("ee" * 32)
+    hmac_key = decode_secret_key("ff" * 32)
     assert key is not None
-    cipher = AesGcmContactCipher(encryption_key=key, hmac_key=None)
-    assert cipher.available is False
+    assert hmac_key is not None
+    missing_encrypt = AesGcmContactCipher(encryption_key=None, hmac_key=hmac_key)
+    assert missing_encrypt.available is False
     with pytest.raises(Exception, match="unavailable"):
-        cipher.encrypt("x")
+        missing_encrypt.encrypt("x")
+    missing_hmac = AesGcmContactCipher(encryption_key=key, hmac_key=None)
+    assert missing_hmac.available is False
+    with pytest.raises(Exception, match="unavailable"):
+        missing_hmac.fingerprint(kind=ContactKind.PHONE, normalized_value="+48123")
+    full = AesGcmContactCipher(encryption_key=key, hmac_key=hmac_key)
+    assert full.available is True
+    with pytest.raises(Exception, match="invalid"):
+        full.decrypt("not-valid-ciphertext")

@@ -78,7 +78,7 @@ class AesGcmContactCipher:
             raw = base64.urlsafe_b64decode(ciphertext.encode("ascii"))
             nonce, payload = raw[:_NONCE_BYTES], raw[_NONCE_BYTES:]
             plaintext = self._aesgcm.decrypt(nonce, payload, None)
-        except (ValueError, UnicodeEncodeError) as error:
+        except Exception as error:
             message = "contact ciphertext is invalid"
             raise ContactCryptoUnavailableError(message) from error
         return plaintext.decode("utf-8")
