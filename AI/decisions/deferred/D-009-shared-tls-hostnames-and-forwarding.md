@@ -2,40 +2,32 @@
 schema: ai-docs/deferred-decision@1
 id: D-009
 title: Shared TLS hostnames and forwarding
-status: deferred
+status: resolved
 task_gates:
   - E7-T10
-resolved_by: []
+resolved_by:
+  - "Owner chat 2026-08-20: WEF hostname 2fa54e2405.duckdns.org; Forecast remains public :3000 only (no second shared-edge hostname)"
+  - "Funbox port-forward screenshot 2026-08-20: public TCP 80→asusnuc:80 and 443→asusnuc:443; retain 3000/3100 for Forecast/WEF rollback"
+  - "External probes 2026-08-20: DNS A 2fa54e2405.duckdns.org → 79.184.170.100; :3100 WEF and :3000 Forecast healthy; public :80/:443 time out until Nginx binds (Funbox cert no longer presented)"
 ---
 
 # D-009: Shared TLS hostnames and forwarding
 
-- Status: deferred until E7-T10 live rollout; approved E7 spike revision 3 permits only inert topology and cutover-automation work before resolution.
-- Context: [ADR-020](../adr/ADR-020-use-nginx-shared-tls-ingress.md) selects Nginx/Certbot and requires independently routable HTTPS origins for WEF and the existing AI Forecast service currently exposed on port 3000.
-- Required owner inputs:
-  - Approve two stable public hostnames; one hostname cannot independently route two root applications without verified path-prefix support.
-  - Confirm both DNS records resolve to the NUC's current public address.
-  - Confirm router/firewall forwarding sends public TCP 80/443 to the NUC during the controlled migration.
-- Recommended resolution: retain the existing DuckDNS name for AI Forecast and register a second free DuckDNS hostname for WEF, then route both through Nginx on standard 443.
-- Alternative: approve and prove path-prefix compatibility for both applications on one hostname. Do not assume this works for Next.js assets, API paths, cookies, redirects, or the existing AI Forecast application.
-- Rejected default: long-term public HTTPS on application ports 3000/3100. Certificates are hostname-bound rather than port-bound, and public application ports complicate redirects, monitoring, firewall policy, and future service migration.
-- Evidence required to resolve: owner-approved names, DNS lookups, external 80/443 reachability while Nginx is listening, successful ACME staging issuance, and independent host-header routing tests.
-- Progress while deferred: E7-T8 may prove the isolated topology and E7-T9 may prove reversible automation with reserved fixture names and local listeners. Neither may register names, issue public certificates, alter forwarding, or activate the server.
-- Progress as of 2026-08-20:
-  - E7-T8 `done` (PR #69): inert Nginx topology + Pebble ACME fixtures.
-  - E7-T9 `done` (PRs #106–#108): reversible cutover/preflight/smoke/rollback automation; no live NUC mutation.
-  - NUC check: WEF on `:3100`, Forecast on `:3000`, no host listeners on 80/443; public `:80` remap to WEF (if present) is not Nginx ACME readiness.
-  - Proposed E7 plan revision 6 sequences only E7-T10 after this decision resolves; see [PROPOSED_IMPLEMENTATION_PLAN-revision-6](../../epics/E7-production-delivery/PROPOSED_IMPLEMENTATION_PLAN-revision-6.md) and operations [B-009](../../operations/BLOCKERS.md).
-- Owner progress (2026-08-20, not yet resolved):
-  - Owner nominated existing `2fa54e2405.duckdns.org` for public TLS attachment.
-  - External verification the same day:
-    - DNS A `2fa54e2405.duckdns.org` → `79.184.170.100`.
-    - `:3100` serves WEF (Caddy); `:3000` serves AI Forecast.
-    - Public `:80` accepts TCP then returns an empty reply (not Nginx/ACME HTTP-01).
-    - Public `:443` presents Orange Funbox certificate `CN=0827A8-Funbox7-…` / SAN `192.168.1.1` (router HTTPS), not a NUC/Nginx certificate.
-  - Still required before `status: resolved`: second distinct hostname (or proven path-prefix), router/firewall forwarding of public TCP 80 **and** 443 to the NUC (not Funbox termination), and recorded assignment of which name is WEF vs Forecast.
-- Owner checklist to resolve:
-  - [ ] Two hostnames approved (or path-prefix alternative proven).
-  - [ ] DNS A/AAAA for both names → NUC public IP verified from outside the LAN.
-  - [ ] Router/firewall forwards public TCP 80 and 443 to the NUC (Nginx will bind them during cutover).
-  - [ ] Record the approved names and verification evidence in this file's `resolved_by` / resolution notes; set `status: resolved`.
+- Status: **resolved** (2026-08-20) for hostname assignment and router forwarding intent. ACME staging/production issuance and Nginx listener proof remain E7-T10 execution evidence.
+- Context: [ADR-020](../adr/ADR-020-use-nginx-shared-tls-ingress.md) selects Nginx/Certbot. Owner amendment: initial shared-edge TLS covers **WEF only**; AI Forecast stays on host port **3000** and is not given a second public hostname in this cutover.
+- Owner-approved resolution:
+  - **WEF hostname:** `2fa54e2405.duckdns.org` (TLS on standard 80/443 via shared Nginx after E7-T10).
+  - **AI Forecast:** no shared-edge hostname; remain reachable at `http://2fa54e2405.duckdns.org:3000` (and direct NUC :3000) until a later owner-approved Forecast TLS task.
+  - **DNS:** `2fa54e2405.duckdns.org` → `79.184.170.100` verified externally.
+  - **Forwarding:** Funbox rules forward public TCP **80→asusnuc:80** and **443→asusnuc:443**; keep **3000** and **3100** published for Forecast and interim WEF/Caddy rollback.
+- Rejected for this cutover: second DuckDNS name for Forecast; path-prefix multiplexing of both apps on one hostname.
+- Still rejected long-term for WEF: public HTTPS solely on application port 3100 (certificates are hostname-bound; WEF moves to 443).
+- Evidence recorded above; E7-T10 must still prove ACME HTTP-01, certificate chain for `2fa54e2405.duckdns.org`, WEF smokes through Nginx, and Forecast `:3000` unchanged.
+- Follow-on plan: [PROPOSED_IMPLEMENTATION_PLAN-revision-7](../../epics/E7-production-delivery/PROPOSED_IMPLEMENTATION_PLAN-revision-7.md) (WEF-only TLS).
+
+## Owner checklist
+
+- [x] Hostname assignment approved (WEF-only shared TLS; Forecast stays on :3000).
+- [x] DNS A for WEF name → NUC public IP verified from outside the LAN.
+- [x] Router/firewall forwards public TCP 80 and 443 to the NUC (screenshot + post-change timeout probes).
+- [x] Decision recorded here with `status: resolved`.

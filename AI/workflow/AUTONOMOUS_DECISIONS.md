@@ -176,13 +176,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no production auth enablement; no Starlette Admin in this task; revealed contacts stay in memory only.
 - Reversal: revise/reapprove plan revision 4 and demote E6-T6 if UX scope changes materially.
 
-## AD-021: Sequence E6-T7 owner admin console after E6-T6
+## AD-022: Resolve D-009 as WEF-only TLS; Forecast stays on :3000
 
 - Time: 2026-08-20.
-- Prompt avoided: wait for D-009/E7-T10 before the owner console, or fold E6-T1/T2/T3 into the same change.
-- Selected approach: approve E6 implementation-plan revision 5 and promote E6-T7 only; use Starlette Admin at `/admin` as already selected by AUTH_ADMIN_CONTACTS and the approved spike.
-- Rationale: E6-T4/E6-T5 dependencies are satisfied; E6-T6 is done; owner console is the remaining E6 auth/admin M3 gap before E7-T7.
-- Safety limit: no production auth enablement; no generic sensitive ModelView CRUD; `/admin` stays off public OpenAPI; `starlette-admin` addition stays within the approved spike selection.
-- Reversal: revise/reapprove plan revision 5 and demote E6-T7 if admin framework or capability scope changes materially.
-
+- Prompt avoided: invent a second DuckDNS name for Forecast, force path-prefix multiplexing, or refuse WEF HTTPS until Forecast also has a hostname.
+- Selected approach: record owner decision that `2fa54e2405.duckdns.org` is the WEF TLS hostname; AI Forecast remains publicly reachable on port 3000 only; amend ADR-020 for this initial cutover; open E7 plan revision 7 for WEF-only E7-T10.
+- Rationale: owner explicit chat direction; Funbox already forwards 80/443 to the NUC; dual-hostname Forecast TLS is not required for WEF HTTPS or subsequent E7-T7.
+- Safety limit: no live NUC cutover until plan revision 7 is approved and WEF-only shared-edge tooling/tests merge; do not disable Forecast :3000; do not enable sensitive WEF features until E7-T7.
+- Reversal: restore dual-hostname D-009/ADR-020 requirements via a new owner decision and plan revision before moving Forecast behind Nginx.
 
