@@ -92,6 +92,15 @@ class DependabotMergeControllerTests(unittest.TestCase):
         )
         self.assertEqual(decision.action, "merge")
 
+    def test_allow_graphql_app_dependabot_author(self) -> None:
+        decision = evaluate_candidate(
+            _pr(author_login="app/dependabot"),
+            required_checks=REQUIRED,
+            owner_allowlist=OWNERS,
+            repository="Flippylolz/WEF",
+        )
+        self.assertEqual(decision.action, "merge")
+
     def test_reject_non_dependabot_author(self) -> None:
         decision = evaluate_candidate(
             _pr(author_login="human"),

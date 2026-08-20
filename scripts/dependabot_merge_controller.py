@@ -18,7 +18,9 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CHECKS_PATH = REPOSITORY_ROOT / ".github" / "dependabot-required-checks.json"
 AUTOMERGE_LABEL = "automerge"
 DEPENDABOT_LOGIN = "dependabot[bot]"
-ALLOWED_COMMITTERS = frozenset({DEPENDABOT_LOGIN, "web-flow"})
+# gh GraphQL `author.login` is `app/dependabot`; REST commit authors use `dependabot[bot]`.
+DEPENDABOT_AUTHOR_LOGINS = frozenset({DEPENDABOT_LOGIN, "app/dependabot"})
+ALLOWED_COMMITTERS = frozenset({*DEPENDABOT_AUTHOR_LOGINS, "web-flow"})
 DEFAULT_OWNER_ALLOWLIST = frozenset({"Flippylolz"})
 ALLOWED_UPDATE_TYPES = frozenset(
     {
@@ -161,7 +163,7 @@ def evaluate_candidate(
         return Decision("reject", "pull request is draft")
     if pr.base_ref != "main":
         return Decision("reject", "base branch is not main")
-    if pr.author_login != DEPENDABOT_LOGIN:
+    if pr.author_login not in DEPENDABOT_AUTHOR_LOGINS:
         return Decision("reject", "author is not dependabot[bot]")
     if not pr.head_ref.startswith("dependabot/"):
         return Decision("reject", "head branch does not start with dependabot/")
@@ -186,7 +188,7 @@ def evaluate_candidate(
     for commit in pr.commits:
         author = str(commit.get("author_login") or "")
         committer = str(commit.get("committer_login") or "")
-        if author != DEPENDABOT_LOGIN:
+        if author not in DEPENDABOT_AUTHOR_LOGINS:
             return Decision("reject", f"commit author {author!r} is not dependabot[bot]")
         if committer not in ALLOWED_COMMITTERS:
             return Decision("reject", f"commit committer {committer!r} is not an allowed bot")
