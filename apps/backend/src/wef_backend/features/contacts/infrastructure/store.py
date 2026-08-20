@@ -94,8 +94,12 @@ class SQLAlchemyContactStore:
         request_id: UUID,
         outcome: RevealOutcome,
     ) -> None:
-        """Persist one minimized reveal audit row."""
+        """Persist one minimized reveal audit row when the offer exists."""
         async with self._session_factory.begin() as session:
+            exists = await session.scalar(select(OfferRow.id).where(OfferRow.id == offer_id))
+            if exists is None:
+                # Missing offers must fail closed as not-found without FK errors.
+                return
             session.add(
                 ContactRevealRow(
                     id=uuid4(),
