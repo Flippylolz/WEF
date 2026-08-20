@@ -233,3 +233,4 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: E1 spike revision 2 already bounded this work; E1-T1/E1-T4 are done; REPOSITORY_RULES require the config; AD-009 continue authority.
 - Safety limit: no merge-controller workflow, no PR checkout/execution, no dependency upgrades in the configuration PR itself.
 - Reversal: remove `.github/dependabot.yml` and demote E1-T6 if ecosystems/grouping policy change.
+- Completion: PR #140 merged; vulnerability alerts + automated security fixes enabled on the repository.

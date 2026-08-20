@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E1-T6
 epic: E1
 title: "Configure Dependabot update pull requests"
-status: in_progress
+status: done
 revision: 1
 priority: P0
 size: M
@@ -41,12 +41,16 @@ branch:
   task_id: E1-T6
   one_task_only: true
   created_at: "2026-08-20T17:53:13Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/140"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-20T17:58:29Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/140"
+  evidence:
+    - "Merged https://github.com/Flippylolz/WEF/pull/140 (dependabot.yml + structural tests + plan rev 5 / AD-029)"
+    - "CI all green on PR #140 (Backend, Frontend and contract, Repository safety, Runtime images, Coverage badge)"
+    - "Repository vulnerability alerts and automated security fixes enabled via GitHub API after merge"
+    - "E1-T7 merge controller remains proposed"
 invalidation:
   invalidated_by: null
   invalidated_at: null
