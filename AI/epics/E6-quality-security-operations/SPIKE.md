@@ -108,7 +108,7 @@ These are verified facts about the repository, not evidence that any E6 acceptan
 | Task | Dependencies | State |
 | --- | --- | --- |
 | E6-T4 registration/sessions | E1-T2, E3-T1 | **all done — actionable now** |
-| E6-T5 contact masking/reveal | E2-T2, E3-T1, E4-T3, E6-T4 | blocked on E4-T3 (proposed) |
+| E6-T5 contact masking/reveal | E2-T2, E3-T1, E4-T3, E6-T4 | unblocked; sequenced by plan revision 3 |
 | E6-T1 test pyramid | E4-T3, E5-T3 | blocked (both proposed/draft) |
 | E6-T2 privacy/security hardening | E3-T4, E4-T3, E5-T3 | blocked (all proposed/draft) |
 | E6-T3 diagnostics | E3-T2, E4-T4 | blocked (both proposed) |
@@ -144,7 +144,7 @@ This recommendation is submitted for owner approval and does not authorize any p
 - [E6-T2: Perform privacy and security hardening](proposed-tasks/E6-T2-perform-privacy-and-security-hardening.md) — boundary confirmed; blocked on E3-T4/E4-T3/E5-T3.
 - [E6-T3: Add operational diagnostics](proposed-tasks/E6-T3-add-operational-diagnostics.md) — boundary confirmed; blocked on E3-T2/E4-T4.
 - [E6-T4: Implement in-house registration and sessions](tasks/E6-T4-implement-in-house-registration-and-sessions.md) — boundary confirmed and actionable; promoted and the first implementation-plan sequence entry.
-- [E6-T5: Implement contact masking, encryption, reveal, and audit](proposed-tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — boundary confirmed; blocked on E4-T3 and E6-T4.
+- [E6-T5: Implement contact masking, encryption, reveal, and audit](tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — promoted/`ready`; dependencies satisfied; plan revision 3.
 - [E6-T6: Implement English i18n and restricted-action UX](proposed-tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — boundary confirmed; blocked on E5-T3/E6-T4/E6-T5.
 - [E6-T7: Implement owner administration console](proposed-tasks/E6-T7-implement-owner-administration-console.md) — boundary confirmed; blocked on E6-T4/E6-T5.
 

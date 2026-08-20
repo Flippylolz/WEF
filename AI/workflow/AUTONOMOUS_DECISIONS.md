@@ -157,3 +157,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: the owner explicitly requested full E5, one task per stacked branch, documentation first, and confirmed that E3/E4 dependencies are handled by parallel agents.
 - Safety limit: E5-T3 and E5-T5 remain blocked until exact E4-T3/E4-T4 ancestry or completion is recorded. E5 cannot invent frontend contracts, weaken privacy/accessibility/performance acceptance, or absorb E3/E4 task scope.
 - Reversal: close unmerged E5 descendants, keep promoted tasks in `draft`, and revise/reapprove E5 if parallel contract delivery materially changes the accepted boundary; do not rewrite shared history.
+
+## AD-019: Sequence E6-T5 while parking live TLS on D-009
+
+- Time: 2026-08-20.
+- Prompt avoided: wait for owner hostname/router inputs before any further epic work, or invent DuckDNS names / mutate NUC 80/443 without D-009.
+- Selected approach: document B-009 and proposed E7 plan revision 6 (E7-T10 awaiting D-009); approve E6 implementation-plan revision 3 and promote E6-T5 under AD-009; continue contact masking/reveal implementation without production auth activation.
+- Rationale: E7-T8/E7-T9 are done; live TLS is a genuine owner-input gate; E6-T5 dependencies are satisfied and advance M3 without requiring D-009.
+- Safety limit: no live shared-edge cutover, no autonomous DuckDNS registration, no E7-T7 enablement until HTTPS; `cryptography` addition stays within the E0 spike selection for E6-T5.
+- Reversal: revise/reapprove E6 plan revision 3 and demote E6-T5 if contact encryption/reveal scope changes; resolve D-009 before approving E7 plan revision 6.
+
