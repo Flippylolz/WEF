@@ -30,7 +30,7 @@ A deterministic synthetic fixture is migrated/seeded into canonical PostGIS loca
 - [E1-T4: Establish CI baseline](../epics/E1-repository-developer-foundation/tasks/E1-T4-establish-ci-baseline.md) — `in_progress`, stacked on E1-T2
 - [E1-T3: Add local Docker Compose](../epics/E1-repository-developer-foundation/tasks/E1-T3-add-local-docker-compose.md) — `in_progress`, stacked through E1-T4 on E1-T2
 - [E1-T5: Configure protected-main governance](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T5-configure-protected-main-governance.md) — `cancelled`
-- [E1-T6: Configure Dependabot update pull requests](../epics/E1-repository-developer-foundation/tasks/E1-T6-configure-dependabot-update-pull-requests.md) — `in_progress`
+- [E1-T6: Configure Dependabot update pull requests](../epics/E1-repository-developer-foundation/tasks/E1-T6-configure-dependabot-update-pull-requests.md) — `done`
 - [E1-T7: Implement scheduled Dependabot merge controller](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — `proposed`
 ### [E3: Database, geocoding, and media pipeline](../epics/E3-database-geocoding-media/README.md)
 
