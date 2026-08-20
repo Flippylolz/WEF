@@ -326,7 +326,12 @@ def rollback_release(edge_root: Path, *, upstream_network: str = "wef-edge") -> 
 
 
 def graceful_reload() -> None:
-    """Ask the running edge Nginx to reload its validated configuration."""
+    """Ask the running edge Nginx to reload its validated configuration.
+
+    Non-root shared-edge nginx uses a custom config path and leaves
+    ``/run/nginx.pid`` empty, so ``nginx -s reload`` fails. Signal HUP on the
+    container instead (same approach as reconnect-wef-upstreams.sh).
+    """
     listing = _docker(
         [
             "ps",
@@ -341,17 +346,7 @@ def graceful_reload() -> None:
     if not containers:
         msg = "no running edge nginx container was found for reload"
         raise SharedEdgeReleaseError(msg)
-    result = _docker(
-        [
-            "exec",
-            containers[0],
-            "nginx",
-            "-c",
-            f"{EDGE_MOUNT}/current/active.conf",
-            "-s",
-            "reload",
-        ]
-    )
+    result = _docker(["kill", "-s", "HUP", containers[0]])
     if result.returncode != 0:
         message = result.stderr.strip() or result.stdout.strip()
         msg = f"graceful nginx reload failed: {message}"
