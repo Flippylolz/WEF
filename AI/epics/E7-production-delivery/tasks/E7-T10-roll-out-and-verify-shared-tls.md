@@ -13,7 +13,7 @@ requirement_ids: []
 decision_ids: [ADR-008, ADR-010, ADR-014, ADR-019, ADR-020]
 deferred_decision_ids: []
 promotion:
-  source: ../proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md
+  source: ../tasks/E7-T10-roll-out-and-verify-shared-tls.md
   promoted_by: "Cursor Agent (autonomous epic mission)"
   promoted_at: "2026-08-20T13:45:55Z"
 spike_gate:
