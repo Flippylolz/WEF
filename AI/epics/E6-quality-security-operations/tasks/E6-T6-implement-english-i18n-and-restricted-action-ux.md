@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E6-T6
 epic: E6
 title: "Implement English i18n and restricted-action UX"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: L
@@ -44,10 +44,14 @@ branch:
   created_at: "2026-08-20T11:35:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/113"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-20T11:46:30Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/113"
+  evidence:
+    - "E6-T6 branch feat/E6-T6-restricted-action-ux squash-merged via https://github.com/Flippylolz/WEF/pull/113 (squash 2c2ef59); one task per branch/PR"
+    - "Extended AccountModal/UserToolbar with password change, forced must_change_password, revoke-all sessions; offer-detail explicit contact reveal with return-to-offer sign-in; English message catalogs; contacts-api client"
+    - "Vitest coverage for click-to-reveal, anonymous sign-in path, forced-password block, rate-limit/forbidden/unavailable; CI green on merge (Backend, Frontend/contract, Repository safety, Runtime images, Coverage badge)"
+    - "Production auth/reveal enablement remains E7-T7 after E7-T10/D-009"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -80,11 +84,11 @@ English i18n-keyed auth and restricted-action UX exists so anonymous users brows
 
 ## Acceptance criteria
 
-- [ ] Components contain no new hardcoded user-facing copy outside reviewed catalogs.
-- [ ] Anonymous users can browse everything except restricted actions.
-- [ ] Reveal requires explicit click; successful values are not prefetched, persisted, or cached.
-- [ ] Keyboard/accessibility/error/rate-limit flows pass tests.
-- [ ] Forced-password-change users cannot reveal until password is changed.
+- [x] Components contain no new hardcoded user-facing copy outside reviewed catalogs.
+- [x] Anonymous users can browse everything except restricted actions.
+- [x] Reveal requires explicit click; successful values are not prefetched, persisted, or cached.
+- [x] Keyboard/accessibility/error/rate-limit flows pass tests.
+- [x] Forced-password-change users cannot reveal until password is changed.
 
 ## Rollback
 
