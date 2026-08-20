@@ -58,4 +58,4 @@ Return to the spike if activation becomes a destructive overwrite of production 
 
 ## Owner decision
 
-Flippylolz authorized continuation after E7-T7 (chat continue 2026-08-20). Revision 9 sequences E7-T11 revision 1 only.
+Flippylolz authorized continuation after E7-T7 (chat continue 2026-08-20). Revision 9 sequences E7-T11 revision 1 only; executed via PRs #127/#128 and live NUC activation on 2026-08-20.
