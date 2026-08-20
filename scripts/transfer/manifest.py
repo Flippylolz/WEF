@@ -49,9 +49,7 @@ def create_manifest(
         msg = "release SHA must be 64 lowercase hexadecimal characters"
         raise ValueError(msg)
 
-    ordered_components = tuple(
-        sorted(components, key=lambda component: component.name)
-    )
+    ordered_components = tuple(sorted(components, key=lambda component: component.name))
     ordered_counts = {key: table_row_counts[key] for key in sorted(table_row_counts)}
 
     return {

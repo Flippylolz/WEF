@@ -31,7 +31,9 @@ def insert_order(tables: tuple[str, ...] | None = None) -> tuple[str, ...]:
         ready = sorted(
             table
             for table in pending
-            if all(dep in ordered or dep not in selected for dep in TABLE_DEPENDENCIES.get(table, ()))
+            if all(
+                dep in ordered or dep not in selected for dep in TABLE_DEPENDENCIES.get(table, ())
+            )
         )
         if not ready:
             msg = "unable to resolve FK-safe insert order"

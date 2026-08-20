@@ -45,13 +45,15 @@ class TransferFoundationTests(unittest.TestCase):
             components=components,
         )
         rendered_once = render_manifest(manifest)
-        rendered_twice = render_manifest(create_manifest(
-            source_checksum="c" * 64,
-            release_sha="d" * 64,
-            table_row_counts={"locations": 1, "offers": 2},
-            media=media,
-            components=components,
-        ))
+        rendered_twice = render_manifest(
+            create_manifest(
+                source_checksum="c" * 64,
+                release_sha="d" * 64,
+                table_row_counts={"locations": 1, "offers": 2},
+                media=media,
+                components=components,
+            )
+        )
         self.assertEqual(rendered_once, rendered_twice)
         validate_manifest(json.loads(rendered_once))
 
