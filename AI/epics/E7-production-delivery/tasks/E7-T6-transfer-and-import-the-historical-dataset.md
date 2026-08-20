@@ -38,10 +38,10 @@ dependency_gate:
     - "E7-T4 | done | merged on main"
 branch:
   required: true
-  name: cursor/doc-e7-t6-slice-progress-0c74
+  name: cursor/feat-e7-t6-transfer-remote-0c74
   task_id: E7-T6
   one_task_only: true
-  created_at: "2026-08-20T03:05:00Z"
+  created_at: "2026-08-20T03:20:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -75,8 +75,9 @@ Cloud-testable repository slices merged on `main` (task remains `in_progress`):
 | Foundation | [#88](https://github.com/Flippylolz/WEF/pull/88) | Manifest, dry-run, conflict/checkpoint/path helpers + 11 unit tests |
 | Bundle packaging | [#89](https://github.com/Flippylolz/WEF/pull/89) | Source layout, pack/verify, CLI + 5 integration tests |
 | Candidate config | [#90](https://github.com/Flippylolz/WEF/pull/90) | Checksum-scoped candidate paths, loopback verification env builder + 5 tests |
+| Transfer remote | (in progress) | Transfer plan, rsync command builder, server dry-run gates |
 
-Remaining for full E7-T6 acceptance: rsync/SSH transfer, server-side dry run, candidate DB clone/load, media staging, and non-public reconciliation on the NUC.
+Remaining for full E7-T6 acceptance: live rsync execution on NUC, candidate DB clone/load, media staging, and non-public reconciliation.
 
 ## Scope
 
