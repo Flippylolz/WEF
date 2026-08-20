@@ -16,6 +16,7 @@ from scripts.deploy.shared_edge_render import (
     TLS_REDIRECT_CONFIG,
     EdgeConfiguration,
     SharedEdgeRenderError,
+    parse_configuration,
     render_template,
     validate_configuration,
     write_release,
@@ -211,6 +212,27 @@ class WriteReleaseTests(unittest.TestCase):
             self.assertIn("-d wef.test", issuance)
             self.assertNotIn("forecast.test", issuance)
             self.assertEqual(issuance.count("certbot certonly"), 1)
+
+    def test_parse_configuration_returns_templates_dir(self) -> None:
+        _, output_dir, templates_dir = parse_configuration(
+            [
+                "--wef-hostname",
+                "wef.test",
+                "--wef-api-upstream",
+                "fixture-wef-api:8080",
+                "--wef-media-upstream",
+                "fixture-wef-media:8080",
+                "--wef-web-upstream",
+                "fixture-wef-web:8080",
+                "--fixture-mode",
+                "--templates-dir",
+                "/tmp/custom-edge-templates",
+                "--output-dir",
+                "/tmp/custom-edge-out",
+            ]
+        )
+        self.assertEqual(output_dir, Path("/tmp/custom-edge-out"))
+        self.assertEqual(templates_dir, Path("/tmp/custom-edge-templates"))
 
 
 if __name__ == "__main__":
