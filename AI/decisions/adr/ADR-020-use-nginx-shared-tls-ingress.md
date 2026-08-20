@@ -27,3 +27,10 @@ resolves: []
   - Ports 80 and 443 must reach the NUC for normal HTTP-01/TLS operation unless a separately reviewed DNS-01 design is selected.
   - Certificate renewal, expiry monitoring, configuration validation, graceful reload, both application smoke checks, and rollback evidence become public-launch gates.
   - No Nginx, Certbot, router, existing-project, or port-3000 mutation is authorized by this ADR alone. [E7-T8](../../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) and [E7-T9](../../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) are inert implementation tasks; [E7-T10](../../epics/E7-production-delivery/proposed-tasks/E7-T10-roll-out-and-verify-shared-tls.md) owns the gated live mutation.
+
+## Owner amendment (2026-08-20)
+
+- Owner resolved [D-009](../deferred/D-009-shared-tls-hostnames-and-forwarding.md) with **WEF-only** shared TLS on `2fa54e2405.duckdns.org`.
+- AI Forecast remains on public host port **3000** for this cutover and is **not** required to receive a second hostname or Nginx TLS termination in E7-T10 revision 2.
+- Dual-origin Forecast HTTPS remains a later, separately approved change; it does not block WEF HTTPS or E7-T7 once WEF TLS is verified.
+- Routing sentence above that required separate public hostnames for both apps is narrowed for the initial cutover by this amendment; the WEF hostname-on-443 requirement stands.

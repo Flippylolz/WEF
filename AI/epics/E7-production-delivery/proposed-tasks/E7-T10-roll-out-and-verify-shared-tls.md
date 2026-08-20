@@ -23,7 +23,7 @@ promotion:
 
 # E7-T10: Roll out and verify shared TLS
 
-> This live rollout remains planning input only. D-009, promotion, and a current implementation-plan approval are mandatory before any production mutation.
+> Planning input until D-009 is resolved and a current implementation plan containing this task is approved. **D-009 resolved 2026-08-20** as WEF-only TLS on `2fa54e2405.duckdns.org`; Forecast stays on `:3000`. Promote under [plan revision 7](../PROPOSED_IMPLEMENTATION_PLAN-revision-7.md) after approval; task body revision 2 will narrow dual-origin Forecast requirements accordingly.
 
 ## Outcome
 
