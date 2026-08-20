@@ -352,6 +352,7 @@ jobs:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_USER: ${{ vars.DEPLOY_USER }}
           GHCR_TOKEN: ${{ github.token }}
+          GHCR_USERNAME: ${{ github.repository_owner }}
           FORCE_ROLLBACK_REHEARSAL: ${{ needs.resolve.outputs.force_rollback_rehearsal }}
           PUBLIC_PORT: ${{ vars.WEF_PUBLIC_PORT }}
           RELEASE_SHA: ${{ needs.resolve.outputs.release_sha }}
@@ -364,7 +365,7 @@ jobs:
           [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
           [[ "$PUBLIC_PORT" =~ ^[0-9]{4,5}$ ]]
           [[ "$SSH_PORT" =~ ^[0-9]{1,5}$ ]]
-          [[ "$GITHUB_ACTOR" =~ ^[A-Za-z0-9-]+$ ]]
+          [[ "$GHCR_USERNAME" =~ ^[A-Za-z0-9-]+$ ]]
           test -n "$DEPLOY_SSH_KEY"
           test -n "$DEPLOY_KNOWN_HOSTS"
           test -n "$GHCR_TOKEN"
@@ -468,7 +469,7 @@ jobs:
             "umask 077; '$release_dir/scripts/deploy/server_inventory.sh' > '$inventory_before'"
           # shellcheck disable=SC2029
           printf '%s' "$GHCR_TOKEN" | ssh "${ssh_options[@]}" "$target" \
-            "docker login ghcr.io --username '$GITHUB_ACTOR' --password-stdin"
+            "docker login ghcr.io --username '$GHCR_USERNAME' --password-stdin"
           deploy_command=(
             env
             "WEF_ROOT=/home/nuc/wef"
