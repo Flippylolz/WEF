@@ -122,7 +122,7 @@ Both current and target edges:
 
 - Preserve client/request IDs and correct proxy headers.
 - Enable compression for text/JSON, not already compressed media.
-- Add HSTS only after the domain and certificate flow are verified.
+- Add HSTS (`Strict-Transport-Security: max-age=31536000`) on the WEF HTTPS shared-edge vhost after the domain and certificate flow are verified (E7-T10). Omit `preload` unless separately approved. Do not advertise HSTS on plain `:3100`.
 - Add `X-Content-Type-Options: nosniff`, a conservative referrer policy, and a tested Content Security Policy.
 - The CSP explicitly permits only the configured map style/tile origins, same-origin API/media, and the worker requirements used by MapLibre (including `worker-src blob:` only when the chosen bundle requires it).
 - Prevent directory listing and access to dotfiles or temporary media files.
