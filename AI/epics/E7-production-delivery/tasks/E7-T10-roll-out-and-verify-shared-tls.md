@@ -104,5 +104,5 @@ Restore previous validated Nginx config or drop back to Caddy `:3100` for WEF; l
 
 - Shared-edge root: `/home/nuc/wef-shared-edge/root` (outside `/home/nuc/wef` cleanup boundary).
 - Ops copy of templates/scripts: `/home/nuc/wef-shared-edge/ops` (synced from main after PR #121).
-- WEF upstreams joined to `wef-edge` as `wef-api` / `wef-web`; `wef-media` via dedicated media-edge container. After a WEF container recreate, run `/home/nuc/wef-shared-edge/ops/reconnect-wef-upstreams.sh` until cutover overlay is the default deploy path.
+- WEF upstreams joined to `wef-edge` as `wef-api` / `wef-web`; `wef-media` via dedicated media-edge container. Ordinary application deploys merge `compose.production-shared-edge.yaml`, run `scripts/deploy/reconnect-wef-upstreams.sh` (attach + Nginx reload), and require public HTTPS smoke before activation.
 - Caddy on `:3100` intentionally retained as rollback.

@@ -32,6 +32,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.production.yaml"
 CANDIDATE_COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.candidate.yaml"
 CUTOVER_COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.production-cutover.yaml"
+SHARED_EDGE_COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.production-shared-edge.yaml"
 LOCAL_COMPOSE_FILE = REPOSITORY_ROOT / "infra/compose.yaml"
 RELEASE_SHA = "a" * 40
 WEF_ROOT = Path("/home/nuc/wef")
@@ -517,6 +518,58 @@ def assert_cutover_rollback_topology(model: dict[str, Any]) -> None:
     assert edge.get("ports"), "Caddy rollback must still publish the rehearsal port"
 
 
+def render_shared_edge_compose(environment: dict[str, str]) -> dict[str, Any]:
+    """Render ordinary-release shared-edge attachment without disabling Caddy."""
+    docker = shutil.which("docker")
+    if docker is None:
+        msg = "docker is required to prove shared-edge attachment topology"
+        raise RuntimeError(msg)
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as env_file:
+        for key, value in sorted(environment.items()):
+            env_file.write(f"{key}={value}\n")
+        env_file.flush()
+        result = subprocess.run(  # noqa: S603
+            [
+                docker,
+                "compose",
+                "--env-file",
+                env_file.name,
+                "--file",
+                str(COMPOSE_FILE),
+                "--file",
+                str(SHARED_EDGE_COMPOSE_FILE),
+                "config",
+                "--format",
+                "json",
+            ],
+            check=True,
+            cwd=REPOSITORY_ROOT,
+            capture_output=True,
+            text=True,
+        )
+    return cast("dict[str, Any]", json.loads(result.stdout))
+
+
+def assert_shared_edge_attachment_topology(model: dict[str, Any]) -> None:
+    """Prove shared-edge attachment keeps Caddy :3100 and joins wef-edge aliases."""
+    services = cast("dict[str, dict[str, Any]]", model["services"])
+    networks = cast("dict[str, dict[str, Any]]", model["networks"])
+    assert "edge" in services, "ordinary shared-edge attachment must keep Caddy"
+    assert "profiles" not in services["edge"], "Caddy must remain in the default profile"
+    assert "media-edge" in services
+    assert networks["shared_edge"].get("external") is True
+    assert networks["shared_edge"].get("name") == "wef-edge"
+    api_networks = services["api"]["networks"]
+    web_networks = services["web"]["networks"]
+    media_networks = services["media-edge"]["networks"]
+    assert api_networks["shared_edge"].get("aliases") == ["wef-api"]
+    assert web_networks["shared_edge"].get("aliases") == ["wef-web"]
+    assert media_networks["shared_edge"].get("aliases") == ["wef-media"]
+    deploy = (REPOSITORY_ROOT / "scripts/deploy/deploy.sh").read_text(encoding="utf-8")
+    assert "bring_up_application_services" in deploy
+    assert "smoke_public_https_origin" in deploy
+
+
 def main() -> int:
     """Run the production topology proof."""
     environment = release_environment()
@@ -527,6 +580,7 @@ def main() -> int:
     assert_cutover_rollback_topology(
         render_cutover_compose(environment, include_caddy_rehearsal=True)
     )
+    assert_shared_edge_attachment_topology(render_shared_edge_compose(environment))
     assert_local_media_boundary(render_local_compose())
     assert_negative_configuration_gate()
     assert_script_safety()

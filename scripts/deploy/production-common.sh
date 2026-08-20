@@ -107,9 +107,92 @@ initialize_release_context() {
 }
 
 production_compose() {
-  docker compose \
-    --project-name wef-production \
-    --env-file "$WEF_CONFIG_FILE" \
-    --file "$WEF_RELEASE_DIR/compose.production.yaml" \
-    "$@"
+  if shared_edge_attachment_enabled; then
+    docker compose \
+      --project-name wef-production \
+      --env-file "$WEF_CONFIG_FILE" \
+      --file "$WEF_RELEASE_DIR/compose.production.yaml" \
+      --file "$WEF_RELEASE_DIR/compose.production-shared-edge.yaml" \
+      "$@"
+  else
+    docker compose \
+      --project-name wef-production \
+      --env-file "$WEF_CONFIG_FILE" \
+      --file "$WEF_RELEASE_DIR/compose.production.yaml" \
+      "$@"
+  fi
+}
+
+shared_edge_network_present() {
+  docker network inspect wef-edge >/dev/null 2>&1
+}
+
+shared_edge_attachment_enabled() {
+  [ "${WEF_DEPLOY_TEST_MODE:-0}" != "1" ] || return 1
+  [ -f "$WEF_RELEASE_DIR/compose.production-shared-edge.yaml" ] || return 1
+  shared_edge_network_present
+}
+
+reconnect_shared_edge_upstreams() {
+  if ! shared_edge_network_present; then
+    return 0
+  fi
+  script=""
+  if [ -f "$WEF_RELEASE_DIR/scripts/deploy/reconnect-wef-upstreams.sh" ]; then
+    script="$WEF_RELEASE_DIR/scripts/deploy/reconnect-wef-upstreams.sh"
+  elif [ -n "${SCRIPT_DIR:-}" ] && [ -f "$SCRIPT_DIR/reconnect-wef-upstreams.sh" ]; then
+    script="$SCRIPT_DIR/reconnect-wef-upstreams.sh"
+  elif [ -f /home/nuc/wef-shared-edge/ops/reconnect-wef-upstreams.sh ]; then
+    script=/home/nuc/wef-shared-edge/ops/reconnect-wef-upstreams.sh
+  else
+    fail "shared edge is present but reconnect-wef-upstreams.sh is missing"
+  fi
+  bash "$script"
+}
+
+bring_up_application_services() {
+  if shared_edge_attachment_enabled; then
+    production_compose up --detach --wait api web edge media-edge
+  else
+    production_compose up --detach --wait api web edge
+  fi
+  reconnect_shared_edge_upstreams
+}
+
+smoke_public_https_origin() {
+  if ! shared_edge_network_present; then
+    return 0
+  fi
+  base_url=${WEF_PUBLIC_HTTPS_BASE_URL:-https://2fa54e2405.duckdns.org}
+  base_url=${base_url%/}
+  tmp_dir=$(mktemp -d)
+  printf 'Smoke: public HTTPS origin %s...\n' "$base_url"
+  attempt=1
+  while [ "$attempt" -le 12 ]; do
+    if curl --connect-timeout 5 --max-time 20 --fail --silent --show-error \
+      --output "$tmp_dir/live.json" \
+      "$base_url/api/v1/health/live" &&
+      curl --connect-timeout 5 --max-time 20 --fail --silent --show-error \
+        --output "$tmp_dir/root.html" \
+        "$base_url/"; then
+      python3 - "$tmp_dir/live.json" "$tmp_dir/root.html" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+live = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+html = Path(sys.argv[2]).read_text(encoding="utf-8")
+assert live == {"status": "live"}
+assert "Apartments and houses for sale in Warsaw" in html
+PY
+      rm -rf "$tmp_dir"
+      printf 'Public HTTPS smoke passed for %s.\n' "$base_url"
+      return 0
+    fi
+    printf 'Public HTTPS not ready yet (attempt %s/12); retrying...\n' "$attempt" >&2
+    attempt=$((attempt + 1))
+    sleep 2
+  done
+  rm -rf "$tmp_dir"
+  fail "public HTTPS origin remained unhealthy after shared-edge reconnect"
 }

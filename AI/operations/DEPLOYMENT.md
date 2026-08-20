@@ -129,7 +129,7 @@ Both current and target edges:
 
 During the rehearsal, only Caddy publishes the selected WEF port. PostgreSQL, web, API, and worker ports remain on an internal Compose network. WEF must not publish or bind host ports 3000, 8080, or UDP 51820, and deployment must not restart or alter non-WEF projects. The selected port is rechecked immediately before Compose starts.
 
-After E7-T10, shared Nginx is the only target public web server on 80/443. WEF application deploys do not own the shared edge, and the existing AI Forecast service is changed only by the separately approved, inventoried, and rollback-tested cutover.
+After E7-T10, shared Nginx is the only target public web server on 80/443. Ordinary WEF application deploys do not own, recreate, or remove the `wef-shared-edge` project. When the external `wef-edge` network is present, each deploy/rollback merges `compose.production-shared-edge.yaml` (keeping Caddy on `:3100`), runs `scripts/deploy/reconnect-wef-upstreams.sh` (attach `wef-api`/`wef-web`/`wef-media` + Nginx reload), and must pass public HTTPS smoke on `WEF_PUBLIC_HTTPS_BASE_URL` (default `https://2fa54e2405.duckdns.org`) before activation. AI Forecast remains unchanged by ordinary WEF releases.
 
 ## Preliminary server sizing
 
