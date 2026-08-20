@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E11
 title: "Scalable quick filters"
-status: ready
+status: done
 milestones: [M3]
 owner: owner
 ---

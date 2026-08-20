@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E7
 title: "Docker/GitHub production delivery"
-status: ready
+status: done
 milestones: [M3]
 owner: owner
 spike: SPIKE.md
@@ -17,7 +17,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 
 ## Approval state
 
-- Epic workspace status: `ready`; D-009 resolved as WEF-only TLS; E7-T10 promoted under plan revision 7.
+- Epic workspace status: `done`; D-009 resolved as WEF-only TLS; E7-T10 promoted under plan revision 7.
 - [Spike](SPIKE.md): `approved`, revision 4.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 9 `approved` and executed; E7-T11 historical public activation is `done`.
 - E7-T1 through E7-T4, E7-T6, E7-T7, E7-T8, E7-T9, E7-T10, and E7-T11 are `done`. E7-T5 remains deferred.

@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E6
 title: "Quality, security, and operations"
-status: ready
+status: done
 milestones: [M3]
 owner: owner
 spike: SPIKE.md
@@ -17,7 +17,7 @@ production behavior is tested, privacy-aware, observable, and recoverable.
 
 ## Approval state
 
-- Epic workspace status: `ready`; E6-T1/T2/T3/T4/T5/T6/T7 are `done`.
+- Epic workspace status: `done`; E6-T1/T2/T3/T4/T5/T6/T7 are `done`.
 - [Spike](SPIKE.md): `approved`, revision 2 (PR #49, squash cd2ad36).
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 8 (`spike_revision: 2`); E6-T1 completed under this revision.
 - No remaining actionable E6 proposed tasks for M3.

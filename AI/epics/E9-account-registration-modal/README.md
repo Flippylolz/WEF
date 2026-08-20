@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E9
 title: "Account registration modal"
-status: ready
+status: done
 milestones: [M3]
 owner: owner
 ---
@@ -15,7 +15,7 @@ Anonymous visitors can create an account and sign in through an accessible modal
 
 ## Approval state
 
-- Epic workspace status: `ready`; owner-authorized implementation of the registration modal UX against the existing E6-T4 identity backend.
+- Epic workspace status: `done`; E9-T1 registration/login modal is complete against the E6-T4 identity backend.
 - Form validation uses `react-hook-form` with `zod` resolvers, matching the architecture spike recommendation.
 - Modal presentation uses the native `<dialog>` element to avoid an additional UI framework dependency.
 

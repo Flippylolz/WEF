@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E12
 title: "Database index audit"
-status: ready
+status: done
 milestones: [M3]
 owner: owner
 ---

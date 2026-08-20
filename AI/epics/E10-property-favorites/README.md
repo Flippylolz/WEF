@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E10
 title: "Property favorites"
-status: ready
+status: done
 milestones: [M3]
 owner: owner
 ---
@@ -15,7 +15,7 @@ Signed-in users can star grouped map locations, review them from a toolbar contr
 
 ## Promoted tasks
 
-- [E10-T1: Implement property favorites](tasks/E10-T1-implement-property-favorites.md) — P1/M, M3; depends on E9 account modal and E6-T4 auth API.
+- [E10-T1: Implement property favorites](tasks/E10-T1-implement-property-favorites.md) — `done`, P1/M, M3; depends on E9 account modal and E6-T4 auth API.
 
 ## API
 

@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E5
 title: "Interactive map frontend"
-status: ready
+status: done
 milestones: [M1, M3]
 owner: owner
 spike: SPIKE.md
@@ -17,7 +17,7 @@ a responsive, accessible map/list/detail experience over dated offers.
 
 ## Approval state
 
-- Epic workspace status: `ready`; E5-T1 and E5-T2 are complete and the full remaining sequence is approved.
+- Epic workspace status: `done`; E5-T1 through E5-T5 are complete.
 - [Spike](SPIKE.md): `approved`, revision 3.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 3, sequencing E5-T2 through E5-T5 after the documentation branch.
 - E5-T1 through E5-T5 are `done` (E5-T5 merged via PR #85).

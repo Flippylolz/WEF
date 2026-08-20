@@ -16,20 +16,20 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 ## Linked epic registry
 
 - [E0 — Architecture and dependency spike](E0-architecture-dependency-spike/README.md) — `done`; spike revision 2/plan revision 3 approved, E0-T1 and E0-T2 done; milestones M1.
-- [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `done`; spike revision 2/plan revision 4 approved; 4 done, 2 proposed, 1 cancelled; milestones M1.
+- [E1 — Repository and developer foundation](E1-repository-developer-foundation/README.md) — `done`; spike revision 2; E1-T1–T4, E1-T6, E1-T7 done; E1-T5 cancelled; milestones M1.
 - [E2 — Historical export parser and audit](E2-historical-export-parser-audit/README.md) — `done`; spike/plan revision 3 approved and E2-T1–T5 done with a reconciled complete-export audit; milestones M1, M2.
 - [E3 — Database, geocoding, and media pipeline](E3-database-geocoding-media/README.md) — `done`; spike/plan revision 4 approved; E3-T1–T5 done with E3-T5's terminal local reconciliation on PRs #65/#66; milestones M1, M2.
 - [E4 — Read API and filter contracts](E4-read-api-filter-contracts/README.md) — `done`; spike/plan revision 2; E4-T1/T2 done through PRs #12/#13, 2 proposed (unactionable M2 candidates); milestones M1, M2.
-- [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `ready`; spike/plan revision 3; E5-T1 done, E5-T2 done through PR #43 (with fix PR #47), E5-T3–T5 promoted/dependency-blocked; milestones M1, M3.
-- [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `ready`; spike revision 2 approved (PR #49), plan revision 2 approved (PR #50); E6-T4 done through PR #51; 6 proposed/blocked; milestones M3.
-- [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `ready`; spike revision 4 and plan revision 4 approved; 11 tasks (5 done, 1 promoted draft, 1 invalidated/paused, 3 proposed, 1 deferred); milestone M3.
-- [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; 5 tasks (5 proposed); milestones M4.
-- [E9 — Account registration modal](E9-account-registration-modal/README.md) — `ready`; E9-T1 implements the registration/login modal against E6-T4; milestone M3.
-- [E10 — Property favorites](E10-property-favorites/README.md) — `ready`; E10-T1 adds starred locations with toolbar and list controls; milestone M3.
-- [E11 — Scalable quick filters](E11-scalable-quick-filters/README.md) — `ready`; E11-T1 adds registry-backed quick filters starting with last 24 hours; milestone M3.
-- [E12 — Database index audit](E12-database-index-audit/README.md) — `ready`; E12-T1 adds reviewed catalog query indexes; milestone M3.
+- [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `done`; spike/plan revision 3; E5-T1–T5 done; milestones M1, M3.
+- [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `done`; spike revision 2 / plan revision 8; E6-T1–T7 done; milestones M3.
+- [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `done`; spike revision 4 / plan revision 9; E7-T1–T4 and E7-T6–T11 done, E7-T5 deferred; milestone M3.
+- [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `draft`; spike `awaiting_approval`; 5 tasks (5 proposed); milestones M4.
+- [E9 — Account registration modal](E9-account-registration-modal/README.md) — `done`; E9-T1 done; milestone M3.
+- [E10 — Property favorites](E10-property-favorites/README.md) — `done`; E10-T1 done; milestone M3.
+- [E11 — Scalable quick filters](E11-scalable-quick-filters/README.md) — `done`; E11-T1 done; milestone M3.
+- [E12 — Database index audit](E12-database-index-audit/README.md) — `done`; E12-T1 done; milestone M3.
 
-The original E0/E1/E3/E4/E5-T1/E7 ordered stack is merged and reconciled against successful integrated `main` CI. E2-T1 and later E3–E5/E7 work retain approved current gates or remain proposed/ready. E6 is selected with spike revision 2 awaiting owner approval; E8 is selected for research with no implementation permission. New work must pass its dedicated pull-request CI before merge.
+The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 remains research-gated (`awaiting_approval`) with no implementation permission. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
