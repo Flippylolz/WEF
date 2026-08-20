@@ -56,7 +56,7 @@ export async function addFavorite(
   options: RequestOptions = {},
 ): Promise<FavoriteResult<null>> {
   try {
-    const { error, response } = await client(options.fetcher).PUT(
+    const { response } = await client(options.fetcher).PUT(
       "/api/v1/favorites/{location_id}",
       {
         params: { path: { location_id: locationId } },
@@ -64,7 +64,7 @@ export async function addFavorite(
         ...(options.signal ? { signal: options.signal } : {}),
       },
     );
-    if (!response.ok || error !== undefined) {
+    if (response.status !== 204 && !response.ok) {
       return { state: "error" };
     }
     return { state: "ready", data: null };
@@ -78,7 +78,7 @@ export async function removeFavorite(
   options: RequestOptions = {},
 ): Promise<FavoriteResult<null>> {
   try {
-    const { error, response } = await client(options.fetcher).DELETE(
+    const { response } = await client(options.fetcher).DELETE(
       "/api/v1/favorites/{location_id}",
       {
         params: { path: { location_id: locationId } },
@@ -86,7 +86,7 @@ export async function removeFavorite(
         ...(options.signal ? { signal: options.signal } : {}),
       },
     );
-    if (!response.ok || error !== undefined) {
+    if (response.status !== 204 && !response.ok) {
       return { state: "error" };
     }
     return { state: "ready", data: null };
