@@ -53,7 +53,7 @@ The following definition preserves the original E7-T7 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E6-T4](../../E6-quality-security-operations/tasks/E6-T4-implement-in-house-registration-and-sessions.md), [E6-T5](../../E6-quality-security-operations/tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md), [E6-T6](../../E6-quality-security-operations/proposed-tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md), [E6-T7](../../E6-quality-security-operations/proposed-tasks/E6-T7-implement-owner-administration-console.md), [E7-T4](../tasks/E7-T4-implement-health-verification-and-rollback.md), and [E7-T10](E7-T10-roll-out-and-verify-shared-tls.md).
+- Task dependencies: [E6-T4](../../E6-quality-security-operations/tasks/E6-T4-implement-in-house-registration-and-sessions.md), [E6-T5](../../E6-quality-security-operations/tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md), [E6-T6](../../E6-quality-security-operations/tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md), [E6-T7](../../E6-quality-security-operations/proposed-tasks/E6-T7-implement-owner-administration-console.md), [E7-T4](../tasks/E7-T4-implement-health-verification-and-rollback.md), and [E7-T10](E7-T10-roll-out-and-verify-shared-tls.md).
 - Milestone: [M3](../../../milestones/M3-public-dockerized-mvp.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Operations](../../../operations/README.md), [Governance](../../../governance/README.md), [Security](../../../security/README.md), [Data](../../../data/README.md).
 

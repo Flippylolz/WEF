@@ -3,19 +3,19 @@ schema: ai-workflow/implementation-plan@1
 epic: E6
 title: "Quality, security, and operations implementation plan"
 status: approved
-revision: 3
+revision: 4
 owner: owner
 spike_revision: 2
 task_sequence:
-  - id: E6-T5
+  - id: E6-T6
     revision: 1
 approval:
   required_role: owner
   status: approved
   decided_by: Flippylolz
-  decided_at: "2026-08-20T10:40:42Z"
-  approved_revision: 3
-  evidence: "Owner continue / autonomous epic mission directive (AD-009); E4-T3 and E6-T4 are done on main, unblocking E6-T5 while E7-T10 remains gated by D-009"
+  decided_at: "2026-08-20T11:27:24Z"
+  approved_revision: 4
+  evidence: "Owner continue / autonomous epic mission (AD-009); E5-T3/E6-T4/E6-T5 done on main; E9 registration modal already present—E6-T6 completes password/session/reveal UX and i18n"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -23,84 +23,66 @@ invalidation:
   return_to: null
 ---
 
-# Implementation Plan: E6-T5 contact masking, encryption, reveal, and audit
+# Implementation Plan: E6-T6 English i18n and restricted-action UX
 
 ## Approved spike baseline
 
-- [Spike revision 2](SPIKE.md) remains owner-approved and current.
-- Binding decisions: [ADR-011](../../decisions/adr/ADR-011-accounts-gate-contact-reveal.md), [ADR-012](../../decisions/adr/ADR-012-backend-centric-modular-monolith.md), [ADR-016](../../decisions/adr/ADR-016-pseudonymous-accounts-owner-console.md); security contract [AUTH_ADMIN_CONTACTS](../../security/AUTH_ADMIN_CONTACTS.md); data model `ContactPoint` / `ContactReveal` in [DATA_MODEL](../../contracts/DATA_MODEL.md).
-- E0 spike locks `cryptography` for authenticated contact encryption/HMAC primitives; adding that production dependency is in-scope for this plan (no alternate crypto library).
+- [Spike revision 2](SPIKE.md) remains owner-approved.
+- Binding docs: [AUTH_ADMIN_CONTACTS](../../security/AUTH_ADMIN_CONTACTS.md), ADR-011/012/016.
+- E9-T1 already delivered register/login modal; this plan sequences only the remaining E6-T6 acceptance surface.
 
 ## Scope and outcome
 
-Deliver server-side contact persistence and the authenticated no-store reveal mutation so anonymous map/detail/source responses never contain raw phones/handles, while active accounts can reveal only contacts for publicly visible offers under rate limits and minimized audit. Production enablement of registration/reveal remains [E7-T7](../E7-production-delivery/proposed-tasks/E7-T7-enable-production-registration-and-contact-reveal.md) after HTTPS.
+Complete restricted-action frontend UX: password change (including forced `must_change_password`), session revocation, English i18n for auth/reveal/error strings, and an explicit audited contact-reveal control on offer detail with return-to-offer after anonymous sign-in. No production auth enablement (E7-T7).
 
 ## Ordered task sequence
 
-1. [E6-T5: Implement contact masking, encryption, reveal, and audit](tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md) — revision 1.
-   - Independently reviewable: new `contacts` feature (or equivalent modular slice), additive `contact_points` / `contact_reveals` migration, ingestion persist of encrypted contacts + masked public text, `POST /api/v1/offers/{offer_id}/contacts/reveal`, OpenAPI + frontend codegen, unit/integration/security tests.
-   - Dependencies: E2-T2, E3-T1, E4-T3, E6-T4 — all `done` on integrated main.
-   - Affected modules/contracts: `features/contacts/` (or co-located ports under catalog/identity per import-linter), ingestion persistence adapter, composition/settings secrets, Alembic head, `contracts/openapi/v1.json`, `apps/web/src/generated/api.ts`, AUTH_ADMIN_CONTACTS/DATA_MODEL alignment notes if needed.
-   - Tests: masking fixtures; AES-GCM encrypt/decrypt + HMAC fingerprint stability; reveal authz (anonymous/disabled/forced-change/IDOR/rate-limit); audit minimization (no plaintext/IP/UA); OpenAPI additive-only; no secret leakage in logs.
-   - Migration: additive tables; `EXPECTED_DATABASE_REVISION` advances; rollback is redeploy-previous (unused tables remain).
-   - Secrets: `WEF_CONTACT_ENCRYPTION_KEY` and `WEF_CONTACT_HMAC_KEY` (or equivalent) via settings; never committed; tests use ephemeral keys.
+1. [E6-T6: Implement English i18n and restricted-action UX](tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md) — revision 1.
+   - Independently reviewable: web-only (plus message catalogs); reuses existing OpenAPI `revealOfferContacts` / auth password/session paths.
+   - Dependencies: E5-T3, E6-T4, E6-T5 — all `done`.
+   - Affected modules: `apps/web` account modal/toolbar, offer detail drawer, auth/contacts API clients, `messages/en.json`, vitest coverage.
+   - Tests: reveal requires click; anonymous opens sign-in and returns to offer; must_change blocks reveal; rate-limit/error states; no revealed plaintext in query cache; a11y smoke for new controls.
+   - Out of scope: Starlette Admin (E6-T7), HTTPS activation (E7-T7).
 
-Only E6-T5 is sequenced. E6-T1/T2/T3/T6/T7 remain proposed until their own plan revisions.
+Only E6-T6 is sequenced. E6-T7 remains proposed until a later plan revision.
 
 ## Cross-task architecture
 
-- Reuse E6-T4 `_require_account`, origin/CSRF JSON guards, and `MemoryRateLimiter` patterns; authorization stays in application interactors.
-- Reveal may call catalog visibility (same `OfferVisibility.VISIBLE` gate as offer detail); do not leak existence of non-visible offers beyond public masking.
-- Ingestion already extracts `ContactSpan` and builds `source_text_public_masked`; this task materializes `ContactPoint` rows and keeps public APIs on masked text only.
-- Frontend reveal UX is out of scope (E6-T6). Owner audit console is out of scope (E6-T7).
-
-## Data and migrations
-
-- One Alembic revision creating `contact_points` and `contact_reveals` per DATA_MODEL.
-- Ciphertext + keyed fingerprint + safe `masked_value`; plaintext never indexed.
-- Reveal audit outcomes: `allowed`, `rate_limited`, `forbidden`, `unavailable`.
+- Reveal plaintext stays in component memory only (`useState`); never `react-query` cache or `localStorage`.
+- API calls use `cache: "no-store"`; backend already sends `Cache-Control: no-store, private`.
+- Lift or share a thin auth-UI intent so offer detail can request login/register with return focus on the same offer.
 
 ## Security and privacy
 
-- AES-GCM via `cryptography`; HMAC-SHA256 fingerprints with a distinct key.
-- `Cache-Control: no-store, private` on reveal responses.
-- Auth/reveal remain disabled on plain HTTP until E7-T7 (ADR-019 / ADR-011 production gate).
-- Negative tests prove ciphertext/keys/plaintext never appear in public responses or structured logs.
+- Do not prefetch reveal on drawer open or hover.
+- Forced-password-change users are directed only to password change/logout.
+- Prefer generic client messages; do not surface raw backend contact material in error text.
 
 ## Test and verification strategy
 
-- Pytest unit + PostGIS integration + contract export/codegen/oasdiff additive proof.
-- CI remains the merge gate; no live production reveal activation.
+- Vitest component tests; existing web typecheck/lint/build CI gates.
+- No backend contract change expected; if OpenAPI untouched, skip contract regen.
 
 ## Operations, rollout, and rollback
 
-- Migrate-then-serve via existing readiness revision gate.
-- Configure contact keys in deployment secrets before E7-T7; until then the feature may refuse reveal safely when keys are absent.
-- Rollback: previous image; additive tables unused.
+- Frontend image redeploy; no migration.
+- Feature remains inert on plain HTTP until E7-T7 enables auth in production.
 
 ## Risks and mitigations
 
-- Missing keys in rehearsal: fail closed on encrypt/reveal; do not write plaintext.
-- Scope creep to E6-T6/T7 or E7-T7: explicitly out of scope.
-- Dependency on historical contact density: synthetic and fixture offers cover acceptance; full historical backfill of contact_points may occur on next import/replay without blocking API merge.
+- Scope creep into owner console: explicitly out of scope.
+- Duplicate auth modal ownership with E9: extend existing `AccountModal`/`UserToolbar` rather than a second stack.
 
 ## Invalidation triggers
 
-- Material change to reveal authorization, encryption algorithm, or public contact contracts.
-- New deferred decision blocking contact storage.
-- Re-scope that merges owner console or frontend reveal UX into this task.
+- Material change to reveal authorization or public auth contracts.
+- Requirement to ship a second locale (beyond English keys) in this task.
 
 ## Approval checklist
 
-- [x] The referenced spike revision has explicit owner approval and remains valid.
-- [x] Every sequence entry is a promoted task with complete acceptance criteria and traceability.
-- [x] Dependencies are complete, acyclic, and enforceable task by task.
-- [x] Affected modules, contracts, tests, migrations, risks, rollout, and rollback are explicit.
-- [x] Deferred decisions required for implementation are resolved (none for E6-T5).
-- [x] No production or disposable proof code has been written in this plan PR.
-- [x] `revision` represents the material plan being submitted.
-- [x] Approval recorded under the owner continue / AD-009 autonomous directive.
-
-## Owner decision
-
-The owner records the decision only in the YAML `approval` object. Approval authorizes this plan revision, not blanket epic implementation: E6-T5 still requires promotion, dependency, branch, and evidence gates.
+- [x] Spike revision approved and valid.
+- [x] Sequence entries are promoted tasks with acceptance criteria.
+- [x] Dependencies complete.
+- [x] Modules, tests, risks, rollback explicit.
+- [x] No deferred decisions for this slice.
+- [x] Approval under continue / AD-009.
