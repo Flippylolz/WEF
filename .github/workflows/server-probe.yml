@@ -1,0 +1,87 @@
+name: Server probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: Remote command (default captures WEF server inventory)
+        required: false
+        default: server-inventory
+        type: choice
+        options:
+          - server-inventory
+          - wef-status
+
+concurrency:
+  group: wef-server-probe
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe production host
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run remote probe
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          PROBE_COMMAND: ${{ inputs.command }}
+          SSH_PORT: ${{ vars.DEPLOY_SSH_PORT }}
+        run: |
+          set -euo pipefail
+          [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$SSH_PORT" =~ ^[0-9]{1,5}$ ]]
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+
+          ssh_dir="$RUNNER_TEMP/wef-ssh"
+          install -m 0700 -d "$ssh_dir"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          chmod 0600 "$ssh_dir/key" "$ssh_dir/known_hosts"
+          ssh_options=(
+            -i "$ssh_dir/key"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$ssh_dir/known_hosts"
+            -p "$SSH_PORT"
+          )
+          target="${DEPLOY_USER}@${DEPLOY_HOST}"
+          release_dir="/home/nuc/wef/releases/current"
+
+          case "$PROBE_COMMAND" in
+            server-inventory)
+              remote_command="umask 077; '$release_dir/scripts/deploy/server_inventory.sh'"
+              ;;
+            wef-status)
+              remote_command="set -e; ls -la /home/nuc/wef; df -h /home/nuc/wef; docker compose --project-name wef-production ps"
+              ;;
+            *)
+              echo "Unsupported probe command: $PROBE_COMMAND" >&2
+              exit 64
+              ;;
+          esac
+
+          mkdir -p "$RUNNER_TEMP/probe"
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" "$remote_command" > "$RUNNER_TEMP/probe/output.json"
+          python3 -m json.tool "$RUNNER_TEMP/probe/output.json" > /dev/null
+
+      - name: Upload probe artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: server-probe-${{ github.run_id }}
+          path: ${{ runner.temp }}/probe/output.json
+          if-no-files-found: error
+          retention-days: 7
