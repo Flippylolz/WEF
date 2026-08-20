@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E1
 title: "Repository and developer foundation"
-status: done
+status: in_progress
 milestones: [M1]
 owner: owner
 spike: SPIKE.md
@@ -17,11 +17,11 @@ a reproducible monorepo that cannot accidentally commit or package the source ar
 
 ## Approval state
 
-- Epic workspace status: `done`; every task in the approved implementation-plan sequence is merged with reconciled completion evidence.
+- Epic workspace status: `in_progress`; revision 4 foundation tasks are `done`, and revision 5 authorizes Dependabot configuration.
 - [Spike](SPIKE.md): `approved`, revision 2, explicitly approved by the owner, research only, no code. It defines separate ownership and branches for repository safety, application Dockerfiles/Make targets, and local Compose.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 4, containing E1-T1, E1-T2, E1-T4, and E1-T3 in ordered stack sequence.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 5, authorizing E1-T6 only (Dependabot update PRs).
 - E1-T1, E1-T2, E1-T4, and E1-T3 are `done`.
-- E1-T5 remains cancelled; E1-T6 and E1-T7 remain non-actionable under `proposed-tasks/`.
+- E1-T5 remains cancelled; E1-T6 is promoted/`in_progress`; E1-T7 remains non-actionable under `proposed-tasks/`.
 
 ## Milestones
 
@@ -53,7 +53,7 @@ a reproducible monorepo that cannot accidentally commit or package the source ar
 - [E1-T4: Establish CI baseline](tasks/E1-T4-establish-ci-baseline.md) — promoted, `done`, P0/M, M1
 - [E1-T3: Add local Docker Compose](tasks/E1-T3-add-local-docker-compose.md) — promoted, `done`, P0/M, M1
 - [E1-T5: Configure protected-main governance](proposed-tasks/E1-T5-configure-protected-main-governance.md) — `cancelled`, P0/M, M1
-- [E1-T6: Configure Dependabot update pull requests](proposed-tasks/E1-T6-configure-dependabot-update-pull-requests.md) — `proposed`, P0/M, M1
+- [E1-T6: Configure Dependabot update pull requests](tasks/E1-T6-configure-dependabot-update-pull-requests.md) — promoted, `in_progress`, P0/M, M1
 - [E1-T7: Implement scheduled Dependabot merge controller](proposed-tasks/E1-T7-implement-scheduled-dependabot-merge-controller.md) — `proposed`, P0/M, M1
 
 ## Cross-epic dependencies
