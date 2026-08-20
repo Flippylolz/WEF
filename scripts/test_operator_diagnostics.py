@@ -8,6 +8,7 @@ import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import cast
 
 from scripts.deploy.operator_diagnostics import (
     OperatorDiagnosticsError,
@@ -26,9 +27,7 @@ class RedactionTests(unittest.TestCase):
                 "source_text_excerpt": "private",
             },
         )
-        nested = payload["nested"]
-        self.assertIsInstance(nested, dict)
-        assert isinstance(nested, dict)
+        nested = cast("dict[str, object]", payload["nested"])
         self.assertEqual(payload["release_sha"], "abc")
         self.assertEqual(payload["database_url"], "***")
         self.assertEqual(nested["password"], "***")
