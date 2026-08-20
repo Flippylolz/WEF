@@ -88,39 +88,29 @@ def validate_upstream(value: str, label: str) -> None:
         raise SharedEdgeRenderError(msg)
 
 
-def validate_configuration(config: EdgeConfiguration) -> None:
-    """Reject every input that cannot render a safe deterministic release."""
-    validate_hostname(
-        config.wef_hostname,
-        fixture_mode=config.fixture_mode,
-        label="WEF hostname",
-    )
+def validate_forecast_pair(config: EdgeConfiguration) -> None:
+    """Require Forecast hostname and upstream together, or omit both."""
     if config.forecast_hostname is None:
         if config.forecast_upstream is not None:
             msg = "forecast hostname and upstream must both be set or both omitted"
             raise SharedEdgeRenderError(msg)
-    else:
-        if config.forecast_upstream is None:
-            msg = "forecast hostname and upstream must both be set or both omitted"
-            raise SharedEdgeRenderError(msg)
-        validate_hostname(
-            config.forecast_hostname,
-            fixture_mode=config.fixture_mode,
-            label="AI Forecast hostname",
-        )
-        if config.wef_hostname == config.forecast_hostname:
-            msg = "WEF and AI Forecast hostnames must be distinct"
-            raise SharedEdgeRenderError(msg)
-        validate_upstream(config.forecast_upstream, "AI Forecast upstream")
-    for label, value in (
-        ("WEF API upstream", config.wef_api_upstream),
-        ("WEF media upstream", config.wef_media_upstream),
-        ("WEF web upstream", config.wef_web_upstream),
-    ):
-        validate_upstream(value, label)
-    if not BODY_SIZE_PATTERN.fullmatch(config.client_max_body_size):
-        msg = "client max body size must be like 1m or 512k"
+        return
+    if config.forecast_upstream is None:
+        msg = "forecast hostname and upstream must both be set or both omitted"
         raise SharedEdgeRenderError(msg)
+    validate_hostname(
+        config.forecast_hostname,
+        fixture_mode=config.fixture_mode,
+        label="AI Forecast hostname",
+    )
+    if config.wef_hostname == config.forecast_hostname:
+        msg = "WEF and AI Forecast hostnames must be distinct"
+        raise SharedEdgeRenderError(msg)
+    validate_upstream(config.forecast_upstream, "AI Forecast upstream")
+
+
+def validate_acme_account_policy(config: EdgeConfiguration) -> None:
+    """Reject ACME email/server combinations that break fixture/production boundaries."""
     if config.email is not None and not EMAIL_PATTERN.fullmatch(config.email):
         msg = "ACME account email is not a valid address"
         raise SharedEdgeRenderError(msg)
@@ -133,6 +123,26 @@ def validate_configuration(config: EdgeConfiguration) -> None:
     if not config.fixture_mode and config.acme_server == FIXTURE_ACME_SERVER:
         msg = "production releases must not target the local proof ACME server"
         raise SharedEdgeRenderError(msg)
+
+
+def validate_configuration(config: EdgeConfiguration) -> None:
+    """Reject every input that cannot render a safe deterministic release."""
+    validate_hostname(
+        config.wef_hostname,
+        fixture_mode=config.fixture_mode,
+        label="WEF hostname",
+    )
+    validate_forecast_pair(config)
+    for label, value in (
+        ("WEF API upstream", config.wef_api_upstream),
+        ("WEF media upstream", config.wef_media_upstream),
+        ("WEF web upstream", config.wef_web_upstream),
+    ):
+        validate_upstream(value, label)
+    if not BODY_SIZE_PATTERN.fullmatch(config.client_max_body_size):
+        msg = "client max body size must be like 1m or 512k"
+        raise SharedEdgeRenderError(msg)
+    validate_acme_account_policy(config)
 
 
 def render_template(template: str, replacements: Mapping[str, str]) -> str:
