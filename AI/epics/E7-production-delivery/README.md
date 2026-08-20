@@ -62,7 +62,7 @@ every merge to `main` can produce a verified, rollback-capable release on the su
 - [E7-T3: Implement GitHub image and deployment workflows](tasks/E7-T3-implement-github-image-and-deployment-workflows.md) — `done`, P0/L, M3
 - [E7-T4: Implement health verification and rollback](tasks/E7-T4-implement-health-verification-and-rollback.md) — `done`, P0/M, M3
 - [E7-T8: Build isolated shared Nginx TLS topology](tasks/E7-T8-build-shared-nginx-tls-ingress.md) — `done` through PR #69 (gates restored by owner after an accidental invalidation), P1/M, M3
-- [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `invalidated`/paused; dependency E7-T8 is now satisfied but its own gates await the owner's call, P1/L, M3
+- [E7-T9: Implement reversible shared-edge cutover](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) — `in_progress` slice 1 on feat/e7-t9-cutover-slice1; dependency E7-T8 satisfied, P1/L, M3
 - [E7-T6: Transfer the verified historical snapshot into a non-public production candidate](tasks/E7-T6-transfer-and-import-the-historical-dataset.md) — `done` through PRs #88–#104, P1/L, M3
 
 ## Deferred/proposed tasks

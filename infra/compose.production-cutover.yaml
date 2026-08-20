@@ -1,0 +1,87 @@
+# Shared-edge cutover overlay for compose.production.yaml.
+#
+# Merge for cutover rehearsals:
+#   docker compose -f compose.production.yaml -f compose.production-cutover.yaml up
+#
+# The default merged model joins api/web/media-edge to the external wef-edge
+# network and keeps Caddy off unless profile caddy-rehearsal is enabled.
+# The base compose.production.yaml file remains the complete Caddy rollback path.
+
+name: wef-production
+
+x-media-edge-security: &media-edge-security
+  read_only: true
+  init: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  tmpfs:
+    - /var/cache/nginx:rw,noexec,nosuid,size=16m,mode=1777
+    - /var/run:rw,noexec,nosuid,size=1m,mode=1777
+    - /tmp:rw,noexec,nosuid,size=16m
+
+services:
+  edge:
+    profiles:
+      - caddy-rehearsal
+
+  api:
+    networks:
+      application: {}
+      shared_edge:
+        aliases:
+          - wef-api
+
+  web:
+    networks:
+      application: {}
+      shared_edge:
+        aliases:
+          - wef-web
+
+  media-edge:
+    image: nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    user: "1000:1000"
+    <<: *media-edge-security
+    restart: unless-stopped
+    stop_grace_period: 15s
+    cpus: "0.10"
+    mem_limit: 64m
+    mem_reservation: 16m
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options:
+        max-file: "3"
+        max-size: 10m
+    expose:
+      - "8080"
+    volumes:
+      - type: bind
+        source: ${WEF_ROOT:?WEF_ROOT is required}/media/public
+        target: /srv/media
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${WEF_RELEASE_DIR:?WEF_RELEASE_DIR is required}/nginx/media-edge.conf
+        target: /etc/nginx/nginx.conf
+        read_only: true
+        bind:
+          create_host_path: false
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      shared_edge:
+        aliases:
+          - wef-media
+
+networks:
+  shared_edge:
+    external: true
+    name: wef-edge

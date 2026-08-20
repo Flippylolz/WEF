@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E7
 title: "Reversible shared-edge cutover automation"
-status: awaiting_approval
+status: approved
 revision: 5
 owner: owner
 spike_revision: 4
@@ -25,7 +25,7 @@ invalidation:
 
 # Proposed Implementation Plan revision 5: Reversible shared-edge cutover automation
 
-> **Not yet approved.** This document proposes the next E7 sequence after E7-T6 completion. It authorizes only E7-T9 revision 1. Owner approval of this revision and explicit restoration of [E7-T9](tasks/E7-T9-implement-reversible-shared-edge-cutover.md) from `invalidated` are both required before implementation starts.
+> **Approved** on 2026-08-20 through the owner continue directive after E7-T6 completion.
 
 ## Why now
 
