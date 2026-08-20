@@ -9,7 +9,12 @@ import sys
 from pathlib import Path
 
 from scripts.transfer.remote_paths import DEFAULT_WEF_ROOT
-from scripts.transfer.rsync_transfer import RsyncOptions, RsyncTarget, build_rsync_command
+from scripts.transfer.rsync_transfer import (
+    RsyncOptions,
+    RsyncTarget,
+    build_remote_prepare_command,
+    build_rsync_command,
+)
 from scripts.transfer.server_dry_run import evaluate_server_dry_run, load_server_inventory
 from scripts.transfer.transfer_plan import build_transfer_plan
 
@@ -105,20 +110,28 @@ def main(argv: list[str] | None = None) -> int:
         bundle_dir=arguments.bundle_dir,
         wef_root=arguments.wef_root,
     )
+    target = RsyncTarget(
+        user=arguments.remote_user,
+        host=arguments.remote_host,
+        port=arguments.ssh_port,
+    )
+    options = RsyncOptions(
+        identity_file=arguments.identity_file,
+        known_hosts_file=arguments.known_hosts_file,
+        dry_run=arguments.dry_run,
+    )
+    prepare = build_remote_prepare_command(
+        remote_incoming_dir=plan.remote_incoming_dir,
+        target=target,
+        options=options,
+    )
     command = build_rsync_command(
         local_bundle_dir=arguments.bundle_dir,
         remote_incoming_dir=plan.remote_incoming_dir,
-        target=RsyncTarget(
-            user=arguments.remote_user,
-            host=arguments.remote_host,
-            port=arguments.ssh_port,
-        ),
-        options=RsyncOptions(
-            identity_file=arguments.identity_file,
-            known_hosts_file=arguments.known_hosts_file,
-            dry_run=arguments.dry_run,
-        ),
+        target=target,
+        options=options,
     )
+    sys.stdout.write(shlex.join(prepare) + "\n")
     sys.stdout.write(shlex.join(command) + "\n")
     return 0
 

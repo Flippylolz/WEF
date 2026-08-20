@@ -13,7 +13,11 @@ from tempfile import TemporaryDirectory
 
 from scripts.transfer.bundle import pack_bundle
 from scripts.transfer.remote_paths import remote_bundle_paths
-from scripts.transfer.rsync_transfer import RsyncTarget, build_rsync_command
+from scripts.transfer.rsync_transfer import (
+    RsyncTarget,
+    build_remote_prepare_command,
+    build_rsync_command,
+)
 from scripts.transfer.server_dry_run import evaluate_server_dry_run
 from scripts.transfer.transfer_plan import build_transfer_plan
 from scripts.transfer_remote import main as transfer_remote_main
@@ -57,6 +61,7 @@ class TransferRemoteTests(unittest.TestCase):
             paths.incoming_dir,
             root / "imports" / "incoming" / BUNDLE_CHECKSUM,
         )
+        self.assertNotIn("System/Volumes", paths.incoming_dir.as_posix())
 
     def test_build_transfer_plan_from_verified_bundle(self) -> None:
         with TemporaryDirectory() as temp_dir:
@@ -87,7 +92,16 @@ class TransferRemoteTests(unittest.TestCase):
             )
             self.assertEqual(command[0], "rsync")
             self.assertIn("--partial", command)
-            self.assertIn("--info=progress2", command)
+            self.assertIn("--progress", command)
+
+    def test_remote_prepare_command_creates_incoming_directory(self) -> None:
+        command = build_remote_prepare_command(
+            remote_incoming_dir=Path("/home/nuc/wef/imports/incoming/" + BUNDLE_CHECKSUM),
+            target=RsyncTarget(user="nuc", host="example.test"),
+        )
+        self.assertEqual(command[0], "ssh")
+        self.assertIn("mkdir -p", command[-1])
+        self.assertIn(BUNDLE_CHECKSUM, command[-1])
 
     def test_server_dry_run_allows_sufficient_capacity(self) -> None:
         with TemporaryDirectory() as temp_dir:

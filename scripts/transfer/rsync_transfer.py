@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import shlex
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from pathlib import Path
 
 DEFAULT_SSH_PORT = 22
 MAX_PORT = 65535
@@ -44,6 +41,27 @@ def _validate_target(target: RsyncTarget) -> None:
         raise RsyncTransferError(msg)
 
 
+def build_remote_prepare_command(
+    *,
+    remote_incoming_dir: Path,
+    target: RsyncTarget,
+    options: RsyncOptions | None = None,
+) -> list[str]:
+    """Build one SSH command that creates the remote incoming directory."""
+    _validate_target(target)
+    selected = options or RsyncOptions()
+    command = ["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes"]
+    if selected.identity_file is not None:
+        command.extend(["-i", str(selected.identity_file)])
+    if selected.known_hosts_file is not None:
+        command.extend(["-o", f"UserKnownHostsFile={selected.known_hosts_file}"])
+    if target.port != DEFAULT_SSH_PORT:
+        command.extend(["-p", str(target.port)])
+    command.append(f"{target.user}@{target.host}")
+    command.append(f"mkdir -p {shlex.quote(remote_incoming_dir.as_posix())}")
+    return command
+
+
 def build_rsync_command(
     *,
     local_bundle_dir: Path,
@@ -71,8 +89,7 @@ def build_rsync_command(
         "rsync",
         "-a",
         "--partial",
-        "--info=progress2",
-        "--mkpath",
+        "--progress",
         "-e",
         shlex.join(ssh_command),
         f"{local_bundle_dir.as_posix()}/",
