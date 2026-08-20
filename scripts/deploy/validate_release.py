@@ -169,13 +169,20 @@ def _validate_runtime_boundaries(
     if not ADMIN_SESSION_SECRET_PATTERN.fullmatch(values["WEF_ADMIN_SESSION_SECRET"]):
         msg = "admin session secret has an unsafe release format"
         raise ReleaseConfigurationError(msg)
-    if not CONTACT_KEY_PATTERN.fullmatch(values["WEF_CONTACT_ENCRYPTION_KEY"]):
+    _validate_contact_keys(values)
+
+
+def _validate_contact_keys(values: dict[str, str]) -> None:
+    """Require distinct 32-byte hex contact encryption and HMAC keys."""
+    encryption_key = values["WEF_CONTACT_ENCRYPTION_KEY"]
+    hmac_key = values["WEF_CONTACT_HMAC_KEY"]
+    if not CONTACT_KEY_PATTERN.fullmatch(encryption_key):
         msg = "contact encryption key must be 32-byte hex"
         raise ReleaseConfigurationError(msg)
-    if not CONTACT_KEY_PATTERN.fullmatch(values["WEF_CONTACT_HMAC_KEY"]):
+    if not CONTACT_KEY_PATTERN.fullmatch(hmac_key):
         msg = "contact HMAC key must be 32-byte hex"
         raise ReleaseConfigurationError(msg)
-    if values["WEF_CONTACT_ENCRYPTION_KEY"] == values["WEF_CONTACT_HMAC_KEY"]:
+    if encryption_key == hmac_key:
         msg = "contact encryption and HMAC keys must be distinct"
         raise ReleaseConfigurationError(msg)
 

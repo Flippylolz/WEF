@@ -112,8 +112,8 @@ def assert_release_configuration() -> None:
         "POSTGRES_USER": "wef",
         "WEF_ADMIN_SESSION_SECRET": "fixture-admin-session-secret-0123456789abcdef",
         "WEF_ALLOW_SYNTHETIC_SEED": "false",
-        "WEF_CONTACT_ENCRYPTION_KEY": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-        "WEF_CONTACT_HMAC_KEY": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+        "WEF_CONTACT_ENCRYPTION_KEY": "0123456789abcdef" * 4,
+        "WEF_CONTACT_HMAC_KEY": "fedcba9876543210" * 4,
         "WEF_GEOAPIFY_API_KEY": "fixture-geoapify-key-0123456789",
         "WEF_LOG_LEVEL": "INFO",
     }
