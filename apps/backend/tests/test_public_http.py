@@ -7,7 +7,9 @@ from typing import Self
 import httpx
 import pytest
 
-from wef_backend.features.ingestion.infrastructure import public_http
+from wef_backend.features.ingestion.infrastructure.public_http import (
+    fetch_public_url_status,
+)
 
 
 @pytest.mark.asyncio
@@ -30,4 +32,4 @@ async def test_fetch_public_url_status_returns_code(monkeypatch: pytest.MonkeyPa
             return _Resp()
 
     monkeypatch.setattr(httpx, "AsyncClient", _Client)
-    assert await public_http.fetch_public_url_status("https://t.me/example/1") == 200
+    assert await fetch_public_url_status("https://t.me/example/1") == 200

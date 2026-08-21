@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from wef_backend import promote_public_catalog_command as command
+import wef_backend.promote_public_catalog_command as command
 from wef_backend.features.catalog.application.promote_public_catalog import (
     PromotePublicCatalogResult,
 )
@@ -22,6 +22,20 @@ class _FakeDatabase:
         self.session_factory = object()
 
 
+class _FakePromote:
+    def __init__(self, _store: object) -> None:
+        return None
+
+    async def __call__(self) -> PromotePublicCatalogResult:
+        return PromotePublicCatalogResult(
+            offers_promoted=1,
+            synthetic_offers_hidden=5,
+            synthetic_locations_rejected=4,
+            visible_offers=10,
+            map_eligible_locations=8,
+        )
+
+
 def _settings() -> Settings:
     return Settings(database_url="postgresql+asyncpg://unused/unused")
 
@@ -34,17 +48,7 @@ def _database(_url: str) -> _FakeDatabase:
 async def test_run_returns_counts(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(command, "load_settings", _settings)
     monkeypatch.setattr(command, "create_database_resources", _database)
-
-    async def fake_call(_self: object) -> PromotePublicCatalogResult:
-        return PromotePublicCatalogResult(
-            offers_promoted=1,
-            synthetic_offers_hidden=5,
-            synthetic_locations_rejected=4,
-            visible_offers=10,
-            map_eligible_locations=8,
-        )
-
-    monkeypatch.setattr(command.PromotePublicCatalog, "__call__", fake_call)
+    monkeypatch.setattr(command, "PromotePublicCatalog", _FakePromote)
     payload = await command.run()
     assert payload["offers_promoted"] == 1
     assert payload["synthetic_offers_hidden"] == 5
