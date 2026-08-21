@@ -3,7 +3,7 @@ schema: ai-workflow/implementation-plan@1
 epic: E8
 title: "Future Telegram live ingestion implementation plan"
 status: approved
-revision: 4
+revision: 5
 owner: owner
 spike_revision: 2
 task_sequence:
@@ -15,13 +15,15 @@ task_sequence:
     revision: 1
   - id: E8-T3
     revision: 1
+  - id: E8-T5
+    revision: 1
 approval:
   required_role: owner
   status: approved
   decided_by: "Cursor Agent (autonomous epic mission under AD-009 continue)"
-  decided_at: "2026-08-21T08:15:35Z"
-  approved_revision: 4
-  evidence: "AD-036; spike revision 2; promote E8-T3 live new/edit/delete; no worker Compose enablement; live secrets remain B-003"
+  decided_at: "2026-08-21T08:39:41Z"
+  approved_revision: 5
+  evidence: "AD-037; spike revision 2; promote E8-T5 worker ops scaffolding; Compose profile stays disabled; live secrets remain B-003"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -31,48 +33,49 @@ invalidation:
 
 # Implementation Plan: Future Telegram live ingestion
 
-> Revision 4 authorizes **E8-T3 revision 1** after E8-T2 backfill scaffolding. It adds
-> serialized new/edit/delete processing through shared persistence. It does **not**
-> enable the production worker Compose profile or claim live secret acceptance (B-003).
+> Revision 5 authorizes **E8-T5 revision 1** after E8-T3 event processing. It adds
+> disabled-by-default Compose, worker status/staleness/reconciliation CLI, session
+> rotation dry-run, and a double activation gate. It does **not** enable the production
+> worker profile or claim live secret acceptance (B-003).
 
 ## Intended scope and outcome
 
 Preserve the epic outcome: new, edited, and deleted channel posts are processed safely
-without changing public contracts. Revision 4 implements event serialization, revision
-upserts, delete lineage/visibility recalculation, and worker-health separation from API
-readiness.
+without changing public contracts. Revision 5 makes production reconciliation and
+alerting operable as scaffolding while keeping the worker profile off until secrets and
+owner activation exist.
 
 ## Ordered task sequence
 
 1. [E8-T1: Confirm channel identity and access](tasks/E8-T1-confirm-channel-identity-and-access.md) — `in_progress` (secrets/live resolve still open).
 2. [E8-T4: Revalidate geocoder for recurring ingestion](tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — delivered under revision 2.
 3. [E8-T2: Implement secure Telethon session and backfill](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md) — delivered under revision 3.
-4. [E8-T3: Implement live new/edit/delete processing](tasks/E8-T3-implement-live-new-edit-delete-processing.md) — promoted under this revision.
-
-Later revisions will sequence E8-T5 per the approved spike.
+4. [E8-T3: Implement live new/edit/delete processing](tasks/E8-T3-implement-live-new-edit-delete-processing.md) — delivered under revision 4.
+5. [E8-T5: Production reconciliation and worker alerting](tasks/E8-T5-production-reconciliation-and-worker-alerting.md) — promoted under this revision.
 
 ## Modules and contracts
 
-- `wef_backend.features.ingestion.application.telegram_events`
-- `wef_backend.features.ingestion.infrastructure.telethon_events`
-- Extended `IngestionPersistencePort.persist_live_upsert` / `mark_source_deleted`
-- Reuses E8-T2 Fake/Telethon clients and E3 persistence
-- No public OpenAPI change; no schema migration; no worker Compose enablement
+- `wef_backend.features.ingestion.domain.telegram_worker_ops`
+- `wef_backend.features.ingestion.application.telegram_worker_status`
+- `wef_backend.features.ingestion.infrastructure.telegram_worker_status_store`
+- CLI: `wef-telegram-worker-status`, `wef-telegram-worker`
+- Compose profile `telegram-worker` in `infra/compose.yaml` and `infra/compose.production.yaml`
+- No public OpenAPI change; no schema migration; profile remains disabled by default
 
 ## Tests and checks
 
-- Unit tests for new/edit/delete convergence, checkpoint non-rewind on older edits,
-  queue serialization, Telethon adapters, worker-health vs API readiness
+- Unit tests for freshness, reconciliation, activation gate, worker fail-closed, rotation dry-run
 - `make lint` / typecheck / backend tests for the touched modules
 
 ## Rollout and limits
 
-- No production worker enablement (E8-T5)
-- Live Telethon event subscriptions require owner-supplied secrets (B-003)
+- Do not enable `--profile telegram-worker` or `WEF_TELEGRAM_WORKER_ACTIVATE=1` in production until B-003 is cleared
+- Continuous live loop remains gated (`WEF_TELEGRAM_WORKER_LIVE_LOOP`)
+- Worker freshness never gates `/api/v1/health/ready`
 
 ## Approval checklist
 
 - [x] Spike revision 2 is approved (AD-031).
-- [x] Sequence contains only promoted E8-T1, E8-T4, E8-T2, and E8-T3.
+- [x] Sequence contains only promoted E8 tasks through E8-T5.
 - [x] No proposed task appears as executable work.
-- [x] Safety limit: no worker Compose profile enablement; secrets remain owner-supplied.
+- [x] Safety limit: worker Compose profile disabled by default; secrets remain owner-supplied.

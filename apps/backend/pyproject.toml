@@ -36,6 +36,8 @@ wef-accept-pending-geocode-pins = "wef_backend.accept_pending_geocode_pins_comma
 wef-bootstrap-owner = "wef_backend.owner_command:main"
 wef-verify-telegram-channel = "wef_backend.telegram_channel_command:main"
 wef-telegram-backfill = "wef_backend.telegram_backfill_command:main"
+wef-telegram-worker = "wef_backend.telegram_worker_command:main"
+wef-telegram-worker-status = "wef_backend.telegram_worker_status_command:main"
 
 [build-system]
 requires = ["hatchling"]

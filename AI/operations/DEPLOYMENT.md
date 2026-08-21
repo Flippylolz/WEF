@@ -27,6 +27,10 @@ Local Compose services:
 - `caddy`: optional local same-origin routing.
 - `importer`: same backend image, run as an on-demand command.
 - `telegram-worker`: profile-disabled until credentials and a test channel are explicitly configured.
+  Enable only with `docker compose --profile telegram-worker ...` after mode-0600 files exist at
+  `/run/secrets/wef_telegram_{api_id,api_hash,session}` and `WEF_TELEGRAM_WORKER_ACTIVATE=1`.
+  Observe readiness with `wef-telegram-worker-status` (never gates `/api/v1/health/ready`).
+  Rehearse rotation with `wef-telegram-worker-status --rotation-dry-run`.
 
 The raw export is mounted read-only only into importer commands. Media output uses a named/local volume. The repository root is the Docker build context only with a strict `.dockerignore` excluding the export, archives, media, secrets, caches, and local database files.
 
@@ -50,7 +54,11 @@ Production services:
 - `web`: internal port only.
 - `api`: internal port only.
 - `db`: an application-owned PostgreSQL/PostGIS container on the internal network only, with a persistent host-backed volume.
-- `telegram-worker`: one replica, enabled only after [Epic 8](../epics/E8-telegram-live-ingestion/README.md).
+- `telegram-worker`: one replica, enabled only after [Epic 8](../epics/E8-telegram-live-ingestion/README.md)
+  clears B-003 and owner activation under [E8-T5](../epics/E8-telegram-live-ingestion/tasks/E8-T5-production-reconciliation-and-worker-alerting.md).
+  Host secret files live under `${WEF_ROOT}/secrets/current/` as `wef_telegram_api_id`,
+  `wef_telegram_api_hash`, and `wef_telegram_session` (mode 0600), mounted read-only at
+  `/run/secrets/`. Ordinary production deploys must not pass `--profile telegram-worker`.
 
 The importer is a run-to-completion command, not an always-running service. The production Compose project is explicitly named `wef-production`; it does not reuse an existing container, network, volume, database, or Compose project.
 

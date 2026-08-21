@@ -270,6 +270,42 @@ services:
     networks:
       - application
 
+  # Disabled by default. Do not start until B-003 secrets exist on the NUC,
+  # owner activation is recorded, and WEF_TELEGRAM_WORKER_ACTIVATE=1.
+  telegram-worker:
+    profiles:
+      - telegram-worker
+    image: ${WEF_BACKEND_IMAGE:?WEF_BACKEND_IMAGE digest is required}
+    command: ["wef-telegram-worker"]
+    environment:
+      <<: *backend-environment
+      WEF_TELEGRAM_WORKER_ACTIVATE: ${WEF_TELEGRAM_WORKER_ACTIVATE:-0}
+      WEF_TELEGRAM_WORKER_LIVE_LOOP: ${WEF_TELEGRAM_WORKER_LIVE_LOOP:-0}
+      WEF_TELEGRAM_API_ID_FILE: /run/secrets/wef_telegram_api_id
+      WEF_TELEGRAM_API_HASH_FILE: /run/secrets/wef_telegram_api_hash
+      WEF_TELEGRAM_SESSION_FILE: /run/secrets/wef_telegram_session
+    <<: *application-security
+    volumes:
+      - type: bind
+        source: ${WEF_ROOT:?WEF_ROOT is required}/secrets/current
+        target: /run/secrets
+        read_only: true
+        bind:
+          create_host_path: false
+    restart: "no"
+    stop_grace_period: 30s
+    cpus: "0.50"
+    mem_limit: 512m
+    mem_reservation: 64m
+    pids_limit: 128
+    logging: *production-logging
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - application
+      - provider-egress
+
 networks:
   application:
     internal: true

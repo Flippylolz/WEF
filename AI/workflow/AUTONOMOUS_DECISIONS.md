@@ -305,3 +305,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no worker Compose enablement; no credentials in Git; worker health never gates public API readiness.
 - Reversal: demote E8-T3 / revert plan revision 4 if the owner rejects AD-036.
 - Follow-up: owner supplies Telegram secrets; then live event evidence; E8-T5 production worker enablement.
+
+## AD-037: Approve E8 plan revision 5 and sequence E8-T5
+
+- Time: 2026-08-21.
+- Prompt avoided: wait indefinitely for live Telegram secrets before any worker ops scaffolding while `continue` was reissued; or enable the production worker Compose profile under E8-T5 before B-003 clears.
+- Selected approach: under AD-009 `continue`, approve implementation plan revision 5 authorizing **E8-T5**; promote E8-T5; ship disabled-by-default `telegram-worker` Compose (local + production), `wef-telegram-worker-status` (freshness + checkpoint reconciliation), session-rotation dry-run, and fail-closed `wef-telegram-worker` behind `WEF_TELEGRAM_WORKER_ACTIVATE`; leave live activation and continuous loop gated on B-003.
+- Rationale: spike revision 2 ordered E8-T3 → E8-T5; prior E8 tasks delivered scaffolding; credential-free ops contracts unblock reviewable production readiness without enabling the worker.
+- Safety limit: do not start `--profile telegram-worker` or set activation/live-loop env vars in production until owner supplies secrets and records activation; worker freshness never gates API readiness.
+- Reversal: demote E8-T5 / revert plan revision 5 and remove the Compose worker service if the owner rejects AD-037.
+- Follow-up: owner supplies Telegram API ID/hash/session to NUC `secrets/current` (mode 0600); then activation evidence closes remaining E8 acceptance.
