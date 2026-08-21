@@ -213,7 +213,7 @@ before every dependency becomes `done`.
 
 - [E8-T1: Confirm channel identity and access](tasks/E8-T1-confirm-channel-identity-and-access.md) — promoted under plan revision 1.
 - [E8-T2: Implement secure Telethon session and backfill](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md) — promoted under plan revision 3.
-- [E8-T3: Implement live new/edit/delete processing](proposed-tasks/E8-T3-implement-live-new-edit-delete-processing.md) — candidate boundary for spike refinement.
+- [E8-T3: Implement live new/edit/delete processing](tasks/E8-T3-implement-live-new-edit-delete-processing.md) — promoted under plan revision 4.
 - [E8-T4: Revalidate geocoder for recurring ingestion](tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — promoted under plan revision 2.
 - [E8-T5: Production reconciliation and worker alerting](proposed-tasks/E8-T5-production-reconciliation-and-worker-alerting.md) — candidate boundary for spike refinement.
 

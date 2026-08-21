@@ -13,6 +13,7 @@ import pytest
 from telethon.errors import FloodWaitError
 
 from wef_backend.features.ingestion.application.persistence import (
+    DeletionOutcomeKind,
     MessageOutcome,
     MessagePersistOutcome,
     PersistableMessage,
@@ -22,6 +23,7 @@ from wef_backend.features.ingestion.application.persistence import (
     RunLockHeldError,
     RunMode,
     RunStatus,
+    SourceDeletionOutcome,
 )
 from wef_backend.features.ingestion.application.telegram_backfill import (
     LiveBackfillRequest,
@@ -288,6 +290,43 @@ class _FakeStore:
             )
         self.checkpoints.append(acknowledged)
         return outcomes, acknowledged, acknowledged_counts, 0
+
+    async def persist_live_upsert(
+        self,
+        *,
+        channel_id: UUID,
+        run_id: UUID,
+        message: PersistableMessage,
+        checkpoint: RunCheckpoint,
+        counts: RunCounts,
+        advance_checkpoint: bool,
+    ) -> tuple[MessagePersistOutcome, RunCheckpoint, RunCounts, int]:
+        outcomes, acknowledged, acknowledged_counts, offers = await self.persist_batch(
+            channel_id=channel_id,
+            run_id=run_id,
+            batch=((message, message.raw.external_message_id),),
+            checkpoint=checkpoint,
+            counts=counts,
+        )
+        if not advance_checkpoint:
+            acknowledged = checkpoint
+        return outcomes[0], acknowledged, acknowledged_counts, offers
+
+    async def mark_source_deleted(
+        self,
+        *,
+        channel_id: UUID,
+        external_message_ids: Sequence[int],
+    ) -> Sequence[SourceDeletionOutcome]:
+        _ = channel_id
+        return tuple(
+            SourceDeletionOutcome(
+                external_message_id=external_id,
+                outcome=DeletionOutcomeKind.MISSING,
+                offers_hidden=0,
+            )
+            for external_id in external_message_ids
+        )
 
     async def finish_run(
         self,

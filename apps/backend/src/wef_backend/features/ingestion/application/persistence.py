@@ -100,6 +100,23 @@ class MessagePersistOutcome:
     revision_number: int
 
 
+class DeletionOutcomeKind(StrEnum):
+    """Per-id source delete reconciliation outcome."""
+
+    DELETED = "deleted"
+    ALREADY_DELETED = "already_deleted"
+    MISSING = "missing"
+
+
+@dataclass(frozen=True, slots=True)
+class SourceDeletionOutcome:
+    """Result of marking one source message deleted."""
+
+    external_message_id: int
+    outcome: DeletionOutcomeKind
+    offers_hidden: int
+
+
 @dataclass(frozen=True, slots=True)
 class RunCheckpoint:
     """Exactly the work acknowledged by the last committed transaction."""
@@ -224,6 +241,29 @@ class IngestionPersistencePort(Protocol):
         Returns per-message outcomes, the acknowledged checkpoint, the
         acknowledged counts, and the number of newly created offers.
         """
+        ...
+
+    async def persist_live_upsert(  # noqa: PLR0913
+        self,
+        *,
+        channel_id: UUID,
+        run_id: UUID,
+        message: PersistableMessage,
+        checkpoint: RunCheckpoint,
+        counts: RunCounts,
+        advance_checkpoint: bool,
+    ) -> tuple[MessagePersistOutcome, RunCheckpoint, RunCounts, int]:
+        """Upsert one live message; optionally advance the durable message-id cursor."""
+        ...
+
+    async def mark_source_deleted(
+        self,
+        *,
+        channel_id: UUID,
+        external_message_ids: Sequence[int],
+    ) -> Sequence[SourceDeletionOutcome]:
+        """Mark source messages deleted and hide linked offers without erasing lineage."""
+        ...
 
     async def finish_run(
         self,

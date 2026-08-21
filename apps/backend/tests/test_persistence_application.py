@@ -12,6 +12,7 @@ import pytest
 
 from wef_backend.features.catalog.domain import ContentType
 from wef_backend.features.ingestion.application.persistence import (
+    DeletionOutcomeKind,
     MessageOutcome,
     MessagePersistOutcome,
     PersistableMessage,
@@ -23,6 +24,7 @@ from wef_backend.features.ingestion.application.persistence import (
     RunMetadata,
     RunMode,
     RunStatus,
+    SourceDeletionOutcome,
     build_extraction_json,
     build_source_text_excerpt,
     build_source_text_public_masked,
@@ -291,6 +293,46 @@ class FakeStore:
         new_checkpoint = checkpoint.advances(batch[-1][1], None)
         new_counts = counts.with_outcome(outcome=outcome, offer_created=True)
         return (outcome,), new_checkpoint, new_counts, 1
+
+    async def persist_live_upsert(
+        self,
+        *,
+        channel_id: UUID,
+        run_id: UUID,
+        message: PersistableMessage,
+        checkpoint: RunCheckpoint,
+        counts: RunCounts,
+        advance_checkpoint: bool,
+    ) -> tuple[MessagePersistOutcome, RunCheckpoint, RunCounts, int]:
+        """Acknowledge one live upsert or fail as scripted."""
+        batch = ((message, message.raw.external_message_id),)
+        outcomes, new_checkpoint, new_counts, offers = await self.persist_batch(
+            channel_id=channel_id,
+            run_id=run_id,
+            batch=batch,
+            checkpoint=checkpoint,
+            counts=counts,
+        )
+        if not advance_checkpoint:
+            new_checkpoint = checkpoint
+        return outcomes[0], new_checkpoint, new_counts, offers
+
+    async def mark_source_deleted(
+        self,
+        *,
+        channel_id: UUID,  # noqa: ARG002
+        external_message_ids: Sequence[int],
+    ) -> Sequence[SourceDeletionOutcome]:
+        """Record delete calls without durable storage."""
+        self.calls.append(f"delete:{len(external_message_ids)}")
+        return tuple(
+            SourceDeletionOutcome(
+                external_message_id=external_id,
+                outcome=DeletionOutcomeKind.MISSING,
+                offers_hidden=0,
+            )
+            for external_id in external_message_ids
+        )
 
     async def finish_run(
         self,
