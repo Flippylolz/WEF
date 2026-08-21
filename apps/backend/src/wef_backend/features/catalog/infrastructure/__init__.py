@@ -14,6 +14,9 @@ from wef_backend.features.catalog.infrastructure.models import (
 from wef_backend.features.catalog.infrastructure.offer_detail_adapter import (
     SQLAlchemyOfferDetailAdapter,
 )
+from wef_backend.features.catalog.infrastructure.promote_public_catalog_adapter import (
+    SQLAlchemyPromotePublicCatalogAdapter,
+)
 from wef_backend.features.catalog.infrastructure.seed_adapter import (
     SQLAlchemyCatalogSeedAdapter,
 )
@@ -26,4 +29,5 @@ __all__ = [
     "SQLAlchemyCatalogSeedAdapter",
     "SQLAlchemyMapQueryAdapter",
     "SQLAlchemyOfferDetailAdapter",
+    "SQLAlchemyPromotePublicCatalogAdapter",
 ]

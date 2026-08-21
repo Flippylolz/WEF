@@ -265,3 +265,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no Telethon dependency; no worker enablement; no paid Geoapify activation; no Nominatim recurring fallback; no credentials in Git.
 - Reversal: demote E8-T4 / revert plan revision 2 and reopen D-002 if the owner rejects AD-032.
 - Follow-up: E8-T2 after owner Telegram secrets; E8-T5 still owns production worker enablement.
+
+## AD-033: Promote historical offers and hide synthetic M1 seed
+
+- Time: 2026-08-21.
+- Prompt avoided: leave the public map on five synthetic pins while ~2,994 imported offers stayed `needs_review`.
+- Selected approach: on owner request, hide `synthetic-m1-v1` offers, reject synthetic location IDs, and set all other offers to `visible` on `wef_hist_candidate`; ship `wef-promote-public-catalog` for repeatable ops.
+- Rationale: E7-T11 activated the candidate DB/media but intentionally deferred bulk visibility; the owner now asked to remove mock data and show historical records.
+- Safety limit: map still requires accepted in-scope locations with points; ungeocoded/needs_review locations without points remain non-pinnable; no Telethon/worker enablement.
+- Reversal: restore offer `needs_review` / synthetic `visible` from backup or reverse SQL if the owner wants the rehearsal-only map again.
+- Follow-up: optional later curation UI for selective hiding; geocode remaining point-less locations if more pins are desired.
