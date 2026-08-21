@@ -277,6 +277,7 @@ class IngestionPersistencePort(Protocol):
         """Record the terminal run state."""
         ...
 
+
 def money_to_minor(amount: Decimal) -> int:
     """Convert source major units to integer minor units."""
     return int((amount * 100).to_integral_value(rounding=ROUND_HALF_UP))
