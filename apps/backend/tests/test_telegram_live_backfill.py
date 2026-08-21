@@ -471,9 +471,7 @@ async def test_telethon_live_client_iter_waits_on_flood(
     )
     client._client.flood_on_iter = True  # noqa: SLF001
     await client.connect()
-    messages = [
-        item async for item in client.iter_messages(username="elestate_warszawa", min_id=0)
-    ]
+    messages = [item async for item in client.iter_messages(username="elestate_warszawa", min_id=0)]
     assert len(messages) == 1
     assert sleeps == [1]
     await client.disconnect()
