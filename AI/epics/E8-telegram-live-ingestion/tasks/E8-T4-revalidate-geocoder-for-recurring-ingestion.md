@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E8-T4
 epic: E8
 title: "Revalidate geocoder for recurring ingestion"
-status: in_progress
+status: done
 revision: 1
 priority: P2
 size: M
@@ -40,12 +40,14 @@ branch:
   task_id: E8-T4
   one_task_only: true
   created_at: "2026-08-21T07:05:27Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/162"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-21T07:20:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/162"
+  evidence:
+    - "Retain Geoapify for recurring use; resolve D-002; forbid Nominatim recurring; defer/monitor + wef-revalidate-recurring-geocoder"
+    - "AD-032; plan revision 2; B-004 cleared as R-011"
 invalidation:
   invalidated_by: null
   invalidated_at: null

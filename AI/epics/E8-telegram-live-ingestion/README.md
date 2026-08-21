@@ -21,7 +21,7 @@ new, edited, and deleted channel posts are processed safely without changing pub
 - [Spike](SPIKE.md): `approved`, revision 2 (AD-031).
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 2; authorizes E8-T1 and E8-T4.
 - [E8-T1](tasks/E8-T1-confirm-channel-identity-and-access.md): promoted, `in_progress` (secrets/live resolve open).
-- [E8-T4](tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md): promoted, `in_progress`.
+- [E8-T4](tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md): promoted, `done`.
 - E8-T2, T3, T5 remain proposed until later plan revisions.
 
 ## Milestones
@@ -51,7 +51,7 @@ new, edited, and deleted channel posts are processed safely without changing pub
 ## Tasks
 
 - [E8-T1: Confirm channel identity and access](tasks/E8-T1-confirm-channel-identity-and-access.md) — `in_progress`, P2/S, M4
-- [E8-T4: Revalidate geocoder for recurring ingestion](tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — `in_progress`, P2/M, M4
+- [E8-T4: Revalidate geocoder for recurring ingestion](tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — `done`, P2/M, M4
 
 ## Proposed tasks
 
