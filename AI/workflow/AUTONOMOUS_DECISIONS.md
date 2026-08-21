@@ -295,3 +295,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no worker Compose enablement; no credentials in Git; live Telethon runs fail closed without owner-supplied mode-0600 secret files.
 - Reversal: demote E8-T2 / revert plan revision 3 and remove the Telethon dependency if the owner rejects AD-035.
 - Follow-up: owner supplies API ID/hash/session; then live backfill evidence; E8-T3 events; E8-T5 worker enablement.
+
+## AD-036: Approve E8 plan revision 4 and sequence E8-T3
+
+- Time: 2026-08-21.
+- Prompt avoided: wait indefinitely for live Telegram secrets before any new/edit/delete processing while `continue` was reissued; or enable the production worker under E8-T3.
+- Selected approach: under AD-009 `continue`, approve implementation plan revision 4 authorizing **E8-T3**; promote E8-T3; ship serialized live event processing, `persist_live_upsert`, `mark_source_deleted` (lineage-preserving hide), Fake-client convergence tests, and Telethon event adapters; leave live subscription and worker enablement gated on B-003 / E8-T5.
+- Rationale: spike revision 2 ordered E8-T2 → E8-T3; E8-T2 scaffolding is merged; fake-client acceptance covers replay/edit/delete without credentials.
+- Safety limit: no worker Compose enablement; no credentials in Git; worker health never gates public API readiness.
+- Reversal: demote E8-T3 / revert plan revision 4 if the owner rejects AD-036.
+- Follow-up: owner supplies Telegram secrets; then live event evidence; E8-T5 production worker enablement.

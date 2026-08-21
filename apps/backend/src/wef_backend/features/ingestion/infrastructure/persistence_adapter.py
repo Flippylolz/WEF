@@ -14,6 +14,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import delete, func, select, text, update
 
+from wef_backend.features.catalog.domain import OfferVisibility
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
 from wef_backend.features.contacts.application.reveal import (
     ContactCipher,
@@ -24,6 +25,7 @@ from wef_backend.features.contacts.application.reveal import (
 from wef_backend.features.contacts.domain.model import ContactKind as StoredContactKind
 from wef_backend.features.contacts.infrastructure.models import ContactPointRow
 from wef_backend.features.ingestion.application.persistence import (
+    DeletionOutcomeKind,
     IngestionPersistencePort,
     MessageOutcome,
     MessagePersistOutcome,
@@ -35,6 +37,7 @@ from wef_backend.features.ingestion.application.persistence import (
     RunLockHeldError,
     RunMode,
     RunStatus,
+    SourceDeletionOutcome,
     build_extraction_json,
     build_source_text_excerpt,
     build_source_text_public_masked,
@@ -251,6 +254,115 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             raise PersistenceBatchError(redacted_error_summary(error)) from error
         offers_created = sum(1 for result in results if result.offer_created)
         return outcomes, acknowledged, acknowledged_counts, offers_created
+
+    async def persist_live_upsert(  # noqa: PLR0913
+        self,
+        *,
+        channel_id: UUID,
+        run_id: UUID,
+        message: PersistableMessage,
+        checkpoint: RunCheckpoint,
+        counts: RunCounts,
+        advance_checkpoint: bool,
+    ) -> tuple[MessagePersistOutcome, RunCheckpoint, RunCounts, int]:
+        """Upsert one live message; optionally advance the durable message-id cursor."""
+        try:
+            async with self._session_factory() as session, session.begin():
+                result = await self._persist_message(
+                    session,
+                    channel_id=channel_id,
+                    persistable=message,
+                )
+                outcome = MessagePersistOutcome(
+                    external_message_id=message.raw.external_message_id,
+                    outcome=result.outcome,
+                    revision_number=result.revision_number,
+                )
+                acknowledged = checkpoint
+                if advance_checkpoint:
+                    acknowledged = checkpoint.advances(
+                        message.raw.external_message_id,
+                        message.raw.checksum,
+                    )
+                acknowledged_counts = counts.with_outcome(
+                    outcome=outcome,
+                    offer_created=result.offer_created,
+                )
+                await session.execute(
+                    update(IngestRunRow)
+                    .where(IngestRunRow.id == run_id)
+                    .values(
+                        checkpoint_json=asdict(acknowledged),
+                        counts_json=asdict(acknowledged_counts),
+                    ),
+                )
+        except PersistenceBatchError:
+            raise
+        except Exception as error:
+            raise PersistenceBatchError(redacted_error_summary(error)) from error
+        return outcome, acknowledged, acknowledged_counts, int(result.offer_created)
+
+    async def mark_source_deleted(
+        self,
+        *,
+        channel_id: UUID,
+        external_message_ids: Sequence[int],
+    ) -> Sequence[SourceDeletionOutcome]:
+        """Mark source messages deleted and hide linked offers without erasing lineage."""
+        outcomes: list[SourceDeletionOutcome] = []
+        try:
+            async with self._session_factory() as session, session.begin():
+                now = datetime.now(UTC)
+                for external_id in external_message_ids:
+                    existing = await session.scalar(
+                        select(SourceMessageRow)
+                        .where(
+                            SourceMessageRow.source_channel_id == channel_id,
+                            SourceMessageRow.external_message_id == external_id,
+                        )
+                        .limit(1),
+                    )
+                    if existing is None:
+                        outcomes.append(
+                            SourceDeletionOutcome(
+                                external_message_id=external_id,
+                                outcome=DeletionOutcomeKind.MISSING,
+                                offers_hidden=0,
+                            ),
+                        )
+                        continue
+                    if existing.deleted_at is not None:
+                        outcomes.append(
+                            SourceDeletionOutcome(
+                                external_message_id=external_id,
+                                outcome=DeletionOutcomeKind.ALREADY_DELETED,
+                                offers_hidden=0,
+                            ),
+                        )
+                        continue
+                    existing.deleted_at = now
+                    hide_result = await session.execute(
+                        update(OfferRow)
+                        .where(
+                            OfferRow.id.in_(
+                                select(OfferSourceRow.offer_id).where(
+                                    OfferSourceRow.source_message_id == existing.id,
+                                ),
+                            ),
+                            OfferRow.visibility != OfferVisibility.HIDDEN.value,
+                        )
+                        .values(visibility=OfferVisibility.HIDDEN.value),
+                    )
+                    outcomes.append(
+                        SourceDeletionOutcome(
+                            external_message_id=external_id,
+                            outcome=DeletionOutcomeKind.DELETED,
+                            offers_hidden=int(getattr(hide_result, "rowcount", 0) or 0),
+                        ),
+                    )
+        except Exception as error:
+            raise PersistenceBatchError(redacted_error_summary(error)) from error
+        return tuple(outcomes)
 
     async def _persist_message(
         self,
