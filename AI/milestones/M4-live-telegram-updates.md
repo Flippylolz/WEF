@@ -22,7 +22,7 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 ### [E8: Future Telegram live ingestion](../epics/E8-telegram-live-ingestion/README.md)
 
 - [E8-T1: Confirm channel identity and access](../epics/E8-telegram-live-ingestion/tasks/E8-T1-confirm-channel-identity-and-access.md) — `in_progress`
-- [E8-T2: Implement secure Telethon session and backfill](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T2-implement-secure-telethon-session-and-backfill.md) — `proposed`
+- [E8-T2: Implement secure Telethon session and backfill](../epics/E8-telegram-live-ingestion/tasks/E8-T2-implement-secure-telethon-session-and-backfill.md) — `in_progress`
 - [E8-T3: Implement live new/edit/delete processing](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T3-implement-live-new-edit-delete-processing.md) — `proposed`
 - [E8-T4: Revalidate geocoder for recurring ingestion](../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — `done`
 - [E8-T5: Production reconciliation and worker alerting](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T5-production-reconciliation-and-worker-alerting.md) — `proposed`

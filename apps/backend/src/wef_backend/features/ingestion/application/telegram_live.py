@@ -1,0 +1,149 @@
+"""Live Telegram client contract and entity verification for E8-T2."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Protocol
+
+from wef_backend.features.ingestion.domain.model import (
+    RawMessage,
+    SourceIdentity,
+    SourcePlatform,
+    canonical_json_checksum,
+    freeze_json,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
+
+
+class TelegramEntityMismatchError(RuntimeError):
+    """Raised when the live entity does not match expected non-secret identity."""
+
+
+@dataclass(frozen=True, slots=True)
+class TelegramChannelEntity:
+    """Resolved live channel identity (non-secret fields only)."""
+
+    username: str
+    channel_id: str
+    title: str
+
+
+@dataclass(frozen=True, slots=True)
+class LiveTelegramMessage:
+    """Minimal live message surface before RawMessage conversion."""
+
+    external_message_id: int
+    text: str
+    published_at: datetime
+    edited_at: datetime | None
+    media_group_id: str | None = None
+
+
+class TelegramLiveClientPort(Protocol):
+    """Inward-owned live Telegram client used by backfill (and later events)."""
+
+    async def connect(self) -> None:
+        """Establish a session connection."""
+        ...
+
+    async def disconnect(self) -> None:
+        """Close the session connection."""
+        ...
+
+    async def resolve_channel(self, username: str) -> TelegramChannelEntity:
+        """Resolve one public channel username to numeric ID and title."""
+        ...
+
+    def iter_messages(
+        self,
+        *,
+        username: str,
+        min_id: int,
+        reverse: bool = True,
+        limit: int | None = None,
+    ) -> AsyncIterator[LiveTelegramMessage]:
+        """Iterate channel messages for backfill (oldest-first when reverse=True)."""
+        ...
+
+
+def verify_channel_entity(
+    expected: TelegramChannelIdentity,
+    actual: TelegramChannelEntity,
+) -> None:
+    """Fail closed when live entity disagrees with configured identity."""
+    if actual.username.casefold() != expected.username.casefold():
+        message = "Telegram channel username does not match expected identity"
+        raise TelegramEntityMismatchError(message)
+    if actual.channel_id != expected.channel_id:
+        message = "Telegram channel id does not match expected identity"
+        raise TelegramEntityMismatchError(message)
+    if actual.title != expected.channel_title:
+        message = "Telegram channel title does not match expected identity"
+        raise TelegramEntityMismatchError(message)
+
+
+def live_message_to_raw(
+    message: LiveTelegramMessage,
+    *,
+    identity: SourceIdentity,
+) -> RawMessage:
+    """Convert one live message into the shared RawMessage boundary."""
+    payload = {
+        "id": message.external_message_id,
+        "type": "message",
+        "date_unixtime": str(int(message.published_at.timestamp())),
+        "text": message.text,
+        "from_live": True,
+    }
+    if message.edited_at is not None:
+        payload["edited_unixtime"] = str(int(message.edited_at.timestamp()))
+    if message.media_group_id is not None:
+        payload["media_group_id"] = message.media_group_id
+    frozen_payload = freeze_json(payload)
+    if not isinstance(frozen_payload, Mapping):
+        message_text = "live message payload must freeze as an object"
+        raise TypeError(message_text)
+    return RawMessage(
+        source=identity,
+        external_message_id=message.external_message_id,
+        reply_to_message_id=None,
+        published_at=message.published_at.astimezone(UTC),
+        edited_at=None if message.edited_at is None else message.edited_at.astimezone(UTC),
+        message_type="message",
+        text=message.text,
+        original_text=freeze_json(message.text),
+        text_entities=(),
+        media=(),
+        raw_payload=frozen_payload,
+        checksum=canonical_json_checksum(payload),
+        media_group_id=message.media_group_id,
+    )
+
+
+def source_identity_from_channel(identity: TelegramChannelIdentity) -> SourceIdentity:
+    """Build the shared source identity for the live channel."""
+    return SourceIdentity(
+        platform=SourcePlatform.TELEGRAM,
+        channel_id=identity.channel_id,
+        channel_name=identity.channel_title,
+        channel_type="public_channel",
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class LiveBackfillResult:
+    """Redacted backfill reconciliation summary."""
+
+    verified_channel_id: str
+    messages_seen: int
+    checkpoint_external_message_id: int
+    created: int
+    unchanged: int
+    revised: int
+    skipped_non_candidate: int

@@ -285,3 +285,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no Telethon; no worker enablement; out-of-scope results remain unpinned; city/district pins may be coarse and are reversible via review lineage.
 - Reversal: set affected locations back to `needs_review` with `point` cleared using prior selection lineage if the owner wants stricter auto-only pins.
 - Follow-up: E8-T2 still waits on B-003 Telegram secrets.
+
+## AD-035: Approve E8 plan revision 3 and sequence E8-T2
+
+- Time: 2026-08-21.
+- Prompt avoided: wait indefinitely for live Telegram secrets before any Telethon/backfill scaffolding while `continue` was reissued; or enable the production worker Compose profile under E8-T2.
+- Selected approach: under AD-009 `continue`, approve implementation plan revision 3 authorizing **E8-T2**; promote E8-T2; add the spike-selected `telethon` dependency; ship secret-file loading, Fake+Telethon clients, entity verify, advisory-lock backfill through E3 persistence, and `wef-telegram-backfill`; leave live acceptance and worker enablement gated on B-003 / E8-T5.
+- Rationale: spike revision 2 ordered E8-T1 → E8-T4 → E8-T2; E8-T4 is done; fake-client acceptance unblocks reviewable progress without credentials; production activation remains E8-T5.
+- Safety limit: no worker Compose enablement; no credentials in Git; live Telethon runs fail closed without owner-supplied mode-0600 secret files.
+- Reversal: demote E8-T2 / revert plan revision 3 and remove the Telethon dependency if the owner rejects AD-035.
+- Follow-up: owner supplies API ID/hash/session; then live backfill evidence; E8-T3 events; E8-T5 worker enablement.

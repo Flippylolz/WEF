@@ -1,0 +1,65 @@
+"""In-memory Telegram client for deterministic E8-T2 tests."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Sequence
+
+    from wef_backend.features.ingestion.application.telegram_live import (
+        LiveTelegramMessage,
+        TelegramChannelEntity,
+    )
+
+
+@dataclass
+class FakeTelegramLiveClient:
+    """Deterministic live client with an in-memory message stream."""
+
+    entity: TelegramChannelEntity
+    messages: Sequence[LiveTelegramMessage] = ()
+    connected: bool = False
+    resolve_calls: list[str] = field(default_factory=list)
+
+    async def connect(self) -> None:
+        """Mark the fake client connected."""
+        self.connected = True
+
+    async def disconnect(self) -> None:
+        """Mark the fake client disconnected."""
+        self.connected = False
+
+    async def resolve_channel(self, username: str) -> TelegramChannelEntity:
+        """Return the configured entity when the username matches."""
+        self.resolve_calls.append(username)
+        if username.casefold() != self.entity.username.casefold():
+            message = "fake channel username not found"
+            raise LookupError(message)
+        return self.entity
+
+    async def iter_messages(
+        self,
+        *,
+        username: str,
+        min_id: int,
+        reverse: bool = True,
+        limit: int | None = None,
+    ) -> AsyncIterator[LiveTelegramMessage]:
+        """Yield in-memory messages for the configured channel."""
+        if not self.connected:
+            message = "fake client is not connected"
+            raise RuntimeError(message)
+        if username.casefold() != self.entity.username.casefold():
+            message = "fake channel username not found"
+            raise LookupError(message)
+        ordered = sorted(
+            (item for item in self.messages if item.external_message_id > min_id),
+            key=lambda item: item.external_message_id,
+            reverse=not reverse,
+        )
+        if limit is not None:
+            ordered = ordered[:limit]
+        for item in ordered:
+            yield item
