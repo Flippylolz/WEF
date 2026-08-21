@@ -306,6 +306,34 @@ services:
     networks:
       - application
 
+  # Disabled by default. Enable only with `--profile telegram-worker` after
+  # mode-0600 secret files exist and WEF_TELEGRAM_WORKER_ACTIVATE=1 is set.
+  telegram-worker:
+    profiles:
+      - telegram-worker
+    image: wef-backend:local
+    build: *backend-build
+    command: ["wef-telegram-worker"]
+    environment:
+      WEF_DATABASE_URL: ${WEF_DATABASE_URL:-postgresql+asyncpg://wef:wef-local-only@db:5432/wef}
+      WEF_ENV: development
+      WEF_TELEGRAM_WORKER_ACTIVATE: ${WEF_TELEGRAM_WORKER_ACTIVATE:-0}
+      WEF_TELEGRAM_WORKER_LIVE_LOOP: ${WEF_TELEGRAM_WORKER_LIVE_LOOP:-0}
+      WEF_TELEGRAM_API_ID_FILE: /run/secrets/wef_telegram_api_id
+      WEF_TELEGRAM_API_HASH_FILE: /run/secrets/wef_telegram_api_hash
+      WEF_TELEGRAM_SESSION_FILE: /run/secrets/wef_telegram_session
+    volumes:
+      - ${WEF_TELEGRAM_SECRETS_DIR:-../secrets/telegram}:/run/secrets:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+    networks:
+      - application
+      - provider-egress
+
 networks:
   application:
     internal: true
