@@ -5,12 +5,15 @@ title: Telegram channel identity and access
 status: deferred
 task_gates:
   - E8-T1
-resolved_by: []
 ---
 
 # D-003: Telegram channel identity and access
 
-- Status: public source-link format resolved; live access remains deferred until E8-T1.
+- Status: **deferred** for live API credentials/session; **public identity recorded** under E8-T1.
 - Verified channel: `https://t.me/elestate_warszawa`.
-- Verified message-link pattern: `https://t.me/elestate_warszawa/{message_id}`; message 3 resolves publicly.
-- Required later for the listener: whether edits/deletes must be mirrored, Telegram API ID/hash, and an authorized account/session.
+- Expected numeric channel ID: `2180077318` (matches historical import settings).
+- Expected title: `El Estate | Покупка Варшава`.
+- Verified message-link pattern: `https://t.me/elestate_warszawa/{message_id}`; message 3 is the public probe target.
+- Operating owner: one dedicated least-privilege Telegram **user** account (not a bot).
+- Worker-only secrets (mode `0600`, never in Git): API ID, API hash, Telethon string session file paths configured via `WEF_TELEGRAM_*_FILE`.
+- Remaining for full resolution: owner supplies secrets to the approved NUC/GitHub secret paths; E8-T2 performs authenticated entity resolve; real new/edit/delete observations close B-003.

@@ -28,6 +28,14 @@ class Settings(BaseSettings):
     historical_channel_id: str = "2180077318"
     historical_channel_type: str = "public_channel"
     historical_channel_name: str | None = "El Estate | Покупка Варшава"
+    # Live Telegram worker identity (non-secret). Secrets stay in worker-only files.
+    telegram_channel_username: str = "elestate_warszawa"
+    telegram_channel_id: str = "2180077318"
+    telegram_channel_title: str = "El Estate | Покупка Варшава"
+    telegram_message_link_template: str = "https://t.me/elestate_warszawa/{message_id}"
+    telegram_api_id_file: Path = Path("/run/secrets/wef_telegram_api_id")
+    telegram_api_hash_file: Path = Path("/run/secrets/wef_telegram_api_hash")
+    telegram_session_file: Path = Path("/run/secrets/wef_telegram_session")
     ingestion_report_path: Path = Path("/app/media/reports/e2-dry-run")
     geoapify_api_key: SecretStr | None = None
     geoapify_requests_per_second: Decimal = Field(default=Decimal(4), gt=0, le=5)

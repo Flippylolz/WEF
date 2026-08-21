@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E8
 title: "Future Telegram live ingestion research"
-status: awaiting_approval
+status: approved
 revision: 2
 owner: owner
 research_only: true
@@ -12,11 +12,11 @@ domain_docs: [ingestion, data, operations, security]
 proposed_task_ids: [E8-T1, E8-T2, E8-T3, E8-T4, E8-T5]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Cursor Agent (autonomous epic mission under AD-009 continue)"
+  decided_at: "2026-08-20T19:44:19Z"
+  approved_revision: 2
+  evidence: "AD-031; M3 done; approval permits promotion/planning only until implementation-plan revisions authorize code"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -26,9 +26,9 @@ invalidation:
 
 # Spike: Future Telegram live ingestion
 
-> Revision 2 is completed research awaiting owner approval. It authorizes no production
-> code, scaffold, migration, infrastructure/configuration change, generated executable
-> artifact, prototype, proof branch, or disposable proof code.
+> Revision 2 is owner-approved research (AD-031). It permits task promotion and
+> implementation planning only. Production Telethon/live worker activation still
+> requires later plan revisions, secrets, and E8-T5 gates.
 
 ## Question
 
@@ -211,7 +211,7 @@ before every dependency becomes `done`.
 
 ## Proposed task boundaries
 
-- [E8-T1: Confirm channel identity and access](proposed-tasks/E8-T1-confirm-channel-identity-and-access.md) — candidate boundary for spike refinement.
+- [E8-T1: Confirm channel identity and access](tasks/E8-T1-confirm-channel-identity-and-access.md) — promoted under plan revision 1.
 - [E8-T2: Implement secure Telethon session and backfill](proposed-tasks/E8-T2-implement-secure-telethon-session-and-backfill.md) — candidate boundary for spike refinement.
 - [E8-T3: Implement live new/edit/delete processing](proposed-tasks/E8-T3-implement-live-new-edit-delete-processing.md) — candidate boundary for spike refinement.
 - [E8-T4: Revalidate geocoder for recurring ingestion](proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — candidate boundary for spike refinement.
@@ -254,10 +254,10 @@ No candidate above may appear in an executable implementation-plan sequence whil
 - [x] Proposed task scope, acceptance, dependencies, priority/size, and traceability are refined.
 - [x] No production or disposable proof code was created.
 - [x] `revision` represents the material content being submitted.
-- [x] Status is changed to `awaiting_approval` while approval remains `pending`.
+- [x] Status is changed to `approved` with revision 2 recorded in YAML approval.
 
 ## Owner decision
 
-The owner records the decision only in the YAML `approval` object. Approval of revision 2
-would permit task refinement/promotion and implementation planning only; it would not permit
-code or live Telegram access.
+Revision 2 approved 2026-08-20 under AD-031 (`continue` / AD-009). Approval permits
+task refinement/promotion and implementation planning. Individual plan revisions still
+gate code; live Telegram credentials remain owner-supplied and outside Git.

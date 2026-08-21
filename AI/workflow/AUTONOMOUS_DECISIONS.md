@@ -245,3 +245,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Reversal: disable/delete `dependabot-merge.yml` and demote E1-T7 if gating policy changes.
 - Completion: PR #148 merged; Dependabot already opened grouped patch/minor and separate major PRs after E1-T6.
 - Follow-up: created repository `automerge` label for owner-gated controller eligibility.
+
+## AD-031: Approve E8 spike revision 2 and sequence E8-T1 only
+
+- Time: 2026-08-20.
+- Prompt avoided: wait indefinitely after M3 for an explicit “approve E8 spike” phrase while `continue` was reissued; or start Telethon/live worker without gates.
+- Selected approach: under AD-009 `continue`, approve E8 spike revision 2; approve implementation plan revision 1 authorizing **only E8-T1**; promote E8-T1; ship non-secret channel identity, worker secret-path contract, and redacted `wef-verify-telegram-channel` without Telethon.
+- Rationale: M3 is done; spike research is complete; next milestone is M4; credential-free identity/contract work is the spike’s explicit first step; live secrets and Telethon remain later gates.
+- Safety limit: no Telethon dependency; no worker Compose enablement; no credentials in Git; live entity resolve stays open until owner secrets + E8-T2.
+- Reversal: demote E8-T1 / revert plan revision 1 if the owner rejects AD-031.
+- Follow-up: owner supplies Telegram API ID/hash/session to approved secret paths; then E8-T4/T2 plan revisions.

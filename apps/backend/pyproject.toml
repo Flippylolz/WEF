@@ -30,6 +30,7 @@ wef-import = "wef_backend.import_command:main"
 wef-migrate = "wef_backend.migration:migrate"
 wef-seed-m1 = "wef_backend.seed_command:main"
 wef-bootstrap-owner = "wef_backend.owner_command:main"
+wef-verify-telegram-channel = "wef_backend.telegram_channel_command:main"
 
 [build-system]
 requires = ["hatchling"]
