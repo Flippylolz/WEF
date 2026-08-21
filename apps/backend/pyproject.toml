@@ -18,6 +18,7 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.52",
     "starlette-admin>=0.17.1",
     "structlog>=26.1.0",
+    "telethon>=1.44.0",
     "uvicorn[standard]>=0.52.1",
 ]
 
@@ -34,6 +35,7 @@ wef-promote-public-catalog = "wef_backend.promote_public_catalog_command:main"
 wef-accept-pending-geocode-pins = "wef_backend.accept_pending_geocode_pins_command:main"
 wef-bootstrap-owner = "wef_backend.owner_command:main"
 wef-verify-telegram-channel = "wef_backend.telegram_channel_command:main"
+wef-telegram-backfill = "wef_backend.telegram_backfill_command:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -80,6 +82,10 @@ python_version = "3.13"
 strict = true
 files = ["src", "tests", "scripts"]
 warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["telethon", "telethon.*"]
+ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 100

@@ -1,0 +1,590 @@
+"""Unit tests for E8-T2 Telegram secrets, entity verify, and fake backfill."""
+
+from __future__ import annotations
+
+import stat
+from contextlib import asynccontextmanager
+from datetime import UTC, datetime
+from types import SimpleNamespace
+from typing import TYPE_CHECKING
+from uuid import uuid4
+
+import pytest
+from telethon.errors import FloodWaitError
+
+from wef_backend.features.ingestion.application.persistence import (
+    MessageOutcome,
+    MessagePersistOutcome,
+    PersistableMessage,
+    PersistenceBatchError,
+    RunCheckpoint,
+    RunCounts,
+    RunLockHeldError,
+    RunMode,
+    RunStatus,
+)
+from wef_backend.features.ingestion.application.telegram_backfill import (
+    LiveBackfillRequest,
+    LiveTelegramBackfill,
+)
+from wef_backend.features.ingestion.application.telegram_live import (
+    LiveTelegramMessage,
+    TelegramChannelEntity,
+    TelegramEntityMismatchError,
+    live_message_to_raw,
+    source_identity_from_channel,
+    verify_channel_entity,
+)
+from wef_backend.features.ingestion.domain.telegram_channel import (
+    default_live_channel_identity,
+)
+from wef_backend.features.ingestion.domain.telegram_secrets import (
+    TelegramSecretError,
+    TelegramWorkerSecrets,
+    load_telegram_worker_secrets,
+)
+from wef_backend.features.ingestion.infrastructure import telethon_client as telethon_module
+from wef_backend.features.ingestion.infrastructure.fake_telegram_client import (
+    FakeTelegramLiveClient,
+)
+from wef_backend.features.ingestion.infrastructure.telethon_client import _to_live_message
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Sequence
+    from pathlib import Path
+    from uuid import UUID
+
+
+def _write_secret(path: Path, value: str, *, mode: int = 0o600) -> None:
+    path.write_text(value, encoding="utf-8")
+    path.chmod(mode)
+
+
+def test_load_telegram_worker_secrets_requires_mode_0600(tmp_path: Path) -> None:
+    api_id = tmp_path / "api_id"
+    api_hash = tmp_path / "api_hash"
+    session = tmp_path / "session"
+    _write_secret(api_id, "12345", mode=0o644)
+    _write_secret(api_hash, "hash")
+    _write_secret(session, "session-string")
+    with pytest.raises(TelegramSecretError, match="mode 0600"):
+        load_telegram_worker_secrets(
+            api_id_file=api_id,
+            api_hash_file=api_hash,
+            session_file=session,
+        )
+
+
+def test_load_telegram_worker_secrets_reads_valid_files(tmp_path: Path) -> None:
+    api_id = tmp_path / "api_id"
+    api_hash = tmp_path / "api_hash"
+    session = tmp_path / "session"
+    _write_secret(api_id, "12345")
+    _write_secret(api_hash, "hash-value")
+    _write_secret(session, "session-string")
+    secrets = load_telegram_worker_secrets(
+        api_id_file=api_id,
+        api_hash_file=api_hash,
+        session_file=session,
+    )
+    assert secrets.api_id == 12345
+    assert secrets.api_hash == "hash-value"
+    assert secrets.session == "session-string"
+    assert stat.S_IMODE(api_id.stat().st_mode) == 0o600
+
+
+def test_load_telegram_worker_secrets_rejects_bad_api_id(tmp_path: Path) -> None:
+    api_id = tmp_path / "api_id"
+    api_hash = tmp_path / "api_hash"
+    session = tmp_path / "session"
+    _write_secret(api_id, "not-an-int")
+    _write_secret(api_hash, "hash")
+    _write_secret(session, "session")
+    with pytest.raises(TelegramSecretError, match="valid integer"):
+        load_telegram_worker_secrets(
+            api_id_file=api_id,
+            api_hash_file=api_hash,
+            session_file=session,
+        )
+
+
+def test_load_telegram_worker_secrets_rejects_non_positive_api_id(tmp_path: Path) -> None:
+    api_id = tmp_path / "api_id"
+    api_hash = tmp_path / "api_hash"
+    session = tmp_path / "session"
+    _write_secret(api_id, "0")
+    _write_secret(api_hash, "hash")
+    _write_secret(session, "session")
+    with pytest.raises(TelegramSecretError, match="positive integer"):
+        load_telegram_worker_secrets(
+            api_id_file=api_id,
+            api_hash_file=api_hash,
+            session_file=session,
+        )
+
+
+def test_load_telegram_worker_secrets_rejects_empty_hash_and_session(
+    tmp_path: Path,
+) -> None:
+    api_id = tmp_path / "api_id"
+    api_hash = tmp_path / "api_hash"
+    session = tmp_path / "session"
+    _write_secret(api_id, "1")
+    _write_secret(api_hash, "   ")
+    _write_secret(session, "session")
+    with pytest.raises(TelegramSecretError, match="api_hash"):
+        load_telegram_worker_secrets(
+            api_id_file=api_id,
+            api_hash_file=api_hash,
+            session_file=session,
+        )
+    _write_secret(api_hash, "hash")
+    _write_secret(session, "   ")
+    with pytest.raises(TelegramSecretError, match="session"):
+        load_telegram_worker_secrets(
+            api_id_file=api_id,
+            api_hash_file=api_hash,
+            session_file=session,
+        )
+
+
+def test_load_telegram_worker_secrets_rejects_missing_file(tmp_path: Path) -> None:
+    with pytest.raises(TelegramSecretError, match="missing"):
+        load_telegram_worker_secrets(
+            api_id_file=tmp_path / "missing",
+            api_hash_file=tmp_path / "missing2",
+            session_file=tmp_path / "missing3",
+        )
+
+
+def test_verify_channel_entity_rejects_mismatches() -> None:
+    expected = default_live_channel_identity()
+    with pytest.raises(TelegramEntityMismatchError, match="channel id"):
+        verify_channel_entity(
+            expected,
+            TelegramChannelEntity(
+                username=expected.username,
+                channel_id="999",
+                title=expected.channel_title,
+            ),
+        )
+    with pytest.raises(TelegramEntityMismatchError, match="username"):
+        verify_channel_entity(
+            expected,
+            TelegramChannelEntity(
+                username="other",
+                channel_id=expected.channel_id,
+                title=expected.channel_title,
+            ),
+        )
+    with pytest.raises(TelegramEntityMismatchError, match="title"):
+        verify_channel_entity(
+            expected,
+            TelegramChannelEntity(
+                username=expected.username,
+                channel_id=expected.channel_id,
+                title="Other Title",
+            ),
+        )
+
+
+def test_live_message_to_raw_builds_checksum() -> None:
+    identity = source_identity_from_channel(default_live_channel_identity())
+    published = datetime(2024, 1, 2, 3, 4, 5, tzinfo=UTC)
+    edited = datetime(2024, 1, 2, 4, 4, 5, tzinfo=UTC)
+    raw = live_message_to_raw(
+        LiveTelegramMessage(
+            external_message_id=42,
+            text="Cena: 5000 PLN, 2 pokoje, Mokotów",
+            published_at=published,
+            edited_at=edited,
+            media_group_id="album-1",
+        ),
+        identity=identity,
+    )
+    assert raw.external_message_id == 42
+    assert len(raw.checksum) == 64
+    assert raw.text.startswith("Cena:")
+    assert raw.edited_at == edited
+    assert raw.media_group_id == "album-1"
+
+
+class _FakeStore:
+    """Minimal persistence port for restartable/idempotent backfill tests."""
+
+    def __init__(self) -> None:
+        self.messages: dict[int, PersistableMessage] = {}
+        self.checkpoints: list[RunCheckpoint] = []
+        self.runs: list[tuple[UUID, RunMode, RunStatus]] = []
+        self.lock_held = False
+
+    @asynccontextmanager
+    async def run_lock(self, source_key: str) -> AsyncIterator[None]:
+        if self.lock_held:
+            raise RunLockHeldError(source_key)
+        self.lock_held = True
+        try:
+            yield
+        finally:
+            self.lock_held = False
+
+    async def ensure_channel(
+        self,
+        *,
+        platform: str,
+        external_id: str,
+        display_name: str,
+    ) -> UUID:
+        _ = (platform, external_id, display_name)
+        return uuid4()
+
+    async def start_run(
+        self,
+        *,
+        channel_id: UUID,
+        mode: RunMode,
+        parser_version: str,
+        source_checksum: str | None,
+        release_sha: str | None,
+    ) -> UUID:
+        _ = (channel_id, parser_version, source_checksum, release_sha)
+        run_id = uuid4()
+        self.runs.append((run_id, mode, RunStatus.RUNNING))
+        return run_id
+
+    async def persist_batch(
+        self,
+        *,
+        channel_id: UUID,
+        run_id: UUID,
+        batch: Sequence[tuple[PersistableMessage, int]],
+        checkpoint: RunCheckpoint,
+        counts: RunCounts,
+    ) -> tuple[Sequence[MessagePersistOutcome], RunCheckpoint, RunCounts, int]:
+        _ = (channel_id, run_id)
+        outcomes: list[MessagePersistOutcome] = []
+        acknowledged = checkpoint
+        acknowledged_counts = counts
+        for persistable, source_index in batch:
+            existing = self.messages.get(persistable.raw.external_message_id)
+            if existing is None:
+                outcome = MessageOutcome.CREATED
+                self.messages[persistable.raw.external_message_id] = persistable
+            elif existing.raw.checksum == persistable.raw.checksum:
+                outcome = MessageOutcome.UNCHANGED
+            else:
+                outcome = MessageOutcome.REVISED
+                self.messages[persistable.raw.external_message_id] = persistable
+            message_outcome = MessagePersistOutcome(
+                external_message_id=persistable.raw.external_message_id,
+                outcome=outcome,
+                revision_number=1,
+            )
+            outcomes.append(message_outcome)
+            acknowledged = acknowledged.advances(source_index, persistable.raw.checksum)
+            acknowledged_counts = acknowledged_counts.with_outcome(
+                outcome=message_outcome,
+                offer_created=outcome is MessageOutcome.CREATED,
+            )
+        self.checkpoints.append(acknowledged)
+        return outcomes, acknowledged, acknowledged_counts, 0
+
+    async def finish_run(
+        self,
+        *,
+        run_id: UUID,
+        status: RunStatus,
+        counts: RunCounts,
+        checkpoint: RunCheckpoint,
+        error_summary: str | None,
+    ) -> None:
+        _ = (counts, checkpoint, error_summary)
+        self.runs.append((run_id, RunMode.LIVE, status))
+
+
+def _listing_messages() -> tuple[LiveTelegramMessage, ...]:
+    base = datetime(2024, 6, 1, 12, 0, tzinfo=UTC)
+    texts = (
+        "Cena: 4500 PLN, 2 pokoje, Mokotów ul. Puławska",
+        "Cena: 5200 PLN, 3 pokoje, Wilanów",
+        "Hello world not a listing",
+        "Cena: 6100 PLN, 1 pokój, Śródmieście",
+    )
+    return tuple(
+        LiveTelegramMessage(
+            external_message_id=index,
+            text=text,
+            published_at=base,
+            edited_at=None,
+        )
+        for index, text in enumerate(texts, start=10)
+    )
+
+
+def test_telethon_message_adapter_maps_fields() -> None:
+    published = datetime(2024, 2, 3, 4, 5, 6, tzinfo=UTC)
+    live = _to_live_message(
+        SimpleNamespace(
+            id=99,
+            message="hello",
+            text=None,
+            date=published,
+            edit_date=None,
+            grouped_id=123,
+        ),
+    )
+    assert live.external_message_id == 99
+    assert live.text == "hello"
+    assert live.media_group_id == "123"
+    assert live.published_at == published
+
+
+def test_telethon_message_adapter_rejects_missing_date() -> None:
+    with pytest.raises(TypeError, match="published timestamp"):
+        _to_live_message(SimpleNamespace(id=1, message="x", date=None, edit_date=None))
+
+
+def test_telethon_message_adapter_normalizes_naive_dates() -> None:
+    published = datetime(2024, 2, 3, 4, 5, 6)  # noqa: DTZ001 — intentional naive input
+    edited = datetime(2024, 2, 3, 5, 5, 6)  # noqa: DTZ001 — intentional naive input
+    live = _to_live_message(
+        SimpleNamespace(
+            id=7,
+            message=None,
+            text="body",
+            date=published,
+            edit_date=edited,
+            grouped_id=None,
+        ),
+    )
+    assert live.text == "body"
+    assert live.published_at.tzinfo is UTC
+    assert live.edited_at is not None
+    assert live.edited_at.tzinfo is UTC
+    assert live.media_group_id is None
+
+
+@pytest.mark.asyncio
+async def test_fake_client_error_paths() -> None:
+    identity = default_live_channel_identity()
+    client = FakeTelegramLiveClient(
+        entity=TelegramChannelEntity(
+            username=identity.username,
+            channel_id=identity.channel_id,
+            title=identity.channel_title,
+        ),
+        messages=(),
+    )
+    with pytest.raises(RuntimeError, match="not connected"):
+        async for _ in client.iter_messages(username=identity.username, min_id=0):
+            pass
+    await client.connect()
+    with pytest.raises(LookupError, match="username"):
+        await client.resolve_channel("missing")
+    with pytest.raises(LookupError, match="username"):
+        async for _ in client.iter_messages(username="missing", min_id=0):
+            pass
+    await client.disconnect()
+
+
+class _FakeTelethon:
+    """Minimal Telethon stand-in for flood-wait unit tests."""
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        self._authorized = True
+        self.flood_on_entity = False
+        self.flood_on_iter = False
+
+    async def connect(self) -> None:
+        return None
+
+    async def disconnect(self) -> None:
+        return None
+
+    async def is_user_authorized(self) -> bool:
+        return self._authorized
+
+    async def get_entity(self, username: str) -> SimpleNamespace:
+        if self.flood_on_entity:
+            self.flood_on_entity = False
+            raise FloodWaitError(request=None, capture=2)
+        return SimpleNamespace(
+            id=2180077318,
+            title="El Estate | Покупка Варшава",
+            username=username,
+        )
+
+    def iter_messages(self, *_args: object, **_kwargs: object) -> object:
+        async def _gen() -> AsyncIterator[SimpleNamespace]:
+            if self.flood_on_iter:
+                self.flood_on_iter = False
+                raise FloodWaitError(request=None, capture=1)
+            yield SimpleNamespace(
+                id=10,
+                message="hi",
+                text=None,
+                date=datetime(2024, 1, 1, tzinfo=UTC),
+                edit_date=None,
+                grouped_id=None,
+            )
+
+        return _gen()
+
+
+@pytest.mark.asyncio
+async def test_telethon_live_client_resolve_waits_on_flood(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sleeps: list[float] = []
+    monkeypatch.setattr(telethon_module, "TelegramClient", _FakeTelethon)
+    monkeypatch.setattr(telethon_module, "StringSession", lambda value: value)
+
+    async def _sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+
+    client = telethon_module.TelethonLiveClient(
+        TelegramWorkerSecrets(api_id=1, api_hash="hash", session="session"),
+        sleep=_sleep,
+    )
+    client._client.flood_on_entity = True  # noqa: SLF001
+    await client.connect()
+    entity = await client.resolve_channel("elestate_warszawa")
+    assert entity.channel_id == "2180077318"
+    assert sleeps == [2]
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_telethon_live_client_iter_waits_on_flood(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sleeps: list[float] = []
+    monkeypatch.setattr(telethon_module, "TelegramClient", _FakeTelethon)
+    monkeypatch.setattr(telethon_module, "StringSession", lambda value: value)
+
+    async def _sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+
+    client = telethon_module.TelethonLiveClient(
+        TelegramWorkerSecrets(api_id=1, api_hash="hash", session="session"),
+        sleep=_sleep,
+    )
+    client._client.flood_on_iter = True  # noqa: SLF001
+    await client.connect()
+    messages = [
+        item async for item in client.iter_messages(username="elestate_warszawa", min_id=0)
+    ]
+    assert len(messages) == 1
+    assert sleeps == [1]
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_telethon_live_client_requires_authorization(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _Unauthorized:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            return None
+
+        async def connect(self) -> None:
+            return None
+
+        async def is_user_authorized(self) -> bool:
+            return False
+
+    monkeypatch.setattr(telethon_module, "TelegramClient", _Unauthorized)
+    monkeypatch.setattr(telethon_module, "StringSession", lambda value: value)
+    client = telethon_module.TelethonLiveClient(
+        TelegramWorkerSecrets(api_id=1, api_hash="hash", session="session"),
+    )
+    with pytest.raises(RuntimeError, match="not authorized"):
+        await client.connect()
+
+
+@pytest.mark.asyncio
+async def test_fake_backfill_records_failed_run_on_batch_error() -> None:
+    identity = default_live_channel_identity()
+    client = FakeTelegramLiveClient(
+        entity=TelegramChannelEntity(
+            username=identity.username,
+            channel_id=identity.channel_id,
+            title=identity.channel_title,
+        ),
+        messages=_listing_messages()[:1],
+    )
+    store = _FakeStore()
+
+    async def _fail_batch(**_kwargs: object) -> object:
+        category = "test_failure"
+        raise PersistenceBatchError(category)
+
+    store.persist_batch = _fail_batch  # type: ignore[assignment]
+    backfill = LiveTelegramBackfill(store=store, client=client)
+    with pytest.raises(PersistenceBatchError):
+        await backfill(LiveBackfillRequest(identity=identity, overlap=0))
+    assert store.runs[-1][2] is RunStatus.FAILED
+
+
+@pytest.mark.asyncio
+async def test_fake_client_respects_limit() -> None:
+    identity = default_live_channel_identity()
+    client = FakeTelegramLiveClient(
+        entity=TelegramChannelEntity(
+            username=identity.username,
+            channel_id=identity.channel_id,
+            title=identity.channel_title,
+        ),
+        messages=_listing_messages(),
+    )
+    await client.connect()
+    items = [
+        item
+        async for item in client.iter_messages(
+            username=identity.username,
+            min_id=0,
+            limit=1,
+        )
+    ]
+    assert len(items) == 1
+
+
+@pytest.mark.asyncio
+async def test_fake_backfill_is_restartable_and_idempotent() -> None:
+    identity = default_live_channel_identity()
+    messages = _listing_messages()
+    client = FakeTelegramLiveClient(
+        entity=TelegramChannelEntity(
+            username=identity.username,
+            channel_id=identity.channel_id,
+            title=identity.channel_title,
+        ),
+        messages=messages,
+    )
+    store = _FakeStore()
+    backfill = LiveTelegramBackfill(store=store, client=client)
+    first = await backfill(
+        LiveBackfillRequest(
+            identity=identity,
+            resume_after_external_id=0,
+            overlap=0,
+            batch_size=1,
+        ),
+    )
+    assert first.messages_seen == 4
+    assert first.checkpoint_external_message_id == 13
+    assert first.created >= 1
+    assert len(store.messages) == 4
+
+    second = await backfill(
+        LiveBackfillRequest(
+            identity=identity,
+            resume_after_external_id=first.checkpoint_external_message_id,
+            overlap=2,
+        ),
+    )
+    assert second.messages_seen == 2  # overlap only (12, 13)
+    assert second.unchanged == 2
+    assert second.created == 0
+    assert second.checkpoint_external_message_id == 13
+    assert len(store.messages) == 4
