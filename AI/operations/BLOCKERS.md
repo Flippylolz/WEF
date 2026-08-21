@@ -14,14 +14,6 @@ This append-only log records blockers that could not be safely resolved autonomo
 - Safe workaround: use synthetic/fake-client fixtures and the historical adapter for
   deterministic implementation checks; keep the production worker disabled.
 
-### B-004: Recurring production geocoder revalidation
-
-- Impact: live recurring geocoding cannot be enabled yet.
-- Current state: Geoapify is the initial free recommendation; E3-T3 remains an external
-  prerequisite and E8-T4 revalidation remains required before recurring live ingestion.
-- Needed from owner: none for the synthetic MVP; later approve provider/quota after measured fixtures.
-- Safe workaround: deterministic seeded coordinates/cache for the vertical MVP.
-
 ### B-005: GitHub-enforced branch protection unavailable
 
 - Impact: reviews/checks are procedural rather than platform-enforced.
@@ -31,7 +23,10 @@ This append-only log records blockers that could not be safely resolved autonomo
 
 ## Resolved during overnight work
 
-### R-010 / B-002: Production authentication / sensitive-feature gate (E7-T7)
+### R-011 / B-004: Recurring production geocoder revalidation
+
+- Resolution: E8-T4 retained Geoapify for recurring use after a 2026-08-21 pricing/terms recheck, resolved D-002, forbade public Nominatim for always-on jobs, and shipped defer/monitor contracts plus `wef-revalidate-recurring-geocoder` (AD-032).
+- Effect: E8-T2/T3/T5 may proceed behind remaining Telegram secret and worker-enablement gates; paid Geoapify still needs a separate owner decision if free soft limits are exceeded.
 
 - Resolution: E7-T7 enabled registration/sessions/admin/contact reveal on `https://2fa54e2405.duckdns.org` after E7-T10 HTTPS (PRs #123/#124/#125). Contact crypto keys in deploy; Uvicorn trusts forwarded proto; owner bootstrapped once then bootstrap secrets removed; `/admin` routed to API; `:3100` cannot hold Secure sessions; Forecast `:3000` unchanged.
 - Effect: E7-T11 may proceed behind the remaining historical public-activation gate.

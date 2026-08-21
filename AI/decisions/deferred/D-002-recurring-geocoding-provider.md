@@ -2,17 +2,18 @@
 schema: ai-docs/deferred-decision@1
 id: D-002
 title: Recurring geocoding provider
-status: deferred
-task_gates:
+status: resolved
+task_gates: []
+resolved_by:
   - E8-T4
-resolved_by: []
 ---
 
 # D-002: Recurring geocoding provider
 
-- Status: deferred. [ADR-021](../adr/ADR-021-use-cached-provider-neutral-geocoding.md) accepts Geoapify only for the historical import through the owner's merged [PR #59](https://github.com/Flippylolz/WEF/pull/59). Recurring production selection still requires E8-T4 revalidation and an explicit later resolution.
-- Detailed comparison: [Geocoding](../../ingestion/GEOCODING.md).
-- Historical result: Geoapify was selected after the owner reviewed its current pricing, rate, storage, attribution, and successful bounded readiness call. Geoapify-only sample quality and manual review belong to E3-T5; LocationIQ is no longer a mandatory historical comparator.
-- Self-hosted alternative: regional Nominatim with a Poland extract and daily replication, preferably on a separate host or only after a resource benchmark. Photon/OpenSearch and Pelias are too memory-heavy for the current shared 8 GB NUC as initial choices.
-- Constraint: the public Nominatim instance may only be considered for a small, cached, one-time seed import under its [official usage policy](https://operations.osmfoundation.org/policies/nominatim/), checked 2026-08-13. It is not the production recurring-ingestion dependency.
-- Evidence gate: E3-T5 must record aggregate/redacted Geoapify quality and review evidence for the private historical inputs. E8-T4 still revalidates recurring-use quota, current terms, measured quality, and fallback behavior.
+- Status: **resolved** by [E8-T4](../../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) under AD-032 (2026-08-21).
+- Recurring provider: **Geoapify** (same provider-neutral port/cache as ADR-021 historical import).
+- Dated recheck (https://www.geoapify.com/pricing/ , 2026-08-21): free plan 3,000 credits/day, ≤5 rps, commercial use allowed with required attribution; WEF soft caps remain 2,700 credits/day and 4 rps.
+- Public Nominatim: **not** allowed for recurring/always-on jobs (one-time seed policy unchanged).
+- Fallback: **defer** on quota/rate/transient errors; no automatic provider fan-out.
+- Paid plan activation still requires a separate owner decision if free soft limits become insufficient.
+- Operator evidence: `wef-revalidate-recurring-geocoder` and optional `--live-check` (one credit via existing readiness path).

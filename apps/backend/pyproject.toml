@@ -25,6 +25,7 @@ dependencies = [
 wef-backend = "wef_backend.cli:serve"
 wef-export-openapi = "wef_backend.openapi_export:main"
 wef-geocoder-check = "wef_backend.geocoder_check:main"
+wef-revalidate-recurring-geocoder = "wef_backend.recurring_geocoder_command:main"
 wef-importer-dry-run = "wef_backend.operator:main"
 wef-import = "wef_backend.import_command:main"
 wef-migrate = "wef_backend.migration:migrate"
