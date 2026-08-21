@@ -37,6 +37,13 @@ from wef_backend.features.catalog.application.offer_detail import (
     build_verified_source_url,
     confidence_indicator_from_score,
 )
+from wef_backend.features.catalog.application.promote_public_catalog import (
+    SYNTHETIC_LOCATION_IDS,
+    SYNTHETIC_PARSER_VERSION,
+    PromotePublicCatalog,
+    PromotePublicCatalogPort,
+    PromotePublicCatalogResult,
+)
 from wef_backend.features.catalog.application.seed_m1 import (
     CatalogSeedPort,
     ProductionSeedError,
@@ -47,6 +54,8 @@ from wef_backend.features.catalog.application.seed_m1 import (
 )
 
 __all__ = [
+    "SYNTHETIC_LOCATION_IDS",
+    "SYNTHETIC_PARSER_VERSION",
     "BoundingBox",
     "BrowseLocationOffers",
     "CatalogSeedPort",
@@ -75,6 +84,9 @@ __all__ = [
     "OfferMediaDTO",
     "OfferSummaryDTO",
     "ProductionSeedError",
+    "PromotePublicCatalog",
+    "PromotePublicCatalogPort",
+    "PromotePublicCatalogResult",
     "QueryFacets",
     "QueryMapLocations",
     "SeedLocation",

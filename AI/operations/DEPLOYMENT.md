@@ -343,6 +343,8 @@ This is persistence, not backup: one disk/host failure, corruption, accidental d
 
 The worker is disabled by default until [D-003](../decisions/deferred/D-003-telegram-channel-access.md) live credentials are supplied and E8-T5 enables the service. Operators can run `wef-verify-telegram-channel` for public identity + redacted secret-path inspection without enabling the worker. Recurring geocoding retains Geoapify under [D-002](../decisions/deferred/D-002-recurring-geocoding-provider.md); operators can run `wef-revalidate-recurring-geocoder` (optional `--live-check`) without enabling the worker.
 
+After historical activation, imported offers may remain `needs_review` while the M1 synthetic seed is still `visible`. Run `wef-promote-public-catalog` in the API/operator container to hide synthetic seed rows and publish historical offers (`needs_review` → `visible`). Map pins still require an accepted in-scope location with coordinates (~470 pins after the 2026-08-21 promotion).
+
 When enabled:
 
 - Run exactly one replica per configured channel.
