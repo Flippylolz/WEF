@@ -136,7 +136,22 @@ class _InvalidCheckpointResult:
         return {"last_source_index": "nope"}, datetime(2026, 8, 21, tzinfo=UTC)
 
 
-class _InvalidCheckpointSession(_LiveSession):
+class _InvalidCheckpointSession:
+    def __init__(self) -> None:
+        self._scalar_calls = 0
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, *_args: object) -> None:
+        return None
+
+    async def scalar(self, _stmt: object) -> object:
+        self._scalar_calls += 1
+        if self._scalar_calls == 1:
+            return uuid4()
+        return 42
+
     async def execute(self, _stmt: object) -> _InvalidCheckpointResult:
         return _InvalidCheckpointResult()
 
