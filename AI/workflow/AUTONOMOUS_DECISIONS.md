@@ -255,3 +255,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: no Telethon dependency; no worker Compose enablement; no credentials in Git; live entity resolve stays open until owner secrets + E8-T2.
 - Reversal: demote E8-T1 / revert plan revision 1 if the owner rejects AD-031.
 - Follow-up: owner supplies Telegram API ID/hash/session to approved secret paths; then E8-T4/T2 plan revisions.
+
+## AD-032: Approve E8 plan revision 2 and sequence E8-T4
+
+- Time: 2026-08-21.
+- Prompt avoided: wait for a separate “approve E8-T4” phrase after E8-T1 while `continue` was reissued; or enable the live worker / Telethon under geocoder work.
+- Selected approach: under AD-009 `continue`, approve implementation plan revision 2 authorizing **E8-T4** after E8-T1; promote E8-T4; retain Geoapify for recurring use after dated free-plan recheck; resolve D-002; ship defer/monitor contract and `wef-revalidate-recurring-geocoder` without Telethon or worker Compose enablement.
+- Rationale: spike revision 2 already ordered E8-T1 → E8-T4; E3-T3 is done; recurring selection was the next gated step before Telethon.
+- Safety limit: no Telethon dependency; no worker enablement; no paid Geoapify activation; no Nominatim recurring fallback; no credentials in Git.
+- Reversal: demote E8-T4 / revert plan revision 2 and reopen D-002 if the owner rejects AD-032.
+- Follow-up: E8-T2 after owner Telegram secrets; E8-T5 still owns production worker enablement.

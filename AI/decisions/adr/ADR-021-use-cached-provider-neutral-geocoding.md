@@ -18,7 +18,7 @@ resolves: []
 - Review safety: provider success never implies acceptance. Out-of-scope, low-precision, ambiguous, or low-confidence results remain unresolved/reviewable; a selected public pin must retain auditable result/review lineage.
 - Cache uncertainty: a unique cache key may not prevent concurrent duplicate misses. A later plan must choose and verify cross-process miss ownership with healthy concurrency and ambiguous-retry reconciliation, without holding a database transaction during provider I/O and without promising an impossible at-most-once network call.
 - Operations: provider keys remain backend/operator secrets, CI remains network-free, quota exhaustion defers work, and paid-plan activation requires a separate owner decision.
-- Recurring ingestion: D-002 remains deferred. E8-T4 must revalidate quota, terms, measured quality, and fallback behavior before recurring use.
+- Recurring ingestion: D-002 is resolved by E8-T4 (retain Geoapify). Public Nominatim remains ineligible for recurring jobs; paid activation still needs a separate owner decision.
 
 ## Official evidence checked 2026-08-13
 

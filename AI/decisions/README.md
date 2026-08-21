@@ -24,7 +24,7 @@ None.
 - [ADR-018 — Allow ordered stacked pull request implementation](adr/ADR-018-ordered-stacked-pull-requests.md)
 - [ADR-019 — Separate the anonymous HTTP rehearsal from public launch](adr/ADR-019-anonymous-http-production-rehearsal.md)
 - [ADR-020 — Use Nginx as the shared TLS ingress](adr/ADR-020-use-nginx-shared-tls-ingress.md)
-- [ADR-021 — Use cached provider-neutral geocoding with Geoapify for the historical import](adr/ADR-021-use-cached-provider-neutral-geocoding.md) — accepted through the owner's merged PR #59; recurring use remains deferred by D-002/E8-T4.
+- [ADR-021 — Use cached provider-neutral geocoding with Geoapify for the historical import](adr/ADR-021-use-cached-provider-neutral-geocoding.md) — accepted through the owner's merged PR #59; recurring use retained via D-002/E8-T4.
 
 ## Partially superseded
 
@@ -43,7 +43,7 @@ None.
 ## Deferred/revalidation
 
 - [D-001 — Production server and domain](deferred/D-001-production-server-domain.md) — resolved for the anonymous rehearsal by ADR-019.
-- [D-002 — Recurring geocoding provider](deferred/D-002-recurring-geocoding-provider.md) — deferred; ADR-021 selects Geoapify only for the historical import, and recurring use still requires E8-T4 revalidation.
+- [D-002 — Recurring geocoding provider](deferred/D-002-recurring-geocoding-provider.md) — resolved by E8-T4; retain Geoapify for recurring use; public Nominatim forbidden for always-on jobs.
 - [D-003 — Telegram channel identity and access](deferred/D-003-telegram-channel-access.md) — public identity recorded (E8-T1); live API credentials/session remain deferred.
 - [D-005 — Object storage and CDN](deferred/D-005-object-storage-cdn.md) — revisit when its operational cost triggers occur.
 - [D-009 — Shared TLS hostnames and forwarding](deferred/D-009-shared-tls-hostnames-and-forwarding.md) — resolve two public hostnames and 80/443 forwarding before E7-T10 live rollout; E7-T8/E7-T9 remain inert.

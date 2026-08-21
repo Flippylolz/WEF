@@ -9,11 +9,11 @@
 
 This is a low-volume backend workload. A free hosted production allowance is operationally safer than running a search index on the current shared 8 GB NUC.
 
-[ADR-021](../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) selects Geoapify for the historical import through the owner's merged [PR #59](https://github.com/Flippylolz/WEF/pull/59). Recurring selection remains deferred by [D-002](../decisions/deferred/D-002-recurring-geocoding-provider.md), and [E8-T4](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) must revalidate recurring use.
+[ADR-021](../decisions/adr/ADR-021-use-cached-provider-neutral-geocoding.md) selects Geoapify for the historical import through the owner's merged [PR #59](https://github.com/Flippylolz/WEF/pull/59). [D-002](../decisions/deferred/D-002-recurring-geocoding-provider.md) is **resolved** by [E8-T4](../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md): retain Geoapify for recurring/always-on use under the same provider-neutral cache.
 
 ## Recommended MVP: Geoapify free
 
-Official [pricing](https://www.geoapify.com/pricing/), [Geocoding API storage guidance](https://www.geoapify.com/geocoding-api/), and [terms](https://www.geoapify.com/terms-and-conditions/) checked on 2026-08-13:
+Official [pricing](https://www.geoapify.com/pricing/), [Geocoding API storage guidance](https://www.geoapify.com/geocoding-api/), and [terms](https://www.geoapify.com/terms-and-conditions/) checked on 2026-08-13 and **revalidated on 2026-08-21**:
 
 - 3,000 credits per day.
 - One forward geocoding request generally costs one credit.
@@ -121,4 +121,4 @@ Provider choice must be configuration, not branching business logic.
 
 ## Recommendation
 
-Use Geoapify for the historical import under ADR-021, with Geoapify-only aggregate quality evidence and explicit manual review in E3-T5. This does not resolve D-002 or authorize recurring production use; E8-T4 must revalidate current quota, terms, quality, and fallback behavior. Consider public Nominatim, at most, as a potential small one-time fallback only if its policy permits the specific use and every condition is met. Defer self-hosting until usage or provider terms justify a separate benchmark/host.
+Use Geoapify for the historical import under ADR-021 and for **recurring live ingestion** under D-002/E8-T4 (revalidated 2026-08-21). Keep Geoapify-only aggregate quality evidence and explicit manual review from E3-T5. Public Nominatim remains ineligible for recurring jobs; at most it may be a potential small one-time seed fallback if its policy permits the specific use and every condition is met. Defer self-hosting until usage or provider terms justify a separate benchmark/host. Operator command: `wef-revalidate-recurring-geocoder [--live-check]`.

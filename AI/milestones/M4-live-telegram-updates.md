@@ -13,7 +13,7 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 ## Current constraints
 
 - M3 and D-003 gate live channel access; credentials and sessions stay only in approved secret paths.
-- The recurring geocoder is revalidated under D-002 before always-on ingestion.
+- The recurring geocoder is revalidated under D-002 (resolved: retain Geoapify) before always-on ingestion.
 - The worker remains single-replica, restartable, idempotent, and non-blocking for the public API.
 - E8-T5 depends only on E8-T3 and E8-T4; deferred backup task E7-T5 is not a dependency.
 
@@ -24,7 +24,7 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 - [E8-T1: Confirm channel identity and access](../epics/E8-telegram-live-ingestion/tasks/E8-T1-confirm-channel-identity-and-access.md) — `in_progress`
 - [E8-T2: Implement secure Telethon session and backfill](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T2-implement-secure-telethon-session-and-backfill.md) — `proposed`
 - [E8-T3: Implement live new/edit/delete processing](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T3-implement-live-new-edit-delete-processing.md) — `proposed`
-- [E8-T4: Revalidate geocoder for recurring ingestion](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — `proposed`
+- [E8-T4: Revalidate geocoder for recurring ingestion](../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — `done`
 - [E8-T5: Production reconciliation and worker alerting](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T5-production-reconciliation-and-worker-alerting.md) — `proposed`
 
 Cancelled and deferred candidates remain linked for traceability but are not completion requirements unless an approved revision restores them to required scope.

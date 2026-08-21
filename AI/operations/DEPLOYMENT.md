@@ -341,7 +341,7 @@ This is persistence, not backup: one disk/host failure, corruption, accidental d
 
 ## Telegram worker operations
 
-The worker is disabled by default until [D-003](../decisions/deferred/D-003-telegram-channel-access.md) live credentials are supplied and E8-T5 enables the service. Operators can run `wef-verify-telegram-channel` for public identity + redacted secret-path inspection without enabling the worker.
+The worker is disabled by default until [D-003](../decisions/deferred/D-003-telegram-channel-access.md) live credentials are supplied and E8-T5 enables the service. Operators can run `wef-verify-telegram-channel` for public identity + redacted secret-path inspection without enabling the worker. Recurring geocoding retains Geoapify under [D-002](../decisions/deferred/D-002-recurring-geocoding-provider.md); operators can run `wef-revalidate-recurring-geocoder` (optional `--live-check`) without enabling the worker.
 
 When enabled:
 

@@ -173,7 +173,7 @@ For the seed import, the public Nominatim instance may be used only as a small, 
 - No autocomplete, recurring batch, or repeated query.
 - Clear OpenStreetMap attribution and license compliance.
 
-The importer must be able to stop and resume without repeating cached requests. Recurring Telegram ingestion requires the [D-002 recurring-geocoding revalidation](../decisions/deferred/D-002-recurring-geocoding-provider.md) performed by [E8-T4](../epics/E8-telegram-live-ingestion/proposed-tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md).
+The importer must be able to stop and resume without repeating cached requests. Recurring Telegram ingestion uses the [D-002 recurring Geoapify retention](../decisions/deferred/D-002-recurring-geocoding-provider.md) from [E8-T4](../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md).
 
 Short Google Maps links are resolved only through a controlled, rate-limited resolver that records redirect targets and validates hosts. Redirect content is data, never executed.
 

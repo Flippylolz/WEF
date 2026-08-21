@@ -50,7 +50,7 @@ The following definition preserves the original E8-T5 roadmap entry:
 
 ## Dependencies and traceability
 
-- Task dependencies: [E8-T3](E8-T3-implement-live-new-edit-delete-processing.md), [E8-T4](E8-T4-revalidate-geocoder-for-recurring-ingestion.md)
+- Task dependencies: [E8-T3](E8-T3-implement-live-new-edit-delete-processing.md), [E8-T4](../tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md)
 - Milestone: [M4](../../../milestones/M4-live-telegram-updates.md).
 - Traceability: [Product requirements](../../../product/EXPERIENCE.md), [Decision registry](../../../decisions/README.md), [Ingestion](../../../ingestion/README.md), [Data](../../../data/README.md), [Operations](../../../operations/README.md), [Security](../../../security/README.md).
 
