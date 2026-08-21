@@ -275,3 +275,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: map still requires accepted in-scope locations with points; ungeocoded/needs_review locations without points remain non-pinnable; no Telethon/worker enablement.
 - Reversal: restore offer `needs_review` / synthetic `visible` from backup or reverse SQL if the owner wants the rehearsal-only map again.
 - Follow-up: optional later curation UI for selective hiding; geocode remaining point-less locations if more pins are desired.
+
+## AD-034: Accept in-scope pending geocode pins for public map coverage
+
+- Time: 2026-08-21.
+- Prompt avoided: leave ~306 in-scope geocoded locations unpinned (`needs_review` without `point`) after the owner asked for historical records to be visible; or start Telethon while B-003 remains open.
+- Selected approach: under AD-009 `continue` after AD-033, accept in-scope `low_precision`/`low_confidence` geocode results onto locations with `manual_accept` lineage; ship `wef-accept-pending-geocode-pins`; leave out-of-scope and `no_result` ungeocoded rows unpinned.
+- Rationale: coordinates already existed in `geocode_results`; auto-review correctly withheld pin acceptance, but public discovery needed pins; owner visibility request + AD-033 follow-up authorize operator acceptance.
+- Safety limit: no Telethon; no worker enablement; out-of-scope results remain unpinned; city/district pins may be coarse and are reversible via review lineage.
+- Reversal: set affected locations back to `needs_review` with `point` cleared using prior selection lineage if the owner wants stricter auto-only pins.
+- Follow-up: E8-T2 still waits on B-003 Telegram secrets.
