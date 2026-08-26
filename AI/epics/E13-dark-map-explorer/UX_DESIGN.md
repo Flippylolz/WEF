@@ -16,6 +16,20 @@ copying its brand:
 - strong selected-item continuity between list and map;
 - reversible drill-in navigation rather than long, appended sections.
 
+## Visual references
+
+These static mockups illustrate the proposed dark shell, compact filter row,
+selectable result cards, coordinated pin state, and responsive mobile sheet.
+They are design references rather than screenshots of implemented behavior.
+
+### Desktop
+
+![Desktop dark map-first listing explorer mockup](assets/dark-map-explorer-desktop.jpg)
+
+### Mobile
+
+![Mobile dark map-first listing explorer mockup](assets/dark-map-explorer-mobile.jpg)
+
 ## Desktop information architecture
 
 ```text
