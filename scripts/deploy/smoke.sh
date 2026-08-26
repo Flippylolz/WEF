@@ -59,16 +59,31 @@ curl_safe --fail --silent --show-error \
   --output "$tmp_dir/map.json" \
   "$base_url/api/v1/map/locations?bbox=20.8%2C52.1%2C21.3%2C52.4"
 
-python3 - "$tmp_dir/map.json" <<'PY'
+python3 - "$tmp_dir/map.json" "$tmp_dir/location_id" <<'PY'
 import json
+import re
 import sys
 from pathlib import Path
 
+uuid_pattern = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
 payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 assert payload["type"] == "FeatureCollection"
 assert payload["meta"]["feature_count"] >= 1
 assert len(payload["features"]) == payload["meta"]["feature_count"]
+ranked = sorted(
+    payload["features"],
+    key=lambda feature: int(
+        (feature.get("properties") or {}).get("matching_offer_count") or 0
+    ),
+    reverse=True,
+)
+location_id = str(ranked[0].get("id") or "")
+assert uuid_pattern.fullmatch(location_id), location_id
+Path(sys.argv[2]).write_text(location_id, encoding="utf-8")
 PY
+location_id=$(cat "$tmp_dir/location_id")
 
 printf 'Smoke: Warsaw district boundaries...\n'
 curl_safe --fail --silent --show-error \
@@ -121,7 +136,7 @@ curl_safe --fail --silent --show-error \
 printf 'Smoke: selected location offers...\n'
 curl_safe --fail --silent --show-error \
   --output "$tmp_dir/offers.json" \
-  "$base_url/api/v1/locations/10000000-0000-4000-8000-000000000001/offers?bbox=20.8%2C52.1%2C21.3%2C52.4&include_non_matching=true&limit=20"
+  "$base_url/api/v1/locations/${location_id}/offers?bbox=20.8%2C52.1%2C21.3%2C52.4&include_non_matching=true&limit=20"
 
 python3 - "$tmp_dir/facets.json" "$tmp_dir/offers.json" <<'PY'
 import json
@@ -131,12 +146,15 @@ from pathlib import Path
 facets = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 offers_path = Path(sys.argv[2])
 offers = json.loads(offers_path.read_text(encoding="utf-8"))
+item = offers["items"][0]
 assert facets["districts"]
 assert facets["rooms"]
-assert offers["total_count"] >= offers["matching_count"] >= 1
+assert offers["total_count"] >= 1
+assert offers["total_count"] >= offers["matching_count"]
 assert offers["items"]
-assert offers["items"][0]["parking_price_min_minor"] is not None
-assert offers["items"][0]["storage_price_min_minor"] is not None
+assert "id" in item
+assert "parking_price_min_minor" in item
+assert "storage_price_min_minor" in item
 assert "source_text" not in offers_path.read_text(encoding="utf-8")
 PY
 

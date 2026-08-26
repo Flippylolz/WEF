@@ -76,7 +76,7 @@ case "$url" in
     printf '%s\\n' '{"status":"ready"}' > "$output"
     ;;
   */api/v1/map/locations*)
-    payload='{"type":"FeatureCollection","features":[{}],"meta":{"feature_count":1}}'
+    payload='{"type":"FeatureCollection","features":[{"id":"10000000-0000-4000-8000-000000000001","properties":{"matching_offer_count":1}}],"meta":{"feature_count":1}}'
     printf '%s\\n' "$payload" > "$output"
     ;;
   */api/v1/filter-facets)
@@ -92,6 +92,7 @@ payload = {
     "total_count": 1,
     "items": [
         {
+            "id": "20000000-0000-4000-8000-000000000001",
             "parking_price_min_minor": 1,
             "storage_price_min_minor": 1,
         },
