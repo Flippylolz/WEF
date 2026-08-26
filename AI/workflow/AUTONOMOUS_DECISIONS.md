@@ -315,3 +315,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Safety limit: do not start `--profile telegram-worker` or set activation/live-loop env vars in production until owner supplies secrets and records activation; worker freshness never gates API readiness.
 - Reversal: demote E8-T5 / revert plan revision 5 and remove the Compose worker service if the owner rejects AD-037.
 - Follow-up: owner supplies Telegram API ID/hash/session to NUC `secrets/current` (mode 0600); then activation evidence closes remaining E8 acceptance.
+
+## AD-038: Approve E13 spike/plan and implement the dark map-first explorer
+
+- Time: 2026-08-26.
+- Prompt avoided: wait for a separate synchronous "approve E13 spike/plan" phrase after the owner explicitly assigned the epic, or redesign the frontend without the gated plan.
+- Selected approach: treat the owner's explicit 2026-08-26 instruction ("implement the changes described in epic 13, merge the PR, make sure that production is deployed and run a test") as owner approval under the AD-009 continue authority: approve E13 spike revision 1 and implementation plan revision 1 authorizing E13-T1 → E13-T2 → E13-T3; promote all three tasks; implement each on its own branch/PR with full CI; merge base-first; verify the automatic production deploy and run the production smoke/GUI test.
+- Rationale: the spike is complete and the owner named the epic and requested the full implement → merge → deploy → test cycle; requiring synchronous re-confirmation would contradict the instruction. The instruction adopts the spike's recommended Option C, resolving the "meaning of listing" open question in favor of dated-offer cards (E13-T2/T3) after the grouped-location first slice (E13-T1).
+- Safety limit: no new production dependency, no map vendor change (verified OpenFreeMap `styles/dark`), no availability/relevance claims, backend keeps filtering/sort/pagination ownership, malformed facet values are not corrected in the frontend, and each task still passes its own PR CI before merge.
+- Reversal: close unmerged E13 PRs and demote/invalidate the affected tasks; revert plan revision 1 if the owner rejects AD-038; production rolls back to the prior release image.

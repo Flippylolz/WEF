@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E13
 title: "Dark map-first listing explorer"
-status: awaiting_approval
+status: approved
 revision: 1
 owner: owner
 research_only: true
@@ -16,11 +16,11 @@ domain_docs:
 proposed_task_ids: [E13-T1, E13-T2, E13-T3]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "ZCode agent (owner-directed E13 implementation mission under AD-009/AD-038)"
+  decided_at: "2026-08-26T18:45:03Z"
+  approved_revision: 1
+  evidence: "AD-038; owner instruction 2026-08-26 to implement epic 13, merge, deploy, and test; approval permits promotion/planning/implementation per plan revision 1"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -258,7 +258,7 @@ a decision record and spike revision.
 - [x] Proposed task boundaries and dependencies are identified.
 - [x] No production or disposable proof code was created.
 - [x] `revision` represents the material content being submitted.
-- [x] `status` is `awaiting_approval` and approval remains `pending`.
+- [x] `status` is `approved` for revision 1; the owner decision is recorded in the `approval` object (AD-038).
 
 ## Owner decision
 

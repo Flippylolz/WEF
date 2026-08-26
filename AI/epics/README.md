@@ -28,9 +28,9 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E10 — Property favorites](E10-property-favorites/README.md) — `done`; E10-T1 done; milestone M3.
 - [E11 — Scalable quick filters](E11-scalable-quick-filters/README.md) — `done`; E11-T1 done; milestone M3.
 - [E12 — Database index audit](E12-database-index-audit/README.md) — `done`; E12-T1 done; milestone M3.
-- [E13 — Dark map-first listing explorer](E13-dark-map-explorer/README.md) — `selected`; spike revision 1 awaiting owner approval; milestone M4.
+- [E13 — Dark map-first listing explorer](E13-dark-map-explorer/README.md) — `ready`; spike/plan revision 1 approved (AD-038); E13-T1–T3 promoted; milestones M4.
 
-The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker. E13 is selected for a documentation-only dark map/list redesign spike; production code remains prohibited until its approval gates are satisfied. New work must pass its dedicated pull-request CI before merge.
+The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker. E13's dark map-first redesign spike and implementation plan revision 1 are approved (AD-038) and its three tasks are promoted for sequenced delivery. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
@@ -139,6 +139,12 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E8-T3](E8-telegram-live-ingestion/tasks/E8-T3-implement-live-new-edit-delete-processing.md): task dependencies `E8-T2, E8-T4`; M4; requirements `P-006, P-007`; decisions `ADR-003, ADR-005, ADR-006, ADR-007`.
 - [E8-T4](E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md): promoted/`done` revision 1 through PR #162; task dependencies `E3-T3`; D-002 resolved (retain Geoapify); M4; requirements `P-001, P-007`; decisions `ADR-005, ADR-006, ADR-021`.
 - [E8-T5](E8-telegram-live-ingestion/tasks/E8-T5-production-reconciliation-and-worker-alerting.md): promoted/`in_progress` revision 1; task dependencies `E8-T3, E8-T4`; M4; requirements `P-006, P-007`; decisions `ADR-006, ADR-010, ADR-015`; activation gated on B-003.
+
+### E13
+
+- [E13-T1](E13-dark-map-explorer/tasks/E13-T1-dark-shell-compact-filters.md): promoted/`ready` revision 1; task dependencies `none`; M4; requirements `P-004`; decisions `ADR-002, ADR-003, ADR-004, ADR-012, ADR-013`.
+- [E13-T2](E13-dark-map-explorer/tasks/E13-T2-viewport-listing-summary-projection.md): promoted/`ready` revision 1; task dependencies `none`; M4; requirements `P-001, P-003`; decisions `ADR-002, ADR-003, ADR-012, ADR-013`.
+- [E13-T3](E13-dark-map-explorer/tasks/E13-T3-selectable-listing-rail.md): promoted/`draft` revision 1; blocked dependencies `E13-T1, E13-T2`; M4; requirements `P-004`; decisions `ADR-002, ADR-003, ADR-004, ADR-012`.
 
 Bootstrap and production gates are preserved: E0-T1 depends on E1-T1 so its dedicated branch can exist; E0-T2 depends on E0-T1 and E1-T1; E1-T2 depends on E0-T2; E7-T1 depends on E1-T3/E5-T1 for the anonymous rehearsal, E7-T2 retains resolved D-001 plus E7-T1, and E7-T3 retains E1-T4/E7-T1/E7-T2. Promoted E7-T6 revision 3 retains E3-T5/E7-T2/E7-T4 and no longer depends on D-002 because it transfers materialized results without provider calls; it stages a non-public candidate and leaves activation to proposed E7-T11 behind the ADR-019 gates. Shared TLS proceeds E7-T4 → E7-T8 → E7-T9 → E7-T10, with D-009 gating only E7-T10; E7-T7 retains E6-T4/E6-T5/E6-T6/E6-T7/E7-T4/E7-T10. E8-T5 depends only on E8-T3 and E8-T4—it does not depend on deferred E7-T5.
 

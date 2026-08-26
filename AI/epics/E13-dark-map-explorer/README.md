@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E13
 title: "Dark map-first listing explorer"
-status: selected
+status: ready
 milestones: [M4]
 owner: owner
 spike: SPIKE.md
@@ -21,10 +21,10 @@ entire result collection.
 
 ## Approval state
 
-- Epic workspace status: `selected`; documentation and research are permitted.
-- [Spike](SPIKE.md): `awaiting_approval`, revision 1.
-- Production code, generated contracts, migrations, and implementation plans
-  remain prohibited until the workflow gates are satisfied.
+- Epic workspace status: `ready`; implementation is authorized.
+- [Spike](SPIKE.md): `approved`, revision 1 (AD-038).
+- [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 1
+  (AD-038), sequencing E13-T1 → E13-T2 → E13-T3.
 
 ## Design reference
 
@@ -45,13 +45,11 @@ entire result collection.
 - [ADR-012: Backend-centric modular monolith](../../decisions/adr/ADR-012-backend-centric-modular-monolith.md)
 - [ADR-013: Committed OpenAPI and offline docs](../../decisions/adr/ADR-013-committed-openapi-offline-docs.md)
 
-## Candidate task boundaries
+## Promoted tasks
 
-- `E13-T1`: Build the dark application shell and compact filter experience.
-- `E13-T2`: Add a paginated viewport listing-summary projection.
-- `E13-T3`: Build the selectable listing rail and coordinated map interaction.
-
-These are spike outputs only. No proposed or promoted task is actionable.
+- [E13-T1: Build the dark application shell and compact filter experience](tasks/E13-T1-dark-shell-compact-filters.md) — P1/L, M4
+- [E13-T2: Add a paginated viewport listing-summary projection](tasks/E13-T2-viewport-listing-summary-projection.md) — P1/L, M4
+- [E13-T3: Build the selectable listing rail and coordinated map behavior](tasks/E13-T3-selectable-listing-rail.md) — P1/L, M4; depends on E13-T1 and E13-T2
 
 ## Dependencies
 
@@ -62,6 +60,6 @@ These are spike outputs only. No proposed or promoted task is actionable.
 
 ## Current constraint
 
-Documentation and research only. This workspace does not authorize production
-code, generated contracts, migrations, or implementation until the spike is
-approved and an implementation plan is gated.
+Implementation proceeds task by task under [implementation plan](IMPLEMENTATION_PLAN.md)
+revision 1 (AD-038): one dedicated branch and pull request per task, CI green
+before each merge, standard production deploy and smoke verification.
