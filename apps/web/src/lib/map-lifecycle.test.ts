@@ -18,4 +18,15 @@ describe("map-lifecycle", () => {
     resetMapConstructionCount();
     expect(getMapConstructionCount()).toBe(0);
   });
+
+  it("does not count constructions outside test mode", () => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = "production";
+    try {
+      recordMapConstruction();
+      expect(getMapConstructionCount()).toBe(0);
+    } finally {
+      process.env.NODE_ENV = previous;
+    }
+  });
 });

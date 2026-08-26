@@ -10,5 +10,12 @@ export default defineConfig({
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["./src/test/setup.ts"],
+    coverage: {
+      reporter: ["json-summary", "text"],
+      thresholds: {
+        lines: 90,
+        branches: 90,
+      },
+    },
   },
 });

@@ -28,7 +28,18 @@ describe("favorites-api", () => {
       removeFavorite("10000000-0000-4000-8000-000000000001"),
     ).resolves.toEqual({ state: "ready", data: null });
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const controller = new AbortController();
+    await expect(
+      addFavorite("10000000-0000-4000-8000-000000000001", {
+        signal: controller.signal,
+      }),
+    ).resolves.toEqual({ state: "ready", data: null });
+    await expect(
+      removeFavorite("10000000-0000-4000-8000-000000000001", {
+        signal: controller.signal,
+      }),
+    ).resolves.toEqual({ state: "ready", data: null });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
     const first = fetchMock.mock.calls[0]?.[0] as Request;
     const second = fetchMock.mock.calls[1]?.[0] as Request;
     expect(first.url).toContain(
@@ -73,5 +84,49 @@ describe("favorites-api", () => {
         ],
       },
     });
+    await expect(
+      fetchFavorites({ signal: new AbortController().signal }),
+    ).resolves.toEqual({
+      state: "ready",
+      data: {
+        items: [
+          {
+            location_id: "10000000-0000-4000-8000-000000000001",
+            display_name: "Synthetic Central Residence",
+            display_address: "Synthetic address, Warsaw",
+            district: "srodmiescie",
+            created_at: "2026-08-20T12:00:00+00:00",
+          },
+        ],
+      },
+    });
+  });
+
+  it("returns a stable error state for HTTP and transport failures", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("nope", { status: 503 })),
+    );
+    await expect(fetchFavorites()).resolves.toEqual({ state: "error" });
+    await expect(
+      addFavorite("10000000-0000-4000-8000-000000000001"),
+    ).resolves.toEqual({ state: "error" });
+    await expect(
+      removeFavorite("10000000-0000-4000-8000-000000000001"),
+    ).resolves.toEqual({ state: "error" });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("offline");
+      }),
+    );
+    await expect(fetchFavorites()).resolves.toEqual({ state: "error" });
+    await expect(
+      addFavorite("10000000-0000-4000-8000-000000000001"),
+    ).resolves.toEqual({ state: "error" });
+    await expect(
+      removeFavorite("10000000-0000-4000-8000-000000000001"),
+    ).resolves.toEqual({ state: "error" });
   });
 });

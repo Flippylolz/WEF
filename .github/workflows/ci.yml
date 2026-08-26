@@ -54,6 +54,7 @@ jobs:
           uv --directory apps/backend run pytest \
             --cov=wef_backend \
             --cov-branch \
+            --cov-fail-under=90 \
             --cov-report=term-missing \
             --cov-report=json:../../tmp/backend-coverage.json
       - name: Upload backend coverage
@@ -85,12 +86,13 @@ jobs:
           corepack prepare pnpm@11.21.0 --activate
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
-      - name: Format, lint, type, and test
+      - name: Format, lint, and type
         run: |
           pnpm --filter web format:check
           pnpm --filter web lint
           pnpm --filter web typecheck
-          pnpm --filter web test:coverage
+      - name: Tests with 90% coverage
+        run: pnpm --filter web test:coverage
       - name: Contract and static documentation
         run: |
           pnpm --filter web contract:check
@@ -166,12 +168,13 @@ jobs:
           pattern: "*-coverage-${{ github.sha }}"
           path: tmp/coverage
           merge-multiple: true
-      - name: Render coverage badge
+      - name: Enforce 90% coverage and render badge
         run: |
           python3 scripts/render_coverage_badge.py \
             --backend tmp/coverage/backend-coverage.json \
             --frontend tmp/coverage/coverage-summary.json \
-            --output .github/badges/coverage.svg
+            --output .github/badges/coverage.svg \
+            --fail-under 90
       - name: Publish coverage badge on main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |

@@ -126,6 +126,8 @@ Review should verify:
 
 CI runs for pull requests targeting `main`.
 
+CI fails when backend coverage or frontend coverage is below 90%. The suites run in separate jobs and Makefile targets. The Backend job uses pytest `--cov-fail-under=90`. The Frontend job uses Vitest `coverage.thresholds` of 90% for lines and branches. The Coverage badge job applies the same per-suite floor and does not use a combined threshold.
+
 Deployment does not run for:
 
 - Feature, fix, docs, chore, hotfix, or Dependabot branch pushes.

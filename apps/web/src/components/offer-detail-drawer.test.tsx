@@ -303,6 +303,9 @@ describe("OfferDetailDrawer", () => {
       .mockResolvedValueOnce({
         state: "error",
         code: "forbidden",
+      })
+      .mockResolvedValueOnce({
+        state: "error",
       });
     renderDrawer(detail.id, { account: signedInAccount });
 
@@ -326,6 +329,13 @@ describe("OfferDetailDrawer", () => {
     );
     expect(
       await screen.findByText("detailRevealError.forbidden"),
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "detailRevealContacts" }),
+    );
+    expect(
+      await screen.findByText("detailRevealError.unknown"),
     ).toBeInTheDocument();
   });
 
@@ -371,5 +381,120 @@ describe("OfferDetailDrawer", () => {
       ).not.toBeInTheDocument(),
     );
     await waitFor(() => expect(document.activeElement).toBe(trigger));
+  });
+
+  it("shows empty revealed contacts and a date-only source fallback", async () => {
+    vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
+      state: "ready",
+      data: {
+        ...detail,
+        verified_source_url: null,
+        source_message_id: null,
+        source_history: [
+          {
+            source_message_id: "50000000-0000-4000-8000-000000000002",
+            relationship: "edit",
+            published_at: "2026-08-01T10:00:00Z",
+            edited_at: "2026-08-02T10:00:00Z",
+          },
+        ],
+      },
+    });
+    vi.mocked(contactsApi.revealOfferContacts).mockResolvedValue({
+      state: "ready",
+      data: { contacts: [] },
+    });
+    renderDrawer(detail.id, { account: signedInAccount });
+
+    expect(
+      await screen.findByText(/detailSourceFallback:/),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "detailRevealContacts" }),
+    );
+    expect(await screen.findByText("detailRevealEmpty")).toBeInTheDocument();
+  });
+
+  it("shows loading and error states for the detail query", () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const pending = render(
+      <QueryClientProvider client={queryClient}>
+        <OfferDetailDrawer
+          open
+          offerId={detail.id}
+          matchesFilters
+          detailQuery={
+            {
+              data: undefined,
+              error: null,
+              isError: false,
+              isPending: true,
+              isSuccess: false,
+            } as never
+          }
+          account={null}
+          onClose={() => undefined}
+          onRequestSignIn={() => undefined}
+          onRequestPasswordChange={() => undefined}
+          returnFocusRef={{ current: document.createElement("button") }}
+        />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("detailLoading");
+    pending.unmount();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <OfferDetailDrawer
+          open
+          offerId={detail.id}
+          matchesFilters
+          detailQuery={
+            {
+              data: undefined,
+              error: new Error("boom"),
+              isError: true,
+              isPending: false,
+              isSuccess: false,
+            } as never
+          }
+          account={null}
+          onClose={() => undefined}
+          onRequestSignIn={() => undefined}
+          onRequestPasswordChange={() => undefined}
+          returnFocusRef={{ current: document.createElement("button") }}
+        />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("detailError");
+  });
+
+  it("renders partial data, omitted prices, and unsafe source urls", async () => {
+    vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
+      state: "ready",
+      data: {
+        ...detail,
+        data_confidence: "partial",
+        price_min_minor: null,
+        price_max_minor: null,
+        parking_price_min_minor: null,
+        parking_price_max_minor: null,
+        parking_included_in_price: false,
+        storage_included_in_price: false,
+        area_min_sqm: null,
+        area_max_sqm: null,
+        rooms_min: null,
+        rooms_max: null,
+        verified_source_url: "http://example.test/offer",
+      },
+    });
+    renderDrawer();
+
+    expect(await screen.findByText("partialData")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "detailOpenTelegram" }),
+    ).not.toBeInTheDocument();
   });
 });

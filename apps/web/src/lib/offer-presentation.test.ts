@@ -5,6 +5,7 @@ import {
   formatArea,
   formatPrice,
   formatPublishedDate,
+  formatRooms,
   isSafeExternalUrl,
   mediaAltText,
   pickMediaDisplayUrl,
@@ -56,5 +57,20 @@ describe("offer-presentation", () => {
 
   it("formats publication timestamps deterministically", () => {
     expect(formatPublishedDate("2026-08-01T10:00:00Z")).toContain("2026");
+  });
+
+  it("formats rooms and ranged prices without inventing values", () => {
+    expect(formatRooms(1, 1)).toBe("1");
+    expect(formatRooms(1, 3)).toBe("1–3");
+    expect(formatRooms(null, 3)).toBeNull();
+    expect(formatPrice(80_000_000, 125_000_000)).toContain("–");
+    expect(
+      formatAdditionalPrice(4_500_000, 4_500_000, false, "Included"),
+    ).toContain("45");
+    expect(formatAdditionalPrice(null, null, false, "Included")).toBeNull();
+    expect(formatArea("35.00", "35.00")).toBe("35.00 m²");
+    expect(isSafeExternalUrl(undefined)).toBe(false);
+    expect(isSafeExternalUrl("   ")).toBe(false);
+    expect(isSafeExternalUrl("not a url")).toBe(false);
   });
 });

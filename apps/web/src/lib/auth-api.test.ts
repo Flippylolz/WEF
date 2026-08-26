@@ -65,6 +65,117 @@ describe("auth-api", () => {
     expect(result).toEqual({ state: "error", message: "Unavailable." });
   });
 
+  it("returns the current account and maps problem details", async () => {
+    const ok = vi.fn(async () => jsonResponse(200, account));
+    const failed = vi.fn(async () => jsonResponse(500, { detail: "nope" }));
+    const unreadable = vi.fn(async () => jsonResponse(500, { detail: 12 }));
+    const offline = vi.fn(async () => {
+      throw new Error("offline");
+    });
+
+    expect(await fetchCurrentAccount({ fetcher: ok })).toEqual({
+      state: "ready",
+      data: account,
+    });
+    expect(await fetchCurrentAccount({ fetcher: failed })).toEqual({
+      state: "error",
+      message: "nope",
+    });
+    expect(await fetchCurrentAccount({ fetcher: unreadable })).toEqual({
+      state: "error",
+    });
+    expect(await fetchCurrentAccount({ fetcher: offline })).toEqual({
+      state: "error",
+    });
+  });
+
+  it("surfaces register, login, and password mutation failures", async () => {
+    const failed = vi.fn(async () => jsonResponse(400, { detail: "taken" }));
+    const offline = vi.fn(async () => {
+      throw new Error("offline");
+    });
+
+    expect(
+      await registerAccount(
+        { username: "warsaw", password: "longenough123" },
+        { fetcher: failed },
+      ),
+    ).toEqual({ state: "error", message: "taken" });
+    expect(
+      await loginAccount(
+        { username: "warsaw", password: "longenough123" },
+        { fetcher: failed },
+      ),
+    ).toEqual({ state: "error", message: "taken" });
+    expect(await logoutAccount({ fetcher: offline })).toEqual({
+      state: "error",
+    });
+    expect(
+      await changePassword(
+        {
+          current_password: "longenough123",
+          new_password: "newlongenough456",
+        },
+        { fetcher: failed },
+      ),
+    ).toEqual({ state: "error", message: "taken" });
+    expect(await revokeAllSessions({ fetcher: offline })).toEqual({
+      state: "error",
+    });
+    expect(
+      await registerAccount(
+        { username: "warsaw", password: "longenough123" },
+        { fetcher: offline },
+      ),
+    ).toEqual({ state: "error" });
+    expect(
+      await loginAccount(
+        { username: "warsaw", password: "longenough123" },
+        { fetcher: offline },
+      ),
+    ).toEqual({ state: "error" });
+    expect(
+      await changePassword(
+        {
+          current_password: "longenough123",
+          new_password: "newlongenough456",
+        },
+        { fetcher: offline },
+      ),
+    ).toEqual({ state: "error" });
+  });
+
+  it("logs out and revokes sessions on success and HTTP errors", async () => {
+    const ok = vi.fn(async () => new Response(null, { status: 204 }));
+    expect(await logoutAccount({ fetcher: ok })).toEqual({
+      state: "ready",
+      data: null,
+    });
+
+    const failed = vi.fn(async () => jsonResponse(400, { detail: "blocked" }));
+    expect(await revokeAllSessions({ fetcher: failed })).toEqual({
+      state: "error",
+      message: "blocked",
+    });
+    expect(await logoutAccount({ fetcher: failed })).toEqual({
+      state: "error",
+      message: "blocked",
+    });
+
+    const unreadable = vi.fn(async () => jsonResponse(400, { detail: 12 }));
+    expect(await revokeAllSessions({ fetcher: unreadable })).toEqual({
+      state: "error",
+    });
+
+    const controller = new AbortController();
+    const signaled = vi.fn(async (request: Request) => {
+      expect(request.signal).toBe(controller.signal);
+      return new Response(null, { status: 204 });
+    });
+    await logoutAccount({ fetcher: signaled, signal: controller.signal });
+    await revokeAllSessions({ fetcher: signaled, signal: controller.signal });
+  });
+
   it("changes password and revokes all sessions", async () => {
     const fetcher = vi.fn(async (request: Request) => {
       expect(request.credentials).toBe("include");

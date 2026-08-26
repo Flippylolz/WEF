@@ -69,5 +69,58 @@ describe("contacts-api", () => {
         message: "blocked",
       });
     }
+
+    const unknown = vi.fn(async () => jsonResponse(500, { code: "boom" }));
+    expect(
+      await revealOfferContacts("20000000-0000-4000-8000-000000000001", {
+        fetcher: unknown,
+      }),
+    ).toEqual({
+      state: "error",
+      code: "unknown",
+      message: "boom",
+    });
+
+    const offline = vi.fn(async () => {
+      throw new Error("offline");
+    });
+    expect(
+      await revealOfferContacts("20000000-0000-4000-8000-000000000001", {
+        fetcher: offline,
+      }),
+    ).toEqual({ state: "error", code: "unknown" });
+  });
+
+  it("treats empty payloads and non-string problem fields as unknown errors", async () => {
+    const empty = vi.fn(async () => new Response(null, { status: 200 }));
+    expect(
+      await revealOfferContacts("20000000-0000-4000-8000-000000000001", {
+        fetcher: empty,
+      }),
+    ).toEqual({ state: "error", code: "unknown" });
+
+    const unreadable = vi.fn(async () =>
+      jsonResponse(400, { code: 12, detail: 12 }),
+    );
+    expect(
+      await revealOfferContacts("20000000-0000-4000-8000-000000000001", {
+        fetcher: unreadable,
+      }),
+    ).toEqual({ state: "error", code: "unknown" });
+
+    const controller = new AbortController();
+    const signaled = vi.fn(async () =>
+      jsonResponse(401, { detail: "blocked" }),
+    );
+    expect(
+      await revealOfferContacts("20000000-0000-4000-8000-000000000001", {
+        fetcher: signaled,
+        signal: controller.signal,
+      }),
+    ).toEqual({
+      state: "error",
+      code: "unauthorized",
+      message: "blocked",
+    });
   });
 });

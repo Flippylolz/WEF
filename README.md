@@ -37,14 +37,19 @@ make coverage
 make build
 ```
 
-`make test` is fully containerized. It starts the local Compose PostGIS service,
-recreates a reserved `wef_test` database alongside the persistent development
-database, and runs the backend and frontend suites in development containers.
-No test database URL or host language runtime is required. Static API
-documentation is generated as an artifact and is not served by the production
-API. `make coverage` runs both test suites with line and branch measurement and
-refreshes the badge above for local preview; CI renders the badge from uploaded
-coverage artifacts and publishes it automatically on `main`.
+`make test-backend` and `make test-frontend` run the suites independently.
+`make test` runs backend tests, then frontend tests. Backend tests are fully
+containerized: they start local Compose PostGIS, recreate a reserved `wef_test`
+database alongside the persistent development database, and need no host
+database URL. Frontend unit tests run in the web development container with
+no network. Each suite fails when its own branch-aware coverage is below 90%.
+The coverage badge still shows the combined percentage, but that combined
+figure is not a merge gate. `make coverage-backend` and `make coverage-frontend`
+refresh each report; `make coverage` then writes the badge. GitHub Actions
+publishes the badge on `main` only after both suite floors are met.
+
+Static API documentation is generated as an artifact and is not served by the
+production API.
 
 `make help` lists the exact command façade. The Makefile delegates to uv, pnpm, and Docker; it does not select environments or contain application logic.
 

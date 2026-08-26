@@ -69,6 +69,19 @@ describe("map search parameters", () => {
       priceMinMinor: null,
       publishedFrom: null,
     });
+
+    expect(
+      parseMapSearchParams(new URLSearchParams("bbox=1,2,3,foo")).bbox,
+    ).toBe(DEFAULT_BBOX);
+    expect(
+      parseMapSearchParams(new URLSearchParams("published_from=yesterday"))
+        .publishedFrom,
+    ).toBeNull();
+    expect(
+      parseMapSearchParams(
+        new URLSearchParams("published_from=2026-08-01T25:00:00Z"),
+      ).publishedFrom,
+    ).toBeNull();
   });
 
   it("canonicalizes equivalent publication timestamps in UTC", () => {

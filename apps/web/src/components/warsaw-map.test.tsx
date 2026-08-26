@@ -26,11 +26,13 @@ vi.mock("react-map-gl/maplibre", () => ({
       onClick,
       onLoad,
       onMoveEnd,
+      onError,
     }: {
       children: ReactNode;
       onClick: (event: object) => void;
       onLoad: () => void;
       onMoveEnd: (event: object) => void;
+      onError: () => void;
     },
     ref,
   ) {
@@ -104,6 +106,9 @@ vi.mock("react-map-gl/maplibre", () => ({
           }
         >
           simulated-map-move-flat
+        </button>
+        <button type="button" onClick={onError}>
+          simulated-map-error
         </button>
         {children}
       </div>
@@ -361,5 +366,85 @@ describe("WarsawMap", () => {
     );
 
     expect(fitBounds).not.toHaveBeenCalled();
+  });
+
+  it("ignores clicks without a selectable feature and reports map errors", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const onFailure = vi.fn();
+    clickedFeature = { properties: {}, geometry: { type: "LineString" } };
+    const { rerender } = render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId="10000000-0000-4000-8000-000000000001"
+        highlightedId="10000000-0000-4000-8000-000000000002"
+        loadingLabel="Loading interactive map"
+        onSelect={onSelect}
+        onFailure={onFailure}
+        onViewportChange={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-click" }),
+    );
+    expect(onSelect).not.toHaveBeenCalled();
+
+    clickedFeature = {
+      id: 7,
+      properties: { cluster_id: 42 },
+      geometry: { type: "Polygon" },
+    };
+    rerender(
+      <WarsawMap
+        bbox="not-a-bbox"
+        data={mapData}
+        selectedId={null}
+        highlightedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={onSelect}
+        onFailure={onFailure}
+        onViewportChange={vi.fn()}
+      />,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-click" }),
+    );
+    expect(easeTo).not.toHaveBeenCalled();
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-error" }),
+    );
+    expect(onFailure).toHaveBeenCalled();
+  });
+
+  it("skips cluster animation when the user prefers reduced motion", async () => {
+    const user = userEvent.setup();
+    clickedFeature = {
+      id: 7,
+      properties: { cluster_id: 42 },
+      geometry: { type: "Point", coordinates: [21.0, 52.2] },
+    };
+    render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+        reduceMotion
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-click" }),
+    );
+    expect(easeTo).toHaveBeenCalledWith({
+      center: [21.0, 52.2],
+      zoom: 13,
+      duration: 0,
+    });
   });
 });
