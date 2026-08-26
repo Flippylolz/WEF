@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   getMapConstructionCount,
@@ -20,13 +20,12 @@ describe("map-lifecycle", () => {
   });
 
   it("does not count constructions outside test mode", () => {
-    const previous = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     try {
       recordMapConstruction();
       expect(getMapConstructionCount()).toBe(0);
     } finally {
-      process.env.NODE_ENV = previous;
+      vi.unstubAllEnvs();
     }
   });
 });
