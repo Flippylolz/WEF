@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E13-T1
 epic: E13
 title: "Build the dark application shell and compact filter experience"
-status: ready
+status: in_progress
 revision: 1
 priority: P1
 size: L
