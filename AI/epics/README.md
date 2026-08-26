@@ -29,8 +29,9 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E11 — Scalable quick filters](E11-scalable-quick-filters/README.md) — `done`; E11-T1 done; milestone M3.
 - [E12 — Database index audit](E12-database-index-audit/README.md) — `done`; E12-T1 done; milestone M3.
 - [E13 — Dark map-first listing explorer](E13-dark-map-explorer/README.md) — `in_progress`; spike/plan revision 1 approved (AD-038); E13-T1 done, T2/T3 next; milestones M4.
+- [E14 — Production hardening and scalability](E14-production-hardening-and-scalability/README.md) — `selected`; spike revision 1 awaits owner approval; E14-T1–T9 proposed/non-actionable; milestone M5.
 
-The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker, while verified live entity/event, gap-reconciliation, and outage-recovery acceptance remain open. E13's dark map-first redesign spike and implementation plan revision 1 are approved (AD-038); E13-T1 is done and T2/T3 remain sequenced. New work must pass its dedicated pull-request CI before merge.
+The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker, while verified live entity/event, gap-reconciliation, and outage-recovery acceptance remain open. E13's dark map-first redesign spike and implementation plan revision 1 are approved (AD-038); E13-T1 is done and T2/T3 remain sequenced. E14 is selected for post-launch research/planning, but its proposed tasks remain non-actionable until the current spike and a later implementation plan pass their separate owner-approval gates. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
@@ -146,6 +147,18 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E13-T2](E13-dark-map-explorer/tasks/E13-T2-viewport-listing-summary-projection.md): promoted/`ready` revision 1; task dependencies `none`; M4; requirements `P-001, P-003`; decisions `ADR-002, ADR-003, ADR-012, ADR-013`.
 - [E13-T3](E13-dark-map-explorer/tasks/E13-T3-selectable-listing-rail.md): promoted/`draft` revision 1; blocked dependencies `E13-T1, E13-T2`; M4; requirements `P-004`; decisions `ADR-002, ADR-003, ADR-004, ADR-012`.
 
+### E14
+
+- [E14-T1](E14-production-hardening-and-scalability/proposed-tasks/E14-T1-make-quality-and-governance-gates-truthful.md): proposed/non-actionable; task dependencies `none`; M5; requirements `none`; decisions `ADR-009, ADR-012, ADR-013, ADR-017`.
+- [E14-T2](E14-production-hardening-and-scalability/proposed-tasks/E14-T2-strengthen-critical-path-test-confidence.md): proposed/non-actionable; task dependency `E14-T1`; M5; requirements `P-001` through `P-008`; risk-weighted confidence and failure probes.
+- [E14-T3](E14-production-hardening-and-scalability/proposed-tasks/E14-T3-refactor-frontend-orchestration-hotspots.md): proposed/non-actionable; task dependencies `E13-T3, E14-T2`; M5; requirements `P-001, P-002, P-003, P-004, P-005, P-008`.
+- [E14-T4](E14-production-hardening-and-scalability/proposed-tasks/E14-T4-refactor-backend-ingestion-and-operator-seams.md): proposed/non-actionable; task dependency `E14-T2`; M5; requirements `P-001, P-002, P-005, P-006, P-007, P-008`.
+- [E14-T5](E14-production-hardening-and-scalability/proposed-tasks/E14-T5-add-full-stack-cross-browser-and-accessibility-journeys.md): proposed/non-actionable; task dependencies `E14-T3, E14-T4`; M5; requirements `P-001` through `P-008`.
+- [E14-T6](E14-production-hardening-and-scalability/proposed-tasks/E14-T6-define-slos-and-ship-privacy-safe-observability.md): proposed/non-actionable; task dependencies `E8-T5, E14-T1`; M5; requirements `P-001, P-006, P-007, P-008`.
+- [E14-T7](E14-production-hardening-and-scalability/proposed-tasks/E14-T7-prove-capacity-and-enforce-performance-budgets.md): proposed/non-actionable; task dependencies `E14-T3, E14-T4, E14-T6`; M5; requirements `P-001, P-002, P-003, P-004, P-005, P-006, P-007`.
+- [E14-T8](E14-production-hardening-and-scalability/proposed-tasks/E14-T8-harden-supply-chain-and-release-integrity.md): proposed/non-actionable; task dependency `E14-T1`; M5; requirements `P-007, P-008`.
+- [E14-T9](E14-production-hardening-and-scalability/proposed-tasks/E14-T9-rehearse-operational-resilience-and-disaster-recovery.md): proposed/non-actionable and blocked while E7-T5/ADR-015 remain deferred; task dependencies `E7-T5, E14-T6, E14-T7, E14-T8`; M5; requirements `P-006, P-007, P-008`.
+
 Bootstrap and production gates are preserved: E0-T1 depends on E1-T1 so its dedicated branch can exist; E0-T2 depends on E0-T1 and E1-T1; E1-T2 depends on E0-T2; E7-T1 depends on E1-T3/E5-T1 for the anonymous rehearsal, E7-T2 retains resolved D-001 plus E7-T1, and E7-T3 retains E1-T4/E7-T1/E7-T2. Promoted E7-T6 revision 3 retains E3-T5/E7-T2/E7-T4 and no longer depends on D-002 because it transfers materialized results without provider calls; it stages a non-public candidate and leaves activation to proposed E7-T11 behind the ADR-019 gates. Shared TLS proceeds E7-T4 → E7-T8 → E7-T9 → E7-T10, with D-009 gating only E7-T10; E7-T7 retains E6-T4/E6-T5/E6-T6/E6-T7/E7-T4/E7-T10. E8-T5 depends only on E8-T3 and E8-T4—it does not depend on deferred E7-T5.
 
 ## Global definition of done
@@ -188,3 +201,4 @@ The workflow's [expanded definition of done](../workflow/DEFINITION_OF_DONE.md) 
 - Resumable verified materialized-snapshot transfer into a non-public production candidate: E7-T6; HTTPS/sensitive-feature-gated public activation: E7-T11.
 - Monitoring, contact-data minimization, and accessibility: E5-T4, E6-T2, E6-T3, E6-T5; backups are deferred in E7-T5 and a formal privacy notice is out of scope.
 - Live channel ingestion implementation and remaining operational acceptance: E8-T1 through E8-T5.
+- Post-launch maintainability, test confidence, SLOs, capacity, release integrity, and disaster-recovery evidence: E14-T1 through E14-T9, with existing E7-T5 as E14-T9's non-duplicated recovery prerequisite.
