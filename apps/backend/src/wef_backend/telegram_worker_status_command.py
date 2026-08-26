@@ -12,28 +12,26 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from wef_backend.features.ingestion.application.telegram_worker_liveness import (
+    worker_liveness_ok,
+)
 from wef_backend.features.ingestion.application.telegram_worker_status import (
     WorkerStatusOptions,
     build_telegram_worker_status,
     rotation_rehearsal_report,
 )
-from wef_backend.features.ingestion.domain.telegram_channel import TelegramWorkerSecretPaths
+from wef_backend.features.ingestion.domain.telegram_secrets import (
+    credentials_present,
+    unwrap_secret,
+)
 from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store import (
     SQLAlchemyTelegramWorkerStatusStore,
 )
 from wef_backend.settings import load_settings
+from wef_backend.telegram_credentials import secret_text
 
 if TYPE_CHECKING:
     from wef_backend.features.ingestion.domain.telegram_worker_ops import TelegramWorkerStatus
-
-
-def _secret_paths() -> TelegramWorkerSecretPaths:
-    settings = load_settings()
-    return TelegramWorkerSecretPaths(
-        api_id_file=settings.telegram_api_id_file,
-        api_hash_file=settings.telegram_api_hash_file,
-        session_file=settings.telegram_session_file,
-    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -50,9 +48,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print the session rotation rehearsal checklist only",
     )
     parser.add_argument(
-        "--owner-gate-open",
+        "--liveness",
         action="store_true",
-        help="Mark the production activation owner gate as open (status only)",
+        help="Exit 0 only when the listen-loop heartbeat is fresh (Compose healthcheck)",
     )
     return parser
 
@@ -64,24 +62,33 @@ def _serialize_status(status: TelegramWorkerStatus) -> dict[str, object]:
         payload["last_live_run_finished_at"] = (
             finished.astimezone(UTC).isoformat().replace("+00:00", "Z")
         )
-    payload["secret_files"] = [asdict(item) for item in status.secret_files]
     payload["reconciliation"] = asdict(status.reconciliation)
     payload["freshness"] = status.freshness.value
     payload["reconciliation"]["status"] = status.reconciliation.status.value
     return payload
 
 
-async def run_status(*, owner_gate_open: bool) -> dict[str, object]:
-    """Load DB + secret path evidence into a redacted status report."""
+async def run_status() -> dict[str, object]:
+    """Load DB + env credential presence into a redacted status report."""
     settings = load_settings()
+    api_hash = secret_text(settings.telegram_api_hash)
+    session = secret_text(settings.telegram_session)
+    if not session and settings.telegram_session_path is not None:
+        path = settings.telegram_session_path
+        session = unwrap_secret(path.read_text(encoding="utf-8")) if path.is_file() else None
     engine = create_async_engine(settings.database_url)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     store = SQLAlchemyTelegramWorkerStatusStore(session_factory)
     try:
         status = await build_telegram_worker_status(
             store,
-            secret_paths=_secret_paths(),
-            options=WorkerStatusOptions(owner_gate_open=owner_gate_open),
+            options=WorkerStatusOptions(
+                credentials_ready=credentials_present(
+                    api_id=settings.telegram_api_id,
+                    api_hash=api_hash,
+                ),
+                session_ready=bool(session),
+            ),
         )
         return _serialize_status(status)
     finally:
@@ -91,11 +98,17 @@ async def run_status(*, owner_gate_open: bool) -> dict[str, object]:
 def main(argv: list[str] | None = None) -> None:
     """Print JSON status or rotation dry-run; exit 2 on unexpected failure."""
     args = build_parser().parse_args(argv)
+    if args.liveness:
+        settings = load_settings()
+        if worker_liveness_ok(settings.telegram_heartbeat_path):
+            return
+        sys.stderr.write("Telegram worker liveness failed\n")
+        raise SystemExit(1)
     try:
         if args.rotation_dry_run:
             payload = rotation_rehearsal_report()
         else:
-            payload = asyncio.run(run_status(owner_gate_open=args.owner_gate_open))
+            payload = asyncio.run(run_status())
     except Exception:  # noqa: BLE001
         sys.stderr.write("Telegram worker status failed\n")
         raise SystemExit(2) from None

@@ -22,6 +22,7 @@ WEF_PATHS = (
     WEF_ROOT / "releases",
     WEF_ROOT / "secrets",
     WEF_ROOT / "secrets/releases",
+    WEF_ROOT / "secrets/telegram",
     WEF_ROOT / "postgres",
     WEF_ROOT / "media",
     WEF_ROOT / "media/originals",

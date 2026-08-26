@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING
 
 import pytest
 
@@ -16,12 +15,8 @@ from wef_backend.features.ingestion.application.telegram_channel_verify import (
     TelegramChannelVerification,
 )
 from wef_backend.features.ingestion.application.telegram_live import LiveBackfillResult
-from wef_backend.features.ingestion.domain.telegram_channel import SecretFileStatus
 from wef_backend.features.ingestion.domain.telegram_secrets import TelegramWorkerSecrets
 from wef_backend.settings import Settings
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def test_telegram_channel_command_prints_redacted_report(
@@ -36,17 +31,10 @@ def test_telegram_channel_command_prints_redacted_report(
             public_channel_url="https://t.me/elestate_warszawa",
             public_message_url="https://t.me/elestate_warszawa/1",
             public_message_reachable=True,
-            secret_files=(
-                SecretFileStatus(
-                    path="/run/secrets/wef_telegram_api_id",
-                    present=False,
-                    mode=None,
-                    owner_readable_only=None,
-                ),
-            ),
-            secrets_ready=False,
-            live_client_verification="deferred_to_E8_T2",
-            status="public_ok_secrets_pending",
+            credentials_ready=False,
+            session_ready=False,
+            live_client_verification="awaiting_api_credentials",
+            status="public_ok_credentials_missing",
         )
 
     monkeypatch.setattr(
@@ -71,9 +59,9 @@ def test_telegram_channel_command_exits_when_public_unreachable(
             public_channel_url="https://t.me/elestate_warszawa",
             public_message_url="https://t.me/elestate_warszawa/1",
             public_message_reachable=False,
-            secret_files=(),
-            secrets_ready=False,
-            live_client_verification="deferred_to_E8_T2",
+            credentials_ready=False,
+            session_ready=False,
+            live_client_verification="awaiting_api_credentials",
             status="public_unreachable",
         )
 
@@ -147,15 +135,13 @@ def test_telegram_backfill_command_generic_failure(
 
 def test_telegram_backfill_command_fails_closed_without_secrets(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
 ) -> None:
     monkeypatch.setattr(
         telegram_backfill_command,
         "load_settings",
         lambda: Settings(
-            telegram_api_id_file=tmp_path / "missing_id",
-            telegram_api_hash_file=tmp_path / "missing_hash",
-            telegram_session_file=tmp_path / "missing_session",
+            telegram_api_id=None,
+            telegram_api_hash=None,
         ),
     )
     with pytest.raises(SystemExit) as exited:
@@ -166,22 +152,13 @@ def test_telegram_backfill_command_fails_closed_without_secrets(
 @pytest.mark.asyncio
 async def test_telegram_backfill_run_loads_secrets_and_disposes(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
 ) -> None:
-    api_id = tmp_path / "api_id"
-    api_hash = tmp_path / "api_hash"
-    session = tmp_path / "session"
-    for path, value in ((api_id, "1"), (api_hash, "hash"), (session, "sess")):
-        path.write_text(value, encoding="utf-8")
-        path.chmod(0o600)
-
     monkeypatch.setattr(
         telegram_backfill_command,
         "load_settings",
         lambda: Settings(
-            telegram_api_id_file=api_id,
-            telegram_api_hash_file=api_hash,
-            telegram_session_file=session,
+            telegram_api_id=1,
+            telegram_api_hash=None,
             database_url="postgresql+asyncpg://example/unused",
         ),
     )
@@ -234,8 +211,8 @@ async def test_telegram_backfill_run_loads_secrets_and_disposes(
     monkeypatch.setattr(telegram_backfill_command, "LiveTelegramBackfill", _Backfill)
     monkeypatch.setattr(
         telegram_backfill_command,
-        "load_telegram_worker_secrets",
-        lambda **_kwargs: TelegramWorkerSecrets(api_id=1, api_hash="hash", session="sess"),
+        "secrets_from_settings",
+        lambda _settings: TelegramWorkerSecrets(api_id=1, api_hash="hash", session="sess"),
     )
 
     result = await telegram_backfill_command.run_backfill(

@@ -19,6 +19,8 @@ SAFE_PASSWORD = re.compile(r"^[A-Za-z0-9_.~!%^*+:/=,?-]{24,128}$")
 SAFE_PROVIDER_KEY = re.compile(r"^[A-Za-z0-9._-]{20,200}$")
 ALLOWED_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
 CONTACT_KEY_PATTERN = re.compile(r"^[A-Fa-f0-9]{64}$")
+TELEGRAM_API_ID_PATTERN = re.compile(r"^[1-9][0-9]{4,15}$")
+TELEGRAM_API_HASH_PATTERN = re.compile(r"^[A-Fa-f0-9]{32}$")
 MIN_BOOTSTRAP_USERNAME_LENGTH = 3
 MIN_BOOTSTRAP_PASSWORD_LENGTH = 10
 
@@ -58,6 +60,21 @@ def _require_contact_keys() -> tuple[str, str]:
     return contact_encryption_key, contact_hmac_key
 
 
+def _require_telegram_credentials() -> tuple[str, str, str | None, str | None]:
+    """Require API id/hash; session and phone are optional until first login."""
+    api_id = required_environment("WEF_TELEGRAM_API_ID")
+    api_hash = required_environment("WEF_TELEGRAM_API_HASH")
+    if not TELEGRAM_API_ID_PATTERN.fullmatch(api_id):
+        msg = "Telegram api_id must be a positive integer"
+        raise ValueError(msg)
+    if not TELEGRAM_API_HASH_PATTERN.fullmatch(api_hash):
+        msg = "Telegram api_hash must be 32 hexadecimal characters"
+        raise ValueError(msg)
+    session = os.environ.get("WEF_TELEGRAM_SESSION", "").strip() or None
+    phone = os.environ.get("WEF_TELEGRAM_PHONE", "").strip() or None
+    return api_id, api_hash, session, phone
+
+
 def _optional_bootstrap_owner(values: dict[str, str]) -> None:
     """Attach paired bootstrap owner credentials when both are present."""
     bootstrap_username = os.environ.get("WEF_BOOTSTRAP_OWNER_USERNAME", "").strip()
@@ -87,6 +104,9 @@ def build_values(
     geoapify_api_key = required_environment("WEF_GEOAPIFY_API_KEY")
     admin_session_secret = required_environment("WEF_ADMIN_SESSION_SECRET")
     contact_encryption_key, contact_hmac_key = _require_contact_keys()
+    telegram_api_id, telegram_api_hash, telegram_session, telegram_phone = (
+        _require_telegram_credentials()
+    )
     if not DATABASE_IDENTIFIER.fullmatch(database) or not DATABASE_IDENTIFIER.fullmatch(
         username,
     ):
@@ -130,9 +150,15 @@ def build_values(
         "WEF_RELEASE_DIR": str(context.release.release_dir),
         "WEF_RELEASE_SHA": context.release.release_sha,
         "WEF_ROOT": str(context.release.root),
+        "WEF_TELEGRAM_API_HASH": telegram_api_hash,
+        "WEF_TELEGRAM_API_ID": telegram_api_id,
         "WEF_WEB_IMAGE": context.web_image,
     }
     _optional_bootstrap_owner(values)
+    if telegram_session is not None:
+        values["WEF_TELEGRAM_SESSION"] = telegram_session
+    if telegram_phone is not None:
+        values["WEF_TELEGRAM_PHONE"] = telegram_phone
     validate_environment(values, context.release)
     return values
 

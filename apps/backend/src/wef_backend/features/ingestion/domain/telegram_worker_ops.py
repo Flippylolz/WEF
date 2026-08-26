@@ -1,27 +1,22 @@
-"""Telegram worker activation, staleness, and checkpoint reconciliation contracts."""
+"""Telegram worker staleness and checkpoint reconciliation contracts."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from wef_backend.features.ingestion.domain.telegram_channel import SecretFileStatus
 
 DEFAULT_STALE_AFTER = timedelta(minutes=15)
-ACTIVATION_ENV = "WEF_TELEGRAM_WORKER_ACTIVATE"
-LIVE_LOOP_ENV = "WEF_TELEGRAM_WORKER_LIVE_LOOP"
-COMPOSE_PROFILE = "telegram-worker"
+DEFAULT_HEARTBEAT_MAX_AGE = timedelta(seconds=45)
+HEARTBEAT_INTERVAL_SECONDS = 10.0
+COMPOSE_SERVICE = "telegram-worker"
 
 
 class WorkerFreshness(StrEnum):
     """Worker freshness classification (never gates public API readiness)."""
 
     NEVER_STARTED = "never_started"
-    SECRETS_PENDING = "secrets_pending"
-    ACTIVATION_CLOSED = "activation_closed"
+    CREDENTIALS_PENDING = "credentials_pending"
     FRESH = "fresh"
     STALE = "stale"
     DISCONNECTED = "disconnected"
@@ -51,8 +46,7 @@ class CheckpointReconciliation:
 class FreshnessInput:
     """Inputs for worker freshness classification."""
 
-    secrets_ready: bool
-    activation_enabled: bool
+    credentials_ready: bool
     last_committed_at: datetime | None
     connected: bool | None
     now: datetime
@@ -63,19 +57,15 @@ class FreshnessInput:
 class TelegramWorkerStatus:
     """Redacted operator-facing worker ops report."""
 
-    compose_profile: str
-    activation_env: str
-    activation_enabled: bool
-    live_loop_enabled: bool
-    secrets_ready: bool
-    secret_files: tuple[SecretFileStatus, ...]
+    compose_service: str
+    credentials_ready: bool
+    session_ready: bool
     freshness: WorkerFreshness
     stale_after_seconds: int
     last_live_run_finished_at: datetime | None
     last_live_checkpoint_external_id: int | None
     max_persisted_external_id: int
     reconciliation: CheckpointReconciliation
-    production_activation_gate_open: bool
     notes: tuple[str, ...]
 
 
@@ -88,12 +78,32 @@ class SessionRotationStep:
     requires_live_secrets: bool
 
 
+def parse_heartbeat_timestamp(text: str) -> datetime:
+    """Parse a heartbeat timestamp; naive values are treated as UTC."""
+    stripped = text.strip()
+    if not stripped:
+        message = "heartbeat is empty"
+        raise ValueError(message)
+    parsed = datetime.fromisoformat(stripped)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
+
+
+def heartbeat_is_fresh(
+    written_at: datetime,
+    *,
+    now: datetime,
+    max_age: timedelta = DEFAULT_HEARTBEAT_MAX_AGE,
+) -> bool:
+    """Return True when the listen-loop heartbeat is still within max_age."""
+    return now.astimezone(UTC) - written_at.astimezone(UTC) <= max_age
+
+
 def classify_freshness(inputs: FreshnessInput) -> WorkerFreshness:
     """Classify worker freshness without implying API unreadiness."""
-    if not inputs.secrets_ready:
-        return WorkerFreshness.SECRETS_PENDING
-    if not inputs.activation_enabled:
-        return WorkerFreshness.ACTIVATION_CLOSED
+    if not inputs.credentials_ready:
+        return WorkerFreshness.CREDENTIALS_PENDING
     if inputs.connected is False:
         return WorkerFreshness.DISCONNECTED
     if inputs.last_committed_at is None:
@@ -142,12 +152,12 @@ def session_rotation_rehearsal_steps() -> tuple[SessionRotationStep, ...]:
         ),
         SessionRotationStep(
             order=2,
-            action="Atomically replace the mode-0600 session secret file",
+            action="Replace WEF_TELEGRAM_SESSION in the env file",
             requires_live_secrets=True,
         ),
         SessionRotationStep(
             order=3,
-            action="Run wef-verify-telegram-channel (public + secret paths)",
+            action="Run wef-verify-telegram-channel",
             requires_live_secrets=False,
         ),
         SessionRotationStep(
@@ -157,7 +167,7 @@ def session_rotation_rehearsal_steps() -> tuple[SessionRotationStep, ...]:
         ),
         SessionRotationStep(
             order=5,
-            action="Start telegram-worker with activation gate enabled",
+            action="Start telegram-worker so it generates or loads the string session",
             requires_live_secrets=True,
         ),
         SessionRotationStep(
@@ -166,8 +176,3 @@ def session_rotation_rehearsal_steps() -> tuple[SessionRotationStep, ...]:
             requires_live_secrets=True,
         ),
     )
-
-
-def production_activation_allowed(*, secrets_ready: bool, owner_gate_open: bool) -> bool:
-    """Double-gate production worker enablement (secrets + explicit owner gate)."""
-    return secrets_ready and owner_gate_open

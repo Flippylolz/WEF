@@ -16,15 +16,13 @@ from wef_backend.features.ingestion.application.telegram_backfill import (
     LiveTelegramBackfill,
 )
 from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
-from wef_backend.features.ingestion.domain.telegram_secrets import (
-    TelegramSecretError,
-    load_telegram_worker_secrets,
-)
+from wef_backend.features.ingestion.domain.telegram_secrets import TelegramSecretError
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
 from wef_backend.features.ingestion.infrastructure.telethon_client import TelethonLiveClient
 from wef_backend.settings import load_settings
+from wef_backend.telegram_credentials import secrets_from_settings
 
 if TYPE_CHECKING:
     from wef_backend.features.ingestion.application.telegram_live import LiveBackfillResult
@@ -45,7 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Bounded live Telegram backfill through shared ingestion persistence. "
-            "Requires worker-only api_id/api_hash/session files (mode 0600)."
+            "Requires WEF_TELEGRAM_API_ID and WEF_TELEGRAM_API_HASH in the environment."
         ),
     )
     parser.add_argument(
@@ -77,11 +75,7 @@ async def run_backfill(
 ) -> LiveBackfillResult:
     """Load secrets, connect Telethon, and run one bounded backfill window."""
     settings = load_settings()
-    secrets = load_telegram_worker_secrets(
-        api_id_file=settings.telegram_api_id_file,
-        api_hash_file=settings.telegram_api_hash_file,
-        session_file=settings.telegram_session_file,
-    )
+    secrets = secrets_from_settings(settings)
     engine = create_async_engine(settings.database_url)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     store = SQLAlchemyIngestionPersistence(session_factory)

@@ -25,25 +25,24 @@ promotion:
 
 ## Outcome
 
-Ship disabled-by-default local/production Compose for `telegram-worker`, redacted
-worker health/staleness + export-checkpoint reconciliation, session-rotation dry-run,
-and an explicit production activation gate—without enabling the worker while B-003
-secrets are missing.
+Ship local (profile-gated) and production Compose for `telegram-worker`, redacted
+worker health/staleness + export-checkpoint reconciliation, and session-rotation
+dry-run. Production starts the worker with the application; first authorized session
+still needs a phone/login (B-003).
 
 ## Work
 
-- [x] Disabled-by-default `telegram-worker` Compose profile (local + production).
-- [x] Secret-path transfer contract (`/run/secrets/wef_telegram_*`, host `secrets/current`).
+- [x] Disabled-by-default local `telegram-worker` Compose profile; production worker starts with the application.
+- [x] Env credentials (`WEF_TELEGRAM_API_ID` / `WEF_TELEGRAM_API_HASH` / optional session) plus generated string session persist under `secrets/telegram`.
 - [x] `wef-telegram-worker-status` for last received/committed timestamps and reconciliation.
 - [x] Freshness classification that never gates public API readiness.
 - [x] Session rotation rehearsal dry-run checklist.
-- [x] `wef-telegram-worker` entrypoint fail-closed unless `WEF_TELEGRAM_WORKER_ACTIVATE=1`.
-- [ ] Live production activation with owner-supplied secrets (blocked on B-003).
-- [ ] Continuous live loop enablement (`WEF_TELEGRAM_WORKER_LIVE_LOOP=1`) after activation evidence.
+- [x] `wef-telegram-worker` runs the live listen loop after in-app session generation.
+- [ ] First authorized production session (phone/code) and live new/edit/delete evidence.
 
 ## Acceptance
 
-- [x] Compose profile is present and off by default; ordinary `make up` / production deploy does not start the worker.
+- [x] Local Compose profile is off by default; ordinary production deploys start `telegram-worker`.
 - [x] Last live checkpoint / finished_at and max persisted external message id are observable via CLI.
 - [x] Unexplained live-ahead checkpoints are classified and exit non-zero from status CLI.
 - [x] Rotation rehearsal is printable without mutating secrets.
@@ -52,8 +51,7 @@ secrets are missing.
 
 ## Safety limits
 
-- Do not set `WEF_TELEGRAM_WORKER_ACTIVATE=1` or enable the Compose profile in production until B-003 is cleared and owner activation is recorded.
-- Continuous live loop remains gated even after a successful session probe.
+- Production `telegram-worker` starts with the application; it fail-closes until API credentials exist and a string session can be generated or loaded.
 - Worker freshness must not affect `/api/v1/health/ready`.
 
 ## Dependencies and traceability

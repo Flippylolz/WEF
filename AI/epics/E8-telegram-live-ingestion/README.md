@@ -69,4 +69,4 @@ None remaining for E8.
 
 ## Lifecycle
 
-Follow the [approval-gated workflow](../../workflow/README.md). Live worker enablement remains gated on B-003 secrets plus owner activation under E8-T5.
+Follow the [approval-gated workflow](../../workflow/README.md). Production starts `telegram-worker` with the application; first authorized session remains gated on B-003 (phone/login).

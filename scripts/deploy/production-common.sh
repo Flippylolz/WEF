@@ -56,12 +56,14 @@ prepare_runtime_directories() {
   mkdir -p \
     "$WEF_ROOT/media/originals" \
     "$WEF_ROOT/media/public" \
-    "$WEF_ROOT/media/reports"
+    "$WEF_ROOT/media/reports" \
+    "$WEF_ROOT/secrets/telegram"
   chmod 0750 \
     "$WEF_ROOT/media" \
     "$WEF_ROOT/media/originals" \
     "$WEF_ROOT/media/public" \
     "$WEF_ROOT/media/reports"
+  chmod 0700 "$WEF_ROOT/secrets/telegram"
 }
 
 initialize_release_context() {
@@ -156,6 +158,7 @@ bring_up_application_services() {
   else
     production_compose up --detach --wait api web edge
   fi
+  production_compose up --detach telegram-worker
   reconnect_shared_edge_upstreams
 }
 

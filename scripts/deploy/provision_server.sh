@@ -37,6 +37,7 @@ fi
 mkdir -p \
   "$WEF_ROOT/releases" \
   "$WEF_ROOT/secrets/releases" \
+  "$WEF_ROOT/secrets/telegram" \
   "$WEF_ROOT/postgres" \
   "$WEF_ROOT/media" \
   "$WEF_ROOT/media/originals" \
@@ -61,6 +62,6 @@ chmod 0750 \
   "$WEF_ROOT/caddy-data" \
   "$WEF_ROOT/state" \
   "$WEF_ROOT/logs"
-chmod 0700 "$WEF_ROOT/secrets" "$WEF_ROOT/secrets/releases" "$WEF_ROOT/postgres"
+chmod 0700 "$WEF_ROOT/secrets" "$WEF_ROOT/secrets/releases" "$WEF_ROOT/secrets/telegram" "$WEF_ROOT/postgres"
 
 printf 'Prepared the isolated WEF server boundary at %s.\n' "$WEF_ROOT"

@@ -2,25 +2,19 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Protocol
 
 from wef_backend.features.ingestion.domain.telegram_channel import (
-    TelegramWorkerSecretPaths,
     default_live_channel_identity,
-    inspect_secret_file,
 )
 from wef_backend.features.ingestion.domain.telegram_worker_ops import (
-    ACTIVATION_ENV,
-    COMPOSE_PROFILE,
+    COMPOSE_SERVICE,
     DEFAULT_STALE_AFTER,
-    LIVE_LOOP_ENV,
     FreshnessInput,
     TelegramWorkerStatus,
     classify_freshness,
-    production_activation_allowed,
     reconcile_checkpoints,
     session_rotation_rehearsal_steps,
 )
@@ -46,9 +40,8 @@ class TelegramWorkerStatusStore(Protocol):
 class WorkerStatusOptions:
     """Optional overrides for building a worker status report."""
 
-    activation_enabled: bool | None = None
-    live_loop_enabled: bool | None = None
-    owner_gate_open: bool = False
+    credentials_ready: bool = False
+    session_ready: bool = False
     stale_after: timedelta = DEFAULT_STALE_AFTER
     now: datetime | None = None
 
@@ -56,24 +49,11 @@ class WorkerStatusOptions:
 async def build_telegram_worker_status(
     store: TelegramWorkerStatusStore,
     *,
-    secret_paths: TelegramWorkerSecretPaths,
     options: WorkerStatusOptions | None = None,
 ) -> TelegramWorkerStatus:
-    """Assemble a redacted worker ops report from secrets + DB checkpoints."""
+    """Assemble a redacted worker ops report from env credentials + DB checkpoints."""
     opts = options or WorkerStatusOptions()
     identity = default_live_channel_identity()
-    secret_files = tuple(inspect_secret_file(path) for path in secret_paths.required_files())
-    secrets_ready = all(item.present and item.owner_readable_only for item in secret_files)
-    activation = (
-        opts.activation_enabled
-        if opts.activation_enabled is not None
-        else os.environ.get(ACTIVATION_ENV) == "1"
-    )
-    live_loop = (
-        opts.live_loop_enabled
-        if opts.live_loop_enabled is not None
-        else os.environ.get(LIVE_LOOP_ENV) == "1"
-    )
     max_id = await store.max_external_message_id(channel_external_id=identity.channel_id)
     live_checkpoint, finished_at = await store.latest_live_checkpoint(
         channel_external_id=identity.channel_id,
@@ -87,42 +67,35 @@ async def build_telegram_worker_status(
     current = opts.now or datetime.now(UTC)
     freshness = classify_freshness(
         FreshnessInput(
-            secrets_ready=secrets_ready,
-            activation_enabled=activation,
+            credentials_ready=opts.credentials_ready,
             last_committed_at=finished_at,
             connected=None,
             now=current,
             stale_after=opts.stale_after,
         ),
     )
-    gate_open = production_activation_allowed(
-        secrets_ready=secrets_ready,
-        owner_gate_open=opts.owner_gate_open,
-    )
     notes: list[str] = [
         "Public API readiness is independent of telegram-worker freshness.",
-        f"Compose profile `{COMPOSE_PROFILE}` is disabled by default.",
     ]
-    if not secrets_ready:
-        notes.append("Telegram worker secrets are missing or not mode 0600 (B-003).")
-    if not activation:
-        notes.append(f"Set {ACTIVATION_ENV}=1 only after owner activation approval.")
+    if not opts.credentials_ready:
+        notes.append("Set WEF_TELEGRAM_API_ID and WEF_TELEGRAM_API_HASH in the env file.")
+    elif not opts.session_ready:
+        notes.append(
+            "String session will be generated on first authorized login "
+            "(WEF_TELEGRAM_PHONE / WEF_TELEGRAM_LOGIN_CODE).",
+        )
     if reconciliation.unexplained:
         notes.append("Live checkpoint is ahead of persisted source messages.")
     return TelegramWorkerStatus(
-        compose_profile=COMPOSE_PROFILE,
-        activation_env=ACTIVATION_ENV,
-        activation_enabled=activation,
-        live_loop_enabled=live_loop,
-        secrets_ready=secrets_ready,
-        secret_files=secret_files,
+        compose_service=COMPOSE_SERVICE,
+        credentials_ready=opts.credentials_ready,
+        session_ready=opts.session_ready,
         freshness=freshness,
         stale_after_seconds=int(opts.stale_after.total_seconds()),
         last_live_run_finished_at=finished_at,
         last_live_checkpoint_external_id=live_checkpoint,
         max_persisted_external_id=max_id,
         reconciliation=reconciliation,
-        production_activation_gate_open=gate_open,
         notes=tuple(notes),
     )
 
@@ -133,6 +106,6 @@ def rotation_rehearsal_report() -> dict[str, object]:
         "mode": "dry_run",
         "steps": [asdict(step) for step in session_rotation_rehearsal_steps()],
         "note": (
-            "Do not rotate in production until secrets exist and the worker profile is approved."
+            "Rotate by replacing WEF_TELEGRAM_SESSION; the worker generates a new string session."
         ),
     }
