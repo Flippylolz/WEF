@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,6 +16,7 @@ if TYPE_CHECKING:
 
 GREEN_THRESHOLD = 90
 YELLOW_THRESHOLD = 80
+COVERAGE_FLOOR = float(GREEN_THRESHOLD)
 
 
 class CoverageDataError(ValueError):
@@ -86,6 +88,18 @@ def frontend_counts(path: Path) -> CoverageCounts:
     return CoverageCounts(covered, total)
 
 
+def coverage_shortfalls(
+    suites: Mapping[str, CoverageCounts],
+    floor: float,
+) -> tuple[str, ...]:
+    """Return named totals whose coverage is below the required floor."""
+    return tuple(
+        f"{name} {counts.percentage:.1f}%"
+        for name, counts in suites.items()
+        if counts.percentage < floor
+    )
+
+
 def badge_color(percentage: float) -> str:
     """Use familiar coverage colors without depending on a badge service."""
     if percentage >= GREEN_THRESHOLD:
@@ -125,21 +139,42 @@ def render_badge(percentage: float) -> str:
 
 
 def parse_args() -> argparse.Namespace:
-    """Parse report and output paths."""
+    """Parse report paths, output path, and the coverage floor."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend", required=True, type=Path)
     parser.add_argument("--frontend", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument(
+        "--fail-under",
+        type=float,
+        default=COVERAGE_FLOOR,
+        help="fail if backend or frontend coverage is below this percentage",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
-    """Combine both reports and write the resulting badge."""
+    """Combine both reports, write the badge, and enforce the coverage floor."""
     args = parse_args()
-    counts = backend_counts(args.backend) + frontend_counts(args.frontend)
+    backend = backend_counts(args.backend)
+    frontend = frontend_counts(args.frontend)
+    combined = backend + frontend
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(render_badge(counts.percentage), encoding="utf-8")
-    print(f"Repository branch-aware coverage: {counts.percentage:.1f}%")
+    args.output.write_text(render_badge(combined.percentage), encoding="utf-8")
+    print(f"Backend branch-aware coverage: {backend.percentage:.1f}%")
+    print(f"Frontend branch-aware coverage: {frontend.percentage:.1f}%")
+    print(f"Repository branch-aware coverage: {combined.percentage:.1f}%")
+    shortfalls = coverage_shortfalls(
+        {"backend": backend, "frontend": frontend},
+        args.fail_under,
+    )
+    if shortfalls:
+        joined = ", ".join(shortfalls)
+        print(
+            f"Coverage is below the {args.fail_under:.0f}% floor: {joined}",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

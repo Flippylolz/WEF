@@ -69,6 +69,7 @@ services:
         "pytest",
         "--cov=wef_backend",
         "--cov-branch",
+        "--cov-fail-under=90",
         "--cov-report=term-missing",
       ]
     environment:
@@ -88,7 +89,7 @@ services:
       context: ..
       dockerfile: apps/web/Dockerfile
       target: development
-    command: ["pnpm", "test"]
+    command: ["pnpm", "test:coverage"]
     network_mode: none
     restart: "no"
 

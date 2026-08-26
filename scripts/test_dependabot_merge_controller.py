@@ -22,7 +22,13 @@ from scripts.dependabot_merge_controller import (
     process_repository,
 )
 
-REQUIRED = ("Backend", "Frontend and contract", "Repository safety", "Runtime images")
+REQUIRED = (
+    "Backend",
+    "Frontend and contract",
+    "Repository safety",
+    "Runtime images",
+    "Coverage badge",
+)
 OWNERS = frozenset({"Flippylolz"})
 
 
@@ -66,6 +72,7 @@ class DependabotMergeControllerTests(unittest.TestCase):
                 "Frontend and contract",
                 "Repository safety",
                 "Runtime images",
+                "Coverage badge",
             ),
         )
 
@@ -196,7 +203,7 @@ class DependabotMergeControllerTests(unittest.TestCase):
 
     def test_defer_failing_unrelated_check(self) -> None:
         checks = [{"name": name, "state": "SUCCESS"} for name in REQUIRED]
-        checks.append({"name": "Coverage badge", "state": "FAILURE"})
+        checks.append({"name": "Workflow lint", "state": "FAILURE"})
         decision = evaluate_candidate(
             _pr(checks=tuple(checks)),
             required_checks=REQUIRED,
@@ -204,7 +211,7 @@ class DependabotMergeControllerTests(unittest.TestCase):
             repository="Flippylolz/WEF",
         )
         self.assertEqual(decision.action, "defer")
-        self.assertIn("Coverage badge", decision.reason)
+        self.assertIn("Workflow lint", decision.reason)
 
     def test_defer_pending_required_check(self) -> None:
         checks = [{"name": name, "state": "SUCCESS"} for name in REQUIRED]

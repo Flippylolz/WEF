@@ -186,4 +186,48 @@ describe("MapFilterControls", () => {
       screen.getByRole("checkbox", { name: "contentType.unit" }),
     ).toBeChecked();
   });
+
+  it("clears blank numeric and date fields instead of inventing values", async () => {
+    const user = userEvent.setup();
+    const onApply = vi.fn();
+    render(
+      <MapFilterControls
+        facets={facets}
+        facetsError={false}
+        facetsLoading={false}
+        quickFilters={defaultQuickFilters}
+        quickFiltersLoading={false}
+        state={{
+          ...DEFAULT_MAP_SEARCH_STATE,
+          priceMinMinor: 80_000_000,
+          publishedFrom: "2026-08-01T00:00:00.000Z",
+          publishedTo: "2026-08-31T23:59:59.999Z",
+        }}
+        onApply={onApply}
+        onClear={vi.fn()}
+      />,
+    );
+
+    await user.clear(screen.getByRole("spinbutton", { name: "minimumPrice" }));
+    await user.type(
+      screen.getByRole("spinbutton", { name: "maximumPrice" }),
+      "not-a-number",
+    );
+    fireEvent.change(screen.getByLabelText("publishedFrom"), {
+      target: { value: "" },
+    });
+    fireEvent.change(screen.getByLabelText("publishedTo"), {
+      target: { value: "" },
+    });
+    await user.click(screen.getByRole("button", { name: "applyFilters" }));
+
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        priceMinMinor: null,
+        priceMaxMinor: null,
+        publishedFrom: null,
+        publishedTo: null,
+      }),
+    );
+  });
 });
