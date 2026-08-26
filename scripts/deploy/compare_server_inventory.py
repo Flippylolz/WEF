@@ -13,6 +13,7 @@ EXPECTED_WEF_PATHS = {
     "/home/nuc/wef/releases": 0o750,
     "/home/nuc/wef/secrets": 0o700,
     "/home/nuc/wef/secrets/releases": 0o700,
+    "/home/nuc/wef/secrets/telegram": 0o700,
     "/home/nuc/wef/postgres": 0o700,
     "/home/nuc/wef/media": 0o750,
     "/home/nuc/wef/media/originals": 0o750,

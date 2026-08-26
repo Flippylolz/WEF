@@ -83,6 +83,7 @@ def main() -> int:
         for relative in ("postgres", "media", "caddy-data", "state"):
             (root / relative).mkdir(parents=True)
         (root / "media/public").mkdir(parents=True)
+        (root / "secrets/telegram").mkdir(parents=True)
         release_dir.mkdir(parents=True)
         config_dir.mkdir(parents=True)
         shutil.copy2(REPOSITORY_ROOT / "infra/compose.production.yaml", release_dir)
@@ -107,6 +108,8 @@ def main() -> int:
             "WEF_RELEASE_DIR": str(release_dir),
             "WEF_RELEASE_SHA": RELEASE_SHA,
             "WEF_ROOT": str(root),
+            "WEF_TELEGRAM_API_HASH": "0123456789abcdef0123456789abcdef",
+            "WEF_TELEGRAM_API_ID": "12345678",
             "WEF_WEB_IMAGE": "wef-web:local",
         }
         config_file.write_text(

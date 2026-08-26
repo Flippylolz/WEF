@@ -1,11 +1,37 @@
 """Runtime settings loaded only by the composition root."""
 
+from __future__ import annotations
+
+import os
 from decimal import Decimal
 from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _load_dotenv_files() -> None:
+    """Load repo-root/.cwd .env for operator CLIs; skip under pytest."""
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return
+    try:
+        from dotenv import load_dotenv  # noqa: PLC0415
+    except ImportError:
+        return
+    candidates: list[Path] = [Path.cwd() / ".env"]
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "AGENTS.md").is_file():
+            candidates.append(parent / ".env")
+            break
+    seen: set[Path] = set()
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if resolved in seen or not candidate.is_file():
+            continue
+        seen.add(resolved)
+        load_dotenv(candidate, override=False)
 
 
 class Settings(BaseSettings):
@@ -15,6 +41,7 @@ class Settings(BaseSettings):
         env_prefix="WEF_",
         extra="ignore",
         frozen=True,
+        env_ignore_empty=True,
     )
 
     database_url: str = "postgresql+asyncpg://localhost/wef_proof"
@@ -28,14 +55,20 @@ class Settings(BaseSettings):
     historical_channel_id: str = "2180077318"
     historical_channel_type: str = "public_channel"
     historical_channel_name: str | None = "El Estate | Покупка Варшава"
-    # Live Telegram worker identity (non-secret). Secrets stay in worker-only files.
+    # Live Telegram worker identity (non-secret) plus env-backed credentials.
     telegram_channel_username: str = "elestate_warszawa"
     telegram_channel_id: str = "2180077318"
     telegram_channel_title: str = "El Estate | Покупка Варшава"
     telegram_message_link_template: str = "https://t.me/elestate_warszawa/{message_id}"
-    telegram_api_id_file: Path = Path("/run/secrets/wef_telegram_api_id")
-    telegram_api_hash_file: Path = Path("/run/secrets/wef_telegram_api_hash")
-    telegram_session_file: Path = Path("/run/secrets/wef_telegram_session")
+    telegram_api_id: int | None = None
+    telegram_api_hash: SecretStr | None = None
+    telegram_session: SecretStr | None = None
+    telegram_phone: str | None = None
+    telegram_login_code: SecretStr | None = None
+    telegram_2fa_password: SecretStr | None = None
+    telegram_session_path: Path | None = None
+    telegram_env_file: Path | None = None
+    telegram_heartbeat_path: Path = Path("/tmp/wef-telegram-worker.live")  # noqa: S108
     ingestion_report_path: Path = Path("/app/media/reports/e2-dry-run")
     geoapify_api_key: SecretStr | None = None
     geoapify_requests_per_second: Decimal = Field(default=Decimal(4), gt=0, le=5)
@@ -57,4 +90,5 @@ class Settings(BaseSettings):
 
 def load_settings() -> Settings:
     """Load settings explicitly instead of at module import time."""
+    _load_dotenv_files()
     return Settings()

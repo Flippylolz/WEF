@@ -59,18 +59,18 @@ owner activation exist.
 - `wef_backend.features.ingestion.application.telegram_worker_status`
 - `wef_backend.features.ingestion.infrastructure.telegram_worker_status_store`
 - CLI: `wef-telegram-worker-status`, `wef-telegram-worker`
-- Compose profile `telegram-worker` in `infra/compose.yaml` and `infra/compose.production.yaml`
-- No public OpenAPI change; no schema migration; profile remains disabled by default
+- Compose profile `telegram-worker` in local `infra/compose.yaml`; production `infra/compose.production.yaml` starts the worker with the application
+- No public OpenAPI change; no schema migration
 
 ## Tests and checks
 
-- Unit tests for freshness, reconciliation, activation gate, worker fail-closed, rotation dry-run
+- Unit tests for freshness, reconciliation, worker fail-closed, rotation dry-run
 - `make lint` / typecheck / backend tests for the touched modules
 
 ## Rollout and limits
 
-- Do not enable `--profile telegram-worker` or `WEF_TELEGRAM_WORKER_ACTIVATE=1` in production until B-003 is cleared
-- Continuous live loop remains gated (`WEF_TELEGRAM_WORKER_LIVE_LOOP`)
+- Local listener stays behind `--profile telegram-worker`; production starts `telegram-worker` with the application
+- First authorized session still needs a phone/login (B-003); the worker generates `WEF_TELEGRAM_SESSION` in-process
 - Worker freshness never gates `/api/v1/health/ready`
 
 ## Approval checklist

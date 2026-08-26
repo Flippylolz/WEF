@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import stat
+import sys
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from types import SimpleNamespace
@@ -29,6 +29,7 @@ from wef_backend.features.ingestion.application.telegram_backfill import (
     LiveBackfillRequest,
     LiveTelegramBackfill,
 )
+from wef_backend.features.ingestion.application.telegram_events import LiveEventQueue
 from wef_backend.features.ingestion.application.telegram_live import (
     LiveTelegramMessage,
     TelegramChannelEntity,
@@ -41,9 +42,11 @@ from wef_backend.features.ingestion.domain.telegram_channel import (
     default_live_channel_identity,
 )
 from wef_backend.features.ingestion.domain.telegram_secrets import (
+    TelegramLoginCodeError,
     TelegramSecretError,
     TelegramWorkerSecrets,
     load_telegram_worker_secrets,
+    persist_telegram_session,
 )
 from wef_backend.features.ingestion.infrastructure import telethon_client as telethon_module
 from wef_backend.features.ingestion.infrastructure.fake_telegram_client import (
@@ -57,106 +60,55 @@ if TYPE_CHECKING:
     from uuid import UUID
 
 
-def _write_secret(path: Path, value: str, *, mode: int = 0o600) -> None:
-    path.write_text(value, encoding="utf-8")
-    path.chmod(mode)
-
-
-def test_load_telegram_worker_secrets_requires_mode_0600(tmp_path: Path) -> None:
-    api_id = tmp_path / "api_id"
-    api_hash = tmp_path / "api_hash"
-    session = tmp_path / "session"
-    _write_secret(api_id, "12345", mode=0o644)
-    _write_secret(api_hash, "hash")
-    _write_secret(session, "session-string")
-    with pytest.raises(TelegramSecretError, match="mode 0600"):
-        load_telegram_worker_secrets(
-            api_id_file=api_id,
-            api_hash_file=api_hash,
-            session_file=session,
-        )
-
-
-def test_load_telegram_worker_secrets_reads_valid_files(tmp_path: Path) -> None:
-    api_id = tmp_path / "api_id"
-    api_hash = tmp_path / "api_hash"
-    session = tmp_path / "session"
-    _write_secret(api_id, "12345")
-    _write_secret(api_hash, "hash-value")
-    _write_secret(session, "session-string")
+def test_load_telegram_worker_secrets_from_env_values() -> None:
     secrets = load_telegram_worker_secrets(
-        api_id_file=api_id,
-        api_hash_file=api_hash,
-        session_file=session,
+        api_id=12345,
+        api_hash="hash-value",
+        session="session-string",
     )
     assert secrets.api_id == 12345
     assert secrets.api_hash == "hash-value"
     assert secrets.session == "session-string"
-    assert stat.S_IMODE(api_id.stat().st_mode) == 0o600
 
 
-def test_load_telegram_worker_secrets_rejects_bad_api_id(tmp_path: Path) -> None:
-    api_id = tmp_path / "api_id"
-    api_hash = tmp_path / "api_hash"
-    session = tmp_path / "session"
-    _write_secret(api_id, "not-an-int")
-    _write_secret(api_hash, "hash")
-    _write_secret(session, "session")
-    with pytest.raises(TelegramSecretError, match="valid integer"):
-        load_telegram_worker_secrets(
-            api_id_file=api_id,
-            api_hash_file=api_hash,
-            session_file=session,
-        )
+def test_load_telegram_worker_secrets_allows_empty_session() -> None:
+    secrets = load_telegram_worker_secrets(api_id=1, api_hash="hash", session="")
+    assert secrets.session == ""
 
 
-def test_load_telegram_worker_secrets_rejects_non_positive_api_id(tmp_path: Path) -> None:
-    api_id = tmp_path / "api_id"
-    api_hash = tmp_path / "api_hash"
-    session = tmp_path / "session"
-    _write_secret(api_id, "0")
-    _write_secret(api_hash, "hash")
-    _write_secret(session, "session")
+def test_load_telegram_worker_secrets_rejects_bad_api_id() -> None:
     with pytest.raises(TelegramSecretError, match="positive integer"):
-        load_telegram_worker_secrets(
-            api_id_file=api_id,
-            api_hash_file=api_hash,
-            session_file=session,
-        )
+        load_telegram_worker_secrets(api_id=None, api_hash="hash", session="session")
+    with pytest.raises(TelegramSecretError, match="positive integer"):
+        load_telegram_worker_secrets(api_id=0, api_hash="hash", session="session")
 
 
-def test_load_telegram_worker_secrets_rejects_empty_hash_and_session(
-    tmp_path: Path,
-) -> None:
-    api_id = tmp_path / "api_id"
-    api_hash = tmp_path / "api_hash"
-    session = tmp_path / "session"
-    _write_secret(api_id, "1")
-    _write_secret(api_hash, "   ")
-    _write_secret(session, "session")
+def test_load_telegram_worker_secrets_rejects_empty_hash() -> None:
     with pytest.raises(TelegramSecretError, match="api_hash"):
-        load_telegram_worker_secrets(
-            api_id_file=api_id,
-            api_hash_file=api_hash,
-            session_file=session,
-        )
-    _write_secret(api_hash, "hash")
-    _write_secret(session, "   ")
-    with pytest.raises(TelegramSecretError, match="session"):
-        load_telegram_worker_secrets(
-            api_id_file=api_id,
-            api_hash_file=api_hash,
-            session_file=session,
-        )
+        load_telegram_worker_secrets(api_id=1, api_hash="  ", session="session")
 
 
-def test_load_telegram_worker_secrets_rejects_missing_file(tmp_path: Path) -> None:
-    with pytest.raises(TelegramSecretError, match="missing"):
-        load_telegram_worker_secrets(
-            api_id_file=tmp_path / "missing",
-            api_hash_file=tmp_path / "missing2",
-            session_file=tmp_path / "missing3",
-        )
+def test_load_telegram_worker_secrets_reads_session_path(tmp_path: Path) -> None:
+    session_path = tmp_path / "session"
+    session_path.write_text("from-file", encoding="utf-8")
+    secrets = load_telegram_worker_secrets(
+        api_id=1,
+        api_hash="hash",
+        session=None,
+        session_path=session_path,
+    )
+    assert secrets.session == "from-file"
+
+
+def test_persist_telegram_session_writes_env_and_path(tmp_path: Path) -> None:
+    session_path = tmp_path / "nested" / "session"
+    env_file = tmp_path / ".env"
+    env_file.write_text("WEF_ENV=development\nWEF_TELEGRAM_SESSION=old\n", encoding="utf-8")
+    persist_telegram_session("generated-session", session_path=session_path, env_file=env_file)
+    assert session_path.read_text(encoding="utf-8") == "generated-session"
+    assert "WEF_TELEGRAM_SESSION=generated-session" in env_file.read_text(encoding="utf-8")
+    assert "WEF_ENV=development" in env_file.read_text(encoding="utf-8")
+    assert oct(session_path.stat().st_mode & 0o777) == "0o600"
 
 
 def test_verify_channel_entity_rejects_mismatches() -> None:
@@ -433,12 +385,17 @@ class _FakeTelethon:
         self._authorized = True
         self.flood_on_entity = False
         self.flood_on_iter = False
+        self.session = SimpleNamespace(save=lambda: "session")
+        self._connected = False
+
+    def is_connected(self) -> bool:
+        return self._connected
 
     async def connect(self) -> None:
-        return None
+        self._connected = True
 
     async def disconnect(self) -> None:
-        return None
+        self._connected = False
 
     async def is_user_authorized(self) -> bool:
         return self._authorized
@@ -486,7 +443,9 @@ async def test_telethon_live_client_resolve_waits_on_flood(
         sleep=_sleep,
     )
     client._client.flood_on_entity = True  # noqa: SLF001
+    assert client.is_connected() is False
     await client.connect()
+    assert client.is_connected() is True
     entity = await client.resolve_channel("elestate_warszawa")
     assert entity.channel_id == "2180077318"
     assert sleeps == [2]
@@ -517,12 +476,81 @@ async def test_telethon_live_client_iter_waits_on_flood(
 
 
 @pytest.mark.asyncio
-async def test_telethon_live_client_requires_authorization(
+async def test_telethon_live_client_generates_session_with_login_code(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _LoginClient:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            self.session = SimpleNamespace(save=lambda: "generated")
+            self._authorized = False
+            self.signed_in: list[str] = []
+
+        def is_connected(self) -> bool:
+            return True
+
+        async def connect(self) -> None:
+            return None
+
+        async def is_user_authorized(self) -> bool:
+            return self._authorized
+
+        async def sign_in(self, phone: str, code: str) -> None:
+            self.signed_in.append(f"{phone}:{code}")
+            self._authorized = True
+
+    monkeypatch.setattr(telethon_module, "TelegramClient", _LoginClient)
+    monkeypatch.setattr(telethon_module, "StringSession", lambda value: value)
+    client = telethon_module.TelethonLiveClient(
+        TelegramWorkerSecrets(api_id=1, api_hash="hash", session=""),
+    )
+    await client.connect()
+    session = await client.ensure_authorized(phone="+48111", login_code="12345")
+    assert session == "generated"
+
+
+@pytest.mark.asyncio
+async def test_telethon_live_client_requests_login_code_without_tty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _Pending:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            self.session = SimpleNamespace(save=lambda: "")
+            self.code_requested = False
+
+        def is_connected(self) -> bool:
+            return True
+
+        async def connect(self) -> None:
+            return None
+
+        async def is_user_authorized(self) -> bool:
+            return False
+
+        async def send_code_request(self, phone: str) -> None:
+            assert phone == "+48111"
+            self.code_requested = True
+
+    monkeypatch.setattr(telethon_module, "TelegramClient", _Pending)
+    monkeypatch.setattr(telethon_module, "StringSession", lambda value: value)
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
+    client = telethon_module.TelethonLiveClient(
+        TelegramWorkerSecrets(api_id=1, api_hash="hash", session=""),
+    )
+    await client.connect()
+    with pytest.raises(TelegramLoginCodeError, match="login code sent"):
+        await client.ensure_authorized(phone="+48111")
+
+
+@pytest.mark.asyncio
+async def test_telethon_live_client_requires_phone_when_unauthorized(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class _Unauthorized:
         def __init__(self, *_args: object, **_kwargs: object) -> None:
             return None
+
+        def is_connected(self) -> bool:
+            return True
 
         async def connect(self) -> None:
             return None
@@ -533,10 +561,94 @@ async def test_telethon_live_client_requires_authorization(
     monkeypatch.setattr(telethon_module, "TelegramClient", _Unauthorized)
     monkeypatch.setattr(telethon_module, "StringSession", lambda value: value)
     client = telethon_module.TelethonLiveClient(
-        TelegramWorkerSecrets(api_id=1, api_hash="hash", session="session"),
+        TelegramWorkerSecrets(api_id=1, api_hash="hash", session=""),
     )
-    with pytest.raises(RuntimeError, match="not authorized"):
-        await client.connect()
+    await client.connect()
+    with pytest.raises(TelegramSecretError, match="WEF_TELEGRAM_PHONE"):
+        await client.ensure_authorized()
+
+
+@pytest.mark.asyncio
+async def test_telethon_live_client_sign_in_uses_2fa_password(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _NeedPasswordError(Exception):
+        pass
+
+    class _Session:
+        def save(self) -> str:
+            return "sess-2fa"
+
+    class _Client:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            self.session = _Session()
+            self.authorized = False
+
+        def is_connected(self) -> bool:
+            return True
+
+        async def connect(self) -> None:
+            return None
+
+        async def is_user_authorized(self) -> bool:
+            return self.authorized
+
+        async def sign_in(
+            self,
+            phone: str | None = None,
+            code: str | None = None,
+            password: str | None = None,
+        ) -> None:
+            if password is None:
+                assert phone == "+48111"
+                assert code == "22222"
+                raise _NeedPasswordError
+            self.authorized = True
+
+    monkeypatch.setattr(telethon_module, "TelegramClient", _Client)
+    monkeypatch.setattr(telethon_module, "StringSession", lambda value: value)
+    monkeypatch.setattr(telethon_module, "SessionPasswordNeededError", _NeedPasswordError)
+    client = telethon_module.TelethonLiveClient(
+        TelegramWorkerSecrets(api_id=1, api_hash="hash", session=""),
+    )
+    await client.connect()
+    two_factor = "2fa-secret"
+    session = await client.ensure_authorized(
+        phone="+48111",
+        login_code="22222",
+        password=two_factor,
+    )
+    assert session == "sess-2fa"
+    assert client.save_session() == "sess-2fa"
+
+
+@pytest.mark.asyncio
+async def test_telethon_live_client_subscribe_registers_handlers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    handlers: list[object] = []
+
+    class _Client:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            return None
+
+        def is_connected(self) -> bool:
+            return True
+
+        async def connect(self) -> None:
+            return None
+
+        def add_event_handler(self, callback: object, event: object) -> None:
+            handlers.append((callback, event))
+
+    monkeypatch.setattr(telethon_module, "TelegramClient", _Client)
+    monkeypatch.setattr(telethon_module, "StringSession", lambda value: value)
+    client = telethon_module.TelethonLiveClient(
+        TelegramWorkerSecrets(api_id=1, api_hash="hash", session="sess"),
+    )
+    await client.connect()
+    client.subscribe_channel("elestate_warszawa", LiveEventQueue())
+    assert len(handlers) == 3
 
 
 @pytest.mark.asyncio

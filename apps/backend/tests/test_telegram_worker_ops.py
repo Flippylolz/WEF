@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Self
@@ -10,19 +11,28 @@ from uuid import uuid4
 import pytest
 
 from wef_backend import telegram_worker_command, telegram_worker_status_command
+from wef_backend.features.ingestion.application.telegram_worker_liveness import (
+    maintain_worker_heartbeat,
+    worker_liveness_ok,
+    write_worker_heartbeat,
+)
 from wef_backend.features.ingestion.application.telegram_worker_status import (
     WorkerStatusOptions,
     build_telegram_worker_status,
     rotation_rehearsal_report,
 )
-from wef_backend.features.ingestion.domain.telegram_channel import TelegramWorkerSecretPaths
-from wef_backend.features.ingestion.domain.telegram_secrets import TelegramSecretError
+from wef_backend.features.ingestion.domain.telegram_secrets import (
+    TelegramLoginCodeError,
+    TelegramSecretError,
+)
 from wef_backend.features.ingestion.domain.telegram_worker_ops import (
+    DEFAULT_HEARTBEAT_MAX_AGE,
     FreshnessInput,
     ReconciliationStatus,
     WorkerFreshness,
     classify_freshness,
-    production_activation_allowed,
+    heartbeat_is_fresh,
+    parse_heartbeat_timestamp,
     reconcile_checkpoints,
 )
 from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store import (
@@ -161,74 +171,23 @@ class _InvalidCheckpointFactory:
         return _InvalidCheckpointSession()
 
 
-def _secret_paths(tmp_path: Path, *, ready: bool) -> TelegramWorkerSecretPaths:
-    paths = TelegramWorkerSecretPaths(
-        api_id_file=tmp_path / "wef_telegram_api_id",
-        api_hash_file=tmp_path / "wef_telegram_api_hash",
-        session_file=tmp_path / "wef_telegram_session",
-    )
-    if ready:
-        for path in paths.required_files():
-            path.write_text("x", encoding="utf-8")
-            path.chmod(0o600)
-    return paths
-
-
 def test_classify_freshness_and_reconciliation() -> None:
     now = datetime(2026, 8, 21, 12, 0, tzinfo=UTC)
     assert (
         classify_freshness(
             FreshnessInput(
-                secrets_ready=False,
-                activation_enabled=True,
+                credentials_ready=False,
                 last_committed_at=now,
                 connected=True,
                 now=now,
             ),
         )
-        is WorkerFreshness.SECRETS_PENDING
+        is WorkerFreshness.CREDENTIALS_PENDING
     )
     assert (
         classify_freshness(
             FreshnessInput(
-                secrets_ready=True,
-                activation_enabled=False,
-                last_committed_at=now,
-                connected=True,
-                now=now,
-            ),
-        )
-        is WorkerFreshness.ACTIVATION_CLOSED
-    )
-    assert (
-        classify_freshness(
-            FreshnessInput(
-                secrets_ready=True,
-                activation_enabled=True,
-                last_committed_at=now - timedelta(minutes=20),
-                connected=True,
-                now=now,
-            ),
-        )
-        is WorkerFreshness.STALE
-    )
-    assert (
-        classify_freshness(
-            FreshnessInput(
-                secrets_ready=True,
-                activation_enabled=True,
-                last_committed_at=now - timedelta(minutes=5),
-                connected=True,
-                now=now,
-            ),
-        )
-        is WorkerFreshness.FRESH
-    )
-    assert (
-        classify_freshness(
-            FreshnessInput(
-                secrets_ready=True,
-                activation_enabled=True,
+                credentials_ready=True,
                 last_committed_at=now,
                 connected=False,
                 now=now,
@@ -239,8 +198,29 @@ def test_classify_freshness_and_reconciliation() -> None:
     assert (
         classify_freshness(
             FreshnessInput(
-                secrets_ready=True,
-                activation_enabled=True,
+                credentials_ready=True,
+                last_committed_at=now - timedelta(minutes=20),
+                connected=True,
+                now=now,
+            ),
+        )
+        is WorkerFreshness.STALE
+    )
+    assert (
+        classify_freshness(
+            FreshnessInput(
+                credentials_ready=True,
+                last_committed_at=now - timedelta(minutes=5),
+                connected=True,
+                now=now,
+            ),
+        )
+        is WorkerFreshness.FRESH
+    )
+    assert (
+        classify_freshness(
+            FreshnessInput(
+                credentials_ready=True,
                 last_committed_at=None,
                 connected=True,
                 now=now,
@@ -268,44 +248,128 @@ def test_classify_freshness_and_reconciliation() -> None:
         live_checkpoint_external_id=0,
     )
     assert empty.status is ReconciliationStatus.NO_SOURCE_DATA
-    assert production_activation_allowed(secrets_ready=True, owner_gate_open=False) is False
-    assert production_activation_allowed(secrets_ready=True, owner_gate_open=True) is True
+
+
+def test_heartbeat_freshness_and_parse() -> None:
+    now = datetime(2026, 8, 26, 12, 0, tzinfo=UTC)
+    written = parse_heartbeat_timestamp("2026-08-26T12:00:00+00:00")
+    assert heartbeat_is_fresh(written, now=now, max_age=DEFAULT_HEARTBEAT_MAX_AGE)
+    naive = parse_heartbeat_timestamp("2026-08-26T12:00:00")
+    assert naive.tzinfo is not None
+    stale = now - DEFAULT_HEARTBEAT_MAX_AGE - timedelta(seconds=1)
+    assert not heartbeat_is_fresh(stale, now=now)
+    with pytest.raises(ValueError, match="empty"):
+        parse_heartbeat_timestamp("  ")
+
+
+def test_worker_liveness_ok_requires_fresh_file(tmp_path: Path) -> None:
+    path = tmp_path / "heartbeat"
+    now = datetime(2026, 8, 26, 12, 0, tzinfo=UTC)
+    assert worker_liveness_ok(path, now=now) is False
+    write_worker_heartbeat(path, now=now)
+    assert worker_liveness_ok(path, now=now) is True
+    assert worker_liveness_ok(path, now=now + timedelta(minutes=2)) is False
+    path.write_text("not-a-timestamp", encoding="utf-8")
+    assert worker_liveness_ok(path, now=now) is False
 
 
 @pytest.mark.asyncio
-async def test_build_status_reports_secrets_pending(tmp_path: Path) -> None:
+async def test_maintain_worker_heartbeat_writes_while_connected_then_unlinks(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "heartbeat"
+    stop = asyncio.Event()
+    task = asyncio.create_task(
+        maintain_worker_heartbeat(
+            path,
+            is_connected=lambda: True,
+            stop=stop,
+            interval=0.05,
+        ),
+    )
+    for _ in range(40):
+        if path.is_file():
+            break
+        await asyncio.sleep(0.025)
+    assert worker_liveness_ok(path) is True
+    stop.set()
+    await task
+    assert path.is_file() is False
+
+
+@pytest.mark.asyncio
+async def test_maintain_worker_heartbeat_skips_write_while_disconnected(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "heartbeat"
+    stop = asyncio.Event()
+    task = asyncio.create_task(
+        maintain_worker_heartbeat(
+            path,
+            is_connected=lambda: False,
+            stop=stop,
+            interval=0.05,
+        ),
+    )
+    await asyncio.sleep(0.08)
+    stop.set()
+    await task
+    assert path.is_file() is False
+
+
+def test_status_liveness_cli_exits_on_missing_heartbeat(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        telegram_worker_status_command,
+        "load_settings",
+        lambda: Settings(telegram_heartbeat_path=tmp_path / "missing"),
+    )
+    with pytest.raises(SystemExit) as exited:
+        status_main(["--liveness"])
+    assert exited.value.code == 1
+
+
+def test_status_liveness_cli_succeeds_when_heartbeat_is_fresh(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "heartbeat"
+    write_worker_heartbeat(path)
+    monkeypatch.setattr(
+        telegram_worker_status_command,
+        "load_settings",
+        lambda: Settings(telegram_heartbeat_path=path),
+    )
+    status_main(["--liveness"])
+
+
+@pytest.mark.asyncio
+async def test_build_status_reports_credentials_pending() -> None:
     status = await build_telegram_worker_status(
         _FakeStore(max_id=10, checkpoint=5, finished_at=datetime.now(UTC)),
-        secret_paths=_secret_paths(tmp_path, ready=False),
-        options=WorkerStatusOptions(activation_enabled=False, owner_gate_open=False),
+        options=WorkerStatusOptions(credentials_ready=False, session_ready=False),
     )
-    assert status.freshness is WorkerFreshness.SECRETS_PENDING
+    assert status.freshness is WorkerFreshness.CREDENTIALS_PENDING
     assert status.reconciliation.status is ReconciliationStatus.LIVE_BEHIND
-    assert status.production_activation_gate_open is False
-    assert status.compose_profile == "telegram-worker"
+    assert status.compose_service == "telegram-worker"
 
 
 @pytest.mark.asyncio
-async def test_build_status_marks_fresh_when_activated(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setenv("WEF_TELEGRAM_WORKER_LIVE_LOOP", "1")
+async def test_build_status_marks_fresh_when_credentials_ready() -> None:
     finished = datetime(2026, 8, 21, 11, 55, tzinfo=UTC)
     status = await build_telegram_worker_status(
         _FakeStore(max_id=42, checkpoint=90, finished_at=finished),
-        secret_paths=_secret_paths(tmp_path, ready=True),
         options=WorkerStatusOptions(
-            activation_enabled=True,
-            owner_gate_open=True,
+            credentials_ready=True,
+            session_ready=True,
             now=datetime(2026, 8, 21, 12, 0, tzinfo=UTC),
         ),
     )
-    assert status.secrets_ready is True
+    assert status.credentials_ready is True
     assert status.freshness is WorkerFreshness.FRESH
-    assert status.live_loop_enabled is True
     assert status.reconciliation.status is ReconciliationStatus.LIVE_AHEAD_UNEXPLAINED
-    assert status.production_activation_gate_open is True
     payload = _serialize_status(status)
     assert payload["last_live_run_finished_at"] == "2026-08-21T11:55:00Z"
 
@@ -318,82 +382,49 @@ def test_rotation_rehearsal_report_is_dry_run() -> None:
     assert len(steps) >= 5
 
 
-def test_worker_main_fails_closed_without_activation(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("WEF_TELEGRAM_WORKER_ACTIVATE", raising=False)
-    with pytest.raises(SystemExit) as exc:
-        worker_main()
-    assert exc.value.code == 2
-
-
 def test_worker_main_fails_closed_on_secret_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("WEF_TELEGRAM_WORKER_ACTIVATE", "1")
-
     async def _fail() -> None:
         message = "missing"
         raise TelegramSecretError(message)
 
-    monkeypatch.setattr(telegram_worker_command, "_probe_authorized_session", _fail)
+    monkeypatch.setattr(telegram_worker_command, "run_telegram_worker", _fail)
     with pytest.raises(SystemExit) as exc:
         worker_main()
     assert exc.value.code == 2
 
 
-def test_worker_main_fails_closed_on_probe_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("WEF_TELEGRAM_WORKER_ACTIVATE", "1")
+def test_worker_main_exits_when_login_code_required(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fail() -> None:
+        message = "login code sent"
+        raise TelegramLoginCodeError(message)
 
+    monkeypatch.setattr(telegram_worker_command, "run_telegram_worker", _fail)
+    with pytest.raises(SystemExit) as exc:
+        worker_main()
+    assert exc.value.code == 3
+
+
+def test_worker_main_fails_closed_on_runtime_error(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _fail() -> None:
         message = "probe failed"
         raise RuntimeError(message)
 
-    monkeypatch.setattr(telegram_worker_command, "_probe_authorized_session", _fail)
+    monkeypatch.setattr(telegram_worker_command, "run_telegram_worker", _fail)
     with pytest.raises(SystemExit) as exc:
         worker_main()
     assert exc.value.code == 2
 
 
-def test_worker_main_succeeds_when_loop_gated(
+def test_worker_main_succeeds_when_loop_returns(
     monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    monkeypatch.setenv("WEF_TELEGRAM_WORKER_ACTIVATE", "1")
-    monkeypatch.delenv("WEF_TELEGRAM_WORKER_LIVE_LOOP", raising=False)
-
-    class _Client:
-        async def connect(self) -> None:
-            return None
-
-        async def disconnect(self) -> None:
-            return None
-
-        async def resolve_channel(self, username: str) -> object:
-            assert username == "elestate_warszawa"
-            return object()
-
-    monkeypatch.setattr(
-        telegram_worker_command,
-        "load_telegram_worker_secrets",
-        lambda **_kwargs: object(),
-    )
-    monkeypatch.setattr(telegram_worker_command, "TelethonLiveClient", lambda _secrets: _Client())
-    monkeypatch.setattr(telegram_worker_command, "verify_channel_entity", lambda *_args: None)
-    monkeypatch.setattr(telegram_worker_command, "load_settings", Settings)
-    with pytest.raises(SystemExit) as exc:
-        worker_main()
-    assert exc.value.code == 0
-    assert "continuous live loop remains gated" in capsys.readouterr().out
-
-
-def test_worker_main_refuses_live_loop(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("WEF_TELEGRAM_WORKER_ACTIVATE", "1")
-    monkeypatch.setenv("WEF_TELEGRAM_WORKER_LIVE_LOOP", "1")
-
     async def _ok() -> None:
         return None
 
-    monkeypatch.setattr(telegram_worker_command, "_probe_authorized_session", _ok)
-    with pytest.raises(SystemExit) as exc:
-        worker_main()
-    assert exc.value.code == 2
+    monkeypatch.setattr(telegram_worker_command, "run_telegram_worker", _ok)
+    worker_main()
 
 
 def test_status_rotation_dry_run_prints_json(capsys: pytest.CaptureFixture[str]) -> None:
@@ -406,20 +437,18 @@ def test_status_main_exits_on_unexplained_gap(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    async def _status(*, owner_gate_open: bool) -> dict[str, object]:
-        _ = owner_gate_open
+    async def _status() -> dict[str, object]:
         return {"reconciliation": {"unexplained": True}}
 
     monkeypatch.setattr(telegram_worker_status_command, "run_status", _status)
     with pytest.raises(SystemExit) as exc:
-        status_main(["--owner-gate-open"])
+        status_main([])
     assert exc.value.code == 3
     assert "unexplained" in capsys.readouterr().out
 
 
 def test_status_main_exits_on_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    async def _status(*, owner_gate_open: bool) -> dict[str, object]:
-        _ = owner_gate_open
+    async def _status() -> dict[str, object]:
         message = "db down"
         raise RuntimeError(message)
 
@@ -465,7 +494,6 @@ async def test_status_store_ignores_invalid_checkpoint() -> None:
 
 @pytest.mark.asyncio
 async def test_run_status_disposes_engine(
-    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     disposed: list[str] = []
@@ -487,12 +515,10 @@ async def test_run_status_disposes_engine(
         telegram_worker_status_command,
         "load_settings",
         lambda: Settings(
-            telegram_api_id_file=tmp_path / "missing-id",
-            telegram_api_hash_file=tmp_path / "missing-hash",
-            telegram_session_file=tmp_path / "missing-session",
+            telegram_api_id=None,
+            telegram_api_hash=None,
         ),
     )
-    payload = await telegram_worker_status_command.run_status(owner_gate_open=False)
+    payload = await telegram_worker_status_command.run_status()
     assert disposed == ["yes"]
-    assert payload["freshness"] == WorkerFreshness.SECRETS_PENDING.value
-    assert payload["production_activation_gate_open"] is False
+    assert payload["freshness"] == WorkerFreshness.CREDENTIALS_PENDING.value

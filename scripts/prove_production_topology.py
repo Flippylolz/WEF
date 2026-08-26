@@ -77,6 +77,8 @@ def release_environment() -> dict[str, str]:
         "WEF_RELEASE_DIR": str(RELEASE_DIR),
         "WEF_RELEASE_SHA": RELEASE_SHA,
         "WEF_ROOT": str(WEF_ROOT),
+        "WEF_TELEGRAM_API_HASH": "0123456789abcdef0123456789abcdef",
+        "WEF_TELEGRAM_API_ID": "12345678",
         "WEF_WEB_IMAGE": WEB_IMAGE,
     }
 
@@ -170,6 +172,7 @@ def assert_topology(model: dict[str, Any]) -> None:  # noqa: PLR0915
         "geocoder-check",
         "migrate",
         "seed",
+        "telegram-worker",
         "web",
     }
     assert all("build" not in service for service in services.values())
@@ -225,13 +228,23 @@ def assert_topology(model: dict[str, Any]) -> None:  # noqa: PLR0915
     assert forbidden_targets.isdisjoint(api_mounts)
     assert forbidden_targets.isdisjoint(edge_mounts)
 
-    for name in ("api", "geocoder-check", "migrate", "seed", "web"):
+    for name in ("api", "geocoder-check", "migrate", "seed", "telegram-worker", "web"):
         service = services[name]
         assert service["read_only"] is True
         assert service["security_opt"] == ["no-new-privileges:true"]
         assert service["cap_drop"] == ["ALL"]
         assert int(service["pids_limit"]) > 0
         assert int(service["mem_limit"]) > 0
+
+    worker = services["telegram-worker"]
+    assert "profiles" not in worker
+    assert worker["command"] == ["wef-telegram-worker"]
+    assert worker["user"] == "1000:1000"
+    health = worker["healthcheck"]
+    assert not health.get("disable", False)
+    assert health["test"][0] in {"CMD", "CMD-SHELL"}
+    assert "wef-telegram-worker-status" in health["test"]
+    assert "--liveness" in health["test"]
 
     for service in services.values():
         assert "container_name" not in service

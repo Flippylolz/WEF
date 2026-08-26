@@ -9,7 +9,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { UserToolbar } from "@/components/user-toolbar";
+import { UserToolbar, type AuthOpener } from "@/components/user-toolbar";
 import * as authApi from "@/lib/auth-api";
 import * as favoritesApi from "@/lib/favorites-api";
 
@@ -32,7 +32,7 @@ const account: authApi.Account = {
 function renderToolbar(
   props: {
     onSelectFavorite?: (locationId: string) => void;
-    onRegisterAuthOpener?: (open: (intent: { mode: "login" }) => void) => void;
+    onRegisterAuthOpener?: (open: AuthOpener) => void;
     onAccountChange?: (account: authApi.Account | null) => void;
   } = {},
 ) {
@@ -75,8 +75,7 @@ describe("UserToolbar", () => {
       state: "ready",
       data: null,
     });
-    let openAuth:
-      ((intent: { mode: "login" | "register" }) => void) | undefined;
+    let openAuth: AuthOpener | undefined;
     renderToolbar({
       onRegisterAuthOpener: (open) => {
         openAuth = open;

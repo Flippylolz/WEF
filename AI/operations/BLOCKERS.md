@@ -6,13 +6,13 @@ This append-only log records blockers that could not be safely resolved autonomo
 
 ### B-003: Telegram client credentials/session
 
-- Impact: live channel ingestion cannot run.
-- Current state: public channel URL is known, but Telegram API ID/hash and an authorized
-  Telethon session are not available. The GitHub Actions secret inventory checked on
-  2026-08-13 contains no Telegram credential/session names.
-- Needed from owner: provide credentials later through GitHub secrets, never chat/repository files.
-- Safe workaround: use synthetic/fake-client fixtures and the historical adapter for
-  deterministic implementation checks; keep the production worker disabled.
+- Impact: production live listen requires the authorized session in deploy config and a
+  running `telegram-worker`.
+- Current state: API ID/hash and the first authorized string session are stored in gitignored
+  local files and GitHub production secrets. Do not paste session strings into chat or Git.
+- Needed from owner: none for first login. Remaining work is deploying `telegram-worker` with
+  that session.
+- Safe workaround: historical adapter remains the source of truth if the worker is down.
 
 ### B-005: GitHub-enforced branch protection unavailable
 

@@ -185,6 +185,8 @@ def prepare_release(root: Path, release_sha: str) -> tuple[Path, Path]:
         "WEF_RELEASE_DIR": str(release_dir),
         "WEF_RELEASE_SHA": release_sha,
         "WEF_ROOT": str(root),
+        "WEF_TELEGRAM_API_HASH": "0123456789abcdef0123456789abcdef",
+        "WEF_TELEGRAM_API_ID": "12345678",
         "WEF_WEB_IMAGE": "wef-web:local",
     }
     config_file.write_text(
@@ -238,6 +240,7 @@ def main() -> int:
             "caddy-data",
             "state",
             "secrets/releases",
+            "secrets/telegram",
             "releases",
         ):
             (root / relative).mkdir(parents=True, exist_ok=True)

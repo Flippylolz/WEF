@@ -1,4 +1,4 @@
-"""Operator CLI: verify public Telegram channel identity and secret paths."""
+"""Operator CLI: verify public Telegram channel identity and env credentials."""
 
 from __future__ import annotations
 
@@ -10,14 +10,16 @@ from dataclasses import asdict
 from wef_backend.features.ingestion.application.telegram_channel_verify import (
     verify_telegram_channel_access,
 )
-from wef_backend.features.ingestion.domain.telegram_channel import (
-    TelegramChannelIdentity,
-    TelegramWorkerSecretPaths,
+from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
+from wef_backend.features.ingestion.domain.telegram_secrets import (
+    credentials_present,
+    unwrap_secret,
 )
 from wef_backend.features.ingestion.infrastructure.public_http import (
     fetch_public_url_status,
 )
 from wef_backend.settings import load_settings
+from wef_backend.telegram_credentials import secret_text
 
 
 def _identity_from_settings() -> TelegramChannelIdentity:
@@ -30,24 +32,24 @@ def _identity_from_settings() -> TelegramChannelIdentity:
     )
 
 
-def _secret_paths_from_settings() -> TelegramWorkerSecretPaths:
-    settings = load_settings()
-    return TelegramWorkerSecretPaths(
-        api_id_file=settings.telegram_api_id_file,
-        api_hash_file=settings.telegram_api_hash_file,
-        session_file=settings.telegram_session_file,
-    )
-
-
 async def run() -> dict[str, object]:
     """Execute verification and return a JSON-serializable report."""
+    settings = load_settings()
+    api_hash = secret_text(settings.telegram_api_hash)
+    session = secret_text(settings.telegram_session)
+    if not session and settings.telegram_session_path is not None:
+        path = settings.telegram_session_path
+        session = unwrap_secret(path.read_text(encoding="utf-8")) if path.is_file() else None
     result = await verify_telegram_channel_access(
         _identity_from_settings(),
-        _secret_paths_from_settings(),
+        credentials_ready=credentials_present(
+            api_id=settings.telegram_api_id,
+            api_hash=api_hash,
+        ),
+        session_ready=bool(session),
         get=fetch_public_url_status,
     )
     payload = asdict(result)
-    payload["secret_files"] = [asdict(item) for item in result.secret_files]
     payload["operating_owner"] = "dedicated_telegram_user_not_bot"
     return payload
 

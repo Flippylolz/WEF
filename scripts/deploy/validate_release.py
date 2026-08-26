@@ -16,6 +16,8 @@ SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 PROVIDER_KEY_PATTERN = re.compile(r"^[A-Za-z0-9._-]{20,200}$")
 ADMIN_SESSION_SECRET_PATTERN = re.compile(r"^[A-Za-z0-9._-]{32,200}$")
 CONTACT_KEY_PATTERN = re.compile(r"^[A-Fa-f0-9]{64}$")
+TELEGRAM_API_ID_PATTERN = re.compile(r"^[1-9][0-9]{4,15}$")
+TELEGRAM_API_HASH_PATTERN = re.compile(r"^[A-Fa-f0-9]{32}$")
 FORBIDDEN_VALUE_FRAGMENTS = ("change-me", "changeme", "local-only", "replace-for", "dev-only")
 MIN_PUBLIC_PORT = 1024
 MAX_PUBLIC_PORT = 65535
@@ -37,6 +39,8 @@ REQUIRED_KEYS = frozenset(
         "WEF_RELEASE_DIR",
         "WEF_RELEASE_SHA",
         "WEF_ROOT",
+        "WEF_TELEGRAM_API_HASH",
+        "WEF_TELEGRAM_API_ID",
         "WEF_WEB_IMAGE",
     },
 )
@@ -170,6 +174,7 @@ def _validate_runtime_boundaries(
         msg = "admin session secret has an unsafe release format"
         raise ReleaseConfigurationError(msg)
     _validate_contact_keys(values)
+    _validate_telegram_credentials(values)
 
 
 def _validate_contact_keys(values: dict[str, str]) -> None:
@@ -184,6 +189,18 @@ def _validate_contact_keys(values: dict[str, str]) -> None:
         raise ReleaseConfigurationError(msg)
     if encryption_key == hmac_key:
         msg = "contact encryption and HMAC keys must be distinct"
+        raise ReleaseConfigurationError(msg)
+
+
+def _validate_telegram_credentials(values: dict[str, str]) -> None:
+    """Require Telegram API id/hash in the complete production env file."""
+    api_id = values["WEF_TELEGRAM_API_ID"]
+    api_hash = values["WEF_TELEGRAM_API_HASH"]
+    if not TELEGRAM_API_ID_PATTERN.fullmatch(api_id):
+        msg = "Telegram api_id must be a positive integer"
+        raise ReleaseConfigurationError(msg)
+    if not TELEGRAM_API_HASH_PATTERN.fullmatch(api_hash):
+        msg = "Telegram api_hash must be 32 hexadecimal characters"
         raise ReleaseConfigurationError(msg)
 
 

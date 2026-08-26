@@ -43,6 +43,10 @@ def assert_workflow_boundaries() -> None:
     assert '"$deploy_status" -eq 42' in source
     assert "PUBLIC_PORT: ${{ vars.WEF_PUBLIC_PORT }}" in source
     assert "WEF_GEOAPIFY_API_KEY: ${{ secrets.WEF_GEOAPIFY_API_KEY }}" in source
+    assert "WEF_TELEGRAM_API_ID: ${{ secrets.WEF_TELEGRAM_API_ID }}" in source
+    assert "WEF_TELEGRAM_API_HASH: ${{ secrets.WEF_TELEGRAM_API_HASH }}" in source
+    assert "WEF_TELEGRAM_PHONE: ${{ secrets.WEF_TELEGRAM_PHONE }}" in source
+    assert "WEF_TELEGRAM_SESSION: ${{ secrets.WEF_TELEGRAM_SESSION }}" in source
     assert "WEF_ADMIN_SESSION_SECRET: ${{ secrets.WEF_ADMIN_SESSION_SECRET }}" in source
     assert "WEF_CONTACT_ENCRYPTION_KEY: ${{ secrets.WEF_CONTACT_ENCRYPTION_KEY }}" in source
     assert "WEF_CONTACT_HMAC_KEY: ${{ secrets.WEF_CONTACT_HMAC_KEY }}" in source
@@ -117,6 +121,8 @@ def assert_release_configuration() -> None:
         "WEF_CONTACT_HMAC_KEY": "fedcba9876543210" * 4,
         "WEF_GEOAPIFY_API_KEY": "fixture-geoapify-key-0123456789",
         "WEF_LOG_LEVEL": "INFO",
+        "WEF_TELEGRAM_API_HASH": "0123456789abcdef0123456789abcdef",
+        "WEF_TELEGRAM_API_ID": "12345678",
     }
     previous = {key: os.environ.get(key) for key in environment}
     os.environ.update(environment)

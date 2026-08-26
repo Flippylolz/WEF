@@ -83,7 +83,13 @@ describe("web-vitals", () => {
     setWebVitalsSink((metric) => {
       received.push(metric);
     });
-    for (const name of ["onCLS", "onFCP", "onINP", "onLCP", "onTTFB"] as const) {
+    for (const name of [
+      "onCLS",
+      "onFCP",
+      "onINP",
+      "onLCP",
+      "onTTFB",
+    ] as const) {
       webVitals[name].mockImplementation((callback: (metric: object) => void) =>
         callback({
           name: name.slice(2),

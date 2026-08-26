@@ -1,16 +1,13 @@
-"""Credential-free public channel checks and redacted secret-path inspection."""
+"""Public channel checks and redacted credential presence (never secret bytes)."""
 
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from wef_backend.features.ingestion.domain.telegram_channel import (
-    SecretFileStatus,
-    TelegramChannelIdentity,
-    TelegramWorkerSecretPaths,
-    inspect_secret_file,
-)
+if TYPE_CHECKING:
+    from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
 
 _HTTP_CLIENT_ERROR = 400
 
@@ -27,8 +24,8 @@ class TelegramChannelVerification:
     public_channel_url: str
     public_message_url: str
     public_message_reachable: bool
-    secret_files: tuple[SecretFileStatus, ...]
-    secrets_ready: bool
+    credentials_ready: bool
+    session_ready: bool
     live_client_verification: str
     status: str
 
@@ -42,30 +39,26 @@ async def verify_public_message_reachable(
     return await get(url) < _HTTP_CLIENT_ERROR
 
 
-def summarize_secret_paths(paths: TelegramWorkerSecretPaths) -> tuple[SecretFileStatus, ...]:
-    """Inspect each configured secret path without reading file contents."""
-    return tuple(inspect_secret_file(path) for path in paths.required_files())
-
-
 async def verify_telegram_channel_access(
     identity: TelegramChannelIdentity,
-    secret_paths: TelegramWorkerSecretPaths,
     *,
+    credentials_ready: bool,
+    session_ready: bool,
     get: PublicUrlGetter,
     probe_message_id: int = 3,
 ) -> TelegramChannelVerification:
-    """Verify public identity and secret-path contract without loading Telethon."""
+    """Verify public identity and whether env credentials are present."""
     message_url = identity.public_message_url(probe_message_id)
     reachable = await verify_public_message_reachable(message_url, get=get)
-    secrets = summarize_secret_paths(secret_paths)
-    secrets_ready = all(item.present and item.owner_readable_only is True for item in secrets)
     if not reachable:
         status = "public_unreachable"
-    elif not secrets_ready:
-        status = "public_ok_secrets_missing"
+    elif not credentials_ready:
+        status = "public_ok_credentials_missing"
+    elif not session_ready:
+        status = "public_ok_session_pending"
     else:
-        # Live numeric ID/title resolve requires Telethon (E8-T2) plus real secrets.
-        status = "public_ok_secrets_present_awaiting_client"
+        status = "public_ok_credentials_present"
+    live = "ready" if credentials_ready else "awaiting_api_credentials"
     return TelegramChannelVerification(
         channel_username=identity.username,
         expected_channel_id=identity.channel_id,
@@ -73,8 +66,8 @@ async def verify_telegram_channel_access(
         public_channel_url=identity.public_channel_url(),
         public_message_url=message_url,
         public_message_reachable=reachable,
-        secret_files=secrets,
-        secrets_ready=secrets_ready,
-        live_client_verification="deferred_to_E8-T2",
+        credentials_ready=credentials_ready,
+        session_ready=session_ready,
+        live_client_verification=live,
         status=status,
     )
