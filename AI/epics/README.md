@@ -28,8 +28,9 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E10 — Property favorites](E10-property-favorites/README.md) — `done`; E10-T1 done; milestone M3.
 - [E11 — Scalable quick filters](E11-scalable-quick-filters/README.md) — `done`; E11-T1 done; milestone M3.
 - [E12 — Database index audit](E12-database-index-audit/README.md) — `done`; E12-T1 done; milestone M3.
+- [E13 — Dark map-first listing explorer](E13-dark-map-explorer/README.md) — `selected`; spike revision 1 awaiting owner approval; milestone M4.
 
-The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 remains research-gated (`awaiting_approval`) with no implementation permission. New work must pass its dedicated pull-request CI before merge.
+The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker. E13 is selected for a documentation-only dark map/list redesign spike; production code remains prohibited until its approval gates are satisfied. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
