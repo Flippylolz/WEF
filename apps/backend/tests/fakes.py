@@ -18,6 +18,8 @@ from wef_backend.features.admin.application.admin_ops import (
 )
 from wef_backend.features.catalog.application import (
     FacetSnapshot,
+    ListingBrowseRecord,
+    ListingCursor,
     MapFilters,
     MapLocationRecord,
     MapQuerySnapshot,
@@ -25,6 +27,7 @@ from wef_backend.features.catalog.application import (
     OfferBrowseSnapshot,
     OfferCursor,
     OfferDetailRecord,
+    ViewportListingSnapshot,
 )
 from wef_backend.features.contacts.application.reveal import (
     ContactCipher,
@@ -85,17 +88,33 @@ class FakeMapQuery:
 
 @dataclass(frozen=True, slots=True)
 class FakeCatalogBrowse:
-    """In-memory facets and selected-location query adapter."""
+    """In-memory facets, location-offer, and viewport-listing adapter."""
 
     facets: FacetSnapshot
     records: tuple[OfferBrowseRecord, ...] = ()
     location_exists: bool = True
     matching_count: int = 0
     total_count: int = 0
+    viewport_records: tuple[ListingBrowseRecord, ...] = ()
+    viewport_matching_count: int = 0
 
     async def query_facets(self) -> FacetSnapshot:
         """Return deterministic facet values."""
         return self.facets
+
+    async def query_viewport_listings(
+        self,
+        *,
+        filters: MapFilters,
+        cursor: ListingCursor | None,
+        limit: int,
+    ) -> ViewportListingSnapshot:
+        """Return deterministic listing records while satisfying the port."""
+        del filters, cursor
+        return ViewportListingSnapshot(
+            records=self.viewport_records[:limit],
+            matching_count=self.viewport_matching_count,
+        )
 
     async def query_location_offers(
         self,

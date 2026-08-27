@@ -289,6 +289,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/listings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List paginated offer cards for the current viewport
+         * @description Return newest-first filter-matching listings with parent locations.
+         */
+        get: operations["listViewportListings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/locations/{location_id}/offers": {
         parameters: {
             query?: never;
@@ -568,6 +588,27 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * ListingLocationResponse
+         * @description Public parent location context for one viewport listing card.
+         */
+        ListingLocationResponse: {
+            confidence: components["schemas"]["ConfidenceIndicator"];
+            /** Coordinate Precision */
+            coordinate_precision: string;
+            /** Display Address */
+            display_address: string;
+            /** Display Name */
+            display_name: string;
+            /** District */
+            district: string | null;
+            geometry: components["schemas"]["PointGeometry"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
         };
         /**
          * LocationMapFeature
@@ -1032,6 +1073,76 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * ViewportListingItemResponse
+         * @description Dated filter-matching viewport listing summary.
+         */
+        ViewportListingItemResponse: {
+            /** Area Max Sqm */
+            area_max_sqm?: string | null;
+            /** Area Min Sqm */
+            area_min_sqm?: string | null;
+            content_type: components["schemas"]["ContentType"];
+            /** Currency */
+            currency: string | null;
+            data_confidence: components["schemas"]["OfferDataConfidence"];
+            /** Delivery Label */
+            delivery_label: string | null;
+            /** Display Name */
+            display_name: string;
+            /** Floor Label */
+            floor_label: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            location: components["schemas"]["ListingLocationResponse"];
+            market_type: components["schemas"]["MarketType"];
+            /**
+             * Parking Included In Price
+             * @default false
+             */
+            parking_included_in_price: boolean;
+            /** Parking Price Max Minor */
+            parking_price_max_minor?: number | null;
+            /** Parking Price Min Minor */
+            parking_price_min_minor?: number | null;
+            /** Price Max Minor */
+            price_max_minor?: number | null;
+            /** Price Min Minor */
+            price_min_minor?: number | null;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Rooms Max */
+            rooms_max?: number | null;
+            /** Rooms Min */
+            rooms_min?: number | null;
+            /**
+             * Storage Included In Price
+             * @default false
+             */
+            storage_included_in_price: boolean;
+            /** Storage Price Max Minor */
+            storage_price_max_minor?: number | null;
+            /** Storage Price Min Minor */
+            storage_price_min_minor?: number | null;
+        };
+        /**
+         * ViewportListingPageResponse
+         * @description Viewport items with the filtered total and opaque continuation.
+         */
+        ViewportListingPageResponse: {
+            /** Items */
+            items: components["schemas"]["ViewportListingItemResponse"][];
+            /** Matching Count */
+            matching_count: number;
+            /** Next Cursor */
+            next_cursor: string | null;
         };
     };
     responses: never;
@@ -1560,6 +1671,50 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    listViewportListings: {
+        parameters: {
+            query: {
+                area_max?: number | string | null;
+                area_min?: number | string | null;
+                bbox: string;
+                content_type?: components["schemas"]["ContentType"][];
+                cursor?: string | null;
+                district?: string[];
+                limit?: number;
+                market_type?: components["schemas"]["MarketType"][];
+                price_max?: number | null;
+                price_min?: number | null;
+                published_from?: string | null;
+                published_to?: string | null;
+                quick_filter?: string | null;
+                rooms?: number[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewportListingPageResponse"];
+                };
+            };
+            /** @description The filters or cursor are invalid. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
             };
         };
     };
