@@ -2,7 +2,7 @@
 
 import type { FeatureCollection, Point } from "geojson";
 import { setWorkerUrl, type GeoJSONSource } from "maplibre-gl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AttributionControl,
   Layer,
@@ -146,7 +146,19 @@ export function WarsawMap({
   onViewportChange,
   reduceMotion = false,
 }: WarsawMapProps) {
-  const geojson = data as FeatureCollection<Point>;
+  const geojson = useMemo<FeatureCollection<Point>>(
+    () => ({
+      ...data,
+      features: data.features.map((feature) => ({
+        ...feature,
+        // MapLibre's vector-tile wrapper coerces a GeoJSON feature id through
+        // parseInt, so UUID ids can be truncated or dropped. Properties retain
+        // the full string through clustering and rendered-feature queries.
+        properties: { ...feature.properties, location_id: feature.id },
+      })),
+    }),
+    [data],
+  );
   const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef<MapRef>(null);
   const mapLoaded = useRef(false);
@@ -235,8 +247,9 @@ export function WarsawMap({
       return;
     }
 
-    if (typeof feature.id === "string") {
-      onSelect(feature.id);
+    const locationId = feature.properties?.location_id;
+    if (typeof locationId === "string") {
+      onSelect(locationId);
     }
   }
 
@@ -323,7 +336,7 @@ export function WarsawMap({
               id="location-selected"
               type="circle"
               source="locations"
-              filter={["==", ["id"], selectedId]}
+              filter={["==", ["get", "location_id"], selectedId]}
               paint={{
                 "circle-color": "transparent",
                 "circle-radius": 20,
@@ -337,7 +350,7 @@ export function WarsawMap({
               id="location-highlighted"
               type="circle"
               source="locations"
-              filter={["==", ["id"], highlightedId]}
+              filter={["==", ["get", "location_id"], highlightedId]}
               paint={{
                 "circle-color": "transparent",
                 "circle-radius": 16,

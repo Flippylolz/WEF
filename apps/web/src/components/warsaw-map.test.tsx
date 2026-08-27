@@ -135,14 +135,26 @@ vi.mock("react-map-gl/maplibre", () => ({
     <div
       data-testid={`source-${id}`}
       data-source-url={typeof data === "string" ? data : undefined}
+      data-source-json={
+        typeof data === "string" ? undefined : JSON.stringify(data)
+      }
     >
       {children}
     </div>
   ),
-  Layer: ({ id, layout }: { id: string; layout?: Record<string, unknown> }) => (
+  Layer: ({
+    id,
+    layout,
+    filter,
+  }: {
+    id: string;
+    layout?: Record<string, unknown>;
+    filter?: unknown;
+  }) => (
     <div
       data-testid={`layer-${id}`}
       data-text-font={JSON.stringify(layout?.["text-font"])}
+      data-filter={JSON.stringify(filter)}
     />
   ),
   NavigationControl: () => null,
@@ -155,11 +167,32 @@ vi.mock("react-map-gl/maplibre", () => ({
 
 const mapData: LocationMap = {
   type: "FeatureCollection",
-  features: [],
+  features: [
+    {
+      type: "Feature",
+      id: "10000000-0000-4000-8000-000000000001",
+      geometry: { type: "Point", coordinates: [21.0122, 52.2297] },
+      properties: {
+        display_name: "Synthetic Central Residence",
+        display_address: "Synthetic address, Warsaw",
+        district: "srodmiescie",
+        coordinate_precision: "district",
+        confidence: "low",
+        matching_offer_count: 1,
+        total_offer_count: 1,
+        latest_published_at: "2026-08-01T10:00:00Z",
+        price_min_minor: 80_000_000,
+        price_max_minor: 80_000_000,
+        area_min_sqm: "35.00",
+        area_max_sqm: "35.00",
+        currency: "PLN",
+      },
+    },
+  ],
   meta: {
     request_id: "00000000-0000-4000-8000-000000000001",
-    feature_count: 0,
-    matching_offer_count: 0,
+    feature_count: 1,
+    matching_offer_count: 1,
   },
 };
 
@@ -177,8 +210,11 @@ describe("WarsawMap", () => {
       "/vendor/maplibre/maplibre-gl-worker.mjs",
     );
     clickedFeature = {
-      id: "10000000-0000-4000-8000-000000000001",
-      properties: {},
+      // This mirrors MapLibre's vector-tile conversion of the UUID feature id.
+      id: 10_000_000,
+      properties: {
+        location_id: "10000000-0000-4000-8000-000000000001",
+      },
       geometry: { type: "Point", coordinates: [21.0122, 52.2297] },
     };
     render(
@@ -213,6 +249,12 @@ describe("WarsawMap", () => {
     expect(screen.getByTestId("source-warsaw-districts")).toHaveAttribute(
       "data-source-url",
       "/data/warsaw-districts.geojson",
+    );
+    expect(screen.getByTestId("source-locations")).toHaveAttribute(
+      "data-source-json",
+      expect.stringContaining(
+        '"location_id":"10000000-0000-4000-8000-000000000001"',
+      ),
     );
     expect(screen.getByTestId("layer-warsaw-district-labels")).toHaveAttribute(
       "data-text-font",
@@ -393,6 +435,15 @@ describe("WarsawMap", () => {
         onFailure={onFailure}
         onViewportChange={vi.fn()}
       />,
+    );
+
+    expect(screen.getByTestId("layer-location-selected")).toHaveAttribute(
+      "data-filter",
+      '["==",["get","location_id"],"10000000-0000-4000-8000-000000000001"]',
+    );
+    expect(screen.getByTestId("layer-location-highlighted")).toHaveAttribute(
+      "data-filter",
+      '["==",["get","location_id"],"10000000-0000-4000-8000-000000000002"]',
     );
 
     await user.click(

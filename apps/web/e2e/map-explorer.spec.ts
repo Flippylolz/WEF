@@ -71,4 +71,22 @@ test.describe("map explorer critical path", () => {
     ).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("button", { name: "Retry map" })).toBeVisible();
   });
+
+  test("keeps the map and panel toggle visible when the sidebar is collapsed", async ({
+    page,
+  }) => {
+    await installSyntheticCatalog(page, "ready");
+    await page.goto("/");
+
+    await expect(
+      page.getByRole("button", { name: /Synthetic Central Residence/i }),
+    ).toBeVisible({ timeout: 30_000 });
+
+    await page.getByRole("button", { name: "Hide panel" }).click();
+
+    await expect(page.getByLabel("Interactive map of Warsaw")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Show panel" }),
+    ).toBeVisible();
+  });
 });
