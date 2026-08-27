@@ -17,6 +17,11 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 - The worker remains single-replica, restartable, idempotent, and non-blocking for the public API.
 - E8-T5 depends only on E8-T3 and E8-T4; deferred backup task E7-T5 is not a dependency.
 - Release `3ee56a5` created and started the production worker service on 2026-08-26; task completion still requires verified live entity/event delivery, gap reconciliation, and outage-recovery evidence.
+- On 2026-08-27 the connected, Docker-healthy worker remained at checkpoint `29202`
+  while Telegram advanced through at least `29257`; production missed six parser-classified
+  offer candidates. [E15](../epics/E15-telegram-ingestion-reliability/README.md) is the
+  selected blocker-priority recovery epic. Its spike and proposed P0 tasks remain
+  non-actionable until their workflow approvals are satisfied.
 
 ## Included epic/task definitions
 
@@ -28,6 +33,12 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 - [E8-T4: Revalidate geocoder for recurring ingestion](../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — `done`
 - [E8-T5: Production reconciliation and worker alerting](../epics/E8-telegram-live-ingestion/tasks/E8-T5-production-reconciliation-and-worker-alerting.md) — `in_progress`
 
+### [E15: Telegram ingestion reliability recovery](../epics/E15-telegram-ingestion-reliability/README.md)
+
+- [E15-T1: Supervise and observe the Telegram event pipeline](../epics/E15-telegram-ingestion-reliability/proposed-tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0 `proposed`/non-actionable
+- [E15-T2: Add checkpoint-driven Telegram reconciliation](../epics/E15-telegram-ingestion-reliability/proposed-tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0 `proposed`/non-actionable
+- [E15-T3: Recover the production gap and prove outage recovery](../epics/E15-telegram-ingestion-reliability/proposed-tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0 `proposed`/non-actionable
+
 Cancelled and deferred candidates remain linked for traceability but are not completion requirements unless an approved revision restores them to required scope.
 
 ## Exit evidence
@@ -35,7 +46,12 @@ Cancelled and deferred candidates remain linked for traceability but are not com
 - [ ] Channel identity/access and recurring geocoder gates are resolved for current production conditions.
 - [ ] Backfill from the historical checkpoint is restartable, idempotent, and reconciled.
 - [ ] New/edit/delete events preserve revisions and visibility semantics through the shared ingestion core.
-- [ ] A single worker exposes received/committed freshness, stale/connectivity alerts, and rehearsed session rotation/outage recovery.
+- [ ] Passive event loss is recovered by bounded checkpoint-driven reconciliation at
+  startup, reconnect, and steady state without full re-import or duplicate canonical data.
+- [ ] A single worker exposes truthful transport/consumer/reconciliation health,
+  remote/local lag, stale/gap alerts, and rehearsed session rotation/outage recovery.
+- [ ] The 2026-08-27 missed range is reconciled through the reviewed production path
+  with redacted source/checkpoint/canonical evidence.
 - [ ] Every required task has been promoted, approved, dependency-gated, implemented on its dedicated branch, and completed with definition-of-done evidence.
 
 ## Status rule

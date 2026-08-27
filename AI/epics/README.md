@@ -30,8 +30,9 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E12 — Database index audit](E12-database-index-audit/README.md) — `done`; E12-T1 done; milestone M3.
 - [E13 — Dark map-first listing explorer](E13-dark-map-explorer/README.md) — `done`; spike/plan revision 1 approved (AD-038); E13-T1–T3 done through PRs #176/#179/#180; milestones M4.
 - [E14 — Production hardening and scalability](E14-production-hardening-and-scalability/README.md) — `selected`; spike revision 1 awaits owner approval; E14-T1–T9 proposed/non-actionable; milestone M5.
+- [E15 — Telegram ingestion reliability recovery](E15-telegram-ingestion-reliability/README.md) — `selected`, operational **blocker** priority; spike revision 1 awaits owner approval; E15-T1–T3 are P0 proposed/non-actionable; milestone M4.
 
-The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker, while verified live entity/event, gap-reconciliation, and outage-recovery acceptance remain open. E13's dark map-first redesign spike and implementation plan revision 1 are approved (AD-038); E13-T1/T2/T3 are done through PRs #176/#179/#180. E14 is selected for post-launch research/planning, but its proposed tasks remain non-actionable until the current spike and a later implementation plan pass their separate owner-approval gates. New work must pass its dedicated pull-request CI before merge.
+The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker, but the 2026-08-27 production gap proved that passive events and transport-only health do not satisfy gap/outage acceptance. E15 is therefore selected as the next blocker-priority M4 epic; its proposed tasks remain non-actionable until spike and implementation-plan approval. E13's dark map-first redesign is done. E14 remains selected for broader post-launch research/planning after the E15 blocker, and its candidates retain their own approval gates. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
@@ -159,6 +160,12 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E14-T8](E14-production-hardening-and-scalability/proposed-tasks/E14-T8-harden-supply-chain-and-release-integrity.md): proposed/non-actionable; task dependency `E14-T1`; M5; requirements `P-007, P-008`.
 - [E14-T9](E14-production-hardening-and-scalability/proposed-tasks/E14-T9-rehearse-operational-resilience-and-disaster-recovery.md): proposed/non-actionable and blocked while E7-T5/ADR-015 remain deferred; task dependencies `E7-T5, E14-T6, E14-T7, E14-T8`; M5; requirements `P-006, P-007, P-008`.
 
+### E15
+
+- [E15-T1](E15-telegram-ingestion-reliability/proposed-tasks/E15-T1-supervise-and-observe-event-pipeline.md): P0 proposed/non-actionable; task dependencies `none`; M4; requirements `P-006, P-007`; decisions `ADR-006, ADR-008, ADR-010`; fail-fast worker task supervision and privacy-safe listener diagnostics.
+- [E15-T2](E15-telegram-ingestion-reliability/proposed-tasks/E15-T2-add-checkpoint-driven-reconciliation.md): P0 proposed/non-actionable; task dependency `E15-T1`; M4; requirements `P-006, P-007`; decisions `ADR-003, ADR-005, ADR-006, ADR-007, ADR-010`; startup/reconnect/periodic checkpoint polling makes passive events a latency optimization rather than the completeness boundary.
+- [E15-T3](E15-telegram-ingestion-reliability/proposed-tasks/E15-T3-recover-gap-and-prove-outage-recovery.md): P0 proposed/non-actionable; task dependencies `E15-T1, E15-T2`; M4; requirements `P-006, P-007`; decisions `ADR-003, ADR-005, ADR-006, ADR-007, ADR-008, ADR-010, ADR-015`; bounded production recovery and outage/alert evidence close or narrow B-003.
+
 Bootstrap and production gates are preserved: E0-T1 depends on E1-T1 so its dedicated branch can exist; E0-T2 depends on E0-T1 and E1-T1; E1-T2 depends on E0-T2; E7-T1 depends on E1-T3/E5-T1 for the anonymous rehearsal, E7-T2 retains resolved D-001 plus E7-T1, and E7-T3 retains E1-T4/E7-T1/E7-T2. Promoted E7-T6 revision 3 retains E3-T5/E7-T2/E7-T4 and no longer depends on D-002 because it transfers materialized results without provider calls; it stages a non-public candidate and leaves activation to proposed E7-T11 behind the ADR-019 gates. Shared TLS proceeds E7-T4 → E7-T8 → E7-T9 → E7-T10, with D-009 gating only E7-T10; E7-T7 retains E6-T4/E6-T5/E6-T6/E6-T7/E7-T4/E7-T10. E8-T5 depends only on E8-T3 and E8-T4—it does not depend on deferred E7-T5.
 
 ## Global definition of done
@@ -200,5 +207,5 @@ The workflow's [expanded definition of done](../workflow/DEFINITION_OF_DONE.md) 
 - Dockerized GitHub deployment: E7-T1 through E7-T4.
 - Resumable verified materialized-snapshot transfer into a non-public production candidate: E7-T6; HTTPS/sensitive-feature-gated public activation: E7-T11.
 - Monitoring, contact-data minimization, and accessibility: E5-T4, E6-T2, E6-T3, E6-T5; backups are deferred in E7-T5 and a formal privacy notice is out of scope.
-- Live channel ingestion implementation and remaining operational acceptance: E8-T1 through E8-T5.
+- Live channel ingestion implementation: E8-T1 through E8-T5; blocker-priority source-completeness recovery and operational acceptance: E15-T1 through E15-T3.
 - Post-launch maintainability, test confidence, SLOs, capacity, release integrity, and disaster-recovery evidence: E14-T1 through E14-T9, with existing E7-T5 as E14-T9's non-duplicated recovery prerequisite.

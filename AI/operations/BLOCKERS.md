@@ -7,14 +7,25 @@ This append-only log records blockers that could not be safely resolved autonomo
 ### B-003: Telegram live acceptance evidence
 
 - Impact: M4 cannot close without verified real entity/event delivery, gap reconciliation,
-  and outage recovery evidence.
+  truthful listener health, and outage recovery evidence. Production data remains stale
+  when Telegram advances without a persisted event.
 - Current state: API ID/hash and the first authorized string session are stored in gitignored
   local files and GitHub production secrets. Release `3ee56a5` created and started the
-  production `telegram-worker` service on 2026-08-26. Do not paste session strings into chat
-  or Git.
-- Needed from owner: none for credential provisioning. Remaining work is to observe and record
-  live entity/new/edit/delete behavior, reconcile gaps, and rehearse outage recovery.
-- Safe workaround: historical adapter remains the source of truth if the worker is down.
+  production `telegram-worker` service on 2026-08-26. On 2026-08-27 the connected,
+  Docker-healthy worker remained at message/checkpoint `29202` while Telegram advanced
+  through at least `29257`; none of the 55 newer records or six parser-classified offer
+  candidates reached persistence. Read-only investigation verified account membership,
+  filters, conversion, and database availability, and narrowed the persistent failure to
+  passive-update/event-loop delivery plus the absence of independent polling reconciliation.
+  [E15](../epics/E15-telegram-ingestion-reliability/README.md) is selected at blocker/P0
+  priority. Do not paste session strings into chat or Git.
+- Needed from owner: review and explicitly approve or reject E15 spike revision 1. After
+  spike approval, task promotion and a separately approved implementation plan remain
+  mandatory before code, restart, deployment, backfill, or production repair.
+- Safe workaround: historical data remains available; operators may inspect redacted
+  worker staleness and use the existing bounded backfill only through an explicitly
+  reviewed production-recovery action. Docker `healthy` alone is not evidence that live
+  Telegram ingestion is current.
 
 ### B-005: GitHub-enforced branch protection unavailable
 
