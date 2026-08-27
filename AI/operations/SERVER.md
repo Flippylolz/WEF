@@ -164,6 +164,8 @@ On 2026-08-13 UTC:
 - Kept GHCR authentication ephemeral: the workflow uses its job-scoped package-read token during the remote pull and logs out in its exit trap; no registry token is stored on the host.
 - Did not create a production config/release, start a container, bind port 3100, touch existing Compose projects, or enable automatic SSH. Hosted execution remains blocked by B-006, and E7-T4 owns the first bounded activation.
 
+This subsection is historical preparation evidence. E7-T4 subsequently completed the rehearsal, and `AUTO_DEPLOY_ENABLED=true` is the current repository setting (verified 2026-08-26).
+
 ### E7-T4 bind-permission proof
 
 On 2026-08-13 UTC, a temporary directory under `/home/nuc/wef/state` proved the pinned PostGIS UID 999 cannot write a native `nuc:0700` bind, while the exact no-network/read-only-root initializer with only `CHOWN` and `DAC_OVERRIDE` changes that one root to `999:999` and makes it writable. The trap changed the temporary directory back to `nuc`, removed it, and left the real inactive `/home/nuc/wef/postgres` at `nuc:0700`. Pulling the public pinned PostGIS image started no service and changed no active project.

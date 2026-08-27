@@ -61,7 +61,7 @@ Production FastAPI configuration sets:
 
 FastAPI still permits offline `app.openapi()` generation while no schema/UI route is registered.
 
-Caddy does not serve the committed contract or static documentation. Production images do not copy `contracts/`, generated HTML, or documentation tooling into runtime stages.
+Neither shared Nginx nor the Caddy rollback listener serves the committed contract or static documentation. Production images do not copy `contracts/`, generated HTML, or documentation tooling into runtime stages.
 
 Production smoke/security tests require 404 for common documentation paths, including:
 
@@ -128,7 +128,7 @@ The HTML is:
 
 - Generated into ignored `artifacts/` locally.
 - Uploaded to GitHub Actions as `api-contract-{commit_sha}`.
-- Never served by Caddy/FastAPI in production.
+- Never served by Nginx, Caddy, or FastAPI in production.
 - Built only from synthetic schema examples.
 
 Swagger UI is therefore unnecessary as a deployed service. Developers may use development-only Swagger UI or open the generated Redocly artifact.

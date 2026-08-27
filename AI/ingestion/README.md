@@ -9,10 +9,10 @@ This domain owns historical and live source adapters, the canonical parsing/norm
 
 ## Invariants
 
-- Historical export and future Telegram events use the same canonical ingestion core through source adapters.
+- Historical export and live Telegram events use the same canonical persistence core through source adapters.
 - Source lineage is preserved and reprocessing is idempotent.
 - Heuristic fields retain confidence/provenance and are never presented as verified facts.
 - A public Telegram link is formed only from a verified channel identity.
-- Network geocoding and live Telegram access begin only after their deferred decisions and task dependencies are resolved.
+- Recurring geocoding retains Geoapify under the resolved D-002 decision. The live worker implementation is deployed, while verified live entity/event, gap-reconciliation, and outage-recovery acceptance remain tracked under D-003/B-003.
 
 Import runs must reconcile accepted, skipped, failed, and quarantined records without leaking private source data into Git, images, logs, or CI artifacts.

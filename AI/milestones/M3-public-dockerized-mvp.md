@@ -8,12 +8,12 @@ status: done
 
 ## Outcome
 
-The responsive map experience is production-deployed from GitHub with persistent server storage, monitoring, application rollback, attribution, contact masking, and reveal auditing. An interim anonymous-only HTTP rehearsal may precede launch; M3 public launch includes the E7-T8-through-E7-T10 shared Nginx/Certbot HTTPS sequence for WEF and AI Forecast before E7-T7 registration/contact reveal/admin is enabled. Backups remain explicitly out of scope.
+The responsive map experience is production-deployed from GitHub with persistent server storage, monitoring, application rollback, attribution, contact masking, and reveal auditing. M3 public launch completed the E7-T8-through-E7-T10 shared Nginx/Certbot HTTPS sequence for WEF, left AI Forecast unchanged on `:3000`, and then enabled E7-T7 registration/contact reveal/admin. Backups remain explicitly out of scope.
 
 ## Current constraints
 
-- During the rehearsal, only the configured WEF edge port is published and existing workloads remain unchanged. E7-T10 may alter only the explicitly approved AI Forecast/public-edge listener topology after E7-T8/E7-T9 independent topology, health, and rollback proof; application/data resources remain unchanged.
-- Production authentication, administration, and contact reveal remain disabled until HTTPS and required secrets pass smoke/security checks.
+- Shared Nginx now serves WEF HTTPS on 80/443; AI Forecast remains on `:3000` and the application Caddy listener remains on `:3100` for rollback. Ordinary releases must preserve the independent edge and non-WEF workloads.
+- Production authentication, administration, and contact reveal are enabled on HTTPS and remain unavailable through the plain-HTTP rollback route because production cookies are Secure.
 - Rollback covers compatible application releases; no destructive schema downgrade or data-recovery guarantee is implied.
 - E7-T5 remains deferred under ADR-015 and is not a public-launch gate.
 
@@ -55,11 +55,11 @@ Cancelled and deferred candidates remain linked for traceability but are not com
 - [x] Immutable images deploy from GitHub to the isolated NUC topology with complete validated configuration and no host interference. — E7-T1–T3 + live `Release and deploy production` to `/home/nuc/wef` (`wef-production`, port `3100`).
 - [x] Health verification and compatible application rollback are rehearsed; release SHA/digests/migration revision are auditable. — E7-T4 + operator diagnostics (E6-T3); live `current.json` release SHA + `/api/v1/health/live`.
 - [x] HTTPS-gated registration, owner administration, and contact reveal pass production smoke/security checks while anonymous browsing remains available. — E7-T7 + E6-T4/T5/T7; live HTTPS site after E7-T10.
-- [x] Shared Nginx serves independently healthy WEF and AI Forecast HTTPS hostnames, and Certbot renewal/reload/expiry monitoring plus rollback evidence pass. — E7-T8–T10; Forecast remains on `:3000`; post-recreate reconnect via `wef-shared-edge/ops/reconnect-wef-upstreams.sh`.
+- [x] Shared Nginx serves the healthy WEF HTTPS hostname, Certbot renewal/reload/expiry monitoring plus rollback evidence pass, and AI Forecast remains healthy and unchanged on `:3000`. — E7-T8–T10; post-recreate reconnect via `wef-shared-edge/ops/reconnect-wef-upstreams.sh`.
 - [x] Every required task has been promoted, approved, dependency-gated, implemented on its dedicated branch, and completed with definition-of-done evidence. — Required E5/E6/E7 M3 tasks `done`; E7-T5 remains deferred (ADR-015).
 
 Recorded 2026-08-20 after live HTTPS `200` and health `live` reconfirmation (shared-edge upstream reconnect after container recreate).
 
 ## Status rule
 
-`done` means every required exit-evidence checkbox above is satisfied under the [workflow](../workflow/README.md). E7-T5 backups remain deferred and are not an M3 gate. E8 live Telegram ingestion remains blocked on spike approval (M4).
+`done` means every required exit-evidence checkbox above is satisfied under the [workflow](../workflow/README.md). E7-T5 backups remain deferred and are not an M3 gate. E8 live Telegram implementation has advanced, but operational acceptance remains M4.

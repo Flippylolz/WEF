@@ -50,4 +50,4 @@ Recorded 2026-08-20 after E3-T5 terminal reconciliation, E4-T3/T4 completion, an
 
 ## Status rule
 
-`planned` records the current outcome checkpoint only; it grants no implementation permission. Change this milestone to `done` only when all required exit evidence and task completion records exist under the [workflow](../workflow/README.md).
+`done` records that all required exit evidence and task completion records exist under the [workflow](../workflow/README.md); it does not grant permission for later scope.

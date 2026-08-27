@@ -22,9 +22,9 @@ The public MVP does not require an account for browsing. In-house registration i
 - The detail view may show source-history entries when multiple messages represent the same canonical offer.
 - No record is silently discarded solely because parsing or geocoding failed.
 
-## Explicit non-goals for the MVP
+## Initial MVP non-goals
 
-- Favorites, alerts, or saved searches.
+- Alerts and saved searches. Location favorites were subsequently delivered by E10.
 - Payments, lead management, chat, or booking.
 - Editing listings in the browser.
 - Claiming real-time availability.
@@ -42,3 +42,9 @@ The public MVP does not require an account for browsing. In-house registration i
 - Price-per-square-metre analytics.
 - Lead workflows beyond the basic audited contact reveal.
 - Public data freshness and ingestion-status indicators.
+
+## Shipped post-MVP extensions
+
+- Authenticated location favorites with an account toolbar and favorites panel (E10).
+- Server-defined quick-filter presets that reuse canonical map filter semantics (E11).
+- Catalog query indexes selected from measured query plans (E12).

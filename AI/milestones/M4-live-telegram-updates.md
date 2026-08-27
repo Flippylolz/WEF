@@ -16,6 +16,7 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 - The recurring geocoder is revalidated under D-002 (resolved: retain Geoapify) before always-on ingestion.
 - The worker remains single-replica, restartable, idempotent, and non-blocking for the public API.
 - E8-T5 depends only on E8-T3 and E8-T4; deferred backup task E7-T5 is not a dependency.
+- Release `3ee56a5` created and started the production worker service on 2026-08-26; task completion still requires verified live entity/event delivery, gap reconciliation, and outage-recovery evidence.
 
 ## Included epic/task definitions
 

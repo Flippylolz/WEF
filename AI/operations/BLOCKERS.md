@@ -4,14 +4,16 @@ This append-only log records blockers that could not be safely resolved autonomo
 
 ## Active blockers
 
-### B-003: Telegram client credentials/session
+### B-003: Telegram live acceptance evidence
 
-- Impact: production live listen requires the authorized session in deploy config and a
-  running `telegram-worker`.
+- Impact: M4 cannot close without verified real entity/event delivery, gap reconciliation,
+  and outage recovery evidence.
 - Current state: API ID/hash and the first authorized string session are stored in gitignored
-  local files and GitHub production secrets. Do not paste session strings into chat or Git.
-- Needed from owner: none for first login. Remaining work is deploying `telegram-worker` with
-  that session.
+  local files and GitHub production secrets. Release `3ee56a5` created and started the
+  production `telegram-worker` service on 2026-08-26. Do not paste session strings into chat
+  or Git.
+- Needed from owner: none for credential provisioning. Remaining work is to observe and record
+  live entity/new/edit/delete behavior, reconcile gaps, and rehearse outage recovery.
 - Safe workaround: historical adapter remains the source of truth if the worker is down.
 
 ### B-005: GitHub-enforced branch protection unavailable

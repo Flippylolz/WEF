@@ -1,10 +1,10 @@
-# Nginx and TLS Target
+# Nginx and TLS
 
 ## Status
 
 This is the approved target architecture from [ADR-020](../decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md). **Live WEF HTTPS is active** on `https://2fa54e2405.duckdns.org` via the `wef-shared-edge` Nginx/Certbot project (E7-T10, 2026-08-20). AI Forecast remains on public host port 3000. Caddy on port 3100 is retained as WEF rollback. Tooling and inert proofs: [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) / [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md); live cutover evidence is on [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md).
 
-## Target topology
+## Live topology
 
 - Nginx Open Source is the only public web server and reverse proxy on NUC ports 80/443 for WEF.
 - Initial E7-T10 cutover terminates TLS for the WEF hostname only; Forecast remains on public host port 3000 (Forecast vhost stays optional in the renderer for fixtures/future use).
@@ -38,10 +38,10 @@ On failure, restore the last healthy listener/routing configuration, reload the 
 ## Required evidence
 
 - Nginx configuration test and graceful reload.
-- Valid public certificate chain and hostname match for both applications.
+- Valid public certificate chain and hostname match for WEF.
 - HTTP-to-HTTPS redirect and conservative TLS/security-header checks.
 - WEF web/API/media/release-marker smoke through Nginx.
-- AI Forecast frontend/backend smoke through Nginx.
+- AI Forecast `:3000` smoke proving the cutover left it unchanged.
 - Certbot renewal dry run, deploy-hook reload evidence, and expiry monitoring.
 - Before/after inventory proving unrelated workloads and both applications' persistent state are unchanged.
 - Deliberate invalid-config, unavailable-upstream, and renewal-hook failure tests with successful rollback.

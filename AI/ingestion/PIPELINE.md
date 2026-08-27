@@ -5,7 +5,7 @@
 - Import the Telegram Desktop export without loading the full JSON file into memory.
 - Produce the same canonical result when a run is safely repeated.
 - Preserve every source message even when candidate detection, parsing, media, or geocoding fails.
-- Share all normalization and persistence logic with future live Telegram ingestion.
+- Share canonical persistence, revisions, visibility, and checkpoint behavior between historical and live Telegram ingestion.
 - Make heuristic decisions visible through confidence, reason codes, and reports.
 
 ## Pipeline boundary
@@ -252,14 +252,16 @@ Golden outputs include source identity, parsed typed values, confidence/reasons,
 
 Never begin with a full media copy and external geocoding in the same unverified run.
 
-## Future live Telegram adapter
+## Live Telegram adapter
+
+The Telethon adapter, bounded backfill, serialized new/edit/delete event processor, liveness heartbeat, redacted status/reconciliation command, and production worker service are implemented. The acceptance gap is operational: verified live entity/event delivery, gap reconciliation, and outage recovery remain under M4/B-003.
 
 ### Authentication
 
 - Use a dedicated Telegram account authorized to read the channel.
 - Create API ID/hash through Telegram's official process.
-- Bootstrap a Telethon session interactively in a controlled local/admin environment.
-- Store the resulting session string as a production secret.
+- Bootstrap a Telethon string session through the worker in a controlled local/admin environment using phone/login-code/2FA inputs when required.
+- Load API credentials and an optional existing session from ignored local environment or deploy-managed production secrets; persist a newly generated session beneath the restricted Telegram session directory.
 - Never print, commit, transmit in logs, or expose the session through API/debug endpoints.
 - Restrict deployment access because the session can act as the authorized account.
 
@@ -268,7 +270,7 @@ Never begin with a full media copy and external geocoding in the same unverified
 1. Resolve the configured channel entity and verify ID/title against production configuration.
 2. Backfill from the last durable external message ID/date using Telethon message iteration.
 3. Process oldest to newest through the common pipeline.
-4. Subscribe to new-message events for the single configured channel.
+4. Subscribe to new/edit/delete events for the single verified channel.
 5. Handle edit and delete events.
 6. Persist a checkpoint only after the database transaction succeeds.
 7. Periodically reconcile a small overlap window to recover missed events.
@@ -296,7 +298,7 @@ The worker records:
 - Recent flood waits and retry category counts.
 - Pending low-confidence/review records.
 
-A stale-worker alert is added with deployment monitoring. The public API remains read-only and operational during a Telegram outage, serving the last committed data.
+`wef-telegram-worker-status` reports checkpoint reconciliation and freshness, while the Compose healthcheck uses only the listen-loop heartbeat. Worker freshness deliberately does not gate `/api/v1/health/ready`; the public API remains operational during a Telegram outage and serves the last committed data.
 
 ## Manual review without an admin UI
 

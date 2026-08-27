@@ -3,13 +3,12 @@
 ## Repository
 
 - Canonical repository: `https://github.com/Flippylolz/WEF`.
-- Intended visibility: private unless the owner explicitly changes it.
+- Current visibility: public (verified through the GitHub repository API on 2026-08-26).
 - Default branch: `main`.
-- The current repository is empty and has no default branch.
-- The local workspace is not yet a Git repository.
+- The repository is initialized and `main` is the active default branch.
 - Raw exports, media, databases, generated import reports containing source data, Telegram sessions, and secrets must never be committed.
 
-As of 2026-08-12, the authenticated account has repository admin access, but GitHub returns `403` for private-repository rulesets with the current account plan. [ADR-017](../decisions/adr/ADR-017-no-enforced-branch-protection.md) makes paid-plan/protected-branch work completely out of scope. The rules below are procedural unless explicitly described as workflow-enforced.
+ADR-017 records the original private-plan limitation and keeps platform-enforced protection out of scope. Although the repository is now public, the GitHub API reported no `main` branch protection and no repository rulesets on 2026-08-26. The rules below remain procedural unless explicitly described as workflow-enforced.
 
 ## Branch policy
 
@@ -17,19 +16,19 @@ Every feature or independently reviewable change uses its own branch and pull re
 
 Allowed branch patterns:
 
-- `feature/<task-id>-<short-description>` for product features.
+- `feat/<task-id>-<short-description>` for product features.
 - `spike/<short-description>` for time-boxed architecture/dependency/research proofs with explicit exit criteria.
-- `fix/<task-id>-<short-description>` for non-emergency defects.
+- `bugfix/<task-id>-<short-description>` for non-emergency defects.
 - `hotfix/<short-description>` for production emergencies.
-- `docs/<short-description>` for documentation-only changes.
+- `doc/<short-description>` for documentation-only changes.
 - `chore/<short-description>` for tooling and maintenance.
 - `dependabot/**` for GitHub-managed dependency updates.
 
 Examples:
 
-- `feature/E4-T1-map-geojson`
+- `feat/E4-T1-map-geojson`
 - `spike/backend-architecture-dependencies`
-- `fix/E3-T3-geocode-bounds`
+- `bugfix/E3-T3-geocode-bounds`
 - `hotfix/api-startup`
 
 Rules:
@@ -92,14 +91,11 @@ GitHub does not enforce these controls under [ADR-017](../decisions/adr/ADR-017-
 
 Expected CI check names must remain stable for scripts/manual review. Add them only after each workflow has run at least once:
 
-- `docs`
-- `backend-quality`
-- `backend-tests`
-- `frontend-quality`
-- `frontend-tests`
-- `contract`
-- `compose-build`
-- `e2e`
+- `Backend`
+- `Frontend and contract`
+- `Repository safety`
+- `Runtime images`
+- `Coverage badge`
 
 Checks may be introduced incrementally while the applications are scaffolded, but no implemented component may merge without its lint/type/test/build checks.
 
@@ -155,7 +151,7 @@ The deploy job additionally:
 - Receives no production secret in pull-request workflows.
 - Verifies through the GitHub API that the pushed SHA is associated with a merged pull request targeting `main`; an unassociated direct push builds/tests but does not deploy automatically.
 
-Until [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) proves health-gated rollback on the supplied server, keep the repository variable `AUTO_DEPLOY_ENABLED=false` and deploy test releases by a manual `workflow_dispatch` for an explicit SHA. After that rehearsal, set it to `true`; successful, tested `main` merges then deploy automatically.
+[E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) completed the health-gated rollback rehearsal. `AUTO_DEPLOY_ENABLED=true` was verified through the GitHub repository API on 2026-08-26, so a tested `main` commit associated with a merged pull request proceeds through automatic deployment; manual dispatch remains available for an explicit SHA.
 
 ## Dependabot
 
@@ -220,9 +216,9 @@ This is a compensating control, not equivalent to protected branches: GitHub can
 - An exception does not waive post-merge CI, deployment health checks, or rollback requirements.
 - Routine dependency updates, documentation, and “small” fixes are not emergencies.
 
-## Bootstrap order
+## Completed bootstrap sequence
 
-Work allowed now:
+The repository was established in this order:
 
 1. Initialize the local repository with the existing `AI/` documentation and safety ignore files.
 2. Add `origin` as `git@github.com:Flippylolz/WEF.git`; SSH is the preferred Git transport.
@@ -230,7 +226,7 @@ Work allowed now:
 4. Add CI workflows and follow branch/pull-request rules manually.
 5. Enable squash merge, auto-delete branches, vulnerability alerts, and Dependabot version/security updates.
 6. Add the scheduled label/check/commit-gated Dependabot merge controller.
-7. Build the main-only GHCR/SSH deployment workflow; keep automatic execution disabled with `AUTO_DEPLOY_ENABLED=false` until [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md).
+7. Build the main-only GHCR/SSH deployment workflow, prove E7-T4 rollback, and enable automatic deployment.
 
 Permanently out of current scope under [ADR-017](../decisions/adr/ADR-017-no-enforced-branch-protection.md):
 
