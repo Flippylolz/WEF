@@ -22,7 +22,7 @@ import { recordMapConstruction } from "@/lib/map-lifecycle";
 
 const MAP_STYLE =
   process.env.NEXT_PUBLIC_MAP_STYLE_URL?.trim() ||
-  "https://tiles.openfreemap.org/styles/liberty";
+  "https://tiles.openfreemap.org/styles/dark";
 const MAP_DISABLED = process.env.NEXT_PUBLIC_WEF_DISABLE_MAP === "1";
 const MAPLIBRE_WORKER = "/vendor/maplibre/maplibre-gl-worker.mjs";
 const DISTRICT_BOUNDARIES = "/data/warsaw-districts.geojson";
@@ -35,8 +35,8 @@ const districtFillLayer: LayerProps = {
   type: "fill" as const,
   source: "warsaw-districts",
   paint: {
-    "fill-color": "#2b7d58",
-    "fill-opacity": 0.08,
+    "fill-color": "#62d7a1",
+    "fill-opacity": 0.05,
   },
 };
 
@@ -45,9 +45,9 @@ const districtLineLayer: LayerProps = {
   type: "line" as const,
   source: "warsaw-districts",
   paint: {
-    "line-color": "#154f3b",
-    "line-opacity": 0.9,
-    "line-width": ["interpolate", ["linear"], ["zoom"], 9, 1.5, 13, 3],
+    "line-color": "#3d4a5c",
+    "line-opacity": 0.85,
+    "line-width": ["interpolate", ["linear"], ["zoom"], 9, 1.5, 13, 2.5],
   },
 };
 
@@ -63,8 +63,8 @@ const districtLabelLayer: LayerProps = {
     "text-letter-spacing": 0.05,
   },
   paint: {
-    "text-color": "#154f3b",
-    "text-halo-color": "rgba(255, 255, 255, 0.92)",
+    "text-color": "#9ba8b8",
+    "text-halo-color": "rgba(8, 11, 16, 0.92)",
     "text-halo-width": 1.5,
   },
 };
@@ -75,9 +75,9 @@ const clusterLayer: LayerProps = {
   source: "locations",
   filter: ["has", "point_count"],
   paint: {
-    "circle-color": "#154f3b",
+    "circle-color": "#1d2632",
     "circle-radius": ["step", ["get", "point_count"], 20, 10, 26, 50, 34],
-    "circle-stroke-color": "#ffffff",
+    "circle-stroke-color": "#62d7a1",
     "circle-stroke-width": 2,
   },
 };
@@ -91,7 +91,7 @@ const clusterCountLayer: LayerProps = {
     "text-field": ["get", "point_count_abbreviated"],
     "text-size": 13,
   },
-  paint: { "text-color": "#ffffff" },
+  paint: { "text-color": "#f4f7fb" },
 };
 
 const locationLayer: LayerProps = {
@@ -103,8 +103,8 @@ const locationLayer: LayerProps = {
     "circle-color": [
       "case",
       ["==", ["get", "confidence"], "low"],
-      "#c65f24",
-      "#2b7d58",
+      "#ffb86b",
+      "#62d7a1",
     ],
     "circle-radius": [
       "interpolate",
@@ -115,7 +115,7 @@ const locationLayer: LayerProps = {
       5,
       15,
     ],
-    "circle-stroke-color": "#ffffff",
+    "circle-stroke-color": "#080b10",
     "circle-stroke-width": 2,
   },
 };
@@ -306,8 +306,8 @@ export function WarsawMap({
               filter={["==", ["id"], selectedId]}
               paint={{
                 "circle-color": "transparent",
-                "circle-radius": 18,
-                "circle-stroke-color": "#17201b",
+                "circle-radius": 20,
+                "circle-stroke-color": "#22c77a",
                 "circle-stroke-width": 3,
               }}
             />
@@ -321,7 +321,7 @@ export function WarsawMap({
               paint={{
                 "circle-color": "transparent",
                 "circle-radius": 16,
-                "circle-stroke-color": "#2b7d58",
+                "circle-stroke-color": "#8ab4ff",
                 "circle-stroke-width": 2,
                 "circle-stroke-opacity": 0.95,
               }}

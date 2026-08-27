@@ -26,9 +26,14 @@ const navigation = vi.hoisted(() => ({
 
 vi.mock("next-intl", () => ({
   useTranslations:
-    () => (key: string, values?: { count?: number; room?: number }) => {
+    () =>
+    (
+      key: string,
+      values?: { count?: number; room?: number; label?: string },
+    ) => {
       if (values?.count !== undefined) return `${key}:${values.count}`;
       if (values?.room !== undefined) return `${key}:${values.room}`;
+      if (values?.label !== undefined) return `${key}:${values.label}`;
       return key;
     },
 }));
@@ -144,6 +149,10 @@ function renderExplorer() {
       <MapExplorer />
     </QueryClientProvider>,
   );
+}
+
+async function openFiltersDrawer(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: /^filtersButton/ }));
 }
 
 function setNavigationHref(target: string) {
@@ -337,12 +346,17 @@ describe("MapExplorer", () => {
     });
     renderExplorer();
 
-    expect(screen.getByRole("heading", { name: "filtersTitle" })).toBeVisible();
+    const filtersToggle = screen.getByRole("button", {
+      name: /^filtersButton/,
+    });
+    expect(filtersToggle).toHaveAttribute("aria-haspopup", "dialog");
     expect(screen.getAllByText("loading").length).toBeGreaterThan(0);
     const errors = await screen.findAllByText("error");
     expect(errors.some((error) => error.getAttribute("role") === "alert")).toBe(
       true,
     );
+    const user = userEvent.setup();
+    await openFiltersDrawer(user);
     expect(screen.getByRole("heading", { name: "filtersTitle" })).toBeVisible();
     expect(screen.queryByTestId("map")).not.toBeInTheDocument();
   });
@@ -359,6 +373,8 @@ describe("MapExplorer", () => {
     renderExplorer();
 
     expect(await screen.findByText("empty")).toHaveAttribute("role", "status");
+    const user = userEvent.setup();
+    await openFiltersDrawer(user);
     expect(screen.getByRole("heading", { name: "filtersTitle" })).toBeVisible();
   });
 
@@ -368,7 +384,6 @@ describe("MapExplorer", () => {
       "&rooms=2&district=wola&market_type=secondary&content_type=unit" +
       "&published_from=2026-08-01T00%3A00%3A00.000Z" +
       "&published_to=2026-08-31T23%3A59%3A59.999Z";
-    const user = userEvent.setup();
     renderExplorer();
 
     await waitFor(() => {
@@ -390,6 +405,8 @@ describe("MapExplorer", () => {
       );
     });
 
+    const user = userEvent.setup();
+    await openFiltersDrawer(user);
     expect(
       screen.getByRole("checkbox", { name: "roomOption:2" }),
     ).toBeChecked();
@@ -403,6 +420,7 @@ describe("MapExplorer", () => {
       );
     });
     expect(navigation.search).toBe("");
+    await openFiltersDrawer(user);
     expect(
       screen.getByRole("checkbox", { name: "roomOption:2" }),
     ).not.toBeChecked();
@@ -511,6 +529,8 @@ describe("MapExplorer", () => {
       name: /Synthetic Central Residence/,
     });
 
+    const user = userEvent.setup();
+    await openFiltersDrawer(user);
     fireEvent.change(screen.getByRole("spinbutton", { name: "minimumPrice" }), {
       target: { value: "800000" },
     });
@@ -910,5 +930,62 @@ describe("MapExplorer", () => {
     expect(await screen.findByText("detailError")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "retry" }));
     expect(await screen.findByText("partialData")).toBeInTheDocument();
+  });
+  it("exposes compact chips: quick preset toggles, applied chips remove, and the Filters drawer applies/closes", async () => {
+    renderExplorer();
+    await screen.findByRole("button", {
+      name: /Synthetic Central Residence/,
+    });
+    const user = userEvent.setup();
+
+    // Filters toggle starts collapsed with no applied groups.
+    const filtersToggle = screen.getByRole("button", {
+      name: /^filtersButton/,
+    });
+    expect(filtersToggle).toHaveAttribute("aria-haspopup", "dialog");
+    expect(filtersToggle).toHaveAttribute("aria-expanded", "false");
+
+    // Quick preset chip applies immediately through the URL lifecycle.
+    await user.click(
+      screen.getByRole("button", { name: "quickFilter.last_day" }),
+    );
+    expect(navigation.push).toHaveBeenLastCalledWith(
+      "/?quick_filter=last_day",
+      { scroll: false },
+    );
+
+    // Applied chips appear with values and per-group remove actions.
+    navigation.search =
+      "price_min=80000000&rooms=2&district=wola&quick_filter=last_day";
+    for (const listener of navigation.listeners) listener();
+    expect(await screen.findByText(/PLN 800,000/)).toBeInTheDocument();
+    expect(filtersToggle).toHaveTextContent("4");
+    await user.click(
+      screen.getByRole("button", { name: "chipRemove:priceLabel" }),
+    );
+    expect(navigation.push).toHaveBeenLastCalledWith(
+      "/?rooms=2&district=wola&quick_filter=last_day",
+      { scroll: false },
+    );
+
+    // The drawer opens from the rail, applies a valid draft, and closes.
+    await user.click(screen.getByRole("button", { name: "moreFilters" }));
+    expect(filtersToggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("heading", { name: "filtersTitle" })).toBeVisible();
+    fireEvent.change(screen.getByRole("spinbutton", { name: "minimumPrice" }), {
+      target: { value: "900000" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "applyFilters" }));
+    expect(navigation.push).toHaveBeenLastCalledWith(
+      "/?price_min=90000000&rooms=2&district=wola&quick_filter=last_day",
+      { scroll: false },
+    );
+    expect(filtersToggle).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("keeps exactly one attribution surface rendered by the map control", async () => {
+    renderExplorer();
+    await screen.findByTestId("map");
+    expect(document.querySelector(".map-attribution")).toBeNull();
   });
 });

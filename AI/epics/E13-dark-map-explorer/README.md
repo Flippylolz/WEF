@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E13
 title: "Dark map-first listing explorer"
-status: ready
+status: in_progress
 milestones: [M4]
 owner: owner
 spike: SPIKE.md
@@ -21,7 +21,7 @@ entire result collection.
 
 ## Approval state
 
-- Epic workspace status: `ready`; implementation is authorized.
+- Epic workspace status: `in_progress`; E13-T1 delivered, T2/T3 to follow.
 - [Spike](SPIKE.md): `approved`, revision 1 (AD-038).
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 1
   (AD-038), sequencing E13-T1 → E13-T2 → E13-T3.

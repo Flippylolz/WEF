@@ -184,7 +184,18 @@
     "mobileResultsBarLabel": "Mobile results",
     "mobileShowResults": "Show {count, plural, one {# location} other {# locations}}",
     "mobileFullList": "Full list",
-    "mobileShowMap": "Show map"
+    "mobileShowMap": "Show map",
+    "filtersButton": "Filters",
+    "moreFilters": "More filters",
+    "resultsScope": "Map area",
+    "chipRemove": "Remove filter: {label}",
+    "chip": {
+      "roomsValue": "{rooms} rooms",
+      "listValue": "{values} and {count} more",
+      "publicationFrom": "From {from}",
+      "publicationTo": "Until {to}",
+      "publicationRange": "{from} – {to}"
+    }
   },
   "errors": {
     "segmentTitle": "This view could not be loaded",

@@ -123,7 +123,7 @@ PY
   */vendor/maplibre/maplibre-gl-shared.mjs)
     printf '%s\\n' 'export {};' > "$output"
     ;;
-  https://tiles.openfreemap.org/styles/liberty)
+  https://tiles.openfreemap.org/styles/dark)
     printf '%s\\n' '{"version":8,"sources":{"openmaptiles":{}},"layers":[{}]}' > "$output"
     ;;
   */)

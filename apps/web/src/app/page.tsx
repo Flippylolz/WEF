@@ -8,12 +8,10 @@ export default async function Home() {
   const t = await getTranslations("home");
 
   return (
-    <main className="page-shell" aria-labelledby="page-title">
-      <header className="page-header">
-        <p className="eyebrow">WEF</p>
-        <h1 id="page-title">{t("title")}</h1>
-        <p className="subtitle">{t("subtitle")}</p>
-      </header>
+    <main className="page-shell app-shell" aria-labelledby="page-title">
+      <h1 className="sr-only" id="page-title">
+        {t("title")}
+      </h1>
       <QueryProvider>
         <Suspense
           fallback={

@@ -10,6 +10,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import {
+  AppliedFilterChips,
+  countAppliedGroups,
+  type FilterChipGroup,
+} from "@/components/filter-chips";
 import { MapFilterControls } from "@/components/map-filter-controls";
 import { LiveAnnouncement } from "@/components/live-announcement";
 import { UserToolbar, type AuthOpener } from "@/components/user-toolbar";
@@ -30,6 +35,7 @@ import {
 } from "@/lib/favorites-api";
 import { fetchCurrentAccount } from "@/lib/auth-api";
 import {
+  DEFAULT_CONTENT_TYPES,
   DEFAULT_MAP_SEARCH_STATE,
   normalizeBbox,
   parseMapSearchParams,
@@ -111,10 +117,23 @@ export function MapExplorer() {
     string | null
   >(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersDialogRef = useRef<HTMLDialogElement | null>(null);
   const openAuthRef = useRef<AuthOpener>(() => undefined);
   const registerAuthOpener = useCallback((open: AuthOpener) => {
     openAuthRef.current = open;
   }, []);
+
+  useEffect(() => {
+    const dialog = filtersDialogRef.current;
+    if (dialog === null) return;
+    if (filtersOpen && !dialog.open) {
+      if (typeof dialog.showModal === "function") dialog.showModal();
+    }
+    if (!filtersOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [filtersOpen]);
   const isMobile = useMediaQuery("(max-width: 56rem)");
   const reduceMotion = usePrefersReducedMotion();
   const viewportTimer = useRef<number | null>(null);
@@ -255,6 +274,48 @@ export function MapExplorer() {
     [cancelViewportUpdate, navigate, searchState],
   );
 
+  const removeFilterGroup = useCallback(
+    (group: FilterChipGroup) => {
+      const next = { ...searchState };
+      if (group === "price") {
+        next.priceMinMinor = null;
+        next.priceMaxMinor = null;
+      } else if (group === "area") {
+        next.areaMin = null;
+        next.areaMax = null;
+      } else if (group === "rooms") {
+        next.rooms = [];
+      } else if (group === "districts") {
+        next.districts = [];
+      } else if (group === "marketTypes") {
+        next.marketTypes = [];
+      } else if (group === "contentTypes") {
+        next.contentTypes = DEFAULT_CONTENT_TYPES;
+      } else if (group === "publication") {
+        next.publishedFrom = null;
+        next.publishedTo = null;
+      } else if (group === "quickFilter") {
+        next.quickFilter = null;
+      }
+      navigate(next, "push");
+    },
+    [navigate, searchState],
+  );
+
+  const toggleQuickFilter = useCallback(
+    (presetId: string | null) => {
+      navigate(
+        {
+          ...searchState,
+          quickFilter: presetId,
+          publishedFrom: presetId ? null : searchState.publishedFrom,
+        },
+        "push",
+      );
+    },
+    [navigate, searchState],
+  );
+
   function selectLocation(locationId: string) {
     const currentFeature = mapQuery.data?.features.find(
       (feature) => feature.id === locationId,
@@ -315,83 +376,37 @@ export function MapExplorer() {
     .filter(Boolean)
     .join(" ");
 
+  const appliedFilterCount = useMemo(
+    () => countAppliedGroups(searchState),
+    [searchState],
+  );
+
   return (
     <section className="map-explorer-shell" aria-label={t("explorerLabel")}>
       <LiveAnnouncement message={liveAnnouncement} />
-      <UserToolbar
-        onSelectFavorite={selectLocation}
-        onRegisterAuthOpener={registerAuthOpener}
-      />
+      <header className="app-bar">
+        <p className="app-title">
+          <span aria-hidden="true">WEF</span>
+        </p>
+        <button
+          className="filters-toggle"
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={filtersOpen}
+          onClick={() => setFiltersOpen(true)}
+        >
+          {t("filtersButton")}
+          {appliedFilterCount > 0 ? (
+            <span className="filters-toggle-count">{appliedFilterCount}</span>
+          ) : null}
+        </button>
+        <span className="app-bar-spacer" />
+        <UserToolbar
+          onSelectFavorite={selectLocation}
+          onRegisterAuthOpener={registerAuthOpener}
+        />
+      </header>
       <div className={explorerClassName}>
-        <div className="map-region">
-          {mapFailed ? (
-            <div className="map-fallback" role="status">
-              <strong>{t("mapUnavailable")}</strong>
-              <span>{t("listStillAvailable")}</span>
-              <button type="button" onClick={retryMap}>
-                {t("retryMap")}
-              </button>
-            </div>
-          ) : map ? (
-            <WarsawMap
-              key="warsaw-map"
-              bbox={searchState.bbox}
-              data={map}
-              selectedId={selectedId}
-              highlightedId={highlightedLocationId}
-              loadingLabel={t("mapLoading")}
-              onSelect={selectLocation}
-              onFailure={() => setMapFailed(true)}
-              onViewportChange={handleViewportChange}
-              reduceMotion={reduceMotion}
-            />
-          ) : (
-            <div
-              className={`map-fallback${mapQuery.isError ? " state-error" : ""}`}
-              role={mapQuery.isError ? "alert" : "status"}
-            >
-              <strong>{mapQuery.isError ? t("error") : t("loading")}</strong>
-              {mapQuery.isError ? (
-                <>
-                  <span>{t("filtersPreserved")}</span>
-                  <button type="button" onClick={retryMap}>
-                    {t("retryMap")}
-                  </button>
-                </>
-              ) : null}
-            </div>
-          )}
-          {!sidebarOpen && !isMobile ? (
-            <button
-              className="sidebar-toggle sidebar-toggle-floating"
-              type="button"
-              aria-label={t("showPanel")}
-              title={t("showPanel")}
-              aria-expanded={false}
-              aria-controls="explorer-sidebar"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <ChevronLeftIcon />
-            </button>
-          ) : null}
-          {isMobile && mobilePanelMode === "map" ? (
-            <div
-              className="mobile-results-bar"
-              role="region"
-              aria-label={t("mobileResultsBarLabel")}
-            >
-              <button type="button" onClick={openMobileSheet}>
-                {t("mobileShowResults", {
-                  count: map?.meta.feature_count ?? 0,
-                })}
-              </button>
-            </div>
-          ) : null}
-          <p className="map-attribution">
-            © OpenFreeMap · © OpenStreetMap contributors
-          </p>
-        </div>
-
         <aside
           id="explorer-sidebar"
           className={`explorer-sidebar${panelOpen ? "" : " explorer-sidebar-collapsed"}`}
@@ -410,33 +425,13 @@ export function MapExplorer() {
               </button>
             </div>
           ) : null}
-          <MapFilterControls
-            key={filtersOnlySearch}
-            facets={facetsQuery.data ?? null}
-            facetsError={facetsQuery.isError}
-            facetsLoading={facetsQuery.isPending}
+          <AppliedFilterChips
+            state={searchState}
             quickFilters={quickFiltersQuery.data ?? []}
             quickFiltersLoading={quickFiltersQuery.isPending}
-            state={searchState}
-            onApply={(nextState) =>
-              navigate({ ...nextState, bbox: searchState.bbox }, "push")
-            }
-            onClear={() => navigate(DEFAULT_MAP_SEARCH_STATE, "push")}
-            collapseControl={
-              isMobile ? null : (
-                <button
-                  className="sidebar-toggle"
-                  type="button"
-                  aria-label={t("hidePanel")}
-                  title={t("hidePanel")}
-                  aria-expanded={sidebarOpen}
-                  aria-controls="explorer-sidebar"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <ChevronRightIcon />
-                </button>
-              )
-            }
+            onRemoveGroup={removeFilterGroup}
+            onToggleQuickFilter={toggleQuickFilter}
+            onOpenFilters={() => setFiltersOpen(true)}
           />
 
           <section className="results-panel" aria-label={t("locationsLabel")}>
@@ -444,12 +439,28 @@ export function MapExplorer() {
               <div>
                 <p className="eyebrow">{t("locationsEyebrow")}</p>
                 <h2>{t("locationsTitle")}</h2>
+                <span className="results-scope">{t("resultsScope")}</span>
               </div>
-              <span className="result-count">
-                {t("locationCount", {
-                  count: map?.meta.feature_count ?? 0,
-                })}
-              </span>
+              <div className="panel-heading-tools">
+                <span className="result-count">
+                  {t("locationCount", {
+                    count: map?.meta.feature_count ?? 0,
+                  })}
+                </span>
+                {isMobile ? null : (
+                  <button
+                    className="sidebar-toggle"
+                    type="button"
+                    aria-label={t("hidePanel")}
+                    title={t("hidePanel")}
+                    aria-expanded={sidebarOpen}
+                    aria-controls="explorer-sidebar"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <ChevronRightIcon />
+                  </button>
+                )}
+              </div>
             </div>
             {facetsQuery.data ? (
               <p className="facet-summary">
@@ -517,7 +528,102 @@ export function MapExplorer() {
             />
           </section>
         </aside>
+
+        <div className="map-region">
+          {mapFailed ? (
+            <div className="map-fallback" role="status">
+              <strong>{t("mapUnavailable")}</strong>
+              <span>{t("listStillAvailable")}</span>
+              <button type="button" onClick={retryMap}>
+                {t("retryMap")}
+              </button>
+            </div>
+          ) : map ? (
+            <WarsawMap
+              key="warsaw-map"
+              bbox={searchState.bbox}
+              data={map}
+              selectedId={selectedId}
+              highlightedId={highlightedLocationId}
+              loadingLabel={t("mapLoading")}
+              onSelect={selectLocation}
+              onFailure={() => setMapFailed(true)}
+              onViewportChange={handleViewportChange}
+              reduceMotion={reduceMotion}
+            />
+          ) : (
+            <div
+              className={`map-fallback${mapQuery.isError ? " state-error" : ""}`}
+              role={mapQuery.isError ? "alert" : "status"}
+            >
+              <strong>{mapQuery.isError ? t("error") : t("loading")}</strong>
+              {mapQuery.isError ? (
+                <>
+                  <span>{t("filtersPreserved")}</span>
+                  <button type="button" onClick={retryMap}>
+                    {t("retryMap")}
+                  </button>
+                </>
+              ) : null}
+            </div>
+          )}
+          {!sidebarOpen && !isMobile ? (
+            <button
+              className="sidebar-toggle sidebar-toggle-floating"
+              type="button"
+              aria-label={t("showPanel")}
+              title={t("showPanel")}
+              aria-expanded={false}
+              aria-controls="explorer-sidebar"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <ChevronLeftIcon />
+            </button>
+          ) : null}
+          {isMobile && mobilePanelMode === "map" ? (
+            <div
+              className="mobile-results-bar"
+              role="region"
+              aria-label={t("mobileResultsBarLabel")}
+            >
+              <button type="button" onClick={openMobileSheet}>
+                {t("mobileShowResults", {
+                  count: map?.meta.feature_count ?? 0,
+                })}
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
+      <dialog
+        ref={filtersDialogRef}
+        className="filter-drawer"
+        aria-label={t("filtersTitle")}
+        onClose={() => setFiltersOpen(false)}
+        onClick={(event) => {
+          if (event.target === filtersDialogRef.current) {
+            setFiltersOpen(false);
+          }
+        }}
+      >
+        <div className="filter-drawer-body">
+          <MapFilterControls
+            key={filtersOnlySearch}
+            facets={facetsQuery.data ?? null}
+            facetsError={facetsQuery.isError}
+            facetsLoading={facetsQuery.isPending}
+            state={searchState}
+            onApply={(nextState) => {
+              navigate({ ...nextState, bbox: searchState.bbox }, "push");
+              setFiltersOpen(false);
+            }}
+            onClear={() => {
+              navigate(DEFAULT_MAP_SEARCH_STATE, "push");
+              setFiltersOpen(false);
+            }}
+          />
+        </div>
+      </dialog>
       <OfferDetailDrawer
         open={selectedOfferId !== null}
         offerId={selectedOfferId}
