@@ -84,7 +84,10 @@ test.describe("map explorer critical path", () => {
 
     await page.getByRole("button", { name: "Hide panel" }).click();
 
-    await expect(page.getByLabel("Interactive map of Warsaw")).toBeVisible();
+    // CI intentionally disables MapLibre, so assert the layout-owned map
+    // region rather than the optional canvas. The collapsed-grid regression
+    // reduced this region to zero width regardless of map availability.
+    await expect(page.locator(".map-region")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Show panel" }),
     ).toBeVisible();
