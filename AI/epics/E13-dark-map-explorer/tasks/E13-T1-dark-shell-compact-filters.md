@@ -39,11 +39,11 @@ branch:
   task_id: E13-T1
   one_task_only: true
   created_at: "2026-08-26T18:45:03Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/176"
 completion:
   completed_by: "ZCode agent (owner-directed E13 implementation mission)"
   completed_at: "2026-08-27T01:34:36Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/176"
   evidence:
     - "Dark shell/rail/chips/drawer implemented; 130 vitest tests green at 94.93%/90.86% coverage; lint/typecheck/build green"
     - "Local stack visual verification at 1440x900 and 360x800 (dark map, one attribution, chips, drawer dialog)"
