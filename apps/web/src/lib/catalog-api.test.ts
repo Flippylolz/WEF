@@ -7,6 +7,7 @@ import {
   fetchLocationOffers,
   fetchOfferDetail,
   fetchQuickFilters,
+  fetchViewportListings,
 } from "@/lib/catalog-api";
 
 const response = (body: object, status = 200) =>
@@ -16,6 +17,72 @@ const response = (body: object, status = 200) =>
   });
 
 describe("catalog API", () => {
+  it("loads paginated viewport listings with cursor and limit", async () => {
+    const fetcher = vi.fn(async (request: Request) => {
+      const url = new URL(request.url);
+      expect(url.pathname).toBe("/api/v1/listings");
+      expect(url.searchParams.get("bbox")).toBe(DEFAULT_BBOX);
+      expect(url.searchParams.get("cursor")).toBe("next");
+      expect(url.searchParams.get("limit")).toBe("20");
+      return response({
+        items: [
+          {
+            id: "20000000-0000-4000-8000-000000000001",
+            content_type: "development",
+            market_type: "primary",
+            display_name: "development · primary",
+            data_confidence: "complete",
+            published_at: "2026-08-01T10:00:00Z",
+            currency: "PLN",
+            price_min_minor: 80_000_000,
+            price_max_minor: 125_000_000,
+            parking_price_min_minor: null,
+            parking_price_max_minor: null,
+            parking_included_in_price: false,
+            storage_price_min_minor: null,
+            storage_price_max_minor: null,
+            storage_included_in_price: false,
+            area_min_sqm: "35.00",
+            area_max_sqm: "71.50",
+            rooms_min: 1,
+            rooms_max: 3,
+            floor_label: null,
+            delivery_label: null,
+            location: {
+              id: "10000000-0000-4000-8000-000000000001",
+              display_name: "Synthetic Central Residence",
+              display_address: "Synthetic address 1, Warsaw",
+              district: "srodmiescie",
+              coordinate_precision: "address",
+              confidence: "high",
+              geometry: {
+                type: "Point",
+                coordinates: [21.0122, 52.2297],
+              },
+            },
+          },
+        ],
+        matching_count: 1,
+        next_cursor: null,
+      });
+    });
+
+    const result = await fetchViewportListings(
+      { bbox: DEFAULT_BBOX, cursor: "next", limit: 20 },
+      { fetcher },
+    );
+
+    expect(result.state).toBe("ready");
+    if (result.state === "ready") {
+      expect(result.data.items[0]?.location.display_name).toBe(
+        "Synthetic Central Residence",
+      );
+      expect(result.data.items[0]?.location.geometry.coordinates).toEqual([
+        21.0122, 52.2297,
+      ]);
+    }
+  });
+
   it("requests the map with the bounded default viewport", async () => {
     const fetcher = vi.fn(async (request: Request) => {
       expect(new URL(request.url).searchParams.get("bbox")).toBe(DEFAULT_BBOX);

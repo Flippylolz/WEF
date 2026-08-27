@@ -18,6 +18,9 @@ export type LocationOfferPage =
   paths["/api/v1/locations/{location_id}/offers"]["get"]["responses"][200]["content"]["application/json"];
 export type OfferDetail =
   paths["/api/v1/offers/{offer_id}"]["get"]["responses"][200]["content"]["application/json"];
+export type ViewportListingPage =
+  paths["/api/v1/listings"]["get"]["responses"][200]["content"]["application/json"];
+export type ViewportListing = ViewportListingPage["items"][number];
 
 type Ready<T> = { state: "ready"; data: T };
 type Failed = { state: "error" };
@@ -170,6 +173,44 @@ export async function fetchOfferDetail(
       return { state: "error" };
     }
     return { state: "ready", data };
+  } catch {
+    return { state: "error" };
+  }
+}
+
+export async function fetchViewportListings(
+  query: MapLocationQuery & { cursor?: string; limit?: number } = {
+    bbox: DEFAULT_BBOX,
+  },
+  options: RequestOptions = {},
+): Promise<ApiResult<ViewportListingPage>> {
+  try {
+    const { data, error, response } = await client(options.fetcher).GET(
+      "/api/v1/listings",
+      {
+        params: { query },
+        cache: "no-store",
+        ...(options.signal ? { signal: options.signal } : {}),
+      },
+    );
+    if (!response.ok || error !== undefined || data === undefined) {
+      return { state: "error" };
+    }
+    const items: ViewportListingPage["items"] = data.items.map((item) => {
+      const [longitude, latitude] = item.location.geometry.coordinates;
+      if (longitude === undefined || latitude === undefined) {
+        throw new Error("Invalid point coordinates");
+      }
+      const coordinates: [number, number] = [longitude, latitude];
+      return {
+        ...item,
+        location: {
+          ...item.location,
+          geometry: { ...item.location.geometry, coordinates },
+        },
+      };
+    });
+    return { state: "ready", data: { ...data, items } };
   } catch {
     return { state: "error" };
   }

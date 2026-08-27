@@ -24,6 +24,7 @@ from wef_backend.app import create_http_app
 from wef_backend.composition import AppServices
 from wef_backend.features.catalog.application import (
     BrowseLocationOffers,
+    BrowseViewportListings,
     GetOfferDetail,
     QueryFacets,
     QueryMapLocations,
@@ -44,6 +45,9 @@ async def admin_client(
         query_map=QueryMapLocations(FakeMapQuery()),
         query_facets=QueryFacets(FakeCatalogBrowse(facets=empty_facet_snapshot())),
         browse_location_offers=BrowseLocationOffers(
+            FakeCatalogBrowse(facets=empty_facet_snapshot()),
+        ),
+        browse_viewport_listings=BrowseViewportListings(
             FakeCatalogBrowse(facets=empty_facet_snapshot()),
         ),
         get_offer_detail=GetOfferDetail(FakeOfferDetailQuery()),

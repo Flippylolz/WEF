@@ -27,6 +27,7 @@ from wef_backend.features.catalog.interface import (
     offers_router,
 )
 from wef_backend.features.catalog.interface import router as catalog_router
+from wef_backend.features.catalog.interface.router import listings_router
 from wef_backend.features.contacts.interface import contacts_router
 from wef_backend.features.estates.interface import router as estates_router
 from wef_backend.features.identity.interface import identity_router
@@ -63,6 +64,7 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     )
     app.include_router(health_router)
     app.include_router(catalog_router)
+    app.include_router(listings_router)
     app.include_router(facets_router)
     app.include_router(locations_router)
     app.include_router(offers_router)
@@ -82,6 +84,7 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
         app.state.query_map = services.query_map
         app.state.query_facets = services.query_facets
         app.state.browse_location_offers = services.browse_location_offers
+        app.state.browse_viewport_listings = services.browse_viewport_listings
         app.state.get_offer_detail = services.get_offer_detail
         app.state.is_ready = services.is_ready
         app.state.identity = services.identity

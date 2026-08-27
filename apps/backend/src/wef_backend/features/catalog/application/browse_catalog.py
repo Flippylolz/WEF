@@ -1,4 +1,4 @@
-"""Facet and selected-location offer browsing use cases."""
+"""Facet and selected-location/viewport offer browsing use cases."""
 
 from __future__ import annotations
 
@@ -6,13 +6,14 @@ import base64
 import json
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 from enum import StrEnum
 from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
 
-if TYPE_CHECKING:
-    from decimal import Decimal
+from wef_backend.features.catalog.application.map_query import ConfidenceIndicator
 
+if TYPE_CHECKING:
     from wef_backend.features.catalog.application.map_query import MapFilters
     from wef_backend.features.catalog.domain import ContentType, MarketType
 
@@ -82,6 +83,68 @@ class CursorCodec:
             message = "cursor is invalid"
             raise CursorError(message) from error
         if version != _CURSOR_VERSION or decoded.match_rank not in (0, 1):
+            message = "cursor is invalid"
+            raise CursorError(message)
+        if decoded.published_at.tzinfo is None:
+            message = "cursor is invalid"
+            raise CursorError(message)
+        return decoded
+
+
+_LISTING_CURSOR_VERSION = 1
+
+_HIGH_LOCATION_CONFIDENCE = Decimal("0.90")
+_MEDIUM_LOCATION_CONFIDENCE = Decimal("0.75")
+
+
+@dataclass(frozen=True, slots=True)
+class ListingCursor:
+    """Versioned deterministic position in the viewport listing order."""
+
+    published_at: datetime
+    offer_id: UUID
+
+
+class ListingCursorCodec:
+    """Encode bounded newest-first ordering values without transport leaks."""
+
+    @staticmethod
+    def encode(cursor: ListingCursor) -> str:
+        """Encode a listing cursor as unpadded URL-safe base64."""
+        payload = json.dumps(
+            [
+                _LISTING_CURSOR_VERSION,
+                cursor.published_at.isoformat(),
+                str(cursor.offer_id),
+            ],
+            separators=(",", ":"),
+        ).encode()
+        return base64.urlsafe_b64encode(payload).decode().rstrip("=")
+
+    @staticmethod
+    def decode(value: str | None) -> ListingCursor | None:
+        """Decode and strictly validate a bounded listing cursor."""
+        if value is None:
+            return None
+        if not value or len(value) > _MAX_CURSOR_LENGTH:
+            message = "cursor is invalid"
+            raise CursorError(message)
+        try:
+            padding = "=" * (-len(value) % 4)
+            raw = base64.b64decode(
+                value + padding,
+                altchars=b"-_",
+                validate=True,
+            )
+            version, published_at, offer_id = json.loads(raw)
+            decoded = ListingCursor(
+                published_at=datetime.fromisoformat(str(published_at)),
+                offer_id=UUID(str(offer_id)),
+            )
+        except (ValueError, TypeError, json.JSONDecodeError) as error:
+            message = "cursor is invalid"
+            raise CursorError(message) from error
+        if version != _LISTING_CURSOR_VERSION:
             message = "cursor is invalid"
             raise CursorError(message)
         if decoded.published_at.tzinfo is None:
@@ -305,4 +368,216 @@ class BrowseLocationOffers:
             floor_label=record.floor_label,
             delivery_label=record.delivery_label,
             matches_filters=record.matches_filters,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ListingLocationContext:
+    """Public parent location context for one viewport listing row."""
+
+    id: UUID
+    display_name: str
+    display_address: str
+    district: str | None
+    precision: str
+    confidence: Decimal
+    longitude: float
+    latitude: float
+
+
+@dataclass(frozen=True, slots=True)
+class ListingBrowseRecord:
+    """Persistence-neutral filter-matching viewport listing row."""
+
+    id: UUID
+    content_type: ContentType
+    market_type: MarketType
+    published_at: datetime
+    currency: str | None
+    price_min_minor: int | None
+    price_max_minor: int | None
+    parking_price_min_minor: int | None
+    parking_price_max_minor: int | None
+    parking_included_in_price: bool
+    storage_price_min_minor: int | None
+    storage_price_max_minor: int | None
+    storage_included_in_price: bool
+    area_min_sqm: Decimal | None
+    area_max_sqm: Decimal | None
+    rooms_min: int | None
+    rooms_max: int | None
+    floor_label: str | None
+    delivery_label: str | None
+    location: ListingLocationContext
+
+
+@dataclass(frozen=True, slots=True)
+class ViewportListingSnapshot:
+    """One bounded newest-first page and its filtered total."""
+
+    records: tuple[ListingBrowseRecord, ...]
+    matching_count: int
+
+
+class ViewportListingQueryPort(Protocol):
+    """Viewport offer-summary projection contract."""
+
+    async def query_viewport_listings(
+        self,
+        *,
+        filters: MapFilters,
+        cursor: ListingCursor | None,
+        limit: int,
+    ) -> ViewportListingSnapshot:
+        """Return at most limit-plus-one ordered records and the count."""
+        ...
+
+
+@dataclass(frozen=True, slots=True)
+class ListingLocationDTO:
+    """Backend-decorated public parent location summary."""
+
+    id: UUID
+    display_name: str
+    display_address: str
+    district: str | None
+    precision: str
+    confidence_indicator: ConfidenceIndicator
+    longitude: float
+    latitude: float
+
+
+@dataclass(frozen=True, slots=True)
+class ListingSummaryDTO:
+    """Backend-decorated viewport listing card."""
+
+    id: UUID
+    content_type: ContentType
+    market_type: MarketType
+    display_name: str
+    data_confidence: OfferDataConfidence
+    published_at: datetime
+    currency: str | None
+    price_min_minor: int | None
+    price_max_minor: int | None
+    parking_price_min_minor: int | None
+    parking_price_max_minor: int | None
+    parking_included_in_price: bool
+    storage_price_min_minor: int | None
+    storage_price_max_minor: int | None
+    storage_included_in_price: bool
+    area_min_sqm: Decimal | None
+    area_max_sqm: Decimal | None
+    rooms_min: int | None
+    rooms_max: int | None
+    floor_label: str | None
+    delivery_label: str | None
+    location: ListingLocationDTO
+
+
+@dataclass(frozen=True, slots=True)
+class ViewportListingPage:
+    """Viewport page and filtered total with opaque continuation."""
+
+    items: tuple[ListingSummaryDTO, ...]
+    matching_count: int
+    next_cursor: str | None
+
+
+def _location_confidence_indicator(score: Decimal) -> ConfidenceIndicator:
+    """Map a location confidence score to the public coarse indicator."""
+    if score >= _HIGH_LOCATION_CONFIDENCE:
+        return ConfidenceIndicator.HIGH
+    if score >= _MEDIUM_LOCATION_CONFIDENCE:
+        return ConfidenceIndicator.MEDIUM
+    return ConfidenceIndicator.LOW
+
+
+class BrowseViewportListings:
+    """Return a deterministic newest-first backend-decorated page."""
+
+    def __init__(self, query_port: ViewportListingQueryPort) -> None:
+        """Store the viewport listing query port."""
+        self._query_port = query_port
+
+    async def __call__(
+        self,
+        *,
+        filters: MapFilters,
+        cursor: str | None,
+        limit: int,
+    ) -> ViewportListingPage:
+        """Decode pagination, execute one query, and decorate summaries."""
+        decoded_cursor = ListingCursorCodec.decode(cursor)
+        snapshot = await self._query_port.query_viewport_listings(
+            filters=filters,
+            cursor=decoded_cursor,
+            limit=limit + 1,
+        )
+        visible_records = snapshot.records[:limit]
+        next_cursor = None
+        if len(snapshot.records) > limit:
+            last = visible_records[-1]
+            next_cursor = ListingCursorCodec.encode(
+                ListingCursor(
+                    published_at=last.published_at,
+                    offer_id=last.id,
+                ),
+            )
+        return ViewportListingPage(
+            items=tuple(self._decorate(record) for record in visible_records),
+            matching_count=snapshot.matching_count,
+            next_cursor=next_cursor,
+        )
+
+    @staticmethod
+    def _decorate(record: ListingBrowseRecord) -> ListingSummaryDTO:
+        """Own public labels and coarse completeness decisions."""
+        complete = all(
+            value is not None
+            for value in (
+                record.price_min_minor,
+                record.price_max_minor,
+                record.area_min_sqm,
+                record.area_max_sqm,
+                record.rooms_min,
+                record.rooms_max,
+            )
+        )
+        return ListingSummaryDTO(
+            id=record.id,
+            content_type=record.content_type,
+            market_type=record.market_type,
+            display_name=f"{record.content_type.value} · {record.market_type.value}",
+            data_confidence=(
+                OfferDataConfidence.COMPLETE if complete else OfferDataConfidence.PARTIAL
+            ),
+            published_at=record.published_at,
+            currency=record.currency,
+            price_min_minor=record.price_min_minor,
+            price_max_minor=record.price_max_minor,
+            parking_price_min_minor=record.parking_price_min_minor,
+            parking_price_max_minor=record.parking_price_max_minor,
+            parking_included_in_price=record.parking_included_in_price,
+            storage_price_min_minor=record.storage_price_min_minor,
+            storage_price_max_minor=record.storage_price_max_minor,
+            storage_included_in_price=record.storage_included_in_price,
+            area_min_sqm=record.area_min_sqm,
+            area_max_sqm=record.area_max_sqm,
+            rooms_min=record.rooms_min,
+            rooms_max=record.rooms_max,
+            floor_label=record.floor_label,
+            delivery_label=record.delivery_label,
+            location=ListingLocationDTO(
+                id=record.location.id,
+                display_name=record.location.display_name,
+                display_address=record.location.display_address,
+                district=record.location.district,
+                precision=record.location.precision,
+                confidence_indicator=_location_confidence_indicator(
+                    record.location.confidence,
+                ),
+                longitude=record.location.longitude,
+                latitude=record.location.latitude,
+            ),
         )

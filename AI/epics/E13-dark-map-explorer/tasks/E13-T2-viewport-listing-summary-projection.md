@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E13-T2
 epic: E13
 title: "Add a paginated viewport listing-summary projection"
-status: ready
+status: done
 revision: 1
 priority: P1
 size: L
@@ -38,13 +38,16 @@ branch:
   name: feat/E13-T2-viewport-listing-summary
   task_id: E13-T2
   one_task_only: true
-  created_at: "2026-08-26T18:45:03Z"
-  pull_request: null
+  created_at: "2026-08-27T02:00:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/177"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode agent (owner-directed E13 implementation mission)"
+  completed_at: "2026-08-27T04:20:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/177"
+  evidence:
+    - "GET /api/v1/listings additive endpoint with newest-first keyset cursor; 411 backend tests green at 91% coverage"
+    - "PostGIS integration proof: 5-offer fixture paginates 2+2+1 with strict descending order and public gates"
+    - "contracts/openapi/v1.json + generated api.ts regenerated; contract-check and oasdiff-compatible additive schema"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -100,17 +103,17 @@ pagination authority.
 
 ## Acceptance criteria
 
-- [ ] Endpoint returns filter-matching visible offers within the bbox,
+- [x] Endpoint returns filter-matching visible offers within the bbox,
       newest-first, with parent location summary fields only.
-- [ ] Cursor pagination is deterministic and bounded (limit ≤ 50, lookahead
+- [x] Cursor pagination is deterministic and bounded (limit ≤ 50, lookahead
       behavior identical to the location-offers endpoint); invalid cursors
       return 422; empty/last pages return `next_cursor: null`.
-- [ ] Non-public locations/offers are never returned; confidence is exposed
+- [x] Non-public locations/offers are never returned; confidence is exposed
       only as the coarse public indicator.
-- [ ] `make contract-generate` output committed; `make contract-check`,
+- [x] `make contract-generate` output committed; `make contract-check`,
       lint, typecheck, and both ≥90% coverage floors pass; oasdiff shows no
       breaking changes.
-- [ ] Backend tests cover filters, bbox bounds, ordering ties, cursor edge
+- [x] Backend tests cover filters, bbox bounds, ordering ties, cursor edge
       cases, and the visibility gates.
 
 ## Test plan

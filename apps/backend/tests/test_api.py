@@ -27,9 +27,12 @@ from wef_backend.app import create_http_app
 from wef_backend.composition import AppServices, ReadyCheck
 from wef_backend.features.catalog.application import (
     BrowseLocationOffers,
+    BrowseViewportListings,
     ConfidenceIndicator,
     FacetSnapshot,
     GetOfferDetail,
+    ListingBrowseRecord,
+    ListingLocationContext,
     MapLocationRecord,
     OfferBrowseRecord,
     QueryFacets,
@@ -58,6 +61,7 @@ def create_test_app(
         query_map=QueryMapLocations(FakeMapQuery()),
         query_facets=QueryFacets(browse),
         browse_location_offers=BrowseLocationOffers(browse),
+        browse_viewport_listings=BrowseViewportListings(browse),
         get_offer_detail=GetOfferDetail(FakeOfferDetailQuery()),
         is_ready=ready_check,
         close=close_nothing,
@@ -438,3 +442,84 @@ async def test_filter_facets_are_short_cacheable() -> None:
 
     assert response.status_code == status.HTTP_200_OK
     assert response.headers["cache-control"] == "public, max-age=60"
+
+
+async def test_viewport_listings_present_parent_location_and_reject_bad_cursor() -> None:
+    """Present newest-first listing cards and validate cursors safely."""
+    app = create_test_app()
+    browse = FakeCatalogBrowse(
+        facets=empty_facet_snapshot(),
+        viewport_records=(
+            ListingBrowseRecord(
+                id=UUID("20000000-0000-4000-8000-000000000001"),
+                content_type=ContentType.DEVELOPMENT,
+                market_type=MarketType.PRIMARY,
+                published_at=datetime(2026, 8, 1, tzinfo=UTC),
+                currency="PLN",
+                price_min_minor=80_000_000,
+                price_max_minor=125_000_000,
+                parking_price_min_minor=None,
+                parking_price_max_minor=None,
+                parking_included_in_price=False,
+                storage_price_min_minor=None,
+                storage_price_max_minor=None,
+                storage_included_in_price=False,
+                area_min_sqm=Decimal("35.00"),
+                area_max_sqm=Decimal("71.50"),
+                rooms_min=1,
+                rooms_max=3,
+                floor_label=None,
+                delivery_label=None,
+                location=ListingLocationContext(
+                    id=UUID("10000000-0000-4000-8000-000000000001"),
+                    display_name="Synthetic Central Residence",
+                    display_address="Synthetic address 1, Warsaw",
+                    district="srodmiescie",
+                    precision="address",
+                    confidence=Decimal("0.60"),
+                    longitude=21.0122,
+                    latitude=52.2297,
+                ),
+            ),
+        ),
+        viewport_matching_count=1,
+    )
+    app.state.browse_viewport_listings = BrowseViewportListings(browse)
+
+    async with api_client(app) as client:
+        listing_response = await client.get(
+            "/api/v1/listings",
+            params={
+                "bbox": "20.9,52.1,21.2,52.4",
+                "price_min": 50_000_000,
+                "rooms": 2,
+                "limit": 1,
+            },
+        )
+        bad_cursor = await client.get(
+            "/api/v1/listings",
+            params={"bbox": "20.9,52.1,21.2,52.4", "cursor": "not-valid!"},
+        )
+        schema = app.openapi()
+
+    assert listing_response.status_code == status.HTTP_200_OK
+    payload = listing_response.json()
+    assert payload["matching_count"] == 1
+    assert payload["next_cursor"] is None
+    item = payload["items"][0]
+    assert item["display_name"] == "development · primary"
+    assert item["data_confidence"] == "complete"
+    assert item["price_max_minor"] == 125_000_000
+    assert item["location"]["display_name"] == "Synthetic Central Residence"
+    assert item["location"]["district"] == "srodmiescie"
+    assert item["location"]["confidence"] == "low"
+    assert item["location"]["geometry"]["coordinates"] == [21.0122, 52.2297]
+    assert "source_text" not in listing_response.text
+    assert "public_source_text" not in listing_response.text
+
+    assert bad_cursor.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert bad_cursor.json()["detail"] == "cursor is invalid"
+
+    assert schema["paths"]["/api/v1/listings"]["get"]["operationId"] == (
+        "listViewportListings"
+    )

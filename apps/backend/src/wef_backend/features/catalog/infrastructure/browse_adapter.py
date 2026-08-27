@@ -1,4 +1,4 @@
-"""SQLAlchemy adapters for facets and selected-location offers."""
+"""SQLAlchemy adapters for facets, location offers, and viewport listings."""
 
 from __future__ import annotations
 
@@ -9,11 +9,16 @@ from sqlalchemy import and_, case, func, or_, select
 from wef_backend.features.catalog.application import (
     FacetQueryPort,
     FacetSnapshot,
+    ListingBrowseRecord,
+    ListingCursor,
+    ListingLocationContext,
     LocationOfferQueryPort,
     MapFilters,
     OfferBrowseRecord,
     OfferBrowseSnapshot,
     OfferCursor,
+    ViewportListingQueryPort,
+    ViewportListingSnapshot,
 )
 from wef_backend.features.catalog.domain import (
     ContentType,
@@ -33,8 +38,12 @@ if TYPE_CHECKING:
     from sqlalchemy.sql.elements import ColumnElement
 
 
-class SQLAlchemyCatalogBrowseAdapter(FacetQueryPort, LocationOfferQueryPort):
-    """Aggregate visible facets and deterministic selected-location pages."""
+class SQLAlchemyCatalogBrowseAdapter(
+    FacetQueryPort,
+    LocationOfferQueryPort,
+    ViewportListingQueryPort,
+):
+    """Aggregate visible facets and deterministic browse pages."""
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         """Store the lazy async session factory."""
@@ -213,6 +222,102 @@ class SQLAlchemyCatalogBrowseAdapter(FacetQueryPort, LocationOfferQueryPort):
             total_count=int(total_count),
         )
 
+    async def query_viewport_listings(
+        self,
+        *,
+        filters: MapFilters,
+        cursor: ListingCursor | None,
+        limit: int,
+    ) -> ViewportListingSnapshot:
+        """Return a newest-first filtered page plus the filtered count."""
+        conditions = SQLAlchemyMapQueryAdapter.filter_conditions(filters)
+        page_conditions: list[ColumnElement[bool]] = list(conditions)
+        if cursor is not None:
+            page_conditions.append(self._after_listing_cursor(cursor))
+        page_statement = (
+            select(
+                OfferRow.id,
+                OfferRow.content_type,
+                OfferRow.market_type,
+                OfferRow.published_at,
+                OfferRow.currency,
+                OfferRow.price_min_minor,
+                OfferRow.price_max_minor,
+                OfferRow.parking_price_min_minor,
+                OfferRow.parking_price_max_minor,
+                OfferRow.parking_included_in_price,
+                OfferRow.storage_price_min_minor,
+                OfferRow.storage_price_max_minor,
+                OfferRow.storage_included_in_price,
+                OfferRow.area_min_sqm,
+                OfferRow.area_max_sqm,
+                OfferRow.rooms_min,
+                OfferRow.rooms_max,
+                OfferRow.floor_label,
+                OfferRow.delivery_label,
+                LocationRow.id.label("location_id"),
+                LocationRow.display_name.label("location_display_name"),
+                LocationRow.display_address.label("location_display_address"),
+                LocationRow.district.label("location_district"),
+                LocationRow.precision.label("location_precision"),
+                LocationRow.confidence.label("location_confidence"),
+                func.ST_X(LocationRow.point).label("location_longitude"),
+                func.ST_Y(LocationRow.point).label("location_latitude"),
+            )
+            .join(LocationRow, LocationRow.id == OfferRow.location_id)
+            .where(*page_conditions)
+            .order_by(
+                OfferRow.published_at.desc(),
+                OfferRow.id.desc(),
+            )
+            .limit(limit)
+        )
+        count_statement = (
+            select(func.count(OfferRow.id))
+            .join(LocationRow, LocationRow.id == OfferRow.location_id)
+            .where(*conditions)
+        )
+        async with self._session_factory() as session:
+            matching_count = await session.scalar(count_statement)
+            rows = (await session.execute(page_statement)).all()
+        return ViewportListingSnapshot(
+            records=tuple(
+                ListingBrowseRecord(
+                    id=row.id,
+                    content_type=ContentType(row.content_type),
+                    market_type=MarketType(row.market_type),
+                    published_at=row.published_at,
+                    currency=row.currency,
+                    price_min_minor=row.price_min_minor,
+                    price_max_minor=row.price_max_minor,
+                    parking_price_min_minor=row.parking_price_min_minor,
+                    parking_price_max_minor=row.parking_price_max_minor,
+                    parking_included_in_price=row.parking_included_in_price,
+                    storage_price_min_minor=row.storage_price_min_minor,
+                    storage_price_max_minor=row.storage_price_max_minor,
+                    storage_included_in_price=row.storage_included_in_price,
+                    area_min_sqm=row.area_min_sqm,
+                    area_max_sqm=row.area_max_sqm,
+                    rooms_min=row.rooms_min,
+                    rooms_max=row.rooms_max,
+                    floor_label=row.floor_label,
+                    delivery_label=row.delivery_label,
+                    location=ListingLocationContext(
+                        id=row.location_id,
+                        display_name=row.location_display_name,
+                        display_address=row.location_display_address,
+                        district=row.location_district,
+                        precision=row.location_precision,
+                        confidence=row.location_confidence,
+                        longitude=float(row.location_longitude),
+                        latitude=float(row.location_latitude),
+                    ),
+                )
+                for row in rows
+            ),
+            matching_count=int(matching_count or 0),
+        )
+
     @staticmethod
     def _visible_base() -> tuple[ColumnElement[bool], ...]:
         """Return public catalog gates shared by both browse queries."""
@@ -238,6 +343,17 @@ class SQLAlchemyCatalogBrowseAdapter(FacetQueryPort, LocationOfferQueryPort):
             ),
             and_(
                 match_rank == cursor.match_rank,
+                OfferRow.published_at == cursor.published_at,
+                OfferRow.id < cursor.offer_id,
+            ),
+        )
+
+    @staticmethod
+    def _after_listing_cursor(cursor: ListingCursor) -> ColumnElement[bool]:
+        """Return rows after a descending publication-time/UUID position."""
+        return or_(
+            OfferRow.published_at < cursor.published_at,
+            and_(
                 OfferRow.published_at == cursor.published_at,
                 OfferRow.id < cursor.offer_id,
             ),

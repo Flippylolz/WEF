@@ -13,6 +13,7 @@ from wef_backend.features.catalog.application import (
     LocationOfferPage,
     MapQueryResult,
     OfferDataConfidence,
+    ViewportListingPage,
 )
 from wef_backend.features.catalog.application.offer_detail import OfferDetailDTO
 from wef_backend.features.catalog.application.quick_filters import QuickFilterPreset
@@ -150,6 +151,59 @@ class LocationOfferPageResponse(BaseModel):
     items: tuple[OfferSummaryResponse, ...]
     matching_count: int = Field(ge=0)
     total_count: int = Field(ge=0)
+    next_cursor: str | None
+
+
+class ListingLocationResponse(BaseModel):
+    """Public parent location context for one viewport listing card."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    display_name: str
+    display_address: str
+    district: str | None
+    coordinate_precision: str
+    confidence: ConfidenceIndicator
+    geometry: PointGeometry
+
+
+class ViewportListingItemResponse(BaseModel):
+    """Dated filter-matching viewport listing summary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    content_type: ContentType
+    market_type: MarketType
+    display_name: str
+    data_confidence: OfferDataConfidence
+    published_at: datetime
+    currency: str | None
+    price_min_minor: int | None = Field(default=None, ge=0)
+    price_max_minor: int | None = Field(default=None, ge=0)
+    parking_price_min_minor: int | None = Field(default=None, ge=0)
+    parking_price_max_minor: int | None = Field(default=None, ge=0)
+    parking_included_in_price: bool = False
+    storage_price_min_minor: int | None = Field(default=None, ge=0)
+    storage_price_max_minor: int | None = Field(default=None, ge=0)
+    storage_included_in_price: bool = False
+    area_min_sqm: Decimal | None = Field(default=None, gt=0)
+    area_max_sqm: Decimal | None = Field(default=None, gt=0)
+    rooms_min: int | None = Field(default=None, ge=0)
+    rooms_max: int | None = Field(default=None, ge=0)
+    floor_label: str | None
+    delivery_label: str | None
+    location: ListingLocationResponse
+
+
+class ViewportListingPageResponse(BaseModel):
+    """Viewport items with the filtered total and opaque continuation."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: tuple[ViewportListingItemResponse, ...]
+    matching_count: int = Field(ge=0)
     next_cursor: str | None
 
 
@@ -340,6 +394,53 @@ def present_location_offer_page(
         ),
         matching_count=page.matching_count,
         total_count=page.total_count,
+        next_cursor=page.next_cursor,
+    )
+
+
+def present_viewport_listing_page(
+    page: ViewportListingPage,
+) -> ViewportListingPageResponse:
+    """Present backend-decorated viewport listings and the filtered total."""
+    return ViewportListingPageResponse(
+        items=tuple(
+            ViewportListingItemResponse(
+                id=item.id,
+                content_type=item.content_type,
+                market_type=item.market_type,
+                display_name=item.display_name,
+                data_confidence=item.data_confidence,
+                published_at=item.published_at,
+                currency=item.currency,
+                price_min_minor=item.price_min_minor,
+                price_max_minor=item.price_max_minor,
+                parking_price_min_minor=item.parking_price_min_minor,
+                parking_price_max_minor=item.parking_price_max_minor,
+                parking_included_in_price=item.parking_included_in_price,
+                storage_price_min_minor=item.storage_price_min_minor,
+                storage_price_max_minor=item.storage_price_max_minor,
+                storage_included_in_price=item.storage_included_in_price,
+                area_min_sqm=item.area_min_sqm,
+                area_max_sqm=item.area_max_sqm,
+                rooms_min=item.rooms_min,
+                rooms_max=item.rooms_max,
+                floor_label=item.floor_label,
+                delivery_label=item.delivery_label,
+                location=ListingLocationResponse(
+                    id=item.location.id,
+                    display_name=item.location.display_name,
+                    display_address=item.location.display_address,
+                    district=item.location.district,
+                    coordinate_precision=item.location.precision,
+                    confidence=item.location.confidence_indicator,
+                    geometry=PointGeometry(
+                        coordinates=(item.location.longitude, item.location.latitude),
+                    ),
+                ),
+            )
+            for item in page.items
+        ),
+        matching_count=page.matching_count,
         next_cursor=page.next_cursor,
     )
 

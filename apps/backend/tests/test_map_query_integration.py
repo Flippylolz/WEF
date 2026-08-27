@@ -17,6 +17,7 @@ from wef_backend.database import create_database_resources
 from wef_backend.features.catalog.application import (
     BoundingBox,
     BrowseLocationOffers,
+    BrowseViewportListings,
     GetOfferDetail,
     MapFilters,
     QueryFacets,
@@ -310,3 +311,76 @@ async def _hide_out_of_scope_and_unreviewed_rows(
             )
             .values(review_status=LocationReviewStatus.NEEDS_REVIEW.value),
         )
+
+
+async def test_viewport_listing_projection_order_gates_and_pagination() -> None:
+    """Prove newest-first viewport listings, public gates, and cursor pages."""
+    assert TEST_DATABASE_URL is not None
+    settings = Settings(
+        env="test",
+        database_url=TEST_DATABASE_URL,
+        alembic_config=Path("alembic.ini"),
+    )
+    await asyncio.to_thread(alembic_command.upgrade, alembic_config(settings), "head")
+    database = create_database_resources(TEST_DATABASE_URL)
+    adapter = SQLAlchemyCatalogBrowseAdapter(database.session_factory)
+    listings_service = BrowseViewportListings(adapter)
+    seed = SeedM1Catalog(
+        SQLAlchemyCatalogSeedAdapter(database.session_factory),
+        environment="test",
+    )
+    await seed(*m1_fixture())
+
+    try:
+        collected: list[UUID] = []
+        published_order: list[object] = []
+        cursor: str | None = None
+        for _ in range(6):
+            page = await listings_service(
+                filters=MapFilters(bbox=WARSAW),
+                cursor=cursor,
+                limit=2,
+            )
+            assert page.matching_count == 5
+            collected.extend(item.id for item in page.items)
+            published_order.extend(item.published_at for item in page.items)
+            cursor = page.next_cursor
+            if cursor is None:
+                break
+
+        assert cursor is None
+        assert len(collected) == 5
+        assert len(set(collected)) == 5
+        assert published_order == sorted(published_order, reverse=True)
+        newest = await listings_service(
+            filters=MapFilters(bbox=WARSAW),
+            cursor=None,
+            limit=1,
+        )
+        assert newest.items[0].location.display_name
+        assert newest.items[0].location.longitude != 0
+        assert newest.items[0].location.latitude != 0
+        assert newest.items[0].location.confidence_indicator in {"low", "medium", "high"}
+
+        wola_only = await listings_service(
+            filters=MapFilters(bbox=WARSAW, districts=("wola",)),
+            cursor=None,
+            limit=10,
+        )
+        assert wola_only.matching_count == 1
+        wola_item = wola_only.items[0]
+        assert wola_item.location.district == "wola"
+        assert wola_only.next_cursor is None
+
+        await _hide_out_of_scope_and_unreviewed_rows(database.session_factory)
+        gated = await listings_service(
+            filters=MapFilters(bbox=WARSAW),
+            cursor=None,
+            limit=10,
+        )
+        gated_districts = {item.location.district for item in gated.items}
+        assert gated_districts == {"srodmiescie"}
+        assert gated.matching_count == 2
+    finally:
+        await seed(*m1_fixture())
+        await database.engine.dispose()

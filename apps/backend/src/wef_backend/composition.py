@@ -24,6 +24,7 @@ from wef_backend.features.admin.infrastructure import (
 )
 from wef_backend.features.catalog.application import (
     BrowseLocationOffers,
+    BrowseViewportListings,
     GetOfferDetail,
     QueryFacets,
     QueryMapLocations,
@@ -88,6 +89,7 @@ class AppServices:
     query_map: QueryMapLocations
     query_facets: QueryFacets
     browse_location_offers: BrowseLocationOffers
+    browse_viewport_listings: BrowseViewportListings
     get_offer_detail: GetOfferDetail
     is_ready: ReadyCheck
     close: ResourceCloser
@@ -160,6 +162,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
         query_map=QueryMapLocations(map_adapter),
         query_facets=QueryFacets(browse_adapter),
         browse_location_offers=BrowseLocationOffers(browse_adapter),
+        browse_viewport_listings=BrowseViewportListings(browse_adapter),
         get_offer_detail=GetOfferDetail(offer_detail_adapter),
         is_ready=database_is_ready,
         close=database.engine.dispose,

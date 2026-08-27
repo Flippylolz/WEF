@@ -31,11 +31,13 @@ from wef_backend.features.catalog.interface.presenter import (
     LocationOfferPageResponse,
     OfferDetailResponse,
     QuickFilterListResponse,
+    ViewportListingPageResponse,
     present_facets,
     present_location_map,
     present_location_offer_page,
     present_offer_detail,
     present_quick_filters,
+    present_viewport_listing_page,
 )
 
 RoomValue = Annotated[int, Field(ge=0, le=20)]
@@ -102,8 +104,16 @@ class LocationOfferQueryParams(MapQueryParams):
     limit: int = Field(default=20, ge=1, le=50)
 
 
+class ViewportListingQueryParams(MapQueryParams):
+    """Shared filters plus cursor controls for the viewport projection."""
+
+    cursor: str | None = Field(default=None, max_length=512)
+    limit: int = Field(default=20, ge=1, le=50)
+
+
 router = APIRouter(prefix="/api/v1/map", tags=["map"])
 facets_router = APIRouter(prefix="/api/v1", tags=["filters"])
+listings_router = APIRouter(prefix="/api/v1", tags=["listings"])
 locations_router = APIRouter(prefix="/api/v1/locations", tags=["locations"])
 offers_router = APIRouter(prefix="/api/v1/offers", tags=["offers"])
 
@@ -216,6 +226,33 @@ async def list_location_offers(
     if not page.location_exists:
         raise ResourceNotFoundError
     return present_location_offer_page(page)
+
+
+@listings_router.get(
+    "/listings",
+    operation_id="listViewportListings",
+    summary="List paginated offer cards for the current viewport",
+    responses={
+        422: {
+            "model": ProblemResponse,
+            "description": "The filters or cursor are invalid.",
+        },
+    },
+)
+async def list_viewport_listings(
+    request: Request,
+    query: Annotated[ViewportListingQueryParams, Query()],
+) -> ViewportListingPageResponse:
+    """Return newest-first filter-matching listings with parent locations."""
+    try:
+        page = await request.app.state.browse_viewport_listings(
+            filters=query.to_filters(),
+            cursor=query.cursor,
+            limit=query.limit,
+        )
+    except CursorError as error:
+        raise QueryValidationError(str(error)) from error
+    return present_viewport_listing_page(page)
 
 
 @offers_router.get(
