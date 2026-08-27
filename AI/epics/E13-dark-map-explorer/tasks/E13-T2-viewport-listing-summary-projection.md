@@ -39,11 +39,11 @@ branch:
   task_id: E13-T2
   one_task_only: true
   created_at: "2026-08-27T02:00:00Z"
-  pull_request: "https://github.com/Flippylolz/WEF/pull/177"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/179"
 completion:
   completed_by: "ZCode agent (owner-directed E13 implementation mission)"
   completed_at: "2026-08-27T04:20:00Z"
-  pull_request: "https://github.com/Flippylolz/WEF/pull/177"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/179"
   evidence:
     - "GET /api/v1/listings additive endpoint with newest-first keyset cursor; 411 backend tests green at 91% coverage"
     - "PostGIS integration proof: 5-offer fixture paginates 2+2+1 with strict descending order and public gates"
