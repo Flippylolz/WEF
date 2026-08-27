@@ -75,20 +75,29 @@ They are design references rather than screenshots of implemented behavior.
 All text/surface combinations must meet WCAG 2.2 AA and must be verified in the
 rendered application.
 
-| Token | Proposed value | Use |
-| --- | --- | --- |
-| `--background` | `#080b10` | application canvas |
-| `--surface` | `#10151d` | rail, drawers, dialogs |
-| `--surface-raised` | `#171e28` | cards and floating controls |
-| `--surface-hover` | `#1d2632` | hover/focus-adjacent state |
-| `--foreground` | `#f4f7fb` | primary text |
-| `--muted` | `#9ba8b8` | supporting text |
-| `--border` | `#293442` | structural separators |
-| `--accent` | `#62d7a1` | primary selection/action |
-| `--accent-strong` | `#22c77a` | selected pin/card edge |
-| `--focus` | `#8ab4ff` | keyboard focus ring |
-| `--warning` | `#ffb86b` | approximate/low confidence |
-| `--error` | `#ff7f87` | errors only |
+| Token | Value (GitHub Dark, 2026-08-27) | Original value | Use |
+| --- | --- | --- | --- |
+| `--background` | `#0d1117` | `#080b10` | application canvas |
+| `--surface` | `#161b22` | `#10151d` | rail, drawers, dialogs |
+| `--surface-raised` | `#21262d` | `#171e28` | cards and floating controls |
+| `--surface-hover` | `#262c36` | `#1d2632` | hover/focus-adjacent state |
+| `--foreground` | `#e6edf3` | `#f4f7fb` | primary text |
+| `--muted` | `#8b949e` | `#9ba8b8` | supporting text |
+| `--border` | `#30363d` | `#293442` | structural separators |
+| `--accent` | `#3fb950` | `#62d7a1` | primary selection/action |
+| `--accent-strong` | `#238636` | `#22c77a` | selected pin/card edge and primary buttons |
+| `--focus` | `#4493f8` | `#8ab4ff` | keyboard focus ring |
+| `--warning` | `#d29922` | `#ffb86b` | approximate/low confidence |
+| `--error` | `#f85149` | `#ff7f87` | errors only |
+
+On 2026-08-27 the owner directed the shipped palette to match GitHub Dark
+(Primer): canvas `#0d1117`, subtle `#161b22`, button surface `#21262d`,
+border `#30363d`, text `#e6edf3`, muted `#8b949e`, green `#3fb950` /
+`#238636`, blue `#4493f8`, attention `#d29922`, danger `#f85149`. Primary
+buttons use white text on `#238636` (hover `#2ea043`); map overlays
+(district tint/lines/labels, cluster circles, default and low-confidence
+pins, selected/hover halos) follow the same mapping. All text/surface
+combinations still meet WCAG 2.2 AA.
 
 Large-area green is avoided. Accent color marks selection and primary actions;
 it does not tint every panel.

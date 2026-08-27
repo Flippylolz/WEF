@@ -2,18 +2,21 @@
 
 :root {
   color-scheme: dark;
-  --background: #080b10;
-  --surface: #10151d;
-  --surface-raised: #171e28;
-  --surface-hover: #1d2632;
-  --foreground: #f4f7fb;
-  --muted: #9ba8b8;
-  --border: #293442;
-  --accent: #62d7a1;
-  --accent-strong: #22c77a;
-  --focus: #8ab4ff;
-  --warning: #ffb86b;
-  --error: #ff7f87;
+  /* GitHub Dark (Primer) palette: canvas #0d1117, subtle #161b22,
+     button #21262d, border #30363d, text #e6edf3, muted #8b949e,
+     green #3fb950/#238636, blue #4493f8, attention #d29922, danger #f85149. */
+  --background: #0d1117;
+  --surface: #161b22;
+  --surface-raised: #21262d;
+  --surface-hover: #262c36;
+  --foreground: #e6edf3;
+  --muted: #8b949e;
+  --border: #30363d;
+  --accent: #3fb950;
+  --accent-strong: #238636;
+  --focus: #4493f8;
+  --warning: #d29922;
+  --error: #f85149;
 }
 
 * {
@@ -50,7 +53,7 @@ body {
   bottom: max(0.5rem, env(safe-area-inset-bottom));
   border: 1px solid var(--border);
   border-radius: 0.35rem;
-  background: rgb(23 30 40 / 82%);
+  background: rgb(22 27 34 / 85%);
   color: var(--muted);
   padding: 0.2rem 0.4rem;
   box-shadow: 0 0.2rem 0.8rem rgb(0 0 0 / 40%);
@@ -225,7 +228,7 @@ input:focus-visible {
   min-width: 0;
   min-height: 36rem;
   order: 2;
-  background: #0b0f14;
+  background: #0d1117;
 }
 
 .map-canvas,
@@ -244,7 +247,7 @@ input:focus-visible {
   left: 50%;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgb(16 21 29 / 92%);
+  background: rgb(13 17 23 / 92%);
   color: var(--foreground);
   padding: 0.55rem 0.9rem;
   transform: translate(-50%, -50%);
@@ -485,7 +488,7 @@ input:focus-visible {
 
 .button-primary {
   background: var(--accent-strong);
-  color: #06120c;
+  color: #ffffff;
 }
 
 .button-secondary {
@@ -494,7 +497,7 @@ input:focus-visible {
 }
 
 .button-primary:hover {
-  background: var(--accent);
+  background: #2ea043;
 }
 
 .button-secondary:hover {
@@ -596,7 +599,7 @@ input:focus-visible {
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgb(23 30 40 / 92%);
+  background: rgb(22 27 34 / 92%);
   color: var(--accent);
   cursor: pointer;
   transition:
@@ -1013,8 +1016,8 @@ input:focus-visible {
   display: inline-flex;
   margin-top: 0.75rem;
   border-radius: 0.55rem;
-  background: var(--focus);
-  color: #0a1020;
+  background: #1f6feb;
+  color: #ffffff;
   font-weight: 700;
   padding: 0.65rem 0.9rem;
   text-decoration: none;
@@ -1140,7 +1143,7 @@ input:focus-visible {
     width: min(100%, 22rem);
     border: 1px solid var(--border);
     border-radius: 999px;
-    background: rgb(23 30 40 / 96%);
+    background: rgb(22 27 34 / 96%);
     color: var(--foreground);
     padding: 0.7rem 1rem;
     font: inherit;

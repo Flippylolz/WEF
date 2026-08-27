@@ -36,7 +36,7 @@ const districtFillLayer: LayerProps = {
   type: "fill" as const,
   source: "warsaw-districts",
   paint: {
-    "fill-color": "#62d7a1",
+    "fill-color": "#3fb950",
     "fill-opacity": 0.05,
   },
 };
@@ -46,7 +46,7 @@ const districtLineLayer: LayerProps = {
   type: "line" as const,
   source: "warsaw-districts",
   paint: {
-    "line-color": "#3d4a5c",
+    "line-color": "#30363d",
     "line-opacity": 0.85,
     "line-width": ["interpolate", ["linear"], ["zoom"], 9, 1.5, 13, 2.5],
   },
@@ -64,8 +64,8 @@ const districtLabelLayer: LayerProps = {
     "text-letter-spacing": 0.05,
   },
   paint: {
-    "text-color": "#9ba8b8",
-    "text-halo-color": "rgba(8, 11, 16, 0.92)",
+    "text-color": "#8b949e",
+    "text-halo-color": "rgba(13, 17, 23, 0.92)",
     "text-halo-width": 1.5,
   },
 };
@@ -76,9 +76,9 @@ const clusterLayer: LayerProps = {
   source: "locations",
   filter: ["has", "point_count"],
   paint: {
-    "circle-color": "#1d2632",
+    "circle-color": "#262c36",
     "circle-radius": ["step", ["get", "point_count"], 20, 10, 26, 50, 34],
-    "circle-stroke-color": "#62d7a1",
+    "circle-stroke-color": "#3fb950",
     "circle-stroke-width": 2,
   },
 };
@@ -92,7 +92,7 @@ const clusterCountLayer: LayerProps = {
     "text-field": ["get", "point_count_abbreviated"],
     "text-size": 13,
   },
-  paint: { "text-color": "#f4f7fb" },
+  paint: { "text-color": "#e6edf3" },
 };
 
 const locationLayer: LayerProps = {
@@ -104,8 +104,8 @@ const locationLayer: LayerProps = {
     "circle-color": [
       "case",
       ["==", ["get", "confidence"], "low"],
-      "#ffb86b",
-      "#62d7a1",
+      "#d29922",
+      "#3fb950",
     ],
     "circle-radius": [
       "interpolate",
@@ -116,7 +116,7 @@ const locationLayer: LayerProps = {
       5,
       15,
     ],
-    "circle-stroke-color": "#080b10",
+    "circle-stroke-color": "#0d1117",
     "circle-stroke-width": 2,
   },
 };
@@ -327,7 +327,7 @@ export function WarsawMap({
               paint={{
                 "circle-color": "transparent",
                 "circle-radius": 20,
-                "circle-stroke-color": "#22c77a",
+                "circle-stroke-color": "#2ea043",
                 "circle-stroke-width": 3,
               }}
             />
@@ -341,7 +341,7 @@ export function WarsawMap({
               paint={{
                 "circle-color": "transparent",
                 "circle-radius": 16,
-                "circle-stroke-color": "#8ab4ff",
+                "circle-stroke-color": "#4493f8",
                 "circle-stroke-width": 2,
                 "circle-stroke-opacity": 0.95,
               }}
