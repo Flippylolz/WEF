@@ -119,7 +119,9 @@
     "quickFiltersLabel": "Quick filters",
     "quickFiltersLoading": "Loading quick filters…",
     "quickFilter": {
-      "last_day": "Last 24 hours"
+      "last_day": "Last 24 hours",
+      "since_last_visit": "New since last visit",
+      "since_last_visit_unavailable": "Available after your next visit"
     },
     "starLocation": "Star this location",
     "unstarLocation": "Remove this location from favorites",

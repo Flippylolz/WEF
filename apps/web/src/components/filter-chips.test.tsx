@@ -30,8 +30,10 @@ function renderChips(
     state: DEFAULT_MAP_SEARCH_STATE,
     quickFilters,
     quickFiltersLoading: false,
+    lastVisitAt: null,
     onRemoveGroup: vi.fn(),
     onToggleQuickFilter: vi.fn(),
+    onToggleLastVisit: vi.fn(),
     onOpenFilters: vi.fn(),
     ...overrides,
   };
@@ -92,6 +94,40 @@ describe("AppliedFilterChips", () => {
 
     await user.click(active);
     expect(props.onToggleQuickFilter).toHaveBeenCalledWith(null);
+  });
+
+  it("applies the previous visit cutoff and toggles it off", async () => {
+    const user = userEvent.setup();
+    const lastVisitAt = "2026-08-26T08:30:00.000Z";
+    const props = renderChips({ lastVisitAt });
+
+    const filter = screen.getByRole("button", {
+      name: "quickFilter.since_last_visit",
+    });
+    expect(filter).toHaveAttribute("aria-pressed", "false");
+    await user.click(filter);
+    expect(props.onToggleLastVisit).toHaveBeenCalledWith(lastVisitAt);
+
+    cleanup();
+    const activeProps = renderChips({
+      lastVisitAt,
+      state: { ...DEFAULT_MAP_SEARCH_STATE, publishedFrom: lastVisitAt },
+    });
+    const active = screen.getByRole("button", {
+      name: "quickFilter.since_last_visit",
+    });
+    expect(active).toHaveAttribute("aria-pressed", "true");
+    await user.click(active);
+    expect(activeProps.onToggleLastVisit).toHaveBeenCalledWith(null);
+  });
+
+  it("disables the last-visit shortcut until a baseline exists", () => {
+    renderChips({ lastVisitAt: null });
+    expect(
+      screen.getByRole("button", {
+        name: /quickFilter.since_last_visit.*since_last_visit_unavailable/,
+      }),
+    ).toBeDisabled();
   });
 
   it("removes exactly the requested group and opens the drawer from the rail", async () => {

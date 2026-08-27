@@ -347,6 +347,16 @@ input:focus-visible {
   border-color: var(--accent);
 }
 
+.quick-filter-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.quick-filter-chip:disabled:hover {
+  border-color: var(--border);
+  background: var(--surface-raised);
+}
+
 .filter-chip .chip-value {
   color: var(--muted);
   font-variant-numeric: tabular-nums;

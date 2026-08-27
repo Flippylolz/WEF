@@ -15,6 +15,7 @@ import { MapExplorer } from "@/components/map-explorer";
 import * as authApi from "@/lib/auth-api";
 import * as catalogApi from "@/lib/catalog-api";
 import * as favoritesApi from "@/lib/favorites-api";
+import { lastVisitStorageKeys } from "@/lib/last-visit";
 
 const navigation = vi.hoisted(() => ({
   listeners: new Set<() => void>(),
@@ -285,6 +286,8 @@ describe("MapExplorer", () => {
   });
 
   beforeEach(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
     mapMountCount.value = 0;
     navigation.pathname = "/";
     navigation.search = "";
@@ -1020,6 +1023,31 @@ describe("MapExplorer", () => {
       { scroll: false },
     );
     expect(filtersToggle).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("filters from the prior browser visit and records the current visit", async () => {
+    const priorVisit = "2026-08-26T08:30:00.000Z";
+    window.localStorage.setItem(lastVisitStorageKeys.last, priorVisit);
+    renderExplorer();
+    await screen.findByRole("button", {
+      name: /Synthetic Central Residence/,
+    });
+
+    const user = userEvent.setup();
+    await user.click(
+      screen.getByRole("button", { name: "quickFilter.since_last_visit" }),
+    );
+
+    expect(navigation.push).toHaveBeenLastCalledWith(
+      "/?published_from=2026-08-26T08%3A30%3A00.000Z",
+      { scroll: false },
+    );
+    expect(window.localStorage.getItem(lastVisitStorageKeys.last)).not.toBe(
+      priorVisit,
+    );
+    expect(window.sessionStorage.getItem(lastVisitStorageKeys.previous)).toBe(
+      priorVisit,
+    );
   });
 
   it("keeps exactly one attribution surface rendered by the map control", async () => {
