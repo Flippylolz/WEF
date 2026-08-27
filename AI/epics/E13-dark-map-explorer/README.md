@@ -21,7 +21,7 @@ entire result collection.
 
 ## Approval state
 
-- Epic workspace status: `done`; E13-T1/T2/T3 delivered through PRs #176/#179/#181.
+- Epic workspace status: `done`; E13-T1/T2/T3 delivered through PRs #176/#179/#180.
 - [Spike](SPIKE.md): `approved`, revision 1 (AD-038).
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 1
   (AD-038), sequencing E13-T1 → E13-T2 → E13-T3.

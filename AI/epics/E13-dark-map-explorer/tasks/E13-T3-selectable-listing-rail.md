@@ -41,11 +41,11 @@ branch:
   task_id: E13-T3
   one_task_only: true
   created_at: "2026-08-27T10:00:00Z"
-  pull_request: "https://github.com/Flippylolz/WEF/pull/181"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/180"
 completion:
   completed_by: "ZCode agent (owner-directed E13 implementation mission)"
   completed_at: "2026-08-27T10:30:00Z"
-  pull_request: "https://github.com/Flippylolz/WEF/pull/181"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/180"
   evidence:
     - "Listing rail over GET /api/v1/listings with Load more and bounded prefetch; card/pin hover-selection sync with conditional recenter (comfort-region check) and no map remount"
     - "Back to results restores the rail list, scroll position, and trigger focus; rail states cover skeletons, updating, empty (Clear filters / Reset map), and error with kept cards + Retry"

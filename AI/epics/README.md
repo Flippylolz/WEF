@@ -28,10 +28,10 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E10 — Property favorites](E10-property-favorites/README.md) — `done`; E10-T1 done; milestone M3.
 - [E11 — Scalable quick filters](E11-scalable-quick-filters/README.md) — `done`; E11-T1 done; milestone M3.
 - [E12 — Database index audit](E12-database-index-audit/README.md) — `done`; E12-T1 done; milestone M3.
-- [E13 — Dark map-first listing explorer](E13-dark-map-explorer/README.md) — `done`; spike/plan revision 1 approved (AD-038); E13-T1–T3 done through PRs #176/#179/#181; milestones M4.
+- [E13 — Dark map-first listing explorer](E13-dark-map-explorer/README.md) — `done`; spike/plan revision 1 approved (AD-038); E13-T1–T3 done through PRs #176/#179/#180; milestones M4.
 - [E14 — Production hardening and scalability](E14-production-hardening-and-scalability/README.md) — `selected`; spike revision 1 awaits owner approval; E14-T1–T9 proposed/non-actionable; milestone M5.
 
-The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker, while verified live entity/event, gap-reconciliation, and outage-recovery acceptance remain open. E13's dark map-first redesign spike and implementation plan revision 1 are approved (AD-038); E13-T1/T2/T3 are done through PRs #176/#179/#181. E14 is selected for post-launch research/planning, but its proposed tasks remain non-actionable until the current spike and a later implementation plan pass their separate owner-approval gates. New work must pass its dedicated pull-request CI before merge.
+The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker, while verified live entity/event, gap-reconciliation, and outage-recovery acceptance remain open. E13's dark map-first redesign spike and implementation plan revision 1 are approved (AD-038); E13-T1/T2/T3 are done through PRs #176/#179/#180. E14 is selected for post-launch research/planning, but its proposed tasks remain non-actionable until the current spike and a later implementation plan pass their separate owner-approval gates. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
