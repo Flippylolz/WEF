@@ -3,9 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useMemo, useState, type ReactNode } from "react";
 
-import { QuickFilterBar } from "@/components/quick-filter-bar";
-
-import type { FilterFacets, QuickFilterPreset } from "@/lib/catalog-api";
+import type { FilterFacets } from "@/lib/catalog-api";
 import type {
   ContentType,
   MapSearchState,
@@ -16,24 +14,18 @@ type MapFilterControlsProps = {
   facets: FilterFacets | null;
   facetsError: boolean;
   facetsLoading: boolean;
-  quickFilters: QuickFilterPreset[];
-  quickFiltersLoading: boolean;
   state: MapSearchState;
   onApply: (state: MapSearchState) => void;
   onClear: () => void;
-  collapseControl?: ReactNode;
 };
 
 export function MapFilterControls({
   facets,
   facetsError,
   facetsLoading,
-  quickFilters,
-  quickFiltersLoading,
   state,
   onApply,
   onClear,
-  collapseControl,
 }: MapFilterControlsProps) {
   const t = useTranslations("map");
   const [draft, setDraft] = useState(state);
@@ -81,22 +73,8 @@ export function MapFilterControls({
           <button className="button-primary" type="submit">
             {t("applyFilters")}
           </button>
-          {collapseControl}
         </div>
       </div>
-
-      <QuickFilterBar
-        presets={quickFilters}
-        selectedId={draft.quickFilter}
-        loading={quickFiltersLoading}
-        onSelect={(presetId) =>
-          setDraft((current) => ({
-            ...current,
-            quickFilter: presetId,
-            publishedFrom: presetId ? null : current.publishedFrom,
-          }))
-        }
-      />
 
       <div className="filter-grid">
         <FilterRange label={t("priceLabel")}>

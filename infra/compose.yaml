@@ -147,7 +147,7 @@ services:
       dockerfile: apps/web/Dockerfile
       target: runtime
       args:
-        NEXT_PUBLIC_MAP_STYLE_URL: ${NEXT_PUBLIC_MAP_STYLE_URL:-https://tiles.openfreemap.org/styles/liberty}
+        NEXT_PUBLIC_MAP_STYLE_URL: ${NEXT_PUBLIC_MAP_STYLE_URL:-https://tiles.openfreemap.org/styles/dark}
     environment:
       WEF_API_URL: http://api:8000
     depends_on:

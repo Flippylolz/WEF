@@ -33,7 +33,7 @@ CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
 
 FROM dependencies AS build
 
-ARG NEXT_PUBLIC_MAP_STYLE_URL=https://tiles.openfreemap.org/styles/liberty
+ARG NEXT_PUBLIC_MAP_STYLE_URL=https://tiles.openfreemap.org/styles/dark
 ARG WEF_RELEASE_SHA=development
 ENV NEXT_PUBLIC_MAP_STYLE_URL=${NEXT_PUBLIC_MAP_STYLE_URL} \
     WEF_RELEASE_SHA=${WEF_RELEASE_SHA}

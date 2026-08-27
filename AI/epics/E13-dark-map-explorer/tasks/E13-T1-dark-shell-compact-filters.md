@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E13-T1
 epic: E13
 title: "Build the dark application shell and compact filter experience"
-status: ready
+status: done
 revision: 1
 priority: P1
 size: L
@@ -39,12 +39,15 @@ branch:
   task_id: E13-T1
   one_task_only: true
   created_at: "2026-08-26T18:45:03Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/176"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode agent (owner-directed E13 implementation mission)"
+  completed_at: "2026-08-27T01:34:36Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/176"
+  evidence:
+    - "Dark shell/rail/chips/drawer implemented; 130 vitest tests green at 94.93%/90.86% coverage; lint/typecheck/build green"
+    - "Local stack visual verification at 1440x900 and 360x800 (dark map, one attribution, chips, drawer dialog)"
+    - "OpenFreeMap dark style verified 2026-08-26; Dockerfile/compose/deploy smoke/rollback default switched to styles/dark"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -108,22 +111,22 @@ map-first flow — using only existing contracts.
 
 ## Acceptance criteria
 
-- [ ] Desktop (≥56.0625rem) renders one full-height shell: app bar, left
+- [x] Desktop (≥56.0625rem) renders one full-height shell: app bar, left
       rail, full-bleed dark map; results appear without scrolling past the
       filter form.
-- [ ] Dark tokens applied application-wide; no light-theme remnants in the
+- [x] Dark tokens applied application-wide; no light-theme remnants in the
       explorer, drawers, dialogs, or map overlays; theme color updated.
-- [ ] Filter chips show concise applied values with accessible remove
+- [x] Filter chips show concise applied values with accessible remove
       actions; quick filters render in the same row; the full form opens in
       a labeled drawer that traps focus, supports Escape/close, and reuses
       the existing Apply/Clear URL flow.
-- [ ] Exactly one attribution surface remains on the map.
-- [ ] Mobile keeps map-first sheet/full-list modes with a dark full-height
+- [x] Exactly one attribution surface remains on the map.
+- [x] Mobile keeps map-first sheet/full-list modes with a dark full-height
       filter sheet; 360 px width has no horizontal scrolling.
-- [ ] URL filter share/reload, favorites, auth modal, offer detail drawer,
+- [x] URL filter share/reload, favorites, auth modal, offer detail drawer,
       keyboard paths, live announcements, and reduced-motion all keep
       working; existing unit/a11y/e2e suites updated and green.
-- [ ] `scripts/deploy/smoke.sh` verifies the dark style URL deployment-wide.
+- [x] `scripts/deploy/smoke.sh` verifies the dark style URL deployment-wide.
 
 ## Test plan
 
