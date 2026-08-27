@@ -160,6 +160,7 @@ export function WarsawMap({
     [data],
   );
   const [mapReady, setMapReady] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapRef>(null);
   const mapLoaded = useRef(false);
   const failureHandler = useRef(onFailure);
@@ -221,6 +222,41 @@ export function WarsawMap({
     // newly centered viewport, so results stay bound to the visible area.
   }, [focusTarget, mapReady, reduceMotion]);
 
+  useEffect(() => {
+    if (MAP_DISABLED || !mapReady) return;
+    const container = containerRef.current;
+    const map = mapRef.current;
+    if (container === null || map === null) return;
+
+    let active = true;
+    let resizeQueued = false;
+    const scheduleResize = () => {
+      if (resizeQueued) return;
+      resizeQueued = true;
+      // MapLibre's built-in ResizeObserver calls redraw() synchronously. A
+      // sidebar transition can invoke that while its render queue is already
+      // running, so defer the public resize() call until the stack unwinds.
+      queueMicrotask(() => {
+        resizeQueued = false;
+        if (active) map.resize();
+      });
+    };
+
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(scheduleResize);
+    observer?.observe(container);
+    if (observer === null) window.addEventListener("resize", scheduleResize);
+
+    return () => {
+      active = false;
+      observer?.disconnect();
+      if (observer === null)
+        window.removeEventListener("resize", scheduleResize);
+    };
+  }, [mapReady]);
+
   if (MAP_DISABLED) {
     return null;
   }
@@ -272,7 +308,11 @@ export function WarsawMap({
   }
 
   return (
-    <div className="map-canvas" aria-label="Interactive map of Warsaw">
+    <div
+      ref={containerRef}
+      className="map-canvas"
+      aria-label="Interactive map of Warsaw"
+    >
       {!mapReady ? (
         <div className="map-loading" role="status">
           {loadingLabel}
@@ -307,6 +347,7 @@ export function WarsawMap({
           failureHandler.current();
         }}
         cursor="pointer"
+        trackResize={false}
         attributionControl={false}
       >
         <NavigationControl position="top-right" showCompass={false} />

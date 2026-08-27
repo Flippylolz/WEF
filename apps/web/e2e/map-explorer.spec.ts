@@ -89,4 +89,29 @@ test.describe("map explorer critical path", () => {
       page.getByRole("button", { name: "Show panel" }),
     ).toBeVisible();
   });
+
+  test("does not re-enter map rendering during rapid sidebar resizes", async ({
+    page,
+  }) => {
+    const pageErrors: string[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    await installSyntheticCatalog(page, "ready");
+    await page.goto("/");
+
+    await expect(
+      page.getByRole("button", { name: /Synthetic Central Residence/i }),
+    ).toBeVisible({ timeout: 30_000 });
+
+    for (let index = 0; index < 4; index += 1) {
+      await page.getByRole("button", { name: "Hide panel" }).click();
+      await page.getByRole("button", { name: "Show panel" }).click();
+    }
+    await page.waitForTimeout(500);
+
+    expect(
+      pageErrors.filter((message) =>
+        message.includes("Attempting to run(), but is already running"),
+      ),
+    ).toEqual([]);
+  });
 });

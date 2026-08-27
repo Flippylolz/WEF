@@ -12,6 +12,21 @@ vi.mock("maplibre-gl", () => ({ setWorkerUrl }));
 
 const easeTo = vi.fn();
 const fitBounds = vi.fn();
+const resize = vi.fn();
+let resizeObserverCallback: ResizeObserverCallback | null = null;
+
+class ResizeObserverMock {
+  constructor(callback: ResizeObserverCallback) {
+    resizeObserverCallback = callback;
+  }
+
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+
 const getClusterExpansionZoom = vi.fn(async () => 13);
 let clickedFeature: object = {
   id: "10000000-0000-4000-8000-000000000001",
@@ -27,12 +42,14 @@ vi.mock("react-map-gl/maplibre", () => ({
       onLoad,
       onMoveEnd,
       onError,
+      trackResize,
     }: {
       children: ReactNode;
       onClick: (event: object) => void;
       onLoad: () => void;
       onMoveEnd: (event: object) => void;
       onError: () => void;
+      trackResize?: boolean;
     },
     ref,
   ) {
@@ -46,6 +63,7 @@ vi.mock("react-map-gl/maplibre", () => ({
       easeTo: (options: object) => {
         easeTo(options);
       },
+      resize,
       fitBounds: (
         bounds: [[number, number], [number, number]],
         options: object,
@@ -64,7 +82,7 @@ vi.mock("react-map-gl/maplibre", () => ({
       },
     }));
     return (
-      <div>
+      <div data-testid="map-component" data-track-resize={trackResize}>
         <button type="button" onClick={onLoad}>
           simulated-map-load
         </button>
@@ -201,6 +219,7 @@ describe("WarsawMap", () => {
     cleanup();
     vi.clearAllMocks();
     vi.useRealTimers();
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
   });
 
   it("selects an unclustered backend feature and shows attribution", async () => {
@@ -260,6 +279,66 @@ describe("WarsawMap", () => {
       "data-text-font",
       '["Noto Sans Regular"]',
     );
+  });
+
+  it("resizes asynchronously without MapLibre's synchronous resize redraw", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("map-component")).toHaveAttribute(
+      "data-track-resize",
+      "false",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+
+    act(() => {
+      resizeObserverCallback?.([], {} as ResizeObserver);
+      resizeObserverCallback?.([], {} as ResizeObserver);
+    });
+    expect(resize).not.toHaveBeenCalled();
+    await act(async () => Promise.resolve());
+    expect(resize).toHaveBeenCalledOnce();
+
+    act(() => resizeObserverCallback?.([], {} as ResizeObserver));
+    unmount();
+    await act(async () => Promise.resolve());
+    expect(resize).toHaveBeenCalledOnce();
+  });
+
+  it("falls back to deferred window resize events", async () => {
+    vi.stubGlobal("ResizeObserver", undefined);
+    const user = userEvent.setup();
+    render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+      />,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+
+    act(() => window.dispatchEvent(new Event("resize")));
+    expect(resize).not.toHaveBeenCalled();
+    await act(async () => Promise.resolve());
+    expect(resize).toHaveBeenCalledOnce();
   });
 
   it("expands a cluster instead of selecting a location", async () => {
