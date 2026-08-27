@@ -520,6 +520,4 @@ async def test_viewport_listings_present_parent_location_and_reject_bad_cursor()
     assert bad_cursor.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert bad_cursor.json()["detail"] == "cursor is invalid"
 
-    assert schema["paths"]["/api/v1/listings"]["get"]["operationId"] == (
-        "listViewportListings"
-    )
+    assert schema["paths"]["/api/v1/listings"]["get"]["operationId"] == ("listViewportListings")
