@@ -62,4 +62,4 @@ Recorded 2026-08-20 after task completion records already on `main` and M3 publi
 
 ## Status rule
 
-`planned` records the current outcome checkpoint only; it grants no implementation permission. Change this milestone to `done` only when all required exit evidence and task completion records exist under the [workflow](../workflow/README.md).
+`done` records that all required exit evidence and task completion records exist under the [workflow](../workflow/README.md); it does not grant permission for later scope.

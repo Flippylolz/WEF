@@ -94,4 +94,4 @@ Filter semantics:
 - Only an active logged-in user who is not awaiting a forced password change may reveal contacts through the separate backend endpoint.
 - Every allowed/denied reveal is rate-limited and audited against the signed-in user without logging the contact value.
 - An owner-only Starlette Admin console can disable/reactivate users, revoke sessions, force password reset, and inspect reveal audits through audited backend interactors.
-- Contact reveal remains disabled on the interim plain-HTTP deployment; secure sessions require HTTPS.
+- Contact reveal and owner administration are enabled only on the live HTTPS origin; the plain `:3100` rollback listener cannot establish production Secure-cookie sessions.

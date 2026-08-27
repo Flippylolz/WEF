@@ -6,7 +6,9 @@ Warsaw Estate Platform (WEF) turns a Telegram real-estate export into a filterab
 
 ## Current status
 
-The repository contains a browser-visible synthetic milestone: a forward-migrated PostGIS catalog, backend-authoritative GeoJSON, facets and dated results, and a responsive MapLibre/OpenFreeMap map with an accessible companion list. It also includes the historical export parser, idempotent persistence, provider-neutral geocoding cache, safe media processing, and backend authentication flows. Importing and reviewing the real dataset, URL-backed filters, frontend account experiences, and public rollout remain gated follow-up work.
+The historical Warsaw catalog is live at [2fa54e2405.duckdns.org](https://2fa54e2405.duckdns.org) behind the shared Nginx/Let's Encrypt edge. The shipped product includes backend-authoritative grouped-map queries, URL-backed and server-defined quick filters, dated offer detail and media, pseudonymous accounts, favorites, audited contact reveal, and the owner console. The complete historical import, Geoapify-backed geocoding, media pipeline, immutable GitHub deployment, health-gated rollback, and production diagnostics are implemented.
+
+The Telethon new/edit/delete pipeline, restartable backfill, worker status, and production worker service are also implemented. M4 remains open until verified live entity/event delivery, gap reconciliation, and outage-recovery evidence close B-003; historical data remains available if the worker is unavailable.
 
 Start with:
 
@@ -21,7 +23,7 @@ Start with:
 
 - Python, FastAPI, SQLAlchemy, PostgreSQL, and PostGIS
 - TypeScript, Next.js, React, and MapLibre
-- Docker Compose and Caddy for the isolated local and production-rehearsal topology
+- Docker Compose with Caddy for local same-origin development and a shared Nginx/Certbot production edge
 - GitHub Actions and GitHub Container Registry
 
 The backend is authoritative for business behavior. The frontend primarily renders generated API contracts and backend-provided projections.
@@ -68,7 +70,7 @@ make down
 
 Only Caddy publishes a host port, bound to loopback on `3100` by default. The API, web process, PostGIS, and operator container remain on an internal network. `make down` preserves the named database and media volumes.
 
-This is the current local and production-rehearsal topology. See [deployment operations](AI/operations/DEPLOYMENT.md) for the current release model and the separately gated shared-ingress plan.
+This is the local topology. Production keeps the internal application Caddy listener on `:3100` as a rollback path and serves the public site through the independently managed shared Nginx/Certbot edge on `:443`. See [deployment operations](AI/operations/DEPLOYMENT.md).
 
 `make up` applies forward Alembic migrations before API startup. `make seed-m1` explicitly converges a small invented Warsaw fixture for map/API verification; production requires a separate explicit rehearsal opt-in and the command never reads the local export.
 
@@ -126,7 +128,7 @@ The inert production model is separate from local Compose:
 make production-proof
 ```
 
-That command renders the digest-only `wef-production` topology, validates Caddy, rejects mutable/default release configuration, checks internal networks/single-edge-port/resource boundaries, and statically rejects global cleanup or schema-downgrade commands. It does not connect to or mutate the production host.
+That command renders the digest-only `wef-production` topology, validates the Caddy rollback edge and shared Nginx/Certbot model, rejects mutable/default release configuration, checks network/resource boundaries, and statically rejects global cleanup or schema-downgrade commands. It does not connect to or mutate the production host.
 
 ## Repository safety
 

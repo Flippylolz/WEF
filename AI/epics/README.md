@@ -23,14 +23,14 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E5 — Interactive map frontend](E5-interactive-map-frontend/README.md) — `done`; spike/plan revision 3; E5-T1–T5 done; milestones M1, M3.
 - [E6 — Quality, security, and operations](E6-quality-security-operations/README.md) — `done`; spike revision 2 / plan revision 8; E6-T1–T7 done; milestones M3.
 - [E7 — Docker/GitHub production delivery](E7-production-delivery/README.md) — `done`; spike revision 4 / plan revision 9; E7-T1–T4 and E7-T6–T11 done, E7-T5 deferred; milestone M3.
-- [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `ready`; spike revision 2 approved (AD-031); plan revision 4 authorizes E8-T1/T4/T2/T3; T5 proposed; D-002 resolved; milestones M4.
+- [E8 — Future Telegram live ingestion](E8-telegram-live-ingestion/README.md) — `in_progress`; spike revision 2 and plan revision 5 approved; E8-T4 done, E8-T1/T2/T3/T5 in operational acceptance; D-002 resolved and D-003/B-003 retains live-evidence work; milestone M4.
 - [E9 — Account registration modal](E9-account-registration-modal/README.md) — `done`; E9-T1 done; milestone M3.
 - [E10 — Property favorites](E10-property-favorites/README.md) — `done`; E10-T1 done; milestone M3.
 - [E11 — Scalable quick filters](E11-scalable-quick-filters/README.md) — `done`; E11-T1 done; milestone M3.
 - [E12 — Database index audit](E12-database-index-audit/README.md) — `done`; E12-T1 done; milestone M3.
 - [E13 — Dark map-first listing explorer](E13-dark-map-explorer/README.md) — `in_progress`; spike/plan revision 1 approved (AD-038); E13-T1 done, T2/T3 next; milestones M4.
 
-The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker. E13's dark map-first redesign spike and implementation plan revision 1 are approved (AD-038) and its three tasks are promoted for sequenced delivery. New work must pass its dedicated pull-request CI before merge.
+The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker, while verified live entity/event, gap-reconciliation, and outage-recovery acceptance remain open. E13's dark map-first redesign spike and implementation plan revision 1 are approved (AD-038); E13-T1 is done and T2/T3 remain sequenced. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
@@ -101,15 +101,15 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 
 - [E4-T1](E4-read-api-filter-contracts/tasks/E4-T1-implement-map-query-service-and-geojson-endpoint.md): promoted/done revision 2; satisfied dependency `E3-T1`; M1; requirements `P-001, P-003`; decisions `ADR-002, ADR-003, ADR-005, ADR-012, ADR-013`.
 - [E4-T2](E4-read-api-filter-contracts/tasks/E4-T2-implement-facets-and-location-offer-collection.md): promoted/done revision 2; satisfied dependency `E4-T1`; M1; requirements `P-001, P-002, P-003`; decisions `ADR-002, ADR-003, ADR-012, ADR-013`.
-- [E4-T3](E4-read-api-filter-contracts/tasks/E4-T3-implement-offer-detail.md): promoted/`in_progress` revision 1 on branch `feat/E4-T3-offer-detail`; task dependencies `E3-T4, E4-T2` satisfied; M2; requirements `P-002, P-005, P-006, P-007, P-008`; decisions `ADR-003, ADR-007, ADR-011, ADR-012, ADR-013, ADR-016`.
-- [E4-T4](E4-read-api-filter-contracts/tasks/E4-T4-harden-api-behavior-and-performance.md): task dependencies `E4-T1, E4-T2, E4-T3, E3-T5`; M2; requirements `P-001, P-002, P-003`; decisions `ADR-012, ADR-013`.
+- [E4-T3](E4-read-api-filter-contracts/tasks/E4-T3-implement-offer-detail.md): promoted/`done` revision 1 through PR #78; task dependencies `E3-T4, E4-T2` satisfied; M2; requirements `P-002, P-005, P-006, P-007, P-008`; decisions `ADR-003, ADR-007, ADR-011, ADR-012, ADR-013, ADR-016`.
+- [E4-T4](E4-read-api-filter-contracts/tasks/E4-T4-harden-api-behavior-and-performance.md): promoted/`done` through PR #83; task dependencies `E4-T1, E4-T2, E4-T3, E3-T5` satisfied; M2; requirements `P-001, P-002, P-003`; decisions `ADR-012, ADR-013`.
 ### E5
 
 - [E5-T1](E5-interactive-map-frontend/tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md): promoted/done revision 2; satisfied dependencies `E1-T2, E4-T2`; M1; requirements `P-001, P-004, P-007`; decisions `ADR-002, ADR-004, ADR-012`.
 - [E5-T2](E5-interactive-map-frontend/tasks/E5-T2-add-url-backed-filters-and-viewport-querying.md): promoted/done revision 2 through [PR #43](https://github.com/Flippylolz/WEF/pull/43) with deployed-regression fix [PR #47](https://github.com/Flippylolz/WEF/pull/47); satisfied dependencies `E5-T1, E4-T2`; M1; requirements `P-001, P-003, P-004`; decisions `ADR-002, ADR-003, ADR-012`.
-- [E5-T3](E5-interactive-map-frontend/tasks/E5-T3-build-offer-detail-and-media-gallery.md): promoted/draft revision 2; blocked on `E4-T3`, with `E5-T1` satisfied; M3; requirements `P-002, P-005, P-006, P-007`; decisions `ADR-003, ADR-004, ADR-007, ADR-012`.
-- [E5-T4](E5-interactive-map-frontend/tasks/E5-T4-complete-responsive-list-map-accessibility.md): promoted/draft revision 2; blocked dependency `E5-T3` (`E5-T2` done); M3; requirements `P-001, P-002, P-003, P-004, P-005`; decisions `ADR-002, ADR-004, ADR-012`.
-- [E5-T5](E5-interactive-map-frontend/tasks/E5-T5-performance-and-production-ux-pass.md): promoted/draft revision 2; blocked dependencies `E5-T4, E4-T4`; M3; requirements `P-001, P-004, P-005`; decisions `ADR-004, ADR-007, ADR-012`.
+- [E5-T3](E5-interactive-map-frontend/tasks/E5-T3-build-offer-detail-and-media-gallery.md): promoted/`done` revision 2 through PR #80; dependencies `E4-T3, E5-T1` satisfied; M3; requirements `P-002, P-005, P-006, P-007`; decisions `ADR-003, ADR-004, ADR-007, ADR-012`.
+- [E5-T4](E5-interactive-map-frontend/tasks/E5-T4-complete-responsive-list-map-accessibility.md): promoted/`done` revision 2 through PR #82; dependencies `E5-T2, E5-T3` satisfied; M3; requirements `P-001, P-002, P-003, P-004, P-005`; decisions `ADR-002, ADR-004, ADR-012`.
+- [E5-T5](E5-interactive-map-frontend/tasks/E5-T5-performance-and-production-ux-pass.md): promoted/`done` revision 2 through PR #85; dependencies `E5-T4, E4-T4` satisfied; M3; requirements `P-001, P-004, P-005`; decisions `ADR-004, ADR-007, ADR-012`.
 ### E6
 
 - [E6-T1](E6-quality-security-operations/tasks/E6-T1-complete-automated-test-pyramid.md): promoted/done under plan revision 8; task dependencies `E4-T3, E5-T3`; M3; requirements `P-001, P-002, P-003, P-004, P-005, P-006, P-007, P-008`; decisions `ADR-012, ADR-013, ADR-016`.
@@ -118,7 +118,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E6-T4](E6-quality-security-operations/tasks/E6-T4-implement-in-house-registration-and-sessions.md): promoted/done revision 1 through [PR #51](https://github.com/Flippylolz/WEF/pull/51); satisfied dependencies `E1-T2, E3-T1` and approved revision 2 spike/plan gates; M3; requirements `P-008`; decisions `ADR-011, ADR-012, ADR-016`.
 - [E6-T5](E6-quality-security-operations/tasks/E6-T5-implement-contact-masking-encryption-reveal-and-audit.md): promoted/`done` revision 1 through [PR #110](https://github.com/Flippylolz/WEF/pull/110); satisfied dependencies `E2-T2, E3-T1, E4-T3, E6-T4` and approved plan revision 3; M3; requirements `P-002, P-007, P-008`; decisions `ADR-011, ADR-012, ADR-016`.
 - [E6-T6](E6-quality-security-operations/tasks/E6-T6-implement-english-i18n-and-restricted-action-ux.md): `done` revision 1; merged via PR #113; satisfied dependencies `E5-T3, E6-T4, E6-T5` and approved plan revision 4; M3; requirements `P-002, P-008`; decisions `ADR-011, ADR-012, ADR-016`.
-- [E6-T7](E6-quality-security-operations/tasks/E6-T7-implement-owner-administration-console.md): promoted/`ready` revision 1; satisfied dependencies `E6-T4, E6-T5` and approved plan revision 5; M3; requirements `P-008`; decisions `ADR-011, ADR-012, ADR-016`.
+- [E6-T7](E6-quality-security-operations/tasks/E6-T7-implement-owner-administration-console.md): promoted/`done` revision 1 through PR #116 with completion record #117; satisfied dependencies `E6-T4, E6-T5` and approved plan revision 5; M3; requirements `P-008`; decisions `ADR-011, ADR-012, ADR-016`.
 ### E7
 
 - [E7-T1](E7-production-delivery/tasks/E7-T1-build-production-compose-topology.md): `done`, satisfied dependencies `E1-T3, E5-T1`; M3; requirements `none`; decisions `ADR-005, ADR-008, ADR-010, ADR-014, ADR-015, ADR-019`.
@@ -134,11 +134,11 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 - [E7-T11](E7-production-delivery/tasks/E7-T11-activate-the-verified-historical-candidate.md): `done` through PRs #127/#128 + live activation 2026-08-20; ADR-019 public-activation boundary; task dependencies `E7-T6, E7-T7, E7-T10`; M3; requirements `P-001, P-002, P-005, P-007`; decisions `ADR-008, ADR-010, ADR-014, ADR-015, ADR-019, ADR-020`.
 ### E8
 
-- [E8-T1](E8-telegram-live-ingestion/tasks/E8-T1-confirm-channel-identity-and-access.md): promoted/`in_progress` revision 1; task dependencies `none`; deferred gates D-003 (public identity resolved; live secrets open); milestone prerequisite M3; M4; requirements `P-006`; decisions `ADR-006`.
-- [E8-T2](E8-telegram-live-ingestion/tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): task dependencies `E8-T1, E3-T2, E8-T4`; M4; requirements `P-006, P-007`; decisions `ADR-005, ADR-006, ADR-007`.
-- [E8-T3](E8-telegram-live-ingestion/tasks/E8-T3-implement-live-new-edit-delete-processing.md): task dependencies `E8-T2, E8-T4`; M4; requirements `P-006, P-007`; decisions `ADR-003, ADR-005, ADR-006, ADR-007`.
+- [E8-T1](E8-telegram-live-ingestion/tasks/E8-T1-confirm-channel-identity-and-access.md): promoted/`in_progress` revision 1; task dependencies `none`; deferred gate D-003 (public identity and deploy credentials/session provisioned; real live acceptance open); milestone prerequisite M3; M4; requirements `P-006`; decisions `ADR-006`.
+- [E8-T2](E8-telegram-live-ingestion/tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): promoted/`in_progress`; restartable Telethon backfill delivered through PR #167, with live acceptance/media download still open; task dependencies `E8-T1, E3-T2, E8-T4`; M4; requirements `P-006, P-007`; decisions `ADR-005, ADR-006, ADR-007`.
+- [E8-T3](E8-telegram-live-ingestion/tasks/E8-T3-implement-live-new-edit-delete-processing.md): promoted/`in_progress`; serialized new/edit/delete processing delivered through PR #168, with real subscription evidence still open; task dependencies `E8-T2, E8-T4`; M4; requirements `P-006, P-007`; decisions `ADR-003, ADR-005, ADR-006, ADR-007`.
 - [E8-T4](E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md): promoted/`done` revision 1 through PR #162; task dependencies `E3-T3`; D-002 resolved (retain Geoapify); M4; requirements `P-001, P-007`; decisions `ADR-005, ADR-006, ADR-021`.
-- [E8-T5](E8-telegram-live-ingestion/tasks/E8-T5-production-reconciliation-and-worker-alerting.md): promoted/`in_progress` revision 1; task dependencies `E8-T3, E8-T4`; M4; requirements `P-006, P-007`; decisions `ADR-006, ADR-010, ADR-015`; activation gated on B-003.
+- [E8-T5](E8-telegram-live-ingestion/tasks/E8-T5-production-reconciliation-and-worker-alerting.md): promoted/`in_progress` revision 1; worker ops shipped through PR #169 and production service start through PR #173/release `3ee56a5`; verified live event/gap/outage evidence remains B-003; task dependencies `E8-T3, E8-T4`; M4; requirements `P-006, P-007`; decisions `ADR-006, ADR-010, ADR-015`.
 
 ### E13
 
@@ -174,7 +174,7 @@ The workflow's [expanded definition of done](../workflow/DEFINITION_OF_DONE.md) 
 - Attribution, source traceability, and confidence indicators: E4-T3, E5-T1, E5-T3, E6-T2.
 - WCAG 2.2 AA public flows: E5-T4, E6-T1.
 - Matching/non-matching related-offer disclosure: E4-T2, E5-T3.
-- Shared Nginx/Certbot TLS for WEF and AI Forecast: E7-T8 through E7-T10.
+- Shared Nginx/Certbot TLS for WEF while preserving AI Forecast on `:3000`: E7-T8 through E7-T10.
 - Anonymous browsing plus username/password registration, owner administration, and audited contact reveal: E6-T4 through E6-T7, E7-T10, E7-T7.
 - English-first i18n-keyed interface: E6-T6.
 - Verified Telegram links: E4-T3, E5-T3, then E8-T1 for live data.
@@ -187,4 +187,4 @@ The workflow's [expanded definition of done](../workflow/DEFINITION_OF_DONE.md) 
 - Dockerized GitHub deployment: E7-T1 through E7-T4.
 - Resumable verified materialized-snapshot transfer into a non-public production candidate: E7-T6; HTTPS/sensitive-feature-gated public activation: E7-T11.
 - Monitoring, contact-data minimization, and accessibility: E5-T4, E6-T2, E6-T3, E6-T5; backups are deferred in E7-T5 and a formal privacy notice is out of scope.
-- Future live channel ingestion: E8-T1 through E8-T5.
+- Live channel ingestion implementation and remaining operational acceptance: E8-T1 through E8-T5.

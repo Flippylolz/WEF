@@ -1,11 +1,11 @@
 # Production Rollback Rehearsal
 
-This runbook is executable only after GitHub hosted jobs can publish and deploy the exact tested SHA. Until then, B-006 keeps `AUTO_DEPLOY_ENABLED=false` and WEF inactive.
+This rehearsal completed under E7-T4. `AUTO_DEPLOY_ENABLED=true` is now active; use this runbook only for a deliberate repeat through `workflow_dispatch`, temporarily disabling automatic deployment if the exercise requires an isolated window.
 
 ## Safety gates
 
 - Use two different commits already reachable from `main`: healthy release `A`, then candidate `B`.
-- Keep the workflow's automatic gate false throughout the rehearsal.
+- Keep the workflow's automatic gate false throughout a repeated rehearsal.
 - Confirm the `production` environment has the documented variables/secrets and port 3100 is unoccupied.
 - Do not import historical/private data. The only data is the idempotent synthetic fixture.
 - Do not run Docker prune, Compose volume deletion, Alembic downgrade, or any command against a non-WEF project.
@@ -39,6 +39,6 @@ The workflow runs `verify_rollback_rehearsal.py` over this evidence without read
 
 ## Enable or abort
 
-Set `AUTO_DEPLOY_ENABLED=true` only after both dispatches and all evidence pass on hosted GitHub Actions. Then verify one later merged-PR push to `main` deploys automatically.
+After a repeated rehearsal, restore `AUTO_DEPLOY_ENABLED=true` only after both dispatches and all evidence pass. The normal merged-PR `main` deployment path is already proven and active.
 
 On any failure, leave the variable false. If rollback cannot restore health, stop only WEF application services, retain PostgreSQL/media/Caddy paths, and record the blocker. Never delete or restart another project.

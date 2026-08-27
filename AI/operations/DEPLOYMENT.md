@@ -33,20 +33,20 @@ The raw export is mounted read-only only into importer commands. Media output us
 Expected operator flows:
 
 ```text
-docker compose up --build
-docker compose run --rm importer import dry-run --source /source/result.json
-docker compose run --rm importer import historical --source /source/result.json
+make up
+WEF_SOURCE_DIR=/absolute/path/to/export make import-dry-run
+WEF_SOURCE_DIR=/absolute/path/to/export make import-run
 make test
 ```
 
-Exact service/command names are finalized during implementation, but no workflow may copy the full export into an image layer.
+The import stages are resumable and no workflow may copy the full export into an image layer.
 
 ### Production
 
 Production services:
 
-- `caddy` (current interim): configurable `WEF_PUBLIC_PORT`, initially `3100/TCP`, for the bounded anonymous rehearsal.
-- `nginx` plus `certbot` (target shared edge): standard 80/443 ingress with free automatically renewed TLS for WEF on `2fa54e2405.duckdns.org`. AI Forecast stays on public host port `3000` for the E7-T10 cutover (Forecast TLS hostname remains optional in the renderer for fixtures/future use). The inert topology is built and proven through [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) in the dedicated `wef-shared-edge` Compose project (`infra/compose.shared-edge.yaml` plus proof-only `infra/compose.shared-edge-fixtures.yaml`); cutover is automated by [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md), and activation happens only through gated [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md). Ordinary `wef-production` releases neither deploy nor remove the shared edge.
+- `caddy`: configurable `WEF_PUBLIC_PORT`, currently `3100/TCP`, retained as an application-owned rollback/diagnostic listener that cannot support production Secure-cookie flows.
+- `nginx` plus `certbot`: the live standard 80/443 ingress with automatically renewed TLS for WEF on `2fa54e2405.duckdns.org`. AI Forecast stays on public host port `3000`. [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md), [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md), and [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) delivered and proved this dedicated `wef-shared-edge` Compose project. Ordinary `wef-production` releases reconnect their upstreams but neither deploy nor remove the shared edge.
 - `web`: internal port only.
 - `api`: internal port only.
 - `db`: an application-owned PostgreSQL/PostGIS container on the internal network only, with a persistent host-backed volume.
@@ -80,7 +80,7 @@ Image requirements:
 
 - `infra/compose.yaml`: shared service definitions usable locally.
 - `infra/compose.production.yaml`: production images, restart policy, resources, networks, volumes, and hardened settings.
-- `infra/Caddyfile.production`: implemented interim same-origin WEF routes.
+- `infra/Caddyfile.production`: application-owned rollback same-origin routes.
 - `infra/compose.shared-edge.yaml`: the separately managed `wef-shared-edge` project (Nginx plus Certbot) with a fixed-name `wef-edge` network owned by the edge boundary. `infra/compose.shared-edge-fixtures.yaml` is a proof-only override (fixture upstreams and local Pebble ACME) that must never be combined with a production edge deployment.
 - `infra/nginx/` owns the HTTP-only ACME bootstrap template (`bootstrap.conf.in`), the TLS templates (`tls.conf.in`, `tls-redirect.conf.in`), the optional Forecast vhost fragment (`forecast-vhost.conf.in`), and the Certbot deploy hook (`deploy-hook.sh`). `scripts/deploy/shared_edge_render.py` renders deterministic validated releases (WEF-only when Forecast hostname/upstream are omitted; dual-host when both are set), `scripts/deploy/shared_edge_release.py` validates (`nginx -t` as the serving UID) and atomically activates/rolls back `current`/`previous` pointers, and `scripts/deploy/shared_edge_renew.sh` performs unattended renewal with the success-only validated chain (`nginx -t` then container HUP). `make shared-edge-proof` proves the topology and runtime behavior locally; the proofs also run as part of `make production-proof` in CI.
 - A checked-in `.env.example`: names and safe descriptions only.
@@ -94,31 +94,31 @@ Persistent paths:
 - `/home/nuc/wef/caddy-data/`.
 - A dedicated shared-edge root (operator-selected at edge deployment; `WEF_SHARED_EDGE_ROOT` must be supplied explicitly because it has no default) holding rendered releases with `current`/`previous` pointers, the ACME webroot, complete persistent Certbot `/etc/letsencrypt` state, deploy-hook state, and bounded edge logs. E7-T8 defines the boundary, E7-T10 confirms its live path, and it is not deleted with `/home/nuc/wef`.
 - `/home/nuc/wef/releases/` for release metadata and Compose manifests.
-- `/home/nuc/wef/secrets/releases/<git-sha>/` plus `secrets/current` for complete deploy-managed service configuration, including the future Telegram session.
+- `/home/nuc/wef/secrets/releases/<git-sha>/` plus `secrets/current` for complete deploy-managed service configuration, including Telegram credentials; generated Telegram sessions persist under `/home/nuc/wef/secrets/telegram/`.
 
 Application containers must not rely on writable container layers. Writable temporary paths use explicit temporary filesystems or project-owned volumes. Do not add explicit generic `container_name` values; Compose's `wef-production` prefix prevents collisions.
 
-Before the first PostGIS start, a profile-gated one-shot service changes only the precreated WEF PostgreSQL bind root to the pinned image's UID/GID `999:999`. It runs with no network, a read-only root filesystem, and only `CHOWN`/`DAC_OVERRIDE`; this avoids sudo or broad host permissions. Inventory accepts the PostgreSQL root as either the inactive `nuc` owner or active UID 999 and rejects other WEF path ownership. The current Caddy rehearsal edge runs as host UID/GID `1000:1000` on unprivileged internal port 8080, drops all default capabilities, and adds back only `NET_BIND_SERVICE` because the pinned binary carries that file capability; its WEF-owned data bind remains writable without another root initializer. E7-T8 through E7-T10 replace this public edge with the separately managed shared Nginx/Certbot boundary.
+Before the first PostGIS start, a profile-gated one-shot service changes only the precreated WEF PostgreSQL bind root to the pinned image's UID/GID `999:999`. It runs with no network, a read-only root filesystem, and only `CHOWN`/`DAC_OVERRIDE`; this avoids sudo or broad host permissions. Inventory accepts the PostgreSQL root as either the inactive `nuc` owner or active UID 999 and rejects other WEF path ownership. The Caddy rollback edge runs as host UID/GID `1000:1000` on unprivileged internal port 8080, drops all default capabilities, and adds back only `NET_BIND_SERVICE` because the pinned binary carries that file capability; its WEF-owned data bind remains writable without another root initializer. Shared Nginx/Certbot owns the public boundary independently.
 
 ## Routing and TLS
 
-Current interim Caddy:
+Application Caddy rollback path:
 
 - On port 3100, serves same-origin HTTP for anonymous smoke/browsing only.
 - Routes `/api/*` to FastAPI and all other application routes to Next.js.
 - Serves `/media/*` only from the dedicated public-derivative subtree mounted read-only; source media, restricted originals, and reports are absent from API/edge mounts.
-- Remains an implementation fact until the approved E7-T10 live migration; historical Caddy verification evidence is not rewritten as Nginx evidence.
+- Remains available on `:3100` for rollback/diagnostics; it is not the public HTTPS entry and cannot establish production Secure-cookie sessions.
 
-Target Nginx/Certbot edge:
+Live Nginx/Certbot edge:
 
-- Nginx owns standard ports 80/443 and routes separate hostnames to private WEF and AI Forecast upstreams.
+- Nginx owns standard ports 80/443 for the WEF hostname and private WEF upstreams. AI Forecast remains outside this live edge on public port `3000`; a second vhost is only an optional fixture/future renderer mode.
 - Certbot obtains free Let's Encrypt certificates, persists its complete state, renews unattended, and reloads Nginx only after successful renewal.
 - HTTP redirects to HTTPS only after both application routes and certificates pass external smoke checks.
-- [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) owns inert topology; [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) owns cutover/rollback automation; [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) owns DNS/router confirmation, live AI Forecast/WEF cutover, Caddy removal, renewal proof, monitoring, and rollback.
-- [E7-T7](../epics/E7-production-delivery/tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables authentication/contact reveal only after the E7-T10 HTTPS gate.
+- [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) delivered topology; [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) delivered cutover/rollback automation; [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) completed DNS/router confirmation, live WEF cutover, renewal proof, monitoring, and rollback.
+- [E7-T7](../epics/E7-production-delivery/tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enabled authentication/contact reveal after the E7-T10 HTTPS gate.
 - Full topology, certificate lifecycle, and evidence requirements are in [Nginx and TLS target](NGINX_TLS.md).
 
-Both current and target edges:
+Both public and rollback routes:
 
 - Preserve client/request IDs and correct proxy headers.
 - Enable compression for text/JSON, not already compressed media.
@@ -127,13 +127,13 @@ Both current and target edges:
 - The CSP explicitly permits only the configured map style/tile origins, same-origin API/media, and the worker requirements used by MapLibre (including `worker-src blob:` only when the chosen bundle requires it).
 - Prevent directory listing and access to dotfiles or temporary media files.
 
-During the rehearsal, only Caddy publishes the selected WEF port. PostgreSQL, web, API, and worker ports remain on an internal Compose network. WEF must not publish or bind host ports 3000, 8080, or UDP 51820, and deployment must not restart or alter non-WEF projects. The selected port is rechecked immediately before Compose starts.
+PostgreSQL, web, API, media, and worker upstream ports remain on internal Compose networks. WEF must not take ownership of host ports 3000, 8080, or UDP 51820, and deployment must not restart or alter non-WEF projects. Published 80/443 and the retained `:3100` listener are rechecked by the respective preflight/inventory boundaries.
 
-After E7-T10, shared Nginx is the only target public web server on 80/443. Ordinary WEF application deploys do not own, recreate, or remove the `wef-shared-edge` project. When the external `wef-edge` network is present, each deploy/rollback merges `compose.production-shared-edge.yaml` (keeping Caddy on `:3100`), runs `scripts/deploy/reconnect-wef-upstreams.sh` (attach `wef-api`/`wef-web`/`wef-media` + Nginx HUP), and must pass public HTTPS smoke on `WEF_PUBLIC_HTTPS_BASE_URL` (default `https://2fa54e2405.duckdns.org`) before activation. TLS templates use Docker DNS (`resolver 127.0.0.11`) with variable `proxy_pass` so upstream IPs re-resolve after container recreate; reconnect still attaches network aliases. AI Forecast remains unchanged by ordinary WEF releases.
+Shared Nginx is the only public WEF web server on 80/443. Ordinary WEF application deploys do not own, recreate, or remove the `wef-shared-edge` project. When the external `wef-edge` network is present, each deploy/rollback merges `compose.production-shared-edge.yaml` (keeping Caddy on `:3100`), runs `scripts/deploy/reconnect-wef-upstreams.sh` (attach `wef-api`/`wef-web`/`wef-media` + Nginx HUP), and must pass public HTTPS smoke on `WEF_PUBLIC_HTTPS_BASE_URL` (default `https://2fa54e2405.duckdns.org`) before activation. TLS templates use Docker DNS (`resolver 127.0.0.11`) with variable `proxy_pass` so upstream IPs re-resolve after container recreate; reconnect still attaches network aliases. AI Forecast remains unchanged by ordinary WEF releases.
 
-## Preliminary server sizing
+## Server sizing baseline
 
-Final sizing waits for [D-001](../decisions/deferred/D-001-production-server-domain.md), but a practical starting target is:
+The resolved NUC deployment uses this sizing guidance:
 
 - Preferred: 4 vCPU, 8 GB RAM, and at least 80 GB SSD.
 - Minimum for a low-traffic proof: 2 vCPU and 4 GB RAM if import/media processing is carefully bounded.
@@ -163,16 +163,16 @@ Complete inspected details and the transfer runbook are in the [production serve
 - GitHub-enforced `main` protection is out of scope under [ADR-017](../decisions/adr/ADR-017-no-enforced-branch-protection.md); follow branch/PR/CI rules procedurally and do not claim technical enforcement.
 - Use GitHub Actions variables for non-secret configuration and Actions secrets for sensitive configuration without depending on paid environment protection.
 - Every successful merge/push to `main` automatically builds and publishes a release candidate.
-- Keep `AUTO_DEPLOY_ENABLED=false` until [E7-T4](../epics/E7-production-delivery/tasks/E7-T4-implement-health-verification-and-rollback.md) demonstrates health-gated rollback. Use `workflow_dispatch` for the rehearsal; then set the variable to `true`.
+- E7-T4 completed the rollback rehearsal; `AUTO_DEPLOY_ENABLED=true` is the current repository value (verified 2026-08-26). Automatic deployment still fails closed unless the exact SHA is associated with a merged PR and every release job succeeds.
 - Grant each job minimum `permissions`.
 - Pin third-party Actions to full commit SHAs; use Dependabot/Renovate to propose controlled updates.
 - Enable secret scanning and dependency alerts.
 - Apply the branch, hotfix, owner-bypass, and Dependabot policy in [Repository and change rules](../governance/REPOSITORY_RULES.md).
 - Native protection-dependent auto-merge remains disabled; the custom merge controller and tested main-only deployment remain available.
 
-E7-T3 repository configuration:
+Repository configuration (current non-secret values verified 2026-08-26):
 
-- Variables: `AUTO_DEPLOY_ENABLED` (initially `false`), `DEPLOY_HOST`, `DEPLOY_SSH_PORT`, `DEPLOY_USER`, `POSTGRES_DB`, `POSTGRES_USER`, `WEF_BIND_ADDRESS`, `WEF_LOG_LEVEL`, and `WEF_PUBLIC_PORT`.
+- Variables: `AUTO_DEPLOY_ENABLED=true`, `DEPLOY_HOST`, `DEPLOY_SSH_PORT`, `DEPLOY_USER`, `POSTGRES_DB`, `POSTGRES_USER`, `WEF_BIND_ADDRESS`, `WEF_LOG_LEVEL`, and `WEF_PUBLIC_PORT`.
 - Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `POSTGRES_PASSWORD`, and
   `WEF_GEOAPIFY_API_KEY`.
 - The `production` GitHub environment is a deployment audit boundary, not a paid approval/protection claim.
@@ -180,16 +180,13 @@ E7-T3 repository configuration:
 
 ## CI workflow
 
-Pull requests run independent jobs where practical:
+Pull requests run five stable checks:
 
-1. Documentation/link checks.
-2. Backend format/lint/type checks.
-3. Backend unit and PostgreSQL/PostGIS integration tests.
-4. Frontend lint/type/unit tests.
-5. Generate and compare committed OpenAPI, lint and breaking-change check it, generate/type-check the frontend client, and build/upload the static docs artifact per the [OpenAPI contract](../contracts/OPENAPI.md).
-6. Production web and backend image builds without push.
-7. Playwright critical-path test against a Compose test environment.
-8. Container/dependency vulnerability scan with an agreed severity policy.
+1. `Backend` — format/lint/type/architecture, PostGIS tests with the 90% suite floor, deterministic OpenAPI, and Python dependency audit.
+2. `Frontend and contract` — format/lint/type, Vitest with the 90% suite floor, OpenAPI/client/docs/compatibility checks, production build, dependency audit, and Playwright critical path.
+3. `Repository safety` — scripts, Markdown links, Compose/topology proofs, and source/secret exclusions.
+4. `Runtime images` — non-root runtime image builds/content inspection and the production runtime proof.
+5. `Coverage badge` — independently enforces both suite floors and publishes the combined badge only on `main`.
 
 A failed required job blocks merge.
 
@@ -255,7 +252,7 @@ Large data reprocessing is an explicit importer operation after deploy, not hidd
 Deployment succeeds only when:
 
 - All required Compose services are healthy.
-- `/api/v1/health/live` and `/api/v1/health/ready` succeed through the public Caddy route.
+- `/api/v1/health/live` and `/api/v1/health/ready` succeed through the application route and the public shared-Nginx HTTPS origin.
 - The web root returns the expected release marker/header.
 - A bounded map endpoint smoke query returns valid GeoJSON.
 - A browser smoke check initializes MapLibre and loads the configured style/tile origin without Content Security Policy violations.
@@ -292,13 +289,7 @@ The public API is read-only, but ingestion is a write workload. Pause the Telegr
 
 ## Secrets and configuration
 
-GitHub repository or production-environment secrets:
-
-- `DEPLOY_HOST`.
-- `DEPLOY_PORT`.
-- `DEPLOY_USER`.
-- `DEPLOY_SSH_KEY`.
-- `DEPLOY_HOST_KEY` or known-host material.
+GitHub repository variables provide `DEPLOY_HOST`, `DEPLOY_SSH_PORT`, and `DEPLOY_USER`. Secrets provide `DEPLOY_SSH_KEY` and `DEPLOY_KNOWN_HOSTS`.
 
 GitHub Actions variables/secrets transferred on every deployment:
 
@@ -308,7 +299,7 @@ GitHub Actions variables/secrets transferred on every deployment:
 - One-time owner bootstrap username/password only until the first owner is persisted; remove/rotate it afterward.
 - GHCR read credential when required.
 - Production geocoder credentials/contact configuration.
-- Telegram API ID/hash/session and channel entity after [Epic 8](../epics/E8-telegram-live-ingestion/README.md).
+- Telegram API ID/hash/session/phone through `WEF_TELEGRAM_API_ID`, `WEF_TELEGRAM_API_HASH`, `WEF_TELEGRAM_SESSION`, and `WEF_TELEGRAM_PHONE`; non-secret channel identity comes from application settings.
 
 Practices:
 
@@ -335,13 +326,13 @@ None of these paths is committed to Git, copied into an image, or stored on a co
 
 ## Backups
 
-Backups and restore drills are out of scope under [ADR-015](../decisions/adr/ADR-015-defer-backups.md). PostgreSQL, media, imports, interim Caddy state, and secrets persist on the NUC only. After E7-T10, shared Nginx configuration and complete Certbot state also persist on the NUC under their independent edge boundary.
+Backups and restore drills are out of scope under [ADR-015](../decisions/adr/ADR-015-defer-backups.md). PostgreSQL, media, imports, Caddy rollback state, and secrets persist on the NUC only. Shared Nginx configuration and complete Certbot state also persist on the NUC under their independent edge boundary.
 
 This is persistence, not backup: one disk/host failure, corruption, accidental deletion, or destructive migration may permanently lose all application data. Future backup work must add encrypted off-server copies, retention, and restore verification before claiming recovery guarantees.
 
 ## Telegram worker operations
 
-The worker is disabled by default until [D-003](../decisions/deferred/D-003-telegram-channel-access.md) live credentials are supplied and E8-T5 enables the service. Operators can run `wef-verify-telegram-channel` for public identity + redacted secret-path inspection without enabling the worker. After E8-T2, `wef-telegram-backfill` can run a bounded live backfill only where worker-only mode-`0600` API ID/hash/session files exist; missing secrets fail closed without enabling the Compose worker. After E8-T3, new/edit/delete processing is implemented as an inward event processor (serialized queue + shared persistence) and can be exercised with fake-client fixtures; live Telethon subscriptions still require secrets and worker enablement remains E8-T5. Recurring geocoding retains Geoapify under [D-002](../decisions/deferred/D-002-recurring-geocoding-provider.md); operators can run `wef-revalidate-recurring-geocoder` (optional `--live-check`) without enabling the worker.
+The local worker remains behind the `telegram-worker` profile. Production release `3ee56a5` created and started the `telegram-worker` service on 2026-08-26 using deploy-managed environment credentials and the persistent restricted session directory. Operators use `wef-verify-telegram-channel` for redacted identity/credential readiness, `wef-telegram-backfill` for bounded overlap backfill, and `wef-telegram-worker-status` for checkpoint reconciliation, liveness, and rotation rehearsal. Missing/invalid credentials fail closed, and verified live entity/event delivery, gap reconciliation, and outage-recovery evidence remain open under D-003/B-003. Recurring geocoding retains Geoapify under resolved D-002.
 
 After historical activation, imported offers may remain `needs_review` while the M1 synthetic seed is still `visible`. Run `wef-promote-public-catalog` in the API/operator container to hide synthetic seed rows and publish historical offers (`needs_review` → `visible`). Map pins still require an accepted in-scope location with coordinates. When geocode results exist but auto-review left locations unpinned (`low_precision` / `low_confidence`), run `wef-accept-pending-geocode-pins` to copy in-scope coordinates onto those locations with `manual_accept` lineage (AD-034). Out-of-scope and provider `no_result` rows stay unpinned.
 
@@ -349,7 +340,7 @@ When enabled:
 
 - Run exactly one replica per configured channel.
 - Use `restart: unless-stopped` plus an application reconnect loop with bounded backoff.
-- Mount the Telegram session secret only into the worker, not web/API.
+- Mount the persistent Telegram session directory only into the worker, not web/API.
 - Depend on database readiness, not API readiness.
 - Persist checkpoints before acknowledging progress.
 - Expose no public port.
@@ -375,12 +366,12 @@ More source semantics are defined in the [ingestion pipeline](../ingestion/PIPEL
 
 ## Monitoring
 
-Initial monitoring:
+Current monitoring baseline:
 
-- External HTTP uptime check for the interim WEF 3100 endpoint; E7-T10 replaces it with independent HTTPS checks for WEF and AI Forecast.
+- External HTTPS uptime checks for WEF; AI Forecast remains independently reachable on `:3000`, while `:3100` is a WEF rollback/diagnostic route.
 - Host disk, memory, CPU, load, and Docker restart count.
-- TLS chain/hostname/expiry, Certbot renewal, and Nginx reload checks after E7-T10.
-- Telegram last committed event once enabled.
+- TLS chain/hostname/expiry, Certbot renewal, and Nginx reload checks.
+- Telegram heartbeat plus last committed event/checkpoint reconciliation; these never gate public API readiness.
 - Structured logs retained with size/rotation limits.
 
 Alert first on user impact, disk exhaustion risk, database unready state, and stale Telegram ingestion. Do not add a large metrics platform before these basic checks are operational.
@@ -402,14 +393,14 @@ Then:
 - Patch the host and configure time synchronization.
 - Verify the already-installed Docker 29.5.1 and Compose 5.1.3 versions; do not reinstall during application deployment.
 - Create `/home/nuc/wef` project directories owned by `nuc` and install a dedicated deployment SSH key for that account.
-- Keep SSH and interim `WEF_PUBLIC_PORT=3100` forwarding through the anonymous rehearsal; E7-T10 confirms and forwards 80/443 for Nginx/Certbot only after both public hostnames are approved.
+- Keep SSH and `WEF_PUBLIC_PORT=3100` as the rollback path; public 80/443 forwarding is assigned to the WEF-only Nginx/Certbot edge, while AI Forecast remains on `:3000`.
 - Configure swap only if appropriate for host memory; never use it to hide undersizing.
 - Verify both DNS names before enabling Nginx production TLS or changing the existing port-3000 route.
 - Rehearse the first release on production infrastructure with synthetic/empty data; do not create a staging environment.
 
-## Public production readiness gate
+## Ongoing public production readiness gate
 
-The anonymous synthetic/empty-data rehearsal may run on interim HTTP before this full gate. Public launch and all authentication/contact reveal require the complete gate, including HTTPS.
+The initial gate is complete; every later release must preserve it.
 
 - Required CI is green for the exact release.
 - Images are immutable and vulnerability policy passes.
@@ -419,4 +410,4 @@ The anonymous synthetic/empty-data rehearsal may run on interim HTTP before this
 - Health checks and rollback to the previous application release have been rehearsed.
 - Export/media paths are not present in image layers or Git history.
 - OpenStreetMap attribution, anonymous contact masking, and authenticated reveal auditing are verified.
-- Telegram worker remains disabled unless its separate readiness tasks are complete.
+- Telegram worker failures remain isolated from public readiness; live acceptance and reconciliation evidence stay tracked separately under M4 until complete.

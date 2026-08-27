@@ -36,6 +36,7 @@ Query parameters:
 - `market_type`: repeated enum values.
 - `content_type`: repeated `development`/`unit`; defaults to both.
 - `published_from`, `published_to`: dates/timestamps applied to `Offer.published_at`.
+- `quick_filter`: one server-defined preset ID from `/api/v1/quick-filters`; preset constraints are merged with explicit filters by the backend.
 
 Each feature contains:
 
@@ -88,11 +89,11 @@ The API sets an ETag based on normalized filters plus the latest relevant data v
 
 ### `GET /api/v1/filter-facets`
 
-Returns canonical district, room, market, and content-type options plus dataset min/max bounds. It accepts the non-facet filters needed for contextual counts but does not attempt complex search-engine-style aggregations in the first release.
+Returns canonical district, room, market, and content-type options plus visible-dataset min/max bounds. The implemented endpoint has no query parameters; it is a cacheable description of the current public filter domain.
 
-### `GET /api/v1/locations/{location_id}`
+### `GET /api/v1/quick-filters`
 
-Returns location/development metadata and aggregate counts. It does not automatically return every related source message.
+Returns the server-defined quick-filter preset identifiers, i18n label keys, and canonical filter constraints. Clients send the selected identifier back as `quick_filter`; they do not duplicate preset semantics.
 
 ### `GET /api/v1/locations/{location_id}/offers`
 
@@ -100,7 +101,7 @@ Returns cursor-paginated offer summaries.
 
 It accepts the same offer filters as the map endpoint and an `include_non_matching=false` flag. The UI can request matching offers first, then deliberately request all related history. Pages use the stable order `matches_filters DESC, published_at DESC, id DESC` and an opaque versioned cursor.
 
-Each summary contains only dated structured offer fields, a backend-owned display name and coarse completeness indicator, and an explicit `matches_filters` value. Apartment, parking, and storage price ranges remain separate; parking and storage can instead be explicitly marked as included in the apartment price. The collection returns matching and total visible counts; it excludes source text/links, media, contacts, raw payloads, and provider data.
+Each summary contains only dated structured offer fields, a backend-owned display name and coarse completeness indicator, and an explicit `matches_filters` value. Apartment, parking, and storage price ranges remain separate; parking and storage can instead be explicitly marked as included in the apartment price. The collection response also carries the selected location metadata plus matching and total visible counts; there is no separate `GET /api/v1/locations/{location_id}` endpoint. It excludes source text/links, media, contacts, raw payloads, and provider data.
 
 ### `GET /api/v1/offers/{offer_id}`
 
@@ -123,12 +124,23 @@ Expose versioned in-house account flows defined in [Authentication and contact r
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/logout`
-- `POST /api/v1/auth/password/change`
-- `GET /api/v1/users/me`
-- `DELETE /api/v1/users/me`
-- `DELETE /api/v1/users/me/sessions`
+- `GET /api/v1/auth/me`
+- `POST /api/v1/auth/password`
+- `POST /api/v1/auth/sessions/revoke-all`
+- `POST /api/v1/auth/account/disable`
+- `POST /api/v1/auth/account/delete`
 
 Auth endpoints use username/password, opaque database-backed HttpOnly cookies, generic login responses, CSRF/origin controls, rate limits, and no-store headers as applicable. There is no email verification or self-service forgotten-password endpoint.
+
+### Favorites endpoints
+
+Authenticated accounts can persist public catalog locations:
+
+- `GET /api/v1/favorites` lists the account's favorites newest-first.
+- `PUT /api/v1/favorites/{location_id}` adds one accepted public location idempotently.
+- `DELETE /api/v1/favorites/{location_id}` removes one favorite idempotently.
+
+Favorites contain only public location labels and never create access to hidden locations or offers.
 
 ### Owner administration console
 
@@ -154,6 +166,10 @@ Returns process liveness without testing downstream systems.
 
 Returns readiness only when the database is reachable and the migration revision is compatible.
 
+### Deprecated compatibility endpoint
+
+`GET /api/v1/estates` remains as the deprecated E0 compatibility shape and returns an inert empty projection. Catalog consumers use the grouped map/location/offer endpoints.
+
 ## Filter semantics
 
 - Different filter groups combine with AND.
@@ -168,15 +184,16 @@ These semantics must be implemented once in a query service shared by map, facet
 
 ## Internal command contracts
 
-Internal importer operations are CLI commands, not public HTTP endpoints:
+Implemented operator operations are CLI entry points, not public HTTP endpoints:
 
-- `import dry-run --source ...`
-- `import historical --source ... --media-root ...`
-- `import reprocess --channel ... --parser-version ...`
-- `import verify-media --channel ...`
-- `telegram listen --channel ...`
+- `wef-import {dry-run,persist,geocode,media,verify,run}` for the resumable historical pipeline.
+- `wef-importer-dry-run` for the aggregate read-only parser audit.
+- `wef-geocoder-check` and `wef-revalidate-recurring-geocoder` for bounded provider readiness/policy checks.
+- `wef-promote-public-catalog` and `wef-accept-pending-geocode-pins` for explicit reviewed catalog transitions.
+- `wef-verify-telegram-channel`, `wef-telegram-backfill`, `wef-telegram-worker`, and `wef-telegram-worker-status` for live ingestion and operations.
+- `wef-migrate`, `wef-seed-m1`, and `wef-bootstrap-owner` for migration/rehearsal/owner bootstrap operations.
 
-Exact syntax can change before implementation, but every command must support structured logs, an ingest-run record, a report destination, safe cancellation, and non-zero failure exit codes.
+These commands fail non-zero when their safety or completion conditions are not satisfied and emit only bounded/redacted operator output.
 
 ## Compatibility policy
 

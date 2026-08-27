@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E8
 title: "Future Telegram live ingestion"
-status: ready
+status: in_progress
 milestones: [M4]
 owner: owner
 spike: SPIKE.md
@@ -17,14 +17,14 @@ new, edited, and deleted channel posts are processed safely without changing pub
 
 ## Approval state
 
-- Epic workspace status: `ready`.
+- Epic workspace status: `in_progress`.
 - [Spike](SPIKE.md): `approved`, revision 2 (AD-031).
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 5; authorizes E8-T1, E8-T4, E8-T2, E8-T3, and E8-T5.
-- [E8-T1](tasks/E8-T1-confirm-channel-identity-and-access.md): promoted, `in_progress` (secrets/live resolve open).
+- [E8-T1](tasks/E8-T1-confirm-channel-identity-and-access.md): promoted, `in_progress` (production credentials/session are provisioned; live entity/event evidence remains open).
 - [E8-T4](tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md): promoted, `done`.
-- [E8-T2](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): promoted, `in_progress` (live secrets still B-003).
-- [E8-T3](tasks/E8-T3-implement-live-new-edit-delete-processing.md): promoted, `in_progress` (live subscription still B-003).
-- [E8-T5](tasks/E8-T5-production-reconciliation-and-worker-alerting.md): promoted, `in_progress` (activation still B-003).
+- [E8-T2](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): promoted, `in_progress` (restartable backfill is delivered; live acceptance/media completion remain open).
+- [E8-T3](tasks/E8-T3-implement-live-new-edit-delete-processing.md): promoted, `in_progress` (event processing is delivered; real subscription evidence remains open).
+- [E8-T5](tasks/E8-T5-production-reconciliation-and-worker-alerting.md): promoted, `in_progress` (production service started in release `3ee56a5`; gap/outage evidence remains open).
 
 ## Milestones
 
@@ -69,4 +69,4 @@ None remaining for E8.
 
 ## Lifecycle
 
-Follow the [approval-gated workflow](../../workflow/README.md). Production starts `telegram-worker` with the application; first authorized session remains gated on B-003 (phone/login).
+Follow the [approval-gated workflow](../../workflow/README.md). Production starts `telegram-worker` with the application. Credentials/session are provisioned, but B-003 remains open until live entity, event, gap-reconciliation, and outage-recovery evidence is recorded.

@@ -32,7 +32,7 @@ flowchart LR
         forecast[Existing AI Forecast]
     end
 
-    visitor -->|"HTTPS 80/443 after E7-T10"| nginx
+    visitor -->|"HTTPS 80/443"| nginx
     visitor -->|"Vector tiles"| tiles
     nginx --> web
     nginx --> api
@@ -49,7 +49,7 @@ flowchart LR
     github -->|"Immutable images over SSH deploy"| server
 ```
 
-OpenFreeMap and the geocoder are external dependencies, not containers owned by this project. All project-owned runtime processes are containerized. The implemented anonymous rehearsal still uses Caddy on port 3100. [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) owns inert shared-edge topology, [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md) owns cutover automation, and [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) owns the live Nginx/Certbot migration; [E7-T7](../epics/E7-production-delivery/tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enables sensitive WEF behavior only after that HTTPS gate.
+OpenFreeMap, Geoapify, Telegram, and GitHub are external dependencies, not containers owned by this project. All project-owned runtime processes are containerized. [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md), [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md), and [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) delivered the live shared Nginx/Certbot edge; [E7-T7](../epics/E7-production-delivery/tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enabled production authentication, administration, and contact reveal on that HTTPS origin. The application-owned Caddy listener remains on port 3100 for local use and production rollback, not as the public entry point.
 
 ## Technology stack
 
@@ -80,7 +80,7 @@ The map is a client component loaded only in the browser. The route shell, metad
 - `asyncpg` as the PostgreSQL driver.
 - `ijson` for streaming the historical export rather than loading the whole document into memory.
 - `httpx` for controlled external HTTP calls.
-- Telethon in the future long-running Telegram worker.
+- Telethon in the long-running Telegram worker and bounded backfill command.
 - Structlog configured for structured JSON in production.
 
 Durable imports, media work, and Telegram updates do not run as FastAPI background tasks. They use a separate process/container so API restarts do not lose jobs.
@@ -88,13 +88,13 @@ Durable imports, media work, and Telegram updates do not run as FastAPI backgrou
 ### Data and edge
 
 - PostgreSQL with PostGIS for spatial predicates and indexes.
-- Nginx for target public TLS, routing, compression, security headers, and local media delivery; Certbot for free Let's Encrypt issuance/renewal. Caddy remains only in the implemented interim rehearsal until E7-T10.
+- Nginx for live public TLS, routing, compression, security headers, and local media delivery; Certbot for free Let's Encrypt issuance/renewal. Caddy remains the local same-origin edge and production rollback listener.
 - A mounted media volume for the MVP.
 - OpenFreeMap vector styles/tiles, configured through environment values.
 
 Redis, a task queue, Elasticsearch, Kubernetes, and a service mesh are intentionally absent.
 
-## Planned repository shape
+## Repository shape
 
 ```text
 AI/
@@ -154,31 +154,26 @@ contracts/
     v1.json
 apps/
   web/
-    tests/
+    src/
+    e2e/
   backend/
-    src/wef/
-      bootstrap/
-      shared/
-      catalog/
-        domain/
-        application/
-        infrastructure/
-        interface/
-      ingestion/
-      identity/
-      administration/
-      contact_reveal/
-    migrations/
+    src/wef_backend/
+      features/
+        admin/
+        catalog/
+        contacts/
+        estates/
+        identity/
+        ingestion/
+    alembic/
     tests/
-      unit/
-      integration/
-      contract/
-      architecture/
 infra/
   compose.yaml
   compose.production.yaml
-  Caddyfile.production  # implemented interim WEF edge
-  nginx/                # target shared-edge configuration from E7-T8
+  compose.production-shared-edge.yaml
+  compose.shared-edge.yaml
+  Caddyfile.production  # application rollback listener
+  nginx/                # live shared-edge configuration
 tests/
   fixtures/  # shared synthetic/redacted cross-application fixtures only
 .github/
@@ -195,8 +190,8 @@ The API, historical importer, and Telegram listener share feature/domain/applica
 
 ### Nginx and Certbot
 
-- Nginx is the target public web server and TLS reverse proxy on ports 80/443; the implemented Caddy edge continues serving the bounded anonymous WEF rehearsal on configurable port 3100 until E7-T10 cutover.
-- Uses separate hostnames to route WEF and the existing AI Forecast frontend currently exposed on port 3000.
+- Nginx is the live public web server and TLS reverse proxy on ports 80/443; the application Caddy edge remains reachable on configurable port 3100 only as a rollback/diagnostic path.
+- Routes the WEF hostname to private WEF upstreams. AI Forecast remains outside this edge on its existing public port `3000`; the renderer retains an optional future Forecast-vhost mode.
 - Certbot obtains free Let's Encrypt certificates, persists its complete state, renews unattended, and gracefully reloads Nginx only after successful renewal.
 - Routes `/api/*` to FastAPI.
 - Routes application requests to Next.js.
@@ -238,8 +233,8 @@ The committed schema, frontend generation, static Redocly CI artifact, breaking-
 
 ### Importer/Telegram worker
 
-- Runs one-off `import dry-run`, `import historical`, `import reprocess`, and `import verify-media` commands.
-- Later runs a single long-lived Telegram listener.
+- Runs the staged `wef-import` commands `dry-run`, `persist`, `geocode`, `media`, `verify`, and `run`, plus the aggregate `wef-importer-dry-run` audit command.
+- Runs `wef-telegram-backfill`, the single long-lived `wef-telegram-worker`, and the redacted `wef-telegram-worker-status`/rotation/liveness checks.
 - Acquires a PostgreSQL advisory lock per channel/import mode to prevent duplicate concurrent processors.
 - Persists checkpoints and ingestion runs.
 - Uses bounded concurrency for media and provider calls.
@@ -257,18 +252,18 @@ The committed schema, frontend generation, static Redocly CI artifact, breaking-
 - The storage interface accepts a stream and returns an opaque key, checksum, byte count, detected MIME type, and dimensions/duration where available.
 - The local implementation writes atomically to a mounted volume.
 - Database rows store keys such as checksum-derived paths, never absolute host paths.
-- The active edge receives the same volume read-only: Caddy during the interim rehearsal and Nginx after E7-T10.
+- The application media-edge container receives only the public-derivative subtree read-only; shared Nginx reaches it through the private `wef-edge` network, while the Caddy rollback route uses the same bounded public-media path.
 - A future S3 implementation can preserve public API URL semantics.
 
 ## Main request flow
 
-1. The browser opens a page through the active same-origin edge: interim Caddy or target Nginx.
+1. The browser opens the live HTTPS page through shared Nginx; local development and production rollback use Caddy.
 2. Next.js returns the route shell; the client-only map initializes MapLibre.
 3. MapLibre loads the configured OpenFreeMap style and tiles with required attribution.
 4. The client parses filters from the URL and requests `/api/v1/map/locations` with the viewport bounding box.
 5. FastAPI validates the request, executes spatial/filter queries, and returns compact GeoJSON.
 6. MapLibre clusters and renders points client-side.
-7. Selecting a point requests `/api/v1/locations/{id}` for related offers.
+7. Selecting a point requests `/api/v1/locations/{id}/offers` for related offers and `/api/v1/offers/{id}` for full detail.
 8. Media loads from same-origin opaque `/media/` URLs.
 
 For the expected few hundred locations, client-side MapLibre clustering is simpler and sufficient. Server-side tile generation is a later scale option, not an MVP requirement.
@@ -322,14 +317,14 @@ No dedicated metrics stack is required initially. Add one when logs and host-lev
 
 ## Security boundaries
 
-- Only SSH and the configured WEF edge port are public for the interim deployment; after TLS migration the intended public application ports are 80/443.
+- The live WEF application is public on 80/443 through shared Nginx. SSH, AI Forecast on `:3000`, and the retained WEF Caddy rollback listener on `:3100` follow the documented host/firewall boundary.
 - PostgreSQL and worker processes have no public ports.
 - Containers run as non-root where their base image permits.
 - Images use pinned runtime versions, minimal production stages, and read-only filesystems where practical.
 - Uploaded/source media is not executable and is served with detected content types plus `X-Content-Type-Options: nosniff`.
 - API query values are parameterized through SQLAlchemy.
 - CORS is unnecessary when the web and API are same-origin.
-- Rate limiting belongs at the active edge—target Nginx after E7-T10—for abusive public traffic; initial limits should be measured to avoid breaking map use.
+- The API applies bounded public-route and identity/reveal rate limits; shared Nginx adds edge protections and security headers without replacing backend authorization limits.
 
 ## Test strategy
 
