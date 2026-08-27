@@ -1038,9 +1038,13 @@ input:focus-visible {
     min-height: 0;
   }
 
+  /* Lock the shell to exactly the viewport height so the rail scrolls
+     internally instead of growing the document and dragging the map
+     below the fold. */
   .app-shell {
+    height: 100%;
     min-height: 0;
-    flex: 1 1 auto;
+    padding: 0;
   }
 
   .map-explorer-shell {
