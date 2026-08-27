@@ -220,7 +220,7 @@ input:focus-visible {
 }
 
 .map-explorer-collapsed {
-  grid-template-columns: minmax(0, 1fr) 0fr;
+  grid-template-columns: 0fr minmax(0, 1fr);
 }
 
 .map-region {

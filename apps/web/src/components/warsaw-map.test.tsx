@@ -12,6 +12,21 @@ vi.mock("maplibre-gl", () => ({ setWorkerUrl }));
 
 const easeTo = vi.fn();
 const fitBounds = vi.fn();
+const resize = vi.fn();
+let resizeObserverCallback: ResizeObserverCallback | null = null;
+
+class ResizeObserverMock {
+  constructor(callback: ResizeObserverCallback) {
+    resizeObserverCallback = callback;
+  }
+
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+
 const getClusterExpansionZoom = vi.fn(async () => 13);
 let clickedFeature: object = {
   id: "10000000-0000-4000-8000-000000000001",
@@ -27,12 +42,14 @@ vi.mock("react-map-gl/maplibre", () => ({
       onLoad,
       onMoveEnd,
       onError,
+      trackResize,
     }: {
       children: ReactNode;
       onClick: (event: object) => void;
       onLoad: () => void;
       onMoveEnd: (event: object) => void;
       onError: () => void;
+      trackResize?: boolean;
     },
     ref,
   ) {
@@ -46,6 +63,7 @@ vi.mock("react-map-gl/maplibre", () => ({
       easeTo: (options: object) => {
         easeTo(options);
       },
+      resize,
       fitBounds: (
         bounds: [[number, number], [number, number]],
         options: object,
@@ -64,7 +82,7 @@ vi.mock("react-map-gl/maplibre", () => ({
       },
     }));
     return (
-      <div>
+      <div data-testid="map-component" data-track-resize={trackResize}>
         <button type="button" onClick={onLoad}>
           simulated-map-load
         </button>
@@ -135,14 +153,26 @@ vi.mock("react-map-gl/maplibre", () => ({
     <div
       data-testid={`source-${id}`}
       data-source-url={typeof data === "string" ? data : undefined}
+      data-source-json={
+        typeof data === "string" ? undefined : JSON.stringify(data)
+      }
     >
       {children}
     </div>
   ),
-  Layer: ({ id, layout }: { id: string; layout?: Record<string, unknown> }) => (
+  Layer: ({
+    id,
+    layout,
+    filter,
+  }: {
+    id: string;
+    layout?: Record<string, unknown>;
+    filter?: unknown;
+  }) => (
     <div
       data-testid={`layer-${id}`}
       data-text-font={JSON.stringify(layout?.["text-font"])}
+      data-filter={JSON.stringify(filter)}
     />
   ),
   NavigationControl: () => null,
@@ -155,11 +185,32 @@ vi.mock("react-map-gl/maplibre", () => ({
 
 const mapData: LocationMap = {
   type: "FeatureCollection",
-  features: [],
+  features: [
+    {
+      type: "Feature",
+      id: "10000000-0000-4000-8000-000000000001",
+      geometry: { type: "Point", coordinates: [21.0122, 52.2297] },
+      properties: {
+        display_name: "Synthetic Central Residence",
+        display_address: "Synthetic address, Warsaw",
+        district: "srodmiescie",
+        coordinate_precision: "district",
+        confidence: "low",
+        matching_offer_count: 1,
+        total_offer_count: 1,
+        latest_published_at: "2026-08-01T10:00:00Z",
+        price_min_minor: 80_000_000,
+        price_max_minor: 80_000_000,
+        area_min_sqm: "35.00",
+        area_max_sqm: "35.00",
+        currency: "PLN",
+      },
+    },
+  ],
   meta: {
     request_id: "00000000-0000-4000-8000-000000000001",
-    feature_count: 0,
-    matching_offer_count: 0,
+    feature_count: 1,
+    matching_offer_count: 1,
   },
 };
 
@@ -168,6 +219,7 @@ describe("WarsawMap", () => {
     cleanup();
     vi.clearAllMocks();
     vi.useRealTimers();
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
   });
 
   it("selects an unclustered backend feature and shows attribution", async () => {
@@ -177,8 +229,11 @@ describe("WarsawMap", () => {
       "/vendor/maplibre/maplibre-gl-worker.mjs",
     );
     clickedFeature = {
-      id: "10000000-0000-4000-8000-000000000001",
-      properties: {},
+      // This mirrors MapLibre's vector-tile conversion of the UUID feature id.
+      id: 10_000_000,
+      properties: {
+        location_id: "10000000-0000-4000-8000-000000000001",
+      },
       geometry: { type: "Point", coordinates: [21.0122, 52.2297] },
     };
     render(
@@ -214,10 +269,76 @@ describe("WarsawMap", () => {
       "data-source-url",
       "/data/warsaw-districts.geojson",
     );
+    expect(screen.getByTestId("source-locations")).toHaveAttribute(
+      "data-source-json",
+      expect.stringContaining(
+        '"location_id":"10000000-0000-4000-8000-000000000001"',
+      ),
+    );
     expect(screen.getByTestId("layer-warsaw-district-labels")).toHaveAttribute(
       "data-text-font",
       '["Noto Sans Regular"]',
     );
+  });
+
+  it("resizes asynchronously without MapLibre's synchronous resize redraw", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("map-component")).toHaveAttribute(
+      "data-track-resize",
+      "false",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+
+    act(() => {
+      resizeObserverCallback?.([], {} as ResizeObserver);
+      resizeObserverCallback?.([], {} as ResizeObserver);
+    });
+    expect(resize).not.toHaveBeenCalled();
+    await act(async () => Promise.resolve());
+    expect(resize).toHaveBeenCalledOnce();
+
+    act(() => resizeObserverCallback?.([], {} as ResizeObserver));
+    unmount();
+    await act(async () => Promise.resolve());
+    expect(resize).toHaveBeenCalledOnce();
+  });
+
+  it("falls back to deferred window resize events", async () => {
+    vi.stubGlobal("ResizeObserver", undefined);
+    const user = userEvent.setup();
+    render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+      />,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+
+    act(() => window.dispatchEvent(new Event("resize")));
+    expect(resize).not.toHaveBeenCalled();
+    await act(async () => Promise.resolve());
+    expect(resize).toHaveBeenCalledOnce();
   });
 
   it("expands a cluster instead of selecting a location", async () => {
@@ -393,6 +514,15 @@ describe("WarsawMap", () => {
         onFailure={onFailure}
         onViewportChange={vi.fn()}
       />,
+    );
+
+    expect(screen.getByTestId("layer-location-selected")).toHaveAttribute(
+      "data-filter",
+      '["==",["get","location_id"],"10000000-0000-4000-8000-000000000001"]',
+    );
+    expect(screen.getByTestId("layer-location-highlighted")).toHaveAttribute(
+      "data-filter",
+      '["==",["get","location_id"],"10000000-0000-4000-8000-000000000002"]',
     );
 
     await user.click(
