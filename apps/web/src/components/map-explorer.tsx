@@ -2,6 +2,7 @@
 
 import {
   keepPreviousData,
+  useInfiniteQuery,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ import {
   type FilterChipGroup,
 } from "@/components/filter-chips";
 import { MapFilterControls } from "@/components/map-filter-controls";
+import { ListingCard } from "@/components/listing-card";
 import { LiveAnnouncement } from "@/components/live-announcement";
 import { UserToolbar, type AuthOpener } from "@/components/user-toolbar";
 
@@ -25,8 +27,10 @@ import {
   fetchLocationOffers,
   fetchOfferDetail,
   fetchQuickFilters,
+  fetchViewportListings,
   type LocationMapFeature,
   type LocationOfferPage,
+  type ViewportListing,
 } from "@/lib/catalog-api";
 import {
   addFavorite,
@@ -35,6 +39,7 @@ import {
 } from "@/lib/favorites-api";
 import { fetchCurrentAccount } from "@/lib/auth-api";
 import {
+  DEFAULT_BBOX,
   DEFAULT_CONTENT_TYPES,
   DEFAULT_MAP_SEARCH_STATE,
   normalizeBbox,
@@ -48,9 +53,12 @@ import {
   formatArea,
   formatPrice,
 } from "@/lib/offer-presentation";
+import type { FocusTarget } from "@/lib/listing-focus";
 import { useMediaQuery, usePrefersReducedMotion } from "@/lib/use-media-query";
 
 type MobilePanelMode = "map" | "sheet" | "full";
+
+const LISTING_PAGE_SIZE = 20;
 
 const WarsawMap = dynamic(
   () => import("@/components/warsaw-map").then((module) => module.WarsawMap),
@@ -106,6 +114,10 @@ export function MapExplorer() {
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const [selectedOfferMatchesFilters, setSelectedOfferMatchesFilters] =
     useState<boolean | null>(null);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(
+    null,
+  );
+  const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
   const offerTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [selectedFeatureSnapshot, setSelectedFeatureSnapshot] =
     useState<LocationMapFeature | null>(null);
@@ -116,6 +128,9 @@ export function MapExplorer() {
   const [highlightedLocationId, setHighlightedLocationId] = useState<
     string | null
   >(null);
+  const resultsPanelRef = useRef<HTMLElement | null>(null);
+  const resultsScrollRef = useRef<number>(0);
+  const resultsTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersDialogRef = useRef<HTMLDialogElement | null>(null);
@@ -134,6 +149,22 @@ export function MapExplorer() {
       dialog.close();
     }
   }, [filtersOpen]);
+
+  const resultsRestorationNonce = selectedId === null ? 1 : 0;
+  useEffect(() => {
+    if (selectedId !== null) return;
+    if (resultsScrollRef.current === 0 && resultsTriggerRef.current === null) {
+      return;
+    }
+    const panel = resultsPanelRef.current;
+    if (panel !== null) {
+      panel.scrollTop = resultsScrollRef.current;
+    }
+    resultsTriggerRef.current?.focus();
+    resultsScrollRef.current = 0;
+    resultsTriggerRef.current = null;
+    // The nonce marks the transition back into the results list.
+  }, [resultsRestorationNonce, selectedId]);
   const isMobile = useMediaQuery("(max-width: 56rem)");
   const reduceMotion = usePrefersReducedMotion();
   const viewportTimer = useRef<number | null>(null);
@@ -219,6 +250,50 @@ export function MapExplorer() {
     },
     placeholderData: keepPreviousData,
   });
+  const listingsQuery = useInfiniteQuery({
+    queryKey: ["viewport-listings", canonicalSearch],
+    queryFn: async ({ pageParam, signal }) => {
+      const result = await fetchViewportListings(
+        {
+          ...mapQueryParams,
+          ...(pageParam ? { cursor: pageParam } : {}),
+          limit: LISTING_PAGE_SIZE,
+        },
+        { signal },
+      );
+      if (result.state === "error") throw new Error("listings");
+      return result.data;
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+    placeholderData: keepPreviousData,
+  });
+  const listings = useMemo(
+    () => listingsQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [listingsQuery.data],
+  );
+  const listingCount = listingsQuery.data?.pages[0]?.matching_count ?? 0;
+  const listingPagesSettled =
+    listingsQuery.isSuccess && !listingsQuery.isFetching;
+
+  // A failed refresh must keep the last safe card collection on screen
+  // (placeholderData only covers pending states, not errors). The snapshot
+  // adjusts during render from the latest successful page set.
+  const [lastGoodListings, setLastGoodListings] = useState<ViewportListing[]>(
+    [],
+  );
+  const [lastGoodListingCount, setLastGoodListingCount] = useState(0);
+  if (
+    listingsQuery.isSuccess &&
+    listings.length > 0 &&
+    listings !== lastGoodListings
+  ) {
+    setLastGoodListings(listings);
+    setLastGoodListingCount(listingCount);
+  }
+  const effectiveListings = listings.length > 0 ? listings : lastGoodListings;
+  const effectiveListingCount =
+    listingCount > 0 ? listingCount : lastGoodListingCount;
   const offersQuery = useQuery({
     queryKey: ["location-offers", selectedId, canonicalSearch],
     enabled: selectedId !== null,
@@ -250,6 +325,47 @@ export function MapExplorer() {
       selectedFeatureSnapshot
     );
   }, [mapQuery.data?.features, selectedFeatureSnapshot, selectedId]);
+
+  const announcedListingCountRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!listingPagesSettled) return;
+    if (announcedListingCountRef.current === listingCount) return;
+    announcedListingCountRef.current = listingCount;
+    setLiveAnnouncement(t("listingCountAnnouncement", { count: listingCount }));
+  }, [listingCount, listingPagesSettled, t]);
+
+  // Bounded one-page-ahead prefetch keeps Load more instant without ever
+  // requesting offers per location.
+  useEffect(() => {
+    if (!listingPagesSettled) return;
+    const nextCursor = listingsQuery.data?.pages.at(-1)?.next_cursor;
+    if (nextCursor === undefined || nextCursor === null) return;
+    void queryClient.prefetchInfiniteQuery({
+      queryKey: ["viewport-listings", canonicalSearch],
+      queryFn: async ({ pageParam, signal }) => {
+        const result = await fetchViewportListings(
+          {
+            ...mapQueryParams,
+            ...(pageParam ? { cursor: pageParam } : {}),
+            limit: LISTING_PAGE_SIZE,
+          },
+          { signal },
+        );
+        if (result.state === "error") throw new Error("listings");
+        return result.data;
+      },
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage: { next_cursor: string | null }) =>
+        lastPage.next_cursor ?? undefined,
+      pages: 1,
+    });
+  }, [
+    canonicalSearch,
+    listingPagesSettled,
+    listingsQuery.data,
+    mapQueryParams,
+    queryClient,
+  ]);
 
   const navigate = useCallback(
     (nextState: MapSearchState, mode: "push" | "replace") => {
@@ -328,6 +444,10 @@ export function MapExplorer() {
         }),
       );
     }
+    if (selectedId === null) {
+      resultsScrollRef.current =
+        resultsPanelRef.current?.scrollTop ?? resultsScrollRef.current;
+    }
     setSelectedId(locationId);
     setSelectedOfferId(null);
     setSelectedOfferMatchesFilters(null);
@@ -336,6 +456,41 @@ export function MapExplorer() {
     } else {
       setSidebarOpen(true);
     }
+  }
+
+  function selectListing(listing: ViewportListing, trigger: HTMLButtonElement) {
+    resultsTriggerRef.current = trigger;
+    setSelectedListingId(listing.id);
+    setFocusTarget({
+      longitude: listing.location.geometry.coordinates[0],
+      latitude: listing.location.geometry.coordinates[1],
+      nonce: Date.now(),
+    });
+    selectLocation(listing.location.id);
+  }
+
+  function backToResults() {
+    setSelectedId(null);
+    setSelectedListingId(null);
+    setSelectedOfferId(null);
+    setSelectedOfferMatchesFilters(null);
+    if (isMobile) {
+      setMobilePanelMode("full");
+    }
+  }
+
+  function clearFiltersOnly() {
+    navigate(
+      {
+        ...DEFAULT_MAP_SEARCH_STATE,
+        bbox: searchState.bbox,
+      },
+      "push",
+    );
+  }
+
+  function resetMapView() {
+    navigate({ ...searchState, bbox: DEFAULT_BBOX }, "push");
   }
 
   function selectOffer(
@@ -434,99 +589,156 @@ export function MapExplorer() {
             onOpenFilters={() => setFiltersOpen(true)}
           />
 
-          <section className="results-panel" aria-label={t("locationsLabel")}>
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">{t("locationsEyebrow")}</p>
-                <h2>{t("locationsTitle")}</h2>
-                <span className="results-scope">{t("resultsScope")}</span>
+          {selectedId === null ? (
+            <section
+              ref={resultsPanelRef}
+              className="results-panel"
+              aria-label={t("listingsLabel")}
+            >
+              <div className="panel-heading">
+                <div>
+                  <p className="eyebrow">{t("listingsEyebrow")}</p>
+                  <h2>{t("listingsTitle")}</h2>
+                  <span className="results-scope">{t("resultsScope")}</span>
+                </div>
+                <div className="panel-heading-tools">
+                  <span className="result-count">
+                    {t("listingCount", { count: effectiveListingCount })}
+                  </span>
+                  {isMobile ? null : (
+                    <button
+                      className="sidebar-toggle"
+                      type="button"
+                      aria-label={t("hidePanel")}
+                      title={t("hidePanel")}
+                      aria-expanded={sidebarOpen}
+                      aria-controls="explorer-sidebar"
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <ChevronRightIcon />
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="panel-heading-tools">
-                <span className="result-count">
-                  {t("locationCount", {
-                    count: map?.meta.feature_count ?? 0,
-                  })}
-                </span>
-                {isMobile ? null : (
+              {listingsQuery.isFetching && effectiveListings.length > 0 ? (
+                <p className="results-status" role="status">
+                  {t("updating")}
+                </p>
+              ) : null}
+              {listingsQuery.isError ? (
+                <div className="results-status state-error" role="alert">
+                  <p>{t("listingsError")}</p>
                   <button
-                    className="sidebar-toggle"
+                    className="retry-button"
                     type="button"
-                    aria-label={t("hidePanel")}
-                    title={t("hidePanel")}
-                    aria-expanded={sidebarOpen}
-                    aria-controls="explorer-sidebar"
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() => void listingsQuery.refetch()}
                   >
-                    <ChevronRightIcon />
+                    {t("retry")}
                   </button>
-                )}
-              </div>
-            </div>
-            {facetsQuery.data ? (
-              <p className="facet-summary">
-                {t("districtCount", {
-                  count: facetsQuery.data.districts.length,
-                })}
-              </p>
-            ) : null}
-            {mapQuery.isFetching && map ? (
-              <p className="results-status" role="status">
-                {t("updating")}
-              </p>
-            ) : null}
-            {mapQuery.isError ? (
-              <p className="results-status state-error" role="alert">
-                {t("error")}
-              </p>
-            ) : null}
-            {mapQuery.isPending ? (
-              <p className="results-status" role="status">
-                {t("loading")}
-              </p>
-            ) : null}
-            {map && map.features.length === 0 ? (
-              <p className="results-status" role="status">
-                {t("empty")}
-              </p>
-            ) : null}
-            {map && map.features.length > 0 ? (
-              <ul className="location-list">
-                {map.features.map((feature) => (
-                  <LocationButton
-                    key={feature.id}
-                    feature={feature}
-                    selected={feature.id === selectedId}
-                    highlighted={feature.id === highlightedLocationId}
-                    starred={favoriteIds.has(String(feature.id))}
-                    showStar={signedIn}
-                    onSelect={selectLocation}
-                    onHighlight={setHighlightedLocationId}
-                    onToggleStar={async () => {
-                      const locationId = String(feature.id);
-                      const starred = favoriteIds.has(locationId);
-                      const result = starred
-                        ? await removeFavorite(locationId)
-                        : await addFavorite(locationId);
-                      if (result.state === "ready") {
-                        await queryClient.invalidateQueries({
-                          queryKey: ["favorites"],
-                        });
-                      }
-                    }}
-                  />
-                ))}
-              </ul>
-            ) : null}
-
-            <OfferPanel
-              feature={selectedFeature}
-              offers={offers}
-              onRetry={
-                selectedId ? () => void offersQuery.refetch() : undefined
-              }
-              onSelectOffer={selectOffer}
-            />
-          </section>
+                </div>
+              ) : null}
+              {listingsQuery.isPending ? (
+                <>
+                  <p className="results-status" role="status">
+                    {t("loading")}
+                  </p>
+                  <ul className="location-list" aria-hidden="true">
+                    {Array.from({ length: 5 }, (_, index) => (
+                      <li className="listing-skeleton" key={index} />
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+              {listingPagesSettled && listings.length === 0 ? (
+                <div className="results-status" role="status">
+                  <p>{t("listingsEmpty")}</p>
+                  <div className="empty-actions">
+                    <button type="button" onClick={clearFiltersOnly}>
+                      {t("clearFilters")}
+                    </button>
+                    <button type="button" onClick={resetMapView}>
+                      {t("resetMap")}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+              {effectiveListings.length > 0 ? (
+                <>
+                  <ul className="location-list" aria-label={t("listingsLabel")}>
+                    {effectiveListings.map((listing) => (
+                      <ListingCard
+                        key={listing.id}
+                        listing={listing}
+                        selected={listing.id === selectedListingId}
+                        highlighted={
+                          listing.location.id === highlightedLocationId
+                        }
+                        starred={favoriteIds.has(String(listing.location.id))}
+                        showStar={signedIn}
+                        onSelect={selectListing}
+                        onHighlight={setHighlightedLocationId}
+                        onToggleStar={async (locationId) => {
+                          const starred = favoriteIds.has(locationId);
+                          const result = starred
+                            ? await removeFavorite(locationId)
+                            : await addFavorite(locationId);
+                          if (result.state === "ready") {
+                            await queryClient.invalidateQueries({
+                              queryKey: ["favorites"],
+                            });
+                          }
+                        }}
+                      />
+                    ))}
+                  </ul>
+                  {listingsQuery.hasNextPage ? (
+                    <button
+                      className="load-more"
+                      type="button"
+                      disabled={listingsQuery.isFetchingNextPage}
+                      onClick={() => void listingsQuery.fetchNextPage()}
+                    >
+                      {listingsQuery.isFetchingNextPage
+                        ? t("loadingMore")
+                        : t("loadMore")}
+                    </button>
+                  ) : null}
+                </>
+              ) : null}
+            </section>
+          ) : (
+            <section className="results-panel" aria-label={t("locationsLabel")}>
+              <button
+                className="back-to-results"
+                type="button"
+                onClick={backToResults}
+              >
+                <ChevronLeftIcon />
+                {t("backToResults")}
+              </button>
+              <OfferPanel
+                feature={selectedFeature}
+                offers={offers}
+                onRetry={
+                  selectedId ? () => void offersQuery.refetch() : undefined
+                }
+                onSelectOffer={selectOffer}
+              />
+              {isMobile ? null : (
+                <button
+                  className="sidebar-toggle selected-view-toggle"
+                  type="button"
+                  aria-label={t("hidePanel")}
+                  title={t("hidePanel")}
+                  aria-expanded={sidebarOpen}
+                  aria-controls="explorer-sidebar"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <ChevronRightIcon />
+                </button>
+              )}
+            </section>
+          )}
         </aside>
 
         <div className="map-region">
@@ -545,6 +757,7 @@ export function MapExplorer() {
               data={map}
               selectedId={selectedId}
               highlightedId={highlightedLocationId}
+              focusTarget={focusTarget}
               loadingLabel={t("mapLoading")}
               onSelect={selectLocation}
               onFailure={() => setMapFailed(true)}
@@ -587,9 +800,7 @@ export function MapExplorer() {
               aria-label={t("mobileResultsBarLabel")}
             >
               <button type="button" onClick={openMobileSheet}>
-                {t("mobileShowResults", {
-                  count: map?.meta.feature_count ?? 0,
-                })}
+                {t("mobileShowListings", { count: effectiveListingCount })}
               </button>
             </div>
           ) : null}
@@ -682,73 +893,6 @@ function ChevronRightIcon() {
 
 function href(pathname: string, search: string) {
   return search ? `${pathname}?${search}` : pathname;
-}
-
-type LocationButtonProps = {
-  feature: LocationMapFeature;
-  selected: boolean;
-  highlighted: boolean;
-  starred: boolean;
-  showStar: boolean;
-  onSelect: (id: string) => void;
-  onHighlight: (id: string | null) => void;
-  onToggleStar: () => void;
-};
-
-function LocationButton({
-  feature,
-  selected,
-  highlighted,
-  starred,
-  showStar,
-  onSelect,
-  onHighlight,
-  onToggleStar,
-}: LocationButtonProps) {
-  const t = useTranslations("map");
-  const properties = feature.properties;
-  return (
-    <li>
-      <div className="location-button-row">
-        <button
-          className={`location-button${highlighted ? " location-button-highlighted" : ""}`}
-          type="button"
-          aria-pressed={selected}
-          onClick={() => onSelect(feature.id)}
-          onFocus={() => onHighlight(feature.id)}
-          onBlur={() => onHighlight(null)}
-          onMouseEnter={() => onHighlight(feature.id)}
-          onMouseLeave={() => onHighlight(null)}
-        >
-          <span>
-            <strong>{properties.display_name}</strong>
-            <small>{properties.display_address}</small>
-          </span>
-          <span className="pin-count">
-            {properties.matching_offer_count}
-            <span className="sr-only"> {t("matchingOffers")}</span>
-          </span>
-          {properties.confidence === "low" ? (
-            <span className="confidence-note">{t("lowConfidence")}</span>
-          ) : null}
-        </button>
-        {showStar ? (
-          <button
-            className={`location-star-button${starred ? " location-star-button-active" : ""}`}
-            type="button"
-            aria-label={starred ? t("unstarLocation") : t("starLocation")}
-            aria-pressed={starred}
-            onClick={(event) => {
-              event.stopPropagation();
-              void onToggleStar();
-            }}
-          >
-            ★
-          </button>
-        ) : null}
-      </div>
-    </li>
-  );
 }
 
 type OfferPanelProps = {

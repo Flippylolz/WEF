@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { forwardRef, useImperativeHandle, type ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -37,6 +37,15 @@ vi.mock("react-map-gl/maplibre", () => ({
     ref,
   ) {
     useImperativeHandle(ref, () => ({
+      getBounds: () => ({
+        getWest: () => 20.8,
+        getSouth: () => 52.1,
+        getEast: () => 21.2,
+        getNorth: () => 52.4,
+      }),
+      easeTo: (options: object) => {
+        easeTo(options);
+      },
       fitBounds: (
         bounds: [[number, number], [number, number]],
         options: object,
@@ -446,5 +455,42 @@ describe("WarsawMap", () => {
       zoom: 13,
       duration: 0,
     });
+  });
+  it("recenters only when the focus target leaves the comfortable core", async () => {
+    const user = userEvent.setup();
+    const data = mapData;
+    const { rerender } = render(
+      <WarsawMap
+        bbox="20.8,52.1,21.2,52.4"
+        data={data}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={() => undefined}
+        onFailure={() => undefined}
+        onViewportChange={() => undefined}
+        focusTarget={{ longitude: 21.0, latitude: 52.25, nonce: 1 }}
+      />,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+    expect(easeTo).not.toHaveBeenCalled();
+
+    rerender(
+      <WarsawMap
+        bbox="20.8,52.1,21.2,52.4"
+        data={data}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={() => undefined}
+        onFailure={() => undefined}
+        onViewportChange={() => undefined}
+        focusTarget={{ longitude: 20.81, latitude: 52.39, nonce: 2 }}
+      />,
+    );
+    await waitFor(() => expect(easeTo).toHaveBeenCalledTimes(1));
+    expect(easeTo).toHaveBeenCalledWith(
+      expect.objectContaining({ center: [20.81, 52.39] }),
+    );
   });
 });

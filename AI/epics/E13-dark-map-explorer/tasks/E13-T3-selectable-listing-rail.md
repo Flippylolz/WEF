@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E13-T3
 epic: E13
 title: "Build the selectable listing rail and coordinated map behavior"
-status: draft
+status: done
 revision: 1
 priority: P1
 size: L
@@ -29,22 +29,27 @@ implementation_gate:
   verified_by: "ZCode agent (owner-directed E13 implementation mission)"
   verified_at: "2026-08-26T18:45:03Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "ZCode agent (owner-directed E13 implementation mission)"
+  verified_at: "2026-08-27T10:30:00Z"
+  evidence:
+    - "E13-T1 | done | merged PR https://github.com/Flippylolz/WEF/pull/176"
+    - "E13-T2 | done | merged PR https://github.com/Flippylolz/WEF/pull/179"
 branch:
   required: true
   name: feat/E13-T3-selectable-listing-rail
   task_id: E13-T3
   one_task_only: true
-  created_at: "2026-08-26T18:45:03Z"
-  pull_request: null
+  created_at: "2026-08-27T10:00:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/180"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode agent (owner-directed E13 implementation mission)"
+  completed_at: "2026-08-27T10:30:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/180"
+  evidence:
+    - "Listing rail over GET /api/v1/listings with Load more and bounded prefetch; card/pin hover-selection sync with conditional recenter (comfort-region check) and no map remount"
+    - "Back to results restores the rail list, scroll position, and trigger focus; rail states cover skeletons, updating, empty (Clear filters / Reset map), and error with kept cards + Retry"
+    - "144 vitest tests green at 94.4%/90.3% coverage; Playwright critical path green; lint/typecheck/build green; local stack visual verification of the listing rail"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -102,18 +107,18 @@ with an explicit Back to results control that restores scroll and focus.
 
 ## Acceptance criteria
 
-- [ ] Rail lists paginated offer cards from `GET /api/v1/listings` with Load
+- [x] Rail lists paginated offer cards from `GET /api/v1/listings` with Load
       more and no N+1 location-offer requests while browsing.
-- [ ] Card ↔ pin hover/focus/selection synchronization works by pointer and
+- [x] Card ↔ pin hover/focus/selection synchronization works by pointer and
       keyboard; activation selects the parent pin, conditionally recenters
       without remount, and announces the selected name.
-- [ ] Selected location/offer view replaces the rail list (not appended);
+- [x] Selected location/offer view replaces the rail list (not appended);
       Back to results restores list, scroll position, and focus.
-- [ ] Loading/updating/empty/error/degraded states match the interaction
+- [x] Loading/updating/empty/error/degraded states match the interaction
       contract; viewport movement never blanks the rail or moves focus.
-- [ ] Keyboard-only user can browse, select, open details, favorite, and
+- [x] Keyboard-only user can browse, select, open details, favorite, and
       return; screen-reader announcements cover selection and result count.
-- [ ] Unit, a11y, and e2e suites updated and green; coverage floors pass.
+- [x] Unit, a11y, and e2e suites updated and green; coverage floors pass.
 
 ## Test plan
 
@@ -131,7 +136,7 @@ with an explicit Back to results control that restores scroll and focus.
 
 - [x] Authoritative under `tasks/`; promoted from the approved spike.
 - [x] Spike and implementation gates reference approved revision 1.
-- [ ] Dependency gate: E13-T1 and E13-T2 `done` with recorded PR evidence
+- [x] Dependency gate: E13-T1 and E13-T2 `done` with recorded PR evidence
       before `ready`/`in_progress` (satisfied in this task's PR after both
       merge).
 - [x] Scope matches implementation plan revision 1.

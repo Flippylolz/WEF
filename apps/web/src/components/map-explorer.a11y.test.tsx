@@ -30,6 +30,45 @@ vi.mock("next/dynamic", () => ({
     },
 }));
 
+const listingPage = {
+  items: [
+    {
+      id: "20000000-0000-4000-8000-000000000009",
+      content_type: "development",
+      market_type: "primary",
+      display_name: "development · primary",
+      data_confidence: "complete",
+      published_at: "2026-08-01T10:00:00Z",
+      currency: "PLN",
+      price_min_minor: 80_000_000,
+      price_max_minor: 125_000_000,
+      parking_price_min_minor: null,
+      parking_price_max_minor: null,
+      parking_included_in_price: false,
+      storage_price_min_minor: null,
+      storage_price_max_minor: null,
+      storage_included_in_price: false,
+      area_min_sqm: "35.00",
+      area_max_sqm: "71.50",
+      rooms_min: 1,
+      rooms_max: 3,
+      floor_label: null,
+      delivery_label: null,
+      location: {
+        id: "10000000-0000-4000-8000-000000000001",
+        display_name: "Synthetic Central Residence",
+        display_address: "Synthetic address, Warsaw",
+        district: "srodmiescie",
+        coordinate_precision: "district",
+        confidence: "low",
+        geometry: { type: "Point", coordinates: [21.0122, 52.2297] },
+      },
+    },
+  ],
+  matching_count: 1,
+  next_cursor: null,
+} as const;
+
 const mapData: catalogApi.LocationMap = {
   type: "FeatureCollection",
   features: [
@@ -81,6 +120,10 @@ describe("MapExplorer accessibility", () => {
         published_from: "2026-08-01T10:00:00Z",
         published_to: "2026-08-01T10:00:00Z",
       },
+    });
+    vi.spyOn(catalogApi, "fetchViewportListings").mockResolvedValue({
+      state: "ready",
+      data: listingPage as unknown as catalogApi.ViewportListingPage,
     });
     vi.spyOn(catalogApi, "fetchQuickFilters").mockResolvedValue({
       state: "ready",

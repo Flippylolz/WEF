@@ -9,6 +9,7 @@ import {
   OFFER_ID,
   OFFER_ID_NO_LINK,
   quickFilters,
+  viewportListings,
 } from "../synthetic-catalog";
 
 export type CatalogMode = "ready" | "map_error";
@@ -100,6 +101,14 @@ export async function installSyntheticCatalog(
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(offerDetailMissingLink),
+      });
+      return;
+    }
+    if (path === "/api/v1/listings") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(viewportListings),
       });
       return;
     }
