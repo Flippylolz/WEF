@@ -206,6 +206,45 @@ const facets: catalogApi.FilterFacets = {
   published_to: "2026-08-01T10:00:00Z",
 };
 
+const listingPage: catalogApi.ViewportListingPage = {
+  items: [
+    {
+      id: "20000000-0000-4000-8000-000000000009",
+      content_type: "development",
+      market_type: "primary",
+      display_name: "development · primary",
+      data_confidence: "complete",
+      published_at: "2026-08-01T10:00:00Z",
+      currency: "PLN",
+      price_min_minor: 80_000_000,
+      price_max_minor: 125_000_000,
+      parking_price_min_minor: null,
+      parking_price_max_minor: null,
+      parking_included_in_price: false,
+      storage_price_min_minor: null,
+      storage_price_max_minor: null,
+      storage_included_in_price: false,
+      area_min_sqm: "35.00",
+      area_max_sqm: "71.50",
+      rooms_min: 1,
+      rooms_max: 3,
+      floor_label: null,
+      delivery_label: null,
+      location: {
+        id: "10000000-0000-4000-8000-000000000001",
+        display_name: "Synthetic Central Residence",
+        display_address: "Synthetic address, Warsaw",
+        district: "srodmiescie",
+        coordinate_precision: "district",
+        confidence: "low",
+        geometry: { type: "Point", coordinates: [21.0122, 52.2297] },
+      },
+    },
+  ],
+  matching_count: 1,
+  next_cursor: null,
+};
+
 const offerPage: catalogApi.LocationOfferPage = {
   items: [
     {
@@ -269,6 +308,10 @@ describe("MapExplorer", () => {
     vi.spyOn(catalogApi, "fetchLocationOffers").mockResolvedValue({
       state: "ready",
       data: offerPage,
+    });
+    vi.spyOn(catalogApi, "fetchViewportListings").mockResolvedValue({
+      state: "ready",
+      data: listingPage,
     });
     vi.spyOn(authApi, "fetchCurrentAccount").mockResolvedValue({
       state: "error",
@@ -352,30 +395,26 @@ describe("MapExplorer", () => {
     expect(filtersToggle).toHaveAttribute("aria-haspopup", "dialog");
     expect(screen.getAllByText("loading").length).toBeGreaterThan(0);
     const errors = await screen.findAllByText("error");
-    expect(errors.some((error) => error.getAttribute("role") === "alert")).toBe(
-      true,
-    );
+    expect(
+      errors.some((error) => error.closest('[role="alert"]') !== null),
+    ).toBe(true);
     const user = userEvent.setup();
     await openFiltersDrawer(user);
     expect(screen.getByRole("heading", { name: "filtersTitle" })).toBeVisible();
     expect(screen.queryByTestId("map")).not.toBeInTheDocument();
   });
 
-  it("announces an empty backend projection", async () => {
-    vi.mocked(catalogApi.fetchLocationMap).mockResolvedValue({
+  it("announces an empty viewport projection with clear-and-reset actions", async () => {
+    vi.mocked(catalogApi.fetchViewportListings).mockResolvedValue({
       state: "ready",
-      data: {
-        ...mapData,
-        features: [],
-        meta: { ...mapData.meta, feature_count: 0 },
-      },
+      data: { items: [], matching_count: 0, next_cursor: null },
     });
     renderExplorer();
 
-    expect(await screen.findByText("empty")).toHaveAttribute("role", "status");
-    const user = userEvent.setup();
-    await openFiltersDrawer(user);
-    expect(screen.getByRole("heading", { name: "filtersTitle" })).toBeVisible();
+    const emptyMessage = await screen.findByText("listingsEmpty");
+    expect(emptyMessage.closest('[role="status"]')).not.toBeNull();
+    expect(screen.getByRole("button", { name: "clearFilters" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "resetMap" })).toBeVisible();
   });
 
   it("restores a combined URL filter query and clears to Warsaw defaults", async () => {
@@ -720,7 +759,7 @@ describe("MapExplorer", () => {
     });
     renderExplorer();
 
-    expect(await screen.findByText("mobileShowResults:1")).toBeInTheDocument();
+    expect(await screen.findByText("mobileShowListings:1")).toBeInTheDocument();
     await user.click(
       await screen.findByRole("button", {
         name: /Synthetic Central Residence/,
@@ -741,7 +780,7 @@ describe("MapExplorer", () => {
       screen.getByRole("button", { name: "mobileShowMap" }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "mobileShowMap" }));
-    expect(screen.getByText("mobileShowResults:1")).toBeInTheDocument();
+    expect(screen.getByText("mobileShowListings:1")).toBeInTheDocument();
     vi.unstubAllGlobals();
   });
 
@@ -987,5 +1026,135 @@ describe("MapExplorer", () => {
     renderExplorer();
     await screen.findByTestId("map");
     expect(document.querySelector(".map-attribution")).toBeNull();
+  });
+  it("loads more listing pages through the cursor without per-location requests", async () => {
+    const user = userEvent.setup();
+    const secondPage: catalogApi.ViewportListingPage = {
+      items: [
+        {
+          ...listingPage.items[0]!,
+          id: "20000000-0000-4000-8000-000000000010",
+          location: {
+            ...listingPage.items[0]!.location,
+            id: "10000000-0000-4000-8000-000000000002",
+            display_name: "Synthetic Wola Gardens",
+          },
+        },
+      ],
+      matching_count: 2,
+      next_cursor: null,
+    };
+    vi.mocked(catalogApi.fetchViewportListings).mockImplementation(
+      async (query = { bbox: catalogApi.DEFAULT_BBOX }) => {
+        if ((query as { cursor?: string }).cursor === "cursor-2") {
+          return { state: "ready", data: secondPage };
+        }
+        return {
+          state: "ready",
+          data: { ...listingPage, matching_count: 2, next_cursor: "cursor-2" },
+        };
+      },
+    );
+    renderExplorer();
+
+    expect(
+      await screen.findByRole("button", {
+        name: /Synthetic Central Residence/,
+      }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: /Synthetic Wola Gardens/ }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "loadMore" }));
+
+    expect(
+      await screen.findByRole("button", { name: /Synthetic Wola Gardens/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Synthetic Central Residence/ }),
+    ).toBeInTheDocument();
+    expect(catalogApi.fetchViewportListings).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cursor: "cursor-2", limit: 20 }),
+      { signal: expect.any(AbortSignal) },
+    );
+    expect(
+      screen.queryByRole("button", { name: "loadMore" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("replaces the rail with the selected location and restores results on back", async () => {
+    const user = userEvent.setup();
+    renderExplorer();
+    const card = await screen.findByRole("button", {
+      name: /Synthetic Central Residence/,
+    });
+
+    await user.click(card);
+
+    expect(
+      await screen.findByText("development · primary"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "backToResults" })).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: /Synthetic Central Residence/ }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "backToResults" }));
+
+    expect(
+      await screen.findByRole("button", {
+        name: /Synthetic Central Residence/,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("development · primary")).not.toBeInTheDocument();
+    // Focus returns to the card that opened the selected view.
+    expect(document.activeElement?.textContent ?? "").toMatch(
+      /Synthetic Central Residence/,
+    );
+  });
+
+  it("keeps prior cards and retries after a background listings error", async () => {
+    const user = userEvent.setup();
+    let failuresLeft = 1;
+    vi.mocked(catalogApi.fetchViewportListings).mockImplementation(
+      async (query = { bbox: catalogApi.DEFAULT_BBOX }) => {
+        if (query.bbox !== catalogApi.DEFAULT_BBOX && failuresLeft > 0) {
+          failuresLeft -= 1;
+          return { state: "error" };
+        }
+        return { state: "ready", data: listingPage };
+      },
+    );
+    renderExplorer();
+
+    expect(
+      await screen.findByRole("button", {
+        name: /Synthetic Central Residence/,
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "move-map" }));
+    await waitFor(() =>
+      expect(screen.getByText("listingsError")).toBeVisible(),
+    );
+    expect(
+      screen.getByRole("button", { name: /Synthetic Central Residence/ }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "retry" }));
+    await waitFor(() =>
+      expect(screen.queryByText("listingsError")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("announces the settled listing count once", async () => {
+    vi.mocked(catalogApi.fetchViewportListings).mockResolvedValue({
+      state: "ready",
+      data: { ...listingPage, matching_count: 7 },
+    });
+    renderExplorer();
+
+    await screen.findByText("listingCountAnnouncement:7");
   });
 });

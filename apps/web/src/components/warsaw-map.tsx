@@ -15,6 +15,7 @@ import {
   type ViewStateChangeEvent,
 } from "react-map-gl/maplibre";
 
+import { isWithinComfortRegion, type FocusTarget } from "@/lib/listing-focus";
 import { boundedWarsawViewport, parseBbox } from "@/lib/map-search-params";
 
 import type { LocationMap } from "@/lib/catalog-api";
@@ -125,6 +126,7 @@ type WarsawMapProps = {
   data: LocationMap;
   selectedId: string | null;
   highlightedId?: string | null;
+  focusTarget?: FocusTarget | null;
   loadingLabel: string;
   onSelect: (locationId: string) => void;
   onFailure: () => void;
@@ -137,6 +139,7 @@ export function WarsawMap({
   data,
   selectedId,
   highlightedId = null,
+  focusTarget = null,
   loadingLabel,
   onSelect,
   onFailure,
@@ -188,6 +191,23 @@ export function WarsawMap({
       { duration: 0, padding: 32 },
     );
   }, [bbox, mapReady]);
+
+  useEffect(() => {
+    if (MAP_DISABLED || !mapReady || focusTarget === null) return;
+    const map = mapRef.current;
+    if (map === null) return;
+    const point: [number, number] = [
+      focusTarget.longitude,
+      focusTarget.latitude,
+    ];
+    if (isWithinComfortRegion(map.getBounds(), point)) return;
+    map.easeTo({
+      center: point,
+      duration: reduceMotion ? 0 : 600,
+    });
+    // The ease triggers moveend on purpose: the URL bbox then reflects the
+    // newly centered viewport, so results stay bound to the visible area.
+  }, [focusTarget, mapReady, reduceMotion]);
 
   if (MAP_DISABLED) {
     return null;

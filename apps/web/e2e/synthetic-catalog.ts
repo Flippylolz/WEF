@@ -52,6 +52,45 @@ export const quickFilters = {
   items: [{ id: "last_day", label_key: "quickFilter.last_day" }],
 };
 
+export const viewportListings = {
+  items: [
+    {
+      id: OFFER_ID,
+      content_type: "development",
+      market_type: "primary",
+      display_name: "development · primary",
+      data_confidence: "complete",
+      published_at: "2026-08-01T10:00:00Z",
+      currency: "PLN",
+      price_min_minor: 80_000_000,
+      price_max_minor: 125_000_000,
+      parking_price_min_minor: null,
+      parking_price_max_minor: null,
+      parking_included_in_price: false,
+      storage_price_min_minor: null,
+      storage_price_max_minor: null,
+      storage_included_in_price: false,
+      area_min_sqm: "35.00",
+      area_max_sqm: "71.50",
+      rooms_min: 1,
+      rooms_max: 3,
+      floor_label: null,
+      delivery_label: null,
+      location: {
+        id: LOCATION_ID,
+        display_name: "Synthetic Central Residence",
+        display_address: "Synthetic address, Warsaw",
+        district: "srodmiescie",
+        coordinate_precision: "district",
+        confidence: "low",
+        geometry: { type: "Point", coordinates: [21.0122, 52.2297] },
+      },
+    },
+  ],
+  matching_count: 1,
+  next_cursor: null,
+};
+
 export const locationOffers = {
   items: [
     {

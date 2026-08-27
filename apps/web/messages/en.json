@@ -195,7 +195,22 @@
       "publicationFrom": "From {from}",
       "publicationTo": "Until {to}",
       "publicationRange": "{from} – {to}"
-    }
+    },
+    "listingsLabel": "Warsaw listings",
+    "listingsEyebrow": "Warsaw",
+    "listingsTitle": "Listings",
+    "listingCount": "{count, plural, one {# listing} other {# listings}}",
+    "listingCountAnnouncement": "{count, plural, one {# listing matches the current filters} other {# listings match the current filters}}",
+    "listingsEmpty": "No results in this map area",
+    "listingsError": "Listings are unavailable right now.",
+    "resetMap": "Reset map",
+    "loadMore": "Load more listings",
+    "loadingMore": "Loading…",
+    "backToResults": "Back to results",
+    "publishedOn": "Published {date}",
+    "mobileShowListings": "Show {count, plural, one {# listing} other {# listings}}",
+    "listingRoom": "{rooms} room",
+    "listingRooms": "{rooms} rooms"
   },
   "errors": {
     "segmentTitle": "This view could not be loaded",
