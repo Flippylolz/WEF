@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E13
 title: "Dark map-first listing explorer"
-status: in_progress
+status: done
 milestones: [M4]
 owner: owner
 spike: SPIKE.md
@@ -21,7 +21,7 @@ entire result collection.
 
 ## Approval state
 
-- Epic workspace status: `in_progress`; E13-T1 delivered, T2/T3 to follow.
+- Epic workspace status: `done`; E13-T1/T2/T3 delivered through PRs #176/#179/#181.
 - [Spike](SPIKE.md): `approved`, revision 1 (AD-038).
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 1
   (AD-038), sequencing E13-T1 → E13-T2 → E13-T3.
@@ -49,7 +49,7 @@ entire result collection.
 
 - [E13-T1: Build the dark application shell and compact filter experience](tasks/E13-T1-dark-shell-compact-filters.md) — P1/L, M4
 - [E13-T2: Add a paginated viewport listing-summary projection](tasks/E13-T2-viewport-listing-summary-projection.md) — P1/L, M4
-- [E13-T3: Build the selectable listing rail and coordinated map behavior](tasks/E13-T3-selectable-listing-rail.md) — P1/L, M4; depends on E13-T1 and E13-T2
+- [E13-T3: Build the selectable listing rail and coordinated map behavior](tasks/E13-T3-selectable-listing-rail.md) — P1/L, M4; done (dependencies E13-T1/E13-T2 satisfied)
 
 ## Dependencies
 
@@ -58,8 +58,9 @@ entire result collection.
 - Any new listing-summary contract must keep filtering, visibility, confidence,
   availability language, and pagination authoritative in the backend.
 
-## Current constraint
+## Completion
 
-Implementation proceeds task by task under [implementation plan](IMPLEMENTATION_PLAN.md)
-revision 1 (AD-038): one dedicated branch and pull request per task, CI green
-before each merge, standard production deploy and smoke verification.
+All three plan tasks are done: the dark shell and compact filter experience
+(#176), the viewport listing-summary projection (#179), and the selectable
+listing rail with coordinated map behavior (#181). Production deployment
+follows the standard main-merge workflow with smoke verification.
