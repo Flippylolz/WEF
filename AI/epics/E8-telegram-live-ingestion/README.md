@@ -25,6 +25,10 @@ new, edited, and deleted channel posts are processed safely without changing pub
 - [E8-T2](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): promoted, `in_progress` (restartable backfill is delivered; live acceptance/media completion remain open).
 - [E8-T3](tasks/E8-T3-implement-live-new-edit-delete-processing.md): promoted, `in_progress` (event processing is delivered; real subscription evidence remains open).
 - [E8-T5](tasks/E8-T5-production-reconciliation-and-worker-alerting.md): promoted, `in_progress` (production service started in release `3ee56a5`; gap/outage evidence remains open).
+- On 2026-08-27 the connected production worker missed Telegram messages `29203`
+  through at least `29257` while remaining Docker-healthy. Selected blocker-priority
+  [E15](../E15-telegram-ingestion-reliability/README.md) owns the independently approved
+  reliability remediation and production recovery; E8's delivered history is preserved.
 
 ## Milestones
 
@@ -66,6 +70,9 @@ None remaining for E8.
 
 - Incoming: E8-T2 depends on E3-T2.
 - Incoming: E8-T4 depends on E3-T3.
+- Downstream acceptance: E15-T1/T2/T3 provide the new source-completeness, truthful-health,
+  and recovery evidence needed before E8/B-003/M4 can close; this factual handoff does
+  not retroactively change E8's approved task dependencies.
 
 ## Lifecycle
 
