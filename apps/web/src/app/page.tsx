@@ -8,7 +8,7 @@ export default async function Home() {
   const t = await getTranslations("home");
 
   return (
-    <main className="page-shell app-shell" aria-labelledby="page-title">
+    <main className="app-shell" aria-labelledby="page-title">
       <h1 className="sr-only" id="page-title">
         {t("title")}
       </h1>
