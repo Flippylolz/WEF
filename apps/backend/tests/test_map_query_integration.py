@@ -333,7 +333,7 @@ async def test_viewport_listing_projection_order_gates_and_pagination() -> None:
 
     try:
         collected: list[UUID] = []
-        published_order: list[object] = []
+        published_order: list[datetime] = []
         cursor: str | None = None
         for _ in range(6):
             page = await listings_service(
