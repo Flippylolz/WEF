@@ -19,8 +19,10 @@ type AppliedFilterChipsProps = {
   state: MapSearchState;
   quickFilters: QuickFilterPreset[];
   quickFiltersLoading: boolean;
+  lastVisitAt: string | null | undefined;
   onRemoveGroup: (group: FilterChipGroup) => void;
   onToggleQuickFilter: (presetId: string | null) => void;
+  onToggleLastVisit: (publishedFrom: string | null) => void;
   onOpenFilters: () => void;
 };
 
@@ -208,11 +210,18 @@ export function AppliedFilterChips({
   state,
   quickFilters,
   quickFiltersLoading,
+  lastVisitAt,
   onRemoveGroup,
   onToggleQuickFilter,
+  onToggleLastVisit,
   onOpenFilters,
 }: AppliedFilterChipsProps) {
   const t = useTranslations("map");
+  const lastVisitSelected =
+    lastVisitAt !== null &&
+    lastVisitAt !== undefined &&
+    state.quickFilter === null &&
+    state.publishedFrom === lastVisitAt;
 
   return (
     <div className="rail-controls">
@@ -220,7 +229,7 @@ export function AppliedFilterChips({
         <div className="quick-filter-bar" role="status">
           {t("quickFiltersLoading")}
         </div>
-      ) : quickFilters.length > 0 ? (
+      ) : quickFilters.length > 0 || lastVisitAt !== undefined ? (
         <div className="quick-filter-bar" aria-label={t("quickFiltersLabel")}>
           {quickFilters.map((preset) => {
             const selected = state.quickFilter === preset.id;
@@ -236,6 +245,29 @@ export function AppliedFilterChips({
               </button>
             );
           })}
+          {lastVisitAt !== undefined ? (
+            <button
+              type="button"
+              className={`quick-filter-chip${lastVisitSelected ? " quick-filter-chip-active" : ""}`}
+              aria-label={
+                lastVisitAt === null
+                  ? `${t("quickFilter.since_last_visit")}. ${t("quickFilter.since_last_visit_unavailable")}`
+                  : t("quickFilter.since_last_visit")
+              }
+              aria-pressed={lastVisitSelected}
+              disabled={lastVisitAt === null}
+              title={
+                lastVisitAt === null
+                  ? t("quickFilter.since_last_visit_unavailable")
+                  : undefined
+              }
+              onClick={() =>
+                onToggleLastVisit(lastVisitSelected ? null : lastVisitAt)
+              }
+            >
+              {t("quickFilter.since_last_visit")}
+            </button>
+          ) : null}
         </div>
       ) : null}
       <div className="filter-chip-row">

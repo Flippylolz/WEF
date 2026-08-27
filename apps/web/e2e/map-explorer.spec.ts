@@ -3,6 +3,26 @@ import { expect, test } from "@playwright/test";
 import { installSyntheticCatalog } from "./helpers/catalog-mocks";
 
 test.describe("map explorer critical path", () => {
+  test("filters listings from the previous browser visit", async ({ page }) => {
+    const priorVisit = "2026-08-26T08:30:00.000Z";
+    await page.addInitScript(
+      ({ key, value }) => window.localStorage.setItem(key, value),
+      { key: "wef:last-visit-started-at", value: priorVisit },
+    );
+    await installSyntheticCatalog(page, "ready");
+    await page.goto("/");
+
+    const lastVisitFilter = page.getByRole("button", {
+      name: "New since last visit",
+    });
+    await expect(lastVisitFilter).toBeEnabled();
+    await lastVisitFilter.click();
+
+    await expect
+      .poll(() => new URL(page.url()).searchParams.get("published_from"))
+      .toBe(priorVisit);
+  });
+
   test("selects a location, opens offer detail with verified Telegram link", async ({
     page,
   }) => {

@@ -54,6 +54,7 @@ import {
   formatPrice,
 } from "@/lib/offer-presentation";
 import type { FocusTarget } from "@/lib/listing-focus";
+import { startBrowserVisit } from "@/lib/last-visit";
 import { useMediaQuery, usePrefersReducedMotion } from "@/lib/use-media-query";
 
 type MobilePanelMode = "map" | "sheet" | "full";
@@ -133,10 +134,32 @@ export function MapExplorer() {
   const resultsTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [lastVisitAt, setLastVisitAt] = useState<string | null | undefined>(
+    undefined,
+  );
   const filtersDialogRef = useRef<HTMLDialogElement | null>(null);
   const openAuthRef = useRef<AuthOpener>(() => undefined);
   const registerAuthOpener = useCallback((open: AuthOpener) => {
     openAuthRef.current = open;
+  }, []);
+
+  useEffect(() => {
+    let previousVisit: string | null = null;
+    try {
+      previousVisit = startBrowserVisit({
+        local: window.localStorage,
+        session: window.sessionStorage,
+      });
+    } catch {
+      // Accessing a storage area itself can be blocked by browser privacy mode.
+    }
+    let mounted = true;
+    queueMicrotask(() => {
+      if (mounted) setLastVisitAt(previousVisit);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -432,6 +455,20 @@ export function MapExplorer() {
     [navigate, searchState],
   );
 
+  const toggleLastVisit = useCallback(
+    (publishedFrom: string | null) => {
+      navigate(
+        {
+          ...searchState,
+          publishedFrom,
+          quickFilter: null,
+        },
+        "push",
+      );
+    },
+    [navigate, searchState],
+  );
+
   function selectLocation(locationId: string) {
     const currentFeature = mapQuery.data?.features.find(
       (feature) => feature.id === locationId,
@@ -584,8 +621,10 @@ export function MapExplorer() {
             state={searchState}
             quickFilters={quickFiltersQuery.data ?? []}
             quickFiltersLoading={quickFiltersQuery.isPending}
+            lastVisitAt={lastVisitAt}
             onRemoveGroup={removeFilterGroup}
             onToggleQuickFilter={toggleQuickFilter}
+            onToggleLastVisit={toggleLastVisit}
             onOpenFilters={() => setFiltersOpen(true)}
           />
 

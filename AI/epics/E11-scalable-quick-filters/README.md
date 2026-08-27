@@ -20,6 +20,11 @@ Visitors can apply server-defined publication quick filters such as “Last 24 h
 - Map and offer queries accept `quick_filter=<id>`; the backend resolves the cutoff timestamp.
 - Manual `published_from` and `quick_filter` are mutually exclusive.
 - Frontend renders presets from the API as toggle chips and stores the active preset in the URL.
+- The visitor-relative “New since last visit” shortcut is browser-local rather
+  than a server preset: the web app records visit-start timestamps in Web
+  Storage and applies the prior visit as an explicit `published_from` value.
+  The first visit records a baseline and leaves the shortcut disabled until the
+  next browser session.
 
 ## Promoted tasks
 
