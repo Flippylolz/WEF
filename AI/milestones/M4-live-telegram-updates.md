@@ -23,7 +23,7 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
   approved blocker-priority recovery epic. Spike/plan revision 1 are approved under
   AD-039/AD-040; all three tasks are promoted, E15-T1/T2 are done through green-CI
   PRs #189/#190, and E15-T3 has completed its production acceptance boundary at
-  remote head `29335` pending its documentation PR.
+  remote head `29335` on documentation PR #191.
 - Release `7184cc2d67a` now provides checkpoint polling, remote/local gap status, and
   fail-fast critical-loop health. The incident range is reconciled, repeat replay is
   idempotent, and restart/health fire-clear evidence is recorded in
@@ -45,7 +45,7 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 
 - [E15-T1: Supervise and observe the Telegram event pipeline](../epics/E15-telegram-ingestion-reliability/tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0 `done` through PR #189
 - [E15-T2: Add checkpoint-driven Telegram reconciliation](../epics/E15-telegram-ingestion-reliability/tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0 `done` through PR #190
-- [E15-T3: Recover the production gap and prove outage recovery](../epics/E15-telegram-ingestion-reliability/tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0 `in_progress`; T1/T2 dependencies satisfied
+- [E15-T3: Recover the production gap and prove outage recovery](../epics/E15-telegram-ingestion-reliability/tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0 production acceptance complete, `in_progress` on PR #191
 
 Cancelled and deferred candidates remain linked for traceability but are not completion requirements unless an approved revision restores them to required scope.
 

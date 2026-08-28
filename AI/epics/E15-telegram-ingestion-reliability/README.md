@@ -38,7 +38,7 @@ Priority and selection do not bypass the repository's approval gates.
 - [Research spike](SPIKE.md): revision 1, owner-approved under AD-039.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, owner-approved under AD-040.
 - E15-T1 is `done` through green-CI PR #189; E15-T2 is `done` through green-CI
-  PR #190; E15-T3 is dependency-ready and `in_progress`.
+  PR #190; E15-T3 completed its production boundary and is `in_progress` on PR #191.
 
 ## Incident baseline
 
@@ -75,7 +75,7 @@ fire/clear rehearsal, and retained E8 limitations are recorded in
 
 1. [E15-T1: Supervise and observe the Telegram event pipeline](tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0/M; `done` through PR #189
 2. [E15-T2: Add checkpoint-driven Telegram reconciliation](tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0/L; `done` through PR #190
-3. [E15-T3: Recover the production gap and prove outage recovery](tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0/M; `in_progress`, dependencies satisfied
+3. [E15-T3: Recover the production gap and prove outage recovery](tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0/M; production acceptance complete, `in_progress` on PR #191
 
 T1 makes failures fail visibly. T2 makes passive events a latency optimization rather
 than the completeness boundary. T3 performs bounded recovery only after those controls
