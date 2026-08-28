@@ -19,6 +19,18 @@ _SECRET_PATTERN = re.compile(
 )
 
 
+class _SafeTelethonLogHandler(logging.Handler):
+    """Bridge Telethon levels without rendering messages, args, or exceptions."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        structlog.get_logger("wef.telegram").warning(
+            "telethon_runtime_diagnostic",
+            category="TelethonRuntimeWarning",
+            source_logger=record.name[:64],
+            source_level=record.levelname,
+        )
+
+
 def scrub_log_value(value: object) -> object:
     """Remove credential-like substrings from log field values."""
     if isinstance(value, str):
@@ -59,6 +71,15 @@ def configure_logging(*, level: str = "info", json_logs: bool = True) -> None:
         logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=True,
     )
+
+
+def configure_safe_telethon_logging(*, level: str = "warning") -> None:
+    """Install one privacy-safe Telethon bridge for this worker process."""
+    telethon_logger = logging.getLogger("telethon")
+    telethon_logger.handlers.clear()
+    telethon_logger.addHandler(_SafeTelethonLogHandler())
+    telethon_logger.setLevel(getattr(logging, level.upper(), logging.WARNING))
+    telethon_logger.propagate = False
 
 
 def build_access_log_middleware(

@@ -6,7 +6,7 @@ import sys
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from uuid import uuid4
 
 import pytest
@@ -29,7 +29,10 @@ from wef_backend.features.ingestion.application.telegram_backfill import (
     LiveBackfillRequest,
     LiveTelegramBackfill,
 )
-from wef_backend.features.ingestion.application.telegram_events import LiveEventQueue
+from wef_backend.features.ingestion.application.telegram_events import (
+    LiveEventHandlerError,
+    LiveEventQueue,
+)
 from wef_backend.features.ingestion.application.telegram_live import (
     LiveTelegramMessage,
     TelegramChannelEntity,
@@ -55,7 +58,7 @@ from wef_backend.features.ingestion.infrastructure.fake_telegram_client import (
 from wef_backend.features.ingestion.infrastructure.telethon_client import _to_live_message
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Sequence
+    from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
     from pathlib import Path
     from uuid import UUID
 
@@ -626,7 +629,7 @@ async def test_telethon_live_client_sign_in_uses_2fa_password(
 async def test_telethon_live_client_subscribe_registers_handlers(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    handlers: list[object] = []
+    handlers: list[tuple[object, object]] = []
 
     class _Client:
         def __init__(self, *_args: object, **_kwargs: object) -> None:
@@ -647,8 +650,15 @@ async def test_telethon_live_client_subscribe_registers_handlers(
         TelegramWorkerSecrets(api_id=1, api_hash="hash", session="sess"),
     )
     await client.connect()
-    client.subscribe_channel("elestate_warszawa", LiveEventQueue())
+    queue = LiveEventQueue()
+    client.subscribe_channel("elestate_warszawa", queue)
     assert len(handlers) == 3
+    callback = cast("Callable[[object], Awaitable[None]]", handlers[0][0])
+    await callback(SimpleNamespace(message=SimpleNamespace(id=1, message="private source")))
+    with pytest.raises(LiveEventHandlerError) as captured:
+        await queue.get()
+    assert captured.value.category == "TypeError"
+    assert "private source" not in str(captured.value)
 
 
 @pytest.mark.asyncio

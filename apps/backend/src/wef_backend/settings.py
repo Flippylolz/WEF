@@ -69,6 +69,9 @@ class Settings(BaseSettings):
     telegram_session_path: Path | None = None
     telegram_env_file: Path | None = None
     telegram_heartbeat_path: Path = Path("/tmp/wef-telegram-worker.live")  # noqa: S108
+    telegram_runtime_health_path: Path = Path(
+        "/tmp/wef-telegram-worker.health.json",  # noqa: S108
+    )
     ingestion_report_path: Path = Path("/app/media/reports/e2-dry-run")
     geoapify_api_key: SecretStr | None = None
     geoapify_requests_per_second: Decimal = Field(default=Decimal(4), gt=0, le=5)

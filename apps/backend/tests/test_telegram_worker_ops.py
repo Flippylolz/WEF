@@ -12,14 +12,21 @@ import pytest
 
 from wef_backend import telegram_worker_command, telegram_worker_status_command
 from wef_backend.features.ingestion.application.telegram_worker_liveness import (
+    WorkerRuntimeState,
     maintain_worker_heartbeat,
+    read_worker_runtime_health,
     worker_liveness_ok,
     write_worker_heartbeat,
+    write_worker_runtime_health,
 )
 from wef_backend.features.ingestion.application.telegram_worker_status import (
     WorkerStatusOptions,
     build_telegram_worker_status,
     rotation_rehearsal_report,
+)
+from wef_backend.features.ingestion.application.telegram_worker_supervision import (
+    CriticalWorkerTaskError,
+    supervise_worker_tasks,
 )
 from wef_backend.features.ingestion.domain.telegram_secrets import (
     TelegramLoginCodeError,
@@ -27,6 +34,7 @@ from wef_backend.features.ingestion.domain.telegram_secrets import (
 )
 from wef_backend.features.ingestion.domain.telegram_worker_ops import (
     DEFAULT_HEARTBEAT_MAX_AGE,
+    CriticalStageStatus,
     FreshnessInput,
     ReconciliationStatus,
     WorkerFreshness,
@@ -34,6 +42,7 @@ from wef_backend.features.ingestion.domain.telegram_worker_ops import (
     heartbeat_is_fresh,
     parse_heartbeat_timestamp,
     reconcile_checkpoints,
+    safe_error_category,
 )
 from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store import (
     SQLAlchemyTelegramWorkerStatusStore,
@@ -273,6 +282,59 @@ def test_worker_liveness_ok_requires_fresh_file(tmp_path: Path) -> None:
     assert worker_liveness_ok(path, now=now) is False
 
 
+def test_worker_liveness_requires_every_implemented_critical_loop(tmp_path: Path) -> None:
+    heartbeat = tmp_path / "heartbeat"
+    runtime_path = tmp_path / "health.json"
+    now = datetime(2026, 8, 26, 12, 0, tzinfo=UTC)
+    state = WorkerRuntimeState(
+        transport_connected=True,
+        consumer_running=True,
+        release_sha="abcdef1234567890",
+    )
+    write_worker_heartbeat(heartbeat, now=now)
+    write_worker_runtime_health(runtime_path, state.snapshot(now=now))
+    assert worker_liveness_ok(
+        heartbeat,
+        runtime_health_path=runtime_path,
+        now=now,
+    )
+    health = read_worker_runtime_health(runtime_path)
+    assert health.release_sha == "abcdef123456"
+    assert health.reconciliation_status is CriticalStageStatus.PENDING_IMPLEMENTATION
+
+    state.consumer_running = False
+    write_worker_runtime_health(runtime_path, state.snapshot(now=now))
+    assert not worker_liveness_ok(
+        heartbeat,
+        runtime_health_path=runtime_path,
+        now=now,
+    )
+    state.consumer_running = True
+    state.reconciliation_status = CriticalStageStatus.FAILED
+    write_worker_runtime_health(runtime_path, state.snapshot(now=now))
+    assert not worker_liveness_ok(
+        heartbeat,
+        runtime_health_path=runtime_path,
+        now=now,
+    )
+
+
+def test_runtime_health_parser_fails_closed_on_bad_document(tmp_path: Path) -> None:
+    runtime_path = tmp_path / "health.json"
+    runtime_path.write_text('{"schema_version": 1, "consumer_running": true}', encoding="utf-8")
+    health = read_worker_runtime_health(runtime_path)
+    assert health.is_live(now=datetime.now(UTC)) is False
+    runtime_path.write_text("not-json", encoding="utf-8")
+    with pytest.raises(ValueError, match="Expecting value"):
+        read_worker_runtime_health(runtime_path)
+
+
+def test_safe_error_category_never_renders_exception_message() -> None:
+    error = RuntimeError("password=super-secret source listing text")
+    assert safe_error_category(error) == "RuntimeError"
+    assert "secret" not in safe_error_category(error)
+
+
 @pytest.mark.asyncio
 async def test_maintain_worker_heartbeat_writes_while_connected_then_unlinks(
     tmp_path: Path,
@@ -295,6 +357,74 @@ async def test_maintain_worker_heartbeat_writes_while_connected_then_unlinks(
     stop.set()
     await task
     assert path.is_file() is False
+
+
+@pytest.mark.asyncio
+async def test_maintain_worker_heartbeat_publishes_and_removes_runtime_health(
+    tmp_path: Path,
+) -> None:
+    heartbeat = tmp_path / "heartbeat"
+    runtime_path = tmp_path / "health.json"
+    stop = asyncio.Event()
+    state = WorkerRuntimeState(transport_connected=True, consumer_running=True)
+    task = asyncio.create_task(
+        maintain_worker_heartbeat(
+            heartbeat,
+            is_connected=lambda: True,
+            stop=stop,
+            state=state,
+            runtime_health_path=runtime_path,
+            interval=0.05,
+        ),
+    )
+    for _ in range(40):
+        if runtime_path.is_file():
+            break
+        await asyncio.sleep(0.025)
+    assert worker_liveness_ok(heartbeat, runtime_health_path=runtime_path)
+    stop.set()
+    await task
+    assert not heartbeat.exists()
+    assert not runtime_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_supervisor_fails_fast_and_cancels_siblings() -> None:
+    stop = asyncio.Event()
+    sibling_cancelled = asyncio.Event()
+
+    async def fail() -> None:
+        message = "source text and password=secret must not escape"
+        raise RuntimeError(message)
+
+    async def linger() -> None:
+        try:
+            await asyncio.Event().wait()
+        finally:
+            sibling_cancelled.set()
+
+    with pytest.raises(CriticalWorkerTaskError) as captured:
+        await supervise_worker_tasks(
+            {"consumer": fail(), "transport": linger()},
+            stop=stop,
+        )
+    assert captured.value.stage == "consumer"
+    assert captured.value.category == "RuntimeError"
+    assert "source text" not in str(captured.value)
+    assert stop.is_set()
+    assert sibling_cancelled.is_set()
+
+
+@pytest.mark.asyncio
+async def test_supervisor_treats_normal_critical_task_exit_as_failure() -> None:
+    async def exits() -> None:
+        return None
+
+    stop = asyncio.Event()
+    with pytest.raises(CriticalWorkerTaskError) as captured:
+        await supervise_worker_tasks({"transport": exits()}, stop=stop)
+    assert captured.value.category == "UnexpectedTaskExit"
+    assert stop.is_set()
 
 
 @pytest.mark.asyncio
@@ -336,11 +466,22 @@ def test_status_liveness_cli_succeeds_when_heartbeat_is_fresh(
     tmp_path: Path,
 ) -> None:
     path = tmp_path / "heartbeat"
+    runtime_path = tmp_path / "health.json"
     write_worker_heartbeat(path)
+    write_worker_runtime_health(
+        runtime_path,
+        WorkerRuntimeState(
+            transport_connected=True,
+            consumer_running=True,
+        ).snapshot(),
+    )
     monkeypatch.setattr(
         telegram_worker_status_command,
         "load_settings",
-        lambda: Settings(telegram_heartbeat_path=path),
+        lambda: Settings(
+            telegram_heartbeat_path=path,
+            telegram_runtime_health_path=runtime_path,
+        ),
     )
     status_main(["--liveness"])
 
@@ -415,6 +556,23 @@ def test_worker_main_fails_closed_on_runtime_error(monkeypatch: pytest.MonkeyPat
     with pytest.raises(SystemExit) as exc:
         worker_main()
     assert exc.value.code == 2
+
+
+def test_worker_main_exits_on_redacted_critical_stage_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    async def _fail() -> None:
+        raise CriticalWorkerTaskError(stage="consumer", category="PersistenceBatchError")
+
+    monkeypatch.setattr(telegram_worker_command, "run_telegram_worker", _fail)
+    with pytest.raises(SystemExit) as exc:
+        worker_main()
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert "PersistenceBatchError" in captured.out
+    assert "consumer" in captured.out
+    assert "Telegram worker failed" in captured.err
 
 
 def test_worker_main_succeeds_when_loop_returns(
@@ -495,6 +653,7 @@ async def test_status_store_ignores_invalid_checkpoint() -> None:
 @pytest.mark.asyncio
 async def test_run_status_disposes_engine(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     disposed: list[str] = []
 
@@ -511,14 +670,30 @@ async def test_run_status_disposes_engine(
 
     monkeypatch.setattr(telegram_worker_status_command, "create_async_engine", _engine)
     monkeypatch.setattr(telegram_worker_status_command, "async_sessionmaker", _factory)
+    runtime_path = tmp_path / "worker-health.json"
+    write_worker_runtime_health(
+        runtime_path,
+        WorkerRuntimeState(
+            transport_connected=True,
+            consumer_running=True,
+            release_sha="abcdef1234567890",
+        ).snapshot(now=datetime(2026, 8, 28, tzinfo=UTC)),
+    )
     monkeypatch.setattr(
         telegram_worker_status_command,
         "load_settings",
         lambda: Settings(
             telegram_api_id=None,
             telegram_api_hash=None,
+            telegram_runtime_health_path=runtime_path,
         ),
     )
     payload = await telegram_worker_status_command.run_status()
     assert disposed == ["yes"]
     assert payload["freshness"] == WorkerFreshness.CREDENTIALS_PENDING.value
+    runtime_health = payload["runtime_health"]
+    assert isinstance(runtime_health, dict)
+    assert runtime_health["status"] == "available"
+    assert runtime_health["consumer_running"] is True
+    assert runtime_health["reconciliation_status"] == "pending_implementation"
+    assert runtime_health["release_sha"] == "abcdef123456"

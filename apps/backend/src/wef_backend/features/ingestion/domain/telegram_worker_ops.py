@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
@@ -10,6 +11,8 @@ DEFAULT_STALE_AFTER = timedelta(minutes=15)
 DEFAULT_HEARTBEAT_MAX_AGE = timedelta(seconds=45)
 HEARTBEAT_INTERVAL_SECONDS = 10.0
 COMPOSE_SERVICE = "telegram-worker"
+RUNTIME_HEALTH_SCHEMA_VERSION = 1
+_SAFE_CATEGORY = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]{0,63}$")
 
 
 class WorkerFreshness(StrEnum):
@@ -29,6 +32,14 @@ class ReconciliationStatus(StrEnum):
     LIVE_BEHIND = "live_behind"
     LIVE_AHEAD_UNEXPLAINED = "live_ahead_unexplained"
     NO_SOURCE_DATA = "no_source_data"
+
+
+class CriticalStageStatus(StrEnum):
+    """Privacy-safe lifecycle state for one mandatory worker stage."""
+
+    PENDING_IMPLEMENTATION = "pending_implementation"
+    RUNNING = "running"
+    FAILED = "failed"
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,6 +81,39 @@ class TelegramWorkerStatus:
 
 
 @dataclass(frozen=True, slots=True)
+class WorkerRuntimeHealth:
+    """Local critical-loop health document; never a source checkpoint."""
+
+    schema_version: int
+    written_at: datetime
+    transport_connected: bool
+    consumer_running: bool
+    reconciliation_status: CriticalStageStatus
+    last_event_received_at: datetime | None = None
+    last_event_committed_at: datetime | None = None
+    last_reconciliation_at: datetime | None = None
+    last_error_category: str | None = None
+    release_sha: str | None = None
+
+    def is_live(
+        self,
+        *,
+        now: datetime,
+        max_age: timedelta = DEFAULT_HEARTBEAT_MAX_AGE,
+    ) -> bool:
+        """Require a fresh document and every implemented critical stage."""
+        current = now.astimezone(UTC)
+        written = self.written_at.astimezone(UTC)
+        return (
+            self.schema_version == RUNTIME_HEALTH_SCHEMA_VERSION
+            and timedelta(0) <= current - written <= max_age
+            and self.transport_connected
+            and self.consumer_running
+            and self.reconciliation_status is not CriticalStageStatus.FAILED
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class SessionRotationStep:
     """One redacted rotation rehearsal step (dry-run friendly)."""
 
@@ -88,6 +132,12 @@ def parse_heartbeat_timestamp(text: str) -> datetime:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=UTC)
     return parsed.astimezone(UTC)
+
+
+def safe_error_category(error: BaseException) -> str:
+    """Return a bounded exception class name without rendering its message."""
+    category = type(error).__name__
+    return category if _SAFE_CATEGORY.fullmatch(category) else "UnexpectedError"
 
 
 def heartbeat_is_fresh(

@@ -19,6 +19,9 @@ from wef_backend.features.ingestion.application.telegram_events import (
     LiveTelegramEventKind,
 )
 from wef_backend.features.ingestion.application.telegram_live import TelegramChannelEntity
+from wef_backend.features.ingestion.application.telegram_worker_supervision import (
+    CriticalWorkerTaskError,
+)
 from wef_backend.features.ingestion.domain import telegram_secrets as secrets_module
 from wef_backend.features.ingestion.domain.telegram_channel import (
     default_live_channel_identity,
@@ -496,6 +499,7 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
             telegram_session_path=tmp_path / "session",
             telegram_env_file=tmp_path / ".env",
             telegram_heartbeat_path=tmp_path / "heartbeat",
+            telegram_runtime_health_path=tmp_path / "health.json",
         ),
     )
     monkeypatch.setattr(
@@ -503,7 +507,10 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
         "secrets_from_settings",
         lambda _settings: TelegramWorkerSecrets(api_id=1, api_hash="hash", session=""),
     )
-    await telegram_worker_command.run_telegram_worker()
+    with pytest.raises(CriticalWorkerTaskError) as captured:
+        await telegram_worker_command.run_telegram_worker()
+    assert captured.value.stage == "transport"
+    assert captured.value.category == "UnexpectedTaskExit"
     assert persisted == ["generated-session"]
     assert processed == [1]
 
@@ -578,6 +585,7 @@ async def test_run_telegram_worker_ignores_persist_oserror(  # noqa: C901
             telegram_api_id=1,
             telegram_api_hash=SecretStr("hash"),
             telegram_heartbeat_path=tmp_path / "heartbeat",
+            telegram_runtime_health_path=tmp_path / "health.json",
         ),
     )
     monkeypatch.setattr(
@@ -585,4 +593,7 @@ async def test_run_telegram_worker_ignores_persist_oserror(  # noqa: C901
         "secrets_from_settings",
         lambda _settings: TelegramWorkerSecrets(api_id=1, api_hash="hash", session=""),
     )
-    await telegram_worker_command.run_telegram_worker()
+    with pytest.raises(CriticalWorkerTaskError) as captured:
+        await telegram_worker_command.run_telegram_worker()
+    assert captured.value.stage == "transport"
+    assert captured.value.category == "UnexpectedTaskExit"

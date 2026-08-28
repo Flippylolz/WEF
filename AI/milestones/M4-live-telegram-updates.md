@@ -35,7 +35,7 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 
 ### [E15: Telegram ingestion reliability recovery](../epics/E15-telegram-ingestion-reliability/README.md)
 
-- [E15-T1: Supervise and observe the Telegram event pipeline](../epics/E15-telegram-ingestion-reliability/tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0 `ready`
+- [E15-T1: Supervise and observe the Telegram event pipeline](../epics/E15-telegram-ingestion-reliability/tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0 `in_progress`
 - [E15-T2: Add checkpoint-driven Telegram reconciliation](../epics/E15-telegram-ingestion-reliability/tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0 `draft`; depends on T1
 - [E15-T3: Recover the production gap and prove outage recovery](../epics/E15-telegram-ingestion-reliability/tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0 `draft`; depends on T1/T2
 

@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from wef_backend.features.ingestion.application.telegram_worker_liveness import (
+    read_worker_runtime_health,
     worker_liveness_ok,
 )
 from wef_backend.features.ingestion.application.telegram_worker_status import (
@@ -31,6 +32,8 @@ from wef_backend.settings import load_settings
 from wef_backend.telegram_credentials import secret_text
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from wef_backend.features.ingestion.domain.telegram_worker_ops import TelegramWorkerStatus
 
 
@@ -68,6 +71,39 @@ def _serialize_status(status: TelegramWorkerStatus) -> dict[str, object]:
     return payload
 
 
+def _serialize_runtime_health(path: Path) -> dict[str, object]:
+    """Return an allowlisted runtime snapshot or a bounded unavailable state."""
+    try:
+        health = read_worker_runtime_health(path)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return {"status": "unavailable"}
+    return {
+        "status": "available",
+        "schema_version": health.schema_version,
+        "written_at": health.written_at.astimezone(UTC).isoformat().replace("+00:00", "Z"),
+        "transport_connected": health.transport_connected,
+        "consumer_running": health.consumer_running,
+        "reconciliation_status": health.reconciliation_status.value,
+        "last_event_received_at": (
+            None
+            if health.last_event_received_at is None
+            else health.last_event_received_at.astimezone(UTC).isoformat().replace("+00:00", "Z")
+        ),
+        "last_event_committed_at": (
+            None
+            if health.last_event_committed_at is None
+            else health.last_event_committed_at.astimezone(UTC).isoformat().replace("+00:00", "Z")
+        ),
+        "last_reconciliation_at": (
+            None
+            if health.last_reconciliation_at is None
+            else health.last_reconciliation_at.astimezone(UTC).isoformat().replace("+00:00", "Z")
+        ),
+        "last_error_category": health.last_error_category,
+        "release_sha": health.release_sha,
+    }
+
+
 async def run_status() -> dict[str, object]:
     """Load DB + env credential presence into a redacted status report."""
     settings = load_settings()
@@ -90,7 +126,11 @@ async def run_status() -> dict[str, object]:
                 session_ready=bool(session),
             ),
         )
-        return _serialize_status(status)
+        payload = _serialize_status(status)
+        payload["runtime_health"] = _serialize_runtime_health(
+            settings.telegram_runtime_health_path,
+        )
+        return payload
     finally:
         await engine.dispose()
 
@@ -100,7 +140,10 @@ def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     if args.liveness:
         settings = load_settings()
-        if worker_liveness_ok(settings.telegram_heartbeat_path):
+        if worker_liveness_ok(
+            settings.telegram_heartbeat_path,
+            runtime_health_path=settings.telegram_runtime_health_path,
+        ):
             return
         sys.stderr.write("Telegram worker liveness failed\n")
         raise SystemExit(1)
