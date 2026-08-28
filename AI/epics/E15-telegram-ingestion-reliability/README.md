@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E15
 title: "Telegram ingestion reliability recovery"
-status: selected
+status: ready
 milestones: [M4]
 owner: owner
 spike: SPIKE.md
@@ -34,12 +34,10 @@ Priority and selection do not bypass the repository's approval gates.
 
 ## Approval state
 
-- Epic workspace: `selected` by the owner's 2026-08-27 blocker-priority request.
-- [Research spike](SPIKE.md): revision 1, `awaiting_approval`; documentation/research
-  only and no implementation permission.
-- Implementation plan: intentionally absent until the owner explicitly approves the
-  current spike and proposed tasks are refined and promoted.
-- Every candidate below remains `actionable: false`.
+- Epic workspace: `ready` under the owner-approved E15 delivery mission.
+- [Research spike](SPIKE.md): revision 1, owner-approved under AD-039.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, owner-approved under AD-040.
+- E15-T1 is dependency-ready; E15-T2/T3 remain blocked on their recorded task dependencies.
 
 ## Incident baseline
 
@@ -68,11 +66,11 @@ Read-only production inspection on 2026-08-27 established the following redacted
 The investigation made no production writes, restarts, or backfills and did not retain
 source text, contacts, credentials, or session material.
 
-## Proposed task sequence
+## Approved task sequence
 
-1. [E15-T1: Supervise and observe the Telegram event pipeline](proposed-tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0/M
-2. [E15-T2: Add checkpoint-driven Telegram reconciliation](proposed-tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0/L; depends on T1
-3. [E15-T3: Recover the production gap and prove outage recovery](proposed-tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0/M; depends on T1/T2
+1. [E15-T1: Supervise and observe the Telegram event pipeline](tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0/M; `ready`
+2. [E15-T2: Add checkpoint-driven Telegram reconciliation](tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0/L; `draft`, depends on T1
+3. [E15-T3: Recover the production gap and prove outage recovery](tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0/M; `draft`, depends on T1/T2
 
 T1 makes failures fail visibly. T2 makes passive events a latency optimization rather
 than the completeness boundary. T3 performs bounded recovery only after those controls
@@ -101,4 +99,3 @@ E15 is complete only when all promoted tasks satisfy the workflow definition of 
 the missed production range is reconciled, startup/reconnect/outage gaps self-heal in a
 bounded period, a dead event consumer cannot remain healthy, required alerts fire and
 recover in rehearsal, and B-003/M4 are updated with redacted durable evidence.
-

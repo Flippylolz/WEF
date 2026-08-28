@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E15-T2
 epic: E15
 title: "Add checkpoint-driven Telegram reconciliation"
-status: proposed
+status: draft
 revision: 1
-actionable: false
 priority: P0
 size: L
 milestone: M4
@@ -13,12 +12,44 @@ dependencies: [E15-T1]
 requirement_ids: [P-006, P-007]
 decision_ids: [ADR-003, ADR-005, ADR-006, ADR-007, ADR-010]
 deferred_decision_ids: []
-source: "production-incident:2026-08-27-telegram-gap"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E15-T2-add-checkpoint-driven-reconciliation.md
+  promoted_by: "Codex agent (owner-approved E15 planning under AD-039)"
+  promoted_at: "2026-08-28T14:31:47Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 1
+  verified_by: "Codex agent (owner-approved E15 planning under AD-039)"
+  verified_at: "2026-08-28T14:31:47Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 1
+  verified_by: "Codex agent (owner-approved E15 implementation under AD-040)"
+  verified_at: "2026-08-28T14:33:48Z"
+dependency_gate:
+  status: blocked
+  verified_by: null
+  verified_at: null
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E15-T2
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E15-T2: Add checkpoint-driven Telegram reconciliation
@@ -77,10 +108,16 @@ NewMessage/Edit/Delete delivery is incomplete or the worker reconnects/redeploys
 - [ ] Flood-wait, rate/backoff, cancellation, advisory-lock, malformed/non-candidate,
   edit/delete, restart, and integration tests pass without source/contact leakage.
 
-## Dependencies and gates
+## Affected modules and contracts
 
-Depends on E15-T1 so reconciliation failures are supervised and observable before the
-new correctness loop becomes production-critical.
+- The ingestion application layer gains one checkpoint-driven reconciliation use case
+  that reuses `LiveTelegramEventProcessor`/the canonical persistence port.
+- `TelegramLiveClientPort`, Telethon, and fake adapters gain bounded remote-head/message
+  access needed by the reconciliation loop.
+- Worker lifecycle and health state from E15-T1 supervise and report reconciliation.
+- Settings/Compose gain bounded interval/page/overlap configuration with safe defaults.
+- No public HTTP/OpenAPI contract changes and no database migration are authorized;
+  remote observation remains privacy-safe runtime health state.
 
 ## Risks and notes
 
@@ -89,10 +126,28 @@ Deletion inference from an absent message can be unsafe and must preserve uncert
 The implementation plan must define compatibility and whether any schema/configuration
 change is genuinely required before one is authorized.
 
-## Promotion checklist
+## Test plan
 
-- [ ] E15 spike revision 1 is explicitly owner-approved.
-- [ ] Scope, acceptance, dependency, P0 priority, size, and traceability match the approved spike.
-- [ ] E15-T1 is promoted and the implementation plan records direct sequence/dependency evidence.
-- [ ] This file will be moved—not copied—to `tasks/` with complete promotion metadata.
+- Unit: checkpoint boundary, overlap, paging, remote head, backoff, cancellation, and
+  event/poll deduplication using the fake Telegram client.
+- Integration: PostgreSQL transaction-before-checkpoint behavior, partial failure,
+  advisory-lock contention, replay, edits/deletes, and the 55-record incident shape.
+- Contract/migration: no OpenAPI/schema change; settings and Compose validation.
+- Operations: startup, periodic, disconnect/reconnect, missed-event, flood-wait, health
+  fire/recovery, bounded shutdown, and previous-image rollback safety.
 
+## Rollout and rollback
+
+Deploy only after E15-T1 is done. Start with conservative bounded defaults; startup
+reconciliation runs before passive-only steady state can be considered healthy. Rollback
+to the prior image/config remains safe because persistence/checkpoint contracts do not
+change and reconciliation never rewinds the durable checkpoint. Replayed messages are
+idempotent and are not deleted on rollback.
+
+## Ready checklist
+
+- [x] Authoritative under `tasks/`; the proposed definition was moved, not copied.
+- [x] Promotion metadata and owner-approved spike revision 1 are recorded.
+- [x] Implementation plan revision 1 is owner-approved and the gate is satisfied.
+- [ ] E15-T1 is done or represented by a valid direct stacked dependency gate.
+- [x] Scope and acceptance match the spike recommendation.

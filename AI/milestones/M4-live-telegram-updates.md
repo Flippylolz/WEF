@@ -20,8 +20,8 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 - On 2026-08-27 the connected, Docker-healthy worker remained at checkpoint `29202`
   while Telegram advanced through at least `29257`; production missed six parser-classified
   offer candidates. [E15](../epics/E15-telegram-ingestion-reliability/README.md) is the
-  selected blocker-priority recovery epic. Its spike and proposed P0 tasks remain
-  non-actionable until their workflow approvals are satisfied.
+  approved blocker-priority recovery epic. Spike/plan revision 1 are approved under
+  AD-039/AD-040; all three tasks are promoted and E15-T1 is dependency-ready.
 
 ## Included epic/task definitions
 
@@ -35,9 +35,9 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 
 ### [E15: Telegram ingestion reliability recovery](../epics/E15-telegram-ingestion-reliability/README.md)
 
-- [E15-T1: Supervise and observe the Telegram event pipeline](../epics/E15-telegram-ingestion-reliability/proposed-tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0 `proposed`/non-actionable
-- [E15-T2: Add checkpoint-driven Telegram reconciliation](../epics/E15-telegram-ingestion-reliability/proposed-tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0 `proposed`/non-actionable
-- [E15-T3: Recover the production gap and prove outage recovery](../epics/E15-telegram-ingestion-reliability/proposed-tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0 `proposed`/non-actionable
+- [E15-T1: Supervise and observe the Telegram event pipeline](../epics/E15-telegram-ingestion-reliability/tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0 `ready`
+- [E15-T2: Add checkpoint-driven Telegram reconciliation](../epics/E15-telegram-ingestion-reliability/tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0 `draft`; depends on T1
+- [E15-T3: Recover the production gap and prove outage recovery](../epics/E15-telegram-ingestion-reliability/tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0 `draft`; depends on T1/T2
 
 Cancelled and deferred candidates remain linked for traceability but are not completion requirements unless an approved revision restores them to required scope.
 

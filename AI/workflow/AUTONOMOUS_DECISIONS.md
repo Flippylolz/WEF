@@ -324,3 +324,20 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: the spike is complete and the owner named the epic and requested the full implement → merge → deploy → test cycle; requiring synchronous re-confirmation would contradict the instruction. The instruction adopts the spike's recommended Option C, resolving the "meaning of listing" open question in favor of dated-offer cards (E13-T2/T3) after the grouped-location first slice (E13-T1).
 - Safety limit: no new production dependency, no map vendor change (verified OpenFreeMap `styles/dark`), no availability/relevance claims, backend keeps filtering/sort/pagination ownership, malformed facet values are not corrected in the frontend, and each task still passes its own PR CI before merge.
 - Reversal: close unmerged E13 PRs and demote/invalidate the affected tasks; revert plan revision 1 if the owner rejects AD-038; production rolls back to the prior release image.
+
+## AD-039: Approve E15 spike revision 1 and prepare the implementation plan
+
+- Time: 2026-08-28.
+- Owner decision: `I approve E15 spike revision 1.`
+- Selected approach: record exact owner approval of E15 spike revision 1, promote the three spike-defined P0 task candidates, and prepare implementation plan revision 1 for separate owner review.
+- Scope boundary: this decision authorizes task refinement, promotion, and implementation planning only. It does not authorize production/application code, tests, migrations, configuration, deployment, listener restart, backfill, or production repair.
+- Rationale: E15 is the only selected blocker/P0 epic and its research-only spike completed the incident analysis and bounded recommendation. The repository workflow requires a distinct implementation-plan approval before task implementation can begin.
+- Reversal: invalidate the spike and downstream planning artifacts if the owner withdraws approval or new evidence crosses a spike invalidation trigger.
+
+## AD-040: Approve E15 implementation plan revision 1 and green-CI merge sequence
+
+- Time: 2026-08-28.
+- Owner decision: `please finish the epic, every change should be in it's own PR and you can merge them after the CI is green`.
+- Selected approach: approve E15 implementation plan revision 1 and execute E15-T1 → E15-T2 → E15-T3, one dedicated PR per task, merging in dependency order only after required CI is complete and green. The planning/approval artifacts land first in their own documentation PR.
+- Safety limit: the instruction does not waive task gates, review, CI, privacy, secret handling, immutable deployment health, rollback preflight, single-worker ownership, or bounded production-recovery controls. No raw Telegram content/session/contacts enter Git, logs, or evidence.
+- Reversal: close unmerged PRs and invalidate the affected plan/task gate if material implementation evidence crosses a plan/spike trigger; after deployment, use the prior immutable release without rewinding committed checkpoints.
