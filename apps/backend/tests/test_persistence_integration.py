@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 import re
+from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -17,12 +18,26 @@ from wef_backend.features.catalog.domain import ContentType
 from wef_backend.features.ingestion.application.complete_import import prepare_import
 from wef_backend.features.ingestion.application.persistence import (
     PersistableMessage,
+    PersistenceBatchError,
     PersistHistoricalIngestion,
     RunCounts,
     RunLockHeldError,
     RunMetadata,
 )
 from wef_backend.features.ingestion.application.source import ChannelExpectation
+from wef_backend.features.ingestion.application.telegram_events import (
+    LiveTelegramEvent,
+    LiveTelegramEventKind,
+    LiveTelegramEventProcessor,
+)
+from wef_backend.features.ingestion.application.telegram_live import (
+    LiveTelegramMessage,
+    TelegramChannelEntity,
+)
+from wef_backend.features.ingestion.application.telegram_reconciliation import (
+    TelegramCheckpointReconciler,
+    TelegramReconciliationRequest,
+)
 from wef_backend.features.ingestion.domain.extraction import (
     CandidateDecision,
     CandidateReason,
@@ -34,11 +49,20 @@ from wef_backend.features.ingestion.domain.extraction import (
     RuleProvenance,
     SourceSpan,
 )
+from wef_backend.features.ingestion.domain.telegram_channel import (
+    default_live_channel_identity,
+)
+from wef_backend.features.ingestion.infrastructure.fake_telegram_client import (
+    FakeTelegramLiveClient,
+)
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
 from wef_backend.features.ingestion.infrastructure.telegram_export import (
     TelegramDesktopExportAdapter,
+)
+from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store import (
+    SQLAlchemyTelegramWorkerStatusStore,
 )
 from wef_backend.migration import alembic_config
 from wef_backend.settings import Settings
@@ -306,6 +330,154 @@ async def test_migration_and_replay_reconciliation() -> None:
     assert row.total_revisions == 2
     assert offer_link_count == 2
     assert offer_price == 61_000_000
+    await database.engine.dispose()
+
+
+def _live_message(message_id: int, *, candidate: bool = False) -> LiveTelegramMessage:
+    text_value = (
+        "Kupno | Mieszkanie\n"
+        f"Lokalizacja: Testowa {message_id}, Miasto Testowe\n"
+        f"Cena: {500_000 + message_id} PLN\n"
+        "Powierzchnia: 45.5 m2\n"
+        "Pokoje: 2"
+        if candidate
+        else f"service update {message_id}"
+    )
+    return LiveTelegramMessage(
+        external_message_id=message_id,
+        text=text_value,
+        published_at=datetime(2026, 8, 28, 12, 0, tzinfo=UTC),
+        edited_at=None,
+        media_group_id=(
+            f"incident-album-{(message_id - 29_203) // 10}"
+            if 29_203 <= message_id <= 29_257
+            else None
+        ),
+    )
+
+
+async def test_checkpoint_reconciliation_converges_and_replays_in_postgres() -> None:
+    """The observed incident suffix commits once and a recent-overlap replay is stable."""
+    assert TEST_DATABASE_URL is not None
+    await _prepare()
+    database = create_database_resources(TEST_DATABASE_URL)
+    identity = default_live_channel_identity()
+    entity = TelegramChannelEntity(
+        username=identity.username,
+        channel_id=identity.channel_id,
+        title=identity.channel_title,
+    )
+    baseline_client = FakeTelegramLiveClient(entity=entity, connected=True)
+    persistence = SQLAlchemyIngestionPersistence(database.session_factory)
+    await LiveTelegramEventProcessor(store=persistence, client=baseline_client)(
+        identity=identity,
+        events=(
+            LiveTelegramEvent(
+                kind=LiveTelegramEventKind.NEW,
+                message=_live_message(29_202),
+            ),
+        ),
+        manage_connection=False,
+    )
+    messages = tuple(
+        _live_message(message_id, candidate=message_id < 29_209)
+        for message_id in range(29_203, 29_258)
+    )
+    client = FakeTelegramLiveClient(entity=entity, messages=messages, connected=True)
+    status_store = SQLAlchemyTelegramWorkerStatusStore(database.session_factory)
+    reconciler = TelegramCheckpointReconciler(
+        store=status_store,
+        client=client,
+        processor=LiveTelegramEventProcessor(store=persistence, client=client),
+        processing_lock=asyncio.Lock(),
+    )
+    request = TelegramReconciliationRequest(identity=identity)
+
+    first = await reconciler(request)
+    assert first.starting_checkpoint_external_id == 29_202
+    assert first.messages_fetched == 55
+    assert first.checkpoint_external_id == 29_257
+    checkpoint, _ = await status_store.latest_live_checkpoint(
+        channel_external_id=identity.channel_id,
+    )
+    assert checkpoint == 29_257
+    async with database.session_factory() as session:
+        before = (
+            await session.execute(
+                text(
+                    "SELECT (SELECT count(*) FROM source_messages) AS messages, "
+                    "(SELECT count(*) FROM source_message_revisions) AS revisions, "
+                    "(SELECT count(*) FROM offers) AS offers"
+                ),
+            )
+        ).one()
+    assert before.messages == 56
+    assert before.offers == 6
+
+    replay = await reconciler(request)
+    assert replay.starting_checkpoint_external_id == 29_257
+    assert replay.messages_fetched == 20
+    assert replay.checkpoint_external_id == 29_257
+    async with database.session_factory() as session:
+        after = (
+            await session.execute(
+                text(
+                    "SELECT (SELECT count(*) FROM source_messages) AS messages, "
+                    "(SELECT count(*) FROM source_message_revisions) AS revisions, "
+                    "(SELECT count(*) FROM offers) AS offers"
+                ),
+            )
+        ).one()
+    assert after == before
+    await database.engine.dispose()
+
+
+async def test_checkpoint_reconciliation_resumes_after_partial_database_failure() -> None:
+    """A committed prefix remains durable and the next cycle resumes its unseen suffix."""
+    assert TEST_DATABASE_URL is not None
+    await _prepare()
+    database = create_database_resources(TEST_DATABASE_URL)
+    identity = default_live_channel_identity()
+    entity = TelegramChannelEntity(
+        username=identity.username,
+        channel_id=identity.channel_id,
+        title=identity.channel_title,
+    )
+    client = FakeTelegramLiveClient(
+        entity=entity,
+        messages=(_live_message(101), _live_message(102)),
+        connected=True,
+    )
+    status_store = SQLAlchemyTelegramWorkerStatusStore(database.session_factory)
+    failing = TelegramCheckpointReconciler(
+        store=status_store,
+        client=client,
+        processor=LiveTelegramEventProcessor(
+            store=FailingStore(database.session_factory, fail_on_message_id=102),
+            client=client,
+        ),
+        processing_lock=asyncio.Lock(),
+    )
+    request = TelegramReconciliationRequest(identity=identity, overlap=0)
+
+    with pytest.raises(PersistenceBatchError, match="ingestion batch failed"):
+        await failing(request)
+    checkpoint, _ = await status_store.latest_live_checkpoint(
+        channel_external_id=identity.channel_id,
+    )
+    assert checkpoint == 101
+
+    resumed = await TelegramCheckpointReconciler(
+        store=status_store,
+        client=client,
+        processor=LiveTelegramEventProcessor(
+            store=SQLAlchemyIngestionPersistence(database.session_factory),
+            client=client,
+        ),
+        processing_lock=asyncio.Lock(),
+    )(request)
+    assert resumed.starting_checkpoint_external_id == 101
+    assert resumed.checkpoint_external_id == 102
     await database.engine.dispose()
 
 

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E15-T1
 epic: E15
 title: "Supervise and observe the Telegram event pipeline"
-status: in_progress
+status: done
 revision: 1
 priority: P0
 size: M
@@ -41,10 +41,11 @@ branch:
   created_at: "2026-08-28T14:43:22Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/189"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Codex agent (owner-authorized merge after green CI under AD-040)"
+  completed_at: "2026-08-28T15:14:20Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/189"
+  evidence:
+    - "Squash merge b4b3d6112f271633127d4002110ed0ba5924937e after Backend, Frontend and contract, Repository safety, Runtime images, and Coverage badge all completed successfully"
 invalidation:
   invalidated_by: null
   invalidated_at: null

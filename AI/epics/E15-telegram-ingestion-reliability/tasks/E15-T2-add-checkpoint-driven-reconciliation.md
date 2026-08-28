@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E15-T2
 epic: E15
 title: "Add checkpoint-driven Telegram reconciliation"
-status: draft
+status: in_progress
 revision: 1
 priority: P0
 size: L
@@ -29,16 +29,17 @@ implementation_gate:
   verified_by: "Codex agent (owner-approved E15 implementation under AD-040)"
   verified_at: "2026-08-28T14:33:48Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Codex agent (owner-approved E15 implementation under AD-040)"
+  verified_at: "2026-08-28T15:14:20Z"
+  evidence:
+    - "E15-T1 done through PR https://github.com/Flippylolz/WEF/pull/189; green-CI squash merge b4b3d6112f271633127d4002110ed0ba5924937e"
 branch:
   required: true
-  name: null
+  name: feat/E15-T2-checkpoint-reconciliation
   task_id: E15-T2
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-28T15:08:59Z"
   pull_request: null
 completion:
   completed_by: null
@@ -93,19 +94,19 @@ NewMessage/Edit/Delete delivery is incomplete or the worker reconnects/redeploys
 
 ## Acceptance criteria
 
-- [ ] With passive events disabled, messages published after the checkpoint are found,
+- [x] With passive events disabled, messages published after the checkpoint are found,
   persisted, and checkpointed within the approved reconciliation bound.
-- [ ] Startup and reconnect recover all unseen messages without full import; a repeated
+- [x] Startup and reconnect recover all unseen messages without full import; a repeated
   run is idempotent and event/poll races do not create duplicate offers or revisions.
-- [ ] A 55-record album burst with six listing candidates reconciles in source order
+- [x] A 55-record album burst with six listing candidates reconciles in source order
   under bounded pages/resources and advances only after committed persistence.
-- [ ] Edited messages create the correct immutable revisions; deletion handling is
+- [x] Edited messages create the correct immutable revisions; deletion handling is
   conservative, tested, and documents any Telegram guarantee that cannot be made.
-- [ ] Partial database/provider failure leaves the last committed checkpoint recoverable,
+- [x] Partial database/provider failure leaves the last committed checkpoint recoverable,
   reports a redacted category, and resumes without skipping an unseen suffix.
-- [ ] Remote-head/last-reconciliation status detects the incident shape where local max
+- [x] Remote-head/last-reconciliation status detects the incident shape where local max
   and local checkpoint both equal `29202` while Telegram is ahead.
-- [ ] Flood-wait, rate/backoff, cancellation, advisory-lock, malformed/non-candidate,
+- [x] Flood-wait, rate/backoff, cancellation, advisory-lock, malformed/non-candidate,
   edit/delete, restart, and integration tests pass without source/contact leakage.
 
 ## Affected modules and contracts
@@ -149,5 +150,5 @@ idempotent and are not deleted on rollback.
 - [x] Authoritative under `tasks/`; the proposed definition was moved, not copied.
 - [x] Promotion metadata and owner-approved spike revision 1 are recorded.
 - [x] Implementation plan revision 1 is owner-approved and the gate is satisfied.
-- [ ] E15-T1 is done or represented by a valid direct stacked dependency gate.
+- [x] E15-T1 is done through green-CI PR #189; the dependency gate is satisfied.
 - [x] Scope and acceptance match the spike recommendation.

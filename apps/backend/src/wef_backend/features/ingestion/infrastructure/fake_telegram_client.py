@@ -39,6 +39,11 @@ class FakeTelegramLiveClient:
             raise LookupError(message)
         return self.entity
 
+    async def latest_message_id(self, username: str) -> int:
+        """Return the largest fake message id for the verified channel."""
+        await self.resolve_channel(username)
+        return max((message.external_message_id for message in self.messages), default=0)
+
     async def iter_messages(
         self,
         *,

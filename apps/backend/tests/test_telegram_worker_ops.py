@@ -309,6 +309,28 @@ def test_worker_liveness_requires_every_implemented_critical_loop(tmp_path: Path
         runtime_health_path=runtime_path,
         now=now,
     )
+
+
+def test_worker_liveness_requires_recent_completed_reconciliation(tmp_path: Path) -> None:
+    heartbeat = tmp_path / "heartbeat"
+    runtime_path = tmp_path / "health.json"
+    now = datetime(2026, 8, 28, 12, 0, tzinfo=UTC)
+    state = WorkerRuntimeState(
+        transport_connected=True,
+        consumer_running=True,
+        reconciliation_status=CriticalStageStatus.RUNNING,
+        last_reconciliation_at=now,
+        remote_head_external_id=29_257,
+        local_checkpoint_external_id=29_257,
+    )
+    write_worker_heartbeat(heartbeat, now=now)
+    write_worker_runtime_health(runtime_path, state.snapshot(now=now))
+    assert worker_liveness_ok(heartbeat, runtime_health_path=runtime_path, now=now)
+
+    health = read_worker_runtime_health(runtime_path)
+    assert health.remote_head_external_id == 29_257
+    assert health.local_checkpoint_external_id == 29_257
+    assert not health.is_live(now=now + timedelta(minutes=4))
     state.consumer_running = True
     state.reconciliation_status = CriticalStageStatus.FAILED
     write_worker_runtime_health(runtime_path, state.snapshot(now=now))
@@ -697,3 +719,22 @@ async def test_run_status_disposes_engine(
     assert runtime_health["consumer_running"] is True
     assert runtime_health["reconciliation_status"] == "pending_implementation"
     assert runtime_health["release_sha"] == "abcdef123456"
+
+
+def test_runtime_health_status_reports_remote_gap(tmp_path: Path) -> None:
+    runtime_path = tmp_path / "worker-health.json"
+    write_worker_runtime_health(
+        runtime_path,
+        WorkerRuntimeState(
+            transport_connected=True,
+            consumer_running=True,
+            reconciliation_status=CriticalStageStatus.RUNNING,
+            last_reconciliation_at=datetime(2026, 8, 28, tzinfo=UTC),
+            remote_head_external_id=29_257,
+            local_checkpoint_external_id=29_202,
+        ).snapshot(now=datetime(2026, 8, 28, tzinfo=UTC)),
+    )
+    payload = telegram_worker_status_command._serialize_runtime_health(runtime_path)  # noqa: SLF001
+    assert payload["remote_head_external_id"] == 29_257
+    assert payload["local_checkpoint_external_id"] == 29_202
+    assert payload["remote_gap"] is True

@@ -254,7 +254,10 @@ Never begin with a full media copy and external geocoding in the same unverified
 
 ## Live Telegram adapter
 
-The Telethon adapter, bounded backfill, serialized new/edit/delete event processor, liveness heartbeat, redacted status/reconciliation command, and production worker service are implemented. The acceptance gap is operational: verified live entity/event delivery, gap reconciliation, and outage recovery remain under M4/B-003.
+The Telethon adapter, bounded backfill, serialized new/edit/delete event processor,
+fail-fast critical-loop supervision, checkpoint reconciliation, redacted status command,
+and production worker service are implemented. Production gap and outage-recovery
+evidence remain under E15-T3 and M4/B-003.
 
 ### Authentication
 
@@ -268,12 +271,15 @@ The Telethon adapter, bounded backfill, serialized new/edit/delete event process
 ### Backfill and listening
 
 1. Resolve the configured channel entity and verify ID/title against production configuration.
-2. Backfill from the last durable external message ID/date using Telethon message iteration.
+2. On every process start, observe the remote head and poll forward from the durable
+   live checkpoint (or the persisted channel maximum on the first live run).
 3. Process oldest to newest through the common pipeline.
 4. Subscribe to new/edit/delete events for the single verified channel.
 5. Handle edit and delete events.
 6. Persist a checkpoint only after the database transaction succeeds.
-7. Periodically reconcile a small overlap window to recover missed events.
+7. Reconcile immediately and every 60 seconds: replay 20 recent message IDs, process
+   ordered batches of at most 100, and cap each cycle at 500 messages. A process restart
+   after disconnect performs the startup cycle again.
 
 Delivery is at least once. Idempotent source keys make replay safe.
 
@@ -287,6 +293,8 @@ Delivery is at least once. Idempotent source keys make replay safe.
 - Private `t.me/c/...` links may require membership and are stored only when verified for the intended audience.
 - On edit, store a revision and reprocess affected canonical records.
 - On delete, mark the source deleted and recalculate offer visibility/history; do not erase audit lineage.
+- Polling never infers deletion from an absent history item. Only a passive Telegram
+  delete event can mark a source message deleted.
 
 ### Live-ingestion health
 
@@ -294,11 +302,16 @@ The worker records:
 
 - Last event received and last event committed.
 - Last successful Telegram connection.
-- Current backfill/checkpoint.
+- Current durable checkpoint, observed remote head, and last successful reconciliation.
 - Recent flood waits and retry category counts.
 - Pending low-confidence/review records.
 
-`wef-telegram-worker-status` reports checkpoint reconciliation and freshness, while the Compose healthcheck uses only the listen-loop heartbeat. Worker freshness deliberately does not gate `/api/v1/health/ready`; the public API remains operational during a Telegram outage and serves the last committed data.
+`wef-telegram-worker-status` reports the durable checkpoint, observed remote head,
+remote gap, last successful reconciliation, and critical-loop state. Compose liveness
+requires a fresh transport heartbeat, running consumer, and a reconciliation completed
+within three minutes. Worker freshness deliberately does not gate
+`/api/v1/health/ready`; the public API remains operational during a Telegram outage and
+serves the last committed data.
 
 ## Manual review without an admin UI
 

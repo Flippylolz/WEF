@@ -60,6 +60,10 @@ class TelegramLiveClientPort(Protocol):
         """Resolve one public channel username to numeric ID and title."""
         ...
 
+    async def latest_message_id(self, username: str) -> int:
+        """Return the current remote channel head, or zero when empty."""
+        ...
+
     def iter_messages(
         self,
         *,

@@ -15,13 +15,19 @@ from wef_backend.features.ingestion.application.telegram_events import (
     LiveTelegramEventProcessor,
 )
 from wef_backend.features.ingestion.application.telegram_live import verify_channel_entity
+from wef_backend.features.ingestion.application.telegram_reconciliation import (
+    TelegramCheckpointReconciler,
+    TelegramCheckpointStore,
+    TelegramReconciliationRequest,
+    maintain_checkpoint_reconciliation,
+    read_durable_telegram_checkpoint,
+)
 from wef_backend.features.ingestion.application.telegram_worker_liveness import (
     WorkerRuntimeState,
     maintain_worker_heartbeat,
 )
 from wef_backend.features.ingestion.application.telegram_worker_supervision import (
     CriticalWorkerTaskError,
-    maintain_pending_reconciliation_slot,
     supervise_worker_tasks,
 )
 from wef_backend.features.ingestion.domain.telegram_channel import (
@@ -35,6 +41,9 @@ from wef_backend.features.ingestion.domain.telegram_secrets import (
 )
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
+)
+from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store import (
+    SQLAlchemyTelegramWorkerStatusStore,
 )
 from wef_backend.features.ingestion.infrastructure.telethon_client import TelethonLiveClient
 from wef_backend.logging_config import configure_logging, configure_safe_telethon_logging
@@ -59,6 +68,7 @@ async def _run_connected_worker(
     identity: TelegramChannelIdentity,
     client: TelethonLiveClient,
     store: SQLAlchemyIngestionPersistence,
+    checkpoint_store: TelegramCheckpointStore,
 ) -> None:
     """Subscribe and supervise every critical stage after authorization."""
     state = WorkerRuntimeState(release_sha=settings.release_sha)
@@ -66,6 +76,13 @@ async def _run_connected_worker(
     queue = LiveEventQueue()
     client.subscribe_channel(identity.username, queue)
     processor = LiveTelegramEventProcessor(store=store, client=client)
+    processing_lock = asyncio.Lock()
+    reconciler = TelegramCheckpointReconciler(
+        store=checkpoint_store,
+        client=client,
+        processor=processor,
+        processing_lock=processing_lock,
+    )
     logger.info(
         "telegram_worker_started",
         stage="startup",
@@ -80,12 +97,19 @@ async def _run_connected_worker(
                 if event is None:
                     return
                 state.last_event_received_at = event.received_at
-                await processor(
-                    identity=identity,
-                    events=(event,),
-                    release_sha=settings.release_sha,
-                    manage_connection=False,
-                )
+                async with processing_lock:
+                    checkpoint = await read_durable_telegram_checkpoint(
+                        checkpoint_store,
+                        channel_external_id=identity.channel_id,
+                    )
+                    result = await processor(
+                        identity=identity,
+                        events=(event,),
+                        resume_after_external_id=checkpoint,
+                        release_sha=settings.release_sha,
+                        manage_connection=False,
+                    )
+                state.local_checkpoint_external_id = result.checkpoint_external_message_id
                 state.last_event_committed_at = datetime.now(UTC)
                 state.last_error_category = None
                 logger.info(
@@ -120,7 +144,19 @@ async def _run_connected_worker(
                     state=state,
                     runtime_health_path=settings.telegram_runtime_health_path,
                 ),
-                "reconciliation": maintain_pending_reconciliation_slot(stop),
+                "reconciliation": maintain_checkpoint_reconciliation(
+                    reconciler,
+                    TelegramReconciliationRequest(
+                        identity=identity,
+                        overlap=settings.telegram_reconciliation_overlap,
+                        batch_size=settings.telegram_reconciliation_batch_size,
+                        max_messages=settings.telegram_reconciliation_max_messages,
+                        release_sha=settings.release_sha,
+                    ),
+                    state=state,
+                    stop=stop,
+                    interval=settings.telegram_reconciliation_interval_seconds,
+                ),
             },
             stop=stop,
         )
@@ -141,6 +177,7 @@ async def run_telegram_worker() -> None:
     engine = create_async_engine(settings.database_url)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     store = SQLAlchemyIngestionPersistence(session_factory)
+    checkpoint_store = SQLAlchemyTelegramWorkerStatusStore(session_factory)
     await client.connect()
     try:
         session_string = await client.ensure_authorized(
@@ -161,6 +198,7 @@ async def run_telegram_worker() -> None:
             identity=identity,
             client=client,
             store=store,
+            checkpoint_store=checkpoint_store,
         )
     finally:
         await client.disconnect()

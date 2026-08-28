@@ -461,6 +461,28 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
             )
             await self.queue.close()
 
+        async def latest_message_id(self, _username: str) -> int:
+            return 0
+
+        def iter_messages(self, **_kwargs: object) -> AsyncIterator[object]:
+            items: tuple[object, ...] = ()
+
+            async def _empty() -> AsyncIterator[object]:
+                for item in items:
+                    yield item
+
+            return _empty()
+
+    class _CheckpointStore:
+        async def max_external_message_id(self, **_kwargs: object) -> int:
+            return 0
+
+        async def latest_live_checkpoint(
+            self,
+            **_kwargs: object,
+        ) -> tuple[int | None, datetime | None]:
+            return 0, None
+
     class _Engine:
         async def dispose(self) -> None:
             return None
@@ -469,8 +491,9 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
         def __init__(self, **_kwargs: object) -> None:
             return None
 
-        async def __call__(self, **_kwargs: object) -> None:
+        async def __call__(self, **_kwargs: object) -> SimpleNamespace:
             processed.append(1)
+            return SimpleNamespace(checkpoint_external_message_id=0)
 
     monkeypatch.setattr(telegram_worker_command, "TelethonLiveClient", _Client)
     monkeypatch.setattr(telegram_worker_command, "create_async_engine", lambda _url: _Engine())
@@ -483,6 +506,11 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
         telegram_worker_command,
         "SQLAlchemyIngestionPersistence",
         lambda _factory: object(),
+    )
+    monkeypatch.setattr(
+        telegram_worker_command,
+        "SQLAlchemyTelegramWorkerStatusStore",
+        lambda _factory: _CheckpointStore(),
     )
     monkeypatch.setattr(telegram_worker_command, "LiveTelegramEventProcessor", _Processor)
     monkeypatch.setattr(
@@ -552,6 +580,28 @@ async def test_run_telegram_worker_ignores_persist_oserror(  # noqa: C901
             assert self.queue is not None
             await self.queue.close()
 
+        async def latest_message_id(self, _username: str) -> int:
+            return 0
+
+        def iter_messages(self, **_kwargs: object) -> AsyncIterator[object]:
+            items: tuple[object, ...] = ()
+
+            async def _empty() -> AsyncIterator[object]:
+                for item in items:
+                    yield item
+
+            return _empty()
+
+    class _CheckpointStore:
+        async def max_external_message_id(self, **_kwargs: object) -> int:
+            return 0
+
+        async def latest_live_checkpoint(
+            self,
+            **_kwargs: object,
+        ) -> tuple[int | None, datetime | None]:
+            return 0, None
+
     class _Engine:
         async def dispose(self) -> None:
             return None
@@ -571,6 +621,11 @@ async def test_run_telegram_worker_ignores_persist_oserror(  # noqa: C901
         telegram_worker_command,
         "SQLAlchemyIngestionPersistence",
         lambda _factory: object(),
+    )
+    monkeypatch.setattr(
+        telegram_worker_command,
+        "SQLAlchemyTelegramWorkerStatusStore",
+        lambda _factory: _CheckpointStore(),
     )
     monkeypatch.setattr(
         telegram_worker_command,

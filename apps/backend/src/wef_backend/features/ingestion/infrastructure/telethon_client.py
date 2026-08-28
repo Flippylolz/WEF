@@ -121,6 +121,17 @@ class TelethonLiveClient:
             title=title,
         )
 
+    async def latest_message_id(self, username: str) -> int:
+        """Observe the newest remote message id without retaining its payload."""
+        async for message in self.iter_messages(
+            username=username,
+            min_id=0,
+            reverse=False,
+            limit=1,
+        ):
+            return message.external_message_id
+        return 0
+
     def subscribe_channel(self, username: str, queue: LiveEventQueue) -> None:
         """Register new/edit/delete handlers for one channel onto the serial queue."""
         from wef_backend.features.ingestion.infrastructure.telethon_events import (  # noqa: PLC0415

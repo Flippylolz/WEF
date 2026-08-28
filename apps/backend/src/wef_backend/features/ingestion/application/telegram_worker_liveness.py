@@ -36,6 +36,8 @@ class WorkerRuntimeState:
     last_event_received_at: datetime | None = None
     last_event_committed_at: datetime | None = None
     last_reconciliation_at: datetime | None = None
+    remote_head_external_id: int | None = None
+    local_checkpoint_external_id: int | None = None
     last_error_category: str | None = None
     release_sha: str | None = None
 
@@ -50,6 +52,8 @@ class WorkerRuntimeState:
             last_event_received_at=self.last_event_received_at,
             last_event_committed_at=self.last_event_committed_at,
             last_reconciliation_at=self.last_reconciliation_at,
+            remote_head_external_id=self.remote_head_external_id,
+            local_checkpoint_external_id=self.local_checkpoint_external_id,
             last_error_category=self.last_error_category,
             release_sha=(self.release_sha or "")[:12] or None,
         )
@@ -90,6 +94,8 @@ def write_worker_runtime_health(path: Path, health: WorkerRuntimeHealth) -> None
         "last_event_received_at": _iso(health.last_event_received_at),
         "last_event_committed_at": _iso(health.last_event_committed_at),
         "last_reconciliation_at": _iso(health.last_reconciliation_at),
+        "remote_head_external_id": health.remote_head_external_id,
+        "local_checkpoint_external_id": health.local_checkpoint_external_id,
         "last_error_category": health.last_error_category,
         "release_sha": health.release_sha,
     }
@@ -126,6 +132,16 @@ def read_worker_runtime_health(path: Path) -> WorkerRuntimeHealth:
     if release_sha is not None and not isinstance(release_sha, str):
         message = "release_sha must be a string"
         raise ValueError(message)
+
+    def external_id(name: str) -> int | None:
+        value = payload.get(name)
+        if value is None:
+            return None
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            message = f"{name} must be a non-negative integer"
+            raise ValueError(message)
+        return value
+
     return WorkerRuntimeHealth(
         schema_version=int(payload.get("schema_version", 0)),
         written_at=timestamp("written_at") or datetime.min.replace(tzinfo=UTC),
@@ -137,6 +153,8 @@ def read_worker_runtime_health(path: Path) -> WorkerRuntimeHealth:
         last_event_received_at=timestamp("last_event_received_at"),
         last_event_committed_at=timestamp("last_event_committed_at"),
         last_reconciliation_at=timestamp("last_reconciliation_at"),
+        remote_head_external_id=external_id("remote_head_external_id"),
+        local_checkpoint_external_id=external_id("local_checkpoint_external_id"),
         last_error_category=error_category,
         release_sha=release_sha,
     )
