@@ -99,6 +99,13 @@ def _serialize_runtime_health(path: Path) -> dict[str, object]:
             if health.last_reconciliation_at is None
             else health.last_reconciliation_at.astimezone(UTC).isoformat().replace("+00:00", "Z")
         ),
+        "remote_head_external_id": health.remote_head_external_id,
+        "local_checkpoint_external_id": health.local_checkpoint_external_id,
+        "remote_gap": (
+            health.remote_head_external_id is not None
+            and health.local_checkpoint_external_id is not None
+            and health.remote_head_external_id > health.local_checkpoint_external_id
+        ),
         "last_error_category": health.last_error_category,
         "release_sha": health.release_sha,
     }

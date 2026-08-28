@@ -479,6 +479,20 @@ async def test_telethon_live_client_iter_waits_on_flood(
 
 
 @pytest.mark.asyncio
+async def test_telethon_live_client_observes_remote_head(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(telethon_module, "TelegramClient", _FakeTelethon)
+    monkeypatch.setattr(telethon_module, "StringSession", lambda value: value)
+    client = telethon_module.TelethonLiveClient(
+        TelegramWorkerSecrets(api_id=1, api_hash="hash", session="session"),
+    )
+    await client.connect()
+    assert await client.latest_message_id("elestate_warszawa") == 10
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
 async def test_telethon_live_client_generates_session_with_login_code(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

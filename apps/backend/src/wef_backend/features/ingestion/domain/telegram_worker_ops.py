@@ -9,6 +9,7 @@ from enum import StrEnum
 
 DEFAULT_STALE_AFTER = timedelta(minutes=15)
 DEFAULT_HEARTBEAT_MAX_AGE = timedelta(seconds=45)
+DEFAULT_RECONCILIATION_MAX_AGE = timedelta(minutes=3)
 HEARTBEAT_INTERVAL_SECONDS = 10.0
 COMPOSE_SERVICE = "telegram-worker"
 RUNTIME_HEALTH_SCHEMA_VERSION = 1
@@ -92,6 +93,8 @@ class WorkerRuntimeHealth:
     last_event_received_at: datetime | None = None
     last_event_committed_at: datetime | None = None
     last_reconciliation_at: datetime | None = None
+    remote_head_external_id: int | None = None
+    local_checkpoint_external_id: int | None = None
     last_error_category: str | None = None
     release_sha: str | None = None
 
@@ -104,13 +107,21 @@ class WorkerRuntimeHealth:
         """Require a fresh document and every implemented critical stage."""
         current = now.astimezone(UTC)
         written = self.written_at.astimezone(UTC)
-        return (
+        base_live = (
             self.schema_version == RUNTIME_HEALTH_SCHEMA_VERSION
             and timedelta(0) <= current - written <= max_age
             and self.transport_connected
             and self.consumer_running
             and self.reconciliation_status is not CriticalStageStatus.FAILED
         )
+        if not base_live:
+            return False
+        if self.reconciliation_status is CriticalStageStatus.PENDING_IMPLEMENTATION:
+            return True
+        if self.last_reconciliation_at is None:
+            return False
+        reconciliation_age = current - self.last_reconciliation_at.astimezone(UTC)
+        return timedelta(0) <= reconciliation_age <= DEFAULT_RECONCILIATION_MAX_AGE
 
 
 @dataclass(frozen=True, slots=True)
