@@ -38,7 +38,7 @@ Priority and selection do not bypass the repository's approval gates.
 - [Research spike](SPIKE.md): revision 1, owner-approved under AD-039.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, owner-approved under AD-040.
 - E15-T1 is `done` through green-CI PR #189; E15-T2 is dependency-ready and
-  `in_progress`; E15-T3 remains blocked on T2.
+  `in_progress` on PR #190; E15-T3 remains blocked on T2.
 
 ## Incident baseline
 
@@ -70,7 +70,7 @@ source text, contacts, credentials, or session material.
 ## Approved task sequence
 
 1. [E15-T1: Supervise and observe the Telegram event pipeline](tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0/M; `done` through PR #189
-2. [E15-T2: Add checkpoint-driven Telegram reconciliation](tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0/L; `in_progress`, dependency satisfied
+2. [E15-T2: Add checkpoint-driven Telegram reconciliation](tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0/L; `in_progress` on PR #190, dependency satisfied
 3. [E15-T3: Recover the production gap and prove outage recovery](tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0/M; `draft`, depends on T1/T2
 
 T1 makes failures fail visibly. T2 makes passive events a latency optimization rather
