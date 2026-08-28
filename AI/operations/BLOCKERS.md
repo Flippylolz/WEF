@@ -19,9 +19,10 @@ This append-only log records blockers that could not be safely resolved autonomo
   passive-update/event-loop delivery plus the absence of independent polling reconciliation.
   [E15](../epics/E15-telegram-ingestion-reliability/README.md) is selected at blocker/P0
   priority. Do not paste session strings into chat or Git.
-- Needed from owner: review and explicitly approve or reject E15 spike revision 1. After
-  spike approval, task promotion and a separately approved implementation plan remain
-  mandatory before code, restart, deployment, backfill, or production repair.
+- Needed from owner: none for the approved E15 implementation sequence. AD-039/AD-040
+  approve spike/plan revision 1, one task per PR, and merge only after green CI.
+  Deployment, backfill, and production repair remain gated on T1/T2 completion and
+  E15-T3's reviewed preflight.
 - Safe workaround: historical data remains available; operators may inspect redacted
   worker staleness and use the existing bounded backfill only through an explicitly
   reviewed production-recovery action. Docker `healthy` alone is not evidence that live

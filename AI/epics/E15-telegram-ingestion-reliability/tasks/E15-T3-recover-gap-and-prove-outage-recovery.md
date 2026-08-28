@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E15-T3
 epic: E15
 title: "Recover the production gap and prove outage recovery"
-status: proposed
+status: draft
 revision: 1
-actionable: false
 priority: P0
 size: M
 milestone: M4
@@ -13,12 +12,44 @@ dependencies: [E15-T1, E15-T2]
 requirement_ids: [P-006, P-007]
 decision_ids: [ADR-003, ADR-005, ADR-006, ADR-007, ADR-008, ADR-010, ADR-015]
 deferred_decision_ids: []
-source: "production-incident:2026-08-27-telegram-gap"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E15-T3-recover-gap-and-prove-outage-recovery.md
+  promoted_by: "Codex agent (owner-approved E15 planning under AD-039)"
+  promoted_at: "2026-08-28T14:31:47Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 1
+  verified_by: "Codex agent (owner-approved E15 planning under AD-039)"
+  verified_at: "2026-08-28T14:31:47Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 1
+  verified_by: "Codex agent (owner-approved E15 implementation under AD-040)"
+  verified_at: "2026-08-28T14:33:48Z"
+dependency_gate:
+  status: blocked
+  verified_by: null
+  verified_at: null
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E15-T3
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E15-T3: Recover the production gap and prove outage recovery
@@ -75,11 +106,14 @@ disconnect/restart recovery, truthful health/alert behavior, and no source-messa
 - [ ] B-003, E8, M4, and operator runbooks record exact redacted release/check evidence
   and retain any unresolved edit/delete/media limitation honestly.
 
-## Dependencies and gates
+## Affected modules and contracts
 
-Depends on completed E15-T1 and E15-T2. Production execution additionally requires the
-repository's approved implementation plan, task completion/CI evidence, immutable
-release deployment gates, and a reviewed operator preflight.
+- Existing release/deploy, smoke, rollback, and worker-status commands provide the
+  mutation and evidence paths; no ad-hoc production script or raw export is committed.
+- `AI/operations/{DEPLOYMENT,BLOCKERS}.md`, E8 acceptance records, M4, and E15 workflow
+  artifacts receive redacted exact release/checkpoint/rehearsal evidence.
+- No public or persisted contract change is expected; any discovered need returns to
+  the implementation-plan or spike gate before production mutation.
 
 ## Risks and notes
 
@@ -88,10 +122,29 @@ It must not expose source data in reports or confuse persistence with backup. If
 remote source advances during verification, record a stable observation boundary and
 reconcile again rather than declaring an ambiguous head complete.
 
-## Promotion checklist
+## Test plan
 
-- [ ] E15 spike revision 1 is explicitly owner-approved.
-- [ ] Scope, acceptance, dependencies, P0 priority, size, and traceability match the approved spike.
-- [ ] E15-T1/T2 are promoted and the approved plan records their direct dependency order.
-- [ ] This file will be moved—not copied—to `tasks/` with complete promotion metadata.
+- Preflight: deployed release, worker singleton, remote observed head, local checkpoint,
+  database readiness, HTTPS/API health, Forecast isolation, rollback target, and log safety.
+- Recovery: bounded reconciliation, stable observation boundary, canonical counts,
+  idempotent repeat, no duplicate rows, and checkpoint monotonicity.
+- Rehearsal: disconnect/restart, deliberately missed passive-event recovery, consumer/
+  reconciliation health fire and clear, public-readiness independence.
+- Documentation: record redacted exact commands/results; retain unsupported delete/media
+  guarantees and backup deferral honestly.
 
+## Rollout and rollback
+
+E15-T1/T2 must be merged, green, automatically deployed, and health-verified before
+recovery begins. Abort on unexpected worker ownership, source identity, checkpoint,
+schema, health, or release state. Roll back through the immutable prior image if worker
+health or reconciliation regresses; committed idempotent source recovery is retained and
+must not be undone or checkpoint-rewound.
+
+## Ready checklist
+
+- [x] Authoritative under `tasks/`; the proposed definition was moved, not copied.
+- [x] Promotion metadata and owner-approved spike revision 1 are recorded.
+- [x] Implementation plan revision 1 is owner-approved and the gate is satisfied.
+- [ ] E15-T1 and E15-T2 are done with satisfied dependency evidence.
+- [x] Scope and acceptance match the spike recommendation.

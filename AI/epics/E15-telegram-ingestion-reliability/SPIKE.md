@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E15
 title: "Telegram ingestion reliability recovery"
-status: awaiting_approval
+status: approved
 revision: 1
 owner: owner
 research_only: true
@@ -12,11 +12,11 @@ domain_docs: [architecture, data, ingestion, operations, security, workflow]
 proposed_task_ids: [E15-T1, E15-T2, E15-T3]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Flippylolz"
+  decided_at: "2026-08-28T14:31:47Z"
+  approved_revision: 1
+  evidence: "AD-039; owner statement in Codex task on 2026-08-28: 'I approve E15 spike revision 1.'"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -225,11 +225,11 @@ proves value, but neither may replace explicit checkpoint polling for completene
 - [x] Proposed task boundaries, dependencies, tests, rollout, and risks are identified.
 - [x] No production or disposable proof code was created.
 - [x] `revision` represents the material content submitted.
-- [x] `status` is `awaiting_approval` and approval remains `pending`.
+- [x] Owner approved revision 1 on 2026-08-28; approval evidence is recorded in front matter and AD-039.
 
 ## Owner decision
 
-The owner records the decision only in the YAML `approval` object. Approval of spike
-revision 1 permits task refinement/promotion and implementation planning; it does not
-authorize code, deployment, restart, or backfill.
-
+The owner approved spike revision 1 on 2026-08-28. That decision permitted task
+refinement/promotion and implementation planning; separate AD-040 owner authority now
+approves implementation-plan revision 1 without weakening task, CI, deployment,
+production-preflight, privacy, or rollback gates.
