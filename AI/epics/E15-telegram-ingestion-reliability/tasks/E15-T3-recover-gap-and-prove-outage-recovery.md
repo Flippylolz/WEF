@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E15-T3
 epic: E15
 title: "Recover the production gap and prove outage recovery"
-status: in_progress
+status: done
 revision: 1
 priority: P0
 size: M
@@ -43,10 +43,13 @@ branch:
   created_at: "2026-08-28T20:39:49Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/191"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Codex agent (owner-authorized merge after green CI under AD-040)"
+  completed_at: "2026-08-28T21:12:14Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/191"
+  evidence:
+    - "Production release 7184cc2d67a reconciled every source ID from checkpoint 29202 through observed head 29335; identical replay changed no measured canonical counts"
+    - "Controlled restart recovered aligned; application-child pause fired Docker unhealthy in 91 seconds and cleared within 20 seconds while public readiness remained 200"
+    - "PR #191 merged as bc404490b01131a2437d16a7c6eab64d91603015 after Backend, Frontend and contract, Repository safety, Runtime images, and Coverage badge succeeded in CI run 33211303616"
 invalidation:
   invalidated_by: null
   invalidated_at: null
