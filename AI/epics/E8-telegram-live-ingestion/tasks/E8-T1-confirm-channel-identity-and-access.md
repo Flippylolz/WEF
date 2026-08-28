@@ -78,8 +78,14 @@ Non-secret expected channel identity, operating-owner decision, worker-only secr
 - [x] Non-secret expected channel identity is configured and unit-tested.
 - [x] Public message link probe succeeds in verification (mocked in CI; live URL checked by operator CLI).
 - [x] Secret path contract is inspected without reading/echoing secret bytes; missing secrets yield an explicit non-success status.
-- [ ] Live Telethon resolve of numeric ID/title against expected values (requires owner secrets + E8-T2 client).
-- [ ] Credentials/session present only in the approved secret path on the NUC (owner-supplied).
+- [x] Live Telethon resolve of numeric ID/title against expected values (verified by the
+  authorized E15 recovery against channel `2180077318`).
+- [x] Credentials/session present only in the approved secret path on the NUC
+  (redacted worker readiness and deploy-managed path verification; values not read).
+
+Operational acceptance evidence is recorded in
+[E15 production recovery evidence](../../E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
+Task completion metadata remains separate from E15-T3.
 
 ## Dependencies and gates
 

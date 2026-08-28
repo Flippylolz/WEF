@@ -35,9 +35,14 @@ persistence port—without enabling the production worker or changing public con
 - [x] Session values never enter logs/API/repository/image (file-only load, redacted CLI).
 - [x] Backfill reconciles message counts/checkpoint (`ingest_runs.checkpoint_json` via
   `external_message_id` as the live cursor).
-- [ ] Live Telethon acceptance against a real authorized session (blocked on B-003).
+- [x] Live Telethon acceptance against a real authorized session (channel `2180077318`,
+  bounded head `29335`, redacted E15 production evidence).
 - [ ] Bounded media download to worker temp then storage (text-first backfill shipped;
   media bytes remain follow-up within this task or a tight successor).
+
+The real backfill recovered every ID from `29203` through `29335` and repeated without
+canonical changes. The run created no media assets, so media acceptance remains open.
+See [E15 production recovery evidence](../../E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
 
 ## Scope delivered in revision 1
 

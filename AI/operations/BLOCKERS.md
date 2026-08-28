@@ -6,27 +6,26 @@ This append-only log records blockers that could not be safely resolved autonomo
 
 ### B-003: Telegram live acceptance evidence
 
-- Impact: M4 cannot close without verified real entity/event delivery, gap reconciliation,
-  truthful listener health, and outage recovery evidence. Production data remains stale
-  when Telegram advances without a persisted event.
-- Current state: API ID/hash and the first authorized string session are stored in gitignored
-  local files and GitHub production secrets. Release `3ee56a5` created and started the
-  production `telegram-worker` service on 2026-08-26. On 2026-08-27 the connected,
-  Docker-healthy worker remained at message/checkpoint `29202` while Telegram advanced
-  through at least `29257`; none of the 55 newer records or six parser-classified offer
-  candidates reached persistence. Read-only investigation verified account membership,
-  filters, conversion, and database availability, and narrowed the persistent failure to
-  passive-update/event-loop delivery plus the absence of independent polling reconciliation.
-  [E15](../epics/E15-telegram-ingestion-reliability/README.md) is selected at blocker/P0
-  priority. Do not paste session strings into chat or Git.
-- Needed from owner: none for the approved E15 implementation sequence. AD-039/AD-040
-  approve spike/plan revision 1, one task per PR, and merge only after green CI.
-  Deployment, backfill, and production repair remain gated on T1/T2 completion and
-  E15-T3's reviewed preflight.
-- Safe workaround: historical data remains available; operators may inspect redacted
-  worker staleness and use the existing bounded backfill only through an explicitly
-  reviewed production-recovery action. Docker `healthy` alone is not evidence that live
-  Telegram ingestion is current.
+- Impact: M4 still cannot claim production new/edit/delete callback semantics or live
+  media acquisition. Source completeness, gap repair, and truthful worker-health/outage
+  behavior are no longer blocked.
+- Current state: E15 release `7184cc2d67a` reconciled the 2026-08-27 incident and every
+  source ID from checkpoint `29202` through observed head `29335`. An identical bounded
+  replay made no canonical changes; worker restart and application-child failure both
+  recovered, the latter fired Docker `unhealthy` and cleared to `healthy`, and public
+  readiness stayed `200`. Credentials, authorized session, channel identity, transport,
+  consumer, reconciliation, database, and redacted log safety are verified. No real
+  passive new/edit/delete callback occurred during the acceptance window, and the
+  text-first recovery intentionally created no media assets. Exact redacted evidence is
+  in [E15 production recovery evidence](../epics/E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
+- Needed from owner: no E15 action. Closing the residual blocker requires a safely
+  observable real new/edit/delete sequence (organic or explicitly coordinated) and the
+  approved E8 live-media follow-up; do not create or alter source-channel posts without
+  separate authority.
+- Safe workaround: checkpoint polling is now the source-completeness boundary for new
+  messages, while passive events remain the latency path. Operators use the redacted
+  worker status for remote/local alignment. Absence-based polling never infers deletion,
+  so production edit/delete and media claims remain withheld until E8 evidence exists.
 
 ### B-005: GitHub-enforced branch protection unavailable
 

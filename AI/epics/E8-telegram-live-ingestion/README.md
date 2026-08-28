@@ -20,15 +20,19 @@ new, edited, and deleted channel posts are processed safely without changing pub
 - Epic workspace status: `in_progress`.
 - [Spike](SPIKE.md): `approved`, revision 2 (AD-031).
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 5; authorizes E8-T1, E8-T4, E8-T2, E8-T3, and E8-T5.
-- [E8-T1](tasks/E8-T1-confirm-channel-identity-and-access.md): promoted, `in_progress` (production credentials/session are provisioned; live entity/event evidence remains open).
+- [E8-T1](tasks/E8-T1-confirm-channel-identity-and-access.md): promoted, `in_progress` (production credentials/session and real entity resolution are verified; completion bookkeeping remains separate).
 - [E8-T4](tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md): promoted, `done`.
-- [E8-T2](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): promoted, `in_progress` (restartable backfill is delivered; live acceptance/media completion remain open).
-- [E8-T3](tasks/E8-T3-implement-live-new-edit-delete-processing.md): promoted, `in_progress` (event processing is delivered; real subscription evidence remains open).
-- [E8-T5](tasks/E8-T5-production-reconciliation-and-worker-alerting.md): promoted, `in_progress` (production service started in release `3ee56a5`; gap/outage evidence remains open).
+- [E8-T2](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): promoted, `in_progress` (real authorized backfill is accepted; live media completion remains open).
+- [E8-T3](tasks/E8-T3-implement-live-new-edit-delete-processing.md): promoted, `in_progress` (real authorized subscription is running; no real passive new/edit/delete callback was observed).
+- [E8-T5](tasks/E8-T5-production-reconciliation-and-worker-alerting.md): promoted, `in_progress` (production gap and outage acceptance are satisfied by E15; real passive events/media remain open upstream).
 - On 2026-08-27 the connected production worker missed Telegram messages `29203`
   through at least `29257` while remaining Docker-healthy. Selected blocker-priority
   [E15](../E15-telegram-ingestion-reliability/README.md) owns the independently approved
   reliability remediation and production recovery; E8's delivered history is preserved.
+- On 2026-08-28 release `7184cc2d67a` reconciled every ID through observed head
+  `29335`, repeated idempotently, and proved restart plus health-signal recovery while
+  public readiness stayed available. See the redacted
+  [E15 production evidence](../E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
 
 ## Milestones
 
@@ -76,4 +80,4 @@ None remaining for E8.
 
 ## Lifecycle
 
-Follow the [approval-gated workflow](../../workflow/README.md). Production starts `telegram-worker` with the application. Credentials/session are provisioned, but B-003 remains open until live entity, event, gap-reconciliation, and outage-recovery evidence is recorded.
+Follow the [approval-gated workflow](../../workflow/README.md). Production starts `telegram-worker` with the application. Credentials/session, entity access, gap reconciliation, and outage recovery are verified. B-003 remains narrowly open for real passive new/edit/delete callbacks and live media acquisition.

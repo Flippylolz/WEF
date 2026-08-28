@@ -38,7 +38,8 @@ still needs a phone/login (B-003).
 - [x] Freshness classification that never gates public API readiness.
 - [x] Session rotation rehearsal dry-run checklist.
 - [x] `wef-telegram-worker` runs the live listen loop after in-app session generation.
-- [ ] First authorized production session (phone/code) and live new/edit/delete evidence.
+- [x] First authorized production session is active through the deploy-managed secret path.
+- [ ] Real live new/edit/delete callback evidence.
 
 ## Acceptance
 
@@ -46,8 +47,13 @@ still needs a phone/login (B-003).
 - [x] Last live checkpoint / finished_at and max persisted external message id are observable via CLI.
 - [x] Unexplained live-ahead checkpoints are classified and exit non-zero from status CLI.
 - [x] Rotation rehearsal is printable without mutating secrets.
-- [ ] No unexplained source-message gaps after live activation (blocked on B-003).
-- [ ] Outage recovery without full re-import after live activation (blocked on B-003).
+- [x] No unexplained source-message gaps after live activation through observed head
+  `29335` (E15 production evidence).
+- [x] Outage recovery without full re-import after live activation (E15 restart and
+  application-child health fire/clear rehearsal).
+
+Exact redacted release, checkpoint, idempotency, health, and limitation evidence is in
+[E15 production recovery evidence](../../E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
 
 ## Safety limits
 
