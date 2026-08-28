@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E15-T3
 epic: E15
 title: "Recover the production gap and prove outage recovery"
-status: draft
+status: in_progress
 revision: 1
 priority: P0
 size: M
@@ -29,17 +29,19 @@ implementation_gate:
   verified_by: "Codex agent (owner-approved E15 implementation under AD-040)"
   verified_at: "2026-08-28T14:33:48Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Codex agent (owner-approved E15 implementation under AD-040)"
+  verified_at: "2026-08-28T20:39:49Z"
+  evidence:
+    - "E15-T1 done through green-CI PR #189; merge b4b3d6112f271633127d4002110ed0ba5924937e"
+    - "E15-T2 done through green-CI PR #190; merge 7184cc2d67aafadc654c26fa26fd039ca4390ab2"
 branch:
   required: true
-  name: null
+  name: chore/E15-T3-production-recovery
   task_id: E15-T3
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-28T20:39:49Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/191"
 completion:
   completed_by: null
   completed_at: null
@@ -89,22 +91,27 @@ disconnect/restart recovery, truthful health/alert behavior, and no source-messa
 
 ## Acceptance criteria
 
-- [ ] The verified production database has no unexplained message-ID suffix gap from
+- [x] The verified production database has no unexplained message-ID suffix gap from
   `29202` through the reconciliation run's recorded remote head.
-- [ ] Missed candidate messages produce the expected canonical offers/revisions or a
+- [x] Missed candidate messages produce the expected canonical offers/revisions or a
   documented parser/review outcome; no duplicate source, revision, offer, or contact row is created.
-- [ ] Repeating reconciliation changes no already-current canonical data and does not
+- [x] Repeating reconciliation changes no already-current canonical data and does not
   move the checkpoint backward.
-- [ ] A controlled disconnect/restart and a missed-passive-event scenario recover within
+- [x] A controlled disconnect/restart and a missed-passive-event scenario recover within
   the approved bound while public API readiness remains available.
-- [ ] Consumer/reconciliation failure makes worker health/alerting fail, and successful
+- [x] Consumer/reconciliation failure makes worker health/alerting fail, and successful
   recovery clears the signal; Docker cannot report a dead pipeline as healthy.
-- [ ] Production logs/evidence contain no source text, contacts, credentials, sessions,
+- [x] Production logs/evidence contain no source text, contacts, credentials, sessions,
   raw payloads, or database secrets.
-- [ ] Public HTTPS/API health, AI Forecast isolation, database readiness, container
+- [x] Public HTTPS/API health, AI Forecast isolation, database readiness, container
   limits, and rollback compatibility remain verified.
-- [ ] B-003, E8, M4, and operator runbooks record exact redacted release/check evidence
+- [x] B-003, E8, M4, and operator runbooks record exact redacted release/check evidence
   and retain any unresolved edit/delete/media limitation honestly.
+
+Exact redacted results, timestamps, counters, and limitations are recorded in
+[E15 production recovery evidence](../PRODUCTION_EVIDENCE.md). The production acceptance
+boundary is remote head `29335` on release `7184cc2d67a`; real passive new/edit/delete
+callbacks and live media acquisition remain open under E8/M4 and are not claimed here.
 
 ## Affected modules and contracts
 
@@ -146,5 +153,5 @@ must not be undone or checkpoint-rewound.
 - [x] Authoritative under `tasks/`; the proposed definition was moved, not copied.
 - [x] Promotion metadata and owner-approved spike revision 1 are recorded.
 - [x] Implementation plan revision 1 is owner-approved and the gate is satisfied.
-- [ ] E15-T1 and E15-T2 are done with satisfied dependency evidence.
+- [x] E15-T1 and E15-T2 are done with satisfied dependency evidence.
 - [x] Scope and acceptance match the spike recommendation.

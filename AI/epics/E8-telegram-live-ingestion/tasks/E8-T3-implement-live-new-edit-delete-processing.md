@@ -35,7 +35,8 @@ and hide public offers, and worker disconnects never gate API readiness.
 - [x] Edits preserve previous payload via revisions and update derived data.
 - [x] Deletes mark `source_messages.deleted_at`, hide linked offers, and keep lineage.
 - [x] Worker health is explicit and does not imply API unavailability.
-- [ ] Live Telethon subscription against a real authorized session (blocked on B-003).
+- [x] Live Telethon subscription against a real authorized session (transport connected,
+  consumer running, reconciliation running, verified channel `2180077318`).
 - [ ] Production worker loop / Compose enablement remains E8-T5.
 
 ## Scope delivered in revision 1
@@ -45,6 +46,11 @@ and hide public offers, and worker disconnects never gate API readiness.
 - Telethon event → inward event adapters (`telethon_events`)
 - Deterministic fake-client tests for new/edit/delete convergence
 - No worker Compose enablement; no public OpenAPI change
+
+No real passive new/edit/delete callback arrived during the E15 production observation
+window, so this task remains `in_progress` and makes no production edit/delete claim.
+Polling provides new-message completeness but intentionally does not infer deletion from
+absence. See [E15 production recovery evidence](../../E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
 
 ## Dependencies and traceability
 

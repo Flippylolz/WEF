@@ -34,11 +34,11 @@ Priority and selection do not bypass the repository's approval gates.
 
 ## Approval state
 
-- Epic workspace: `in_progress` with E15-T2 on its dedicated branch.
+- Epic workspace: `in_progress` with E15-T3 on its dedicated branch.
 - [Research spike](SPIKE.md): revision 1, owner-approved under AD-039.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, owner-approved under AD-040.
-- E15-T1 is `done` through green-CI PR #189; E15-T2 is dependency-ready and
-  `in_progress` on PR #190; E15-T3 remains blocked on T2.
+- E15-T1 is `done` through green-CI PR #189; E15-T2 is `done` through green-CI
+  PR #190; E15-T3 completed its production boundary and is `in_progress` on PR #191.
 
 ## Incident baseline
 
@@ -67,11 +67,15 @@ Read-only production inspection on 2026-08-27 established the following redacted
 The investigation made no production writes, restarts, or backfills and did not retain
 source text, contacts, credentials, or session material.
 
+The bounded production repair, idempotency proof, controlled restart, worker-health
+fire/clear rehearsal, and retained E8 limitations are recorded in
+[PRODUCTION_EVIDENCE.md](PRODUCTION_EVIDENCE.md).
+
 ## Approved task sequence
 
 1. [E15-T1: Supervise and observe the Telegram event pipeline](tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0/M; `done` through PR #189
-2. [E15-T2: Add checkpoint-driven Telegram reconciliation](tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0/L; `in_progress` on PR #190, dependency satisfied
-3. [E15-T3: Recover the production gap and prove outage recovery](tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0/M; `draft`, depends on T1/T2
+2. [E15-T2: Add checkpoint-driven Telegram reconciliation](tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0/L; `done` through PR #190
+3. [E15-T3: Recover the production gap and prove outage recovery](tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0/M; production acceptance complete, `in_progress` on PR #191
 
 T1 makes failures fail visibly. T2 makes passive events a latency optimization rather
 than the completeness boundary. T3 performs bounded recovery only after those controls

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E15-T2
 epic: E15
 title: "Add checkpoint-driven Telegram reconciliation"
-status: in_progress
+status: done
 revision: 1
 priority: P0
 size: L
@@ -42,10 +42,12 @@ branch:
   created_at: "2026-08-28T15:08:59Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/190"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Codex agent (owner-authorized merge after green CI under AD-040)"
+  completed_at: "2026-08-28T20:39:13Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/190"
+  evidence:
+    - "Squash merge 7184cc2d67aafadc654c26fa26fd039ca4390ab2 after Backend, Frontend and contract, Repository safety, Runtime images, and Coverage badge all completed successfully"
+    - "Local gates: make lint, make format-check, make typecheck, make contract-check, make test (434 backend/152 frontend), make compose-config, and make production-proof"
 invalidation:
   invalidated_by: null
   invalidated_at: null

@@ -16,13 +16,20 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 - The recurring geocoder is revalidated under D-002 (resolved: retain Geoapify) before always-on ingestion.
 - The worker remains single-replica, restartable, idempotent, and non-blocking for the public API.
 - E8-T5 depends only on E8-T3 and E8-T4; deferred backup task E7-T5 is not a dependency.
-- Release `3ee56a5` created and started the production worker service on 2026-08-26; task completion still requires verified live entity/event delivery, gap reconciliation, and outage-recovery evidence.
+- Release `3ee56a5` created and started the production worker service on 2026-08-26.
 - On 2026-08-27 the connected, Docker-healthy worker remained at checkpoint `29202`
   while Telegram advanced through at least `29257`; production missed six parser-classified
   offer candidates. [E15](../epics/E15-telegram-ingestion-reliability/README.md) is the
   approved blocker-priority recovery epic. Spike/plan revision 1 are approved under
-  AD-039/AD-040; all three tasks are promoted, E15-T1 is done through green-CI PR
-  #189, and E15-T2 is dependency-ready and in progress.
+  AD-039/AD-040; all three tasks are promoted, E15-T1/T2 are done through green-CI
+  PRs #189/#190, and E15-T3 has completed its production acceptance boundary at
+  remote head `29335` on documentation PR #191.
+- Release `7184cc2d67a` now provides checkpoint polling, remote/local gap status, and
+  fail-fast critical-loop health. The incident range is reconciled, repeat replay is
+  idempotent, and restart/health fire-clear evidence is recorded in
+  [E15 production evidence](../epics/E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
+  No real passive new/edit/delete callback or live media acquisition occurred during
+  that window, so those E8 acceptance items remain open.
 
 ## Included epic/task definitions
 
@@ -37,21 +44,21 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
 ### [E15: Telegram ingestion reliability recovery](../epics/E15-telegram-ingestion-reliability/README.md)
 
 - [E15-T1: Supervise and observe the Telegram event pipeline](../epics/E15-telegram-ingestion-reliability/tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0 `done` through PR #189
-- [E15-T2: Add checkpoint-driven Telegram reconciliation](../epics/E15-telegram-ingestion-reliability/tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0 `in_progress` on PR #190; E15-T1 dependency satisfied
-- [E15-T3: Recover the production gap and prove outage recovery](../epics/E15-telegram-ingestion-reliability/tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0 `draft`; depends on T1/T2
+- [E15-T2: Add checkpoint-driven Telegram reconciliation](../epics/E15-telegram-ingestion-reliability/tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0 `done` through PR #190
+- [E15-T3: Recover the production gap and prove outage recovery](../epics/E15-telegram-ingestion-reliability/tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0 production acceptance complete, `in_progress` on PR #191
 
 Cancelled and deferred candidates remain linked for traceability but are not completion requirements unless an approved revision restores them to required scope.
 
 ## Exit evidence
 
-- [ ] Channel identity/access and recurring geocoder gates are resolved for current production conditions.
-- [ ] Backfill from the historical checkpoint is restartable, idempotent, and reconciled.
+- [x] Channel identity/access and recurring geocoder gates are resolved for current production conditions.
+- [x] Backfill from the historical checkpoint is restartable, idempotent, and reconciled.
 - [ ] New/edit/delete events preserve revisions and visibility semantics through the shared ingestion core.
-- [ ] Passive event loss is recovered by bounded checkpoint-driven reconciliation at
+- [x] Passive event loss is recovered by bounded checkpoint-driven reconciliation at
   startup, reconnect, and steady state without full re-import or duplicate canonical data.
-- [ ] A single worker exposes truthful transport/consumer/reconciliation health,
+- [x] A single worker exposes truthful transport/consumer/reconciliation health,
   remote/local lag, stale/gap alerts, and rehearsed session rotation/outage recovery.
-- [ ] The 2026-08-27 missed range is reconciled through the reviewed production path
+- [x] The 2026-08-27 missed range is reconciled through the reviewed production path
   with redacted source/checkpoint/canonical evidence.
 - [ ] Every required task has been promoted, approved, dependency-gated, implemented on its dedicated branch, and completed with definition-of-done evidence.
 
