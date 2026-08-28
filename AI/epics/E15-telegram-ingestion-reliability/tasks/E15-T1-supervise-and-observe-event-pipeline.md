@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E15-T1
 epic: E15
 title: "Supervise and observe the Telegram event pipeline"
-status: ready
+status: in_progress
 revision: 1
 priority: P0
 size: M
@@ -35,10 +35,10 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: feat/E15-T1-supervise-event-pipeline
   task_id: E15-T1
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-28T14:43:22Z"
   pull_request: null
 completion:
   completed_by: null
@@ -92,18 +92,18 @@ identifies the failed stage without exposing Telegram content or credentials.
 
 ## Acceptance criteria
 
-- [ ] Injected handler/consumer/reconciliation failures cause a non-zero worker exit and
+- [x] Injected handler/consumer/reconciliation failures cause a non-zero worker exit and
   a redacted structured diagnostic; Docker cannot continue reporting the dead pipeline healthy.
-- [ ] A connected transport with a stopped consumer or stale reconciliation heartbeat
+- [x] A connected transport with a stopped consumer or stale reconciliation heartbeat
   fails worker health within an approved bounded threshold.
-- [ ] Normal cancellation/redeploy drains or safely abandons queued work according to
+- [x] Normal cancellation/redeploy drains or safely abandons queued work according to
   documented transaction/checkpoint semantics and leaves no false-success heartbeat.
-- [ ] Logs and status contain no source text, contacts, Telegram session/API secrets,
+- [x] Logs and status contain no source text, contacts, Telegram session/API secrets,
   database credentials, raw payloads, or unbounded identifiers.
-- [ ] Unit/integration tests cover every critical task exit, handler conversion error,
+- [x] Unit/integration tests cover every critical task exit, handler conversion error,
   processor error before/after run creation, advisory-lock rejection, reconnect, and
   health fire/recovery path.
-- [ ] Existing public API health/readiness behavior and one-worker Compose topology remain unchanged.
+- [x] Existing public API health/readiness behavior and one-worker Compose topology remain unchanged.
 
 ## Affected modules and contracts
 

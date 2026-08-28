@@ -30,7 +30,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E12 — Database index audit](E12-database-index-audit/README.md) — `done`; E12-T1 done; milestone M3.
 - [E13 — Dark map-first listing explorer](E13-dark-map-explorer/README.md) — `done`; spike/plan revision 1 approved (AD-038); E13-T1–T3 done through PRs #176/#179/#180; milestones M4.
 - [E14 — Production hardening and scalability](E14-production-hardening-and-scalability/README.md) — `selected`; spike revision 1 awaits owner approval; E14-T1–T9 proposed/non-actionable; milestone M5.
-- [E15 — Telegram ingestion reliability recovery](E15-telegram-ingestion-reliability/README.md) — `ready`, operational **blocker** priority; spike/plan revision 1 approved under AD-039/AD-040; E15-T1–T3 promoted and T1 dependency-ready; milestone M4.
+- [E15 — Telegram ingestion reliability recovery](E15-telegram-ingestion-reliability/README.md) — `in_progress`, operational **blocker** priority; spike/plan revision 1 approved under AD-039/AD-040; E15-T1 implementation started; milestone M4.
 
 The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker, but the 2026-08-27 production gap proved that passive events and transport-only health do not satisfy gap/outage acceptance. E15 is therefore the approved blocker-priority M4 epic under AD-039/AD-040; T1 starts the ordered recovery sequence. E13's dark map-first redesign is done. E14 remains selected for broader post-launch research/planning after the E15 blocker, and its candidates retain their own approval gates. New work must pass its dedicated pull-request CI before merge.
 
@@ -162,7 +162,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 
 ### E15
 
-- [E15-T1](E15-telegram-ingestion-reliability/tasks/E15-T1-supervise-and-observe-event-pipeline.md): P0 promoted/`ready`; task dependencies `none`; M4; requirements `P-006, P-007`; decisions `ADR-006, ADR-008, ADR-010`; fail-fast worker task supervision and privacy-safe listener diagnostics.
+- [E15-T1](E15-telegram-ingestion-reliability/tasks/E15-T1-supervise-and-observe-event-pipeline.md): P0 promoted/`in_progress`; task dependencies `none`; M4; requirements `P-006, P-007`; decisions `ADR-006, ADR-008, ADR-010`; fail-fast worker task supervision and privacy-safe listener diagnostics.
 - [E15-T2](E15-telegram-ingestion-reliability/tasks/E15-T2-add-checkpoint-driven-reconciliation.md): P0 promoted/`draft`; task dependency `E15-T1`; M4; requirements `P-006, P-007`; decisions `ADR-003, ADR-005, ADR-006, ADR-007, ADR-010`; startup/reconnect/periodic checkpoint polling makes passive events a latency optimization rather than the completeness boundary.
 - [E15-T3](E15-telegram-ingestion-reliability/tasks/E15-T3-recover-gap-and-prove-outage-recovery.md): P0 promoted/`draft`; task dependencies `E15-T1, E15-T2`; M4; requirements `P-006, P-007`; decisions `ADR-003, ADR-005, ADR-006, ADR-007, ADR-008, ADR-010, ADR-015`; bounded production recovery and outage/alert evidence close or narrow B-003.
 

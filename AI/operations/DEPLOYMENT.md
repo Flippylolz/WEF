@@ -26,7 +26,7 @@ Local Compose services:
 - `db`: a pinned PostGIS image with a named volume.
 - `caddy`: optional local same-origin routing.
 - `importer`: same backend image, run as an on-demand command.
-- `telegram-worker`: optional local listener. Enable with `docker compose --profile telegram-worker` after `WEF_TELEGRAM_API_ID` and `WEF_TELEGRAM_API_HASH` are set in the gitignored repo-root `.env`. The worker generates a Telethon string session on first login (`WEF_TELEGRAM_PHONE`, then `WEF_TELEGRAM_LOGIN_CODE` if not a TTY) and persists it to `WEF_TELEGRAM_SESSION` / `secrets/telegram/session`. Compose healthchecks the listen-loop heartbeat via `wef-telegram-worker-status --liveness` (never gates `/api/v1/health/ready`). Observe checkpoint freshness with `wef-telegram-worker-status`. Rehearse rotation with `wef-telegram-worker-status --rotation-dry-run`.
+- `telegram-worker`: optional local listener. Enable with `docker compose --profile telegram-worker` after `WEF_TELEGRAM_API_ID` and `WEF_TELEGRAM_API_HASH` are set in the gitignored repo-root `.env`. The worker generates a Telethon string session on first login (`WEF_TELEGRAM_PHONE`, then `WEF_TELEGRAM_LOGIN_CODE` if not a TTY) and persists it to `WEF_TELEGRAM_SESSION` / `secrets/telegram/session`. Compose healthchecks both the backward-compatible transport timestamp and the versioned critical-loop runtime-health document via `wef-telegram-worker-status --liveness` (never gates `/api/v1/health/ready`). Observe checkpoint freshness with `wef-telegram-worker-status`. Rehearse rotation with `wef-telegram-worker-status --rotation-dry-run`.
 
 The raw export is mounted read-only only into importer commands. Media output uses a named/local volume. The repository root is the Docker build context only with a strict `.dockerignore` excluding the export, archives, media, secrets, caches, and local database files.
 
@@ -50,7 +50,7 @@ Production services:
 - `web`: internal port only.
 - `api`: internal port only.
 - `db`: an application-owned PostgreSQL/PostGIS container on the internal network only, with a persistent host-backed volume.
-- `telegram-worker`: one replica. Host env comes from the deploy-managed `production.env` (`WEF_TELEGRAM_API_ID`, `WEF_TELEGRAM_API_HASH`, optional `WEF_TELEGRAM_SESSION` / `WEF_TELEGRAM_PHONE`). Generated sessions persist under `${WEF_ROOT}/secrets/telegram/` (mode 0700). Ordinary production deploys start the worker after API/web/edge; the container healthcheck is the listen-loop heartbeat and never gates public readiness.
+- `telegram-worker`: one replica. Host env comes from the deploy-managed `production.env` (`WEF_TELEGRAM_API_ID`, `WEF_TELEGRAM_API_HASH`, optional `WEF_TELEGRAM_SESSION` / `WEF_TELEGRAM_PHONE`). Generated sessions persist under `${WEF_ROOT}/secrets/telegram/` (mode 0700). Ordinary production deploys start the worker after API/web/edge; the container healthcheck requires fresh transport and serialized-consumer state from the runtime-health document and never gates public readiness. E15-T1 leaves reconciliation explicitly `pending_implementation`; E15-T2 makes that real loop mandatory.
 
 The importer is a run-to-completion command, not an always-running service. The production Compose project is explicitly named `wef-production`; it does not reuse an existing container, network, volume, database, or Compose project.
 
@@ -332,7 +332,13 @@ This is persistence, not backup: one disk/host failure, corruption, accidental d
 
 ## Telegram worker operations
 
-The local worker remains behind the `telegram-worker` profile. Production release `3ee56a5` created and started the `telegram-worker` service on 2026-08-26 using deploy-managed environment credentials and the persistent restricted session directory. Operators use `wef-verify-telegram-channel` for redacted identity/credential readiness, `wef-telegram-backfill` for bounded overlap backfill, and `wef-telegram-worker-status` for checkpoint reconciliation, liveness, and rotation rehearsal. Missing/invalid credentials fail closed. On 2026-08-27, however, a connected and Docker-healthy worker remained at checkpoint `29202` while Telegram advanced through at least `29257`; the status command reported stale but local reconciliation remained internally aligned. Treat transport health as insufficient evidence of current ingestion until blocker-priority [E15](../epics/E15-telegram-ingestion-reliability/README.md) delivers supervised consumers, independent checkpoint polling, remote-gap detection, and production recovery evidence. D-003/B-003 remain open. Recurring geocoding retains Geoapify under resolved D-002.
+The local worker remains behind the `telegram-worker` profile. Production release `3ee56a5` created and started the `telegram-worker` service on 2026-08-26 using deploy-managed environment credentials and the persistent restricted session directory. Operators use `wef-verify-telegram-channel` for redacted identity/credential readiness, `wef-telegram-backfill` for bounded overlap backfill, and `wef-telegram-worker-status` for checkpoint reconciliation, liveness, and rotation rehearsal. Missing/invalid credentials fail closed. On 2026-08-27, however, a connected and Docker-healthy worker remained at checkpoint `29202` while Telegram advanced through at least `29257`; the status command reported stale but local reconciliation remained internally aligned. E15-T1 replaces transport-only health with fail-fast transport/consumer/health/reconciliation-slot supervision and privacy-safe stage diagnostics while preserving the legacy heartbeat for rollback. Its reconciliation slot is explicitly pending—not evidence of completeness—until E15-T2 adds independent checkpoint polling and remote-gap detection. D-003/B-003 remain open through production recovery. Recurring geocoding retains Geoapify under resolved D-002.
+
+On cancellation or critical-stage failure, the supervisor cancels sibling tasks and
+removes both local health files. An in-flight database transaction rolls back through
+the existing persistence/session boundary; queued passive events that never committed
+do not advance the durable checkpoint. Until E15-T2 supplies automatic polling, those
+unacknowledged events remain recoverable through the existing bounded backfill path.
 
 After historical activation, imported offers may remain `needs_review` while the M1 synthetic seed is still `visible`. Run `wef-promote-public-catalog` in the API/operator container to hide synthetic seed rows and publish historical offers (`needs_review` → `visible`). Map pins still require an accepted in-scope location with coordinates. When geocode results exist but auto-review left locations unpinned (`low_precision` / `low_confidence`), run `wef-accept-pending-geocode-pins` to copy in-scope coordinates onto those locations with `manual_accept` lineage (AD-034). Out-of-scope and provider `no_result` rows stay unpinned.
 
@@ -371,7 +377,9 @@ Current monitoring baseline:
 - External HTTPS uptime checks for WEF; AI Forecast remains independently reachable on `:3000`, while `:3100` is a WEF rollback/diagnostic route.
 - Host disk, memory, CPU, load, and Docker restart count.
 - TLS chain/hostname/expiry, Certbot renewal, and Nginx reload checks.
-- Telegram heartbeat plus last committed event/checkpoint reconciliation; these never gate public API readiness.
+- Telegram transport timestamp plus versioned critical-loop health, last committed event,
+  and checkpoint reconciliation; these never gate public API readiness. A
+  `pending_implementation` reconciliation stage is not source-completeness evidence.
 - Structured logs retained with size/rotation limits.
 
 Alert first on user impact, disk exhaustion risk, database unready state, and stale Telegram ingestion. Do not add a large metrics platform before these basic checks are operational.

@@ -129,20 +129,29 @@ class TelethonLiveClient:
         )
 
         async def _on_new(event: object) -> None:
-            message = getattr(event, "message", event)
-            await queue.put(
-                new_or_edit_event_from_telethon(message, kind=LiveTelegramEventKind.NEW),
-            )
+            try:
+                message = getattr(event, "message", event)
+                await queue.put(
+                    new_or_edit_event_from_telethon(message, kind=LiveTelegramEventKind.NEW),
+                )
+            except Exception as error:  # noqa: BLE001
+                await queue.fail(error)
 
         async def _on_edit(event: object) -> None:
-            message = getattr(event, "message", event)
-            await queue.put(
-                new_or_edit_event_from_telethon(message, kind=LiveTelegramEventKind.EDIT),
-            )
+            try:
+                message = getattr(event, "message", event)
+                await queue.put(
+                    new_or_edit_event_from_telethon(message, kind=LiveTelegramEventKind.EDIT),
+                )
+            except Exception as error:  # noqa: BLE001
+                await queue.fail(error)
 
         async def _on_delete(event: object) -> None:
-            deleted_ids = getattr(event, "deleted_ids", ())
-            await queue.put(delete_event_from_telethon(deleted_ids))
+            try:
+                deleted_ids = getattr(event, "deleted_ids", ())
+                await queue.put(delete_event_from_telethon(deleted_ids))
+            except Exception as error:  # noqa: BLE001
+                await queue.fail(error)
 
         self._client.add_event_handler(_on_new, events.NewMessage(chats=username))
         self._client.add_event_handler(_on_edit, events.MessageEdited(chats=username))

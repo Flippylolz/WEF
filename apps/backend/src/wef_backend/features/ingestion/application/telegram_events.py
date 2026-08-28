@@ -24,6 +24,7 @@ from wef_backend.features.ingestion.application.telegram_live import (
     source_identity_from_channel,
     verify_channel_entity,
 )
+from wef_backend.features.ingestion.domain.telegram_worker_ops import safe_error_category
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -97,6 +98,15 @@ class LiveWorkerHealth:
     last_event_received_at: datetime | None
     last_event_committed_at: datetime | None
     last_error_category: str | None = None
+
+
+class LiveEventHandlerError(RuntimeError):
+    """Redacted event-adapter failure delivered to the supervised consumer."""
+
+    def __init__(self, category: str) -> None:
+        """Retain only a safe error category."""
+        self.category = category
+        super().__init__(f"Telegram event handler failed ({category})")
 
 
 @dataclass(frozen=True, slots=True)
@@ -238,7 +248,7 @@ class LiveTelegramEventProcessor:
 class LiveEventQueue:
     """Single-consumer queue so Telethon callbacks cannot race persistence."""
 
-    _queue: asyncio.Queue[LiveTelegramEvent | None] = field(
+    _queue: asyncio.Queue[LiveTelegramEvent | LiveEventHandlerError | None] = field(
         default_factory=asyncio.Queue,
     )
 
@@ -246,9 +256,16 @@ class LiveEventQueue:
         """Enqueue one event for serialized processing."""
         await self._queue.put(event)
 
+    async def fail(self, error: BaseException) -> None:
+        """Deliver only the exception category to the supervised consumer."""
+        await self._queue.put(LiveEventHandlerError(safe_error_category(error)))
+
     async def get(self) -> LiveTelegramEvent | None:
         """Return the next event, or None after close()."""
-        return await self._queue.get()
+        item = await self._queue.get()
+        if isinstance(item, LiveEventHandlerError):
+            raise item
+        return item
 
     async def close(self) -> None:
         """Signal the consumer to stop after draining."""
@@ -258,7 +275,7 @@ class LiveEventQueue:
         """Drain queued events until close sentinel (for bounded tests)."""
         items: list[LiveTelegramEvent] = []
         while True:
-            item = await self._queue.get()
+            item = await self.get()
             if item is None:
                 break
             items.append(item)

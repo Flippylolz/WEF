@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E15
 title: "Telegram ingestion reliability recovery"
-status: ready
+status: in_progress
 milestones: [M4]
 owner: owner
 spike: SPIKE.md
@@ -34,10 +34,10 @@ Priority and selection do not bypass the repository's approval gates.
 
 ## Approval state
 
-- Epic workspace: `ready` under the owner-approved E15 delivery mission.
+- Epic workspace: `in_progress` with E15-T1 on its dedicated branch.
 - [Research spike](SPIKE.md): revision 1, owner-approved under AD-039.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, owner-approved under AD-040.
-- E15-T1 is dependency-ready; E15-T2/T3 remain blocked on their recorded task dependencies.
+- E15-T1 is `in_progress`; E15-T2/T3 remain blocked on their recorded task dependencies.
 
 ## Incident baseline
 
@@ -68,7 +68,7 @@ source text, contacts, credentials, or session material.
 
 ## Approved task sequence
 
-1. [E15-T1: Supervise and observe the Telegram event pipeline](tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0/M; `ready`
+1. [E15-T1: Supervise and observe the Telegram event pipeline](tasks/E15-T1-supervise-and-observe-event-pipeline.md) — P0/M; `in_progress`
 2. [E15-T2: Add checkpoint-driven Telegram reconciliation](tasks/E15-T2-add-checkpoint-driven-reconciliation.md) — P0/L; `draft`, depends on T1
 3. [E15-T3: Recover the production gap and prove outage recovery](tasks/E15-T3-recover-gap-and-prove-outage-recovery.md) — P0/M; `draft`, depends on T1/T2
 

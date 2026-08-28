@@ -5,7 +5,9 @@ from __future__ import annotations
 import asyncio
 import sys
 from contextlib import suppress
+from datetime import UTC, datetime
 
+import structlog
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from wef_backend.features.ingestion.application.telegram_events import (
@@ -14,9 +16,16 @@ from wef_backend.features.ingestion.application.telegram_events import (
 )
 from wef_backend.features.ingestion.application.telegram_live import verify_channel_entity
 from wef_backend.features.ingestion.application.telegram_worker_liveness import (
+    WorkerRuntimeState,
     maintain_worker_heartbeat,
 )
+from wef_backend.features.ingestion.application.telegram_worker_supervision import (
+    CriticalWorkerTaskError,
+    maintain_pending_reconciliation_slot,
+    supervise_worker_tasks,
+)
 from wef_backend.features.ingestion.domain.telegram_channel import (
+    TelegramChannelIdentity,
     default_live_channel_identity,
 )
 from wef_backend.features.ingestion.domain.telegram_secrets import (
@@ -28,8 +37,96 @@ from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
 from wef_backend.features.ingestion.infrastructure.telethon_client import TelethonLiveClient
-from wef_backend.settings import load_settings
+from wef_backend.logging_config import configure_logging, configure_safe_telethon_logging
+from wef_backend.settings import Settings, load_settings
 from wef_backend.telegram_credentials import secret_text, secrets_from_settings
+
+logger = structlog.get_logger("wef.telegram_worker")
+
+
+def _log_stage_failure(*, stage: str, category: str) -> None:
+    """Emit one allowlisted failure without attaching exception information."""
+    logger.error(
+        "telegram_worker_stage_failed",
+        stage=stage,
+        category=category,
+    )
+
+
+async def _run_connected_worker(
+    *,
+    settings: Settings,
+    identity: TelegramChannelIdentity,
+    client: TelethonLiveClient,
+    store: SQLAlchemyIngestionPersistence,
+) -> None:
+    """Subscribe and supervise every critical stage after authorization."""
+    state = WorkerRuntimeState(release_sha=settings.release_sha)
+    stop = asyncio.Event()
+    queue = LiveEventQueue()
+    client.subscribe_channel(identity.username, queue)
+    processor = LiveTelegramEventProcessor(store=store, client=client)
+    logger.info(
+        "telegram_worker_started",
+        stage="startup",
+        release_sha=(settings.release_sha or "")[:12] or None,
+    )
+
+    async def consume() -> None:
+        state.consumer_running = True
+        try:
+            while True:
+                event = await queue.get()
+                if event is None:
+                    return
+                state.last_event_received_at = event.received_at
+                await processor(
+                    identity=identity,
+                    events=(event,),
+                    release_sha=settings.release_sha,
+                    manage_connection=False,
+                )
+                state.last_event_committed_at = datetime.now(UTC)
+                state.last_error_category = None
+                logger.info(
+                    "telegram_event_committed",
+                    stage="consumer",
+                    event_kind=event.kind.value,
+                )
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:
+            _log_stage_failure(stage="consumer", category=state.record_failure(error))
+            raise
+        finally:
+            state.consumer_running = False
+
+    async def transport() -> None:
+        state.transport_connected = True
+        try:
+            await client.run_until_disconnected()
+        finally:
+            state.transport_connected = False
+
+    try:
+        await supervise_worker_tasks(
+            {
+                "transport": transport(),
+                "consumer": consume(),
+                "health": maintain_worker_heartbeat(
+                    settings.telegram_heartbeat_path,
+                    is_connected=client.is_connected,
+                    stop=stop,
+                    state=state,
+                    runtime_health_path=settings.telegram_runtime_health_path,
+                ),
+                "reconciliation": maintain_pending_reconciliation_slot(stop),
+            },
+            stop=stop,
+        )
+    finally:
+        stop.set()
+        await queue.close()
 
 
 async def run_telegram_worker() -> None:
@@ -59,38 +156,12 @@ async def run_telegram_worker() -> None:
             )
         entity = await client.resolve_channel(identity.username)
         verify_channel_entity(identity, entity)
-        queue = LiveEventQueue()
-        client.subscribe_channel(identity.username, queue)
-        processor = LiveTelegramEventProcessor(store=store, client=client)
-        stop_heartbeat = asyncio.Event()
-        heartbeat = asyncio.create_task(
-            maintain_worker_heartbeat(
-                settings.telegram_heartbeat_path,
-                is_connected=client.is_connected,
-                stop=stop_heartbeat,
-            ),
+        await _run_connected_worker(
+            settings=settings,
+            identity=identity,
+            client=client,
+            store=store,
         )
-
-        async def consume() -> None:
-            while True:
-                event = await queue.get()
-                if event is None:
-                    return
-                await processor(
-                    identity=identity,
-                    events=(event,),
-                    release_sha=settings.release_sha,
-                    manage_connection=False,
-                )
-
-        consumer = asyncio.create_task(consume())
-        try:
-            await client.run_until_disconnected()
-        finally:
-            stop_heartbeat.set()
-            await heartbeat
-            await queue.close()
-            await consumer
     finally:
         await client.disconnect()
         await engine.dispose()
@@ -98,16 +169,39 @@ async def run_telegram_worker() -> None:
 
 def main() -> None:
     """Run the live Telegram worker; fail closed when credentials are missing."""
+    settings = load_settings()
+    configure_logging(level=settings.log_level, json_logs=settings.env == "production")
+    configure_safe_telethon_logging(level=settings.log_level)
     try:
         asyncio.run(run_telegram_worker())
     except TelegramLoginCodeError:
+        logger.warning(
+            "telegram_worker_authentication_pending",
+            stage="authorization",
+            category="TelegramLoginCodeError",
+        )
         sys.stderr.write(
             "Telegram login code sent; set WEF_TELEGRAM_LOGIN_CODE and restart\n",
         )
         raise SystemExit(3) from None
     except TelegramSecretError:
+        _log_stage_failure(
+            stage="authorization",
+            category="TelegramSecretError",
+        )
         sys.stderr.write("Telegram worker secrets unavailable or invalid\n")
         raise SystemExit(2) from None
+    except CriticalWorkerTaskError as error:
+        _log_stage_failure(
+            stage=error.stage,
+            category=error.category,
+        )
+        sys.stderr.write("Telegram worker failed\n")
+        raise SystemExit(2) from None
     except Exception:  # noqa: BLE001
+        _log_stage_failure(
+            stage="startup_or_shutdown",
+            category="UnexpectedError",
+        )
         sys.stderr.write("Telegram worker failed\n")
         raise SystemExit(2) from None

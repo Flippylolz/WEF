@@ -24,6 +24,7 @@ from wef_backend.features.ingestion.application.persistence import (
     SourceDeletionOutcome,
 )
 from wef_backend.features.ingestion.application.telegram_events import (
+    LiveEventHandlerError,
     LiveEventQueue,
     LiveTelegramEvent,
     LiveTelegramEventKind,
@@ -325,6 +326,17 @@ async def test_event_queue_serializes_drain_order() -> None:
         LiveTelegramEventKind.NEW,
         LiveTelegramEventKind.DELETE,
     ]
+
+
+@pytest.mark.asyncio
+async def test_event_queue_redacts_handler_failure() -> None:
+    queue = LiveEventQueue()
+    await queue.fail(RuntimeError("password=secret source listing text"))
+    with pytest.raises(LiveEventHandlerError) as captured:
+        await queue.get()
+    assert captured.value.category == "RuntimeError"
+    assert "secret" not in str(captured.value)
+    assert "listing" not in str(captured.value)
 
 
 def test_telethon_event_adapters() -> None:
