@@ -701,8 +701,7 @@ class TelegramRawEventRow(IngestionBase):
             name="ck_telegram_raw_events_kind",
         ),
         CheckConstraint(
-            "outcome IS NULL OR outcome IN "
-            "('processed', 'failed', 'skipped_non_candidate')",
+            "outcome IS NULL OR outcome IN ('processed', 'failed', 'skipped_non_candidate')",
             name="ck_telegram_raw_events_outcome",
         ),
         Index(

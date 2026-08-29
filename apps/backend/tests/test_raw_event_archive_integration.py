@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
 from wef_backend.features.ingestion.infrastructure.raw_event_archive import (
     SQLAlchemyRawEventArchive,
@@ -37,7 +37,7 @@ def _settings() -> Settings:
     )
 
 
-def _archive() -> tuple[SQLAlchemyRawEventArchive, object]:
+def _archive() -> tuple[SQLAlchemyRawEventArchive, AsyncEngine]:
     assert TEST_DATABASE_URL is not None
     engine = create_async_engine(TEST_DATABASE_URL)
     factory = async_sessionmaker(engine, expire_on_commit=False)

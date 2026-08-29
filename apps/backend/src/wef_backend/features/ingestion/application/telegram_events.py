@@ -242,13 +242,9 @@ class LiveTelegramEventProcessor:
             await archive.mark_attempt(
                 row_id,
                 outcome=(
-                    "skipped_non_candidate"
-                    if kind is DeletionOutcomeKind.MISSING
-                    else "processed"
+                    "skipped_non_candidate" if kind is DeletionOutcomeKind.MISSING else "processed"
                 ),
             )
-
-
 
     async def __call__(
         self,
@@ -354,8 +350,7 @@ class LiveTelegramEventProcessor:
                             landed[0][0],
                             outcome=(
                                 "skipped_non_candidate"
-                                if persist_outcome.outcome
-                                is MessageOutcome.SKIPPED_NON_CANDIDATE
+                                if persist_outcome.outcome is MessageOutcome.SKIPPED_NON_CANDIDATE
                                 else "processed"
                             ),
                         )

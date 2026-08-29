@@ -50,9 +50,7 @@ def record_to_live_event(record: RawEventRecord) -> LiveTelegramEvent:
             text=str(record.payload.get("text", "")),
             published_at=published_at,
             edited_at=_payload_timestamp(record.payload, "edited_unixtime"),
-            media_group_id=(
-                str(media_group) if isinstance(media_group, str | int) else None
-            ),
+            media_group_id=(str(media_group) if isinstance(media_group, str | int) else None),
         ),
     )
 
@@ -88,7 +86,6 @@ class RawEventDrainer:
         """Process pending archived events one by one through the canonical path."""
         records = await self.archive.unprocessed_batch(self.batch_size)
         for record in records:
-            event = record_to_live_event(record)
             resume_after = 0
             if self.checkpoint_store is not None:
                 resume_after = await read_durable_telegram_checkpoint(
@@ -96,6 +93,7 @@ class RawEventDrainer:
                     channel_external_id=self.identity.channel_id,
                 )
             try:
+                event = record_to_live_event(record)
                 if processing_lock is None:
                     await self.processor(
                         identity=self.identity,

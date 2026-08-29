@@ -23,6 +23,10 @@ from wef_backend.features.ingestion.application.persistence import (
     RunStatus,
     SourceDeletionOutcome,
 )
+from wef_backend.features.ingestion.application.raw_archive import (
+    RawEventDrainer,
+    record_to_live_event,
+)
 from wef_backend.features.ingestion.application.telegram_events import (
     LiveEventHandlerError,
     LiveEventQueue,
@@ -30,6 +34,9 @@ from wef_backend.features.ingestion.application.telegram_events import (
     LiveTelegramEventKind,
     LiveTelegramEventProcessor,
     LiveWorkerHealth,
+    RawArchiveKind,
+    RawArchiveOutcome,
+    RawEventArchivePort,
     RawEventRecord,
 )
 from wef_backend.features.ingestion.application.telegram_live import (
@@ -48,7 +55,7 @@ from wef_backend.features.ingestion.infrastructure.telethon_events import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Sequence
+    from collections.abc import AsyncIterator, Mapping, Sequence
     from uuid import UUID
 
 
@@ -444,11 +451,11 @@ _ENTITY = TelegramChannelEntity(
 )
 
 
-class _FakeArchive:
+class _FakeArchive(RawEventArchivePort):
     """Landing/outcome ledger stand-in recording call order."""
 
     def __init__(self) -> None:
-        self.landed: list[tuple[str, int, dict[str, object]]] = []
+        self.landed: list[tuple[str, int, Mapping[str, object]]] = []
         self.marked: list[tuple[UUID, str, str | None]] = []
         self.pending: list[RawEventRecord] = []
         self._ids = iter(uuid4() for _ in range(99))
@@ -456,27 +463,27 @@ class _FakeArchive:
     async def land(
         self,
         *,
-        event_kind: str,
-        channel_external_id: str,
+        event_kind: RawArchiveKind,
+        channel_external_id: str,  # noqa: ARG002 - contract parity
         external_message_id: int,
-        payload: dict[str, object],
-        checksum: str,
+        payload: Mapping[str, object],
+        checksum: str,  # noqa: ARG002 - contract parity
     ) -> UUID:
-        self.landed.append((event_kind, external_message_id, payload))
+        self.landed.append((str(event_kind), external_message_id, payload))
         return next(self._ids)
 
-    async def unprocessed_batch(self, limit: int) -> list[RawEventRecord]:
+    async def unprocessed_batch(self, limit: int) -> Sequence[RawEventRecord]:
         return self.pending[:limit]
 
     async def mark_attempt(
         self,
         event_id: UUID,
         *,
-        outcome: str,
+        outcome: RawArchiveOutcome,
         error_category: str | None = None,
-        completed_at: object = None,
+        completed_at: datetime | None = None,  # noqa: ARG002 - contract parity
     ) -> None:
-        self.marked.append((event_id, outcome, error_category))
+        self.marked.append((event_id, str(outcome), error_category))
 
 
 async def test_processor_lands_events_verbatim_before_processing() -> None:
@@ -488,7 +495,7 @@ async def test_processor_lands_events_verbatim_before_processing() -> None:
     processor = LiveTelegramEventProcessor(store=store, client=client, archive=archive)
     message = LiveTelegramMessage(
         external_message_id=50,
-        text="Покупка | Квартира\nЦена: 500 000 PLN",
+        text="Покупка | Квартира\nЦена: 500 000 PLN",  # noqa: RUF001
         published_at=datetime(2026, 8, 29, tzinfo=UTC),
         edited_at=None,
     )
@@ -536,14 +543,6 @@ async def test_processor_marks_skipped_non_candidate_and_delete_missing() -> Non
 
 async def test_drainer_reprocesses_pending_records_and_marks_failures() -> None:
     """Pending records flow through the processor; poisoned events fail bounded."""
-    from wef_backend.features.ingestion.application.raw_archive import (
-        RawEventDrainer,
-        record_to_live_event,
-    )
-    from wef_backend.features.ingestion.domain.telegram_channel import (
-        default_live_channel_identity,
-    )
-
     identity = default_live_channel_identity()
     record = RawEventRecord(
         id=uuid4(),
@@ -554,7 +553,7 @@ async def test_drainer_reprocesses_pending_records_and_marks_failures() -> None:
             "id": 601,
             "type": "message",
             "date_unixtime": "1770000000",
-            "text": "Покупка | Квартира\nЦена: 1 200 000 PLN",
+            "text": "Покупка | Квартира\nЦена: 1 200 000 PLN",  # noqa: RUF001
             "from_live": True,
         },
         received_at=datetime(2026, 8, 29, tzinfo=UTC),
@@ -580,8 +579,6 @@ async def test_drainer_reprocesses_pending_records_and_marks_failures() -> None:
 
 async def test_drainer_marks_failed_without_blocking_the_batch() -> None:
     """A poisoned event is marked failed with a safe category; others continue."""
-    from wef_backend.features.ingestion.application.raw_archive import RawEventDrainer
-
     identity = default_live_channel_identity()
     poisoned = RawEventRecord(
         id=uuid4(),
@@ -601,7 +598,7 @@ async def test_drainer_marks_failed_without_blocking_the_batch() -> None:
             "id": 2,
             "type": "message",
             "date_unixtime": "1770000000",
-            "text": "Покупка | Квартира\nЦена: 10 PLN",
+            "text": "Покупка | Квартира\nЦена: 10 PLN",  # noqa: RUF001
             "from_live": True,
         },
         received_at=datetime(2026, 8, 29, tzinfo=UTC),

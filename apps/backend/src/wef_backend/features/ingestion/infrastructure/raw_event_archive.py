@@ -93,7 +93,7 @@ class SQLAlchemyRawEventArchive:
             return tuple(
                 RawEventRecord(
                     id=row.id,
-                    event_kind=cast(RawArchiveKind, row.event_kind),
+                    event_kind=cast("RawArchiveKind", row.event_kind),
                     channel_external_id=row.channel_external_id,
                     external_message_id=row.external_message_id,
                     payload=cast("Mapping[str, object]", row.payload_json),
