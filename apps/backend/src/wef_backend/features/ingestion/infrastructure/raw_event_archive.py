@@ -7,15 +7,22 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 from uuid import UUID, uuid4
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 
+from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
+from wef_backend.features.ingestion.application.raw_replay import ReplayWorkItem
 from wef_backend.features.ingestion.application.telegram_events import (
     RawArchiveKind,
     RawArchiveOutcome,
     RawEventRecord,
 )
-from wef_backend.features.ingestion.infrastructure.models import TelegramRawEventRow
+from wef_backend.features.ingestion.infrastructure.models import (
+    OfferSourceRow,
+    SourceChannelRow,
+    SourceMessageRow,
+    TelegramRawEventRow,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -137,3 +144,74 @@ class SQLAlchemyRawEventArchive:
                 ),
             )
             return int(value or 0)
+
+    async def stale_message_events(
+        self,
+        *,
+        parser_version: str,
+        sentinel_hash: str,
+        limit: int,
+        exclude: frozenset[str] = frozenset(),
+    ) -> Sequence[ReplayWorkItem]:
+        """Select latest archived message events with stale canonical state."""
+        ranked = (
+            select(
+                TelegramRawEventRow.channel_external_id,
+                TelegramRawEventRow.external_message_id,
+                TelegramRawEventRow.payload_json,
+                func.row_number()
+                .over(
+                    partition_by=(
+                        TelegramRawEventRow.channel_external_id,
+                        TelegramRawEventRow.external_message_id,
+                    ),
+                    order_by=TelegramRawEventRow.received_at.desc(),
+                )
+                .label("recency"),
+            ).where(
+                TelegramRawEventRow.event_kind.in_(("new", "edit")),
+            )
+        ).subquery()
+        statement = (
+            select(
+                ranked.c.channel_external_id,
+                ranked.c.external_message_id,
+                ranked.c.payload_json,
+            )
+            .join(
+                SourceChannelRow,
+                SourceChannelRow.external_id == ranked.c.channel_external_id,
+            )
+            .join(
+                SourceMessageRow,
+                (SourceMessageRow.source_channel_id == SourceChannelRow.id)
+                & (SourceMessageRow.external_message_id == ranked.c.external_message_id),
+            )
+            .join(
+                OfferSourceRow,
+                (OfferSourceRow.source_message_id == SourceMessageRow.id)
+                & (OfferSourceRow.relationship == "primary"),
+            )
+            .join(OfferRow, OfferRow.id == OfferSourceRow.offer_id)
+            .join(LocationRow, LocationRow.id == OfferRow.location_id)
+            .where(
+                ranked.c.recency == 1,
+                or_(
+                    OfferRow.parser_version != parser_version,
+                    LocationRow.normalized_address_hash == sentinel_hash,
+                ),
+            )
+            .order_by(ranked.c.channel_external_id, ranked.c.external_message_id)
+            .limit(limit)
+        )
+        async with self._session_factory() as session:
+            rows = (await session.execute(statement)).all()
+        return tuple(
+            ReplayWorkItem(
+                channel_external_id=row.channel_external_id,
+                external_message_id=row.external_message_id,
+                payload=cast("Mapping[str, object]", row.payload_json),
+            )
+            for row in rows
+            if f"{row.channel_external_id}:{row.external_message_id}" not in exclude
+        )

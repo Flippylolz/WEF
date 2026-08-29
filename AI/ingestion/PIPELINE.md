@@ -215,6 +215,20 @@ old replays cannot regress the cursor; failed events retry with a bounded cap
 before counting as permanently failed. The archive is the replay source for the
 parser re-import command and for future parser upgrades.
 
+### 9. Parser replay over the raw archive (E17-T2)
+
+The `wef-replay-parser` operator command re-derives canonical offers from the
+archived raw events. Selection targets the latest archived event per message
+whose primary offer stores an older `parser_version` than the running parser or
+still points at the `Unknown location` sentinel. Each selected message is
+re-persisted through the live upsert path under a `reprocess` ingest run with
+the channel run lock, so revisions, visibility, and dedup fingerprints follow
+exactly the organic-edit semantics. Completed replays select nothing again
+(idempotent); messages that cannot be repaired are reported as
+`stale_after_replay` instead of blocking the run. Replay volume against the
+geocode stage remains bounded by the ADR-021 budget and pause machinery, and
+the sentinel is never queued for provider geocoding.
+
 ### 9. Media verification and storage
 
 For each media descriptor:
