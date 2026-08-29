@@ -30,7 +30,7 @@ from wef_backend.features.catalog.interface import router as catalog_router
 from wef_backend.features.catalog.interface.router import listings_router
 from wef_backend.features.contacts.interface import contacts_router
 from wef_backend.features.estates.interface import router as estates_router
-from wef_backend.features.identity.interface import identity_router
+from wef_backend.features.identity.interface import identity_router, view_history_router
 from wef_backend.features.identity.interface.favorites_router import (
     router as favorites_router,
 )
@@ -38,6 +38,33 @@ from wef_backend.health import router as health_router
 from wef_backend.logging_config import build_access_log_middleware, configure_logging
 from wef_backend.middleware.public_rate_limit import build_public_rate_limit_middleware
 from wef_backend.settings import load_settings
+
+
+def _configure_services(app: FastAPI, services: AppServices) -> None:
+    """Attach composed services and the private admin surface."""
+    app.middleware("http")(
+        build_public_rate_limit_middleware(services.public_rate_limiter),
+    )
+    app.state.list_estates = services.list_estates
+    app.state.query_map = services.query_map
+    app.state.query_facets = services.query_facets
+    app.state.browse_location_offers = services.browse_location_offers
+    app.state.browse_viewport_listings = services.browse_viewport_listings
+    app.state.get_offer_detail = services.get_offer_detail
+    app.state.is_ready = services.is_ready
+    app.state.identity = services.identity
+    app.state.favorites = services.favorites
+    app.state.view_history = services.view_history
+    app.state.contacts = services.contacts
+    app.state.admin = services.admin
+    app.state.auth_cookie_secure = services.auth_cookie_secure
+    admin = build_admin(
+        secret_key=services.admin_session_secret,
+        identity=services.identity,
+        admin=services.admin,
+        cookie_secure=services.auth_cookie_secure,
+    )
+    admin.mount_to(app)
 
 
 def create_http_app(services: AppServices | None = None) -> FastAPI:
@@ -71,6 +98,7 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     app.include_router(estates_router)
     app.include_router(identity_router)
     app.include_router(favorites_router)
+    app.include_router(view_history_router)
     app.include_router(contacts_router)
     app.add_exception_handler(RequestValidationError, request_validation_handler)
     app.add_exception_handler(QueryValidationError, query_validation_handler)
@@ -79,26 +107,7 @@ def create_http_app(services: AppServices | None = None) -> FastAPI:
     app.add_exception_handler(RateLimitExceededError, rate_limit_handler)
 
     if services is not None:
-        app.middleware("http")(build_public_rate_limit_middleware(services.public_rate_limiter))
-        app.state.list_estates = services.list_estates
-        app.state.query_map = services.query_map
-        app.state.query_facets = services.query_facets
-        app.state.browse_location_offers = services.browse_location_offers
-        app.state.browse_viewport_listings = services.browse_viewport_listings
-        app.state.get_offer_detail = services.get_offer_detail
-        app.state.is_ready = services.is_ready
-        app.state.identity = services.identity
-        app.state.favorites = services.favorites
-        app.state.contacts = services.contacts
-        app.state.admin = services.admin
-        app.state.auth_cookie_secure = services.auth_cookie_secure
-        admin = build_admin(
-            secret_key=services.admin_session_secret,
-            identity=services.identity,
-            admin=services.admin,
-            cookie_secure=services.auth_cookie_secure,
-        )
-        admin.mount_to(app)
+        _configure_services(app, services)
 
     app.middleware("http")(
         build_access_log_middleware(release_sha=settings.release_sha),

@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { lastVisitStorageKeys, startBrowserVisit } from "@/lib/last-visit";
+import {
+  getOrCreateAccountVisitId,
+  lastVisitStorageKeys,
+  startBrowserVisit,
+} from "@/lib/last-visit";
 
 function storage(initial: Record<string, string> = {}) {
   const values = new Map(Object.entries(initial));
@@ -62,5 +66,43 @@ describe("startBrowserVisit", () => {
     expect(
       startBrowserVisit({ local: unavailable, session: storage() }),
     ).toBeNull();
+  });
+});
+
+describe("getOrCreateAccountVisitId", () => {
+  it("keeps one server visit id per account for the browser session", () => {
+    const session = storage();
+    const createId = vi
+      .fn()
+      .mockReturnValueOnce("30000000-0000-4000-8000-000000000001")
+      .mockReturnValueOnce("30000000-0000-4000-8000-000000000002");
+
+    expect(getOrCreateAccountVisitId(session, "account-a", createId)).toBe(
+      "30000000-0000-4000-8000-000000000001",
+    );
+    expect(getOrCreateAccountVisitId(session, "account-a", createId)).toBe(
+      "30000000-0000-4000-8000-000000000001",
+    );
+    expect(getOrCreateAccountVisitId(session, "account-b", createId)).toBe(
+      "30000000-0000-4000-8000-000000000002",
+    );
+    expect(createId).toHaveBeenCalledTimes(2);
+  });
+
+  it("still returns a fresh id when session storage is blocked", () => {
+    const unavailable = {
+      getItem: vi.fn(() => {
+        throw new Error("blocked");
+      }),
+      removeItem: vi.fn(),
+      setItem: vi.fn(),
+    };
+    expect(
+      getOrCreateAccountVisitId(
+        unavailable,
+        "account-a",
+        () => "30000000-0000-4000-8000-000000000003",
+      ),
+    ).toBe("30000000-0000-4000-8000-000000000003");
   });
 });

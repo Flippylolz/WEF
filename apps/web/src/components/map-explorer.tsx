@@ -54,8 +54,9 @@ import {
   formatPrice,
 } from "@/lib/offer-presentation";
 import type { FocusTarget } from "@/lib/listing-focus";
-import { startBrowserVisit } from "@/lib/last-visit";
+import { getOrCreateAccountVisitId, startBrowserVisit } from "@/lib/last-visit";
 import { useMediaQuery, usePrefersReducedMotion } from "@/lib/use-media-query";
+import { markOfferViewed, startAccountVisit } from "@/lib/view-history-api";
 
 type MobilePanelMode = "map" | "sheet" | "full";
 
@@ -248,6 +249,36 @@ export function MapExplorer() {
     },
   });
   const signedIn = accountQuery.isSuccess && accountQuery.data !== null;
+  const accountVisitId = useMemo(() => {
+    const accountId = accountQuery.data?.id;
+    if (accountId === undefined || typeof window === "undefined") return null;
+    try {
+      return getOrCreateAccountVisitId(
+        window.sessionStorage,
+        String(accountId),
+      );
+    } catch {
+      // Accessing the storage area itself can be blocked in privacy mode.
+      return crypto.randomUUID();
+    }
+  }, [accountQuery.data?.id]);
+  const accountVisitQuery = useQuery({
+    queryKey: ["view-history", "visit", accountQuery.data?.id, accountVisitId],
+    enabled: signedIn && accountVisitId !== null,
+    queryFn: async ({ signal }) => {
+      if (accountVisitId === null) throw new Error("missing visit");
+      const result = await startAccountVisit(accountVisitId, { signal });
+      if (result.state === "error") throw new Error("view-history");
+      return result.data;
+    },
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+  const effectiveLastVisitAt =
+    signedIn && accountVisitQuery.isPending
+      ? null
+      : signedIn && accountVisitQuery.isSuccess
+        ? accountVisitQuery.data.previous_visit_at
+        : lastVisitAt;
   const favoritesQuery = useQuery({
     queryKey: ["favorites"],
     enabled: signedIn,
@@ -340,6 +371,17 @@ export function MapExplorer() {
       return result.data;
     },
   });
+  useEffect(() => {
+    if (!signedIn || selectedOfferId === null || !offerDetailQuery.isSuccess) {
+      return;
+    }
+    void markOfferViewed(selectedOfferId);
+  }, [
+    offerDetailQuery.dataUpdatedAt,
+    offerDetailQuery.isSuccess,
+    selectedOfferId,
+    signedIn,
+  ]);
 
   const selectedFeature = useMemo(() => {
     if (selectedId === null) return null;
@@ -621,7 +663,7 @@ export function MapExplorer() {
             state={searchState}
             quickFilters={quickFiltersQuery.data ?? []}
             quickFiltersLoading={quickFiltersQuery.isPending}
-            lastVisitAt={lastVisitAt}
+            lastVisitAt={effectiveLastVisitAt}
             onRemoveGroup={removeFilterGroup}
             onToggleQuickFilter={toggleQuickFilter}
             onToggleLastVisit={toggleLastVisit}

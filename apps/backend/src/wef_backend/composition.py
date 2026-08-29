@@ -52,10 +52,14 @@ from wef_backend.features.identity.application import (
     DeleteOwnAccount,
     DisableOwnAccount,
     IdentityService,
+    ListViewedOffers,
     LogoutSession,
+    MarkOfferViewed,
     RegisterAccount,
     ResolveSession,
     RevokeAllAccountSessions,
+    StartAccountVisit,
+    ViewHistoryService,
 )
 from wef_backend.features.identity.application.favorites import (
     AddFavoriteLocation,
@@ -69,6 +73,7 @@ from wef_backend.features.identity.infrastructure import (
     SecretsTokenService,
     SQLAlchemyFavoriteStore,
     SQLAlchemyIdentityStore,
+    SQLAlchemyViewHistoryStore,
     SystemClock,
 )
 from wef_backend.middleware.public_rate_limit import RateLimiter
@@ -95,6 +100,7 @@ class AppServices:
     close: ResourceCloser
     identity: IdentityService
     favorites: FavoriteService
+    view_history: ViewHistoryService
     contacts: ContactService
     admin: AdminService
     auth_cookie_secure: bool
@@ -111,6 +117,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
     offer_detail_adapter = SQLAlchemyOfferDetailAdapter(database.session_factory)
     identity_store = SQLAlchemyIdentityStore(database.session_factory)
     favorite_store = SQLAlchemyFavoriteStore(database.session_factory)
+    view_history_store = SQLAlchemyViewHistoryStore(database.session_factory)
     contact_store = SQLAlchemyContactStore(database.session_factory)
     hasher = PwdlibPasswordHasher()
     tokens = SecretsTokenService()
@@ -187,6 +194,11 @@ def build_services(settings: Settings | None = None) -> AppServices:
             list_favorites=ListFavoriteLocations(favorite_store),
             add_favorite=AddFavoriteLocation(favorite_store),
             remove_favorite=RemoveFavoriteLocation(favorite_store),
+        ),
+        view_history=ViewHistoryService(
+            start_visit=StartAccountVisit(view_history_store, clock),
+            mark_offer_viewed=MarkOfferViewed(view_history_store, clock),
+            list_viewed_offers=ListViewedOffers(view_history_store),
         ),
         contacts=ContactService(
             persist=PersistOfferContacts(contact_store, contact_cipher),

@@ -20,15 +20,22 @@ Visitors can apply server-defined publication quick filters such as “Last 24 h
 - Map and offer queries accept `quick_filter=<id>`; the backend resolves the cutoff timestamp.
 - Manual `published_from` and `quick_filter` are mutually exclusive.
 - Frontend renders presets from the API as toggle chips and stores the active preset in the URL.
-- The visitor-relative “New since last visit” shortcut is browser-local rather
-  than a server preset: the web app records visit-start timestamps in Web
-  Storage and applies the prior visit as an explicit `published_from` value.
-  The first visit records a baseline and leaves the shortcut disabled until the
-  next browser session.
+- The visitor-relative “New since last visit” shortcut remains an explicit
+  `published_from` filter rather than a server preset. Anonymous visitors use
+  visit-start timestamps from Web Storage. Authenticated accounts start an
+  idempotent backend visit and use its previous-visit timestamp, so the baseline
+  follows the account across browsers and devices. The first visit records a
+  baseline and leaves the shortcut disabled until the next visit.
+- Opening a public offer detail while authenticated records an account-scoped
+  viewed-offer aggregate. Anonymous browsing remains untracked by the backend,
+  and a view-history failure falls back to the browser-local visit behavior.
 
 ## Promoted tasks
 
 - [E11-T1: Implement scalable quick filters with last-day preset](tasks/E11-T1-implement-scalable-quick-filters.md) — P1/M, M3
+
+Issue #186 added the backend-authoritative authenticated visit and offer-view
+follow-up after the original frontend-only delivery.
 
 ## Adding a new preset
 

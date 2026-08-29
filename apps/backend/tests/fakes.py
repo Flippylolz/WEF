@@ -61,6 +61,14 @@ from wef_backend.features.identity.application.identity import (
     ResolveSession,
     RevokeAllAccountSessions,
 )
+from wef_backend.features.identity.application.view_history import (
+    AccountVisitView,
+    ListViewedOffers,
+    MarkOfferViewed,
+    StartAccountVisit,
+    ViewedOfferView,
+    ViewHistoryService,
+)
 from wef_backend.features.identity.domain.model import Account, AccountSession, UserRole
 
 
@@ -436,6 +444,93 @@ def build_favorites_service(
         list_favorites=ListFavoriteLocations(favorite_store),
         add_favorite=AddFavoriteLocation(favorite_store),
         remove_favorite=RemoveFavoriteLocation(favorite_store),
+    )
+
+
+@dataclass
+class FakeViewHistoryStore:
+    """In-memory account visit and viewed-offer history."""
+
+    public_offers: set[UUID] = field(default_factory=set)
+    visits: dict[tuple[UUID, UUID], AccountVisitView] = field(default_factory=dict)
+    viewed_offers: dict[tuple[UUID, UUID], ViewedOfferView] = field(default_factory=dict)
+
+    async def start_visit(
+        self,
+        *,
+        user_id: UUID,
+        visit_id: UUID,
+        started_at: datetime,
+    ) -> AccountVisitView:
+        """Create one visit and keep its baseline stable on replay."""
+        key = (user_id, visit_id)
+        existing = self.visits.get(key)
+        if existing is not None:
+            return existing
+        previous = max(
+            (
+                visit.current_visit_at
+                for (owner, _), visit in self.visits.items()
+                if owner == user_id
+            ),
+            default=None,
+        )
+        created = AccountVisitView(
+            visit_id=visit_id,
+            current_visit_at=started_at,
+            previous_visit_at=previous,
+        )
+        self.visits[key] = created
+        return created
+
+    async def mark_offer_viewed(
+        self,
+        *,
+        user_id: UUID,
+        offer_id: UUID,
+        viewed_at: datetime,
+    ) -> ViewedOfferView | None:
+        """Aggregate public-offer views for one account."""
+        if offer_id not in self.public_offers:
+            return None
+        key = (user_id, offer_id)
+        existing = self.viewed_offers.get(key)
+        updated = ViewedOfferView(
+            offer_id=offer_id,
+            first_viewed_at=(existing.first_viewed_at if existing else viewed_at),
+            last_viewed_at=viewed_at,
+            view_count=(existing.view_count + 1 if existing else 1),
+        )
+        self.viewed_offers[key] = updated
+        return updated
+
+    async def list_viewed_offers(
+        self,
+        user_id: UUID,
+    ) -> tuple[ViewedOfferView, ...]:
+        """Return most-recent-first public offer views."""
+        return tuple(
+            view
+            for (owner, _), view in sorted(
+                self.viewed_offers.items(),
+                key=lambda entry: entry[1].last_viewed_at,
+                reverse=True,
+            )
+            if owner == user_id and view.offer_id in self.public_offers
+        )
+
+
+def build_view_history_service(
+    store: FakeViewHistoryStore | None = None,
+    clock: FakeClock | None = None,
+) -> ViewHistoryService:
+    """Compose account view history from deterministic fakes."""
+    view_store = store or FakeViewHistoryStore()
+    view_clock = clock or FakeClock()
+    return ViewHistoryService(
+        start_visit=StartAccountVisit(view_store, view_clock),
+        mark_offer_viewed=MarkOfferViewed(view_store, view_clock),
+        list_viewed_offers=ListViewedOffers(view_store),
     )
 
 

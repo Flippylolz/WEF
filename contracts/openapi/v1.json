@@ -53,6 +53,41 @@
         "title": "AccountResponse",
         "type": "object"
       },
+      "AccountVisitResponse": {
+        "additionalProperties": false,
+        "description": "Stable current and previous visit timestamps for one browser visit.",
+        "properties": {
+          "current_visit_at": {
+            "format": "date-time",
+            "title": "Current Visit At",
+            "type": "string"
+          },
+          "previous_visit_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Visit At"
+          },
+          "visit_id": {
+            "format": "uuid",
+            "title": "Visit Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "visit_id",
+          "current_visit_at",
+          "previous_visit_at"
+        ],
+        "title": "AccountVisitResponse",
+        "type": "object"
+      },
       "Availability": {
         "description": "Availability states understood by every delivery channel.",
         "enum": [
@@ -1720,6 +1755,57 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "ViewedOfferListResponse": {
+        "additionalProperties": false,
+        "description": "Most-recent-first public offer view history.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ViewedOfferResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ViewedOfferListResponse",
+        "type": "object"
+      },
+      "ViewedOfferResponse": {
+        "additionalProperties": false,
+        "description": "One account's aggregate view state for a public offer.",
+        "properties": {
+          "first_viewed_at": {
+            "format": "date-time",
+            "title": "First Viewed At",
+            "type": "string"
+          },
+          "last_viewed_at": {
+            "format": "date-time",
+            "title": "Last Viewed At",
+            "type": "string"
+          },
+          "offer_id": {
+            "format": "uuid",
+            "title": "Offer Id",
+            "type": "string"
+          },
+          "view_count": {
+            "title": "View Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "offer_id",
+          "first_viewed_at",
+          "last_viewed_at",
+          "view_count"
+        ],
+        "title": "ViewedOfferResponse",
         "type": "object"
       },
       "ViewportListingItemResponse": {
@@ -3414,6 +3500,128 @@
         "summary": "List server-defined quick filter presets",
         "tags": [
           "filters"
+        ]
+      }
+    },
+    "/api/v1/view-history/offers": {
+      "get": {
+        "description": "Return public viewed-offer history newest-first.",
+        "operationId": "listViewedOffers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewedOfferListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          }
+        },
+        "summary": "List viewed offers for the account",
+        "tags": [
+          "view-history"
+        ]
+      }
+    },
+    "/api/v1/view-history/offers/{offer_id}": {
+      "put": {
+        "description": "Record one successful authenticated public-offer detail view.",
+        "operationId": "markOfferViewed",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewedOfferResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "404": {
+            "description": "The offer is absent or not public."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Record one viewed offer",
+        "tags": [
+          "view-history"
+        ]
+      }
+    },
+    "/api/v1/view-history/visits/{visit_id}": {
+      "put": {
+        "description": "Capture and return the prior authenticated visit baseline.",
+        "operationId": "startAccountVisit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "visit_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Visit Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountVisitResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start one idempotent account visit",
+        "tags": [
+          "view-history"
         ]
       }
     }

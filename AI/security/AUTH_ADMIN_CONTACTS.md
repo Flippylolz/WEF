@@ -165,6 +165,13 @@ Do not store the raw contact, IP address/hash, or user-agent in the audit row or
 
 Audit access is owner-only and not exposed through the public API. A privacy notice and formal retention policy are out of scope; data minimization is therefore mandatory. Retention/deletion can be added later without changing reveal authorization.
 
+Authenticated visit and viewed-offer history stores only account, public offer,
+timestamps, a client-generated visit UUID, and an aggregate count. It stores no
+IP address, user-agent, raw source text, or contact value. Anonymous visits stay
+in browser storage. Account deletion cascades both history tables, visit rows
+are bounded to the latest 50 per account, and list responses omit offers that
+are no longer public.
+
 ## ActiveAdmin-like owner console
 
 Use Starlette Admin as the initial server-rendered administration foundation:
