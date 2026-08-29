@@ -22,9 +22,19 @@ from wef_backend.features.identity.application.identity import (
     RevokeAllAccountSessions,
     TokenService,
 )
+from wef_backend.features.identity.application.view_history import (
+    AccountVisitView,
+    ListViewedOffers,
+    MarkOfferViewed,
+    StartAccountVisit,
+    ViewedOfferView,
+    ViewHistoryService,
+    ViewHistoryStore,
+)
 
 __all__ = [
     "AccountView",
+    "AccountVisitView",
     "AuthenticateAccount",
     "BootstrapOwner",
     "BootstrapOwnerError",
@@ -35,8 +45,10 @@ __all__ = [
     "IdentityService",
     "IdentityStore",
     "InvalidCredentialsError",
+    "ListViewedOffers",
     "LoginResult",
     "LogoutSession",
+    "MarkOfferViewed",
     "PasswordHasher",
     "PasswordPolicyError",
     "RateLimiter",
@@ -44,7 +56,11 @@ __all__ = [
     "RegistrationDeclinedError",
     "ResolveSession",
     "RevokeAllAccountSessions",
+    "StartAccountVisit",
     "TokenService",
+    "ViewHistoryService",
+    "ViewHistoryStore",
+    "ViewedOfferView",
 ]
 
 from wef_backend.features.identity.domain.model import PasswordPolicyError

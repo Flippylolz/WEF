@@ -142,6 +142,26 @@ Authenticated accounts can persist public catalog locations:
 
 Favorites contain only public location labels and never create access to hidden locations or offers.
 
+### View-history endpoints
+
+Authenticated accounts can carry a “New since last visit” baseline across
+browsers and retain a bounded record of opened public offers:
+
+- `PUT /api/v1/view-history/visits/{visit_id}` starts one idempotent browser
+  visit and returns its stable `current_visit_at` and nullable
+  `previous_visit_at`. Replaying the same account/visit UUID does not advance
+  the baseline.
+- `PUT /api/v1/view-history/offers/{offer_id}` records a successful public
+  offer-detail view, preserving the first timestamp while advancing the last
+  timestamp and count. Absent or non-public offers return `404`.
+- `GET /api/v1/view-history/offers` lists the account's still-public viewed
+  offers, most-recent first.
+
+All three endpoints are self-only, require an active authenticated session,
+apply the identity origin/CSRF policy, and use no-store response handling.
+Anonymous “New since last visit” remains browser-local and does not write
+backend history.
+
 ### Owner administration console
 
 Starlette Admin is mounted at `/admin` after HTTPS and is not included in public OpenAPI. Owner-only custom views/actions invoke application interactors for user disable/reactivate, session revocation, forced temporary-password reset, and reveal/admin audit queries. Generic model CRUD cannot access password hashes, sessions, contact ciphertext/plaintext, or secrets.

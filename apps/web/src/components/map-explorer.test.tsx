@@ -16,6 +16,7 @@ import * as authApi from "@/lib/auth-api";
 import * as catalogApi from "@/lib/catalog-api";
 import * as favoritesApi from "@/lib/favorites-api";
 import { lastVisitStorageKeys } from "@/lib/last-visit";
+import * as viewHistoryApi from "@/lib/view-history-api";
 
 const navigation = vi.hoisted(() => ({
   listeners: new Set<() => void>(),
@@ -322,6 +323,12 @@ describe("MapExplorer", () => {
     vi.spyOn(favoritesApi, "fetchFavorites").mockResolvedValue({
       state: "ready",
       data: { items: [] },
+    });
+    vi.spyOn(viewHistoryApi, "startAccountVisit").mockResolvedValue({
+      state: "error",
+    });
+    vi.spyOn(viewHistoryApi, "markOfferViewed").mockResolvedValue({
+      state: "error",
     });
   });
 
@@ -777,6 +784,11 @@ describe("MapExplorer", () => {
     await user.click(
       await screen.findByRole("button", { name: "detailRevealPasswordAction" }),
     );
+    await waitFor(() => {
+      expect(viewHistoryApi.markOfferViewed).toHaveBeenCalledWith(
+        "20000000-0000-4000-8000-000000000001",
+      );
+    });
     expect(await screen.findByText("forcedPasswordTitle")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "mobileFullList" }));
     expect(
@@ -1047,6 +1059,53 @@ describe("MapExplorer", () => {
     );
     expect(window.sessionStorage.getItem(lastVisitStorageKeys.previous)).toBe(
       priorVisit,
+    );
+  });
+
+  it("uses the authenticated account visit as the cross-device baseline", async () => {
+    const localPriorVisit = "2026-08-26T08:30:00.000Z";
+    const accountPriorVisit = "2026-08-25T07:15:00.000Z";
+    window.localStorage.setItem(lastVisitStorageKeys.last, localPriorVisit);
+    vi.mocked(authApi.fetchCurrentAccount).mockResolvedValue({
+      state: "ready",
+      data: {
+        id: "00000000-0000-4000-8000-000000000001",
+        username: "warsaw",
+        role: "user",
+        must_change_password: false,
+        created_at: "2026-01-01T00:00:00Z",
+        last_login_at: null,
+      },
+    });
+    vi.mocked(viewHistoryApi.startAccountVisit).mockResolvedValue({
+      state: "ready",
+      data: {
+        visit_id: "30000000-0000-4000-8000-000000000001",
+        current_visit_at: "2026-08-29T08:00:00Z",
+        previous_visit_at: accountPriorVisit,
+      },
+    });
+    renderExplorer();
+    await waitFor(() => {
+      expect(viewHistoryApi.startAccountVisit).toHaveBeenCalledWith(
+        expect.any(String),
+        { signal: expect.any(AbortSignal) },
+      );
+      expect(
+        screen.getByRole("button", {
+          name: "quickFilter.since_last_visit",
+        }),
+      ).toBeEnabled();
+    });
+
+    const user = userEvent.setup();
+    await user.click(
+      screen.getByRole("button", { name: "quickFilter.since_last_visit" }),
+    );
+
+    expect(navigation.push).toHaveBeenLastCalledWith(
+      "/?published_from=2026-08-25T07%3A15%3A00.000Z",
+      { scroll: false },
     );
   });
 

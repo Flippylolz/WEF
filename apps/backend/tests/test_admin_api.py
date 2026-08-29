@@ -17,6 +17,7 @@ from tests.fakes import (
     build_contact_service,
     build_favorites_service,
     build_identity_service,
+    build_view_history_service,
     close_nothing,
     empty_facet_snapshot,
 )
@@ -55,6 +56,7 @@ async def admin_client(
         close=close_nothing,
         identity=build_identity_service(store=identity_store),
         favorites=build_favorites_service(),
+        view_history=build_view_history_service(),
         contacts=build_contact_service(),
         admin=build_admin_service(store=identity_store),
         auth_cookie_secure=False,

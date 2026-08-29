@@ -409,6 +409,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/view-history/offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List viewed offers for the account
+         * @description Return public viewed-offer history newest-first.
+         */
+        get: operations["listViewedOffers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/view-history/offers/{offer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Record one viewed offer
+         * @description Record one successful authenticated public-offer detail view.
+         */
+        put: operations["markOfferViewed"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/view-history/visits/{visit_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Start one idempotent account visit
+         * @description Capture and return the prior authenticated visit baseline.
+         */
+        put: operations["startAccountVisit"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -436,6 +496,24 @@ export interface components {
             role: "user" | "owner";
             /** Username */
             username: string;
+        };
+        /**
+         * AccountVisitResponse
+         * @description Stable current and previous visit timestamps for one browser visit.
+         */
+        AccountVisitResponse: {
+            /**
+             * Current Visit At
+             * Format: date-time
+             */
+            current_visit_at: string;
+            /** Previous Visit At */
+            previous_visit_at: string | null;
+            /**
+             * Visit Id
+             * Format: uuid
+             */
+            visit_id: string;
         };
         /**
          * Availability
@@ -1073,6 +1151,37 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * ViewedOfferListResponse
+         * @description Most-recent-first public offer view history.
+         */
+        ViewedOfferListResponse: {
+            /** Items */
+            items: components["schemas"]["ViewedOfferResponse"][];
+        };
+        /**
+         * ViewedOfferResponse
+         * @description One account's aggregate view state for a public offer.
+         */
+        ViewedOfferResponse: {
+            /**
+             * First Viewed At
+             * Format: date-time
+             */
+            first_viewed_at: string;
+            /**
+             * Last Viewed At
+             * Format: date-time
+             */
+            last_viewed_at: string;
+            /**
+             * Offer Id
+             * Format: uuid
+             */
+            offer_id: string;
+            /** View Count */
+            view_count: number;
         };
         /**
          * ViewportListingItemResponse
@@ -1963,6 +2072,116 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+        };
+    };
+    listViewedOffers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewedOfferListResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    markOfferViewed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewedOfferResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The offer is absent or not public. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    startAccountVisit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                visit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountVisitResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

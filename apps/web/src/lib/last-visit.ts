@@ -1,6 +1,7 @@
 const LAST_VISIT_KEY = "wef:last-visit-started-at";
 const CURRENT_VISIT_KEY = "wef:current-visit-started-at";
 const PREVIOUS_VISIT_KEY = "wef:previous-visit-started-at";
+const ACCOUNT_VISIT_KEY_PREFIX = "wef:account-visit-id:";
 
 type VisitStorage = Pick<Storage, "getItem" | "removeItem" | "setItem">;
 
@@ -46,8 +47,27 @@ export function startBrowserVisit(
   }
 }
 
+export function getOrCreateAccountVisitId(
+  storage: VisitStorage,
+  accountId: string,
+  createId: () => string = () => crypto.randomUUID(),
+): string {
+  const key = `${ACCOUNT_VISIT_KEY_PREFIX}${accountId}`;
+  try {
+    const existing = storage.getItem(key);
+    if (existing !== null) return existing;
+    const visitId = createId();
+    storage.setItem(key, visitId);
+    return visitId;
+  } catch {
+    // The server still receives a visit when browser storage is unavailable.
+    return createId();
+  }
+}
+
 export const lastVisitStorageKeys = {
   current: CURRENT_VISIT_KEY,
   last: LAST_VISIT_KEY,
   previous: PREVIOUS_VISIT_KEY,
+  accountPrefix: ACCOUNT_VISIT_KEY_PREFIX,
 } as const;

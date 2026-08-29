@@ -13,6 +13,9 @@ from wef_backend.features.identity.infrastructure.security import (
     SystemClock,
 )
 from wef_backend.features.identity.infrastructure.store import SQLAlchemyIdentityStore
+from wef_backend.features.identity.infrastructure.view_history_store import (
+    SQLAlchemyViewHistoryStore,
+)
 
 __all__ = [
     "IdentityBase",
@@ -20,6 +23,7 @@ __all__ = [
     "PwdlibPasswordHasher",
     "SQLAlchemyFavoriteStore",
     "SQLAlchemyIdentityStore",
+    "SQLAlchemyViewHistoryStore",
     "SecretsTokenService",
     "SessionRow",
     "SystemClock",
