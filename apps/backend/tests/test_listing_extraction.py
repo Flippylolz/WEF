@@ -282,6 +282,43 @@ def test_labeled_location_wins_and_conflicting_pin_lines_stay_null() -> None:
         assert all(span.extract(text) for span in warning.spans)
 
 
+def test_currency_word_prices_keep_grouped_magnitude() -> None:
+    """Tracked currency words may abut the number without truncating it."""
+    samples = (
+        "Покупка | Квартира\n💸Цена:850 000злотых",  # noqa: RUF001
+        "Покупка | Квартира\nЦена: 850000 злотых",  # noqa: RUF001
+        "For sale | Apartment\nPrice: 850 000 złotych",
+    )
+    for text in samples:
+        result = _candidate(text)
+        listing = result.listing
+        assert listing is not None
+        assert listing.apartment_price is not None
+        assert listing.apartment_price.value == MoneyRange(
+            DecimalRange(Decimal(850_000), Decimal(850_000)),
+            "PLN",
+        )
+        assert listing.apartment_price.provenance.rule_version == PARSER_VERSION
+
+
+def test_per_area_only_currency_word_price_stays_reviewable() -> None:
+    """A currency-word per-area price alone never invents a total."""
+    result = _candidate("Покупка | Квартира\nЦена: 12 000злотых за m²")  # noqa: RUF001
+    assert result.listing is not None
+    assert result.listing.apartment_price is None
+    assert [(warning.code, warning.field_name) for warning in result.warnings] == [
+        (ExtractionWarningCode.INVALID_RANGE, "apartment_price")
+    ]
+
+    untracked = _candidate("For sale | Apartment\nPrice: 500 000 groszy")
+    assert untracked.listing is not None
+    assert untracked.listing.apartment_price is not None
+    assert untracked.listing.apartment_price.value.currency is None
+    assert ExtractionWarningCode.UNKNOWN_CURRENCY in {
+        warning.code for warning in untracked.warnings
+    }
+
+
 def test_unknown_currency_remains_null_and_reviewable() -> None:
     """An unlabeled amount never silently becomes PLN."""
     text = json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"][2]["text"]
