@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E17-T4
 epic: E17
 title: "Canonical filter vocabulary and typo rerouting"
-status: ready
+status: done
 revision: 1
 priority: P1
 size: M
@@ -38,6 +38,13 @@ branch:
   name: feat/E17-T4-canonical-filter-vocabulary-and-typo-rerouting
   task_id: E17-T4
   one_task_only: true
+completion:
+  completed_by: "ZCode agent under owner instruction"
+  completed_at: "2026-08-30T00:00:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/201"
+  evidence:
+    - "Write-time canonical district vocabulary with reviewed typo rerouting, variant-expanding filter matching, canonical facet collapsing."
+    - "PR #201 merged after Backend, Frontend and contract, Repository safety, Runtime images, and Coverage badge checks passed"
 invalidation:
   invalidated_by: null
   invalidated_at: null

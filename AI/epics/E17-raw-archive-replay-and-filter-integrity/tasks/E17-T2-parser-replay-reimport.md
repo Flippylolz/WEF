@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E17-T2
 epic: E17
 title: "Parser replay re-import"
-status: ready
+status: done
 revision: 1
 priority: P1
 size: M
@@ -38,6 +38,13 @@ branch:
   name: feat/E17-T2-parser-replay-reimport
   task_id: E17-T2
   one_task_only: true
+completion:
+  completed_by: "ZCode agent under owner instruction"
+  completed_at: "2026-08-30T00:00:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/208"
+  evidence:
+    - "wef-replay-parser command re-derives offers from the archive in reprocess mode; idempotent; sentinel-aware; repairs stale-parser rows."
+    - "PR #208 merged after Backend, Frontend and contract, Repository safety, Runtime images, and Coverage badge checks passed"
 invalidation:
   invalidated_by: null
   invalidated_at: null

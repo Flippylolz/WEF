@@ -33,6 +33,7 @@ dependency_gate:
   verified_by: "ZCode agent under owner instruction"
   verified_at: "2026-08-29T17:10:10Z"
   evidence: []
+note: "Owner-gated: epic completion waits on the owner-supplied backup replay and production promotion (see epic README)."
 branch:
   required: true
   name: doc/E17-T6-owner-backup-replay-and-production-promotion
