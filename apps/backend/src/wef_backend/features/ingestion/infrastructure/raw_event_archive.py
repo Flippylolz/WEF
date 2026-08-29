@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
+from wef_backend.features.ingestion.application.telegram_events import (
+    RawArchiveKind,
+    RawArchiveOutcome,
+    RawEventRecord,
+)
 from wef_backend.features.ingestion.infrastructure.models import TelegramRawEventRow
 
 if TYPE_CHECKING:
@@ -18,21 +22,7 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-RawEventKind = Literal["new", "edit", "delete"]
 _MAX_ATTEMPTS = 5
-
-
-@dataclass(frozen=True, slots=True)
-class RawEventRecord:
-    """One landed verbatim event awaiting (or retaining) its processing outcome."""
-
-    id: UUID
-    event_kind: RawEventKind
-    channel_external_id: str
-    external_message_id: int
-    payload: Mapping[str, object]
-    received_at: datetime
-    attempts: int
 
 
 class SQLAlchemyRawEventArchive:
@@ -45,7 +35,7 @@ class SQLAlchemyRawEventArchive:
     async def land(
         self,
         *,
-        event_kind: RawEventKind,
+        event_kind: RawArchiveKind,
         channel_external_id: str,
         external_message_id: int,
         payload: Mapping[str, object],
@@ -103,7 +93,7 @@ class SQLAlchemyRawEventArchive:
             return tuple(
                 RawEventRecord(
                     id=row.id,
-                    event_kind=row.event_kind,  # type: ignore[arg-type]
+                    event_kind=cast(RawArchiveKind, row.event_kind),
                     channel_external_id=row.channel_external_id,
                     external_message_id=row.external_message_id,
                     payload=cast("Mapping[str, object]", row.payload_json),
@@ -117,7 +107,7 @@ class SQLAlchemyRawEventArchive:
         self,
         event_id: UUID,
         *,
-        outcome: Literal["processed", "failed", "skipped_non_candidate"],
+        outcome: RawArchiveOutcome,
         error_category: str | None = None,
         completed_at: datetime | None = None,
     ) -> None:
