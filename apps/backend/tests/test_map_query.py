@@ -58,6 +58,28 @@ def test_filter_rejects_contradictory_ranges() -> None:
         )
 
 
+def test_normalized_key_identity_is_repeat_and_order_stable() -> None:
+    """Equivalent repeated/ordered filter inputs serialize to one identity."""
+    base = MapFilters(bbox=BoundingBox.parse("20.9,52.1,21.2,52.4"))
+    repeated = MapFilters(
+        bbox=BoundingBox.parse("20.9,52.1,21.2,52.4"),
+        districts=("Wola", "Wola", "Mokotów"),
+        rooms=(2, 1, 2),
+    )
+    ordered = MapFilters(
+        bbox=BoundingBox.parse("20.9,52.1,21.2,52.4"),
+        districts=("Mokotów", "Wola"),
+        rooms=(1, 2),
+    )
+    assert repeated.normalized_key() == ordered.normalized_key()
+    assert (
+        base.normalized_key()
+        == MapFilters(
+            bbox=BoundingBox.parse("20.9,52.1,21.2,52.4"),
+        ).normalized_key()
+    )
+
+
 async def test_etag_normalizes_equivalent_filters_and_tracks_data_version() -> None:
     """Request ordering does not churn ETags while persisted changes do."""
     bbox = BoundingBox.parse("20.9000000,52.1000,21.200,52.400")

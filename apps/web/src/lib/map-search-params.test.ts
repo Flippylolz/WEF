@@ -51,6 +51,20 @@ describe("map search parameters", () => {
     });
   });
 
+  it("orders repeated districts by code units, not the runtime locale", () => {
+    const state = parseMapSearchParams(
+      new URLSearchParams(
+        "district=%6Eowa&district=Wola&district=wola&district=Ochota",
+      ),
+    );
+
+    // Code-unit order: uppercase letters sort before lowercase ones.
+    expect(state.districts).toEqual(["Ochota", "Wola", "nowa", "wola"]);
+    expect(serializeMapSearchState(state)).toContain(
+      "district=Ochota&district=Wola&district=nowa&district=wola",
+    );
+  });
+
   it("normalizes repeats and safely falls back for invalid syntax", () => {
     const state = parseMapSearchParams(
       new URLSearchParams(

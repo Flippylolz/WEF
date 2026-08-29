@@ -242,11 +242,14 @@ function validCalendarDate(year: number, month: number, day: number) {
 }
 
 function uniqueSorted<T extends number | string>(values: T[]) {
-  return [...new Set(values)].sort((left, right) =>
-    typeof left === "number" && typeof right === "number"
-      ? left - right
-      : String(left).localeCompare(String(right)),
-  );
+  // Code-unit ordering keeps URL state identical across runtimes and locales.
+  return [...new Set(values)].sort((left, right) => {
+    if (typeof left === "number" && typeof right === "number")
+      return left - right;
+    const l = String(left);
+    const r = String(right);
+    return l < r ? -1 : l > r ? 1 : 0;
+  });
 }
 
 function appendNumber(
