@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E16-T1
 epic: E16
 title: "Prevent cluster expansion from freezing the map"
-status: in_progress
+status: done
 revision: 1
 priority: P0
 size: S
@@ -41,10 +41,13 @@ branch:
   created_at: "2026-08-29T06:08:03Z"
   pull_request: https://github.com/Flippylolz/WEF/pull/194
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Codex agent under owner instruction"
+  completed_at: "2026-08-29T06:31:40Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/194"
+  evidence:
+    - "PR #194 merged as b09314d104045076e727e183d3f40819c6fcaa48 after Backend, Frontend and contract, Repository safety, Runtime images, and Coverage badge passed"
+    - "Release and deploy production run 33238276936 passed candidate verification, immutable image publication, activation, and deployment verification"
+    - "Production version b09314d: two numbered clusters expanded; later zoom, pan, and pin selection worked with no browser console errors"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -84,15 +87,15 @@ error, corrupting the canvas, or disabling subsequent map interaction.
 
 ## Acceptance criteria
 
-- [ ] Clicking multiple numbered clusters expands each cluster and leaves the
+- [x] Clicking multiple numbered clusters expands each cluster and leaves the
       map responsive to pan, zoom, and later cluster/pin activation.
-- [ ] No singular-matrix/`_calcMatrices` error is emitted during cluster
+- [x] No singular-matrix/`_calcMatrices` error is emitted during cluster
       activation in the real-browser verification.
-- [ ] Missing, rejected, and non-finite expansion targets do not invoke a
+- [x] Missing, rejected, and non-finite expansion targets do not invoke a
       camera update or surface an unhandled rejection.
-- [ ] Unclustered pin selection, URL viewport reporting, reduced-motion
+- [x] Unclustered pin selection, URL viewport reporting, reduced-motion
       behavior, and existing map/list coordination remain green.
-- [ ] Applicable format, lint, typecheck, frontend tests/coverage, production
+- [x] Applicable format, lint, typecheck, frontend tests/coverage, production
       build, and real-browser checks pass.
 
 ## Test plan
