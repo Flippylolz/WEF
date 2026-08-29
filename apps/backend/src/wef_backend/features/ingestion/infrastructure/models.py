@@ -21,6 +21,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text as sa_text,
     Uuid,
     func,
 )
@@ -679,3 +680,47 @@ class OfferMediaRow(IngestionBase):
     position: Mapped[int] = mapped_column(Integer)
     association_rule: Mapped[str] = mapped_column(String(24))
     association_confidence: Mapped[Decimal] = mapped_column(Numeric(4, 3))
+
+
+class TelegramRawEventRow(IngestionBase):
+    """Verbatim landed live event retained independently of canonical state."""
+
+    __tablename__ = "telegram_raw_events"
+    __table_args__ = (
+        UniqueConstraint(
+            "channel_external_id",
+            "external_message_id",
+            "event_kind",
+            "checksum",
+            name="uq_telegram_raw_events_dedupe",
+        ),
+        CheckConstraint(
+            "event_kind IN ('new', 'edit', 'delete')",
+            name="ck_telegram_raw_events_kind",
+        ),
+        CheckConstraint(
+            "outcome IS NULL OR outcome IN "
+            "('processed', 'failed', 'skipped_non_candidate')",
+            name="ck_telegram_raw_events_outcome",
+        ),
+        Index(
+            "ix_telegram_raw_events_pending",
+            "received_at",
+            postgresql_where=sa_text("processed_at IS NULL"),
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    event_kind: Mapped[str] = mapped_column(String(16))
+    channel_external_id: Mapped[str] = mapped_column(String(64))
+    external_message_id: Mapped[int] = mapped_column(BigInteger)
+    payload_json: Mapped[object] = mapped_column(JSONB)
+    checksum: Mapped[str] = mapped_column(String(64))
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.current_timestamp(),
+    )
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    outcome: Mapped[str | None] = mapped_column(String(24))
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    last_error: Mapped[str | None] = mapped_column(String(64))
