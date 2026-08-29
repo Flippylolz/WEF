@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E16
 title: "Reliable numbered map-cluster expansion"
-status: selected
+status: planning
 milestones: [M4]
 owner: owner
 spike: SPIKE.md
@@ -16,12 +16,13 @@ implementation_plan: IMPLEMENTATION_PLAN.md
 Restore numbered map-cluster activation so it expands the selected cluster
 without corrupting MapLibre's camera state or leaving the map unusable.
 
-## Current gate
+## Approval state
 
-- [Spike](SPIKE.md): revision 1 is awaiting explicit owner approval.
-- [E16-T1](proposed-tasks/E16-T1-prevent-cluster-expansion-freeze.md):
-  proposed and non-actionable until the spike and a later implementation plan
-  are approved.
+- [Spike](SPIKE.md): revision 1 approved by the owner on 2026-08-29.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1 awaits explicit
+  owner approval.
+- [E16-T1](tasks/E16-T1-prevent-cluster-expansion-freeze.md): promoted in
+  `draft`; implementation remains blocked on plan revision 1 approval.
 - No production code is authorized by this workspace yet.
 
 ## Governing documents
@@ -32,4 +33,3 @@ without corrupting MapLibre's camera state or leaving the map unusable.
 - [ADR-004: MapLibre and OpenFreeMap](../../decisions/adr/ADR-004-maplibre-openfreemap.md)
 - [E5-T1: Map shell and grouped-pin interaction](../E5-interactive-map-frontend/tasks/E5-T1-build-map-shell-and-grouped-pin-interaction.md)
 - [E13 dark map explorer](../E13-dark-map-explorer/README.md)
-

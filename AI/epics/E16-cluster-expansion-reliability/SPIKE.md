@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E16
 title: "Prevent numbered map-cluster activation from freezing the map"
-status: awaiting_approval
+status: approved
 revision: 1
 owner: owner
 research_only: true
@@ -16,11 +16,11 @@ domain_docs:
 proposed_task_ids: [E16-T1]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "owner"
+  decided_at: "2026-08-29T06:02:08Z"
+  approved_revision: 1
+  evidence: "Codex task 01a04c13-bab1-77e1-9f2a-219b7c3dd2b8 owner instruction on 2026-08-29: merge the doc and work on the fix"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -175,11 +175,11 @@ backend contracts unchanged.
 - [x] Proposed task boundaries and dependencies are identified.
 - [x] No production or disposable proof code was created.
 - [x] `revision` represents the material content being submitted.
-- [x] `status` is `awaiting_approval` and approval remains `pending`.
+- [x] Revision 1 was explicitly owner-approved before task promotion and
+      implementation planning.
 
 ## Owner decision
 
 The owner records the decision only in the YAML `approval` object. Approval of
 this spike revision permits task refinement/promotion and implementation
 planning; it does not permit code.
-

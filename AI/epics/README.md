@@ -168,7 +168,7 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 
 ### E16
 
-- [E16-T1](E16-cluster-expansion-reliability/proposed-tasks/E16-T1-prevent-cluster-expansion-freeze.md): P0 proposed/non-actionable; task dependencies `none`; M4; requirement `P-004`; decisions `ADR-002, ADR-004`; guarded non-interpolated numbered-cluster expansion and real-browser regression verification.
+- [E16-T1](E16-cluster-expansion-reliability/tasks/E16-T1-prevent-cluster-expansion-freeze.md): P0 promoted/`draft`; task dependencies `none`; M4; requirement `P-004`; decisions `ADR-002, ADR-004`; spike revision 1 approved, implementation plan revision 1 awaiting approval; guarded non-interpolated numbered-cluster expansion and real-browser regression verification.
 
 Bootstrap and production gates are preserved: E0-T1 depends on E1-T1 so its dedicated branch can exist; E0-T2 depends on E0-T1 and E1-T1; E1-T2 depends on E0-T2; E7-T1 depends on E1-T3/E5-T1 for the anonymous rehearsal, E7-T2 retains resolved D-001 plus E7-T1, and E7-T3 retains E1-T4/E7-T1/E7-T2. Promoted E7-T6 revision 3 retains E3-T5/E7-T2/E7-T4 and no longer depends on D-002 because it transfers materialized results without provider calls; it stages a non-public candidate and leaves activation to proposed E7-T11 behind the ADR-019 gates. Shared TLS proceeds E7-T4 → E7-T8 → E7-T9 → E7-T10, with D-009 gating only E7-T10; E7-T7 retains E6-T4/E6-T5/E6-T6/E6-T7/E7-T4/E7-T10. E8-T5 depends only on E8-T3 and E8-T4—it does not depend on deferred E7-T5.
 
