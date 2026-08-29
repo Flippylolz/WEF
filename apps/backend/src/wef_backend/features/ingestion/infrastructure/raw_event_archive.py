@@ -168,8 +168,7 @@ class SQLAlchemyRawEventArchive:
                     order_by=TelegramRawEventRow.received_at.desc(),
                 )
                 .label("recency"),
-            )
-            .where(
+            ).where(
                 TelegramRawEventRow.event_kind.in_(("new", "edit")),
             )
         ).subquery()
