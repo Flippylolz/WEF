@@ -90,6 +90,9 @@ const clusterCountLayer: LayerProps = {
   filter: ["has", "point_count"],
   layout: {
     "text-field": ["get", "point_count_abbreviated"],
+    // MapLibre's fallback stack ("Open Sans Regular, Arial Unicode MS
+    // Regular") is not hosted by OpenFreeMap and 404s every glyph range.
+    "text-font": ["Noto Sans Regular"],
     "text-size": 13,
   },
   paint: { "text-color": "#e6edf3" },
