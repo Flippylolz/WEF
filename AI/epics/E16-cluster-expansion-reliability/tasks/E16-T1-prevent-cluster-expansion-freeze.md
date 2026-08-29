@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E16-T1
 epic: E16
 title: "Prevent cluster expansion from freezing the map"
-status: ready
+status: in_progress
 revision: 1
 priority: P0
 size: S

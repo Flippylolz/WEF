@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E16
 title: "Reliable numbered map-cluster expansion"
-status: ready
+status: in_progress
 milestones: [M4]
 owner: owner
 spike: SPIKE.md
@@ -22,8 +22,8 @@ without corrupting MapLibre's camera state or leaving the map unusable.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1 approved by the
   owner on 2026-08-29.
 - [E16-T1](tasks/E16-T1-prevent-cluster-expansion-freeze.md): promoted in
-  `ready`; its approval/dependency gates are satisfied and its dedicated branch
-  is recorded.
+  `in_progress`; its approval/dependency gates are satisfied and implementation
+  is isolated on its recorded dedicated branch.
 
 ## Governing documents
 

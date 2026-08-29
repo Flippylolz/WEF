@@ -11,6 +11,7 @@ const setWorkerUrl = vi.hoisted(() => vi.fn());
 vi.mock("maplibre-gl", () => ({ setWorkerUrl }));
 
 const easeTo = vi.fn();
+const jumpTo = vi.fn();
 const fitBounds = vi.fn();
 const resize = vi.fn();
 let resizeObserverCallback: ResizeObserverCallback | null = null;
@@ -94,6 +95,7 @@ vi.mock("react-map-gl/maplibre", () => ({
               target: {
                 getSource: () => ({ getClusterExpansionZoom }),
                 easeTo,
+                jumpTo,
               },
             })
           }
@@ -344,10 +346,11 @@ describe("WarsawMap", () => {
   it("expands a cluster instead of selecting a location", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
+    const coordinates = [21.0, 52.2];
     clickedFeature = {
       id: 7,
       properties: { cluster_id: 42 },
-      geometry: { type: "Point", coordinates: [21.0, 52.2] },
+      geometry: { type: "Point", coordinates },
     };
     render(
       <WarsawMap
@@ -366,11 +369,70 @@ describe("WarsawMap", () => {
     );
 
     expect(getClusterExpansionZoom).toHaveBeenCalledWith(42);
-    expect(easeTo).toHaveBeenCalledWith({
+    expect(jumpTo).toHaveBeenCalledWith({
       center: [21.0, 52.2],
       zoom: 13,
     });
+    expect(jumpTo.mock.calls[0]?.[0]?.center).not.toBe(coordinates);
+    expect(easeTo).not.toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("ignores rejected and non-finite cluster expansion targets", async () => {
+    const user = userEvent.setup();
+    clickedFeature = {
+      id: 7,
+      properties: { cluster_id: 42 },
+      geometry: { type: "Point", coordinates: [21.0, 52.2] },
+    };
+    const view = render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+      />,
+    );
+
+    getClusterExpansionZoom.mockRejectedValueOnce(new Error("stale cluster"));
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-click" }),
+    );
+    expect(jumpTo).not.toHaveBeenCalled();
+
+    getClusterExpansionZoom.mockResolvedValueOnce(Number.NaN);
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-click" }),
+    );
+    expect(jumpTo).not.toHaveBeenCalled();
+
+    clickedFeature = {
+      id: 7,
+      properties: { cluster_id: 42 },
+      geometry: {
+        type: "Point",
+        coordinates: [Number.POSITIVE_INFINITY, 52.2],
+      },
+    };
+    view.rerender(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+      />,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-click" }),
+    );
+    expect(getClusterExpansionZoom).toHaveBeenCalledTimes(2);
+    expect(jumpTo).not.toHaveBeenCalled();
   });
 
   it("reports failure only after the map load timeout", () => {
@@ -550,14 +612,14 @@ describe("WarsawMap", () => {
     await user.click(
       screen.getByRole("button", { name: "simulated-map-click" }),
     );
-    expect(easeTo).not.toHaveBeenCalled();
+    expect(jumpTo).not.toHaveBeenCalled();
     await user.click(
       screen.getByRole("button", { name: "simulated-map-error" }),
     );
     expect(onFailure).toHaveBeenCalled();
   });
 
-  it("skips cluster animation when the user prefers reduced motion", async () => {
+  it("uses the non-interpolated cluster path with reduced motion", async () => {
     const user = userEvent.setup();
     clickedFeature = {
       id: 7,
@@ -580,11 +642,11 @@ describe("WarsawMap", () => {
     await user.click(
       screen.getByRole("button", { name: "simulated-map-click" }),
     );
-    expect(easeTo).toHaveBeenCalledWith({
+    expect(jumpTo).toHaveBeenCalledWith({
       center: [21.0, 52.2],
       zoom: 13,
-      duration: 0,
     });
+    expect(easeTo).not.toHaveBeenCalled();
   });
   it("recenters only when the focus target leaves the comfortable core", async () => {
     const user = userEvent.setup();
