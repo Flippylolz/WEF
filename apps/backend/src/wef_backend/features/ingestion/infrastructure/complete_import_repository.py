@@ -17,6 +17,7 @@ from wef_backend.features.ingestion.application.complete_import import (
     ProviderReservation,
     RunLease,
 )
+from wef_backend.features.ingestion.application.persistence import normalized_location_key
 from wef_backend.features.ingestion.infrastructure.models import (
     CompleteImportRunRow,
     LocationGeocodeSelectionRow,
@@ -323,14 +324,18 @@ class SQLAlchemyCompleteImportRepository:
             )
 
     async def pending_locations(self) -> Sequence[LocationWorkItem]:
-        """Return deterministic locations never processed by review policy."""
+        """Return address-bearing locations never processed by review policy."""
         async with self._session_factory() as session:
             selected = select(LocationGeocodeSelectionRow.id).where(
                 LocationGeocodeSelectionRow.location_id == LocationRow.id,
             )
             rows = await session.execute(
                 select(LocationRow.id, LocationRow.display_address, LocationRow.district)
-                .where(~selected.exists(), LocationRow.review_status == "ungeocoded")
+                .where(
+                    ~selected.exists(),
+                    LocationRow.review_status == "ungeocoded",
+                    LocationRow.normalized_address_hash != normalized_location_key(None),
+                )
                 .order_by(LocationRow.normalized_address_hash),
             )
             return tuple(LocationWorkItem(*row) for row in rows)

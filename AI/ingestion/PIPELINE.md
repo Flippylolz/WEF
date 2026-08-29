@@ -111,6 +111,21 @@ Parsing rules:
 - Do not infer missing zeroes or room counts from image captions.
 - Treat conflicting high-confidence values as `needs_review`.
 
+Location/address sources (in priority order):
+
+1. Labeled lines (`Локализация:`/`Lokalizacja:`/`adres:` and equivalents) — high confidence. This
+   matched the channel template through mid-2025.
+2. Pin-line template fallback (`e2-v4`): when no labeled line exists, the address is read from the
+   line starting with the 📍 pin emoji. The captured value stops at the next inline field emoji
+   (for example a trailing `📐` area segment) and is accepted only when it carries Warsaw evidence:
+   a street prefix token (`ul.`, `ул.`, `al.` and equivalents), a Warsaw city token, or one
+   comma/pipe segment that exactly names a canonical Warsaw district (optionally behind a
+   `район`/`dzielnica` word or a parenthesized neighborhood). Prose sections that reuse the pin
+   emoji (`📍 Локация:` marketing blocks) and out-of-Warsaw localities fail closed to no location.
+   The same accepted segment set populates the district field at medium confidence
+   (`extract.location_pin` / `extract.district_pin` rules); divergent pin lines emit
+   `conflicting_values` instead of choosing.
+
 ### 6. Normalization
 
 Address normalization produces a comparison/search form, not replacement display copy:
@@ -174,6 +189,13 @@ For the seed import, the public Nominatim instance may be used only as a small, 
 - Clear OpenStreetMap attribution and license compliance.
 
 The importer must be able to stop and resume without repeating cached requests. Recurring Telegram ingestion uses the [D-002 recurring Geoapify retention](../decisions/deferred/D-002-recurring-geocoding-provider.md) from [E8-T4](../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md).
+
+Sentinel policy: candidates whose address cannot be parsed share one durable `Unknown location`
+row (`normalized_location_key(None)`). That sentinel is an accounting placeholder, not an address:
+the geocode stage never queues it for provider resolution, because geocoding a non-address yields
+a low-confidence Warsaw-centroid result that would pin every such offer to the city center. Such
+offers stay `ungeocoded` and off the map until a source edit or a reprocess run supplies a real
+address.
 
 Short Google Maps links are resolved only through a controlled, rate-limited resolver that records redirect targets and validates hosts. Redirect content is data, never executed.
 

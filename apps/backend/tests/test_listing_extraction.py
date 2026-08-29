@@ -183,6 +183,105 @@ def test_unit_extracts_non_pln_scalar_values() -> None:
     assert listing.floor.value == "4"
 
 
+def test_pin_line_location_extracts_template_address_without_labels() -> None:
+    """Live template pin lines yield location and district when labels are absent."""
+    text = (
+        "🏙 Апартамент в центре Варшавы | Варшава\n"
+        "\n"
+        "📍ul. Chmielna, Śródmieście, Warszawa\n"
+        "📐 2 комнаты | 5 этаж | 44 м2\n"
+        "\n"
+        "💸 Цена квартиры — 1 800 000 zł"
+    )
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+
+    assert listing.location is not None
+    assert listing.location.value == "ul. Chmielna, Śródmieście, Warszawa"
+    assert listing.location.provenance.rule_id == "extract.location_pin"
+    assert listing.location.provenance.rule_version == PARSER_VERSION
+    assert listing.location.provenance.confidence is Confidence.MEDIUM
+    for span in listing.location.provenance.spans:
+        assert span.extract(text) == "ul. Chmielna, Śródmieście, Warszawa"
+    assert listing.district is not None
+    assert listing.district.value == "Śródmieście"
+    assert listing.district.provenance.rule_id == "extract.district_pin"
+
+
+def test_pin_line_variants_and_inline_field_boundaries() -> None:
+    """City-first, pipe-separated, and inline area fields all stay bounded."""
+    city_first = _candidate(
+        "Покупка | Квартира\n📍 Варшава, Wola, ul. Stańczyka\nЦена: 850 000 zł",  # noqa: RUF001
+    )
+    assert city_first.listing is not None
+    assert city_first.listing.location is not None
+    assert city_first.listing.location.value == "Варшава, Wola, ul. Stańczyka"
+    assert city_first.listing.district is not None
+    assert city_first.listing.district.value == "Wola"
+
+    piped = _candidate("Покупка | Квартира\n📍 Wola | ул. Konstruktorska\nЦена: 850 000 zł")  # noqa: RUF001
+    assert piped.listing is not None
+    assert piped.listing.location is not None
+    assert piped.listing.location.value == "Wola | ул. Konstruktorska"
+
+    merged = _candidate(
+        "Покупка | Квартира\n"
+        "📍 ul. Przerwana, Włochy, Warszawa 📐 75,48 м² | 3 / 6 этаж\n"
+        "Цена: 500 000 zł",
+    )
+    assert merged.listing is not None
+    assert merged.listing.location is not None
+    assert merged.listing.location.value == "ul. Przerwana, Włochy, Warszawa"
+    assert merged.listing.district is not None
+    assert merged.listing.district.value == "Włochy"
+
+
+def test_pin_line_rejects_prose_headers_and_out_of_scope_localities() -> None:
+    """Section headers, marketing prose, and non-Warsaw localities stay null."""
+    header = _candidate(
+        "Покупка | Квартира\n"
+        "📍 Локация:\n"
+        "Śródmieście — главный деловой и lifestyle-центр Варшавы.\n"
+        "Цена: 500 000 zł",
+    )
+    assert header.listing is not None
+    assert header.listing.location is None
+    assert header.listing.district is None
+
+    out_of_scope = _candidate(
+        "Покупка | Квартира\n📍 Dosin, гмина Serock, Мазовецкое воеводство\nЦена: 500 000 zł",  # noqa: RUF001
+    )
+    assert out_of_scope.listing is not None
+    assert out_of_scope.listing.location is None
+
+    prose = _candidate("Покупка | Квартира\n📍 Идеальная локация — тихо и уютно\nЦена: 500 000 zł")  # noqa: RUF001
+    assert prose.listing is not None
+    assert prose.listing.location is None
+
+
+def test_labeled_location_wins_and_conflicting_pin_lines_stay_null() -> None:
+    """Labeled evidence keeps precedence; divergent pin lines warn instead of choosing."""
+    labeled = _candidate(
+        "Покупка | Квартира\n📍Локализация: ul. Łodygowa, Targówek, Варшава\nЦена: 500 000 zł",  # noqa: RUF001
+    )
+    assert labeled.listing is not None
+    assert labeled.listing.location is not None
+    assert labeled.listing.location.value == "ul. Łodygowa, Targówek, Варшава"
+    assert labeled.listing.location.provenance.rule_id == "extract.location"
+    assert labeled.listing.location.provenance.confidence is Confidence.HIGH
+
+    text = "Покупка | Квартира\n📍 ul. Pierwsza, Warszawa\n📍 ul. Druga, Warszawa\nЦена: 500 000 zł"  # noqa: RUF001
+    conflict = _candidate(text)
+    assert conflict.listing is not None
+    assert conflict.listing.location is None
+    assert [(warning.code, warning.field_name) for warning in conflict.warnings] == [
+        (ExtractionWarningCode.CONFLICTING_VALUES, "location")
+    ]
+    for warning in conflict.warnings:
+        assert all(span.extract(text) for span in warning.spans)
+
+
 def test_unknown_currency_remains_null_and_reviewable() -> None:
     """An unlabeled amount never silently becomes PLN."""
     text = json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"][2]["text"]

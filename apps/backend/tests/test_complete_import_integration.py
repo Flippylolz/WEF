@@ -6,6 +6,7 @@ import asyncio
 import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from alembic import command
@@ -17,6 +18,7 @@ from wef_backend.features.ingestion.application.complete_import import (
     CompleteImportStage,
     CompleteImportStatus,
 )
+from wef_backend.features.ingestion.application.persistence import normalized_location_key
 from wef_backend.features.ingestion.domain import SourceIdentity, SourcePlatform
 from wef_backend.features.ingestion.domain.geocoding import GeocodeProvider
 from wef_backend.features.ingestion.infrastructure.complete_import_repository import (
@@ -52,6 +54,56 @@ def _settings() -> Settings:
         database_url=TEST_DATABASE_URL,
         alembic_config=Path("alembic.ini"),
     )
+
+
+async def test_pending_locations_exclude_unknown_location_sentinel() -> None:
+    """The no-address sentinel is never queued for provider geocoding."""
+    assert TEST_DATABASE_URL is not None
+    await asyncio.to_thread(command.upgrade, alembic_config(_settings()), "head")
+    database = create_database_resources(TEST_DATABASE_URL)
+    repository = SQLAlchemyCompleteImportRepository(database.session_factory)
+    sentinel_id = uuid4()
+    address_id = uuid4()
+    async with database.session_factory() as session:
+        for location_id, display, key in (
+            (sentinel_id, "Unknown location", normalized_location_key(None)),
+            (
+                address_id,
+                "ul. Testowa 1, Warszawa",
+                normalized_location_key("ul. Testowa 1, Warszawa"),
+            ),
+        ):
+            await session.execute(
+                text(
+                    "INSERT INTO locations (id, display_name, display_address, "
+                    "normalized_address, normalized_address_hash, precision, confidence, "
+                    "review_status, out_of_scope) "
+                    "VALUES (:id, :display, :display, :normalized, :key, 'unknown', 0, "
+                    "'ungeocoded', false)"
+                ),
+                {
+                    "id": str(location_id),
+                    "display": display,
+                    "normalized": display.casefold(),
+                    "key": key,
+                },
+            )
+        await session.commit()
+    try:
+        pending = await repository.pending_locations()
+        assert [item.location_id for item in pending if item.location_id == address_id] == [
+            address_id
+        ]
+        assert all(item.location_id != sentinel_id for item in pending)
+        assert all(item.address != "Unknown location" for item in pending)
+    finally:
+        async with database.session_factory() as session:
+            await session.execute(
+                text("DELETE FROM locations WHERE id IN (:a, :b)"),
+                {"a": str(sentinel_id), "b": str(address_id)},
+            )
+            await session.commit()
+        await database.engine.dispose()
 
 
 async def test_run_lease_pause_takeover_and_durable_provider_budget() -> None:

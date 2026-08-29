@@ -29,11 +29,15 @@ from wef_backend.features.ingestion.domain import (
     RuleProvenance,
     SourceSpan,
 )
+from wef_backend.features.ingestion.domain.geocoding import (
+    looks_like_warsaw_address,
+    warsaw_district_in,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v3"
+PARSER_VERSION = "e2-v4"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
@@ -154,6 +158,11 @@ _LOCATION_PATTERN = re.compile(
     rf"(?:lokalizacja|location|adres|локализаци[яи]|адрес){_VALUE_SUFFIX}",
     _FLAGS,
 )
+_LOCATION_PIN_LINE_PATTERN = re.compile(
+    r"(?m)^[ \t]*\U0001F4CD\ufe0f?[ \t]*(?P<value>[^\r\n]+)",
+    _FLAGS,
+)
+_PIN_FIELD_EMOJI_FLOOR = 0x1F000
 _DISTRICT_PATTERN = re.compile(
     rf"(?:dzielnica|district|район){_VALUE_SUFFIX}",
     _FLAGS,
@@ -227,20 +236,8 @@ def extract_listing(
     warnings: list[ExtractionWarning] = []
     content_type = _content_value(decision, warnings)
     market_type = _market_type(message.text, PARSER_VERSION, warnings)
-    location = _string_field(
-        message.text,
-        _LOCATION_PATTERN,
-        "location",
-        PARSER_VERSION,
-        warnings,
-    )
-    district = _string_field(
-        message.text,
-        _DISTRICT_PATTERN,
-        "district",
-        PARSER_VERSION,
-        warnings,
-    )
+    location = _location_field(message.text, PARSER_VERSION, warnings)
+    district = _district_field(message.text, PARSER_VERSION, warnings)
     development_name = _string_field(
         message.text,
         _DEVELOPMENT_PATTERN,
@@ -384,6 +381,94 @@ def _market_type(
         warnings,
         _parse_market_type,
     )
+
+
+def _location_field(
+    text: str,
+    parser_version: str,
+    warnings: list[ExtractionWarning],
+) -> ExtractedValue[str] | None:
+    """Prefer labeled location lines over the pin-line template."""
+    if _LOCATION_PATTERN.search(text) is not None:
+        return _string_field(text, _LOCATION_PATTERN, "location", parser_version, warnings)
+    return _pin_line_field(
+        text,
+        "location",
+        parser_version,
+        warnings,
+        lambda value: value if looks_like_warsaw_address(value) else None,
+    )
+
+
+def _district_field(
+    text: str,
+    parser_version: str,
+    warnings: list[ExtractionWarning],
+) -> ExtractedValue[str] | None:
+    """Prefer labeled district lines over an exact pin-line district segment."""
+    if _DISTRICT_PATTERN.search(text) is not None:
+        return _string_field(text, _DISTRICT_PATTERN, "district", parser_version, warnings)
+    return _pin_line_field(
+        text,
+        "district",
+        parser_version,
+        warnings,
+        warsaw_district_in,
+    )
+
+
+def _pin_line_field[T](
+    text: str,
+    field_name: str,
+    parser_version: str,
+    warnings: list[ExtractionWarning],
+    read_value: Callable[[str], T | None],
+) -> ExtractedValue[T] | None:
+    """Read one field from pin-prefixed template lines the labels cannot cover."""
+    parsed: list[tuple[T, SourceSpan]] = []
+    for match in _LOCATION_PIN_LINE_PATTERN.finditer(text):
+        value, span = _pin_line_value(text, match)
+        mapped = read_value(value) if value else None
+        if mapped is not None:
+            parsed.append((mapped, span))
+    if not parsed:
+        return None
+    if len({item for item, _ in parsed}) > 1:
+        warnings.append(
+            ExtractionWarning(
+                code=ExtractionWarningCode.CONFLICTING_VALUES,
+                field_name=field_name,
+                spans=tuple(span for _, span in parsed),
+            ),
+        )
+        return None
+    selected, selected_span = parsed[0]
+    return ExtractedValue(
+        value=selected,
+        provenance=_provenance(
+            f"extract.{field_name}_pin",
+            parser_version,
+            Confidence.MEDIUM,
+            selected_span,
+        ),
+    )
+
+
+def _pin_line_value(text: str, match: re.Match[str]) -> tuple[str, SourceSpan]:
+    start, end = match.span("value")
+    end = min(
+        (index for index in range(start, end) if ord(text[index]) >= _PIN_FIELD_EMOJI_FLOOR),
+        default=end,
+    )
+    while start < end and text[start].isspace():
+        start += 1
+    while end > start and text[end - 1].isspace():
+        end -= 1
+    while end > start and text[end - 1] in ",|":
+        end -= 1
+    while end > start and text[end - 1].isspace():
+        end -= 1
+    return text[start:end], SourceSpan(start, end)
 
 
 def _parse_market_type(value: str) -> MarketType:
