@@ -30,6 +30,7 @@ from wef_backend.features.ingestion.application.telegram_events import (
     LiveTelegramEventKind,
     LiveTelegramEventProcessor,
     LiveWorkerHealth,
+    RawEventRecord,
 )
 from wef_backend.features.ingestion.application.telegram_live import (
     LiveTelegramMessage,
@@ -61,6 +62,7 @@ class _FakeStore:
         self.checkpoints: list[RunCheckpoint] = []
         self.runs: list[tuple[UUID, RunMode, RunStatus]] = []
         self.lock_held = False
+        self.convert_non_candidates = False
 
     @asynccontextmanager
     async def run_lock(self, source_key: str) -> AsyncIterator[None]:
@@ -200,6 +202,10 @@ class _FakeStore:
         existing = self.messages.get(persistable.raw.external_message_id)
         if existing is None:
             outcome = MessageOutcome.CREATED
+            if self.convert_non_candidates and (
+                persistable.extraction is None or persistable.extraction.listing is None
+            ):
+                outcome = MessageOutcome.SKIPPED_NON_CANDIDATE
             self.messages[persistable.raw.external_message_id] = persistable
         elif existing.raw.checksum == persistable.raw.checksum:
             outcome = MessageOutcome.UNCHANGED
@@ -429,3 +435,190 @@ async def test_live_processor_records_failed_run_on_upsert_error() -> None:
             ),
         )
     assert store.runs[-1][2] is RunStatus.FAILED
+
+
+_ENTITY = TelegramChannelEntity(
+    username=default_live_channel_identity().username,
+    channel_id=default_live_channel_identity().channel_id,
+    title=default_live_channel_identity().channel_title,
+)
+
+
+class _FakeArchive:
+    """Landing/outcome ledger stand-in recording call order."""
+
+    def __init__(self) -> None:
+        self.landed: list[tuple[str, int, dict[str, object]]] = []
+        self.marked: list[tuple[UUID, str, str | None]] = []
+        self.pending: list[RawEventRecord] = []
+        self._ids = iter(uuid4() for _ in range(99))
+
+    async def land(
+        self,
+        *,
+        event_kind: str,
+        channel_external_id: str,
+        external_message_id: int,
+        payload: dict[str, object],
+        checksum: str,
+    ) -> UUID:
+        self.landed.append((event_kind, external_message_id, payload))
+        return next(self._ids)
+
+    async def unprocessed_batch(self, limit: int) -> list[RawEventRecord]:
+        return self.pending[:limit]
+
+    async def mark_attempt(
+        self,
+        event_id: UUID,
+        *,
+        outcome: str,
+        error_category: str | None = None,
+        completed_at: object = None,
+    ) -> None:
+        self.marked.append((event_id, outcome, error_category))
+
+
+async def test_processor_lands_events_verbatim_before_processing() -> None:
+    """New and delete events land first; rows receive the real outcomes."""
+    identity = default_live_channel_identity()
+    store = _FakeStore()
+    client = FakeTelegramLiveClient(_ENTITY)
+    archive = _FakeArchive()
+    processor = LiveTelegramEventProcessor(store=store, client=client, archive=archive)
+    message = LiveTelegramMessage(
+        external_message_id=50,
+        text="Покупка | Квартира\nЦена: 500 000 PLN",
+        published_at=datetime(2026, 8, 29, tzinfo=UTC),
+        edited_at=None,
+    )
+    delete = LiveTelegramEvent(
+        kind=LiveTelegramEventKind.DELETE,
+        deleted_ids=(50,),
+    )
+    new_event = LiveTelegramEvent(kind=LiveTelegramEventKind.NEW, message=message)
+
+    await processor(identity=identity, events=(new_event, delete), manage_connection=False)
+
+    assert [kind for kind, _, _ in archive.landed] == ["new", "delete"]
+    assert [message_id for _, message_id, _ in archive.landed] == [50, 50]
+    assert archive.landed[0][2]["text"] == message.text
+    assert {outcome for _, outcome, _ in archive.marked} == {"processed"}
+
+
+async def test_processor_marks_skipped_non_candidate_and_delete_missing() -> None:
+    """Non-candidates and missing deletions get distinct ledger outcomes."""
+    identity = default_live_channel_identity()
+    store = _FakeStore()
+    client = FakeTelegramLiveClient(_ENTITY)
+    archive = _FakeArchive()
+    store.convert_non_candidates = True
+    processor = LiveTelegramEventProcessor(store=store, client=client, archive=archive)
+    message = LiveTelegramMessage(
+        external_message_id=7,
+        text="no listing evidence here",
+        published_at=datetime(2026, 8, 29, tzinfo=UTC),
+        edited_at=None,
+    )
+
+    await processor(
+        identity=identity,
+        events=(
+            LiveTelegramEvent(kind=LiveTelegramEventKind.NEW, message=message),
+            LiveTelegramEvent(kind=LiveTelegramEventKind.DELETE, deleted_ids=(99,)),
+        ),
+        manage_connection=False,
+    )
+
+    outcomes = [outcome for _, outcome, _ in archive.marked]
+    assert outcomes == ["skipped_non_candidate", "skipped_non_candidate"]
+
+
+async def test_drainer_reprocesses_pending_records_and_marks_failures() -> None:
+    """Pending records flow through the processor; poisoned events fail bounded."""
+    from wef_backend.features.ingestion.application.raw_archive import (
+        RawEventDrainer,
+        record_to_live_event,
+    )
+    from wef_backend.features.ingestion.domain.telegram_channel import (
+        default_live_channel_identity,
+    )
+
+    identity = default_live_channel_identity()
+    record = RawEventRecord(
+        id=uuid4(),
+        event_kind="new",
+        channel_external_id=identity.channel_id,
+        external_message_id=601,
+        payload={
+            "id": 601,
+            "type": "message",
+            "date_unixtime": "1770000000",
+            "text": "Покупка | Квартира\nЦена: 1 200 000 PLN",
+            "from_live": True,
+        },
+        received_at=datetime(2026, 8, 29, tzinfo=UTC),
+        attempts=0,
+    )
+    event = record_to_live_event(record)
+    assert event.message is not None
+    assert event.message.external_message_id == 601
+
+    store = _FakeStore()
+    client = FakeTelegramLiveClient(_ENTITY)
+    archive = _FakeArchive()
+    archive.pending = [record]
+    processor = LiveTelegramEventProcessor(store=store, client=client, archive=archive)
+    drainer = RawEventDrainer(archive=archive, processor=processor, identity=identity)
+
+    drained = await drainer.drain_once(release_sha="test-sha")
+
+    assert drained == 1
+    assert store.messages[601].raw.text == record.payload["text"]
+    assert ("processed" in {outcome for _, outcome, _ in archive.marked}) is True
+
+
+async def test_drainer_marks_failed_without_blocking_the_batch() -> None:
+    """A poisoned event is marked failed with a safe category; others continue."""
+    from wef_backend.features.ingestion.application.raw_archive import RawEventDrainer
+
+    identity = default_live_channel_identity()
+    poisoned = RawEventRecord(
+        id=uuid4(),
+        event_kind="new",
+        channel_external_id=identity.channel_id,
+        external_message_id=1,
+        payload={"id": "not-a-number", "type": "message"},
+        received_at=datetime(2026, 8, 29, tzinfo=UTC),
+        attempts=0,
+    )
+    healthy = RawEventRecord(
+        id=uuid4(),
+        event_kind="new",
+        channel_external_id=identity.channel_id,
+        external_message_id=2,
+        payload={
+            "id": 2,
+            "type": "message",
+            "date_unixtime": "1770000000",
+            "text": "Покупка | Квартира\nЦена: 10 PLN",
+            "from_live": True,
+        },
+        received_at=datetime(2026, 8, 29, tzinfo=UTC),
+        attempts=0,
+    )
+    store = _FakeStore()
+    client = FakeTelegramLiveClient(_ENTITY)
+    archive = _FakeArchive()
+    archive.pending = [poisoned, healthy]
+    processor = LiveTelegramEventProcessor(store=store, client=client, archive=archive)
+    drainer = RawEventDrainer(archive=archive, processor=processor, identity=identity)
+
+    drained = await drainer.drain_once()
+
+    assert drained == 2
+    failures = [(eid, err) for eid, outcome, err in archive.marked if outcome == "failed"]
+    assert len(failures) == 1
+    assert failures[0][0] == poisoned.id
+    assert failures[0][1] == "ValueError"
+    assert any(outcome == "processed" for _, outcome, _ in archive.marked)
