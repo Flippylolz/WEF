@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E14-T5
 epic: E14
 title: "Add full-stack cross-browser and accessibility journeys"
-status: proposed
+status: draft
 revision: 1
-actionable: false
 priority: P1
 size: L
 milestone: M5
@@ -15,10 +14,43 @@ decision_ids: [ADR-004, ADR-011, ADR-013, ADR-016]
 deferred_decision_ids: []
 source: "repository-audit:2026-08-26"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E14-T5-add-full-stack-cross-browser-and-accessibility-journeys.md
+  promoted_by: "Codex agent (owner-approved E14 planning under AD-041)"
+  promoted_at: "2026-08-29T21:17:35Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 1
+  verified_by: "Codex agent (AD-041)"
+  verified_at: "2026-08-29T21:17:35Z"
+implementation_gate:
+  status: blocked
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: null
+  verified_by: null
+  verified_at: null
+dependency_gate:
+  status: blocked
+  verified_by: null
+  verified_at: null
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E14-T5
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E14-T5: Add full-stack cross-browser and accessibility journeys
@@ -61,8 +93,8 @@ Depends on E14-T3 and E14-T4 so stable seams are tested end to end.
 Separate product defects from browser-infrastructure flakes. A retry may collect evidence
 but cannot convert a reproducible first-attempt defect into success.
 
-## Promotion checklist
+## Ready checklist
 
-- [ ] E14 spike is explicitly owner-approved at its current revision.
-- [ ] Scope, checks, dependencies, priority/size, and traceability match the approved spike.
-- [ ] This file will be moved—not copied—to `tasks/` with complete promotion metadata.
+- [x] E14 spike revision 1 is owner-approved under AD-041.
+- [x] The task was moved to `tasks/` with complete promotion metadata.
+- [ ] E14 implementation plan revision 1 is owner-approved and E14-T3/T4 are done.

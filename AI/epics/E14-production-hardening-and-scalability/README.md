@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E14
 title: "Production hardening and scalability"
-status: selected
+status: planning
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -27,13 +27,12 @@ independently reviewable workstreams retain distinct identifiers.
 
 ## Approval state
 
-- Epic workspace: `selected` by the owner's 2026-08-26 request for a post-launch
-  codebase/test improvement epic.
-- [Research spike](SPIKE.md): revision 1, `awaiting_approval`; research-only and no
-  implementation permission.
-- Implementation plan: intentionally absent until the current spike is explicitly
-  owner-approved and proposed tasks are promoted.
-- Every candidate below remains `actionable: false`.
+- Epic workspace: `planning` after the owner approved spike revision 1 on 2026-08-29.
+- [Research spike](SPIKE.md): revision 1, owner-approved under AD-041.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, `awaiting_approval`;
+  implementation remains prohibited until its separate owner decision.
+- E14-T1 through E14-T8 are promoted/`draft`; E14-T9 remains proposed and
+  non-actionable behind ADR-015/E7-T5.
 
 ## Audit baseline
 
@@ -61,21 +60,21 @@ privacy controls. The principal residual risks are:
 - workflow/architecture documentation that can drift from executable CI and the
   implemented system.
 
-## Proposed task sequence
+## Planned task sequence
 
-1. [E14-T1: Make quality and governance gates truthful](proposed-tasks/E14-T1-make-quality-and-governance-gates-truthful.md) — P1/M
-2. [E14-T2: Strengthen critical-path test confidence](proposed-tasks/E14-T2-strengthen-critical-path-test-confidence.md) — P1/L; depends on T1
-3. [E14-T3: Refactor frontend orchestration hotspots](proposed-tasks/E14-T3-refactor-frontend-orchestration-hotspots.md) — P1/L; depends on E13-T3/T2
-4. [E14-T4: Refactor backend ingestion and operator seams](proposed-tasks/E14-T4-refactor-backend-ingestion-and-operator-seams.md) — P1/L; depends on T2
-5. [E14-T5: Add full-stack cross-browser and accessibility journeys](proposed-tasks/E14-T5-add-full-stack-cross-browser-and-accessibility-journeys.md) — P1/L; depends on T3/T4
-6. [E14-T6: Define SLOs and ship privacy-safe observability](proposed-tasks/E14-T6-define-slos-and-ship-privacy-safe-observability.md) — P1/L; depends on E8-T5/T1
-7. [E14-T7: Prove capacity and enforce performance budgets](proposed-tasks/E14-T7-prove-capacity-and-enforce-performance-budgets.md) — P1/L; depends on T3/T4/T6
-8. [E14-T8: Harden supply-chain and release integrity](proposed-tasks/E14-T8-harden-supply-chain-and-release-integrity.md) — P1/L; depends on T1
+1. [E14-T1: Make quality and governance gates truthful](tasks/E14-T1-make-quality-and-governance-gates-truthful.md) — P1/M
+2. [E14-T2: Strengthen critical-path test confidence](tasks/E14-T2-strengthen-critical-path-test-confidence.md) — P1/L; depends on T1
+3. [E14-T3: Refactor frontend orchestration hotspots](tasks/E14-T3-refactor-frontend-orchestration-hotspots.md) — P1/L; depends on E13-T3/T2
+4. [E14-T4: Refactor backend ingestion and operator seams](tasks/E14-T4-refactor-backend-ingestion-and-operator-seams.md) — P1/L; depends on T2
+5. [E14-T5: Add full-stack cross-browser and accessibility journeys](tasks/E14-T5-add-full-stack-cross-browser-and-accessibility-journeys.md) — P1/L; depends on T3/T4
+6. [E14-T8: Harden supply-chain and release integrity](tasks/E14-T8-harden-supply-chain-and-release-integrity.md) — P1/L; depends on T1
+7. [E14-T6: Define SLOs and ship privacy-safe observability](tasks/E14-T6-define-slos-and-ship-privacy-safe-observability.md) — P1/L; depends on E8-T5/T1
+8. [E14-T7: Prove capacity and enforce performance budgets](tasks/E14-T7-prove-capacity-and-enforce-performance-budgets.md) — P1/L; depends on T3/T4/T6
 9. [E14-T9: Rehearse operational resilience and disaster recovery](proposed-tasks/E14-T9-rehearse-operational-resilience-and-disaster-recovery.md) — P0/L; depends on E7-T5/T6/T7/T8
 
-T4 can start after T2; T3 also waits for E13-T3 so it does not refactor a surface
-still under redesign. T5, T6, and T8 can then proceed in parallel where their
-explicit dependencies allow. T9 is the terminal evidence task.
+The pending implementation plan sequences T8 before T6 so all work independent of
+E8-T5 can finish before that external dependency gate. T9 remains outside plan
+revision 1 and is the later terminal recovery-evidence task.
 
 ## Required check matrix
 

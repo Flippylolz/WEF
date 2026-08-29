@@ -16,7 +16,8 @@ from loss of the production host.
 
 ### [E14: Production hardening and scalability](../epics/E14-production-hardening-and-scalability/README.md)
 
-- E14-T1 through E14-T9, all currently non-actionable proposed tasks.
+- E14-T1 through E14-T8 are promoted/`draft` under approved spike revision 1 while
+  implementation plan revision 1 awaits owner approval; E14-T9 remains proposed/blocked.
 - Existing E7-T5 is the recovery-capability prerequisite for E14-T9 and is not duplicated.
 
 ### [E17: Raw archive replay and filter integrity](../epics/E17-raw-archive-replay-and-filter-integrity/README.md)
