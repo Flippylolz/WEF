@@ -6,28 +6,33 @@ import asyncio
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, Protocol
 
 from wef_backend.features.ingestion.application.extraction import PARSER_VERSION, extract_listing
 from wef_backend.features.ingestion.application.persistence import (
     DeletionOutcomeKind,
+    MessageOutcome,
     PersistableMessage,
     PersistenceBatchError,
     RunCheckpoint,
     RunCounts,
     RunMode,
     RunStatus,
+    SourceDeletionOutcome,
     redacted_error_summary,
 )
 from wef_backend.features.ingestion.application.telegram_live import (
+    live_message_payload,
     live_message_to_raw,
     source_identity_from_channel,
     verify_channel_entity,
 )
+from wef_backend.features.ingestion.domain.model import canonical_json_checksum
 from wef_backend.features.ingestion.domain.telegram_worker_ops import safe_error_category
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
+    from uuid import UUID
 
     from wef_backend.features.ingestion.application.persistence import IngestionPersistencePort
     from wef_backend.features.ingestion.application.telegram_live import (
@@ -43,6 +48,92 @@ class LiveTelegramEventKind(StrEnum):
     NEW = "new"
     EDIT = "edit"
     DELETE = "delete"
+
+
+RawArchiveOutcome = Literal["processed", "failed", "skipped_non_candidate"]
+RawArchiveKind = Literal["new", "edit", "delete"]
+
+
+class RawEventArchivePort(Protocol):
+    """Verbatim landing and outcome ledger owned by persistence."""
+
+    async def land(
+        self,
+        *,
+        event_kind: RawArchiveKind,
+        channel_external_id: str,
+        external_message_id: int,
+        payload: Mapping[str, object],
+        checksum: str,
+    ) -> UUID:
+        """Land one verbatim event idempotently and return its stable row id."""
+        ...
+
+    async def unprocessed_batch(self, limit: int) -> Sequence[RawEventRecord]:
+        """Return the oldest events still awaiting a terminal outcome."""
+        ...
+
+    async def mark_attempt(
+        self,
+        event_id: UUID,
+        *,
+        outcome: RawArchiveOutcome,
+        error_category: str | None = None,
+        completed_at: datetime | None = None,
+    ) -> None:
+        """Record one processing attempt with bounded retry on failure."""
+        ...
+
+
+@dataclass(frozen=True, slots=True)
+class RawEventRecord:
+    """One landed verbatim event with its current ledger state."""
+
+    id: UUID
+    event_kind: RawArchiveKind
+    channel_external_id: str
+    external_message_id: int
+    payload: Mapping[str, object]
+    received_at: datetime
+    attempts: int
+
+
+async def land_live_event(
+    archive: RawEventArchivePort,
+    *,
+    channel_external_id: str,
+    event: LiveTelegramEvent,
+) -> list[tuple[UUID, int]]:
+    """Land one event verbatim before any canonical processing; return row ids."""
+    if event.kind is LiveTelegramEventKind.DELETE:
+        landed: list[tuple[UUID, int]] = []
+        for deleted_id in event.deleted_ids:
+            payload: dict[str, object] = {
+                "id": deleted_id,
+                "type": "deleted_message",
+                "from_live": True,
+            }
+            row_id = await archive.land(
+                event_kind="delete",
+                channel_external_id=channel_external_id,
+                external_message_id=deleted_id,
+                payload=payload,
+                checksum=canonical_json_checksum(payload),
+            )
+            landed.append((row_id, deleted_id))
+        return landed
+    if event.message is None:
+        message = "new/edit events require a message payload"
+        raise ValueError(message)
+    payload = live_message_payload(event.message)
+    row_id = await archive.land(
+        event_kind="new" if event.kind is LiveTelegramEventKind.NEW else "edit",
+        channel_external_id=channel_external_id,
+        external_message_id=event.message.external_message_id,
+        payload=payload,
+        checksum=canonical_json_checksum(payload),
+    )
+    return [(row_id, event.message.external_message_id)]
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,6 +206,49 @@ class LiveTelegramEventProcessor:
 
     store: IngestionPersistencePort
     client: TelegramLiveClientPort
+    archive: RawEventArchivePort | None = None
+
+    @staticmethod
+    def _delete_totals(
+        outcomes: Sequence[SourceDeletionOutcome],
+    ) -> tuple[int, int, int, int]:
+        """Fold per-id deletion outcomes into redacted counters."""
+        deleted = 0
+        already_deleted = 0
+        missing = 0
+        offers_hidden = 0
+        for outcome in outcomes:
+            if outcome.outcome is DeletionOutcomeKind.DELETED:
+                deleted += 1
+            elif outcome.outcome is DeletionOutcomeKind.ALREADY_DELETED:
+                already_deleted += 1
+            else:
+                missing += 1
+            offers_hidden += outcome.offers_hidden
+        return deleted, already_deleted, missing, offers_hidden
+
+    async def _mark_delete_outcomes(
+        self,
+        landed: Sequence[tuple[UUID, int]],
+        outcomes: Sequence[SourceDeletionOutcome],
+    ) -> None:
+        """Correlate per-id deletion results onto their landed archive rows."""
+        outcome_by_id = {outcome.external_message_id: outcome.outcome for outcome in outcomes}
+        archive = self.archive
+        if archive is None:
+            return
+        for row_id, deleted_id in landed:
+            kind = outcome_by_id.get(deleted_id)
+            await archive.mark_attempt(
+                row_id,
+                outcome=(
+                    "skipped_non_candidate"
+                    if kind is DeletionOutcomeKind.MISSING
+                    else "processed"
+                ),
+            )
+
+
 
     async def __call__(
         self,
@@ -176,19 +310,27 @@ class LiveTelegramEventProcessor:
             messages_persisted = 0
             try:
                 for event in events:
+                    landed: list[tuple[UUID, int]] = []
+                    if self.archive is not None:
+                        landed = await land_live_event(
+                            self.archive,
+                            channel_external_id=identity.channel_id,
+                            event=event,
+                        )
                     if event.kind is LiveTelegramEventKind.DELETE:
                         outcomes = await self.store.mark_source_deleted(
                             channel_id=channel_id,
                             external_message_ids=event.deleted_ids,
                         )
-                        for outcome in outcomes:
-                            if outcome.outcome is DeletionOutcomeKind.DELETED:
-                                deleted += 1
-                            elif outcome.outcome is DeletionOutcomeKind.ALREADY_DELETED:
-                                already_deleted += 1
-                            else:
-                                missing_on_delete += 1
-                            offers_hidden += outcome.offers_hidden
+                        if self.archive is not None:
+                            await self._mark_delete_outcomes(landed, outcomes)
+                        deleted_delta, already_delta, missing_delta, hidden_delta = (
+                            self._delete_totals(outcomes)
+                        )
+                        deleted += deleted_delta
+                        already_deleted += already_delta
+                        missing_on_delete += missing_delta
+                        offers_hidden += hidden_delta
                         continue
                     if event.message is None:
                         message = "new/edit events require a message payload"
@@ -196,7 +338,7 @@ class LiveTelegramEventProcessor:
                     raw = live_message_to_raw(event.message, identity=channel)
                     message_id = event.message.external_message_id
                     advance = message_id > checkpoint.last_source_index
-                    _, checkpoint, counts, _ = await self.store.persist_live_upsert(
+                    persist_outcome, checkpoint, counts, _ = await self.store.persist_live_upsert(
                         channel_id=channel_id,
                         run_id=run_id,
                         message=PersistableMessage(
@@ -207,6 +349,16 @@ class LiveTelegramEventProcessor:
                         counts=counts,
                         advance_checkpoint=advance,
                     )
+                    if self.archive is not None and landed:
+                        await self.archive.mark_attempt(
+                            landed[0][0],
+                            outcome=(
+                                "skipped_non_candidate"
+                                if persist_outcome.outcome
+                                is MessageOutcome.SKIPPED_NON_CANDIDATE
+                                else "processed"
+                            ),
+                        )
                     messages_persisted += 1
             except PersistenceBatchError as error:
                 await self.store.finish_run(

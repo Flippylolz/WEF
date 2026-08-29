@@ -21,9 +21,11 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    text as sa_text,
     Uuid,
     func,
+)
+from sqlalchemy import (
+    text as sa_text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
