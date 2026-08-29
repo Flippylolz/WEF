@@ -202,6 +202,19 @@ address.
 
 Short Google Maps links are resolved only through a controlled, rate-limited resolver that records redirect targets and validates hosts. Redirect content is data, never executed.
 
+### 9. Raw event archive and background draining (E17-T1)
+
+Every live Telegram event (new message, edit, per-deleted-id removal) is landed
+verbatim in the `telegram_raw_events` table before any extraction or canonical
+write. Landing is idempotent per (channel, message id, kind, payload checksum);
+each row carries a durable processing ledger (`processed` / `failed` /
+`skipped_non_candidate`, attempts, redacted error category). A supervised worker
+task drains landed-but-unprocessed events every few seconds through the same
+processor path, under the shared processing lock and the durable checkpoint, so
+old replays cannot regress the cursor; failed events retry with a bounded cap
+before counting as permanently failed. The archive is the replay source for the
+parser re-import command and for future parser upgrades.
+
 ### 9. Media verification and storage
 
 For each media descriptor:

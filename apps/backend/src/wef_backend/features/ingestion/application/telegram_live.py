@@ -92,13 +92,9 @@ def verify_channel_entity(
         raise TelegramEntityMismatchError(message)
 
 
-def live_message_to_raw(
-    message: LiveTelegramMessage,
-    *,
-    identity: SourceIdentity,
-) -> RawMessage:
-    """Convert one live message into the shared RawMessage boundary."""
-    payload = {
+def live_message_payload(message: LiveTelegramMessage) -> dict[str, object]:
+    """Build the canonical verbatim payload shared by landing and conversion."""
+    payload: dict[str, object] = {
         "id": message.external_message_id,
         "type": "message",
         "date_unixtime": str(int(message.published_at.timestamp())),
@@ -109,6 +105,16 @@ def live_message_to_raw(
         payload["edited_unixtime"] = str(int(message.edited_at.timestamp()))
     if message.media_group_id is not None:
         payload["media_group_id"] = message.media_group_id
+    return payload
+
+
+def live_message_to_raw(
+    message: LiveTelegramMessage,
+    *,
+    identity: SourceIdentity,
+) -> RawMessage:
+    """Convert one live message into the shared RawMessage boundary."""
+    payload = live_message_payload(message)
     frozen_payload = freeze_json(payload)
     if not isinstance(frozen_payload, Mapping):
         message_text = "live message payload must freeze as an object"

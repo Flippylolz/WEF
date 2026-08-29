@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 import structlog
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from wef_backend.features.ingestion.application.raw_archive import RawEventDrainer
 from wef_backend.features.ingestion.application.telegram_events import (
     LiveEventQueue,
     LiveTelegramEventProcessor,
@@ -42,6 +43,9 @@ from wef_backend.features.ingestion.domain.telegram_secrets import (
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
+from wef_backend.features.ingestion.infrastructure.raw_event_archive import (
+    SQLAlchemyRawEventArchive,
+)
 from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store import (
     SQLAlchemyTelegramWorkerStatusStore,
 )
@@ -51,6 +55,8 @@ from wef_backend.settings import Settings, load_settings
 from wef_backend.telegram_credentials import secret_text, secrets_from_settings
 
 logger = structlog.get_logger("wef.telegram_worker")
+
+_DRAIN_INTERVAL_SECONDS = 5.0
 
 
 def _log_stage_failure(*, stage: str, category: str) -> None:
@@ -62,12 +68,37 @@ def _log_stage_failure(*, stage: str, category: str) -> None:
     )
 
 
-async def _run_connected_worker(
+async def _maintain_raw_archive_drain(
+    drainer: RawEventDrainer,
+    state: WorkerRuntimeState,
+    stop: asyncio.Event,
+    release_sha: str | None,
+    processing_lock: asyncio.Lock,
+) -> None:
+    """Repeat bounded archive drains until the worker stops."""
+    while not stop.is_set():
+        with suppress(asyncio.CancelledError):
+            drained = await drainer.drain_once(
+                release_sha=release_sha,
+                processing_lock=processing_lock,
+            )
+            if drained:
+                state.last_event_committed_at = datetime.now(UTC)
+                logger.info(
+                    "telegram_raw_archive_drained",
+                    stage="raw_archive",
+                    events=drained,
+                )
+        await asyncio.sleep(_DRAIN_INTERVAL_SECONDS)
+
+
+async def _run_connected_worker(  # noqa: PLR0913
     *,
     settings: Settings,
     identity: TelegramChannelIdentity,
     client: TelethonLiveClient,
     store: SQLAlchemyIngestionPersistence,
+    archive: SQLAlchemyRawEventArchive,
     checkpoint_store: TelegramCheckpointStore,
 ) -> None:
     """Subscribe and supervise every critical stage after authorization."""
@@ -75,8 +106,14 @@ async def _run_connected_worker(
     stop = asyncio.Event()
     queue = LiveEventQueue()
     client.subscribe_channel(identity.username, queue)
-    processor = LiveTelegramEventProcessor(store=store, client=client)
+    processor = LiveTelegramEventProcessor(store=store, client=client, archive=archive)
     processing_lock = asyncio.Lock()
+    drainer = RawEventDrainer(
+        archive=archive,
+        processor=processor,
+        identity=identity,
+        checkpoint_store=checkpoint_store,
+    )
     reconciler = TelegramCheckpointReconciler(
         store=checkpoint_store,
         client=client,
@@ -137,6 +174,9 @@ async def _run_connected_worker(
             {
                 "transport": transport(),
                 "consumer": consume(),
+                "raw_archive_drain": _maintain_raw_archive_drain(
+                    drainer, state, stop, settings.release_sha, processing_lock
+                ),
                 "health": maintain_worker_heartbeat(
                     settings.telegram_heartbeat_path,
                     is_connected=client.is_connected,
@@ -198,6 +238,7 @@ async def run_telegram_worker() -> None:
             identity=identity,
             client=client,
             store=store,
+            archive=SQLAlchemyRawEventArchive(session_factory),
             checkpoint_store=checkpoint_store,
         )
     finally:
