@@ -112,6 +112,37 @@ describe("MapFilterControls", () => {
     expect(onClear).toHaveBeenCalledOnce();
   });
 
+  it("serves district options in backend order and appends URL-only extras", () => {
+    render(
+      <MapFilterControls
+        facets={{
+          ...facets,
+          districts: ["Wola", "Ochota", "Mokotów"],
+        }}
+        facetsError={false}
+        facetsLoading={false}
+        state={{
+          ...DEFAULT_MAP_SEARCH_STATE,
+          districts: ["Bielany"],
+        }}
+        onApply={vi.fn()}
+        onClear={vi.fn()}
+      />,
+    );
+
+    const wola = screen.getByRole("checkbox", { name: "Wola" });
+    const ochota = screen.getByRole("checkbox", { name: "Ochota" });
+    const mokotow = screen.getByRole("checkbox", { name: "Mokotów" });
+    const bielany = screen.getByRole("checkbox", { name: "Bielany" });
+
+    const following = Node.DOCUMENT_POSITION_FOLLOWING;
+    // Facet order (Wola, Ochota, Mokotów) is not alphabetical order.
+    expect(wola.compareDocumentPosition(ochota) & following).toBeTruthy();
+    expect(ochota.compareDocumentPosition(mokotow) & following).toBeTruthy();
+    // URL-only extras append after every facet option.
+    expect(mokotow.compareDocumentPosition(bielany) & following).toBeTruthy();
+  });
+
   it("renders only facet-provided options while facets are unavailable", () => {
     render(
       <MapFilterControls

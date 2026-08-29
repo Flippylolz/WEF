@@ -313,11 +313,9 @@ function Checkbox({ checked, label, onChange }: CheckboxProps) {
 }
 
 function mergeOptions<T extends number | string>(first: T[], second: T[]) {
-  return [...new Set([...first, ...second])].sort((left, right) =>
-    typeof left === "number" && typeof right === "number"
-      ? left - right
-      : String(left).localeCompare(String(right)),
-  );
+  // Backend facets arrive in served order; URL-only extras append after them so
+  // option order never depends on the client locale.
+  return [...new Set([...first, ...second])];
 }
 
 function toggleValue<T>(values: T[], value: T) {
@@ -350,8 +348,10 @@ function dateTimeValue(value: string, endOfDay: boolean) {
 }
 
 function formatOption(value: string) {
+  // Unicode-aware capitalization: ASCII \b mangles Polish diacritics
+  // (Mokotów became MokotóW).
   return value
     .replaceAll("-", " ")
     .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replace(/(^|\s)(\p{L})/gu, (match) => match.toUpperCase());
 }
