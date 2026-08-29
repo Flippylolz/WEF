@@ -281,6 +281,12 @@ describe("WarsawMap", () => {
       "data-text-font",
       '["Noto Sans Regular"]',
     );
+    // MapLibre's implicit fallback stack is not hosted by OpenFreeMap, so
+    // every symbol layer must pin the hosted Noto Sans Regular explicitly.
+    expect(screen.getByTestId("layer-location-cluster-count")).toHaveAttribute(
+      "data-text-font",
+      '["Noto Sans Regular"]',
+    );
   });
 
   it("resizes asynchronously without MapLibre's synchronous resize redraw", async () => {
