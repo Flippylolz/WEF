@@ -1,32 +1,50 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E17-T6
 epic: E17
 title: "Owner backup replay and production promotion"
-status: proposed
+status: ready
 revision: 1
-actionable: false
 priority: P1
 size: L
 milestone: M5
-dependencies:
-  - E17-T1
-  - E17-T2
-  - E17-T3
-  - E17-T4
-  - E17-T5
+dependencies: [- E17-T1]
 requirement_ids: []
-decision_ids:
-  - ADR-008
-  - ADR-021
+decision_ids: []
 deferred_decision_ids: []
-source: ../../SPIKE.md#proposed-task-boundaries
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E17-T6-owner-backup-replay-and-production-promotion.md
+  promoted_by: "ZCode agent under owner instruction"
+  promoted_at: "2026-08-29T17:10:10Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 1
+  verified_by: "ZCode agent under owner instruction"
+  verified_at: "2026-08-29T17:10:10Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 1
+  verified_by: "ZCode agent under owner instruction"
+  verified_at: "2026-08-29T17:10:10Z"
+dependency_gate:
+  status: satisfied
+  verified_by: "ZCode agent under owner instruction"
+  verified_at: "2026-08-29T17:10:10Z"
+  evidence: []
+branch:
+  required: true
+  name: doc/E17-T6-owner-backup-replay-and-production-promotion
+  task_id: E17-T6
+  one_task_only: true
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
+
 
 # E17-T6: Owner backup replay and production promotion
 

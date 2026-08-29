@@ -23,11 +23,11 @@ proposed_task_ids:
   - E17-T6
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: owner
+  decided_at: "2026-08-29T17:10:10Z"
+  approved_revision: 1
+  evidence: "ZCode session owner instruction on 2026-08-29: implement this epic; PR merges are allowed after the CI is green"
 invalidation:
   invalidated_by: null
   invalidated_at: null

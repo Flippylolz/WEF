@@ -1,27 +1,50 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E17-T5
 epic: E17
 title: "Filter determinism and test coverage"
-status: proposed
+status: ready
 revision: 1
-actionable: false
 priority: P1
 size: M
 milestone: M5
-dependencies:
-  - E17-T4
+dependencies: [- E17-T4]
 requirement_ids: []
-decision_ids:
-  - ADR-012
+decision_ids: []
 deferred_decision_ids: []
-source: ../../SPIKE.md#proposed-task-boundaries
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E17-T5-filter-determinism-and-test-coverage.md
+  promoted_by: "ZCode agent under owner instruction"
+  promoted_at: "2026-08-29T17:10:10Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 1
+  verified_by: "ZCode agent under owner instruction"
+  verified_at: "2026-08-29T17:10:10Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 1
+  verified_by: "ZCode agent under owner instruction"
+  verified_at: "2026-08-29T17:10:10Z"
+dependency_gate:
+  status: satisfied
+  verified_by: "ZCode agent under owner instruction"
+  verified_at: "2026-08-29T17:10:10Z"
+  evidence: []
+branch:
+  required: true
+  name: test/E17-T5-filter-determinism-and-coverage
+  task_id: E17-T5
+  one_task_only: true
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
+
 
 # E17-T5: Filter determinism and test coverage
 
