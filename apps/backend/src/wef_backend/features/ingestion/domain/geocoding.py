@@ -62,6 +62,16 @@ _DISTRICTS = {
     "zoliborz": "Żoliborz",
     "żoliborz": "Żoliborz",
 }
+# Reviewed owner reroutes for genuine source variants that exact folding cannot
+# fix: hyphen loss and letter typos. Closed list — never fuzzy matching.
+_DISTRICT_ALIASES = {
+    "białołęcka": "Białołęka",
+    "bialolecka": "Białołęka",
+    "praga południe": "Praga-Południe",
+    "praga poludnie": "Praga-Południe",
+    "praga pólnoc": "Praga-Północ",
+    "praga polnoc": "Praga-Północ",
+}
 
 
 class GeocodeProvider(StrEnum):
@@ -233,7 +243,28 @@ def canonical_warsaw_district(value: str | None) -> str | None:
     if value is None:
         return None
     normalized = _WHITESPACE.sub(" ", unicodedata.normalize("NFKC", value)).strip().casefold()
-    return _DISTRICTS.get(normalized)
+    return _DISTRICTS.get(normalized) or _DISTRICT_ALIASES.get(normalized)
+
+
+def _district_match_variants() -> dict[str, tuple[str, ...]]:
+    """Map each canonical district to itself plus every reviewed stored spelling."""
+    variants: dict[str, set[str]] = {}
+    for folded, canonical in (*_DISTRICTS.items(), *_DISTRICT_ALIASES.items()):
+        spellings = variants.setdefault(canonical, {canonical})
+        spellings.add(folded)
+        spellings.add(canonical)
+    return {canonical: tuple(sorted(spellings)) for canonical, spellings in variants.items()}
+
+
+_DISTRICT_MATCH_VARIANTS = _district_match_variants()
+
+
+def district_match_values(value: str) -> tuple[str, ...]:
+    """Expand one requested district to every spelling it must match in storage."""
+    canonical = canonical_warsaw_district(value)
+    if canonical is None:
+        return (value,)
+    return _DISTRICT_MATCH_VARIANTS.get(canonical, (canonical,))
 
 
 def warsaw_district_in(value: str) -> str | None:

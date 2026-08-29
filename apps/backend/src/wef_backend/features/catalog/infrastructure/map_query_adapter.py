@@ -15,6 +15,7 @@ from wef_backend.features.catalog.application import (
 )
 from wef_backend.features.catalog.domain import LocationReviewStatus, OfferVisibility
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
+from wef_backend.features.ingestion.domain.geocoding import district_match_values
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -160,7 +161,15 @@ class SQLAlchemyMapQueryAdapter(MapQueryPort):
                 ),
             )
         if filters.districts:
-            conditions.append(LocationRow.district.in_(filters.districts))
+            conditions.append(
+                LocationRow.district.in_(
+                    tuple(
+                        spelling
+                        for item in filters.districts
+                        for spelling in district_match_values(item)
+                    ),
+                ),
+            )
         if filters.market_types:
             conditions.append(
                 OfferRow.market_type.in_(tuple(item.value for item in filters.market_types)),

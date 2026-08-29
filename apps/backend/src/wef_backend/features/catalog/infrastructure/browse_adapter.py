@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
 from sqlalchemy import and_, case, func, or_, select
 
 from wef_backend.features.catalog.application import (
@@ -30,6 +33,22 @@ from wef_backend.features.catalog.infrastructure.map_query_adapter import (
     SQLAlchemyMapQueryAdapter,
 )
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
+from wef_backend.features.ingestion.domain.geocoding import canonical_warsaw_district
+
+
+def _canonical_district_facets(values: Sequence[object]) -> tuple[str, ...]:
+    """Collapse raw stored district spellings onto the reviewed canonical list."""
+    facets: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        if value is None:
+            continue
+        canonical = canonical_warsaw_district(str(value))
+        if canonical is not None and canonical not in seen:
+            seen.add(canonical)
+            facets.append(canonical)
+    return tuple(sorted(facets))
+
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -89,10 +108,8 @@ class SQLAlchemyCatalogBrowseAdapter(
         )
         async with self._session_factory() as session:
             bounds = (await session.execute(bounds_statement)).one()
-            districts = tuple(
-                value
-                for value in (await session.scalars(district_statement)).all()
-                if value is not None
+            districts = _canonical_district_facets(
+                (await session.scalars(district_statement)).all(),
             )
             markets = tuple(
                 MarketType(value) for value in (await session.scalars(market_statement)).all()

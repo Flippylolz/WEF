@@ -196,10 +196,10 @@ async def test_facets_offer_context_and_cursor_ties() -> None:
         )
 
         assert facets.districts == (
-            "mokotow",
-            "praga-polnoc",
-            "srodmiescie",
-            "wola",
+            "Mokot\u00f3w",
+            "Praga-P\u00f3\u0142noc",
+            "Wola",
+            "\u015ar\u00f3dmie\u015bcie",
         )
         assert facets.rooms == (1, 2, 3)
         assert facets.price_min_minor == 69_000_000
