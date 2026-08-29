@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E16-T1
 epic: E16
 title: "Prevent cluster expansion from freezing the map"
-status: draft
+status: in_progress
 revision: 1
 priority: P0
 size: S
@@ -23,11 +23,11 @@ spike_gate:
   verified_by: "Codex agent under owner instruction"
   verified_at: "2026-08-29T06:02:08Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 1
+  verified_by: "Codex agent under owner instruction"
+  verified_at: "2026-08-29T06:08:03Z"
 dependency_gate:
   status: satisfied
   verified_by: "Codex agent under owner instruction"
@@ -35,11 +35,11 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: bugfix/E16-T1-cluster-expansion-freeze
   task_id: E16-T1
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-29T06:08:03Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/194
 completion:
   completed_by: null
   completed_at: null
@@ -122,7 +122,6 @@ error, corrupting the canvas, or disabling subsequent map interaction.
 
 - [x] Authoritative under `tasks/`; promoted after spike revision 1 approval.
 - [x] Spike gate references approved revision 1.
-- [ ] Implementation gate awaits plan revision 1 approval.
+- [x] Implementation gate references approved plan revision 1.
 - [x] Dependency gate satisfied with no dependencies.
-- [ ] Dedicated `bugfix/E16-T1-*` branch will be created after plan approval.
-
+- [x] Dedicated `bugfix/E16-T1-cluster-expansion-freeze` branch is recorded.

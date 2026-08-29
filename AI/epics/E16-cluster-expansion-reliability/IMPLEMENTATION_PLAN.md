@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E16
 title: "Reliable numbered map-cluster expansion delivery"
-status: awaiting_approval
+status: approved
 revision: 1
 owner: owner
 spike_revision: 1
@@ -11,11 +11,11 @@ task_sequence:
     revision: 1
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "owner"
+  decided_at: "2026-08-29T06:08:03Z"
+  approved_revision: 1
+  evidence: "Codex task 01a04c13-bab1-77e1-9f2a-219b7c3dd2b8 owner message on 2026-08-29: I approve"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -121,11 +121,10 @@ the spike recommendation intact returns work to this plan.
 - [x] Deferred decisions required for implementation are resolved (none).
 - [x] No production or disposable proof code has been written.
 - [x] `revision` represents the material plan being submitted.
-- [x] `status` is `awaiting_approval` and approval remains `pending`.
+- [x] Revision 1 was explicitly owner-approved before implementation.
 
 ## Owner decision
 
 The owner records the decision only in the YAML `approval` object. Approval
 authorizes implementation plan revision 1 after the E16-T1 task gate is updated
 and its dedicated branch is created.
-

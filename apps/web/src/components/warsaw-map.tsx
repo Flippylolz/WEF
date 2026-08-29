@@ -266,19 +266,39 @@ export function WarsawMap({
     if (!feature) return;
 
     const clusterId = feature.properties?.cluster_id;
-    if (typeof clusterId === "number") {
+    if (typeof clusterId === "number" && Number.isFinite(clusterId)) {
       const source = event.target.getSource("locations") as
         GeoJSONSource | undefined;
-      const coordinates =
-        feature.geometry.type === "Point"
-          ? (feature.geometry.coordinates as [number, number])
-          : null;
-      if (!source || !coordinates) return;
-      const zoom = await source.getClusterExpansionZoom(clusterId);
-      event.target.easeTo({
+      const rawCoordinates =
+        feature.geometry.type === "Point" ? feature.geometry.coordinates : null;
+      if (
+        !source ||
+        !rawCoordinates ||
+        typeof rawCoordinates[0] !== "number" ||
+        typeof rawCoordinates[1] !== "number"
+      )
+        return;
+      const coordinates: [number, number] = [
+        rawCoordinates[0],
+        rawCoordinates[1],
+      ];
+      if (!coordinates.every(Number.isFinite)) return;
+
+      let zoom: number;
+      try {
+        zoom = await source.getClusterExpansionZoom(clusterId);
+      } catch {
+        return;
+      }
+      if (!Number.isFinite(zoom)) return;
+
+      // MapLibre 6.4.1 can produce a singular intermediate camera matrix when
+      // easing a cluster's center and zoom together. Once its animation frame
+      // throws, the render loop stays corrupted. Apply the same finite target
+      // atomically so cluster expansion cannot poison later map interaction.
+      event.target.jumpTo({
         center: coordinates,
         zoom,
-        duration: reduceMotion ? 0 : undefined,
       });
       return;
     }
