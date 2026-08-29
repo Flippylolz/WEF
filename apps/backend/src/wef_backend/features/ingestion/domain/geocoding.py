@@ -21,6 +21,13 @@ _STREET_PREFIX = re.compile(
     r"^(?:ul(?:ica)?\.?|вул(?:иця)?\.?|ул(?:ица)?\.?)\s*",
     re.IGNORECASE,
 )
+_STREET_TOKEN = re.compile(
+    r"(?<!\w)(?:ulica|aleja|osiedle|plac|улица|ul|al|os|pl|вул|ул)(?!\w)\.?",
+    re.IGNORECASE,
+)
+_AREA_WORD_PREFIX = re.compile(r"^\s*(?:район|district|dzielnica)\s+", re.IGNORECASE)
+_AREA_SUFFIX_PARENTHETICAL = re.compile(r"\s*\([^()]*\)\s*$")
+_ADDRESS_SEGMENT_SPLIT = re.compile(r"[,|]")
 _CITY_NAMES = re.compile(r"\b(?:warszawa|варшава|варшаві|warsaw)\b", re.IGNORECASE)
 _WARSAW_BOUNDS = (20.28, 51.94, 21.37, 52.37)
 _DISTRICTS = {
@@ -227,6 +234,24 @@ def canonical_warsaw_district(value: str | None) -> str | None:
         return None
     normalized = _WHITESPACE.sub(" ", unicodedata.normalize("NFKC", value)).strip().casefold()
     return _DISTRICTS.get(normalized)
+
+
+def warsaw_district_in(value: str) -> str | None:
+    """Return the canonical district when one comma/pipe segment names it exactly."""
+    for segment in _ADDRESS_SEGMENT_SPLIT.split(value):
+        candidate = _AREA_WORD_PREFIX.sub("", segment)
+        candidate = _AREA_SUFFIX_PARENTHETICAL.sub("", candidate)
+        canonical = canonical_warsaw_district(candidate)
+        if canonical is not None:
+            return canonical
+    return None
+
+
+def looks_like_warsaw_address(value: str) -> bool:
+    """Screen one template line for street, city, or exact district evidence."""
+    if _STREET_TOKEN.search(value) is not None or _CITY_NAMES.search(value) is not None:
+        return True
+    return warsaw_district_in(value) is not None
 
 
 def within_warsaw(longitude: Decimal, latitude: Decimal) -> bool:

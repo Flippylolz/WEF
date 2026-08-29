@@ -26,8 +26,10 @@ from wef_backend.features.ingestion.domain.geocoding import (
     GeocodeReviewStatus,
     SelectionReason,
     canonical_warsaw_district,
+    looks_like_warsaw_address,
     normalize_geocode_query,
     review_geocode_result,
+    warsaw_district_in,
     within_warsaw,
 )
 from wef_backend.features.ingestion.infrastructure.geocoder_adapters import (
@@ -85,6 +87,27 @@ def test_normalization_is_versioned_deterministic_and_preserves_source() -> None
     assert canonical_warsaw_district("not-a-district") is None
     with pytest.raises(ValueError, match="non-empty"):
         normalize_geocode_query("  ")
+
+
+def test_template_address_screen_accepts_only_warsaw_evidence() -> None:
+    """Pin-line screening accepts street/city/district lines and rejects prose."""
+    assert looks_like_warsaw_address("Варшава, Wola, ul. Stańczyka")
+    assert looks_like_warsaw_address("ul. Chmielna, Śródmieście, Warszawa")
+    assert looks_like_warsaw_address("Wola | ul. Prosta 69")
+    assert looks_like_warsaw_address("Урсус | ул. Herbu Oksza")  # noqa: RUF001
+    assert looks_like_warsaw_address("Район Targówek | ul. Miedza")
+    assert looks_like_warsaw_address("Nowodwory, Białołęka, Warszawa")
+    assert looks_like_warsaw_address("Mokotów, Варшава")
+    assert not looks_like_warsaw_address("Dosin, гмина Serock, Мазовецкое воеводство")
+    assert not looks_like_warsaw_address("Локация:")
+    assert not looks_like_warsaw_address("Идеальная локация — тихо и уютно")
+    assert not looks_like_warsaw_address(
+        "Локация — 10-15 минут до метро Wilanowska, 10 минут до Westifield Mokotów.",
+    )
+    assert warsaw_district_in("Варшава, Białołęka, ul. Geodezyjna") == "Białołęka"
+    assert warsaw_district_in("Warszawa, Mokotów (Służewiec) | ul. Domaniewska 47A") == "Mokotów"
+    assert warsaw_district_in("Район Targówek | ul. Miedza") == "Targówek"
+    assert warsaw_district_in("ul. Chmielna, Warszawa") is None
 
 
 def test_cache_identity_covers_provider_and_every_version() -> None:
