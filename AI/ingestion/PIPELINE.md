@@ -105,6 +105,9 @@ Parsing rules:
 
 - Normalize Unicode and non-breaking spaces without altering stored source text.
 - Accept decimal comma and decimal point.
+- Tracked currency words (`злотых`, `złotych`, and close inflections) resolve to their
+  ISO currency and may abut the amount (`850 000злотых` is 850 000 PLN, not 850);
+  untracked currency words keep the amount reviewable with unknown currency.
 - Remove grouping spaces only after identifying a numeric span.
 - Do not convert unknown currency to PLN.
 - Do not collapse a range to its midpoint.

@@ -37,13 +37,20 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v4"
+PARSER_VERSION = "e2-v5"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
 
 _FLAGS = re.IGNORECASE | re.UNICODE
-_NUMBER = r"(?<!\w)(?:\d{1,3}(?:[ \u00a0]\d{3})+(?:[,.]\d+)?|\d+(?:[,.]\d+)?)(?!\w)"
+# A number may end only at whitespace/punctuation or directly before a tracked
+# currency word (an 850k example: "850 000" + PLN-word suffix), so grouped
+# amounts keep their magnitude.
+_CURRENCY_WORD = r"(?:злот\w*|złot\w*|zlot\w*)"
+_NUMBER = (
+    r"(?<!\w)(?:\d{1,3}(?:[ \u00a0]\d{3})+(?:[,.]\d+)?|\d+(?:[,.]\d+)?)"
+    r"(?=$|[\s\u00a0.,;:|()\[\]{}»«\"'\u2013\u2014-]|" + _CURRENCY_WORD + r")"
+)
 _VALUE_SUFFIX = r"\s*(?:[:|]\s*|[\u2013\u2014-]\s+)(?P<value>[^\r\n]+)"
 _NUMBER_PATTERN = re.compile(_NUMBER)
 _ROOM_TAG_PATTERN = re.compile(
@@ -59,9 +66,12 @@ _RANGE_JOINER_PATTERN = re.compile(
     r"(?:-|\u2013|\u2014|\b\u0434\u043e\b|\bto\b)",
     _FLAGS,
 )
-_CURRENCY_PATTERN = re.compile(r"(?:\b(?P<iso>PLN|EUR|USD|GBP)\b|(?P<symbol>zł|€|\$))", _FLAGS)
+_CURRENCY_PATTERN = re.compile(
+    rf"(?:\b(?P<iso>PLN|EUR|USD|GBP)\b|(?P<symbol>zł|€|\$)|(?P<word>{_CURRENCY_WORD}))",
+    _FLAGS,
+)
 _PER_AREA_CONTEXT_PATTERN = re.compile(
-    rf"(?:\(\s*)?{_NUMBER}\s*(?:PLN|EUR|USD|GBP|zł|€|\$)?\s*"
+    rf"(?:\(\s*)?{_NUMBER}\s*(?:PLN|EUR|USD|GBP|zł|€|\$|{_CURRENCY_WORD})?\s*"
     r"(?:/|\bper\b|\bza\b|\bna\b|\b\u0437\u0430\b)\s*"
     r"(?:m(?:²|2)|sqm|\u043a\u0432\.?\s*\u043c)(?:\s*\))?",
     _FLAGS,
@@ -788,6 +798,8 @@ def _currency(value: str) -> str | None:
     match = _CURRENCY_PATTERN.search(value)
     if match is None:
         return None
+    if match.group("word") is not None:
+        return "PLN"
     currency_marker = match.group("iso") or match.group("symbol")
     folded = currency_marker.casefold()
     if folded == "zł":
