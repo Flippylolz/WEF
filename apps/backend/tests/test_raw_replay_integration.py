@@ -188,9 +188,5 @@ async def test_replay_rewrites_stale_offers_and_is_idempotent() -> None:
                 ),
                 {"cid": identity.channel_id},
             )
-            await connection.execute(
-                text("DELETE FROM source_channels WHERE external_id = :cid"),
-                {"cid": identity.channel_id},
-            )
             await connection.execute(text("DELETE FROM telegram_raw_events"))
         await engine.dispose()
