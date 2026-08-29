@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E16
 title: "Reliable numbered map-cluster expansion"
-status: in_progress
+status: done
 milestones: [M4]
 owner: owner
 spike: SPIKE.md
@@ -22,8 +22,16 @@ without corrupting MapLibre's camera state or leaving the map unusable.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1 approved by the
   owner on 2026-08-29.
 - [E16-T1](tasks/E16-T1-prevent-cluster-expansion-freeze.md): promoted in
-  `in_progress`; its approval/dependency gates are satisfied and implementation
-  is isolated on its recorded dedicated branch.
+  `done` through green-CI PR #194 and verified on production version `b09314d`.
+
+## Completion evidence
+
+- PR #194 merged as `b09314d104045076e727e183d3f40819c6fcaa48` after
+  every required check passed.
+- Release workflow run `33238276936` verified, published, activated, and
+  health-checked the immutable release.
+- Two production numbered clusters expanded successfully; later zoom, pan, and
+  pin selection remained responsive with no browser console errors.
 
 ## Governing documents
 
