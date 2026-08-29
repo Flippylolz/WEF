@@ -8,7 +8,7 @@ revision: 1
 priority: P1
 size: M
 milestone: M5
-dependencies: [- E17-T1]
+dependencies: [E17-T1]
 requirement_ids: []
 decision_ids: []
 deferred_decision_ids: []
