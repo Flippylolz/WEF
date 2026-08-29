@@ -30,6 +30,7 @@ from wef_backend.features.ingestion.domain import (
     SourceSpan,
 )
 from wef_backend.features.ingestion.domain.geocoding import (
+    canonical_warsaw_district,
     looks_like_warsaw_address,
     warsaw_district_in,
 )
@@ -417,13 +418,47 @@ def _district_field(
 ) -> ExtractedValue[str] | None:
     """Prefer labeled district lines over an exact pin-line district segment."""
     if _DISTRICT_PATTERN.search(text) is not None:
-        return _string_field(text, _DISTRICT_PATTERN, "district", parser_version, warnings)
+        return _district_labeled_field(text, parser_version, warnings)
     return _pin_line_field(
         text,
         "district",
         parser_version,
         warnings,
         warsaw_district_in,
+    )
+
+
+def _district_labeled_field(
+    text: str,
+    parser_version: str,
+    warnings: list[ExtractionWarning],
+) -> ExtractedValue[str] | None:
+    """Store only reviewed canonical district names from labeled lines."""
+    parsed: list[tuple[str, SourceSpan]] = []
+    for match in _DISTRICT_PATTERN.finditer(text):
+        canonical = canonical_warsaw_district(_trimmed_value(text, match))
+        if canonical is not None:
+            parsed.append((canonical, _trimmed_span(text, match)))
+    if not parsed:
+        return None
+    if len({value for value, _ in parsed}) > 1:
+        warnings.append(
+            ExtractionWarning(
+                code=ExtractionWarningCode.CONFLICTING_VALUES,
+                field_name="district",
+                spans=tuple(span for _, span in parsed),
+            ),
+        )
+        return None
+    value, span = parsed[0]
+    return ExtractedValue(
+        value=value,
+        provenance=_provenance(
+            "extract.district",
+            parser_version,
+            Confidence.HIGH,
+            span,
+        ),
     )
 
 

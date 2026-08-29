@@ -319,6 +319,30 @@ def test_per_area_only_currency_word_price_stays_reviewable() -> None:
     }
 
 
+def test_labeled_districts_store_canonical_vocabulary_only() -> None:
+    """Labeled district lines reroute reviewed variants and drop unreviewed text."""
+    rerouted = _candidate(
+        "Inwestycja | Synthetic\nDzielnica: Praga Po\u0142Udnie\nCena: 500 000 PLN",
+    )
+    assert rerouted.listing is not None
+    assert rerouted.listing.district is not None
+    assert rerouted.listing.district.value == "Praga-Po\u0142udnie"
+    assert rerouted.listing.district.provenance.rule_id == "extract.district"
+    assert rerouted.listing.district.provenance.confidence is Confidence.HIGH
+
+    typo = _candidate(
+        "Inwestycja | Synthetic\nDzielnica: Bia\u0142O\u0142\u0119Cka\nCena: 500 000 PLN"
+    )
+    assert typo.listing is not None
+    assert typo.listing.district is not None
+    assert typo.listing.district.value == "Bia\u0142o\u0142\u0119ka"
+
+    unreviewed = _candidate("Inwestycja | Synthetic\nDzielnica: Mordor\nCena: 500 000 PLN")
+    assert unreviewed.listing is not None
+    assert unreviewed.listing.district is None
+    assert unreviewed.listing.location is None
+
+
 def test_unknown_currency_remains_null_and_reviewable() -> None:
     """An unlabeled amount never silently becomes PLN."""
     text = json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"][2]["text"]

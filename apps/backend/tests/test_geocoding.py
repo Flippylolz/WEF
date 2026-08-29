@@ -26,6 +26,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
     GeocodeReviewStatus,
     SelectionReason,
     canonical_warsaw_district,
+    district_match_values,
     looks_like_warsaw_address,
     normalize_geocode_query,
     review_geocode_result,
@@ -108,6 +109,20 @@ def test_template_address_screen_accepts_only_warsaw_evidence() -> None:
     assert warsaw_district_in("Warszawa, Mokotów (Służewiec) | ul. Domaniewska 47A") == "Mokotów"
     assert warsaw_district_in("Район Targówek | ul. Miedza") == "Targówek"
     assert warsaw_district_in("ul. Chmielna, Warszawa") is None
+
+    assert canonical_warsaw_district("Bia\u0142O\u0142\u0119Cka") == "Bia\u0142o\u0142\u0119ka"
+    assert canonical_warsaw_district("Praga Po\u0142Udnie") == "Praga-Po\u0142udnie"
+    assert canonical_warsaw_district("PRAGA P\u00d3LNOC") == "Praga-P\u00f3\u0142noc"
+    assert canonical_warsaw_district("Mordor") is None
+    assert district_match_values("wola") == ("Wola", "wola")
+    assert district_match_values("Bia\u0142O\u0142\u0119Ka") == (
+        "Bia\u0142o\u0142\u0119ka",
+        "bialolecka",
+        "bialoleka",
+        "bia\u0142o\u0142\u0119cka",
+        "bia\u0142o\u0142\u0119ka",
+    )
+    assert district_match_values("Mordor") == ("Mordor",)
 
 
 def test_cache_identity_covers_provider_and_every_version() -> None:

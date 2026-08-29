@@ -59,7 +59,9 @@ class FakeFacetSession:
     def __init__(self) -> None:
         """Initialize deterministic scalar responses."""
         self._scalars = [
-            FakeScalarResult(["srodmiescie", None, "wola"]),
+            FakeScalarResult(
+                ["srodmiescie", None, "wola", "Praga Po\u0141Udnie", "Praga-Po\u0142udnie"]
+            ),
             FakeScalarResult(["primary", "secondary"]),
             FakeScalarResult(["development", "unit"]),
         ]
@@ -152,7 +154,7 @@ async def test_facet_adapter_normalizes_visible_aggregate_values() -> None:
 
     facets = await adapter.query_facets()
 
-    assert facets.districts == ("srodmiescie", "wola")
+    assert facets.districts == ("Praga-Po\u0142udnie", "Wola", "\u015ar\u00f3dmie\u015bcie")
     assert facets.rooms == (1, 2, 3)
     assert facets.market_types == (MarketType.PRIMARY, MarketType.SECONDARY)
     assert facets.content_types == (ContentType.DEVELOPMENT, ContentType.UNIT)
