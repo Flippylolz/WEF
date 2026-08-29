@@ -341,3 +341,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Selected approach: approve E15 implementation plan revision 1 and execute E15-T1 → E15-T2 → E15-T3, one dedicated PR per task, merging in dependency order only after required CI is complete and green. The planning/approval artifacts land first in their own documentation PR.
 - Safety limit: the instruction does not waive task gates, review, CI, privacy, secret handling, immutable deployment health, rollback preflight, single-worker ownership, or bounded production-recovery controls. No raw Telegram content/session/contacts enter Git, logs, or evidence.
 - Reversal: close unmerged PRs and invalidate the affected plan/task gate if material implementation evidence crosses a plan/spike trigger; after deployment, use the prior immutable release without rewinding committed checkpoints.
+
+## AD-041: Approve E14 spike revision 1 and prepare the implementation plan
+
+- Time: 2026-08-29.
+- Owner decision: `I approve E14 spike revision 1.`
+- Selected approach: record exact owner approval of E14 spike revision 1, refine and promote E14-T1 through E14-T8, and prepare implementation plan revision 1 for separate owner review.
+- Scope boundary: this decision authorizes task refinement, promotion, and implementation planning only. It does not authorize application code, tests, dependencies, migrations, infrastructure, deployment, production mutation, or recovery operations.
+- Recovery boundary: E14-T9 remains proposed and non-actionable while ADR-015 and E7-T5 defer off-host backups; a later owner decision must define that recovery scope before promotion.
+- Rationale: E14 is the selected unfinished epic other than E17, its research-only spike is complete, and the owner supplied the exact revision-specific approval required by the workflow.
+- Reversal: invalidate the spike and downstream planning artifacts if the owner withdraws approval or new evidence crosses a spike invalidation trigger.

@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E14-T6
 epic: E14
 title: "Define SLOs and ship privacy-safe observability"
-status: proposed
+status: draft
 revision: 1
-actionable: false
 priority: P1
 size: L
 milestone: M5
@@ -15,10 +14,43 @@ decision_ids: [ADR-006, ADR-008, ADR-010, ADR-014, ADR-015]
 deferred_decision_ids: []
 source: "repository-audit:2026-08-26"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E14-T6-define-slos-and-ship-privacy-safe-observability.md
+  promoted_by: "Codex agent (owner-approved E14 planning under AD-041)"
+  promoted_at: "2026-08-29T21:17:35Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 1
+  verified_by: "Codex agent (AD-041)"
+  verified_at: "2026-08-29T21:17:35Z"
+implementation_gate:
+  status: blocked
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: null
+  verified_by: null
+  verified_at: null
+dependency_gate:
+  status: blocked
+  verified_by: null
+  verified_at: null
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E14-T6
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E14-T6: Define SLOs and ship privacy-safe observability
@@ -61,8 +93,8 @@ Depends on E8-T5 for final worker signals and E14-T1 for truthful gates.
 The implementation plan must compare host resource/cost, privacy, retention, and
 operational burden before approving any backend or vendor.
 
-## Promotion checklist
+## Ready checklist
 
-- [ ] E14 spike is explicitly owner-approved at its current revision.
-- [ ] Scope, checks, dependencies, priority/size, and traceability match the approved spike.
-- [ ] This file will be moved—not copied—to `tasks/` with complete promotion metadata.
+- [x] E14 spike revision 1 is owner-approved under AD-041.
+- [x] The task was moved to `tasks/` with complete promotion metadata.
+- [ ] E14 implementation plan revision 1 is owner-approved and E8-T5/E14-T1 are done.

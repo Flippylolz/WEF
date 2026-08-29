@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E14
 title: "Production hardening and scalability audit"
-status: awaiting_approval
+status: approved
 revision: 1
 owner: owner
 research_only: true
@@ -12,11 +12,11 @@ domain_docs: [architecture, product, contracts, ingestion, security, operations,
 proposed_task_ids: [E14-T1, E14-T2, E14-T3, E14-T4, E14-T5, E14-T6, E14-T7, E14-T8, E14-T9]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Flippylolz"
+  decided_at: "2026-08-29T21:17:35Z"
+  approved_revision: 1
+  evidence: "AD-041; owner instruction in Codex task on 2026-08-29: 'I approve E14 spike revision 1.'"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -224,10 +224,9 @@ Approve the nine-task incremental sequence in the epic README, with three contro
 - [x] Proposed task boundaries, dependencies, checks, risks, and sequencing are identified.
 - [x] No production or disposable proof code was created.
 - [x] `revision` represents the material content submitted.
-- [x] Status is `awaiting_approval` and approval remains `pending`.
+- [x] Owner approved revision 1 on 2026-08-29; approval evidence is recorded in front matter and AD-041.
 
 ## Owner decision
 
-The owner records the decision only in the YAML `approval` object. Approval of spike
-revision 1 permits task refinement/promotion and implementation planning; it does not
-authorize implementation.
+The owner approved spike revision 1 on 2026-08-29. This permits task
+refinement/promotion and implementation planning; it does not authorize implementation.

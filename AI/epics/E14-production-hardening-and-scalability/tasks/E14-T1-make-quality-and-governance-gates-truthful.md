@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E14-T1
 epic: E14
 title: "Make quality and governance gates truthful"
-status: proposed
+status: draft
 revision: 1
-actionable: false
 priority: P1
 size: M
 milestone: M5
@@ -15,10 +14,43 @@ decision_ids: [ADR-009, ADR-012, ADR-013, ADR-017]
 deferred_decision_ids: []
 source: "repository-audit:2026-08-26"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E14-T1-make-quality-and-governance-gates-truthful.md
+  promoted_by: "Codex agent (owner-approved E14 planning under AD-041)"
+  promoted_at: "2026-08-29T21:17:35Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 1
+  verified_by: "Codex agent (AD-041)"
+  verified_at: "2026-08-29T21:17:35Z"
+implementation_gate:
+  status: blocked
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: null
+  verified_by: null
+  verified_at: null
+dependency_gate:
+  status: satisfied
+  verified_by: "Codex agent"
+  verified_at: "2026-08-29T21:17:35Z"
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E14-T1
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E14-T1: Make quality and governance gates truthful
@@ -59,8 +91,8 @@ No task dependency. Spike and implementation-plan approval remain mandatory.
 Avoid one monolithic slow job that harms feedback time; canonical truth can orchestrate
 parallel focused jobs as long as missing jobs fail closed.
 
-## Promotion checklist
+## Ready checklist
 
-- [ ] E14 spike is explicitly owner-approved at its current revision.
-- [ ] Scope, checks, dependencies, priority/size, and traceability match the approved spike.
-- [ ] This file will be moved—not copied—to `tasks/` with complete promotion metadata.
+- [x] E14 spike revision 1 is owner-approved under AD-041.
+- [x] The task was moved to `tasks/` with complete promotion metadata.
+- [ ] E14 implementation plan revision 1 is owner-approved and the implementation gate is satisfied.
