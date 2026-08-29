@@ -69,7 +69,12 @@ owner-supplied backup.
 
 ## Workspace state
 
-- [Spike](SPIKE.md): revision 1, `awaiting_approval`; research only, no code allowed.
-- Proposed tasks (non-actionable until spike approval and promotion):
-  `proposed-tasks/E17-T1` through `proposed-tasks/E17-T6`.
-- `tasks/` does not exist yet; it appears when the first task is promoted.
+- [Spike](SPIKE.md): revision 1, owner-approved 2026-08-29.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, owner-approved
+  2026-08-29.
+- [E17-T1](tasks/E17-T1-raw-event-archive-and-background-processing.md) through
+  [E17-T6](tasks/E17-T6-owner-backup-replay-and-production-promotion.md): promoted
+  2026-08-29; `tasks/` is the single authoritative location (no `proposed-tasks/`
+  remains).
+- Completion gate: epic becomes `done` only through E17-T6's owner-supplied backup
+  replay and production promotion evidence.
