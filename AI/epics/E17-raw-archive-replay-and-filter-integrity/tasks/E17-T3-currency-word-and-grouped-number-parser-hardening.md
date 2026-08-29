@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E17-T3
 epic: E17
 title: "Currency-word and grouped-number parser hardening"
-status: ready
+status: done
 revision: 1
 priority: P1
 size: S
@@ -38,6 +38,13 @@ branch:
   name: bugfix/E17-T3-currency-word-grouped-number-parsing
   task_id: E17-T3
   one_task_only: true
+completion:
+  completed_by: "ZCode agent under owner instruction"
+  completed_at: "2026-08-30T00:00:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/200"
+  evidence:
+    - "e2-v5: currency words map to PLN and grouped amounts keep full magnitude; untracked words stay reviewable."
+    - "PR #200 merged after Backend, Frontend and contract, Repository safety, Runtime images, and Coverage badge checks passed"
 invalidation:
   invalidated_by: null
   invalidated_at: null

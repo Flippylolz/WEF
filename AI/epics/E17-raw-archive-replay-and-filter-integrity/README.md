@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E17
 title: "Raw archive replay and filter integrity"
-status: selected
+status: in_progress
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -31,6 +31,16 @@ applies no filter logic of its own.
   launch state, not an active outage.
 - E17 takes precedence over ordinary feature work until its production completion
   gate in E17-T6 is satisfied.
+
+## Completion state (2026-08-30)
+
+- E17-T1 done (PR #203), E17-T2 done (PR #208), E17-T3 done (PR #200),
+  E17-T4 done (PR #201), E17-T5 done (PR #209) — each merged after every
+  required CI check passed.
+- E17-T6 is `ready` and blocked on the owner gate: a fresh Telegram data
+  backup must be staged by the owner, replayed through the raw archive +
+  replay pipeline into a production candidate, and promoted with recorded
+  quality metrics. The epic becomes `done` only through that promotion.
 
 ## Completion gate (owner-controlled)
 

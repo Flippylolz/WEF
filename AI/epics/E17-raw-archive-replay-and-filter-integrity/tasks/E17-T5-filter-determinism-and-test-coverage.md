@@ -3,12 +3,12 @@ schema: ai-workflow/task@1
 id: E17-T5
 epic: E17
 title: "Filter determinism and test coverage"
-status: ready
+status: done
 revision: 1
 priority: P1
 size: M
 milestone: M5
-dependencies: [- E17-T4]
+dependencies: [E17-T4]
 requirement_ids: []
 decision_ids: []
 deferred_decision_ids: []
@@ -38,6 +38,13 @@ branch:
   name: test/E17-T5-filter-determinism-and-coverage
   task_id: E17-T5
   one_task_only: true
+completion:
+  completed_by: "ZCode agent under owner instruction"
+  completed_at: "2026-08-30T00:00:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/209"
+  evidence:
+    - "Backend-served option ordering, code-unit URL canonicalization, Unicode-aware option labels, normalized-key identity test, zero-variance reruns."
+    - "PR #209 merged after Backend, Frontend and contract, Repository safety, Runtime images, and Coverage badge checks passed"
 invalidation:
   invalidated_by: null
   invalidated_at: null

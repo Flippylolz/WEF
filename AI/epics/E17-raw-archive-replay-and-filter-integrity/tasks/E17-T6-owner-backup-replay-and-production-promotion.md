@@ -8,7 +8,7 @@ revision: 1
 priority: P1
 size: L
 milestone: M5
-dependencies: [- E17-T1]
+dependencies: [E17-T1, E17-T2, E17-T3, E17-T4, E17-T5]
 requirement_ids: []
 decision_ids: []
 deferred_decision_ids: []
@@ -33,6 +33,7 @@ dependency_gate:
   verified_by: "ZCode agent under owner instruction"
   verified_at: "2026-08-29T17:10:10Z"
   evidence: []
+note: "Owner-gated: epic completion waits on the owner-supplied backup replay and production promotion (see epic README)."
 branch:
   required: true
   name: doc/E17-T6-owner-backup-replay-and-production-promotion

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E17-T1
 epic: E17
 title: "Raw event archive and background processing"
-status: ready
+status: done
 revision: 1
 priority: P1
 size: L
@@ -38,6 +38,13 @@ branch:
   name: feat/E17-T1-raw-event-archive-and-background-processing
   task_id: E17-T1
   one_task_only: true
+completion:
+  completed_by: "ZCode agent under owner instruction"
+  completed_at: "2026-08-30T00:00:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/203"
+  evidence:
+    - "Raw-event archive schema, verbatim landing before canonical processing, supervised drainer with bounded retries, and integration coverage."
+    - "PR #203 merged after Backend, Frontend and contract, Repository safety, Runtime images, and Coverage badge checks passed"
 invalidation:
   invalidated_by: null
   invalidated_at: null
