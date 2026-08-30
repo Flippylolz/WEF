@@ -50,6 +50,9 @@ completion:
     - "Candidate metrics: 3,055 offers all parser_version e2-v5; sentinel pin count 0; 3,012/3,055 offers on real locations, remainder ungeocoded off-map; zero implausible price magnitudes (the single sub-100k PLN price is a legitimate 14,000 zł/month rental, message 28768)"
     - "Production promotion: Release and deploy production run 33280067325 completed successfully on main after PR #210, activating the e2-v5 parser, migration chain 0012->0013->0014, raw archive, and replay command"
     - "Host-side operator follow-ups (routine operations, not epic gates): run wef-replay-parser on the production host to re-point historical sentinel/stale rows, then the geocode stage for newly resolved locations under ADR-021 budgets, then wef-accept-pending-geocode-pins"
+    - "Production repair executed 2026-08-30 over SSH: seeded 27,866 archive rows from retained history (PR #213 seed feature), replayed to convergence (3,058 stale offers re-derived; final pass reprocessed=0, stale_after_replay=0, not_rederivable=0), geocoded 1,218 pending locations under the durable budget, accepted 592 pending pins, promoted 3,055 visible offers"
+    - "Sentinel hygiene: reset the accepted pin on the Unknown location row (offers without extractable locations stay ungeocoded and off-map); zero sentinel pins in production"
+    - "Post-repair production snapshot: 3,060 offers (3,051 visible, 5 transient self-healing), 1,934 accepted pins, 1,930 map features in the default viewport, 17 canonical facet districts, /api/v1/health/ready = ready, release 7a3e927 active (PR #214 convergence fix)"
 invalidation:
   invalidated_by: null
   invalidated_at: null

@@ -41,10 +41,12 @@ applies no filter logic of its own.
   2026-08-28) replayed with 100% location coverage, a clean 17-value
   canonical district vocabulary, verified price magnitudes, and a
   converging, idempotent archive replay; production promoted through
-  Release and deploy production run 33280067325. Remaining host-side
-  operations (production replay repair, geocode of newly resolved
-  locations, pin acceptance) are recorded in the E17-T6 completion
-  evidence as routine follow-ups.
+  Release and deploy production run 33280067325.
+- Production repair completed 2026-08-30 over the host runbook: history
+  seeded into the raw archive (27,866 rows), replay converged to zero
+  stale/reprocessable items, 1,218 locations geocoded under budget,
+  592 pins accepted, 3,055 offers visible, sentinel pin removed, and
+  17 canonical facet districts live on the map (release 7a3e927).
 
 ## Completion gate (owner-controlled) — satisfied
 >>>>>>> 7158019 (docs(E17-T6): record backup replay evidence and close the epic)
