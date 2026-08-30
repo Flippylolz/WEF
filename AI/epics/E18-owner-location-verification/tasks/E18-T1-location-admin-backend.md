@@ -182,5 +182,5 @@ plus location update with an owner-attributed audit event.
 ## Done checklist
 
 - [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../workflow/DEFINITION_OF_DONE.md) passes.
+- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.
