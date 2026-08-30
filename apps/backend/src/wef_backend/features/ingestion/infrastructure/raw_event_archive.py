@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 from uuid import UUID, uuid4
 
-from sqlalchemy import func, or_, select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
@@ -150,7 +150,7 @@ class SQLAlchemyRawEventArchive:
         self,
         *,
         parser_version: str,
-        sentinel_hash: str,
+        sentinel_hash: str,  # noqa: ARG002 - protocol parity; staleness is parser drift
         limit: int,
         exclude: frozenset[str] = frozenset(),
     ) -> Sequence[ReplayWorkItem]:
@@ -197,10 +197,7 @@ class SQLAlchemyRawEventArchive:
             .join(LocationRow, LocationRow.id == OfferRow.location_id)
             .where(
                 ranked.c.recency == 1,
-                or_(
-                    OfferRow.parser_version != parser_version,
-                    LocationRow.normalized_address_hash == sentinel_hash,
-                ),
+                OfferRow.parser_version != parser_version,
             )
             .order_by(ranked.c.channel_external_id, ranked.c.external_message_id)
             .limit(limit)

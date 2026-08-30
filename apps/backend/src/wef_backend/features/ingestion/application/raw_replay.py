@@ -53,6 +53,7 @@ class ReplaySummary:
     """Redacted result of one replay invocation."""
 
     reprocessed: int
+    not_rederivable: int
     created: int
     unchanged: int
     revised: int
@@ -113,6 +114,7 @@ class RawParserReplayer:
         sentinel_hash = normalized_location_key(None)
         excluded: set[str] = set()
         reprocessed = 0
+        not_rederivable = 0
         counts = RunCounts()
         async with self.store.run_lock(source_key):
             channel_id = await self.store.ensure_channel(
@@ -149,13 +151,22 @@ class RawParserReplayer:
                             excluded.add(_work_key(item))
                             continue
                         raw = live_message_to_raw(event.message, identity=channel)
+                        extraction = extract_listing(raw)
+                        if extraction.listing is None:
+                            # The current parser no longer derives an offer from
+                            # this source; keep the existing offer (canonical
+                            # revised-offer semantics) and report it instead of
+                            # rewriting history every run.
+                            excluded.add(_work_key(item))
+                            not_rederivable += 1
+                            continue
                         advance = raw.external_message_id > checkpoint.last_source_index
                         _, checkpoint, counts, _ = await self.store.persist_live_upsert(
                             channel_id=channel_id,
                             run_id=run_id,
                             message=PersistableMessage(
                                 raw=raw,
-                                extraction=extract_listing(raw),
+                                extraction=extraction,
                             ),
                             checkpoint=checkpoint,
                             counts=counts,
@@ -190,6 +201,7 @@ class RawParserReplayer:
         )
         return ReplaySummary(
             reprocessed=reprocessed,
+            not_rederivable=not_rederivable,
             created=counts.created,
             unchanged=counts.unchanged,
             revised=counts.revised,
