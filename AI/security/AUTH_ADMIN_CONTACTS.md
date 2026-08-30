@@ -191,12 +191,22 @@ Owner capabilities:
 - Force-reset a password to a temporary value and require change on next login.
 - View reveal audits by user/offer/date/outcome.
 - View admin action history.
+- Browse every canonical location under `/admin/places` with review-status
+  filters (pending queue by default) and address search (E18).
+- Place a location's map point manually from a full-page map picker showing the
+  retained offer evidence, accept an in-scope geocode candidate, reject a
+  location, or send a decided location back to review (E18). Every decision
+  appends a `location_geocode_selections` lineage row
+  (`actor_type="operator"`, `actor_id=<owner>`) and an admin audit event
+  (`target_type="location"`).
 
 Not allowed:
 
 - View/edit password hashes or session tokens.
 - View contact ciphertext/plaintext through generic model forms.
 - Reveal a contact through the audit screen.
+- Edit non-coordinate location fields (display name, district, normalized
+  address) or apply bulk location changes (E18 scope boundary).
 - Change immutable usernames.
 - Delete/demote the last owner.
 - Perform generic writes directly from a Starlette Admin `ModelView`.

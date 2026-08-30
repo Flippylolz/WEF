@@ -119,6 +119,31 @@ During E3-T5, before any historical result becomes a visible pin:
 
 Provider choice must be configuration, not branching business logic.
 
+## Manual operator decisions (E18)
+
+The owner console's Locations page (`/admin/places`) applies single-location
+review decisions through the same lineage contract as the automated pipeline:
+
+- Every decision appends one `location_geocode_selections` row with
+  `actor_type="operator"`, `actor_id=<owner account id>`,
+  `review_policy_version=warsaw-review-v1`, and a monotonic
+  `selection_version`, then updates the `locations` row in one transaction.
+- **Manual point placement** accepts a location with coordinates the owner
+  placed on a map after checking the retained offer text: `reason_code=manual_accept`
+  with `geocode_result_id=null`, `precision=building`, `confidence=1.00`,
+  `selected_geocode_result_id=null`, and `out_of_scope=false`. Coordinates are
+  validated against the versioned Warsaw bounding box (`within_warsaw`) before
+  the write, preserving `ck_locations_accepted_public_point`.
+- **Candidate acceptance** promotes the latest selection's geocode result when it
+  carries an in-scope, error-free point; the copied precision/confidence and
+  result id mirror the batch-accept CLI.
+- **Rejection** (`manual_reject`) and **unresolve** (`manual_unresolve`, only
+  from `accepted`/`rejected` back to `needs_review`) keep any existing point on
+  the row; public map eligibility remains governed by `review_status`.
+- Console decisions interleave safely with the recurring geocoder and the
+  batch-accept CLI because versions are allocated per location inside the
+  decision transaction.
+
 ## Recommendation
 
 Use Geoapify for the historical import under ADR-021 and for **recurring live ingestion** under D-002/E8-T4 (revalidated 2026-08-21). Keep Geoapify-only aggregate quality evidence and explicit manual review from E3-T5. Public Nominatim remains ineligible for recurring jobs; at most it may be a potential small one-time seed fallback if its policy permits the specific use and every condition is met. Defer self-hosting until usage or provider terms justify a separate benchmark/host. Operator command: `wef-revalidate-recurring-geocoder [--live-check]`.

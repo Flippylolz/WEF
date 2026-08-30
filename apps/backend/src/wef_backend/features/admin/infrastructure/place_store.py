@@ -63,14 +63,30 @@ class SQLAlchemyLocationAdminStore:
                 .correlate(LocationRow)
                 .scalar_subquery()
             )
-            stmt: Select[Any] = select(
-                LocationRow,
-                latest.c.reason_code.label("reason_code"),
-                offer_count.label("offer_count"),
-            ).join(
-                latest,
-                and_(latest.c.location_id == LocationRow.id, latest.c.rn == 1),
-                isouter=True,
+            stmt: Select[Any] = (
+                select(
+                    LocationRow,
+                    latest.c.reason_code.label("reason_code"),
+                    func.coalesce(
+                        and_(
+                            GeocodeResultRow.point.is_not(None),
+                            GeocodeResultRow.within_scope.is_(True),
+                            GeocodeResultRow.error_code.is_(None),
+                        ),
+                        False,
+                    ).label("has_candidate"),
+                    offer_count.label("offer_count"),
+                )
+                .join(
+                    latest,
+                    and_(latest.c.location_id == LocationRow.id, latest.c.rn == 1),
+                    isouter=True,
+                )
+                .join(
+                    GeocodeResultRow,
+                    GeocodeResultRow.id == latest.c.geocode_result_id,
+                    isouter=True,
+                )
             )
             stmt = _apply_status_filter(stmt, status)
             if search is not None:
@@ -95,6 +111,7 @@ class SQLAlchemyLocationAdminStore:
                 has_point=row.LocationRow.point is not None,
                 out_of_scope=row.LocationRow.out_of_scope,
                 reason_code=row.reason_code,
+                has_candidate=bool(row.has_candidate),
                 offer_count=int(row.offer_count),
                 updated_at=row.LocationRow.updated_at,
             )
@@ -144,6 +161,7 @@ class SQLAlchemyLocationAdminStore:
             has_point=row.point is not None,
             out_of_scope=row.out_of_scope,
             reason_code=reason_code,
+            has_candidate=await _has_usable_candidate(session, location_id),
             offer_count=offer_count,
             updated_at=row.updated_at,
         )
@@ -339,6 +357,7 @@ def _latest_selection_subquery() -> Subquery:
         select(
             LocationGeocodeSelectionRow.location_id.label("location_id"),
             LocationGeocodeSelectionRow.reason_code.label("reason_code"),
+            LocationGeocodeSelectionRow.geocode_result_id.label("geocode_result_id"),
             func.row_number()
             .over(
                 partition_by=LocationGeocodeSelectionRow.location_id,
@@ -384,6 +403,27 @@ def _offer_summary(offer: OfferRow) -> OfferContextSummary:
         rooms_max=offer.rooms_max,
         source_text_excerpt=offer.source_text_excerpt,
     )
+
+
+async def _has_usable_candidate(
+    session: AsyncSession,
+    location_id: UUID,
+) -> bool:
+    """Return whether the latest selection carries an in-scope result point."""
+    latest = await _latest_selection_row(session, location_id)
+    if latest is None or latest.geocode_result_id is None:
+        return False
+    row = (
+        await session.execute(
+            select(GeocodeResultRow.id).where(
+                GeocodeResultRow.id == latest.geocode_result_id,
+                GeocodeResultRow.point.is_not(None),
+                GeocodeResultRow.within_scope.is_(True),
+                GeocodeResultRow.error_code.is_(None),
+            ),
+        )
+    ).first()
+    return row is not None
 
 
 async def _latest_reason(session: AsyncSession, location_id: UUID) -> str | None:

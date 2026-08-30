@@ -10,6 +10,7 @@ from tests.fakes import (
     FakeCatalogBrowse,
     FakeEstateQuery,
     FakeIdentityStore,
+    FakeLocationAdminStore,
     FakeMapQuery,
     FakeOfferDetailQuery,
     always_ready,
@@ -39,6 +40,7 @@ from wef_backend.features.identity.infrastructure import MemoryRateLimiter
 async def admin_client(
     *,
     store: FakeIdentityStore | None = None,
+    places: FakeLocationAdminStore | None = None,
 ) -> AsyncIterator[tuple[AsyncClient, FakeIdentityStore]]:
     identity_store = store or FakeIdentityStore()
     services = AppServices(
@@ -58,7 +60,7 @@ async def admin_client(
         favorites=build_favorites_service(),
         view_history=build_view_history_service(),
         contacts=build_contact_service(),
-        admin=build_admin_service(store=identity_store),
+        admin=build_admin_service(store=identity_store, places=places),
         auth_cookie_secure=False,
         admin_session_secret="test-admin-session-secret",
         public_rate_limiter=MemoryRateLimiter(),

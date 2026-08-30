@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E18-T2
 epic: E18
 title: "Location admin console page and map picker"
-status: draft
+status: in_progress
 revision: 1
 priority: P1
 size: M
@@ -34,16 +34,17 @@ implementation_gate:
   verified_by: "ZCode agent under owner instruction"
   verified_at: "2026-08-30T11:03:58Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "ZCode agent under owner instruction"
+  verified_at: "2026-08-30T11:50:00Z"
+  evidence:
+    - "E18-T1 done through https://github.com/Flippylolz/WEF/pull/217 (commit 45e815c on main)."
 branch:
   required: true
-  name: null
+  name: feat/E18-T2-location-admin-console
   task_id: E18-T2
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-30T11:41:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -166,17 +167,25 @@ service.
 - [x] `implementation_gate` references the owner-approved current
   implementation-plan revision, which contains this task ID/current revision, and
   is `satisfied`.
-- [ ] Every dependency is `done` with `dependency_gate: satisfied` (E18-T1
-  pending) or recorded as stacked; every deferred gate is resolved.
+- [x] Every dependency is `done` with `dependency_gate: satisfied` (E18-T1 done
+  through PR #217); every deferred gate is resolved.
 - [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting
+- [x] Status passed through `ready`.
+- [x] One new branch contains this task ID.
+- [x] The branch and pull request contain this task only.
+- [x] `branch.name` and `branch.created_at` are recorded before setting
   `in_progress`.
+
+## Implementation note
+
+Rendering the conditional "Accept candidate" action required exposing whether
+the latest selection carries a usable in-scope result, so
+`LocationAdminSummary` gained a read-only `has_candidate` flag computed in the
+E18-T1 reader projection. This extends the approved list projection without
+changing approved behavior or scope.
 
 ## Done checklist
 

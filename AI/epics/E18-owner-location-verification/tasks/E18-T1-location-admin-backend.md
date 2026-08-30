@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E18-T1
 epic: E18
 title: "Location admin backend service"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -43,12 +43,15 @@ branch:
   task_id: E18-T1
   one_task_only: true
   created_at: "2026-08-30T11:20:00Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/217"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode agent under owner instruction"
+  completed_at: "2026-08-30T11:45:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/217"
+  evidence:
+    - "Ports, interactors, SQLAlchemyLocationAdminStore, and composition wiring for list/filter/search and accept/reject/unresolve/set-point decisions with operator lineage and admin audit events."
+    - "8 interactor unit tests and 5 PostGIS integration tests; make test-backend 469 passed, coverage 90.72%."
+    - "PR #217 merged after every required CI check passed; production deploy run 33309521598 green with live/ready 200 and /admin serving afterwards."
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -122,23 +125,23 @@ plus location update with an owner-attributed audit event.
 
 ## Acceptance criteria
 
-- [ ] `ListLocations` returns summaries for every review status with working
+- [x] `ListLocations` returns summaries for every review status with working
   `pending` default filter, explicit status filters, address substring search,
   and a bounded limit, ordered newest-activity-first.
-- [ ] `GetLocationForEdit` returns the location, its latest offers (excerpts,
+- [x] `GetLocationForEdit` returns the location, its latest offers (excerpts,
   price/area/rooms, visibility, published), its latest decision reason, and any
   in-scope candidate point.
-- [ ] Each decision interactor appends exactly one lineage row with the correct
+- [x] Each decision interactor appends exactly one lineage row with the correct
   from/to state, reason, actor, policy version, and `selection_version+1`, updates
   `locations` accordingly, and records an allowed audit event.
-- [ ] `SetPlacePoint` accepts coordinates for any from-state after `within_warsaw`
+- [x] `SetPlacePoint` accepts coordinates for any from-state after `within_warsaw`
   validation and stores `precision=building`, `confidence=1.00`,
   `selected_geocode_result_id` unchanged, `out_of_scope=false`.
-- [ ] Denied paths (unknown location, accept without in-scope candidate,
+- [x] Denied paths (unknown location, accept without in-scope candidate,
   out-of-scope manual point) change nothing, record denied audit events, and raise
   `AdminDeniedError`.
-- [ ] Unit tests with fakes plus PostGIS integration tests pass locally under
-  `make test-backend`.
+- [x] Unit tests with fakes plus PostGIS integration tests pass locally under
+  `make test-backend` (469 passed, 90.72% coverage).
 
 ## Test plan
 
@@ -181,6 +184,6 @@ plus location update with an owner-attributed audit event.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

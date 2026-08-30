@@ -469,6 +469,7 @@ class LocationAdminSummary:
     has_point: bool
     out_of_scope: bool
     reason_code: str | None
+    has_candidate: bool
     offer_count: int
     updated_at: datetime
 
