@@ -207,8 +207,15 @@ class RegisterAccount:
 class AuthenticateAccount:
     """Verify credentials and establish one opaque server-side session."""
 
-    _DUMMY_HASH = "$argon2id$v=19$m=19456,t=2,p=1$"
-    """Constant hash fragment used to equalize unknown-username timing."""
+    _DUMMY_HASH = (
+        "$argon2id$v=19$m=65536,t=3,p=4$qv+YgvjgTXd7vil/ikP8gQ$"
+        "/f7RRZlRURT9YrzXF+ud4Q8HYD5JTsIK21HNahcyzmY"
+    )
+    """Full valid Argon2 hash of a constant dummy secret used to equalize
+    unknown-username timing. It must stay verifiable by the configured
+    hasher; the dummy verification is additionally failure-proofed below
+    so any hasher refusal degrades to the single indistinguishable
+    failure instead of an error response."""
 
     def __init__(
         self,
@@ -235,10 +242,10 @@ class AuthenticateAccount:
             raise InvalidCredentialsError(msg) from error
         account = await self._store.find_account_by_username(normalized)
         if account is None:
-            self._hasher.verify(password, self._DUMMY_HASH)
+            _equalize_timing(self._hasher, password, self._DUMMY_HASH)
             msg = "invalid credentials"
             raise InvalidCredentialsError(msg)
-        if not self._hasher.verify(password, account.hashed_password):
+        if not _verify_tolerant(self._hasher, password, account.hashed_password):
             msg = "invalid credentials"
             raise InvalidCredentialsError(msg)
         if not account.is_active or account.deleted_at is not None:
@@ -260,6 +267,26 @@ class AuthenticateAccount:
             expires_at=expires_at,
             ttl_seconds=int(self._session_ttl.total_seconds()),
         )
+
+
+def _equalize_timing(hasher: PasswordHasher, password: str, hashed: str) -> None:
+    """Run one hash verification for unknown usernames, failing closed.
+
+    Any hasher refusal degrades to the single indistinguishable failure
+    instead of surfacing as an error response.
+    """
+    try:
+        hasher.verify(password, hashed)
+    except Exception:  # noqa: BLE001 - hasher refusals stay indistinguishable
+        return
+
+
+def _verify_tolerant(hasher: PasswordHasher, password: str, hashed: str) -> bool:
+    """Verify one password, treating hasher refusals as a failed match."""
+    try:
+        return hasher.verify(password, hashed)
+    except Exception:  # noqa: BLE001 - corrupt or unknown hashes are failed matches
+        return False
 
 
 def _replace_login(account: Account, last_login_at: datetime) -> Account:

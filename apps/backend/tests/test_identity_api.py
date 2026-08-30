@@ -12,6 +12,7 @@ from tests.fakes import (
     build_identity_service,
 )
 from tests.test_api import create_test_app
+from wef_backend.features.identity.infrastructure.security import PwdlibPasswordHasher
 
 
 def identity_app(
@@ -123,6 +124,19 @@ async def test_login_responses_never_leak_credentials_or_tokens() -> None:
     assert bad.json()["code"] == "invalid_credentials"
     assert unauthorized_me.status_code == status.HTTP_401_UNAUTHORIZED
     assert unauthorized_me.json()["code"] == "not_authenticated"
+
+
+async def test_login_unknown_username_with_real_hasher_is_invalid_not_error() -> None:
+    """Unknown usernames stay a 401 problem even with the production hasher."""
+    app = identity_app()
+    app.state.identity = build_identity_service(hasher=PwdlibPasswordHasher())
+    async with auth_client(app) as client:
+        response = await client.post(
+            "/api/v1/auth/login",
+            json={"username": "ghost", "password": "longenough123"},
+        )
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.json()["code"] == "invalid_credentials"
 
 
 async def test_register_duplicate_username_is_reported_unavailable() -> None:

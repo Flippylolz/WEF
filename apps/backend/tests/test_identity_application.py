@@ -24,7 +24,10 @@ from wef_backend.features.identity.domain.model import (
     PasswordPolicyError,
     UserRole,
 )
-from wef_backend.features.identity.infrastructure.security import MemoryRateLimiter
+from wef_backend.features.identity.infrastructure.security import (
+    MemoryRateLimiter,
+    PwdlibPasswordHasher,
+)
 
 
 async def test_register_creates_user_role_account_with_normalized_username() -> None:
@@ -247,6 +250,64 @@ async def test_dummy_hash_verification_equalizes_unknown_username() -> None:
     with pytest.raises(InvalidCredentialsError):
         await authenticate(username="ghost", password="longenough123")
     assert verified == [AuthenticateAccount._DUMMY_HASH]  # noqa: SLF001
+
+
+async def test_unknown_username_with_real_hasher_stays_invalid() -> None:
+    """A real hasher verifies the dummy hash instead of crashing on it."""
+    store = FakeIdentityStore()
+    authenticate = AuthenticateAccount(
+        store,
+        PwdlibPasswordHasher(),
+        FakeTokens(),
+        FakeClock(),
+        session_ttl_seconds=60,
+    )
+    with pytest.raises(InvalidCredentialsError, match="invalid credentials"):
+        await authenticate(username="ghost", password="longenough123")
+
+
+async def test_unidentifiable_stored_hash_stays_invalid() -> None:
+    """A corrupt stored hash degrades to invalid credentials, not an error."""
+    hasher = PwdlibPasswordHasher()
+    store = FakeIdentityStore()
+    await store.create_account(
+        username_normalized="corrupt",
+        username_display="corrupt",
+        hashed_password="$argon2id$v=19$m=19456,t=2,p=1$",
+        role=UserRole.USER,
+        must_change_password=False,
+    )
+    authenticate = AuthenticateAccount(
+        store,
+        hasher,
+        FakeTokens(),
+        FakeClock(),
+        session_ttl_seconds=60,
+    )
+    with pytest.raises(InvalidCredentialsError, match="invalid credentials"):
+        await authenticate(username="corrupt", password="longenough123")
+
+
+async def test_real_hasher_accepts_correct_password() -> None:
+    """The end-to-end hashing path logs a real account in."""
+    hasher = PwdlibPasswordHasher()
+    store = FakeIdentityStore()
+    await store.create_account(
+        username_normalized="realuser",
+        username_display="realuser",
+        hashed_password=hasher.hash("longenough123"),
+        role=UserRole.USER,
+        must_change_password=False,
+    )
+    authenticate = AuthenticateAccount(
+        store,
+        hasher,
+        FakeTokens(),
+        FakeClock(),
+        session_ttl_seconds=60,
+    )
+    result = await authenticate(username="realuser", password="longenough123")
+    assert result.account.username == "realuser"
 
 
 def test_memory_rate_limiter_enforces_windows() -> None:
