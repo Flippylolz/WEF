@@ -75,3 +75,6 @@ Before importing the complete dataset:
 - Warsaw bounding validation and precision thresholds are tested.
 - Media paths are verified and the destination has sufficient disk.
 - The redaction/logging policy is tested against messages containing phone numbers and mentions.
+- Optional Groq place-review settings are absent by default and are not part of
+  this gate or `/health/ready`; missing `WEF_GROQ_API_KEY` must not block import
+  or deploy.

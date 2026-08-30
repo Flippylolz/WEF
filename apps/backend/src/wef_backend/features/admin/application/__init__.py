@@ -25,6 +25,10 @@ from wef_backend.features.admin.application.admin_ops import (
     SetPlacePoint,
     UnresolvePlace,
 )
+from wef_backend.features.admin.application.ai_review import (
+    ApplyPlaceReview,
+    GeneratePlaceReview,
+)
 
 __all__ = [
     "AcceptPlaceCandidate",
@@ -32,8 +36,10 @@ __all__ = [
     "AdminDeniedError",
     "AdminOutcome",
     "AdminService",
+    "ApplyPlaceReview",
     "DisableUser",
     "ForceResetUserPassword",
+    "GeneratePlaceReview",
     "GeocodeCandidateSummary",
     "GetLocationForEdit",
     "ListAdminAccounts",

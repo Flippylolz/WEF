@@ -234,6 +234,8 @@ Admin actions invoke owner-authorized interactors such as:
 - `RevokeUserSessions`.
 - `ForceResetUserPassword`.
 - `ListContactRevealAudit`.
+- `GeneratePlaceReview`.
+- `ApplyPlaceReview`.
 
 Each mutation creates `AdminAuditEvent` with owner user ID, target user/entity, action, timestamp, request ID, and outcome. It never stores passwords, tokens, or contact values.
 

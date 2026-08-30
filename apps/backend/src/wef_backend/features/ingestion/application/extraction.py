@@ -890,6 +890,21 @@ def _contacts(text: str, parser_version: str) -> tuple[ContactSpan, ...]:
     return tuple(sorted(contacts, key=lambda item: item.span))
 
 
+_REMAINING_DIGIT_RUN = re.compile(r"\d(?:[\s-]?\d){8,}")
+
+
+def extract_contact_spans(text: str) -> tuple[ContactSpan, ...]:
+    """Return parser-owned contact spans for one source description."""
+    return _contacts(text, PARSER_VERSION)
+
+
+def source_text_contains_unmasked_contacts(text: str) -> bool:
+    """Return True when phone/handle-like material remains after masking."""
+    if _PHONE_PATTERN.search(text) is not None or _TELEGRAM_PATTERN.search(text) is not None:
+        return True
+    return _REMAINING_DIGIT_RUN.search(text) is not None
+
+
 def _trimmed_value(text: str, match: re.Match[str]) -> str:
     return _trimmed_span(text, match).extract(text)
 

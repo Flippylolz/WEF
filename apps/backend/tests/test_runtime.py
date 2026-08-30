@@ -53,6 +53,10 @@ def test_settings_loader_returns_typed_defaults() -> None:
     assert settings.env == "development"
     assert settings.geoapify_requests_per_second == 4
     assert settings.geoapify_daily_quota == 2_700
+    assert settings.ai_curation_enabled is False
+    assert settings.groq_api_key is None
+    assert settings.groq_zdr_verified is False
+    assert settings.groq_model == "openai/gpt-oss-20b"
 
 
 @dataclass

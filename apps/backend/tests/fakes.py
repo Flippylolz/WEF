@@ -26,6 +26,20 @@ from wef_backend.features.admin.application.admin_ops import (
     SetPlacePoint,
     UnresolvePlace,
 )
+from wef_backend.features.admin.application.ai_review import (
+    ALLOWED_GROQ_MODEL,
+    AiApplyStatus,
+    AiCurationRuntime,
+    ApplyPlaceReview,
+    GeneratePlaceReview,
+    LocationAiSnapshot,
+    PlaceReviewRun,
+    ProviderOutcome,
+    ProviderRequestError,
+    ReviewRunState,
+    SourceRevisionEvidence,
+    StructuredCompletion,
+)
 from wef_backend.features.catalog.application import (
     FacetSnapshot,
     ListingBrowseRecord,
@@ -751,6 +765,126 @@ class FakeLocationAdminStore:
         return "set_point" not in self.denied_actions
 
 
+def _inactive_ai_runtime() -> AiCurationRuntime:
+    """Return fail-closed AI settings for tests that do not call Groq."""
+    return AiCurationRuntime(
+        enabled=False,
+        zdr_verified=False,
+        model=ALLOWED_GROQ_MODEL,
+        api_key_present=False,
+    )
+
+
+@dataclass
+class FakeChatCompletions:
+    """Scripted Chat Completions port for unit tests."""
+
+    payload: object = field(default_factory=dict)
+    error: ProviderOutcome | None = None
+    calls: list[tuple[dict[str, str], ...]] = field(default_factory=list)
+    models: list[str] = field(default_factory=list)
+    schema_names: list[str] = field(default_factory=list)
+    max_output_tokens: list[int] = field(default_factory=list)
+
+    async def complete(
+        self,
+        *,
+        model: str,
+        messages: tuple[dict[str, str], ...],
+        schema_name: str,
+        schema: dict[str, object],
+        max_output_tokens: int,
+    ) -> StructuredCompletion:
+        """Record the request and return the scripted payload or error."""
+        del schema
+        self.calls.append(messages)
+        self.models.append(model)
+        self.schema_names.append(schema_name)
+        self.max_output_tokens.append(max_output_tokens)
+        if self.error is not None:
+            raise ProviderRequestError(self.error)
+        return StructuredCompletion(
+            payload=self.payload,
+            token_input=12,
+            token_output=8,
+            latency_ms=5,
+            request_id="fake-request",
+        )
+
+
+@dataclass
+class FakePlaceAiReviewStore:
+    """In-memory place-review persistence for interactor tests."""
+
+    snapshot: LocationAiSnapshot | None = None
+    revisions: tuple[SourceRevisionEvidence, ...] = ()
+    extra_source_count: int = 0
+    owner_run_count: int = 0
+    insert_ok: bool = True
+    apply_status: AiApplyStatus = AiApplyStatus.APPLIED
+    runs: dict[UUID, PlaceReviewRun] = field(default_factory=dict)
+
+    async def get_location_snapshot(self, location_id: UUID) -> LocationAiSnapshot | None:
+        if self.snapshot is None or self.snapshot.id != location_id:
+            return None
+        return self.snapshot
+
+    async def list_current_source_revisions(
+        self,
+        location_id: UUID,  # noqa: ARG002 - contract parity
+        *,
+        limit: int,
+    ) -> tuple[SourceRevisionEvidence, ...]:
+        return self.revisions[:limit]
+
+    async def count_current_source_revisions(self, location_id: UUID) -> int:  # noqa: ARG002
+        return len(self.revisions) + self.extra_source_count
+
+    async def count_owner_runs_since(
+        self,
+        owner_id: UUID,  # noqa: ARG002 - contract parity
+        *,
+        since: datetime,  # noqa: ARG002 - contract parity
+    ) -> int:
+        return self.owner_run_count
+
+    async def insert_run(self, run: PlaceReviewRun) -> bool:
+        if not self.insert_ok:
+            return False
+        self.runs[run.id] = run
+        self.owner_run_count += 1
+        return True
+
+    async def get_run(self, run_id: UUID) -> PlaceReviewRun | None:
+        return self.runs.get(run_id)
+
+    async def apply_selected_fields(
+        self,
+        *,
+        run: PlaceReviewRun,
+        snapshot: LocationAiSnapshot,  # noqa: ARG002
+        display_name: str,  # noqa: ARG002
+        display_address: str,  # noqa: ARG002
+        district: str | None,  # noqa: ARG002
+        normalized_address: str,  # noqa: ARG002
+        normalized_address_hash: str,  # noqa: ARG002
+        return_to_review: bool,  # noqa: ARG002
+        applied_fields: tuple[str, ...],
+        actor_id: str,  # noqa: ARG002
+        decided_at: datetime,
+    ) -> AiApplyStatus:
+        if self.apply_status is not AiApplyStatus.APPLIED:
+            return self.apply_status
+        updated = replace(
+            run,
+            state=ReviewRunState.APPLIED,
+            applied_at=decided_at,
+            applied_fields=applied_fields,
+        )
+        self.runs[run.id] = updated
+        return AiApplyStatus.APPLIED
+
+
 def build_admin_service(
     *,
     store: FakeIdentityStore | None = None,
@@ -767,6 +901,8 @@ def build_admin_service(
     location_store = places or FakeLocationAdminStore()
     password_hasher = hasher or FakeHasher()
     time_source = clock or FakeClock()
+    review_store = FakePlaceAiReviewStore()
+    runtime = _inactive_ai_runtime()
     return AdminService(
         list_accounts=ListAdminAccounts(identity_store),
         disable_user=DisableUser(identity_store, audit_store, time_source),
@@ -786,6 +922,15 @@ def build_admin_service(
         reject_place=RejectPlace(location_store, audit_store, time_source),
         unresolve_place=UnresolvePlace(location_store, audit_store, time_source),
         set_place_point=SetPlacePoint(location_store, audit_store, time_source),
+        generate_place_review=GeneratePlaceReview(
+            review_store,
+            FakeChatCompletions(),
+            audit_store,
+            time_source,
+            runtime,
+        ),
+        apply_place_review=ApplyPlaceReview(review_store, audit_store, time_source, runtime),
+        ai_curation_enabled=False,
     )
 
 

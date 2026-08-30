@@ -11,8 +11,10 @@ from wef_backend.database import create_database_resources
 from wef_backend.features.admin.application import (
     AcceptPlaceCandidate,
     AdminService,
+    ApplyPlaceReview,
     DisableUser,
     ForceResetUserPassword,
+    GeneratePlaceReview,
     GetLocationForEdit,
     ListAdminAccounts,
     ListAdminAudits,
@@ -24,11 +26,14 @@ from wef_backend.features.admin.application import (
     SetPlacePoint,
     UnresolvePlace,
 )
+from wef_backend.features.admin.application.ai_review import AiCurationRuntime
 from wef_backend.features.admin.infrastructure import (
     SQLAlchemyAdminAuditStore,
     SQLAlchemyLocationAdminStore,
+    SQLAlchemyPlaceAiReviewStore,
     SQLAlchemyRevealAuditReader,
 )
+from wef_backend.features.admin.infrastructure.groq_provider import GroqChatCompletionsAdapter
 from wef_backend.features.catalog.application import (
     BrowseLocationOffers,
     BrowseViewportListings,
@@ -144,11 +149,40 @@ def build_services(settings: Settings | None = None) -> AppServices:
     contact_rate_limiter = MemoryRateLimiter()
     admin_audit_store = SQLAlchemyAdminAuditStore(database.session_factory)
     location_admin_store = SQLAlchemyLocationAdminStore(database.session_factory)
+    place_ai_review_store = SQLAlchemyPlaceAiReviewStore(database.session_factory)
     reveal_audit_reader = SQLAlchemyRevealAuditReader(database.session_factory)
     admin_secret = (
         runtime_settings.admin_session_secret.get_secret_value()
         if runtime_settings.admin_session_secret is not None
         else "dev-only-admin-session-secret"
+    )
+    groq_key = (
+        runtime_settings.groq_api_key.get_secret_value()
+        if runtime_settings.groq_api_key is not None
+        else ""
+    )
+    ai_runtime = AiCurationRuntime(
+        enabled=runtime_settings.ai_curation_enabled,
+        zdr_verified=runtime_settings.groq_zdr_verified,
+        model=runtime_settings.groq_model,
+        api_key_present=bool(groq_key),
+    )
+    groq_provider = GroqChatCompletionsAdapter(
+        groq_key or "disabled",
+        timeout_seconds=runtime_settings.groq_timeout_seconds,
+    )
+    generate_place_review = GeneratePlaceReview(
+        place_ai_review_store,
+        groq_provider,
+        admin_audit_store,
+        clock,
+        ai_runtime,
+    )
+    apply_place_review = ApplyPlaceReview(
+        place_ai_review_store,
+        admin_audit_store,
+        clock,
+        ai_runtime,
     )
     if runtime_settings.env == "production" and runtime_settings.admin_session_secret is None:
         msg = "WEF_ADMIN_SESSION_SECRET is required in production"
@@ -248,6 +282,9 @@ def build_services(settings: Settings | None = None) -> AppServices:
                 admin_audit_store,
                 clock,
             ),
+            generate_place_review=generate_place_review,
+            apply_place_review=apply_place_review,
+            ai_curation_enabled=ai_runtime.active,
         ),
         auth_cookie_secure=runtime_settings.env == "production",
         admin_session_secret=admin_secret,

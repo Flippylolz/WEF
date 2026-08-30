@@ -93,6 +93,11 @@ class Settings(BaseSettings):
     contact_hmac_key: SecretStr | None = None
     admin_session_secret: SecretStr | None = None
     release_sha: str | None = None
+    ai_curation_enabled: bool = False
+    groq_api_key: SecretStr | None = None
+    groq_model: str = "openai/gpt-oss-20b"
+    groq_zdr_verified: bool = False
+    groq_timeout_seconds: float = Field(default=30.0, ge=1, le=120)
 
 
 def load_settings() -> Settings:
