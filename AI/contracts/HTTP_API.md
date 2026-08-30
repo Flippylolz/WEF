@@ -101,13 +101,15 @@ Returns cursor-paginated offer summaries.
 
 It accepts the same offer filters as the map endpoint and an `include_non_matching=false` flag. The UI can request matching offers first, then deliberately request all related history. Pages use the stable order `matches_filters DESC, published_at DESC, id DESC` and an opaque versioned cursor.
 
-Each summary contains only dated structured offer fields, a backend-owned display name and coarse completeness indicator, and an explicit `matches_filters` value. Apartment, parking, and storage price ranges remain separate; parking and storage can instead be explicitly marked as included in the apartment price. The collection response also carries the selected location metadata plus matching and total visible counts; there is no separate `GET /api/v1/locations/{location_id}` endpoint. It excludes source text/links, media, contacts, raw payloads, and provider data.
+Each summary contains only dated structured offer fields, a backend-owned display name and coarse completeness indicator, an explicit `matches_filters` value, and—under planned E19—`data_origin: "parser" | "ai_assisted"`. Apartment, parking, and storage price ranges remain separate; parking and storage can instead be explicitly marked as included in the apartment price. The collection response also carries the selected location metadata plus matching and total visible counts; there is no separate `GET /api/v1/locations/{location_id}` endpoint. It excludes source text/links, media, contacts, raw payloads, and provider data. The coarse origin value drives a transparent **AI-assisted data** badge but exposes no model, prompt, batch, source-offset, or parser-gap details.
 
 ### `GET /api/v1/offers/{offer_id}`
 
 Returns:
 
 - Dated offer fields.
+- Planned E19 coarse `data_origin` (`parser` or `ai_assisted`), with no detailed
+  AI/provider provenance in the public response.
 - Server-side masked public source text.
 - Field confidence indicators.
 - Location/development summary.

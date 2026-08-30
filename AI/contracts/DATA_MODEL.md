@@ -171,6 +171,9 @@ Rules:
 - `published_at` is always visible in the public offer representation.
 - A fingerprint supports duplicate suggestions; it is not a unique constraint.
 - Canonical offer replay/upsert identity is source-anchored through exact `OfferSource` relationships to immutable source message revisions. Fuzzy fingerprints never become uniqueness keys and must not silently merge offers.
+- Public/admin `data_origin` is a derived projection: `ai_assisted` when at least
+  one currently displayed field has an active `OfferFieldOrigin` of AI, otherwise
+  `parser`. It is not a verification/quality score and is not provider-controlled.
 
 ### OfferSource
 
@@ -190,6 +193,68 @@ Constraints:
 
 - Unique `(offer_id, source_message_revision_id)`; a changed source revision appends revision-specific provenance rather than silently rebasing old offsets onto new text.
 - `source_message_revision_id` must identify a `SourceMessageRevision` whose `source_message_id` equals this row's `source_message_id` (composite foreign key, or derive message identity solely from the revision). Cross-message revision references are forbidden, matching the `SourceMessage.current_revision_id` same-message rule.
+
+### OfferAiEnrichmentBatch and OfferAiEnrichmentItem (planned E19)
+
+An owner-authorized, resumable missing-field autofill cohort and its immutable item
+scope.
+
+Batch fields:
+
+- `id`, `owner_user_id`.
+- Bounded normalized filter/scope JSON, candidate count, and model/prompt/schema
+  versions; never source text, contacts, prompts, or provider responses.
+- State (`queued`, `running`, `paused`, `completed`, `failed`, `reverting`, or
+  `reverted`), durable checkpoint/counters, created/started/finished timestamps,
+  and minimized failure category.
+
+Item fields:
+
+- `batch_id`, `offer_id`, stable ordinal, source/input fingerprint, state/outcome,
+  attempt count, and timestamps.
+- Unique `(batch_id, offer_id)` and `(batch_id, ordinal)`.
+
+The candidate set is frozen when the owner starts the batch. A default batch has 20
+offers and an owner may queue at most 200; execution pauses at the shared daily
+provider-call limit and resumes from the checkpoint.
+
+### OfferAiFieldEvent (planned E19)
+
+Append-only lifecycle and parser-feedback history for one candidate field.
+
+Fields:
+
+- `id`, `batch_id`, `batch_item_id`, `offer_id`, and allowlisted `field_name`.
+- Typed proposed/applied value JSON, outcome (`proposed`, `applied`, `skipped`,
+  `invalidated`, `rolled_back`, `parser_confirmed`, or `parser_conflicting`), and
+  bounded reason enum.
+- Immutable `source_message_revision_id`, exact non-contact `source_start`/
+  `source_end`, source/input fingerprint, and parser version at generation.
+- Provider/model/prompt/schema versions, model confidence as non-authoritative
+  metadata, request ID, token/latency metadata, owner actor, and timestamps.
+
+The evidence offsets must slice the exact retained immutable source revision and
+must not intersect a contact span. The event stores neither the evidence text nor
+any raw prompt/provider response/error body.
+
+### OfferFieldOrigin (planned E19)
+
+Current canonical origin for an offer field, separate from append-only history.
+
+Fields and constraints:
+
+- Unique `(offer_id, field_name)`.
+- Origin (`parser` or `ai`), typed canonical value fingerprint, source revision,
+  parser version, nullable originating AI field-event ID, state (`active`, `stale`,
+  or `conflicting`), and timestamps.
+- An active AI origin must reference an `applied` event whose offer/field/value and
+  source revision match. A parser origin cannot reference an AI event.
+
+Source edits mark affected AI origins stale and clear the canonical field only if it
+still equals the recorded AI value; mismatch becomes conflicting. History is never
+deleted. Parser replay that matches the AI value appends `parser_confirmed` and
+transfers current origin to `parser`; mismatch appends `parser_conflicting` and
+requires owner review.
 
 ### StoredMediaObject
 
