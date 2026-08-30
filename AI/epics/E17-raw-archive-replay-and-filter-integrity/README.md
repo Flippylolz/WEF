@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E17
 title: "Raw archive replay and filter integrity"
-status: in_progress
+status: done
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
