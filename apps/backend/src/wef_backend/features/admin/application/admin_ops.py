@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from wef_backend.features.admin.application.ai_review import (
         ApplyPlaceReview,
         GeneratePlaceReview,
+        GetPlaceReview,
     )
     from wef_backend.features.identity.application.identity import (
         Clock,
@@ -841,6 +842,7 @@ class AdminService:
     set_place_point: SetPlacePoint
     generate_place_review: GeneratePlaceReview
     apply_place_review: ApplyPlaceReview
+    get_place_review: GetPlaceReview
     ai_curation_enabled: bool
 
 

@@ -28,6 +28,7 @@ from wef_backend.features.admin.application.admin_ops import (
 from wef_backend.features.admin.application.ai_review import (
     ApplyPlaceReview,
     GeneratePlaceReview,
+    GetPlaceReview,
 )
 
 __all__ = [
@@ -42,6 +43,7 @@ __all__ = [
     "GeneratePlaceReview",
     "GeocodeCandidateSummary",
     "GetLocationForEdit",
+    "GetPlaceReview",
     "ListAdminAccounts",
     "ListAdminAudits",
     "ListLocations",

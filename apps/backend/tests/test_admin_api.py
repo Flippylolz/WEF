@@ -8,11 +8,14 @@ from httpx import ASGITransport, AsyncClient, Response
 
 from tests.fakes import (
     FakeCatalogBrowse,
+    FakeChatCompletions,
+    FakeClock,
     FakeEstateQuery,
     FakeIdentityStore,
     FakeLocationAdminStore,
     FakeMapQuery,
     FakeOfferDetailQuery,
+    FakePlaceAiReviewStore,
     always_ready,
     build_admin_service,
     build_contact_service,
@@ -24,6 +27,7 @@ from tests.fakes import (
 )
 from wef_backend.app import create_http_app
 from wef_backend.composition import AppServices
+from wef_backend.features.admin.application.ai_review import AiCurationRuntime
 from wef_backend.features.catalog.application import (
     BrowseLocationOffers,
     BrowseViewportListings,
@@ -41,6 +45,10 @@ async def admin_client(
     *,
     store: FakeIdentityStore | None = None,
     places: FakeLocationAdminStore | None = None,
+    review_store: FakePlaceAiReviewStore | None = None,
+    provider: FakeChatCompletions | None = None,
+    runtime: AiCurationRuntime | None = None,
+    clock: FakeClock | None = None,
 ) -> AsyncIterator[tuple[AsyncClient, FakeIdentityStore]]:
     identity_store = store or FakeIdentityStore()
     services = AppServices(
@@ -60,7 +68,14 @@ async def admin_client(
         favorites=build_favorites_service(),
         view_history=build_view_history_service(),
         contacts=build_contact_service(),
-        admin=build_admin_service(store=identity_store, places=places),
+        admin=build_admin_service(
+            store=identity_store,
+            places=places,
+            review_store=review_store,
+            provider=provider,
+            runtime=runtime,
+            clock=clock,
+        ),
         auth_cookie_secure=False,
         admin_session_secret="test-admin-session-secret",
         public_rate_limiter=MemoryRateLimiter(),

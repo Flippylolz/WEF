@@ -24,8 +24,15 @@ from wef_backend.features.admin.application.admin_ops import (
     LocationStatusFilter,
     OfferContextSummary,
 )
+from wef_backend.features.admin.application.ai_review import (
+    FieldAction,
+    PlaceReviewRun,
+    PlaceReviewStatus,
+    ReviewRunState,
+)
 
 if TYPE_CHECKING:
+    from starlette.datastructures import FormData
     from starlette.requests import Request
 
 _WARSAW_CENTER = ("52.2297", "21.0122")
@@ -288,7 +295,8 @@ def _place_action_form(
 ) -> str:
     """Render one CSRF-protected decision form preserving the filter state."""
     return (
-        f"<form method='post' action='/admin/places/{action}' style='display:inline'>"
+        f"<form method='post' action='/admin/places/{action}' style='display:inline' "
+        "onsubmit=\"this.querySelectorAll('button').forEach(function(b){b.disabled=true})\">"
         f"{csrf_input(request)}"
         f"<input type='hidden' name='location_id' value='{place.id}'/>"
         f"<input type='hidden' name='status' value='{escape(filters.status.value)}'/>"
@@ -301,9 +309,19 @@ def _place_row(
     request: Request,
     place: LocationAdminSummary,
     filters: _ListFilters,
+    *,
+    ai_enabled: bool,
 ) -> str:
     """Render one location row with its verification actions."""
     actions = f"<a href='/admin/places/set-point?location_id={place.id}'>Edit point</a> "
+    if ai_enabled:
+        actions += _place_action_form(
+            request,
+            "ai-review/generate",
+            place,
+            filters,
+            "Review with AI",
+        )
     if place.has_candidate:
         actions += _place_action_form(request, "accept", place, filters, "Accept candidate")
     if place.review_status != "rejected":
@@ -345,8 +363,16 @@ class LocationsAdminView(CustomView):
             search=filters.search,
             limit=100,
         )
-        rows = "".join(_place_row(request, place, filters) for place in places)
+        ai_enabled = _admin(request).ai_curation_enabled
+        rows = "".join(
+            _place_row(request, place, filters, ai_enabled=ai_enabled) for place in places
+        )
+        list_error = request.query_params.get("error")
+        error_banner = (
+            "" if not list_error else f"<div class='error' role='alert'>{escape(list_error)}</div>"
+        )
         html = (
+            f"{error_banner}"
             "<div class='places-toolbar'>"
             f"{_filter_tabs(filters)}"
             f"{_search_form(filters)}"
@@ -427,6 +453,100 @@ class LocationsAdminView(CustomView):
             f"{picker_url}&error={quote(refused)}",
             status_code=303,
         )
+
+    @route("/ai-review/generate", methods=["POST"], name="generate_place_ai_review")
+    async def generate_place_ai_review(self, request: Request) -> Response:
+        """Create one review and redirect to the result page."""
+        form = await request.form()
+        filters = _form_filters(form)
+        location_id = _form_uuid(form, "location_id")
+        if location_id is None:
+            return RedirectResponse(_places_url(filters), status_code=303)
+        admin = _admin(request)
+        owner_id = request.state.admin_owner_id
+        request_id = getattr(request.state, "admin_request_id", uuid4())
+        outcome = await admin.generate_place_review(
+            owner_id=owner_id,
+            location_id=location_id,
+            request_id=request_id,
+        )
+        if outcome.run is not None:
+            error = None if outcome.status is PlaceReviewStatus.GENERATED else outcome.reason
+            return RedirectResponse(
+                _ai_review_url(outcome.run.id, filters, error=error),
+                status_code=303,
+            )
+        if outcome.reason == "in_flight":
+            pending = await admin.get_place_review.pending_for_location(
+                owner_id=owner_id,
+                location_id=location_id,
+            )
+            if pending is not None:
+                return RedirectResponse(_ai_review_url(pending.id, filters), status_code=303)
+        return RedirectResponse(
+            f"{_places_url(filters)}&error={quote(_ai_reason_text(outcome.reason))}",
+            status_code=303,
+        )
+
+    @route("/ai-review", methods=["GET"], name="place_ai_review")
+    async def place_ai_review(self, request: Request) -> Response:
+        """Render one persisted review without regenerating it."""
+        filters = _parse_list_filters(request)
+        error = request.query_params.get("error") or None
+        try:
+            run_id = UUID(str(request.query_params.get("run_id", "")))
+        except ValueError:
+            return RedirectResponse(_places_url(filters), status_code=303)
+        run = await _admin(request).get_place_review(
+            owner_id=request.state.admin_owner_id,
+            run_id=run_id,
+        )
+        if run is None:
+            return RedirectResponse(_places_url(filters), status_code=303)
+        return HTMLResponse(
+            _ai_review_document(request, run, filters=filters, error=error),
+        )
+
+    @route("/ai-review/apply", methods=["POST"], name="apply_place_ai_review")
+    async def apply_place_ai_review(self, request: Request) -> Response:
+        """Apply owner-selected fields from one pending review."""
+        form = await request.form()
+        filters = _form_filters(form)
+        run_id = _form_uuid(form, "run_id")
+        if run_id is None:
+            return RedirectResponse(_places_url(filters), status_code=303)
+        selected = tuple(
+            str(value) for value in form.getlist("selected_fields") if str(value).strip()
+        )
+        try:
+            run = await _admin(request).apply_place_review(
+                owner_id=request.state.admin_owner_id,
+                run_id=run_id,
+                selected_fields=selected,
+                request_id=getattr(request.state, "admin_request_id", uuid4()),
+            )
+        except AdminDeniedError as denied:
+            return RedirectResponse(
+                _ai_review_url(run_id, filters, error=str(denied)),
+                status_code=303,
+            )
+        return RedirectResponse(_ai_review_url(run.id, filters), status_code=303)
+
+
+def _form_filters(form: FormData) -> _ListFilters:
+    """Read list filters from a posted admin form."""
+    return _ListFilters(
+        status=_safe_status(str(form.get("status", LocationStatusFilter.PENDING.value))),
+        search=str(form.get("search", "")).strip() or None,
+    )
+
+
+def _form_uuid(form: FormData, name: str) -> UUID | None:
+    """Parse one UUID form field, or None when missing/invalid."""
+    try:
+        return UUID(str(form.get(name, "")))
+    except ValueError:
+        return None
 
 
 async def _run_place_action(request: Request, action: str) -> Response:
@@ -648,5 +768,183 @@ def _set_point_document(
         "<span class='muted'>Click the map to drop the pin · © OpenStreetMap contributors</span>"
         "</form>"
         "<script src='/admin/static/place_picker.js' defer></script>"
+        "</body></html>"
+    )
+
+
+_AI_REASON_TEXT = {
+    "disabled": "AI review is turned off or not fully configured.",
+    "location_not_found": "That place was not found.",
+    "daily_limit": "The daily AI review limit has been reached.",
+    "masking_failed": "Sources could not be prepared for review.",
+    "token_budget": "The available sources exceed the review size limit.",
+    "in_flight": "A review is already pending for this place.",
+    "timeout": "The AI provider timed out. Try again later.",
+    "refusal": "The AI provider refused this review.",
+    "quota": "The AI provider quota is exhausted.",
+    "rate_limited": "The AI provider rate limit was reached.",
+    "network": "The AI provider could not be reached.",
+    "schema": "The AI response was not a valid review.",
+    "no fields selected": "Select at least one proposed correction before applying.",
+    "unsupported field": "Only display name, address, and district can be applied.",
+    "selected field is not a correction": "Only proposed corrections can be applied.",
+    "review is stale": "This review is stale because the place or sources changed.",
+    "review is expired or not pending": "This review has expired or is no longer pending.",
+    "canonical location collision": "Applying the address would collide with another place.",
+    "AI place review is disabled": "AI review is turned off or not fully configured.",
+    "review not found": "That review was not found.",
+    "location not found": "That place was not found.",
+}
+
+_FIELD_LABELS = {
+    "display_name": "Display name",
+    "display_address": "Address",
+    "district": "District",
+}
+
+
+def _ai_reason_text(reason: str) -> str:
+    """Map a bounded reason code or apply denial to owner-safe copy."""
+    return _AI_REASON_TEXT.get(reason, "AI review could not be completed.")
+
+
+def _ai_review_url(
+    run_id: UUID,
+    filters: _ListFilters,
+    error: str | None = None,
+) -> str:
+    """Build the GET URL for one persisted review."""
+    params: dict[str, str] = {"run_id": str(run_id), "status": filters.status.value}
+    if filters.search is not None:
+        params["search"] = filters.search
+    if error:
+        params["error"] = error
+    return f"/admin/places/ai-review?{urlencode(params)}"
+
+
+def _field_rows(run: PlaceReviewRun) -> str:
+    """Render current/proposed diffs with unselected correction checkboxes."""
+    rows: list[str] = []
+    for field in run.proposed_fields:
+        current = field.current_value or "—"
+        proposed = field.proposed_value or "—"
+        selectable = field.action == FieldAction.CORRECT.value
+        field_id = f"field-{field.field_name}"
+        title = escape(_FIELD_LABELS.get(field.field_name, field.field_name))
+        checkbox = ""
+        label = (
+            f"<label for='{escape(field_id)}'>{title}</label>"
+            if selectable and run.state is ReviewRunState.PENDING
+            else f"<span>{title}</span>"
+        )
+        if selectable and run.state is ReviewRunState.PENDING:
+            checkbox = (
+                f"<input type='checkbox' id='{escape(field_id)}' "
+                f"name='selected_fields' value='{escape(field.field_name)}'/>"
+            )
+        rows.append(
+            "<tr>"
+            f"<td>{checkbox}{label}</td>"
+            f"<td>{escape(field.action)}</td>"
+            f"<td>{escape(current)}</td>"
+            f"<td>{escape(proposed)}</td>"
+            f"<td>{escape(field.confidence)}</td>"
+            f"<td>{escape(', '.join(field.evidence_revision_ids) or '—')}</td>"
+            f"<td>{escape(field.rationale_code)}</td>"
+            "</tr>"
+        )
+    return "".join(rows)
+
+
+def _ai_review_document(
+    request: Request,
+    run: PlaceReviewRun,
+    *,
+    filters: _ListFilters,
+    error: str | None,
+) -> str:
+    """Build the standalone Review with AI result page."""
+    error_text = None if error is None else _ai_reason_text(error)
+    error_banner = (
+        "" if not error_text else f"<div class='error' role='alert'>{escape(error_text)}</div>"
+    )
+    omitted = run.omitted_source_count
+    coverage = (
+        f"Reviewed {run.selected_source_count} source description"
+        f"{'s' if run.selected_source_count != 1 else ''}. "
+    )
+    if omitted:
+        coverage += (
+            f"{omitted} additional description{'s' if omitted != 1 else ''} "
+            "were omitted and were not reviewed."
+        )
+    else:
+        coverage += "No source descriptions were omitted."
+    warnings = "".join(f"<li>{escape(item)}</li>" for item in run.warnings)
+    warning_block = (
+        "" if not warnings else f"<section><h2>Warnings</h2><ul>{warnings}</ul></section>"
+    )
+    applied = run.state is ReviewRunState.APPLIED
+    spatial = any(name in run.applied_fields for name in ("display_address", "district"))
+    verify = ""
+    if applied and spatial:
+        verify = (
+            "<p role='status'>This place is back in <code>needs_review</code>. "
+            "Coordinate verification is a separate action. "
+            f"<a href='/admin/places/set-point?location_id={run.location_id}'>"
+            "Verify the map point</a>.</p>"
+        )
+    elif applied:
+        verify = "<p role='status'>Selected fields were applied.</p>"
+    apply_form = ""
+    if run.state is ReviewRunState.PENDING:
+        apply_form = (
+            "<form method='post' action='/admin/places/ai-review/apply' "
+            "onsubmit=\"this.querySelectorAll('button').forEach(function(b){b.disabled=true})\">"
+            f"{csrf_input(request)}"
+            f"<input type='hidden' name='run_id' value='{run.id}'/>"
+            f"<input type='hidden' name='status' value='{escape(filters.status.value)}'/>"
+            f"<input type='hidden' name='search' value='{escape(filters.search or '')}'/>"
+            "<p>No change is selected by default. Choose each field to apply.</p>"
+            "<table><thead><tr>"
+            "<th>Apply</th><th>Action</th><th>Current</th><th>Proposed</th>"
+            "<th>Confidence</th><th>Evidence</th><th>Rationale</th>"
+            f"</tr></thead><tbody>{_field_rows(run) or '<tr><td colspan=7>No fields</td></tr>'}"
+            "</tbody></table>"
+            "<button type='submit'>Apply selected fields</button>"
+            "</form>"
+        )
+    else:
+        apply_form = (
+            "<table><thead><tr>"
+            "<th>Field</th><th>Action</th><th>Current</th><th>Proposed</th>"
+            "<th>Confidence</th><th>Evidence</th><th>Rationale</th>"
+            f"</tr></thead><tbody>{_field_rows(run) or '<tr><td colspan=7>No fields</td></tr>'}"
+            "</tbody></table>"
+        )
+    verdict = run.verdict or run.state.value
+    return (
+        "<!doctype html><html lang='en'><head><meta charset='utf-8'/>"
+        "<title>Review with AI</title>"
+        "<style>"
+        "html{color-scheme:light}"
+        "body{font-family:system-ui,sans-serif;margin:1rem;background:#fff;color:#202222}"
+        ".error{background:#fdecec;color:#8a1f1f;padding:.5rem 1rem}"
+        "table{border-collapse:collapse;width:100%;margin:1rem 0}"
+        "th,td{border:1px solid #ddd;padding:.4rem .5rem;text-align:left;"
+        "overflow-wrap:anywhere}"
+        ".muted{color:#666}"
+        "</style></head><body>"
+        f"<a href='{_places_url(filters)}'>&larr; Locations</a>"
+        "<h1>Review with AI</h1>"
+        f"{error_banner}"
+        f"<p>{escape(coverage)}</p>"
+        f"<p>Overall verdict: <strong>{escape(verdict)}</strong> · "
+        f"state <code>{escape(run.state.value)}</code></p>"
+        f"{warning_block}"
+        f"{verify}"
+        f"{apply_form}"
+        "<p class='muted'>Coordinates are not changed by this review. "
+        "Use Edit point after an address or district correction.</p>"
         "</body></html>"
     )

@@ -281,6 +281,10 @@ class PlaceAiReviewStore(Protocol):
         """Return one run by id."""
         ...
 
+    async def get_pending_run(self, location_id: UUID) -> PlaceReviewRun | None:
+        """Return the pending run for a location, if any."""
+        ...
+
     async def apply_selected_fields(  # noqa: PLR0913
         self,
         *,
@@ -669,6 +673,33 @@ def _audit(
     )
 
 
+class GetPlaceReview:
+    """Owner-scoped read of a persisted place-review run."""
+
+    def __init__(self, store: PlaceAiReviewStore) -> None:
+        """Initialize the collaborator."""
+        self._store = store
+
+    async def __call__(self, *, owner_id: UUID, run_id: UUID) -> PlaceReviewRun | None:
+        """Return one run owned by this owner, or None."""
+        run = await self._store.get_run(run_id)
+        if run is None or run.owner_user_id != owner_id:
+            return None
+        return run
+
+    async def pending_for_location(
+        self,
+        *,
+        owner_id: UUID,
+        location_id: UUID,
+    ) -> PlaceReviewRun | None:
+        """Return this owner's pending run for the location, or None."""
+        run = await self._store.get_pending_run(location_id)
+        if run is None or run.owner_user_id != owner_id:
+            return None
+        return run
+
+
 class GeneratePlaceReview:
     """Create one expiring structured place review from masked sources."""
 
@@ -733,6 +764,17 @@ class GeneratePlaceReview:
                 sources=(),
                 selected_count=0,
                 omitted_count=0,
+            )
+        pending = await self._store.get_pending_run(location_id)
+        if pending is not None:
+            await self._record(owner_id, location_id, request_id, AdminOutcome.DENIED)
+            return PlaceReviewOutcome(
+                status=PlaceReviewStatus.DENIED,
+                reason="in_flight",
+                run=None,
+                sources=(),
+                selected_count=pending.selected_source_count,
+                omitted_count=pending.omitted_source_count,
             )
         now = self._clock.now()
         used = await self._store.count_owner_runs_since(owner_id, since=_day_start(now))

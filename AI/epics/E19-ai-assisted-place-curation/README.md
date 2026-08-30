@@ -70,11 +70,11 @@ parser-gap provenance, and offers with active AI-filled data show an
 - [Spike](SPIKE.md): revision 4 owner-approved under AD-042.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1 owner-approved under
   AD-043.
-- [E19-T1](tasks/E19-T1-ai-place-review-backend.md): promoted/`in_progress`;
-  implementation PR https://github.com/Flippylolz/WEF/pull/226; spike and
-  implementation gates satisfied; E18-T2 dependency satisfied.
-- [E19-T2](tasks/E19-T2-ai-place-review-console.md): promoted/`draft`; depends on
-  E19-T1.
+- [E19-T1](tasks/E19-T1-ai-place-review-backend.md): merged through
+  https://github.com/Flippylolz/WEF/pull/226; completion YAML still pending a
+  follow-up record.
+- [E19-T2](tasks/E19-T2-ai-place-review-console.md): promoted/`in_progress`;
+  depends on merged E19-T1.
 - [E19-T3](tasks/E19-T3-batch-offer-enrichment-provenance.md): promoted/`draft`;
   depends on E19-T1 and may proceed in parallel with E19-T2.
 - [E19-T4](tasks/E19-T4-ai-enrichment-controls-and-reporting.md): promoted/`draft`;

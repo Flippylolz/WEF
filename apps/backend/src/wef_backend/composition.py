@@ -16,6 +16,7 @@ from wef_backend.features.admin.application import (
     ForceResetUserPassword,
     GeneratePlaceReview,
     GetLocationForEdit,
+    GetPlaceReview,
     ListAdminAccounts,
     ListAdminAudits,
     ListLocations,
@@ -184,6 +185,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
         clock,
         ai_runtime,
     )
+    get_place_review = GetPlaceReview(place_ai_review_store)
     if runtime_settings.env == "production" and runtime_settings.admin_session_secret is None:
         msg = "WEF_ADMIN_SESSION_SECRET is required in production"
         raise RuntimeError(msg)
@@ -284,6 +286,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
             ),
             generate_place_review=generate_place_review,
             apply_place_review=apply_place_review,
+            get_place_review=get_place_review,
             ai_curation_enabled=ai_runtime.active,
         ),
         auth_cookie_secure=runtime_settings.env == "production",

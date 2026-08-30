@@ -151,6 +151,18 @@ class SQLAlchemyPlaceAiReviewStore:
                 return None
             return _from_row(row)
 
+    async def get_pending_run(self, location_id: UUID) -> PlaceReviewRun | None:
+        """Return the pending run for a location, if any."""
+        async with self._session_factory() as session:
+            stmt = select(PlaceAiReviewRunRow).where(
+                PlaceAiReviewRunRow.location_id == location_id,
+                PlaceAiReviewRunRow.state == ReviewRunState.PENDING.value,
+            )
+            row = await session.scalar(stmt)
+            if row is None:
+                return None
+            return _from_row(row)
+
     async def apply_selected_fields(  # noqa: PLR0913
         self,
         *,
