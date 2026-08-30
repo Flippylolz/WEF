@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E19-T2
 epic: E19
 title: "Owner AI place-review console and production controls"
-status: proposed
+status: draft
 revision: 3
-actionable: false
 priority: P0
 size: M
 milestone: M5
@@ -18,12 +17,44 @@ decision_ids:
   - ADR-016
   - ADR-022
 deferred_decision_ids: []
-source: "Owner request on 2026-08-30 for a Groq GPT-OSS place update/validation button based on raw descriptions"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E19-T2-ai-place-review-console.md
+  promoted_by: "Cursor Agent (owner-directed E19 mission under AD-042/AD-043)"
+  promoted_at: "2026-08-30T21:36:00Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 4
+  verified_by: "Cursor Agent (AD-042)"
+  verified_at: "2026-08-30T21:36:00Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 1
+  verified_by: "Cursor Agent (AD-043)"
+  verified_at: "2026-08-30T21:36:00Z"
+dependency_gate:
+  status: blocked
+  verified_by: null
+  verified_at: null
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E19-T2
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E19-T2: Owner AI place-review console and production controls
@@ -54,7 +85,15 @@ separate explicit apply action with safe failure, stale, and rollback behavior.
   coordinate changes, or location merge.
 - Making Groq health part of readiness.
 
-## Work
+## Affected modules and contracts
+
+- `apps/backend/src/wef_backend/features/admin/interface/views.py`
+- `apps/backend/src/wef_backend/features/admin/interface/mount.py`
+- Admin HTTP and browser tests
+- `AI/security/AUTH_ADMIN_CONTACTS.md`, `AI/operations/DEPLOYMENT.md`,
+  `AI/architecture/SYSTEM.md`
+
+## Implementation notes
 
 - Reuse `OwnerAuthProvider`, CSRF forms, origin guard, request IDs, and admin audit
   conventions; do not expose an OpenAPI route or API key to the browser.
@@ -62,6 +101,8 @@ separate explicit apply action with safe failure, stale, and rollback behavior.
   duplicate form submission cannot generate or apply twice accidentally.
 - Keep the existing manual map picker as the next step after a spatial field
   correction.
+- The action is absent or clearly disabled when the feature is off or provider
+  configuration is incomplete.
 
 ## Acceptance criteria
 
@@ -88,25 +129,39 @@ separate explicit apply action with safe failure, stale, and rollback behavior.
 - [ ] `make lint`, `make format-check`, `make typecheck`, `make test`, and
   `make contract-check` pass; no public OpenAPI change is produced.
 
-## Dependencies and gates
+## Test plan
 
-- E19-T1 must be `done`; it owns all provider, validation, persistence, and
-  mutation behavior.
-- Requires the approved E19 spike and implementation plan plus normal branch/CI
-  gates. Production enablement is a separate explicit owner action after checking
-  Zero Data Retention in the live Groq project and checking its free-plan limits.
-  Paid usage requires a separate owner decision.
+- Unit: none beyond T1 interactors.
+- Integration: admin HTTP against fake services.
+- Contract/migration: none.
+- End-to-end: Playwright or existing admin browser harness for generate/apply
+  and disabled states.
+- Security/accessibility/operations: CSRF/origin, owner gate, escaped output,
+  feature-disabled `/admin/places`.
 
-## Risks and notes
+## Rollout and rollback
 
-The main UI risk is making an AI suggestion look authoritative or making Apply
-feel automatic. The page must call it a proposal, show uncertainty/source coverage,
-select nothing by default, and keep the manual point-verification next step visible.
+Depends on merged E19-T1. Rollback is the prior image plus the disabled flag.
+Do not enable production Groq from this task.
 
-## Promotion checklist
+## Ready checklist
 
-- [ ] The epic spike is explicitly owner-approved for its current revision.
-- [ ] Scope, acceptance, dependencies, priority, size, and traceability match the approved spike.
-- [ ] Required deferred decisions are resolved.
-- [ ] The file will be moved—not copied—to the epic's `tasks/`.
-- [ ] Promotion metadata will identify the target, promoter, and timestamp.
+- [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
+- [x] Promotion source, promoter, and timestamp are recorded.
+- [x] `spike_gate` references the owner-approved current spike revision and is `satisfied`.
+- [x] `implementation_gate` references the owner-approved current implementation-plan revision, which contains this task ID/current revision, and is `satisfied`.
+- [ ] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is an ancestor PR recorded by `dependency_gate: stacked`.
+- [x] Scope and acceptance criteria match the approved plan.
+
+## Start checklist
+
+- [ ] Status passed through `ready`.
+- [ ] One new branch contains this task ID.
+- [ ] The branch and pull request contain this task only.
+- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+
+## Done checklist
+
+- [ ] Acceptance criteria pass.
+- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [ ] Completion actor, time, pull request, and evidence are recorded.
