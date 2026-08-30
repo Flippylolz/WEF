@@ -49,7 +49,6 @@ applies no filter logic of its own.
   17 canonical facet districts live on the map (release 7a3e927).
 
 ## Completion gate (owner-controlled) — satisfied
->>>>>>> 7158019 (docs(E17-T6): record backup replay evidence and close the epic)
 
 The owner staged the fresh Telegram data backup on 2026-08-30; it was replayed
 through the new pipeline with recorded quality metrics and production was
