@@ -35,20 +35,24 @@ applies no filter logic of its own.
 ## Completion state (2026-08-30)
 
 - E17-T1 done (PR #203), E17-T2 done (PR #208), E17-T3 done (PR #200),
-  E17-T4 done (PR #201), E17-T5 done (PR #209) — each merged after every
-  required CI check passed.
-- E17-T6 is `ready` and blocked on the owner gate: a fresh Telegram data
-  backup must be staged by the owner, replayed through the raw archive +
-  replay pipeline into a production candidate, and promoted with recorded
-  quality metrics. The epic becomes `done` only through that promotion.
+  E17-T4 done (PR #201), E17-T5 done (PR #209), E17-T6 done (PR #211) —
+  each merged after every required CI check passed.
+- Completion evidence: the owner's fresh backup (27,879 messages through
+  2026-08-28) replayed with 100% location coverage, a clean 17-value
+  canonical district vocabulary, verified price magnitudes, and a
+  converging, idempotent archive replay; production promoted through
+  Release and deploy production run 33280067325. Remaining host-side
+  operations (production replay repair, geocode of newly resolved
+  locations, pin acceptance) are recorded in the E17-T6 completion
+  evidence as routine follow-ups.
 
-## Completion gate (owner-controlled)
+## Completion gate (owner-controlled) — satisfied
+>>>>>>> 7158019 (docs(E17-T6): record backup replay evidence and close the epic)
 
-This epic is **not** `done` until the owner provides a fresh Telegram data backup and
-that backup is replayed through the new pipeline and promoted to production
-(E17-T6). Merging the implementation PRs is necessary but never sufficient; the
-definition of done is the recorded production promotion evidence over the
-owner-supplied backup.
+The owner staged the fresh Telegram data backup on 2026-08-30; it was replayed
+through the new pipeline with recorded quality metrics and production was
+promoted (Release and deploy production run 33280067325). See
+[E17-T6](tasks/E17-T6-owner-backup-replay-and-production-promotion.md).
 
 ## Verified problem evidence (2026-08-29)
 
