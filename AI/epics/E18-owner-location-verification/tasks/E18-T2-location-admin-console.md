@@ -181,5 +181,5 @@ service.
 ## Done checklist
 
 - [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../DEFINITION_OF_DONE.md) passes.
+- [ ] The global [definition of done](../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.
