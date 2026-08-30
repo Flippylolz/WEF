@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E18-T1
 epic: E18
 title: "Location admin backend service"
-status: ready
+status: in_progress
 revision: 1
 priority: P1
 size: M
@@ -39,10 +39,10 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: feat/E18-T1-location-admin-backend
   task_id: E18-T1
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-30T11:20:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -173,10 +173,10 @@ plus location update with an owner-attributed audit event.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting
+- [x] Status passed through `ready`.
+- [x] One new branch contains this task ID.
+- [x] The branch and pull request contain this task only.
+- [x] `branch.name` and `branch.created_at` are recorded before setting
   `in_progress`.
 
 ## Done checklist

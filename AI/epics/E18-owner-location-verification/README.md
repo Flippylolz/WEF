@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E18
 title: "Owner location management and verification"
-status: ready
+status: in_progress
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -46,7 +46,7 @@ API contract change.
 - [Spike](SPIKE.md): revision 1, owner-approved 2026-08-30.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, owner-approved
   2026-08-30.
-- [E18-T1](tasks/E18-T1-location-admin-backend.md): promoted 2026-08-30; `ready`.
+- [E18-T1](tasks/E18-T1-location-admin-backend.md): promoted 2026-08-30; `in_progress` on `feat/E18-T1-location-admin-backend`.
 - [E18-T2](tasks/E18-T2-location-admin-console.md): promoted 2026-08-30; `draft`
   until E18-T1 is `done` and its dependency gate is satisfied.
 - `tasks/` is the single authoritative location (no `proposed-tasks/` remains).

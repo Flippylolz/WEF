@@ -13,8 +13,11 @@ from wef_backend.features.identity.domain.model import (
     UserRole,
     validate_password,
 )
+from wef_backend.features.ingestion.domain.geocoding import within_warsaw
 
 if TYPE_CHECKING:
+    from decimal import Decimal
+
     from wef_backend.features.identity.application.identity import (
         Clock,
         IdentityStore,
@@ -409,6 +412,399 @@ class ListRevealAudits:
         return await self._reader.list_recent(limit=limit)
 
 
+class LocationStatusFilter(StrEnum):
+    """Bounded review-status slices for the owner location list."""
+
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    NEEDS_REVIEW = "needs_review"
+    REJECTED = "rejected"
+    UNGEOCODED = "ungeocoded"
+    ALL = "all"
+
+
+@dataclass(frozen=True, slots=True)
+class GeocodeCandidateSummary:
+    """In-scope provider result attached to the latest selection."""
+
+    longitude: Decimal
+    latitude: Decimal
+    precision: str
+    confidence: Decimal
+    provider: str
+    display_name: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class OfferContextSummary:
+    """Retained offer evidence behind one location address."""
+
+    id: UUID
+    content_type: str
+    market_type: str
+    visibility: str
+    published_at: datetime
+    currency: str | None
+    price_min_minor: int | None
+    price_max_minor: int | None
+    area_min_sqm: Decimal | None
+    area_max_sqm: Decimal | None
+    rooms_min: int | None
+    rooms_max: int | None
+    source_text_excerpt: str
+
+
+@dataclass(frozen=True, slots=True)
+class LocationAdminSummary:
+    """Owner-facing projection of one canonical location."""
+
+    id: UUID
+    display_name: str
+    display_address: str
+    district: str | None
+    city: str
+    review_status: str
+    precision: str
+    confidence: Decimal | None
+    has_point: bool
+    out_of_scope: bool
+    reason_code: str | None
+    offer_count: int
+    updated_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class LocationEditDetail:
+    """Everything the owner needs to decide one location's point."""
+
+    summary: LocationAdminSummary
+    normalized_address: str
+    longitude: Decimal | None
+    latitude: Decimal | None
+    candidate: GeocodeCandidateSummary | None
+    offers: tuple[OfferContextSummary, ...]
+
+
+class LocationAdminReader(Protocol):
+    """Read-only owner access to canonical locations."""
+
+    async def list_locations(
+        self,
+        *,
+        status: LocationStatusFilter,
+        search: str | None,
+        limit: int = 100,
+    ) -> tuple[LocationAdminSummary, ...]:
+        """Return locations newest-activity-first within the requested slice."""
+        ...
+
+    async def get_edit_detail(self, location_id: UUID) -> LocationEditDetail | None:
+        """Return one location's verification detail, or None when unknown."""
+        ...
+
+
+class LocationDecisionStore(Protocol):
+    """Transactional operator transitions over the geocode lineage."""
+
+    async def apply_accept_candidate(
+        self,
+        *,
+        location_id: UUID,
+        actor_id: str,
+        decided_at: datetime,
+    ) -> bool:
+        """Promote the latest in-scope candidate point; False when not applicable."""
+        ...
+
+    async def apply_reject(
+        self,
+        *,
+        location_id: UUID,
+        actor_id: str,
+        decided_at: datetime,
+    ) -> bool:
+        """Mark the location rejected; False when not applicable."""
+        ...
+
+    async def apply_unresolve(
+        self,
+        *,
+        location_id: UUID,
+        actor_id: str,
+        decided_at: datetime,
+    ) -> bool:
+        """Return a decided location to needs_review; False when not applicable."""
+        ...
+
+    async def apply_set_point(
+        self,
+        *,
+        location_id: UUID,
+        longitude: Decimal,
+        latitude: Decimal,
+        actor_id: str,
+        decided_at: datetime,
+    ) -> bool:
+        """Place an operator-verified point; False when the location is unknown."""
+        ...
+
+
+class ListLocations:
+    """List locations for the owner console within one review-status slice."""
+
+    def __init__(self, reader: LocationAdminReader) -> None:
+        """Initialize the collaborator."""
+        self._reader = reader
+
+    async def __call__(
+        self,
+        *,
+        status: LocationStatusFilter = LocationStatusFilter.PENDING,
+        search: str | None = None,
+        limit: int = 100,
+    ) -> tuple[LocationAdminSummary, ...]:
+        """Execute the owner administration use case."""
+        cleaned = search.strip() if search is not None else None
+        effective = cleaned or None
+        return await self._reader.list_locations(
+            status=status,
+            search=effective,
+            limit=limit,
+        )
+
+
+class GetLocationForEdit:
+    """Load one location's verification detail for the owner console."""
+
+    def __init__(self, reader: LocationAdminReader) -> None:
+        """Initialize the collaborator."""
+        self._reader = reader
+
+    async def __call__(self, *, location_id: UUID) -> LocationEditDetail:
+        """Execute the owner administration use case."""
+        detail = await self._reader.get_edit_detail(location_id)
+        if detail is None:
+            msg = "location not found"
+            raise AdminDeniedError(msg)
+        return detail
+
+
+class AcceptPlaceCandidate:
+    """Promote the latest in-scope candidate point onto one location."""
+
+    def __init__(
+        self,
+        store: LocationDecisionStore,
+        audits: AdminAuditStore,
+        clock: Clock,
+    ) -> None:
+        """Initialize the collaborator."""
+        self._store = store
+        self._audits = audits
+        self._clock = clock
+
+    async def __call__(
+        self,
+        *,
+        owner_id: UUID,
+        location_id: UUID,
+        request_id: UUID,
+    ) -> None:
+        """Execute the owner administration use case."""
+        applied = await self._store.apply_accept_candidate(
+            location_id=location_id,
+            actor_id=str(owner_id),
+            decided_at=self._clock.now(),
+        )
+        if not applied:
+            await self._audits.record(
+                _location_event(
+                    owner_id,
+                    location_id,
+                    "accept_place",
+                    request_id,
+                    AdminOutcome.DENIED,
+                ),
+            )
+            msg = "no in-scope candidate point to accept"
+            raise AdminDeniedError(msg)
+        await self._audits.record(
+            _location_event(
+                owner_id,
+                location_id,
+                "accept_place",
+                request_id,
+                AdminOutcome.ALLOWED,
+            ),
+        )
+
+
+class RejectPlace:
+    """Mark one location rejected so it stays off the public map."""
+
+    def __init__(
+        self,
+        store: LocationDecisionStore,
+        audits: AdminAuditStore,
+        clock: Clock,
+    ) -> None:
+        """Initialize the collaborator."""
+        self._store = store
+        self._audits = audits
+        self._clock = clock
+
+    async def __call__(
+        self,
+        *,
+        owner_id: UUID,
+        location_id: UUID,
+        request_id: UUID,
+    ) -> None:
+        """Execute the owner administration use case."""
+        applied = await self._store.apply_reject(
+            location_id=location_id,
+            actor_id=str(owner_id),
+            decided_at=self._clock.now(),
+        )
+        if not applied:
+            await self._audits.record(
+                _location_event(
+                    owner_id,
+                    location_id,
+                    "reject_place",
+                    request_id,
+                    AdminOutcome.DENIED,
+                ),
+            )
+            msg = "location is already rejected or unknown"
+            raise AdminDeniedError(msg)
+        await self._audits.record(
+            _location_event(
+                owner_id,
+                location_id,
+                "reject_place",
+                request_id,
+                AdminOutcome.ALLOWED,
+            ),
+        )
+
+
+class UnresolvePlace:
+    """Return a decided location to needs_review for renewed verification."""
+
+    def __init__(
+        self,
+        store: LocationDecisionStore,
+        audits: AdminAuditStore,
+        clock: Clock,
+    ) -> None:
+        """Initialize the collaborator."""
+        self._store = store
+        self._audits = audits
+        self._clock = clock
+
+    async def __call__(
+        self,
+        *,
+        owner_id: UUID,
+        location_id: UUID,
+        request_id: UUID,
+    ) -> None:
+        """Execute the owner administration use case."""
+        applied = await self._store.apply_unresolve(
+            location_id=location_id,
+            actor_id=str(owner_id),
+            decided_at=self._clock.now(),
+        )
+        if not applied:
+            await self._audits.record(
+                _location_event(
+                    owner_id,
+                    location_id,
+                    "unresolve_place",
+                    request_id,
+                    AdminOutcome.DENIED,
+                ),
+            )
+            msg = "only accepted or rejected locations can be unresolved"
+            raise AdminDeniedError(msg)
+        await self._audits.record(
+            _location_event(
+                owner_id,
+                location_id,
+                "unresolve_place",
+                request_id,
+                AdminOutcome.ALLOWED,
+            ),
+        )
+
+
+class SetPlacePoint:
+    """Place an operator-verified point on one location from the map picker."""
+
+    def __init__(
+        self,
+        store: LocationDecisionStore,
+        audits: AdminAuditStore,
+        clock: Clock,
+    ) -> None:
+        """Initialize the collaborator."""
+        self._store = store
+        self._audits = audits
+        self._clock = clock
+
+    async def __call__(
+        self,
+        *,
+        owner_id: UUID,
+        location_id: UUID,
+        longitude: Decimal,
+        latitude: Decimal,
+        request_id: UUID,
+    ) -> None:
+        """Execute the owner administration use case."""
+        if not within_warsaw(longitude, latitude):
+            await self._audits.record(
+                _location_event(
+                    owner_id,
+                    location_id,
+                    "set_place_point",
+                    request_id,
+                    AdminOutcome.DENIED,
+                ),
+            )
+            msg = "manual point must be inside the Warsaw scope"
+            raise AdminDeniedError(msg)
+        applied = await self._store.apply_set_point(
+            location_id=location_id,
+            longitude=longitude,
+            latitude=latitude,
+            actor_id=str(owner_id),
+            decided_at=self._clock.now(),
+        )
+        if not applied:
+            await self._audits.record(
+                _location_event(
+                    owner_id,
+                    location_id,
+                    "set_place_point",
+                    request_id,
+                    AdminOutcome.DENIED,
+                ),
+            )
+            msg = "location not found"
+            raise AdminDeniedError(msg)
+        await self._audits.record(
+            _location_event(
+                owner_id,
+                location_id,
+                "set_place_point",
+                request_id,
+                AdminOutcome.ALLOWED,
+            ),
+        )
+
+
 class ListAdminAudits:
     """List redacted admin audit events."""
 
@@ -432,6 +828,12 @@ class AdminService:
     force_reset_password: ForceResetUserPassword
     list_reveal_audits: ListRevealAudits
     list_admin_audits: ListAdminAudits
+    list_locations: ListLocations
+    get_location_for_edit: GetLocationForEdit
+    accept_place_candidate: AcceptPlaceCandidate
+    reject_place: RejectPlace
+    unresolve_place: UnresolvePlace
+    set_place_point: SetPlacePoint
 
 
 def _event(
@@ -447,6 +849,26 @@ def _event(
         target_user_id=target_user_id,
         target_type="user" if target_user_id is not None else None,
         target_id=str(target_user_id) if target_user_id is not None else None,
+        action=action,
+        occurred_at=datetime.now(UTC),
+        request_id=request_id,
+        outcome=outcome,
+    )
+
+
+def _location_event(
+    owner_id: UUID,
+    location_id: UUID,
+    action: str,
+    request_id: UUID,
+    outcome: AdminOutcome,
+) -> AdminAuditEvent:
+    return AdminAuditEvent(
+        id=uuid4(),
+        owner_user_id=owner_id,
+        target_user_id=None,
+        target_type="location",
+        target_id=str(location_id),
         action=action,
         occurred_at=datetime.now(UTC),
         request_id=request_id,

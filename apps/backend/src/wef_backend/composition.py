@@ -9,17 +9,24 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from wef_backend.database import create_database_resources
 from wef_backend.features.admin.application import (
+    AcceptPlaceCandidate,
     AdminService,
     DisableUser,
     ForceResetUserPassword,
+    GetLocationForEdit,
     ListAdminAccounts,
     ListAdminAudits,
+    ListLocations,
     ListRevealAudits,
     ReactivateUser,
+    RejectPlace,
     RevokeUserSessions,
+    SetPlacePoint,
+    UnresolvePlace,
 )
 from wef_backend.features.admin.infrastructure import (
     SQLAlchemyAdminAuditStore,
+    SQLAlchemyLocationAdminStore,
     SQLAlchemyRevealAuditReader,
 )
 from wef_backend.features.catalog.application import (
@@ -136,6 +143,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
     )
     contact_rate_limiter = MemoryRateLimiter()
     admin_audit_store = SQLAlchemyAdminAuditStore(database.session_factory)
+    location_admin_store = SQLAlchemyLocationAdminStore(database.session_factory)
     reveal_audit_reader = SQLAlchemyRevealAuditReader(database.session_factory)
     admin_secret = (
         runtime_settings.admin_session_secret.get_secret_value()
@@ -222,6 +230,24 @@ def build_services(settings: Settings | None = None) -> AppServices:
             ),
             list_reveal_audits=ListRevealAudits(reveal_audit_reader),
             list_admin_audits=ListAdminAudits(admin_audit_store),
+            list_locations=ListLocations(location_admin_store),
+            get_location_for_edit=GetLocationForEdit(location_admin_store),
+            accept_place_candidate=AcceptPlaceCandidate(
+                location_admin_store,
+                admin_audit_store,
+                clock,
+            ),
+            reject_place=RejectPlace(location_admin_store, admin_audit_store, clock),
+            unresolve_place=UnresolvePlace(
+                location_admin_store,
+                admin_audit_store,
+                clock,
+            ),
+            set_place_point=SetPlacePoint(
+                location_admin_store,
+                admin_audit_store,
+                clock,
+            ),
         ),
         auth_cookie_secure=runtime_settings.env == "production",
         admin_session_secret=admin_secret,
