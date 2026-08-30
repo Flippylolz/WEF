@@ -3,7 +3,7 @@ schema: ai-workflow/spike@1
 epic: E19
 title: "AI-assisted owner catalog curation research"
 status: awaiting_approval
-revision: 3
+revision: 4
 owner: owner
 research_only: true
 code_allowed: false
@@ -146,6 +146,11 @@ made, and no executable code or schema was created.
    for conflicts and fields that fail automatic-apply rules.
 
 ## Recommendation
+
+Treat E19 as the next delivery epic, ahead of E14, and assign P0 priority to all
+four proposed task slices. This sequencing decision does not bypass spike or
+implementation-plan approval: implementation can begin only after both gates
+are approved for their current revisions.
 
 ### Owner flow
 

@@ -63,7 +63,9 @@ parser-gap provenance, and offers with active AI-filled data show an
 
 ## Workspace state
 
-- [Spike](SPIKE.md): revision 3 is complete and awaits explicit owner approval.
+- **Delivery priority:** E19 is the next epic in the delivery queue, ahead of
+  E14. Its proposed task slices are P0, but work remains approval-gated.
+- [Spike](SPIKE.md): revision 4 is complete and awaits explicit owner approval.
 - [E19-T1](proposed-tasks/E19-T1-ai-place-review-backend.md): proposed and
   non-actionable.
 - [E19-T2](proposed-tasks/E19-T2-ai-place-review-console.md): proposed and

@@ -4,9 +4,9 @@ id: E19-T3
 epic: E19
 title: "Batch offer autofill and parser-gap provenance"
 status: proposed
-revision: 1
+revision: 2
 actionable: false
-priority: P1
+priority: P0
 size: L
 milestone: M5
 dependencies:

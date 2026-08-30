@@ -4,9 +4,9 @@ id: E19-T2
 epic: E19
 title: "Owner AI place-review console and production controls"
 status: proposed
-revision: 2
+revision: 3
 actionable: false
-priority: P1
+priority: P0
 size: M
 milestone: M5
 dependencies:

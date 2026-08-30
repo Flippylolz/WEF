@@ -4,9 +4,9 @@ id: E19-T4
 epic: E19
 title: "AI enrichment controls, labels, and parser-gap reporting"
 status: proposed
-revision: 1
+revision: 2
 actionable: false
-priority: P1
+priority: P0
 size: M
 milestone: M5
 dependencies:

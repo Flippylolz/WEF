@@ -4,9 +4,9 @@ id: E19-T1
 epic: E19
 title: "Groq AI foundation and guarded place-review backend"
 status: proposed
-revision: 3
+revision: 4
 actionable: false
-priority: P1
+priority: P0
 size: L
 milestone: M5
 dependencies:
