@@ -21,6 +21,7 @@
   var candidate = readPair(map.dataset.candidateLat, map.dataset.candidateLon);
   var tiles = {};
   var drag = null;
+  var tileFailures = 0;
 
   function readPair(rawLat, rawLon) {
     if (rawLat === undefined || rawLat === null || rawLat === "") return null;
@@ -86,6 +87,11 @@
           img.alt = "";
           img.decoding = "async";
           img.draggable = false;
+          img.addEventListener("error", function () {
+            tileFailures += 1;
+            var notice = document.getElementById("tile-error");
+            if (notice) notice.hidden = false;
+          });
           map.appendChild(img);
           tiles[key] = img;
         }
@@ -195,6 +201,8 @@
 
   if (latInput) latInput.addEventListener("change", syncFromInputs);
   if (lngInput) lngInput.addEventListener("change", syncFromInputs);
+
+  window.addEventListener("resize", render);
 
   if (point === null && candidate !== null) {
     setPoint(candidate.lat, candidate.lon, false);

@@ -98,6 +98,9 @@ async def test_owner_sees_pending_locations_and_filters() -> None:
         assert "ul. Marszałkowska 1" in body
         assert "ul. Rozpatrzona 8" not in body
         assert "Accept candidate" not in body
+        assert "href='/admin/places?status=pending'" in body
+        assert "href='/admin/places?status=all'" in body
+        assert "< | a |" not in body
 
         filtered = await client.get(f"{_PLACES_PATH}?status=accepted")
         assert "ul. Rozpatrzona 8" in filtered.text
