@@ -2,19 +2,29 @@
 
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from uuid import UUID, uuid4
 
 from wef_backend.features.admin.application.admin_ops import (
+    AcceptPlaceCandidate,
     AdminAuditEvent,
     AdminService,
     DisableUser,
     ForceResetUserPassword,
+    GetLocationForEdit,
     ListAdminAccounts,
     ListAdminAudits,
+    ListLocations,
     ListRevealAudits,
+    LocationAdminSummary,
+    LocationEditDetail,
+    LocationStatusFilter,
     ReactivateUser,
+    RejectPlace,
     RevealAuditSummary,
     RevokeUserSessions,
+    SetPlacePoint,
+    UnresolvePlace,
 )
 from wef_backend.features.catalog.application import (
     FacetSnapshot,
@@ -653,11 +663,99 @@ class FakeRevealAuditReader:
         return tuple(self.rows[:limit])
 
 
+@dataclass
+class FakeLocationAdminStore:
+    """In-memory location admin reader and decision store."""
+
+    summaries: list[LocationAdminSummary] = field(default_factory=list)
+    details: dict[UUID, LocationEditDetail] = field(default_factory=dict)
+    denied_actions: set[str] = field(default_factory=set)
+    applied: list[str] = field(default_factory=list)
+
+    async def list_locations(
+        self,
+        *,
+        status: LocationStatusFilter,
+        search: str | None,
+        limit: int = 100,
+    ) -> tuple[LocationAdminSummary, ...]:
+        """Filter summaries by review-status slice and casefolded substring."""
+        rows = list(self.summaries)
+        if status is LocationStatusFilter.PENDING:
+            rows = [
+                summary
+                for summary in rows
+                if summary.review_status in ("needs_review", "ungeocoded")
+            ]
+        elif status is not LocationStatusFilter.ALL:
+            rows = [summary for summary in rows if summary.review_status == status.value]
+        if search is not None:
+            needle = search.casefold()
+            rows = [
+                summary
+                for summary in rows
+                if needle in summary.display_address.casefold()
+                or needle in summary.display_name.casefold()
+            ]
+        return tuple(rows[:limit])
+
+    async def get_edit_detail(self, location_id: UUID) -> LocationEditDetail | None:
+        """Return the scripted detail, or None when unknown."""
+        return self.details.get(location_id)
+
+    async def apply_accept_candidate(
+        self,
+        *,
+        location_id: UUID,  # noqa: ARG002 - contract parity
+        actor_id: str,  # noqa: ARG002 - contract parity
+        decided_at: datetime,  # noqa: ARG002 - contract parity
+    ) -> bool:
+        """Record the decision unless the action is scripted to fail."""
+        self.applied.append("accept")
+        return "accept" not in self.denied_actions
+
+    async def apply_reject(
+        self,
+        *,
+        location_id: UUID,  # noqa: ARG002 - contract parity
+        actor_id: str,  # noqa: ARG002 - contract parity
+        decided_at: datetime,  # noqa: ARG002 - contract parity
+    ) -> bool:
+        """Record the decision unless the action is scripted to fail."""
+        self.applied.append("reject")
+        return "reject" not in self.denied_actions
+
+    async def apply_unresolve(
+        self,
+        *,
+        location_id: UUID,  # noqa: ARG002 - contract parity
+        actor_id: str,  # noqa: ARG002 - contract parity
+        decided_at: datetime,  # noqa: ARG002 - contract parity
+    ) -> bool:
+        """Record the decision unless the action is scripted to fail."""
+        self.applied.append("unresolve")
+        return "unresolve" not in self.denied_actions
+
+    async def apply_set_point(
+        self,
+        *,
+        location_id: UUID,  # noqa: ARG002 - contract parity
+        longitude: Decimal,  # noqa: ARG002 - contract parity
+        latitude: Decimal,  # noqa: ARG002 - contract parity
+        actor_id: str,  # noqa: ARG002 - contract parity
+        decided_at: datetime,  # noqa: ARG002 - contract parity
+    ) -> bool:
+        """Record the decision unless the action is scripted to fail."""
+        self.applied.append("set_point")
+        return "set_point" not in self.denied_actions
+
+
 def build_admin_service(
     *,
     store: FakeIdentityStore | None = None,
     audits: FakeAdminAuditStore | None = None,
     reveals: FakeRevealAuditReader | None = None,
+    places: FakeLocationAdminStore | None = None,
     hasher: FakeHasher | None = None,
     clock: FakeClock | None = None,
 ) -> AdminService:
@@ -665,6 +763,7 @@ def build_admin_service(
     identity_store = store or FakeIdentityStore()
     audit_store = audits or FakeAdminAuditStore()
     reveal_reader = reveals or FakeRevealAuditReader()
+    location_store = places or FakeLocationAdminStore()
     password_hasher = hasher or FakeHasher()
     time_source = clock or FakeClock()
     return AdminService(
@@ -680,6 +779,12 @@ def build_admin_service(
         ),
         list_reveal_audits=ListRevealAudits(reveal_reader),
         list_admin_audits=ListAdminAudits(audit_store),
+        list_locations=ListLocations(location_store),
+        get_location_for_edit=GetLocationForEdit(location_store),
+        accept_place_candidate=AcceptPlaceCandidate(location_store, audit_store, time_source),
+        reject_place=RejectPlace(location_store, audit_store, time_source),
+        unresolve_place=UnresolvePlace(location_store, audit_store, time_source),
+        set_place_point=SetPlacePoint(location_store, audit_store, time_source),
     )
 
 
