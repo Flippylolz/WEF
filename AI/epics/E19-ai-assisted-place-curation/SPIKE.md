@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E19
 title: "AI-assisted owner catalog curation research"
-status: awaiting_approval
+status: approved
 revision: 4
 owner: owner
 research_only: true
@@ -29,11 +29,11 @@ proposed_task_ids:
   - E19-T4
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Flippylolz"
+  decided_at: "2026-08-30T21:32:00Z"
+  approved_revision: 4
+  evidence: "AD-042; owner statement in Cursor session on 2026-08-30: 'I explicitly approve E19 SPIKE.md revision 4 and its recommendation.'"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -341,6 +341,7 @@ are approved for their current revisions.
 
 ## Owner decision
 
-The owner records the decision only in the YAML `approval` object. Approval of
-this spike revision permits task refinement/promotion and implementation planning;
-it does not permit code, API spend, secret changes, or production activation.
+The owner approved this spike revision 4 on 2026-08-30 (AD-042; YAML `approval`
+object). Approval permits task refinement/promotion and implementation planning;
+it does not permit code, API spend, secret changes, or production activation until
+the implementation-plan revision is separately approved.

@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E19-T4
 epic: E19
 title: "AI enrichment controls, labels, and parser-gap reporting"
-status: proposed
+status: draft
 revision: 2
-actionable: false
 priority: P0
 size: M
 milestone: M5
@@ -19,12 +18,44 @@ decision_ids:
   - ADR-016
   - ADR-022
 deferred_decision_ids: []
-source: "Owner request on 2026-08-30 for a batch autofill control, AI-filled offer label, and parser-improvement tracking"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E19-T4-ai-enrichment-controls-and-reporting.md
+  promoted_by: "Cursor Agent (owner-directed E19 mission under AD-042/AD-043)"
+  promoted_at: "2026-08-30T21:36:00Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 4
+  verified_by: "Cursor Agent (AD-042)"
+  verified_at: "2026-08-30T21:36:00Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 1
+  verified_by: "Cursor Agent (AD-043)"
+  verified_at: "2026-08-30T21:36:00Z"
+dependency_gate:
+  status: blocked
+  verified_by: null
+  verified_at: null
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E19-T4
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E19-T4: AI enrichment controls, labels, and parser-gap reporting
@@ -59,7 +90,14 @@ label active AI-derived data without exposing prompts, source text, or internals
 - Automatic parser changes, model training, raw-source exports, or declaring
   AI-assisted data verified.
 
-## Work
+## Affected modules and contracts
+
+- Admin HTML batch/report views
+- Catalog presenters, OpenAPI, generated frontend types, offer card/detail UI
+- `AI/contracts/HTTP_API.md`, `AI/contracts/OPENAPI.md`,
+  `AI/product/EXPERIENCE.md`, operations docs
+
+## Implementation notes
 
 - Reuse owner authentication, CSRF/origin guards, no-store admin responses, request
   IDs, idempotency, rate limiting, audit conventions, and accessible POST/303 flows.
@@ -67,6 +105,8 @@ label active AI-derived data without exposing prompts, source text, or internals
   batch state, source IDs/offsets, and parser-gap records remain owner-only.
 - Make absence of the badge mean only “no currently displayed AI-origin field,” not
   “AI was never attempted”; historical outcome reporting remains independent.
+- Candidate preview must warn that Start batch is the only confirmation before
+  eligible fields are written automatically.
 
 ## Acceptance criteria
 
@@ -92,24 +132,39 @@ label active AI-derived data without exposing prompts, source text, or internals
 - [ ] `make lint`, `make format-check`, `make typecheck`, `make test`, and
   `make contract-check` pass.
 
-## Dependencies and gates
+## Test plan
 
-- E19-T2 supplies the owner AI console patterns; E19-T3 supplies authoritative
-  batch, origin, status, reporting, and mutation behavior.
-- Requires explicit E19 spike approval, task promotion, and an approved
-  implementation plan before public-contract or UI work.
-- Production activation follows E19-T3's per-field evaluation and Groq ZDR gates.
+- Unit: `data_origin` derivation from active origins.
+- Integration: public projection and admin report queries.
+- Contract/migration: OpenAPI `data_origin` required enum.
+- End-to-end: public badge on list/detail; owner batch preview/start/pause/revert
+  with fake provider; accessibility of controls.
+- Security: non-owner denial; redacted export contents.
 
-## Risks and notes
+## Rollout and rollback
 
-A single offer may mix parser- and AI-derived fields. The coarse public badge is
-therefore intentionally transparent but not a quality score; detailed field-level
-origin stays owner-only to avoid presenting implementation internals as facts.
+Starts only after E19-T2 and E19-T3 are `done`. Production remains feature-disabled
+until Groq secret and ZDR are verified. Rollback is the prior image; public badges
+disappear when no active AI origin remains.
 
-## Promotion checklist
+## Ready checklist
 
-- [ ] The epic spike is explicitly owner-approved for its current revision.
-- [ ] Scope, acceptance, dependencies, priority, size, and traceability match the approved spike.
-- [ ] Required deferred decisions are resolved.
-- [ ] The file will be moved—not copied—to the epic's `tasks/`.
-- [ ] Promotion metadata will identify the target, promoter, and timestamp.
+- [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
+- [x] Promotion source, promoter, and timestamp are recorded.
+- [x] `spike_gate` references the owner-approved current spike revision and is `satisfied`.
+- [x] `implementation_gate` references the owner-approved current implementation-plan revision, which contains this task ID/current revision, and is `satisfied`.
+- [ ] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is an ancestor PR recorded by `dependency_gate: stacked`.
+- [x] Scope and acceptance criteria match the approved plan.
+
+## Start checklist
+
+- [ ] Status passed through `ready`.
+- [ ] One new branch contains this task ID.
+- [ ] The branch and pull request contain this task only.
+- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+
+## Done checklist
+
+- [ ] Acceptance criteria pass.
+- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [ ] Completion actor, time, pull request, and evidence are recorded.

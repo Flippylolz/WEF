@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E19
 title: "AI-assisted owner catalog curation"
-status: selected
+status: ready
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -60,26 +60,29 @@ parser-gap provenance, and offers with active AI-filled data show an
 - [Ingestion and parser feedback](../../ingestion/PIPELINE.md)
 - [Data quality and readiness](../../data/QUALITY_AND_READINESS.md)
 - [Delivery workflow](../../workflow/README.md)
+- [AD-042](../../workflow/AUTONOMOUS_DECISIONS.md#ad-042-approve-e19-spike-revision-4)
+  and [AD-043](../../workflow/AUTONOMOUS_DECISIONS.md#ad-043-approve-e19-implementation-plan-revision-1-and-green-ci-merge-sequence)
 
 ## Workspace state
 
 - **Delivery priority:** E19 is the next epic in the delivery queue, ahead of
-  E14. Its proposed task slices are P0, but work remains approval-gated.
-- [Spike](SPIKE.md): revision 4 is complete and awaits explicit owner approval.
-- [E19-T1](proposed-tasks/E19-T1-ai-place-review-backend.md): proposed and
-  non-actionable.
-- [E19-T2](proposed-tasks/E19-T2-ai-place-review-console.md): proposed and
-  non-actionable; depends on E19-T1.
-- [E19-T3](proposed-tasks/E19-T3-batch-offer-enrichment-provenance.md): proposed
-  and non-actionable; depends on E19-T1.
-- [E19-T4](proposed-tasks/E19-T4-ai-enrichment-controls-and-reporting.md): proposed
-  and non-actionable; depends on E19-T2 and E19-T3.
-- `IMPLEMENTATION_PLAN.md` does not exist yet. The workflow permits it only after
-  spike approval and task promotion.
+  E14. Its task slices are P0.
+- [Spike](SPIKE.md): revision 4 owner-approved under AD-042.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1 owner-approved under
+  AD-043.
+- [E19-T1](tasks/E19-T1-ai-place-review-backend.md): promoted/`draft`; spike and
+  implementation gates satisfied; E18-T2 dependency satisfied.
+- [E19-T2](tasks/E19-T2-ai-place-review-console.md): promoted/`draft`; depends on
+  E19-T1.
+- [E19-T3](tasks/E19-T3-batch-offer-enrichment-provenance.md): promoted/`draft`;
+  depends on E19-T1 and may proceed in parallel with E19-T2.
+- [E19-T4](tasks/E19-T4-ai-enrichment-controls-and-reporting.md): promoted/`draft`;
+  depends on E19-T2 and E19-T3.
 
 ## Approval boundary
 
-This workspace is documentation and research only. ADR-022 records the owner's
-requested provider/model direction; it does not bypass spike approval,
-implementation-plan approval, the one-task-per-branch rule, CI, or the explicit
-production data-control decision.
+Spike revision 4 and implementation-plan revision 1 are owner-approved. Individual
+task branches, CI, privacy, and one-task-per-PR rules still apply. Production AI
+enablement additionally requires a supplied Groq secret and verified Zero Data
+Retention; paid usage is not authorized. Missing credentials must not block
+deploying the disabled-by-default implementation.

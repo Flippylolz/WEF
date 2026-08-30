@@ -207,6 +207,7 @@ The feature starts without an assumed paid provider budget and retains a small,
 testable model boundary plus explicit owner-authorized mutation boundaries. The
 free tier imposes a tighter per-request input budget and no availability guarantee.
 The design still requires one external secret, review and enrichment provenance,
-evaluation fixtures, and a privacy acceptance step. This ADR selects the direction
-but does not approve E19's spike, implementation plan, tasks, production
-enablement, or paid usage.
+evaluation fixtures, and a privacy acceptance step. E19 spike revision 4 and
+implementation-plan revision 1 are owner-approved under AD-042/AD-043. This ADR
+still does not authorize paid usage or production enablement; those remain gated
+on a supplied Groq secret and verified Zero Data Retention.

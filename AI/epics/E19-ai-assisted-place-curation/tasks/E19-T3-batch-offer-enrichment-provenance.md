@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E19-T3
 epic: E19
 title: "Batch offer autofill and parser-gap provenance"
-status: proposed
+status: draft
 revision: 2
-actionable: false
 priority: P0
 size: L
 milestone: M5
@@ -18,12 +17,44 @@ decision_ids:
   - ADR-016
   - ADR-022
 deferred_decision_ids: []
-source: "Owner request on 2026-08-30 for batch AI autofill without per-offer confirmation and durable parser-improvement tracking"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E19-T3-batch-offer-enrichment-provenance.md
+  promoted_by: "Cursor Agent (owner-directed E19 mission under AD-042/AD-043)"
+  promoted_at: "2026-08-30T21:36:00Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 4
+  verified_by: "Cursor Agent (AD-042)"
+  verified_at: "2026-08-30T21:36:00Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 1
+  verified_by: "Cursor Agent (AD-043)"
+  verified_at: "2026-08-30T21:36:00Z"
+dependency_gate:
+  status: blocked
+  verified_by: null
+  verified_at: null
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E19-T3
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E19-T3: Batch offer autofill and parser-gap provenance
@@ -52,7 +83,8 @@ rollback, and can be compared with later deterministic parser replay.
   to record parser-confirmed or parser-conflicting outcomes.
 - Add per-field evaluation gates so only fields meeting an owner-approved quality
   threshold can auto-apply in production; other valid suggestions are recorded but
-  do not mutate canonical data.
+  do not mutate canonical data. Until those thresholds exist, production automatic
+  apply stays disabled with the shared feature/ZDR gates.
 
 ## Out of scope
 
@@ -64,7 +96,14 @@ rollback, and can be compared with later deterministic parser replay.
   fine-tuning, or producing unreviewed parser fixtures.
 - Groq's provider-side batch endpoint or paid-plan activation.
 
-## Work
+## Affected modules and contracts
+
+- Admin application batch interactors and the T1 provider port's offer schema
+- Catalog/ingestion persistence models and E17 replay comparison hook
+- Alembic revisions for batches, items, field events, and current origins
+- Domain docs in `AI/contracts/DATA_MODEL.md` and `AI/ingestion/PIPELINE.md`
+
+## Implementation notes
 
 - Use the E19-T1 provider port with an offer-specific prompt/schema; no provider
   call occurs inside a database transaction.
@@ -75,6 +114,7 @@ rollback, and can be compared with later deterministic parser replay.
   events use separate tables and cannot relabel parser output.
 - Derive offer-level `data_origin` from active current field origins rather than
   trusting a provider-returned status.
+- Never overwrite a non-missing parser value.
 
 ## Acceptance criteria
 
@@ -105,26 +145,40 @@ rollback, and can be compared with later deterministic parser replay.
   offset, stale/concurrent, crash/resume, revert, and fake-provider tests pass
   without external network or raw data fixtures.
 
-## Dependencies and gates
+## Test plan
 
-- E19-T1 supplies the configured provider client, common budget/error boundary,
-  strict-schema transport, and fake provider.
-- Requires explicit E19 spike approval, promotion, and an approved implementation
-  plan before code/migration/config work.
-- Production automatic apply additionally requires approved per-field evaluation
-  thresholds, live Groq Zero Data Retention, and explicit batch feature activation.
+- Unit: allowlist, missing-only, evidence resolution, revert guards, replay
+  comparison.
+- Integration: Postgres batch checkpoint, crash/resume, source-edit invalidation.
+- Contract/migration: new provenance tables.
+- End-to-end: none in this task (E19-T4).
+- Security/operations: no raw source/prompt leakage; feature-disable stops the
+  worker without affecting readiness.
 
-## Risks and notes
+## Rollout and rollback
 
-The owner intentionally accepts no per-offer confirmation. Missing-only semantics,
-exact evidence, per-field quality gates, immutable scope, one-offer transactions,
-pause/revert, and append-only provenance are therefore mandatory rather than
-optional hardening.
+May stack on E19-T1 in parallel with E19-T2. Production automatic apply stays
+behind evaluation/ZDR/flag gates. Rollback disables the flag and uses guarded
+revert for still-matching values.
 
-## Promotion checklist
+## Ready checklist
 
-- [ ] The epic spike is explicitly owner-approved for its current revision.
-- [ ] Scope, acceptance, dependencies, priority, size, and traceability match the approved spike.
-- [ ] Required deferred decisions are resolved.
-- [ ] The file will be moved—not copied—to the epic's `tasks/`.
-- [ ] Promotion metadata will identify the target, promoter, and timestamp.
+- [x] The file is authoritative under `tasks/`; no duplicate remains under `proposed-tasks/`.
+- [x] Promotion source, promoter, and timestamp are recorded.
+- [x] `spike_gate` references the owner-approved current spike revision and is `satisfied`.
+- [x] `implementation_gate` references the owner-approved current implementation-plan revision, which contains this task ID/current revision, and is `satisfied`.
+- [ ] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is an ancestor PR recorded by `dependency_gate: stacked`.
+- [x] Scope and acceptance criteria match the approved plan.
+
+## Start checklist
+
+- [ ] Status passed through `ready`.
+- [ ] One new branch contains this task ID.
+- [ ] The branch and pull request contain this task only.
+- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+
+## Done checklist
+
+- [ ] Acceptance criteria pass.
+- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [ ] Completion actor, time, pull request, and evidence are recorded.

@@ -351,3 +351,20 @@ This append-only log records choices made while the owner delegated overnight MV
 - Recovery boundary: E14-T9 remains proposed and non-actionable while ADR-015 and E7-T5 defer off-host backups; a later owner decision must define that recovery scope before promotion.
 - Rationale: E14 is the selected unfinished epic other than E17, its research-only spike is complete, and the owner supplied the exact revision-specific approval required by the workflow.
 - Reversal: invalidate the spike and downstream planning artifacts if the owner withdraws approval or new evidence crosses a spike invalidation trigger.
+
+## AD-042: Approve E19 spike revision 4
+
+- Time: 2026-08-30.
+- Owner decision: `I am the repository/product owner. I explicitly approve E19 SPIKE.md revision 4 and its recommendation.`
+- Selected approach: record exact owner approval of E19 spike revision 4 and its dual-workflow recommendation (confirmed place review plus missing-only batch offer autofill), then promote E19-T1 through E19-T4 and write implementation plan revision 1. PR #224 had already squash-merged the awaiting-approval spike documentation (`5b76126`); this decision is recorded in the follow-up documentation PR rather than by amending the merged pull request.
+- Scope boundary: this decision authorizes task refinement, promotion, and implementation planning. It does not by itself authorize production/application code, tests, migrations, configuration, deployment, Groq spend, secret creation, or production AI enablement.
+- Rationale: the owner supplied the exact revision-specific approval required by the workflow and adopted the spike recommendation without changing ADR-022, P-009, or the four proposed task boundaries.
+- Reversal: invalidate the spike and downstream planning artifacts if the owner withdraws approval or new evidence crosses a spike invalidation trigger.
+
+## AD-043: Approve E19 implementation plan revision 1 and green-CI merge sequence
+
+- Time: 2026-08-30.
+- Owner decision: `I also authorize you under AD-009 to create and approve E19 IMPLEMENTATION_PLAN.md revision 1, provided it stays strictly within spike revision 4, ADR-022, P-009, and the four existing E19 task boundaries. Record this message as the owner decision.` The same message authorized completing E19-T1 through E19-T4, one dedicated PR per task, merging after required CI is green, and verifying the automatic production deploy without mutating real offers.
+- Selected approach: approve E19 implementation plan revision 1 under AD-009 continue authority, then execute documentation PR → E19-T1 → parallel E19-T2/E19-T3 → E19-T4. Each change uses its own branch and pull request. Merge dependency-first only after required CI is complete and green. Provider transport uses existing `httpx`; no Groq or OpenAI SDK is added. Automated tests use a fake provider. Production AI remains disabled unless a Groq secret exists and Zero Data Retention has been verified.
+- Safety limit: stop before implementation if a material deviation, new architecture, paid service, weaker privacy control, or broader data mutation is required. Do not recover or use the previously removed OpenAI key. Do not make paid provider calls, create external accounts, enable production AI processing, or mutate real offers merely to demonstrate the feature. Missing Groq credentials remain a documented activation requirement and must not block deploying the disabled-by-default implementation.
+- Reversal: close unmerged PRs and invalidate the affected plan/task gate if material implementation evidence crosses a plan/spike trigger; after deployment, disable the feature flag and use the prior immutable release.
