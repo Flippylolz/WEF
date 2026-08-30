@@ -44,6 +44,7 @@ def _summary(
         has_point=False,
         out_of_scope=False,
         reason_code="low_confidence",
+        has_candidate=False,
         offer_count=2,
         updated_at=FakeClock().now(),
     )

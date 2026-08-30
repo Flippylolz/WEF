@@ -152,15 +152,32 @@ async def test_list_locations_filters_searches_and_orders() -> None:
     )
     pending = _location_row(review_status="needs_review", display_address="ul. Niepewna 2")
     ungeocoded = _location_row(review_status="ungeocoded", display_address="ul. Niepewna 10")
+    candidate_result = _geocode_result_row(longitude="21.0122", latitude="52.2297")
     async with database.session_factory.begin() as session:
-        session.add_all([accepted, pending, ungeocoded])
+        session.add_all(
+            [
+                accepted,
+                pending,
+                ungeocoded,
+                candidate_result,
+                _selection_row(
+                    location_id=pending.id,
+                    geocode_result_id=candidate_result.id,
+                    selection_version=1,
+                    reason_code="low_confidence",
+                ),
+            ],
+        )
 
     pending_rows = await store.list_locations(
         status=LocationStatusFilter.PENDING,
         search=None,
     )
     assert {row.id for row in pending_rows} == {pending.id, ungeocoded.id}
-    assert all(row.reason_code is None for row in pending_rows)
+    assert {row.id for row in pending_rows if row.has_candidate} == {pending.id}
+    assert {row.id for row in pending_rows if row.reason_code == "low_confidence"} == {
+        pending.id,
+    }
 
     searched = await store.list_locations(
         status=LocationStatusFilter.ALL,

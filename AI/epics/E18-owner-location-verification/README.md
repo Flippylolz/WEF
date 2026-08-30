@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E18
 title: "Owner location management and verification"
-status: in_progress
+status: done
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -46,10 +46,20 @@ API contract change.
 - [Spike](SPIKE.md): revision 1, owner-approved 2026-08-30.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, owner-approved
   2026-08-30.
-- [E18-T1](tasks/E18-T1-location-admin-backend.md): promoted 2026-08-30; `in_progress` on `feat/E18-T1-location-admin-backend`.
+- [E18-T1](tasks/E18-T1-location-admin-backend.md): promoted 2026-08-30; `done` through [PR #217](https://github.com/Flippylolz/WEF/pull/217) after green required CI and a verified production deploy.
 - [E18-T2](tasks/E18-T2-location-admin-console.md): promoted 2026-08-30; `draft`
   until E18-T1 is `done` and its dependency gate is satisfied.
 - `tasks/` is the single authoritative location (no `proposed-tasks/` remains).
+
+## Completion state (2026-08-30)
+
+- E18-T1 done (PR #217), E18-T2 done (PR #218) — each merged after every
+  required CI check passed, each followed by a verified production deploy
+  (health live/ready 200 and `/admin` serving).
+- The owner console now covers every location: status-filtered listing with
+  address search, manual point placement on the map picker driven by the
+  retained offer evidence, candidate acceptance, rejection, and unresolve —
+  all lineage-tracked and audit-logged.
 
 ## Merge and deployment policy
 

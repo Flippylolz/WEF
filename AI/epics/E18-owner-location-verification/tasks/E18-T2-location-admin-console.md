@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E18-T2
 epic: E18
 title: "Location admin console page and map picker"
-status: draft
+status: done
 revision: 1
 priority: P1
 size: M
@@ -34,22 +34,26 @@ implementation_gate:
   verified_by: "ZCode agent under owner instruction"
   verified_at: "2026-08-30T11:03:58Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "ZCode agent under owner instruction"
+  verified_at: "2026-08-30T11:50:00Z"
+  evidence:
+    - "E18-T1 done through https://github.com/Flippylolz/WEF/pull/217 (commit 45e815c on main)."
 branch:
   required: true
-  name: null
+  name: feat/E18-T2-location-admin-console
   task_id: E18-T2
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-30T11:41:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/218"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode agent under owner instruction"
+  completed_at: "2026-08-30T12:20:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/218"
+  evidence:
+    - "LocationsAdminView with status tabs, address search, and per-row Edit point / Accept candidate / Reject / Unresolve actions; full-page set-point picker with offer evidence and a dependency-free OSM slippy map served from the admin static directory."
+    - "11 admin HTTP tests; make lint/format-check/typecheck green; make test: 480 backend and 160 frontend tests passed, coverage 90.72%."
+    - "Browser-verified end-to-end on the local stack with real data: picker loaded OSM tiles, click-to-place updated inputs, save redirected with the filter preserved, the row left the pending queue, and the local database showed accepted/building/1.00 with the operator manual_accept lineage row.
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -123,19 +127,19 @@ service.
 
 ## Acceptance criteria
 
-- [ ] The list renders for every status filter and a search term, with filter
+- [x] The list renders for every status filter and a search term, with filter
   state visible and re-clickable, defaulting to the pending queue.
-- [ ] The picker page shows the location's offer evidence, candidate details, map
+- [x] The picker page shows the location's offer evidence, candidate details, map
   holder, lat/lng inputs, CSRF form, and script tag; unknown ids redirect back
   with an error.
-- [ ] Each POST route performs its transition through `AdminService` and
+- [x] Each POST route performs its transition through `AdminService` and
   redirects 303; invalid/out-of-scope input lands back on the picker with a
   visible error and changes nothing.
-- [ ] Missing CSRF or cross-origin mutation posts are rejected by the existing
+- [x] Missing CSRF or cross-origin mutation posts are rejected by the existing
   guard; a non-owner cannot reach the page (login flow).
-- [ ] `AI/` documentation describes the new page, its audit actions, and the
+- [x] `AI/` documentation describes the new page, its audit actions, and the
   manual-placement semantics; epic/task records are updated.
-- [ ] Admin HTTP tests pass; `make lint`, `make format-check`, `make typecheck`,
+- [x] Admin HTTP tests pass; `make lint`, `make format-check`, `make typecheck`,
   `make test` pass.
 
 ## Test plan
@@ -166,20 +170,28 @@ service.
 - [x] `implementation_gate` references the owner-approved current
   implementation-plan revision, which contains this task ID/current revision, and
   is `satisfied`.
-- [ ] Every dependency is `done` with `dependency_gate: satisfied` (E18-T1
-  pending) or recorded as stacked; every deferred gate is resolved.
+- [x] Every dependency is `done` with `dependency_gate: satisfied` (E18-T1 done
+  through PR #217); every deferred gate is resolved.
 - [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting
+- [x] Status passed through `ready`.
+- [x] One new branch contains this task ID.
+- [x] The branch and pull request contain this task only.
+- [x] `branch.name` and `branch.created_at` are recorded before setting
   `in_progress`.
+
+## Implementation note
+
+Rendering the conditional "Accept candidate" action required exposing whether
+the latest selection carries a usable in-scope result, so
+`LocationAdminSummary` gained a read-only `has_candidate` flag computed in the
+E18-T1 reader projection. This extends the approved list projection without
+changing approved behavior or scope.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.

@@ -230,6 +230,7 @@ The committed schema, frontend generation, static Redocly CI artifact, breaking-
 - Its custom authentication provider delegates to the identity application service.
 - User/session/password-reset/reveal-audit actions call owner-authorized interactors and write `AdminAuditEvent`; model views do not write sensitive tables directly.
 - Admin HTML/actions are outside public OpenAPI and require explicit secure-cookie, CSRF/origin, rate-limit, no-store, and authorization tests.
+- The Locations page (`/admin/places`, E18) lists every canonical location with review-status filters and address search, and resolves points through owner-authorized interactors: manual placement on a dependency-free map picker (offer evidence beside the map, OSM raster tiles fetched by the owner's browser from a full-page route served with a console-owned static script), candidate acceptance, rejection, and unresolve. Each decision appends a `location_geocode_selections` lineage row plus an admin audit event; manual points store `precision=building`, `confidence=1.00`, and are validated against the Warsaw scope.
 
 ### Importer/Telegram worker
 
