@@ -32,8 +32,9 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E14 — Production hardening and scalability](E14-production-hardening-and-scalability/README.md) — `planning`; spike revision 1 approved under AD-041; implementation plan revision 1 awaits owner approval; E14-T1–T8 promoted/`draft`, E14-T9 proposed/blocked; milestone M5.
 - [E15 — Telegram ingestion reliability recovery](E15-telegram-ingestion-reliability/README.md) — `done`; spike/plan revision 1 approved under AD-039/AD-040; E15-T1–T3 completed through green-CI PRs #189/#190/#191 with production recovery evidence; milestone M4 remains open only for residual E8 acceptance.
 - [E17 — Raw archive replay and filter integrity](E17-raw-archive-replay-and-filter-integrity/README.md) — `in_progress`; E17-T1–T5 done through green-CI PRs #203/#208/#200/#201/#209; E17-T6 (owner-supplied backup replay and production promotion) remains the completion gate; milestone M5.
+- [E18 — Owner location management and verification](E18-owner-location-verification/README.md) — `ready`; spike/plan revision 1 approved 2026-08-30 (owner session instruction); E18-T1 promoted/`ready`, E18-T2 promoted/`draft` behind E18-T1; milestone M5.
 
-The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker. E15 completed the blocker-priority source-completeness, health, gap-repair, and outage-recovery work under AD-039/AD-040; E8/M4 honestly retain real passive new/edit/delete and live-media acceptance. E13's dark map-first redesign is done. E14 spike revision 1 is approved and plan revision 1 awaits its separate owner decision; promoted tasks remain non-actionable until that gate clears. E17 was selected on 2026-08-29 to retain raw Telegram events for parser replay, harden currency-word price parsing, and serve canonical filter facets from the backend. New work must pass its dedicated pull-request CI before merge.
+The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker. E15 completed the blocker-priority source-completeness, health, gap-repair, and outage-recovery work under AD-039/AD-040; E8/M4 honestly retain real passive new/edit/delete and live-media acceptance. E13's dark map-first redesign is done. E14 spike revision 1 is approved and plan revision 1 awaits its separate owner decision; promoted tasks remain non-actionable until that gate clears. E17 was selected on 2026-08-29 to retain raw Telegram events for parser replay, harden currency-word price parsing, and serve canonical filter facets from the backend. E18 was selected on 2026-08-30 to give the owner console full location management with manual map point placement based on offer data. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
@@ -204,7 +205,7 @@ The workflow's [expanded definition of done](../workflow/DEFINITION_OF_DONE.md) 
 - English-first i18n-keyed interface: E6-T6.
 - Verified Telegram links: E4-T3, E5-T3, then E8-T1 for live data.
 - Import traceability and failure accounting: E2-T4, E3-T2, E3-T5.
-- Geocoding accuracy/review: E3-T3, E3-T5.
+- Geocoding accuracy/review: E3-T3, E3-T5; owner location management, manual point placement, and verification: E18-T1, E18-T2.
 - Procedural feature branches/hotfix ownership plus required CI workflows: E1-T4 and [repository and change rules](../governance/REPOSITORY_RULES.md); enforced `main` protection is out of scope.
 - Dependabot update pull requests: E1-T6.
 - Scheduled owner-label/check/bot-commit-gated Dependabot merge workaround: E1-T7.
