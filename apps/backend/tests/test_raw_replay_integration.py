@@ -18,6 +18,7 @@ from wef_backend.features.ingestion.application.persistence import (
     RunCheckpoint,
     RunCounts,
     RunMode,
+    normalized_location_key,
 )
 from wef_backend.features.ingestion.application.raw_replay import RawParserReplayer
 from wef_backend.features.ingestion.application.telegram_live import (
@@ -89,6 +90,117 @@ async def _primary_parser_version(engine: AsyncEngine, external_id: int) -> str 
             {"eid": external_id},
         )
         return value.scalar_one_or_none()
+
+
+async def test_seed_from_history_backfills_flattened_archive_rows() -> None:
+    """Seeding re-archives retained history with live-shaped flattened text."""
+    assert TEST_DATABASE_URL is not None
+    await asyncio.to_thread(command.upgrade, alembic_config(_settings()), "head")
+    store, archive, engine = _resources()
+    identity = default_live_channel_identity()
+    channel = source_identity_from_channel(identity)
+    message = _message(9101)
+    external_id = message.external_message_id
+    try:
+        channel_id = await store.ensure_channel(
+            platform=channel.platform.value,
+            external_id=channel.channel_id,
+            display_name=channel.channel_name,
+        )
+        raw = live_message_to_raw(message, identity=channel)
+        run_id = await store.start_run(
+            channel_id=channel_id,
+            mode=RunMode.LIVE,
+            parser_version=PARSER_VERSION,
+            source_checksum=None,
+            release_sha=None,
+        )
+        await store.persist_live_upsert(
+            channel_id=channel_id,
+            run_id=run_id,
+            message=PersistableMessage(
+                raw=raw,
+                extraction=extract_listing(raw),
+            ),
+            checkpoint=RunCheckpoint(),
+            counts=RunCounts(),
+            advance_checkpoint=True,
+        )
+
+        seeded, _skipped = await archive.seed_from_history()
+        assert seeded >= 1
+
+        seeded_again, _skipped_again = await archive.seed_from_history()
+        assert seeded_again == 0
+
+        pending = await archive.unprocessed_batch(10)
+        mine = [record for record in pending if record.external_message_id == external_id]
+        assert len(mine) == 1
+        assert mine[0].payload["text"] == TEXT
+
+        async with engine.begin() as connection:
+            await connection.execute(text("UPDATE offers SET parser_version = 'e2-v1'"))
+
+        replayer = RawParserReplayer(store=store, source=archive, identity=identity)
+        summary = await replayer(release_sha="seed-sha")
+        assert summary.reprocessed >= 1
+        await _assert_ours_repaired(archive, external_id)
+        assert await _primary_parser_version(engine, external_id) == PARSER_VERSION
+    finally:
+        async with engine.begin() as connection:
+            await connection.execute(text("DELETE FROM telegram_raw_events"))
+            await connection.execute(
+                text(
+                    "DELETE FROM offer_sources WHERE source_message_id IN "
+                    "(SELECT id FROM source_messages WHERE external_message_id = :eid)",
+                ),
+                {"eid": external_id},
+            )
+            await connection.execute(
+                text(
+                    "DELETE FROM offers WHERE id IN "
+                    "(SELECT offer_id FROM offer_sources WHERE offer_id NOT IN "
+                    "(SELECT offer_id FROM offer_sources))",
+                ),
+            )
+            await connection.execute(
+                text(
+                    "DELETE FROM locations WHERE id NOT IN "
+                    "(SELECT location_id FROM offers) AND display_address = :addr",
+                ),
+                {"addr": "ul. Testowa Integracyjna, Wola, Warszawa"},
+            )
+            await connection.execute(
+                text("DELETE FROM source_messages WHERE external_message_id = :eid"),
+                {"eid": external_id},
+            )
+            await connection.execute(
+                text(
+                    "DELETE FROM source_message_revisions WHERE source_message_id NOT IN "
+                    "(SELECT id FROM source_messages)",
+                ),
+            )
+            await connection.execute(
+                text(
+                    "DELETE FROM ingest_runs WHERE source_channel_id IN "
+                    "(SELECT id FROM source_channels WHERE external_id = :cid)",
+                ),
+                {"cid": identity.channel_id},
+            )
+        await engine.dispose()
+
+
+async def _assert_ours_repaired(
+    archive: SQLAlchemyRawEventArchive,
+    external_id: int,
+) -> None:
+    """Assert our message no longer selects as stale (shared-DB safe)."""
+    remaining = await archive.stale_message_events(
+        parser_version=PARSER_VERSION,
+        sentinel_hash=normalized_location_key(None),
+        limit=1000,
+    )
+    assert all(item.external_message_id != external_id for item in remaining)
 
 
 async def test_replay_rewrites_stale_offers_and_is_idempotent() -> None:
