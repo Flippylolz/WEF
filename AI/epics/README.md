@@ -33,8 +33,9 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E15 — Telegram ingestion reliability recovery](E15-telegram-ingestion-reliability/README.md) — `done`; spike/plan revision 1 approved under AD-039/AD-040; E15-T1–T3 completed through green-CI PRs #189/#190/#191 with production recovery evidence; milestone M4 remains open only for residual E8 acceptance.
 - [E17 — Raw archive replay and filter integrity](E17-raw-archive-replay-and-filter-integrity/README.md) — `in_progress`; E17-T1–T5 done through green-CI PRs #203/#208/#200/#201/#209; E17-T6 (owner-supplied backup replay and production promotion) remains the completion gate; milestone M5.
 - [E18 — Owner location management and verification](E18-owner-location-verification/README.md) — `done`; spike/plan revision 1 approved 2026-08-30; E18-T1/T2 done through green-CI PRs #217/#218 with verified deploys; milestone M5.
+- [E19 — AI-assisted owner catalog curation](E19-ai-assisted-place-curation/README.md) — `selected` as the next delivery epic ahead of E14; spike revision 4 awaits owner approval; E19-T1–T4 are P0, proposed, and non-actionable; milestone M5.
 
-The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker. E15 completed the blocker-priority source-completeness, health, gap-repair, and outage-recovery work under AD-039/AD-040; E8/M4 honestly retain real passive new/edit/delete and live-media acceptance. E13's dark map-first redesign is done. E14 spike revision 1 is approved and plan revision 1 awaits its separate owner decision; promoted tasks remain non-actionable until that gate clears. E17 was selected on 2026-08-29 to retain raw Telegram events for parser replay, harden currency-word price parsing, and serve canonical filter facets from the backend. E18 was selected on 2026-08-30 to give the owner console full location management with manual map point placement based on offer data. New work must pass its dedicated pull-request CI before merge.
+The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E8 live Telegram ingestion is on `main` with an authorized production worker. E15 completed the blocker-priority source-completeness, health, gap-repair, and outage-recovery work under AD-039/AD-040; E8/M4 honestly retain real passive new/edit/delete and live-media acceptance. E13's dark map-first redesign is done. E17 retains its production-acceptance completion gate, and E18 delivered full owner location management with manual map point placement. E19 is the next delivery epic ahead of E14 for guarded Groq GPT-OSS 20B place review plus missing-only batch offer autofill, AI provenance labels, and parser-gap reporting. E19 remains documentation-only pending spike approval; E14's approved spike and pending plan remain queued behind it. New work must pass its dedicated pull-request CI before merge.
 
 ## Global lifecycle
 
@@ -172,6 +173,13 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 
 - [E16-T1](E16-cluster-expansion-reliability/tasks/E16-T1-prevent-cluster-expansion-freeze.md): P0 promoted/`done` through green-CI PR #194 and production version `b09314d`; task dependencies `none`; M4; requirement `P-004`; decisions `ADR-002, ADR-004`; guarded non-interpolated numbered-cluster expansion with production real-browser regression verification.
 
+### E19
+
+- [E19-T1](E19-ai-assisted-place-curation/proposed-tasks/E19-T1-ai-place-review-backend.md): proposed/non-actionable; task dependency `E18-T2`; M5; requirement `P-009`; decisions `ADR-012, ADR-016, ADR-021, ADR-022`; Groq GPT-OSS adapter, minimized review persistence, contact-masked full-source reader, and guarded generate/apply backend.
+- [E19-T2](E19-ai-assisted-place-curation/proposed-tasks/E19-T2-ai-place-review-console.md): proposed/non-actionable; task dependency `E19-T1`; M5; requirement `P-009`; decisions `ADR-012, ADR-016, ADR-022`; owner-only Review with AI diff/apply console and production controls.
+- [E19-T3](E19-ai-assisted-place-curation/proposed-tasks/E19-T3-batch-offer-enrichment-provenance.md): proposed/non-actionable; task dependency `E19-T1`; M5; requirement `P-009`; decisions `ADR-012, ADR-016, ADR-022`; checkpointed missing-only batch offer autofill, rollback, AI field origins, and parser-replay feedback.
+- [E19-T4](E19-ai-assisted-place-curation/proposed-tasks/E19-T4-ai-enrichment-controls-and-reporting.md): proposed/non-actionable; task dependencies `E19-T2, E19-T3`; M5; requirement `P-009`; decisions `ADR-012, ADR-016, ADR-022`; owner batch controls, public/admin AI-assisted labels, parser-gap reports, and contract/UI tests.
+
 Bootstrap and production gates are preserved: E0-T1 depends on E1-T1 so its dedicated branch can exist; E0-T2 depends on E0-T1 and E1-T1; E1-T2 depends on E0-T2; E7-T1 depends on E1-T3/E5-T1 for the anonymous rehearsal, E7-T2 retains resolved D-001 plus E7-T1, and E7-T3 retains E1-T4/E7-T1/E7-T2. Promoted E7-T6 revision 3 retains E3-T5/E7-T2/E7-T4 and no longer depends on D-002 because it transfers materialized results without provider calls; it stages a non-public candidate and leaves activation to proposed E7-T11 behind the ADR-019 gates. Shared TLS proceeds E7-T4 → E7-T8 → E7-T9 → E7-T10, with D-009 gating only E7-T10; E7-T7 retains E6-T4/E6-T5/E6-T6/E6-T7/E7-T4/E7-T10. E8-T5 depends only on E8-T3 and E8-T4—it does not depend on deferred E7-T5.
 
 ## Global definition of done
@@ -206,6 +214,9 @@ The workflow's [expanded definition of done](../workflow/DEFINITION_OF_DONE.md) 
 - Verified Telegram links: E4-T3, E5-T3, then E8-T1 for live data.
 - Import traceability and failure accounting: E2-T4, E3-T2, E3-T5.
 - Geocoding accuracy/review: E3-T3, E3-T5; owner location management, manual point placement, and verification: E18-T1, E18-T2.
+- Owner-only AI-assisted place validation, missing-only batch offer autofill,
+  transparent AI origin labels, and parser-gap provenance from contact-masked
+  complete source descriptions: proposed E19-T1 through E19-T4.
 - Procedural feature branches/hotfix ownership plus required CI workflows: E1-T4 and [repository and change rules](../governance/REPOSITORY_RULES.md); enforced `main` protection is out of scope.
 - Dependabot update pull requests: E1-T6.
 - Scheduled owner-label/check/bot-commit-gated Dependabot merge workaround: E1-T7.

@@ -289,6 +289,26 @@ Commit only reviewed synthetic/redacted fixtures:
 
 Golden outputs include source identity, parsed typed values, confidence/reasons, normalized location, and media associations.
 
+### AI parser-gap feedback (planned E19)
+
+Owner-started AI offer autofill never mutates parser provenance in
+`OfferSource.extraction_json`. Each applied or rejected candidate records a typed
+field value, the parser version that missed it, and exact non-contact offsets into
+the immutable source revision in separate E19 provenance tables.
+
+Parser maintainers use a bounded owner-only report/export to review these gaps and
+then add synthetic/redacted fixtures and deterministic rules through normal parser
+tasks. Model output is not ground truth and never modifies executable rules,
+versions, fixtures, or training data automatically.
+
+During `wef-replay-parser`, a new deterministic value matching an active AI value
+records `parser_confirmed` and transfers current field origin to the parser. A
+different value records `parser_conflicting` and routes the offer to owner review;
+replay does not silently choose or erase the AI history. A source edit marks the
+old AI origin stale and clears the canonical field only when it still matches the
+AI-applied value; a mismatch becomes an owner-review conflict. Stale AI values are
+never served.
+
 ## Historical import runbook
 
 1. Verify free disk space for database, selected media, and temporary derivatives.
