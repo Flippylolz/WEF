@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E18-T2
 epic: E18
 title: "Location admin console page and map picker"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -45,12 +45,15 @@ branch:
   task_id: E18-T2
   one_task_only: true
   created_at: "2026-08-30T11:41:00Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/218"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode agent under owner instruction"
+  completed_at: "2026-08-30T12:20:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/218"
+  evidence:
+    - "LocationsAdminView with status tabs, address search, and per-row Edit point / Accept candidate / Reject / Unresolve actions; full-page set-point picker with offer evidence and a dependency-free OSM slippy map served from the admin static directory."
+    - "11 admin HTTP tests; make lint/format-check/typecheck green; make test: 480 backend and 160 frontend tests passed, coverage 90.72%."
+    - "Browser-verified end-to-end on the local stack with real data: picker loaded OSM tiles, click-to-place updated inputs, save redirected with the filter preserved, the row left the pending queue, and the local database showed accepted/building/1.00 with the operator manual_accept lineage row.
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -124,19 +127,19 @@ service.
 
 ## Acceptance criteria
 
-- [ ] The list renders for every status filter and a search term, with filter
+- [x] The list renders for every status filter and a search term, with filter
   state visible and re-clickable, defaulting to the pending queue.
-- [ ] The picker page shows the location's offer evidence, candidate details, map
+- [x] The picker page shows the location's offer evidence, candidate details, map
   holder, lat/lng inputs, CSRF form, and script tag; unknown ids redirect back
   with an error.
-- [ ] Each POST route performs its transition through `AdminService` and
+- [x] Each POST route performs its transition through `AdminService` and
   redirects 303; invalid/out-of-scope input lands back on the picker with a
   visible error and changes nothing.
-- [ ] Missing CSRF or cross-origin mutation posts are rejected by the existing
+- [x] Missing CSRF or cross-origin mutation posts are rejected by the existing
   guard; a non-owner cannot reach the page (login flow).
-- [ ] `AI/` documentation describes the new page, its audit actions, and the
+- [x] `AI/` documentation describes the new page, its audit actions, and the
   manual-placement semantics; epic/task records are updated.
-- [ ] Admin HTTP tests pass; `make lint`, `make format-check`, `make typecheck`,
+- [x] Admin HTTP tests pass; `make lint`, `make format-check`, `make typecheck`,
   `make test` pass.
 
 ## Test plan
@@ -189,6 +192,6 @@ changing approved behavior or scope.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
