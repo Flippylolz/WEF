@@ -194,6 +194,22 @@ Constraints:
 - Unique `(offer_id, source_message_revision_id)`; a changed source revision appends revision-specific provenance rather than silently rebasing old offsets onto new text.
 - `source_message_revision_id` must identify a `SourceMessageRevision` whose `source_message_id` equals this row's `source_message_id` (composite foreign key, or derive message identity solely from the revision). Cross-message revision references are forbidden, matching the `SourceMessage.current_revision_id` same-message rule.
 
+### PlaceAiReviewRun (E19-T1)
+
+Short-lived owner place-review proposal. Persist no prompt, provider body, source
+text, evidence quote, contact, or raw provider error.
+
+Fields:
+
+- `id`, `owner_user_id`, `location_id`.
+- `state`: `pending`, `applied`, `expired`, or `failed`.
+- Exact `model` `openai/gpt-oss-20b`, prompt/schema versions, input fingerprint,
+  selected source revision IDs and checksums, location snapshot version.
+- Structured proposed field values, verdict/warning enums, token counts, provider
+  latency/outcome, request ID, selected/omitted source counts, timestamps, expiry,
+  and applied field names.
+- At most one `pending` run per location.
+
 ### OfferAiEnrichmentBatch and OfferAiEnrichmentItem (planned E19)
 
 An owner-authorized, resumable missing-field autofill cohort and its immutable item
@@ -549,7 +565,7 @@ Fields:
 - `selection_version`.
 - `decided_at`.
 
-The current `Location.selected_geocode_result_id`, `point`, `precision`, `confidence`, `review_status`, and `out_of_scope` change together with the latest selection event in one transaction. Acceptance cannot be inferred from provider success, and a new decision appends lineage rather than overwriting the prior event.
+The current `Location.selected_geocode_result_id`, `point`, `precision`, `confidence`, `review_status`, and `out_of_scope` change together with the latest selection event in one transaction. Acceptance cannot be inferred from provider success, and a new decision appends lineage rather than overwriting the prior event. Owner-applied E19 place-review address/district corrections use `reason_code=ai_assisted_correction` and return the place to `needs_review` without changing coordinates.
 
 ### IngestRun
 

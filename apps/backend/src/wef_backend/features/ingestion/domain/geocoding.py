@@ -124,6 +124,7 @@ class SelectionReason(StrEnum):
     MANUAL_ACCEPT = "manual_accept"
     MANUAL_REJECT = "manual_reject"
     MANUAL_UNRESOLVE = "manual_unresolve"
+    AI_ASSISTED_CORRECTION = "ai_assisted_correction"
 
 
 @dataclass(frozen=True, slots=True)

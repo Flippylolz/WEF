@@ -190,3 +190,31 @@ async def test_location_source_text_columns_are_unbounded() -> None:
         }
     finally:
         await database.engine.dispose()
+
+
+async def test_place_ai_review_runs_schema_exists_at_head() -> None:
+    """The E19-T1 review table and pending uniqueness index are present."""
+    assert TEST_DATABASE_URL is not None
+    settings = Settings(
+        env="test",
+        database_url=TEST_DATABASE_URL,
+        alembic_config=Path("alembic.ini"),
+    )
+    database = create_database_resources(TEST_DATABASE_URL)
+    try:
+        await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
+        async with database.session_factory() as session:
+            table = await session.scalar(text("SELECT to_regclass('public.place_ai_review_runs')"))
+            pending_index = await session.scalar(
+                text(
+                    "SELECT count(*) FROM pg_indexes "
+                    "WHERE tablename = 'place_ai_review_runs' "
+                    "AND indexname = 'uq_place_ai_review_runs_pending_location'"
+                ),
+            )
+            revision = await session.scalar(text("SELECT version_num FROM alembic_version"))
+        assert table is not None
+        assert pending_index == 1
+        assert revision == EXPECTED_DATABASE_REVISION
+    finally:
+        await database.engine.dispose()

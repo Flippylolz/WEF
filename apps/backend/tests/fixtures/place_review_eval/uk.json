@@ -1,0 +1,25 @@
+{
+  "locale": "uk",
+  "display_name": "ЖК Приклад",
+  "display_address": "вул. Пулавська 5, Warszawa",
+  "district": "Mokotów",
+  "sources": [
+    "Продаж квартири вул. Пулавська 5 Mokotów. Телефон +48333444555 @rieltoruk"
+  ],
+  "contact_tokens": ["+48333444555", "@rieltoruk"],
+  "provider_payload": {
+    "verdict": "no_change",
+    "fields": [
+      {
+        "field_name": "district",
+        "action": "keep",
+        "current_value": "Mokotów",
+        "proposed_value": null,
+        "confidence": "high",
+        "evidence_revision_ids": [],
+        "rationale_code": "supported"
+      }
+    ],
+    "warnings": ["low_confidence"]
+  }
+}

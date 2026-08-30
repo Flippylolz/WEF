@@ -1,0 +1,25 @@
+{
+  "locale": "ru",
+  "display_name": "Жилой комплекс Пример",
+  "display_address": "ул. Маршалковская 10, Warszawa",
+  "district": "Śródmieście",
+  "sources": [
+    "Продажа квартиры ул. Маршалковская 10 Śródmieście. Тел +48222333444 @brokerdemo"
+  ],
+  "contact_tokens": ["+48222333444", "@brokerdemo"],
+  "provider_payload": {
+    "verdict": "corrections_proposed",
+    "fields": [
+      {
+        "field_name": "display_address",
+        "action": "correct",
+        "current_value": "ул. Маршалковская 10, Warszawa",
+        "proposed_value": "ul. Marszałkowska 10, Warszawa",
+        "confidence": "medium",
+        "evidence_revision_ids": [],
+        "rationale_code": "supported"
+      }
+    ],
+    "warnings": []
+  }
+}

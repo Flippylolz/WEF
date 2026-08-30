@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E19
 title: "AI-assisted owner catalog curation"
-status: ready
+status: in_progress
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -70,7 +70,7 @@ parser-gap provenance, and offers with active AI-filled data show an
 - [Spike](SPIKE.md): revision 4 owner-approved under AD-042.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1 owner-approved under
   AD-043.
-- [E19-T1](tasks/E19-T1-ai-place-review-backend.md): promoted/`draft`; spike and
+- [E19-T1](tasks/E19-T1-ai-place-review-backend.md): promoted/`in_progress`; spike and
   implementation gates satisfied; E18-T2 dependency satisfied.
 - [E19-T2](tasks/E19-T2-ai-place-review-console.md): promoted/`draft`; depends on
   E19-T1.

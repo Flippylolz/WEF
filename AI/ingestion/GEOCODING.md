@@ -143,6 +143,11 @@ review decisions through the same lineage contract as the automated pipeline:
 - Console decisions interleave safely with the recurring geocoder and the
   batch-accept CLI because versions are allocated per location inside the
   decision transaction.
+- **AI-assisted place correction** (`ai_assisted_correction`, E19-T1) applies
+  owner-selected display-name/address/district values from a pending review.
+  Address or district application returns the location to `needs_review` and
+  does not invent or move coordinates; the existing point stays until E18's
+  map picker or geocoding re-verifies it.
 
 ## Recommendation
 

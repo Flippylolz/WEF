@@ -18,6 +18,10 @@ from wef_backend.features.ingestion.domain.geocoding import within_warsaw
 if TYPE_CHECKING:
     from decimal import Decimal
 
+    from wef_backend.features.admin.application.ai_review import (
+        ApplyPlaceReview,
+        GeneratePlaceReview,
+    )
     from wef_backend.features.identity.application.identity import (
         Clock,
         IdentityStore,
@@ -835,6 +839,9 @@ class AdminService:
     reject_place: RejectPlace
     unresolve_place: UnresolvePlace
     set_place_point: SetPlacePoint
+    generate_place_review: GeneratePlaceReview
+    apply_place_review: ApplyPlaceReview
+    ai_curation_enabled: bool
 
 
 def _event(

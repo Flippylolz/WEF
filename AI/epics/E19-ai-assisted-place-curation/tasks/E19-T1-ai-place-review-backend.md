@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E19-T1
 epic: E19
 title: "Groq AI foundation and guarded place-review backend"
-status: draft
+status: in_progress
 revision: 4
 priority: P0
 size: L
@@ -42,10 +42,10 @@ dependency_gate:
     - "E18-T2 done through https://github.com/Flippylolz/WEF/pull/218"
 branch:
   required: true
-  name: null
+  name: feat/E19-T1-ai-place-review-backend
   task_id: E19-T1
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-30T21:43:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -179,10 +179,10 @@ are inert history.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] One new branch contains this task ID.
+- [x] The branch and pull request contain this task only.
+- [x] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
 
 ## Done checklist
 
