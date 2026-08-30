@@ -199,6 +199,18 @@ Owner capabilities:
   appends a `location_geocode_selections` lineage row
   (`actor_type="operator"`, `actor_id=<owner>`) and an admin audit event
   (`target_type="location"`).
+- Request a Groq-hosted GPT-OSS 20B validation of a place against bounded complete
+  current source descriptions, review a structured current/proposed diff, and explicitly
+  apply selected display-name/address/district corrections (planned E19). Detected
+  contacts are masked before transmission; the provider has no tools or write
+  authority; coordinate changes remain manual/provider-neutral; generation and
+  application are separately rate-limited, CSRF/origin-protected, stale-checked,
+  and audit-logged.
+- Preview and start a bounded batch that automatically fills eligible missing offer
+  fields after the single owner submission; pause/resume it, inspect minimized
+  outcomes and parser-gap provenance, and request a guarded rollback (planned E19).
+  Detailed batch/source-offset/provider metadata remains owner-only. Public users
+  receive only the coarse `ai_assisted` provenance label for displayed offer data.
 
 Not allowed:
 
@@ -206,7 +218,11 @@ Not allowed:
 - View contact ciphertext/plaintext through generic model forms.
 - Reveal a contact through the audit screen.
 - Edit non-coordinate location fields (display name, district, normalized
-  address) or apply bulk location changes (E18 scope boundary).
+  address) or apply bulk location changes directly through generic model forms.
+  Planned E19 permits only owner-confirmed, validator-mediated display-name/
+  address/district corrections plus its missing-only, exact-evidence batch offer
+  autofill interactor; generic CRUD, overwrites, and unrestricted bulk changes
+  remain forbidden.
 - Change immutable usernames.
 - Delete/demote the last owner.
 - Perform generic writes directly from a Starlette Admin `ModelView`.
