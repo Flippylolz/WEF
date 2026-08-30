@@ -56,7 +56,7 @@ http {
         ssl_certificate /etc/nginx-edge/letsencrypt/live/{{WEF_HOSTNAME}}/fullchain.pem;
         ssl_certificate_key /etc/nginx-edge/letsencrypt/live/{{WEF_HOSTNAME}}/privkey.pem;
 
-        add_header Content-Security-Policy "default-src 'self'; connect-src 'self' https://tiles.openfreemap.org https://*.openfreemap.org; font-src 'self' data:; img-src 'self' data: blob: https://tiles.openfreemap.org https://*.openfreemap.org; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:" always;
+        add_header Content-Security-Policy "default-src 'self'; connect-src 'self' https://tiles.openfreemap.org https://*.openfreemap.org; font-src 'self' data:; img-src 'self' data: blob: https://tiles.openfreemap.org https://*.openfreemap.org https://tile.openstreetmap.org; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:" always;
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-Frame-Options "DENY" always;
