@@ -25,6 +25,7 @@ None.
 - [ADR-019 — Separate the anonymous HTTP rehearsal from public launch](adr/ADR-019-anonymous-http-production-rehearsal.md)
 - [ADR-020 — Use Nginx as the shared TLS ingress](adr/ADR-020-use-nginx-shared-tls-ingress.md)
 - [ADR-021 — Use cached provider-neutral geocoding with Geoapify for the historical import](adr/ADR-021-use-cached-provider-neutral-geocoding.md) — accepted through the owner's merged PR #59; recurring use retained via D-002/E8-T4.
+- [ADR-022 — Use Groq-hosted GPT-OSS 20B for place review and offer enrichment](adr/ADR-022-use-groq-gpt-oss-for-place-review-and-offer-enrichment.md) — accepted provider/model, confirmed-place-review, and missing-only batch-autofill boundaries for planned E19; implementation, paid usage, and production activation remain approval-gated.
 
 ## Partially superseded
 

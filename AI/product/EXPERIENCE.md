@@ -95,3 +95,42 @@ Filter semantics:
 - Every allowed/denied reveal is rate-limited and audited against the signed-in user without logging the contact value.
 - An owner-only Starlette Admin console can disable/reactivate users, revoke sessions, force password reset, and inspect reveal audits through audited backend interactors.
 - Contact reveal and owner administration are enabled only on the live HTTPS origin; the plain `:3100` rollback listener cannot establish production Secure-cookie sessions.
+
+### P-009: AI-assisted owner catalog curation
+
+- The owner-only Locations console can request a Groq-hosted GPT-OSS 20B review
+  of one canonical place against its complete current source descriptions.
+- The review reports whether the current display name, address, and Warsaw district
+  are supported and may propose corrections with confidence, warnings, and source
+  evidence references. Model output is advisory and never a verified fact by itself.
+- Detected contacts are masked before source descriptions leave the application;
+  raw Telegram payloads, media, contact values, account data, and unrelated places
+  are never included.
+- The owner sees a field-by-field current/proposed diff. No change is selected by
+  default, and a separate explicit Apply action is required.
+- The model cannot set coordinates, review state, visibility, city/country, hashes,
+  or merge locations. Backend validators derive dependent fields and reject stale,
+  expired, unsupported, invalid, or colliding proposals.
+- Applying an address or district correction returns the place to `needs_review`;
+  the existing manual picker or geocoder must verify its point before it is public.
+- Every generate/apply outcome is rate-limited and audit-logged without prompt,
+  response, raw source, contact, or secret content. Provider failure changes no
+  place data or failed batch item and does not impair browsing or ordinary admin
+  operations.
+- The owner can preview a bounded offer cohort and submit **Start batch** once to
+  fill eligible missing offer details automatically; no second confirmation is
+  required per offer. Batch mode never overwrites an existing value and never
+  changes content type, visibility, dates, identity, location/development, source
+  text, contacts, or media.
+- Automatic fill requires a unique exact evidence span in an immutable source
+  revision, deterministic value validation, an unchanged offer/source snapshot,
+  and an approved per-field quality gate. Ambiguous, conflicting, stale, invalid,
+  or below-threshold proposals are skipped or retained for review without mutation.
+- Every currently displayed AI-derived offer field has durable source/parser/run
+  provenance. Offers containing one or more such fields expose
+  `data_origin="ai_assisted"` and show an **AI-assisted data** badge; the badge is
+  transparent provenance, not a verification claim.
+- Owner-only parser-gap reports group AI outcomes by field and parser version and
+  retain typed expected values plus exact source offsets. Parser replay can confirm
+  or flag conflicts, but model output never changes parser code or fixtures without
+  maintainer review.
