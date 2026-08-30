@@ -21,6 +21,7 @@ from wef_backend.features.catalog.infrastructure.models import LocationRow, Offe
 from wef_backend.features.ingestion.domain.geocoding import (
     REVIEW_POLICY_VERSION,
     SelectionReason,
+    within_warsaw,
 )
 from wef_backend.features.ingestion.infrastructure.models import (
     GeocodeResultRow,
@@ -37,6 +38,8 @@ _PENDING_STATUSES = ("needs_review", "ungeocoded")
 _OFFER_LIMIT = 5
 _MANUAL_PRECISION = "building"
 _MANUAL_CONFIDENCE = Decimal("1.00")
+# Must match within_warsaw's versioned Warsaw bounding box.
+_WARSAW_ENVELOPE = (20.28, 51.94, 21.37, 52.37)
 
 
 class SQLAlchemyLocationAdminStore:
@@ -72,6 +75,10 @@ class SQLAlchemyLocationAdminStore:
                             GeocodeResultRow.point.is_not(None),
                             GeocodeResultRow.within_scope.is_(True),
                             GeocodeResultRow.error_code.is_(None),
+                            func.ST_Intersects(
+                                GeocodeResultRow.point,
+                                func.ST_MakeEnvelope(*_WARSAW_ENVELOPE, 4326),
+                            ).is_(True),
                         ),
                         False,
                     ).label("has_candidate"),
@@ -202,6 +209,8 @@ class SQLAlchemyLocationAdminStore:
             if coordinates is None:
                 return False
             longitude, latitude = coordinates
+            if not within_warsaw(longitude, latitude):
+                return False
             await _append_selection(
                 session,
                 _LineageDecision(
@@ -409,21 +418,14 @@ async def _has_usable_candidate(
     session: AsyncSession,
     location_id: UUID,
 ) -> bool:
-    """Return whether the latest selection carries an in-scope result point."""
+    """Return whether the latest selection carries an in-Warsaw result point."""
     latest = await _latest_selection_row(session, location_id)
     if latest is None or latest.geocode_result_id is None:
         return False
-    row = (
-        await session.execute(
-            select(GeocodeResultRow.id).where(
-                GeocodeResultRow.id == latest.geocode_result_id,
-                GeocodeResultRow.point.is_not(None),
-                GeocodeResultRow.within_scope.is_(True),
-                GeocodeResultRow.error_code.is_(None),
-            ),
-        )
-    ).first()
-    return row is not None
+    coordinates = await _result_coordinates(session, latest.geocode_result_id)
+    if coordinates is None:
+        return False
+    return within_warsaw(coordinates[0], coordinates[1])
 
 
 async def _latest_reason(session: AsyncSession, location_id: UUID) -> str | None:
@@ -487,6 +489,8 @@ async def _latest_candidate(
     )
     if coordinates is None:
         return None
+    if not within_warsaw(coordinates[0], coordinates[1]):
+        return None
     return GeocodeCandidateSummary(
         longitude=coordinates[0],
         latitude=coordinates[1],
@@ -518,6 +522,20 @@ async def _usable_candidate_result(
     if row.error_code is not None:
         return None
     return _UsableCandidate(precision=row.precision, confidence=row.confidence)
+
+
+async def _result_coordinates(
+    session: AsyncSession,
+    geocode_result_id: UUID,
+) -> tuple[Decimal, Decimal] | None:
+    """Return exact stored coordinates of one geocode result."""
+    return await _point_coordinates(
+        session,
+        select(
+            func.ST_X(GeocodeResultRow.point),
+            func.ST_Y(GeocodeResultRow.point),
+        ).where(GeocodeResultRow.id == geocode_result_id),
+    )
 
 
 async def _point_coordinates(

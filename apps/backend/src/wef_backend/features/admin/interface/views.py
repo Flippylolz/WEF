@@ -254,7 +254,7 @@ def _places_url(filters: _ListFilters) -> str:
 
 def _filter_tabs(filters: _ListFilters) -> str:
     """Render the status-slice navigation tabs."""
-    tabs = "".join(
+    anchors = [
         "<a href='"
         + _places_url(_ListFilters(status=tab_status, search=filters.search))
         + "'>"
@@ -263,8 +263,8 @@ def _filter_tabs(filters: _ListFilters) -> str:
         + ("</strong>" if tab_status is filters.status else "")
         + "</a>"
         for tab_status, label in _FILTER_TABS
-    )
-    return f"<nav class='places-tabs'>{' | '.join(tabs)}</nav>"
+    ]
+    return f"<nav class='places-tabs'>{' | '.join(anchors)}</nav>"
 
 
 def _search_form(filters: _ListFilters) -> str:
@@ -586,6 +586,9 @@ def _set_point_document(
         ".toolbar{position:absolute;top:.5rem;left:.5rem;display:flex;"
         "flex-direction:column;gap:.25rem;z-index:10}"
         ".toolbar button{width:2rem;height:2rem;font-size:1.1rem}"
+        ".tile-error{position:absolute;bottom:.5rem;left:.5rem;right:.5rem;"
+        "background:#fff7e0;color:#6b4e00;border:1px solid #e3ce7f;"
+        "padding:.4rem .6rem;font-size:.85rem;z-index:10;border-radius:4px}"
         "form.point{padding:.75rem 1rem;border-top:1px solid #ddd;"
         "display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}"
         ".error{background:#fdecec;color:#8a1f1f;padding:.5rem 1rem;"
@@ -623,6 +626,10 @@ def _set_point_document(
         "<div class='toolbar'>"
         "<button type='button' id='zoom-in' aria-label='Zoom in'>+</button>"
         "<button type='button' id='zoom-out' aria-label='Zoom out'>&minus;</button>"
+        "</div>"
+        "<div id='tile-error' hidden class='tile-error'>"
+        "Map tiles failed to load — a browser extension or network filter "
+        "may be blocking tile.openstreetmap.org."
         "</div>"
         "<div id='ghost' hidden></div>"
         "<div id='marker' hidden></div>"

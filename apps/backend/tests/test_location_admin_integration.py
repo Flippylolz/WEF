@@ -359,6 +359,53 @@ async def test_accept_candidate_refuses_result_without_usable_point() -> None:
     await database.engine.dispose()
 
 
+async def test_out_of_bbox_candidate_is_never_surfaced() -> None:
+    """A provider 'in-scope' flag cannot smuggle coordinates outside Warsaw."""
+    database = await _prepare()
+    store = SQLAlchemyLocationAdminStore(database.session_factory)
+    location = _location_row(review_status="needs_review", display_address="ul. Dziwna 1")
+    junk_result = _geocode_result_row(
+        longitude="46.545114",
+        latitude="13.198879",
+        within_scope=True,
+    )
+    async with database.session_factory.begin() as session:
+        session.add_all(
+            [
+                location,
+                junk_result,
+                _selection_row(
+                    location_id=location.id,
+                    geocode_result_id=junk_result.id,
+                    selection_version=1,
+                    reason_code="low_confidence",
+                ),
+            ],
+        )
+
+    rows = await store.list_locations(status=LocationStatusFilter.ALL, search=None)
+    assert [row.has_candidate for row in rows] == [False]
+
+    detail = await store.get_edit_detail(location.id)
+    assert detail is not None
+    assert detail.candidate is None
+
+    assert (
+        await store.apply_accept_candidate(
+            location_id=location.id,
+            actor_id="owner",
+            decided_at=_DECIDED_AT,
+        )
+        is False
+    )
+
+    async with database.session_factory() as session:
+        row = await session.get(LocationRow, location.id)
+        assert row is not None
+        assert row.review_status == "needs_review"
+    await database.engine.dispose()
+
+
 async def test_set_point_reject_and_unresolve_transitions() -> None:
     """Manual points, rejection, and re-opening interleave on one lineage."""
     database = await _prepare()
