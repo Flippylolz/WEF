@@ -233,14 +233,16 @@ The committed schema, frontend generation, static Redocly CI artifact, breaking-
 - The Locations page (`/admin/places`, E18) lists every canonical location with review-status filters and address search, and resolves points through owner-authorized interactors: manual placement on a dependency-free map picker (offer evidence beside the map, OSM raster tiles fetched by the owner's browser from a full-page route served with a console-owned static script), candidate acceptance, rejection, and unresolve. Each decision appends a `location_geocode_selections` lineage row plus an admin audit event; manual points store `precision=building`, `confidence=1.00`, and are validated against the Warsaw scope.
 - E19-T1 adds a backend-mediated Groq GPT-OSS 20B place-review application
   boundary (generate/apply interactors, contact-masked source reader, expiring
-  `place_ai_review_runs`, and an `httpx` Chat Completions adapter). `/admin/places`
-  will receive an owner-confirmed review for display name/address/district in
-  E19-T2. A separate owner-started batch worker fills only missing allowlisted
-  offer fields after exact-evidence, snapshot, deterministic-validator, and
-  per-field quality gates; no per-offer confirmation follows the initial bounded
-  batch authorization. The model has no tools or write capability. Provider calls
-  remain outside database transactions; item writes are checkpointed, idempotent,
-  and transactional.
+  `place_ai_review_runs`, and an `httpx` Chat Completions adapter). E19-T2 adds
+  the owner-only `/admin/places` **Review with AI** POST/303 console over those
+  interactors: source coverage, current/proposed diffs, unselected-by-default
+  field apply, and a link back to E18 point verification after address/district
+  corrections. A separate owner-started batch worker fills only missing
+  allowlisted offer fields after exact-evidence, snapshot, deterministic-validator,
+  and per-field quality gates; no per-offer confirmation follows the initial
+  bounded batch authorization. The model has no tools or write capability.
+  Provider calls remain outside database transactions; item writes are
+  checkpointed, idempotent, and transactional.
 - E19 keeps deterministic parser provenance in `OfferSource.extraction_json`, AI
   current field origins and append-only events in separate tables, and source text
   only in its existing immutable revision store. Public OpenAPI projections expose

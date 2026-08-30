@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E19-T2
 epic: E19
 title: "Owner AI place-review console and production controls"
-status: draft
+status: in_progress
 revision: 3
 priority: P0
 size: M
@@ -34,17 +34,18 @@ implementation_gate:
   verified_by: "Cursor Agent (AD-043)"
   verified_at: "2026-08-30T21:36:00Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Cursor Agent (owner-directed E19 mission under AD-042/AD-043)"
+  verified_at: "2026-08-30T23:20:00Z"
+  evidence:
+    - "E19-T1 merged through https://github.com/Flippylolz/WEF/pull/226 (1120312)"
 branch:
   required: true
-  name: null
+  name: feat/E19-T2-ai-place-review-console
   task_id: E19-T2
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-30T23:20:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/227"
 completion:
   completed_by: null
   completed_at: null
@@ -150,15 +151,15 @@ Do not enable production Groq from this task.
 - [x] Promotion source, promoter, and timestamp are recorded.
 - [x] `spike_gate` references the owner-approved current spike revision and is `satisfied`.
 - [x] `implementation_gate` references the owner-approved current implementation-plan revision, which contains this task ID/current revision, and is `satisfied`.
-- [ ] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is an ancestor PR recorded by `dependency_gate: stacked`.
+- [x] Every dependency is `done` with `dependency_gate: satisfied`, or each incomplete dependency is an ancestor PR recorded by `dependency_gate: stacked`.
 - [x] Scope and acceptance criteria match the approved plan.
 
 ## Start checklist
 
-- [ ] Status passed through `ready`.
-- [ ] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
-- [ ] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
+- [x] Status passed through `ready`.
+- [x] One new branch contains this task ID.
+- [x] The branch and pull request contain this task only.
+- [x] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
 
 ## Done checklist
 

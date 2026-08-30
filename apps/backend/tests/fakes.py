@@ -32,6 +32,7 @@ from wef_backend.features.admin.application.ai_review import (
     AiCurationRuntime,
     ApplyPlaceReview,
     GeneratePlaceReview,
+    GetPlaceReview,
     LocationAiSnapshot,
     PlaceReviewRun,
     ProviderOutcome,
@@ -775,6 +776,16 @@ def _inactive_ai_runtime() -> AiCurationRuntime:
     )
 
 
+def active_ai_runtime() -> AiCurationRuntime:
+    """Return fully gated AI settings for tests that exercise generate/apply."""
+    return AiCurationRuntime(
+        enabled=True,
+        zdr_verified=True,
+        model=ALLOWED_GROQ_MODEL,
+        api_key_present=True,
+    )
+
+
 @dataclass
 class FakeChatCompletions:
     """Scripted Chat Completions port for unit tests."""
@@ -851,12 +862,23 @@ class FakePlaceAiReviewStore:
     async def insert_run(self, run: PlaceReviewRun) -> bool:
         if not self.insert_ok:
             return False
+        if run.state is ReviewRunState.PENDING and any(
+            existing.location_id == run.location_id and existing.state is ReviewRunState.PENDING
+            for existing in self.runs.values()
+        ):
+            return False
         self.runs[run.id] = run
         self.owner_run_count += 1
         return True
 
     async def get_run(self, run_id: UUID) -> PlaceReviewRun | None:
         return self.runs.get(run_id)
+
+    async def get_pending_run(self, location_id: UUID) -> PlaceReviewRun | None:
+        for run in self.runs.values():
+            if run.location_id == location_id and run.state is ReviewRunState.PENDING:
+                return run
+        return None
 
     async def apply_selected_fields(
         self,
@@ -893,6 +915,9 @@ def build_admin_service(
     places: FakeLocationAdminStore | None = None,
     hasher: FakeHasher | None = None,
     clock: FakeClock | None = None,
+    review_store: FakePlaceAiReviewStore | None = None,
+    provider: FakeChatCompletions | None = None,
+    runtime: AiCurationRuntime | None = None,
 ) -> AdminService:
     """Compose one admin service fully backed by fakes."""
     identity_store = store or FakeIdentityStore()
@@ -901,8 +926,9 @@ def build_admin_service(
     location_store = places or FakeLocationAdminStore()
     password_hasher = hasher or FakeHasher()
     time_source = clock or FakeClock()
-    review_store = FakePlaceAiReviewStore()
-    runtime = _inactive_ai_runtime()
+    place_reviews = review_store or FakePlaceAiReviewStore()
+    ai_runtime = runtime or _inactive_ai_runtime()
+    completions = provider or FakeChatCompletions()
     return AdminService(
         list_accounts=ListAdminAccounts(identity_store),
         disable_user=DisableUser(identity_store, audit_store, time_source),
@@ -923,14 +949,20 @@ def build_admin_service(
         unresolve_place=UnresolvePlace(location_store, audit_store, time_source),
         set_place_point=SetPlacePoint(location_store, audit_store, time_source),
         generate_place_review=GeneratePlaceReview(
-            review_store,
-            FakeChatCompletions(),
+            place_reviews,
+            completions,
             audit_store,
             time_source,
-            runtime,
+            ai_runtime,
         ),
-        apply_place_review=ApplyPlaceReview(review_store, audit_store, time_source, runtime),
-        ai_curation_enabled=False,
+        apply_place_review=ApplyPlaceReview(
+            place_reviews,
+            audit_store,
+            time_source,
+            ai_runtime,
+        ),
+        get_place_review=GetPlaceReview(place_reviews),
+        ai_curation_enabled=ai_runtime.active,
     )
 
 

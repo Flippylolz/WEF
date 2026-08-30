@@ -201,14 +201,15 @@ Owner capabilities:
   (`target_type="location"`).
 - Request a Groq-hosted GPT-OSS 20B validation of a place against bounded complete
   current source descriptions, review a structured current/proposed diff, and explicitly
-  apply selected display-name/address/district corrections (planned E19). Detected
-  contacts are masked before transmission; the provider has no tools or write
-  authority; coordinate changes remain manual/provider-neutral; generation and
-  application are separately rate-limited, CSRF/origin-protected, stale-checked,
-  and audit-logged.
+  apply selected display-name/address/district corrections from `/admin/places`
+  (E19-T2). Detected contacts are masked before transmission; the provider has no
+  tools or write authority; coordinate changes remain manual/provider-neutral;
+  generation and application are separately rate-limited, CSRF/origin-protected,
+  stale-checked, and audit-logged. The action is absent when the feature flag,
+  Groq secret, verified Zero Data Retention, or exact model gate is incomplete.
 - Preview and start a bounded batch that automatically fills eligible missing offer
   fields after the single owner submission; pause/resume it, inspect minimized
-  outcomes and parser-gap provenance, and request a guarded rollback (planned E19).
+  outcomes and parser-gap provenance, and request a guarded rollback (planned E19-T3/T4).
   Detailed batch/source-offset/provider metadata remains owner-only. Public users
   receive only the coarse `ai_assisted` provenance label for displayed offer data.
 
@@ -219,9 +220,9 @@ Not allowed:
 - Reveal a contact through the audit screen.
 - Edit non-coordinate location fields (display name, district, normalized
   address) or apply bulk location changes directly through generic model forms.
-  Planned E19 permits only owner-confirmed, validator-mediated display-name/
-  address/district corrections plus its missing-only, exact-evidence batch offer
-  autofill interactor; generic CRUD, overwrites, and unrestricted bulk changes
+  Planned E19-T2 permits only owner-confirmed, validator-mediated display-name/
+  address/district corrections; planned E19-T3/T4 add missing-only, exact-evidence
+  batch offer autofill. Generic CRUD, overwrites, and unrestricted bulk changes
   remain forbidden.
 - Change immutable usernames.
 - Delete/demote the last owner.
@@ -235,6 +236,7 @@ Admin actions invoke owner-authorized interactors such as:
 - `ForceResetUserPassword`.
 - `ListContactRevealAudit`.
 - `GeneratePlaceReview`.
+- `GetPlaceReview`.
 - `ApplyPlaceReview`.
 
 Each mutation creates `AdminAuditEvent` with owner user ID, target user/entity, action, timestamp, request ID, and outcome. It never stores passwords, tokens, or contact values.

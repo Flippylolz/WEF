@@ -301,6 +301,44 @@ GitHub Actions variables/secrets transferred on every deployment:
 - Production geocoder credentials/contact configuration.
 - Telegram API ID/hash/session/phone through `WEF_TELEGRAM_API_ID`, `WEF_TELEGRAM_API_HASH`, `WEF_TELEGRAM_SESSION`, and `WEF_TELEGRAM_PHONE`; non-secret channel identity comes from application settings.
 
+Optional Groq catalog-curation settings (`WEF_AI_CURATION_ENABLED`, `WEF_GROQ_API_KEY`,
+`WEF_GROQ_MODEL`, `WEF_GROQ_ZDR_VERIFIED`, `WEF_GROQ_TIMEOUT_SECONDS`) must **not** be
+added to `validate_release` `REQUIRED_KEYS`. Missing values keep AI review absent
+and must not fail deploy or `/api/v1/health/ready`.
+
+## Groq AI curation operations
+
+Owner of the Groq secret and Zero Data Retention proof: the repository/product owner.
+Do not recover or reuse the previously removed OpenAI key.
+
+Activation (all required; fail closed otherwise):
+
+1. Confirm Groq Zero Data Retention is verified for this account and set
+   `WEF_GROQ_ZDR_VERIFIED=true` only after that proof exists.
+2. Store `WEF_GROQ_API_KEY` as a GitHub Actions secret / production secret file, never
+   in git.
+3. Keep `WEF_GROQ_MODEL=openai/gpt-oss-20b` (exact allowlist).
+4. Set `WEF_AI_CURATION_ENABLED=true` last.
+
+Until those gates are complete, `/admin/places` omits **Review with AI**. Existing
+location administration continues.
+
+Smoke after a release that includes the console (do not mutate real offers):
+
+- `/api/v1/health/live` and `/api/v1/health/ready` succeed without Groq.
+- Owner login can open `/admin/places`.
+- When the feature is off, **Review with AI** is absent.
+- Do not click generate/apply against production places merely to demonstrate the
+  feature.
+
+Free-tier monitoring: the backend enforces 20 provider requests per owner per UTC
+day. Watch Groq dashboard remaining credits/rate limits privately; never log API
+keys, prompts, source bodies, or provider error payloads.
+
+Disable: set `WEF_AI_CURATION_ENABLED=false` (or remove the key / set ZDR false) and
+redeploy or restart API. In-flight HTML actions fail closed. Rollback is the prior
+immutable image; unused `place_ai_review_runs` rows are inert.
+
 Practices:
 
 - Verify SSH host keys; do not disable strict host checking.
