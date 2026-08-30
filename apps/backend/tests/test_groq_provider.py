@@ -294,7 +294,7 @@ async def test_httpx_transport_accepts_non_json_bodies(monkeypatch: pytest.Monke
 
 async def test_adapter_parse_failures_and_request_id_fallback() -> None:
     """Malformed completions map to schema/refusal without leaking bodies."""
-    bad_payloads = (
+    bad_payloads: tuple[tuple[object, ProviderOutcome], ...] = (
         ("not-a-dict", ProviderOutcome.SCHEMA),
         ({"choices": []}, ProviderOutcome.SCHEMA),
         ({"choices": ["x"]}, ProviderOutcome.SCHEMA),
