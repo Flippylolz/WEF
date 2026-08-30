@@ -67,6 +67,7 @@ from wef_backend.features.identity.application.identity import (
     DisableOwnAccount,
     IdentityService,
     LogoutSession,
+    PasswordHasher,
     RegisterAccount,
     ResolveSession,
     RevokeAllAccountSessions,
@@ -376,7 +377,7 @@ class FakeRateLimiter:
 def build_identity_service(
     *,
     store: FakeIdentityStore | None = None,
-    hasher: FakeHasher | None = None,
+    hasher: FakeHasher | PasswordHasher | None = None,
     tokens: FakeTokens | None = None,
     clock: FakeClock | None = None,
     rate_limiter: FakeRateLimiter | None = None,
