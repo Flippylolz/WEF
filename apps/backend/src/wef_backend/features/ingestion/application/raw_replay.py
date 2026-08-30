@@ -140,7 +140,11 @@ class RawParserReplayer:
                         break
                     progressed = False
                     for item in items:
-                        event = _event_from_payload(item)
+                        try:
+                            event = _event_from_payload(item)
+                        except (TypeError, ValueError):
+                            excluded.add(_work_key(item))
+                            continue
                         if event.kind is LiveTelegramEventKind.DELETE or event.message is None:
                             excluded.add(_work_key(item))
                             continue

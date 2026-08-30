@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 from uuid import UUID, uuid4
@@ -25,7 +26,7 @@ from wef_backend.features.ingestion.infrastructure.models import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Sequence
 
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -214,4 +215,108 @@ class SQLAlchemyRawEventArchive:
             )
             for row in rows
             if f"{row.channel_external_id}:{row.external_message_id}" not in exclude
+        )
+
+    async def seed_from_history(
+        self,
+        *,
+        chunk_size: int = 500,
+    ) -> tuple[int, int]:
+        """Backfill the archive from retained history for pre-archive messages.
+
+        Every current source revision already stores its verbatim payload and
+        checksum, so replay can cover messages ingested before the archive
+        existed. Telegram's mixed text representation is flattened to the same
+        shape live landing produces; malformed rows are skipped and counted.
+        Returns (seeded, skipped).
+        """
+        async with self._session_factory() as session:
+            selected = await session.execute(
+                select(
+                    SourceChannelRow.external_id,
+                    SourceMessageRow.external_message_id,
+                    SourceMessageRow.raw_payload_json,
+                    SourceMessageRow.raw_checksum,
+                    SourceMessageRow.ingested_at,
+                )
+                .join(
+                    SourceChannelRow,
+                    SourceChannelRow.id == SourceMessageRow.source_channel_id,
+                )
+                .outerjoin(
+                    TelegramRawEventRow,
+                    (TelegramRawEventRow.channel_external_id == SourceChannelRow.external_id)
+                    & (
+                        TelegramRawEventRow.external_message_id
+                        == SourceMessageRow.external_message_id
+                    ),
+                )
+                .where(
+                    TelegramRawEventRow.id.is_(None),
+                )
+                .order_by(SourceMessageRow.external_message_id),
+            )
+            rows = selected.all()
+
+        seeded = 0
+        skipped = 0
+        chunk: list[dict[str, object]] = []
+        for row in rows:
+            payload = _flatten_text(cast("Mapping[str, object]", row.raw_payload_json))
+            if payload is None:
+                skipped += 1
+                continue
+            chunk.append(
+                {
+                    "id": uuid4(),
+                    "event_kind": "new",
+                    "channel_external_id": row.external_id,
+                    "external_message_id": row.external_message_id,
+                    "payload_json": json.loads(json.dumps(dict(payload))),
+                    "checksum": row.raw_checksum,
+                    "received_at": row.ingested_at,
+                },
+            )
+            seeded += 1
+            if len(chunk) >= chunk_size:
+                await _insert_seed_chunk(self._session_factory, chunk)
+                chunk = []
+        if chunk:
+            await _insert_seed_chunk(self._session_factory, chunk)
+        return seeded, skipped
+
+
+def _flatten_text(payload: Mapping[str, object]) -> dict[str, object] | None:
+    """Return the payload with Telegram's mixed text flattened for replay."""
+    original = payload.get("text", "")
+    if isinstance(original, str):
+        flattened: object = original
+    elif isinstance(original, list):
+        parts: list[str] = []
+        for segment in original:
+            if isinstance(segment, str):
+                parts.append(segment)
+            elif isinstance(segment, Mapping) and isinstance(segment.get("text"), str):
+                parts.append(cast("str", segment["text"]))
+            else:
+                return None
+        flattened = "".join(parts)
+    else:
+        return None
+    seeded_payload = dict(payload)
+    seeded_payload["text"] = flattened
+    return seeded_payload
+
+
+async def _insert_seed_chunk(
+    session_factory: async_sessionmaker[AsyncSession],
+    chunk: list[dict[str, object]],
+) -> None:
+    async with session_factory() as session, session.begin():
+        await session.execute(
+            insert(TelegramRawEventRow)
+            .values(chunk)
+            .on_conflict_do_nothing(
+                constraint="uq_telegram_raw_events_dedupe",
+            ),
         )
