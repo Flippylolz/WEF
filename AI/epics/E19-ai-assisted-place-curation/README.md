@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E19
 title: "AI-assisted owner catalog curation"
-status: in_progress
+status: done
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -65,8 +65,8 @@ parser-gap provenance, and offers with active AI-filled data show an
 
 ## Workspace state
 
-- **Delivery priority:** E19 is the next epic in the delivery queue, ahead of
-  E14. Its task slices are P0.
+- **Delivery priority:** E19 is complete on `main`. Production AI activation
+  remains gated on Groq secret and verified Zero Data Retention.
 - [Spike](SPIKE.md): revision 4 owner-approved under AD-042.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1 owner-approved under
   AD-043.
@@ -76,8 +76,8 @@ parser-gap provenance, and offers with active AI-filled data show an
   https://github.com/Flippylolz/WEF/pull/227 (d8673dc).
 - [E19-T3](tasks/E19-T3-batch-offer-enrichment-provenance.md): done through
   https://github.com/Flippylolz/WEF/pull/228 (45094ba).
-- [E19-T4](tasks/E19-T4-ai-enrichment-controls-and-reporting.md): promoted/`draft`;
-  depends on done E19-T2 and E19-T3.
+- [E19-T4](tasks/E19-T4-ai-enrichment-controls-and-reporting.md): done through
+  https://github.com/Flippylolz/WEF/pull/230 (d7afef6).
 
 ## Approval boundary
 

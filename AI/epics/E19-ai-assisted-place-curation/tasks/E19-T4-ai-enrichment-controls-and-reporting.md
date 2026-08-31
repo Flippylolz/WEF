@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E19-T4
 epic: E19
 title: "AI enrichment controls, labels, and parser-gap reporting"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: M
@@ -49,10 +49,12 @@ branch:
   created_at: "2026-08-31T05:45:00Z"
   pull_request: https://github.com/Flippylolz/WEF/pull/230
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (owner-directed E19 mission under AD-042/AD-043)"
+  completed_at: "2026-08-31T08:55:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/230"
+  evidence:
+    - "Merged as d7afef6 on main through https://github.com/Flippylolz/WEF/pull/230."
+    - "Public data_origin and UI badges, owner offer-enrichment HTML, parser-gap export, admin HTTP/reporting/integration tests, and contract/docs updates; CI run 33374625246 green with 545 backend and 162 frontend tests."
 invalidation:
   invalidated_by: null
   invalidated_at: null
