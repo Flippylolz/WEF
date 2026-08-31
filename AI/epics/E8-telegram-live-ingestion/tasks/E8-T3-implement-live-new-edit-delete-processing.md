@@ -47,10 +47,12 @@ and hide public offers, and worker disconnects never gate API readiness.
 - Deterministic fake-client tests for new/edit/delete convergence
 - No worker Compose enablement; no public OpenAPI change
 
-No real passive new/edit/delete callback arrived during the E15 production observation
-window, so this task remains `in_progress` and makes no production edit/delete claim.
-Polling provides new-message completeness but intentionally does not infer deletion from
-absence. See [E15 production recovery evidence](../../E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
+No real passive edit/delete callback arrived during the E15 or E8 observation windows
+(`last_event_received_at` remained null). Real passive event semantics therefore remain
+an explicit E8/M4 acceptance item; see
+[B003 observation runbook](B003_OBSERVATION_RUNBOOK.md). E15 proves that a missed
+passive suffix is recovered by bounded source polling and that a stalled
+consumer/reconciler cannot remain healthy while health evaluation is running.
 
 ## Dependencies and traceability
 

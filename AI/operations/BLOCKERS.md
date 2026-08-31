@@ -21,7 +21,8 @@ This append-only log records blockers that could not be safely resolved autonomo
   [E15 production recovery evidence](../epics/E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
 - Needed from owner: no E15 action. Closing the residual blocker requires a safely
   observable real edit/delete sequence (organic or explicitly coordinated); do not
-  create or alter source-channel posts without separate authority.
+  create or alter source-channel posts without separate authority. When an event occurs,
+  follow [B003 observation runbook](../epics/E8-telegram-live-ingestion/B003_OBSERVATION_RUNBOOK.md).
 - Safe workaround: checkpoint polling remains the source-completeness boundary for new
   messages, while passive events remain the latency path. Operators use the redacted
   worker status for remote/local alignment. Absence-based polling never infers deletion,

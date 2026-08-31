@@ -43,4 +43,4 @@ new-message callbacks; those remain under B-003.
 - No real passive edit or delete callback was observed during this window.
 - Closing B-003 still requires a safely observable edit/delete sequence (organic or
   explicitly coordinated). Do not create or alter source-channel posts without separate
-  authority.
+  authority. When an event occurs, follow [B003 observation runbook](B003_OBSERVATION_RUNBOOK.md).
