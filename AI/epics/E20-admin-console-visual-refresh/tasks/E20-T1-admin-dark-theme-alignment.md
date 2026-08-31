@@ -152,5 +152,5 @@ shared admin stylesheet, and the hardcoded per-page light styles are removed.
 ## Done checklist
 
 - [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../workflow/DEFINITION_OF_DONE.md) passes.
+- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.

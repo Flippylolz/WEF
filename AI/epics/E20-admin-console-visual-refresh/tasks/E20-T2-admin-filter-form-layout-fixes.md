@@ -147,5 +147,5 @@ narrow widths, with recorded before/after screenshots for each corrected page.
 ## Done checklist
 
 - [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../workflow/DEFINITION_OF_DONE.md) passes.
+- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
 - [ ] Completion actor, time, pull request, and evidence are recorded.
