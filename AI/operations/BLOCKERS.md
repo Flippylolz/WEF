@@ -14,10 +14,12 @@ This append-only log records blockers that could not be safely resolved autonomo
   replay made no canonical changes; worker restart and application-child failure both
   recovered, the latter fired Docker `unhealthy` and cleared to `healthy`, and public
   readiness stayed `200`. Credentials, authorized session, channel identity, transport,
-  consumer, reconciliation, database, and redacted log safety are verified. No real
-  passive new/edit/delete callback occurred during the acceptance window, and the
-  text-first recovery intentionally created no media assets. Exact redacted evidence is
-  in [E15 production recovery evidence](../epics/E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
+  consumer, reconciliation, database, and redacted log safety are verified. Live media
+  download and storage code shipped through PR #243 on 2026-08-31 but is not yet proven
+  in production. No real passive new/edit/delete callback occurred during the acceptance
+  window, and the text-first recovery intentionally created no media assets. Exact
+  redacted evidence is in
+  [E15 production recovery evidence](../epics/E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
 - Needed from owner: no E15 action. Closing the residual blocker requires a safely
   observable real new/edit/delete sequence (organic or explicitly coordinated) and the
   approved E8 live-media follow-up; do not create or alter source-channel posts without

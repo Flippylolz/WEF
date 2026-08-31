@@ -51,6 +51,8 @@ See [E15 production recovery evidence](../../E15-telegram-ingestion-reliability/
 - `TelegramLiveClientPort`, Fake client, Telethon adapter (`flood_sleep_threshold=0`).
 - Entity verify against non-secret `TelegramChannelIdentity`.
 - `LiveTelegramBackfill` + `wef-telegram-backfill` CLI.
+- Bounded live media download and storage through PR #243 (`telethon_live_media`,
+  `LiveMediaPipeline`, worker/backfill wiring, compose media volumes).
 - No Compose worker enablement; no production activation (E8-T5).
 
 ## Dependencies and traceability
