@@ -41,7 +41,8 @@ persistence port—without enabling the production worker or changing public con
   pipeline (`telethon_live_media`, `LiveMediaPipeline`, worker/backfill wiring).
 
 The real backfill recovered every ID from `29203` through `29335` and repeated without
-canonical changes. The run created no media assets, so media acceptance remains open.
+canonical changes. Production live media acquisition for reconciled IDs `29415`–`29434`
+is recorded in [PRODUCTION_EVIDENCE.md](../PRODUCTION_EVIDENCE.md).
 See [E15 production recovery evidence](../../E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
 
 ## Scope delivered in revision 1

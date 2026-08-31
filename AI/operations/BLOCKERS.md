@@ -6,28 +6,26 @@ This append-only log records blockers that could not be safely resolved autonomo
 
 ### B-003: Telegram live acceptance evidence
 
-- Impact: M4 still cannot claim production new/edit/delete callback semantics or live
-  media acquisition. Source completeness, gap repair, and truthful worker-health/outage
-  behavior are no longer blocked.
-- Current state: E15 release `7184cc2d67a` reconciled the 2026-08-27 incident and every
-  source ID from checkpoint `29202` through observed head `29335`. An identical bounded
-  replay made no canonical changes; worker restart and application-child failure both
-  recovered, the latter fired Docker `unhealthy` and cleared to `healthy`, and public
-  readiness stayed `200`. Credentials, authorized session, channel identity, transport,
-  consumer, reconciliation, database, and redacted log safety are verified. Live media
-  download and storage code shipped through PR #243 on 2026-08-31 but is not yet proven
-  in production. No real passive new/edit/delete callback occurred during the acceptance
-  window, and the text-first recovery intentionally created no media assets. Exact
-  redacted evidence is in
+- Impact: M4 still cannot claim production passive edit/delete callback semantics.
+  Live media acquisition through the shared pipeline is now verified (see
+  [E8 live media production evidence](../epics/E8-telegram-live-ingestion/PRODUCTION_EVIDENCE.md)).
+  Source completeness, gap repair, and truthful worker-health/outage behavior are no
+  longer blocked.
+- Current state: E15 release `7184cc2d67a` reconciled the 2026-08-27 incident through
+  head `29335`. E8 release `b71c99f` (PR #243, deploy run `33420585501`) reconciled
+  message IDs `29415`–`29434` on 2026-08-31 with bounded temp downloads, restricted
+  originals, and public derivatives for all 20 IDs. Credentials, authorized session,
+  channel identity, transport, consumer, reconciliation, database, and redacted log
+  safety remain verified. No real passive new/edit/delete callback occurred during
+  either acceptance window. Exact redacted recovery evidence is in
   [E15 production recovery evidence](../epics/E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
 - Needed from owner: no E15 action. Closing the residual blocker requires a safely
-  observable real new/edit/delete sequence (organic or explicitly coordinated) and the
-  approved E8 live-media follow-up; do not create or alter source-channel posts without
-  separate authority.
-- Safe workaround: checkpoint polling is now the source-completeness boundary for new
+  observable real edit/delete sequence (organic or explicitly coordinated); do not
+  create or alter source-channel posts without separate authority.
+- Safe workaround: checkpoint polling remains the source-completeness boundary for new
   messages, while passive events remain the latency path. Operators use the redacted
   worker status for remote/local alignment. Absence-based polling never infers deletion,
-  so production edit/delete and media claims remain withheld until E8 evidence exists.
+  so production edit/delete claims remain withheld until E8 evidence exists.
 
 ### B-005: GitHub-enforced branch protection unavailable
 
