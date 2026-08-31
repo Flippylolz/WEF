@@ -733,6 +733,11 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                 protected = await self._field_origin_sync.protected_field_names(offer_id)
                 for field_name in protected:
                     values.pop(_FIELD_COLUMNS[field_name], None)
+            existing_visibility = await session.scalar(
+                select(OfferRow.visibility).where(OfferRow.id == offer_id),
+            )
+            if existing_visibility == OfferVisibility.VISIBLE.value:
+                values.pop("visibility", None)
             await session.execute(
                 update(OfferRow).where(OfferRow.id == offer_id).values(**values),
             )

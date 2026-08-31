@@ -10,11 +10,12 @@ from pathlib import Path
 
 import pytest
 from alembic import command
-from sqlalchemy import text
+from sqlalchemy import text, update
 
 from tests.test_persistence_application import _contact, _listing, _raw
 from wef_backend.database import create_database_resources
-from wef_backend.features.catalog.domain import ContentType
+from wef_backend.features.catalog.domain import ContentType, OfferVisibility
+from wef_backend.features.catalog.infrastructure.models import OfferRow
 from wef_backend.features.ingestion.application.complete_import import prepare_import
 from wef_backend.features.ingestion.application.persistence import (
     PersistableMessage,
@@ -546,6 +547,34 @@ async def test_long_location_text_persists_without_truncation() -> None:
     assert persisted.display_name == location
     assert persisted.display_address == location
     assert persisted.normalized_address == " ".join(location.casefold().split())
+    await database.engine.dispose()
+
+
+async def test_reprocess_preserves_visible_catalog_visibility() -> None:
+    """Live or replayed upserts must not downgrade promoted public offers."""
+    assert TEST_DATABASE_URL is not None
+    await _prepare()
+    database = create_database_resources(TEST_DATABASE_URL)
+    store = SQLAlchemyIngestionPersistence(database.session_factory)
+    service = PersistHistoricalIngestion(store=store, batch_size=1)
+    body = "Sprzedam mieszkanie 40 m², cena 560 000 zł"
+    await service(
+        channel=_raw().source,
+        messages=[_candidate(51, body, "a" * 64)],
+        metadata=RunMetadata(parser_version="integration@1"),
+    )
+    async with database.session_factory() as session, session.begin():
+        await session.execute(
+            update(OfferRow).values(visibility=OfferVisibility.VISIBLE.value),
+        )
+    await service(
+        channel=_raw().source,
+        messages=[_candidate(51, body + " edited", "b" * 64)],
+        metadata=RunMetadata(parser_version="integration@1"),
+    )
+    async with database.session_factory() as session:
+        visibility = await session.scalar(text("SELECT visibility FROM offers LIMIT 1"))
+    assert visibility == OfferVisibility.VISIBLE.value
     await database.engine.dispose()
 
 
