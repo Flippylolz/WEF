@@ -16,8 +16,11 @@ This append-only log records blockers that could not be safely resolved autonomo
   message IDs `29415`–`29434` on 2026-08-31 with bounded temp downloads, restricted
   originals, and public derivatives for all 20 IDs. Credentials, authorized session,
   channel identity, transport, consumer, reconciliation, database, and redacted log
-  safety remain verified. No real passive new/edit/delete callback occurred during
-  either acceptance window. Exact redacted recovery evidence is in
+  safety remain verified. Passive edit/delete watch is active on the NUC (15-minute
+  cron via PR #250, log at `/home/nuc/wef/state/passive-event-check.log`). As of
+  `2026-08-31T18:17Z` release `ab4f17a` remains aligned at head `29434` with
+  `last_event_received_at` null. No real passive edit/delete callback has occurred yet.
+  Exact redacted recovery evidence is in
   [E15 production recovery evidence](../epics/E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
 - Needed from owner: no E15 action. Closing the residual blocker requires a safely
   observable real edit/delete sequence (organic or explicitly coordinated); do not
