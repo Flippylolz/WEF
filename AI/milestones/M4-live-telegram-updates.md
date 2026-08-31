@@ -27,15 +27,17 @@ The historical checkpoint is reconciled with Telegram, and one hardened worker p
   fail-fast critical-loop health. The incident range is reconciled, repeat replay is
   idempotent, and restart/health fire-clear evidence is recorded in
   [E15 production evidence](../epics/E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
-  No real passive new/edit/delete callback or live media acquisition occurred during
-  that window, so those E8 acceptance items remain open.
+  Live media acquisition for reconciled IDs `29415`–`29434` is recorded in
+  [E8 production evidence](../epics/E8-telegram-live-ingestion/PRODUCTION_EVIDENCE.md).
+  No real passive edit/delete callback occurred during either window, so that E8
+  acceptance item remains open.
 
 ## Included epic/task definitions
 
 ### [E8: Future Telegram live ingestion](../epics/E8-telegram-live-ingestion/README.md)
 
-- [E8-T1: Confirm channel identity and access](../epics/E8-telegram-live-ingestion/tasks/E8-T1-confirm-channel-identity-and-access.md) — `in_progress`
-- [E8-T2: Implement secure Telethon session and backfill](../epics/E8-telegram-live-ingestion/tasks/E8-T2-implement-secure-telethon-session-and-backfill.md) — `in_progress`
+- [E8-T1: Confirm channel identity and access](../epics/E8-telegram-live-ingestion/tasks/E8-T1-confirm-channel-identity-and-access.md) — `done`
+- [E8-T2: Implement secure Telethon session and backfill](../epics/E8-telegram-live-ingestion/tasks/E8-T2-implement-secure-telethon-session-and-backfill.md) — `done`
 - [E8-T3: Implement live new/edit/delete processing](../epics/E8-telegram-live-ingestion/tasks/E8-T3-implement-live-new-edit-delete-processing.md) — `in_progress`
 - [E8-T4: Revalidate geocoder for recurring ingestion](../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — `done`
 - [E8-T5: Production reconciliation and worker alerting](../epics/E8-telegram-live-ingestion/tasks/E8-T5-production-reconciliation-and-worker-alerting.md) — `in_progress`
@@ -52,6 +54,8 @@ Cancelled and deferred candidates remain linked for traceability but are not com
 
 - [x] Channel identity/access and recurring geocoder gates are resolved for current production conditions.
 - [x] Backfill from the historical checkpoint is restartable, idempotent, and reconciled.
+- [x] Live media from reconciled channel posts is downloaded and stored through the shared
+  ingestion media pipeline (E8 production evidence, IDs `29415`–`29434`).
 - [ ] New/edit/delete events preserve revisions and visibility semantics through the shared ingestion core.
 - [x] Passive event loss is recovered by bounded checkpoint-driven reconciliation at
   startup, reconnect, and steady state without full re-import or duplicate canonical data.

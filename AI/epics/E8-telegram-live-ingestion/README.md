@@ -20,11 +20,11 @@ new, edited, and deleted channel posts are processed safely without changing pub
 - Epic workspace status: `in_progress`.
 - [Spike](SPIKE.md): `approved`, revision 2 (AD-031).
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 5; authorizes E8-T1, E8-T4, E8-T2, E8-T3, and E8-T5.
-- [E8-T1](tasks/E8-T1-confirm-channel-identity-and-access.md): promoted, `in_progress` (production credentials/session and real entity resolution are verified; completion bookkeeping remains separate).
+- [E8-T1](tasks/E8-T1-confirm-channel-identity-and-access.md): promoted, `done`.
 - [E8-T4](tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md): promoted, `done`.
-- [E8-T2](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): promoted, `in_progress` (real authorized backfill and live media acquisition accepted through PR #243 deploy; production evidence in [PRODUCTION_EVIDENCE.md](PRODUCTION_EVIDENCE.md)).
-- [E8-T3](tasks/E8-T3-implement-live-new-edit-delete-processing.md): promoted, `in_progress` (real authorized subscription is running; no real passive new/edit/delete callback was observed).
-- [E8-T5](tasks/E8-T5-production-reconciliation-and-worker-alerting.md): promoted, `in_progress` (production gap and outage acceptance are satisfied by E15; real passive events/media remain open upstream).
+- [E8-T2](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): promoted, `done` (backfill, session, and live media acquisition; [PRODUCTION_EVIDENCE.md](PRODUCTION_EVIDENCE.md)).
+- [E8-T3](tasks/E8-T3-implement-live-new-edit-delete-processing.md): promoted, `in_progress` (real authorized subscription is running; no real passive edit/delete callback was observed).
+- [E8-T5](tasks/E8-T5-production-reconciliation-and-worker-alerting.md): promoted, `in_progress` (production gap and outage acceptance are satisfied by E15; passive edit/delete evidence remains open upstream).
 - On 2026-08-27 the connected production worker missed Telegram messages `29203`
   through at least `29257` while remaining Docker-healthy. Selected blocker-priority
   [E15](../E15-telegram-ingestion-reliability/README.md) owns the independently approved
@@ -60,9 +60,9 @@ new, edited, and deleted channel posts are processed safely without changing pub
 
 ## Tasks
 
-- [E8-T1: Confirm channel identity and access](tasks/E8-T1-confirm-channel-identity-and-access.md) — `in_progress`, P2/S, M4
+- [E8-T1: Confirm channel identity and access](tasks/E8-T1-confirm-channel-identity-and-access.md) — `done`, P2/S, M4
 - [E8-T4: Revalidate geocoder for recurring ingestion](tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md) — `done`, P2/M, M4
-- [E8-T2: Implement secure Telethon session and backfill](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md) — `in_progress`, P2/L, M4
+- [E8-T2: Implement secure Telethon session and backfill](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md) — `done`, P2/L, M4
 - [E8-T3: Implement live new/edit/delete processing](tasks/E8-T3-implement-live-new-edit-delete-processing.md) — `in_progress`, P2/L, M4
 - [E8-T5: Production reconciliation and worker alerting](tasks/E8-T5-production-reconciliation-and-worker-alerting.md) — `in_progress`, P2/L, M4
 

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E8-T2
 epic: E8
 title: "Implement secure Telethon session and backfill"
-status: in_progress
+status: done
 revision: 1
 priority: P2
 size: L
@@ -12,13 +12,20 @@ dependencies: [E8-T1, E3-T2, E8-T4]
 requirement_ids: [P-006, P-007]
 decision_ids: [ADR-005, ADR-006, ADR-007]
 deferred_decision_ids: []
-blocker_ids: [B-003]
+blocker_ids: []
 source: "legacy-roadmap:E8-T2"
 promotion:
   status: promoted
   target: tasks/E8-T2-implement-secure-telethon-session-and-backfill.md
   promoted_by: "Cursor Agent (autonomous epic mission under AD-009 continue)"
   promoted_at: "2026-08-21T07:46:50Z"
+completion:
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-31T17:50:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/243"
+  evidence:
+    - "Restartable/idempotent backfill through PR #167; E15 recovery through head 29335"
+    - "Live media download/storage through PR #243 deploy b71c99f; IDs 29415–29434 in PRODUCTION_EVIDENCE.md"
 ---
 
 # E8-T2: Implement secure Telethon session and backfill

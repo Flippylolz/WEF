@@ -37,7 +37,7 @@ and hide public offers, and worker disconnects never gate API readiness.
 - [x] Worker health is explicit and does not imply API unavailability.
 - [x] Live Telethon subscription against a real authorized session (transport connected,
   consumer running, reconciliation running, verified channel `2180077318`).
-- [ ] Production worker loop / Compose enablement remains E8-T5.
+- [ ] Production worker loop / Compose enablement (delivered under E8-T5; passive edit/delete evidence remains B-003).
 
 ## Scope delivered in revision 1
 

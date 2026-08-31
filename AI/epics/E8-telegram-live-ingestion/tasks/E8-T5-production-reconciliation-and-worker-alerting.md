@@ -39,7 +39,7 @@ still needs a phone/login (B-003).
 - [x] Session rotation rehearsal dry-run checklist.
 - [x] `wef-telegram-worker` runs the live listen loop after in-app session generation.
 - [x] First authorized production session is active through the deploy-managed secret path.
-- [ ] Real live new/edit/delete callback evidence.
+- [ ] Real passive edit/delete callback evidence (new-message completeness is covered by reconciliation; B-003).
 
 ## Acceptance
 
