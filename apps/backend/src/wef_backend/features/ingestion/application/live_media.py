@@ -14,7 +14,7 @@ from wef_backend.features.ingestion.application.media_grouping import (
 )
 from wef_backend.features.ingestion.application.media_storage import MediaWorkItem, ProcessMedia
 from wef_backend.features.ingestion.application.persistence import confidence_score
-from wef_backend.features.ingestion.domain import GroupingInput
+from wef_backend.features.ingestion.domain import GroupingInput, SourceAnchor
 from wef_backend.features.ingestion.domain.media_storage import descriptor_identity
 
 if TYPE_CHECKING:
@@ -23,19 +23,10 @@ if TYPE_CHECKING:
     from wef_backend.features.ingestion.domain import RawMessage, SourceIdentity
 
 
-@dataclass(frozen=True, slots=True)
-class LiveSourceAnchor:
-    """Current source/revision identity and optional canonical offer."""
-
-    source_message_id: UUID
-    revision_id: UUID
-    offer_id: UUID | None
-
-
 class LiveMediaAnchorPort(Protocol):
     """Resolve persisted source anchors and replay keys for live media."""
 
-    async def source_anchors(self, channel: SourceIdentity) -> Mapping[int, LiveSourceAnchor]:
+    async def source_anchors(self, channel: SourceIdentity) -> Mapping[int, SourceAnchor]:
         """Return current source/revision identities keyed by external message id."""
         ...
 

@@ -1,10 +1,10 @@
 """Source-specific ingestion adapter implementations."""
 
+from wef_backend.features.ingestion.domain import SourceAnchor
 from wef_backend.features.ingestion.infrastructure.complete_import_repository import (
     CompleteImportLeaseHeldError,
     ImportVerification,
     LocationWorkItem,
-    SourceAnchor,
     SQLAlchemyCompleteImportRepository,
     StaleCompleteImportLeaseError,
 )

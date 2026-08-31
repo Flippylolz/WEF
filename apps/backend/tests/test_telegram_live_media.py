@@ -11,16 +11,14 @@ from uuid import uuid4
 import pytest
 from telethon.tl.types import MessageMediaPhoto
 
-from wef_backend.features.ingestion.application.live_media import (
-    LiveMediaPipeline,
-    LiveSourceAnchor,
-)
+from wef_backend.features.ingestion.application.live_media import LiveMediaPipeline
 from wef_backend.features.ingestion.application.media_grouping import StatefulMediaGrouper
 from wef_backend.features.ingestion.application.telegram_live import (
     LiveTelegramMessage,
     live_message_to_raw,
     source_identity_from_channel,
 )
+from wef_backend.features.ingestion.domain import SourceAnchor
 from wef_backend.features.ingestion.domain.model import MediaDescriptor, MediaKind
 from wef_backend.features.ingestion.domain.telegram_channel import default_live_channel_identity
 from wef_backend.features.ingestion.infrastructure.telethon_live_media import (
@@ -163,7 +161,7 @@ async def test_live_media_pipeline_processes_associated_media() -> None:
     offer_id = uuid4()
     anchors = AsyncMock()
     anchors.source_anchors.return_value = {
-        9: LiveSourceAnchor(
+        9: SourceAnchor(
             source_message_id=anchor_id,
             revision_id=revision_id,
             offer_id=offer_id,
@@ -197,7 +195,7 @@ async def test_live_media_pipeline_processes_associated_media() -> None:
 
 def test_build_live_media_pipeline_creates_processor(tmp_path: Path) -> None:
     pipeline = build_live_media_pipeline(
-        session_factory=AsyncMock(),  # type: ignore[arg-type]
+        session_factory=AsyncMock(),
         source_root=tmp_path / "source",
         originals_root=tmp_path / "originals",
         derivatives_root=tmp_path / "public",
