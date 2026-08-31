@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E20
 title: "Admin console visual refresh"
-status: planning
+status: ready
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -77,10 +77,10 @@ framework or public-facing change is introduced.
 
 ## Approval state
 
-- Epic workspace status: `planning`.
+- Epic workspace status: `ready`.
 - `SPIKE.md` revision 1 was owner-approved on 2026-08-31 under AD-044
   (owner directive recorded in the [autonomous decision
   log](../../workflow/AUTONOMOUS_DECISIONS.md)).
-- [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) revision 1 awaits owner
-  approval; E20-T1/E20-T2 remain `draft` and non-actionable until that gate
-  clears.
+- [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) revision 1 was
+  owner-approved on 2026-08-31 under AD-045. E20-T1 is `ready`; E20-T2
+  remains `draft` until its E20-T1 dependency is done.

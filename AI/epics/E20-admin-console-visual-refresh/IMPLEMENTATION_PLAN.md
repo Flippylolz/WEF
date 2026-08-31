@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E20
 title: "Admin console visual refresh implementation plan"
-status: awaiting_approval
+status: approved
 revision: 1
 owner: owner
 spike_revision: 1
@@ -13,11 +13,11 @@ task_sequence:
     revision: 1
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Flippylolz"
+  decided_at: "2026-08-31T17:40:00Z"
+  approved_revision: 1
+  evidence: "AD-045; owner statement in ZCode session on 2026-08-31: 'I approve E20 implementation plan revision 1'."
 invalidation:
   invalidated_by: null
   invalidated_at: null
