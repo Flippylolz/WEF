@@ -18,8 +18,10 @@ from wef_backend.features.ingestion.application.complete_import import (
     RunLease,
 )
 from wef_backend.features.ingestion.application.persistence import normalized_location_key
+from wef_backend.features.ingestion.domain.geocoding import NORMALIZER_VERSION, SelectionReason
 from wef_backend.features.ingestion.infrastructure.models import (
     CompleteImportRunRow,
+    GeocodeResultRow,
     LocationGeocodeSelectionRow,
     MediaAssetRow,
     MediaDerivativeRow,
@@ -383,17 +385,46 @@ class SQLAlchemyCompleteImportRepository:
             return existing
 
     async def pending_locations(self) -> Sequence[LocationWorkItem]:
-        """Return address-bearing locations never processed by review policy."""
+        """Return ungeocoded address locations that still need provider resolution.
+
+        Includes never-selected rows and expired provider-error selections so a
+        normalizer/provider retry can run after the negative-cache window.
+        """
+        now = datetime.now(UTC)
         async with self._session_factory() as session:
             selected = select(LocationGeocodeSelectionRow.id).where(
                 LocationGeocodeSelectionRow.location_id == LocationRow.id,
             )
+            latest = (
+                select(
+                    LocationGeocodeSelectionRow.location_id.label("location_id"),
+                    LocationGeocodeSelectionRow.reason_code.label("reason_code"),
+                    LocationGeocodeSelectionRow.geocode_result_id.label("geocode_result_id"),
+                    func.row_number()
+                    .over(
+                        partition_by=LocationGeocodeSelectionRow.location_id,
+                        order_by=LocationGeocodeSelectionRow.selection_version.desc(),
+                    )
+                    .label("rn"),
+                )
+            ).subquery()
+            retryable = (
+                select(latest.c.location_id)
+                .outerjoin(GeocodeResultRow, GeocodeResultRow.id == latest.c.geocode_result_id)
+                .where(
+                    latest.c.rn == 1,
+                    latest.c.reason_code == SelectionReason.PROVIDER_ERROR.value,
+                    (GeocodeResultRow.expires_at.is_(None))
+                    | (GeocodeResultRow.expires_at <= now)
+                    | (GeocodeResultRow.normalizer_version != NORMALIZER_VERSION),
+                )
+            )
             rows = await session.execute(
                 select(LocationRow.id, LocationRow.display_address, LocationRow.district)
                 .where(
-                    ~selected.exists(),
                     LocationRow.review_status == "ungeocoded",
                     LocationRow.normalized_address_hash != normalized_location_key(None),
+                    (~selected.exists()) | LocationRow.id.in_(retryable),
                 )
                 .order_by(LocationRow.normalized_address_hash),
             )

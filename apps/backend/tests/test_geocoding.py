@@ -90,6 +90,19 @@ def test_normalization_is_versioned_deterministic_and_preserves_source() -> None
         normalize_geocode_query("  ")
 
 
+def test_normalization_cleans_pipes_cyrillic_street_and_area_words() -> None:
+    """Telegram-shaped address lines become Geoapify-friendly Polish queries."""
+    pipe = normalize_geocode_query("Warszawa, Praga-Południe (Grochów) | ул. Wiatraczna")
+    assert pipe.normalized == "warszawa, praga-południe, ul. wiatraczna, pl"
+    assert pipe.district == "Praga-Południe"
+    area = normalize_geocode_query("ul. Komputerowa 7A | район Mokotów")
+    assert area.normalized == "ul. komputerowa 7a, mokotów, warszawa, pl"
+    assert area.district == "Mokotów"
+    mixed = normalize_geocode_query("Bielany | Варшава | ул. Rudnickiego 4")
+    assert mixed.normalized == "bielany, warszawa, ul. rudnickiego 4, pl"
+    assert mixed.district == "Bielany"
+
+
 def test_template_address_screen_accepts_only_warsaw_evidence() -> None:
     """Pin-line screening accepts street/city/district lines and rejects prose."""
     assert looks_like_warsaw_address("Варшава, Wola, ul. Stańczyka")

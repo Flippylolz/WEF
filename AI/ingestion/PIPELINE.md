@@ -191,7 +191,7 @@ For the seed import, the public Nominatim instance may be used only as a small, 
 - No autocomplete, recurring batch, or repeated query.
 - Clear OpenStreetMap attribution and license compliance.
 
-The importer must be able to stop and resume without repeating cached requests. Recurring Telegram ingestion uses the [D-002 recurring Geoapify retention](../decisions/deferred/D-002-recurring-geocoding-provider.md) from [E8-T4](../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md). The live `telegram-worker` runs a supervised background loop that geocodes pending locations on the same schedule; operator `wef-import geocode` remains available for bulk catch-up.
+The importer must be able to stop and resume without repeating cached requests. Recurring Telegram ingestion uses the [D-002 recurring Geoapify retention](../decisions/deferred/D-002-recurring-geocoding-provider.md) from [E8-T4](../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md). The live `telegram-worker` runs a supervised background loop that geocodes pending locations on the same schedule; operator `wef-import geocode` remains available for bulk catch-up. Address normalization cleans Telegram-shaped pipes, Cyrillic street prefixes, and area words before the provider call. Locations left `ungeocoded` after a provider `no_result` are retried when the negative cache expires or the normalizer version advances.
 
 Sentinel policy: candidates whose address cannot be parsed share one durable `Unknown location`
 row (`normalized_location_key(None)`). That sentinel is an accounting placeholder, not an address:
