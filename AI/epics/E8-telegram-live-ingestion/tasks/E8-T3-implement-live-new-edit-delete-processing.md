@@ -50,7 +50,7 @@ and hide public offers, and worker disconnects never gate API readiness.
 No real passive edit/delete callback arrived during the E15 or E8 observation windows
 (`last_event_received_at` remained null). Real passive event semantics therefore remain
 an explicit E8/M4 acceptance item; see
-[B003 observation runbook](B003_OBSERVATION_RUNBOOK.md). E15 proves that a missed
+[B003 observation runbook](../B003_OBSERVATION_RUNBOOK.md). E15 proves that a missed
 passive suffix is recovered by bounded source polling and that a stalled
 consumer/reconciler cannot remain healthy while health evaluation is running.
 
