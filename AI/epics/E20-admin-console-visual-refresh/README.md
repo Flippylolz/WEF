@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E20
 title: "Admin console visual refresh"
-status: ready
+status: done
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -72,15 +72,19 @@ framework or public-facing change is introduced.
 
 ## Promoted tasks
 
-- [E20-T1: Align admin console theme with the public dark design](tasks/E20-T1-admin-dark-theme-alignment.md) — promoted/`draft`, P1/M, M5
-- [E20-T2: Fix admin filter and form layout defects](tasks/E20-T2-admin-filter-form-layout-fixes.md) — promoted/`draft`, P1/M, M5
+- [E20-T1: Align admin console theme with the public dark design](tasks/E20-T1-admin-dark-theme-alignment.md) — `done` through [PR #247](https://github.com/Flippylolz/WEF/pull/247), P1/M, M5
+- [E20-T2: Fix admin filter and form layout defects](tasks/E20-T2-admin-filter-form-layout-fixes.md) — `done` through [PR #254](https://github.com/Flippylolz/WEF/pull/254), P1/M, M5
 
 ## Approval state
 
-- Epic workspace status: `ready`.
-- `SPIKE.md` revision 1 was owner-approved on 2026-08-31 under AD-044
-  (owner directive recorded in the [autonomous decision
+- Epic workspace status: `done`.
+- `SPIKE.md` revision 1 was owner-approved on 2026-08-31 under AD-044 and
+  [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) revision 1 under AD-045
+  (both recorded in the [autonomous decision
   log](../../workflow/AUTONOMOUS_DECISIONS.md)).
-- [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) revision 1 was
-  owner-approved on 2026-08-31 under AD-045. E20-T1 is `ready`; E20-T2
-  remains `draft` until its E20-T1 dependency is done.
+- E20-T1 and E20-T2 are `done` through green-CI PRs #247/#254 (squashes
+  `1146d66`/`1dce2e9`), each merged only after all five required checks
+  passed and the owner directed the merge sequence under AD-046.
+- Production deploy run 33429448184 shipped both tasks; `/admin` serves the
+  dark Primer-aligned console with the shared stylesheet, and health
+  live/ready return 200 (verified 2026-08-31).

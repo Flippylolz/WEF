@@ -387,3 +387,13 @@ This append-only log records choices made while the owner delegated overnight MV
 - Scope boundary: this approval authorizes the recorded plan revision's scope only (admin interface presentation, shared stylesheet, tests, screenshot evidence). It does not authorize merging without the repository's review/CI gates being green, admin behavior/permission changes, new dependencies, public-site changes, or production mutation.
 - Rationale: the owner supplied the exact revision-specific approval required by the workflow after reviewing the awaiting-approval plan in PR #244, matching the AD-039/AD-041/AD-042 approval pattern.
 - Reversal: invalidate the affected plan/task gates and close unmerged task PRs if the owner withdraws approval or material evidence crosses a plan/spike invalidation trigger.
+
+## AD-046: Approve the E20 merge sequence and epic closeout
+
+- Time: 2026-08-31.
+- Owner decision: `continue`, given in the ZCode session in direct response to the completed E20-T2 delivery report whose stated next step was the owner-directed merge sequence ("Say 'merge' … and I'll handle the retargets to `main` in order, record task completions, and close out the epic registry").
+- Selected approach: record the owner directive as merge authorization for the stacked E20 pull requests, executed base-first with required checks green before each merge — #244 (docs, squash 3f324d7), #247 (E20-T1, squash 1146d66), #254 (E20-T2, squash 1dce2e9) — then verify the automatic production deploy and record task/epic completion in a follow-up documentation PR.
+- Scope boundary: merge authorization covers only the three reviewed E20 pull requests and the completion-record documentation PR. It does not authorize new implementation, configuration, or production mutation beyond the standard deploy workflow's own release.
+- Execution notes: another agent's E8 commits landed on `main` during review, so #244/#247/#254 were refreshed onto the new `main` (conflicting registry paragraphs reconciled to keep both the E8 watch-state updates and the E20 entries) before their final green-CI merges. Production verification after deploy run 33429448184: `/api/v1/health/live` and `/api/v1/health/ready` return 200 and `/admin/login` serves `data-bs-theme="dark"` with the shared stylesheet.
+- Rationale: the owner supplied the merge direction after reviewing each PR's green required checks, matching the AD-040/AD-043 pattern of session directives authorizing green-CI merge sequences.
+- Reversal: revert the squash commits on `main` and redeploy the prior release if the owner withdraws the decision or production evidence shows a regression.

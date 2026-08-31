@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E20-T2
 epic: E20
 title: "Fix admin filter and form layout defects"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -33,11 +33,11 @@ implementation_gate:
   verified_by: "ZCode agent (AD-045)"
   verified_at: "2026-08-31T17:40:00Z"
 dependency_gate:
-  status: stacked
-  verified_by: "ZCode agent (AD-045)"
-  verified_at: "2026-08-31T18:00:00Z"
+  status: satisfied
+  verified_by: "ZCode agent (AD-046)"
+  verified_at: "2026-08-31T19:35:00Z"
   evidence:
-    - "E20-T1: branch feat/E20-T1-admin-dark-theme-alignment, pull request https://github.com/Flippylolz/WEF/pull/247, head d5127ca — direct stack ancestor of this task branch."
+    - "E20-T1: done through pull request https://github.com/Flippylolz/WEF/pull/247 (squash 1146d66 on `main`)."
 branch:
   required: true
   name: feat/E20-T2-admin-filter-form-layout-fixes
@@ -46,10 +46,13 @@ branch:
   created_at: "2026-08-31T18:00:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/254"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode agent (owner-directed merge/closeout under AD-046)"
+  completed_at: "2026-08-31T19:35:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/254"
+  evidence:
+    - "Squash-merged to `main` as 1dce2e9 after all five required PR checks passed (CI run 33429125439)."
+    - "Before/after screenshot catalogue (login, Users, Locations, Offer enrichment, Set-point at 1280px/420px) recorded in PR #254 against a seeded local stack; images kept out of Git per repository artifact rules."
+    - "Shipped to production through deploy run 33429448184; production /admin/login verified serving `data-bs-theme=\"dark\"` and the shared stylesheet (health live/ready 200) on 2026-08-31."
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -147,6 +150,6 @@ narrow widths, with recorded before/after screenshots for each corrected page.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
