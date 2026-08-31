@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E8-T1
 epic: E8
 title: "Confirm channel identity and access"
-status: in_progress
+status: done
 revision: 1
 priority: P2
 size: S
@@ -42,10 +42,12 @@ branch:
   created_at: "2026-08-20T19:44:19Z"
   pull_request: null
 completion:
-  completed_by: null
-  completed_at: null
+  completed_by: "Cursor Agent (autonomous epic mission)"
+  completed_at: "2026-08-31T17:50:00Z"
   pull_request: null
-  evidence: []
+  evidence:
+    - "Non-secret channel identity contract and wef-verify-telegram-channel shipped in revision 1"
+    - "Authorized session, entity resolve, and deploy-managed secret path verified in E15/E8 production evidence"
 invalidation:
   invalidated_by: null
   invalidated_at: null
