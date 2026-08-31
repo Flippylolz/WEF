@@ -12,6 +12,12 @@ from typing import TYPE_CHECKING
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker  # noqa: TC002
 
+from wef_backend.features.catalog.infrastructure.promote_public_catalog_adapter import (
+    SQLAlchemyPromotePublicCatalogAdapter,
+)
+from wef_backend.features.ingestion.application.accept_pending_geocode_pins import (
+    AcceptPendingGeocodePins,
+)
 from wef_backend.features.ingestion.application.complete_import import (
     PIPELINE_VERSION,
     DurableBudgetedGeocoder,
@@ -29,6 +35,9 @@ from wef_backend.features.ingestion.application.telegram_live import source_iden
 from wef_backend.features.ingestion.domain.geocoding import GeocodeProvider
 from wef_backend.features.ingestion.domain.telegram_worker_ops import safe_error_category
 from wef_backend.features.ingestion.infrastructure import HostedGeocoder, HTTPXJSONTransport
+from wef_backend.features.ingestion.infrastructure.accept_pending_geocode_pins_adapter import (
+    SQLAlchemyAcceptPendingGeocodePinsAdapter,
+)
 from wef_backend.features.ingestion.infrastructure.complete_import_repository import (
     SQLAlchemyCompleteImportRepository,
 )
@@ -52,6 +61,8 @@ class RecurringGeocodeCycleResult:
     pending: int
     skipped: bool
     defer_action: RecurringDeferAction | None
+    locations_accepted: int = 0
+    offers_promoted: int = 0
 
 
 @dataclass(slots=True)
@@ -167,13 +178,35 @@ class RecurringGeocodeWorker:
                 processed=processed,
                 pending=max(len(pending) - processed, 0),
             )
+            locations_accepted, offers_promoted = await self._refresh_live_catalog()
+        else:
+            locations_accepted = 0
+            offers_promoted = 0
 
         return RecurringGeocodeCycleResult(
             processed=processed,
             pending=len(pending) - processed,
             skipped=False,
             defer_action=defer_action,
+            locations_accepted=locations_accepted,
+            offers_promoted=offers_promoted,
         )
+
+    async def _refresh_live_catalog(self) -> tuple[int, int]:
+        """Accept in-scope pending pins and publish offers tied to map-ready locations."""
+        pins = await AcceptPendingGeocodePins(
+            SQLAlchemyAcceptPendingGeocodePinsAdapter(self.session_factory),
+        )()
+        promoted = await SQLAlchemyPromotePublicCatalogAdapter(
+            self.session_factory,
+        ).promote_map_ready_offers()
+        if pins.locations_accepted or promoted:
+            logger.info(
+                "recurring_catalog_refresh",
+                locations_accepted=pins.locations_accepted,
+                offers_promoted=promoted,
+            )
+        return pins.locations_accepted, promoted
 
     def _apply_defer(self, action: RecurringDeferAction, *, now: datetime) -> None:
         if action is RecurringDeferAction.DEFER_UNTIL_NEXT_UTC_DAY:

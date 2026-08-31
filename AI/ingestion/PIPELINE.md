@@ -380,7 +380,10 @@ evidence remain under E15-T3 and M4/B-003.
    60 seconds (configurable), up to 10 per cycle, through the same Geoapify cache and
    durable budget machinery as historical import. Quota, rate, and transient provider
    errors defer to the next UTC day or 15 minutes without stopping ingestion; failed
-   locations remain queued for the next cycle.
+   locations remain queued for the next cycle. After each non-empty cycle the worker
+   also accepts in-scope pending geocode pins and promotes only offers whose locations
+   are already accepted with coordinates (map-ready), leaving ungeocoded listings off
+   the public catalog.
 
 Delivery is at least once. Idempotent source keys make replay safe.
 
