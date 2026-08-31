@@ -76,7 +76,8 @@ parser-gap provenance, and offers with active AI-filled data show an
 - [E19-T2](tasks/E19-T2-ai-place-review-console.md): merged through
   https://github.com/Flippylolz/WEF/pull/227.
 - [E19-T3](tasks/E19-T3-batch-offer-enrichment-provenance.md): promoted/`in_progress`;
-  depends on merged E19-T1; stacked on main after T2.
+  implementation PR https://github.com/Flippylolz/WEF/pull/228; depends on merged
+  E19-T1; stacked on main after T2.
 - [E19-T4](tasks/E19-T4-ai-enrichment-controls-and-reporting.md): promoted/`draft`;
   depends on E19-T2 and E19-T3.
 
