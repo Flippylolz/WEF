@@ -304,7 +304,10 @@ GitHub Actions variables/secrets transferred on every deployment:
 Optional Groq catalog-curation settings (`WEF_AI_CURATION_ENABLED`, `WEF_GROQ_API_KEY`,
 `WEF_GROQ_MODEL`, `WEF_GROQ_ZDR_VERIFIED`, `WEF_GROQ_TIMEOUT_SECONDS`) must **not** be
 added to `validate_release` `REQUIRED_KEYS`. Missing values keep AI review absent
-and must not fail deploy or `/api/v1/health/ready`.
+and must not fail deploy or `/api/v1/health/ready`. When `WEF_GROQ_API_KEY` is present
+in GitHub Actions secrets, `build_release_config` includes those optional keys in the
+transferred `production.env`; enablement flags come from Actions variables and stay
+`false` until the owner completes ZDR proof.
 
 ## Groq AI curation operations
 
