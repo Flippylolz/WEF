@@ -369,3 +369,21 @@ This append-only log records choices made while the owner delegated overnight MV
 - Selected approach: approve E19 implementation plan revision 1 under AD-009 continue authority, then execute documentation PR → E19-T1 → parallel E19-T2/E19-T3 → E19-T4. Each change uses its own branch and pull request. Merge dependency-first only after required CI is complete and green. Provider transport uses existing `httpx`; no Groq or OpenAI SDK is added. Automated tests use a fake provider. Production AI remains disabled unless a Groq secret exists and Zero Data Retention has been verified.
 - Safety limit: stop before implementation if a material deviation, new architecture, paid service, weaker privacy control, or broader data mutation is required. Do not recover or use the previously removed OpenAI key. Do not make paid provider calls, create external accounts, enable production AI processing, or mutate real offers merely to demonstrate the feature. Missing Groq credentials remain a documented activation requirement and must not block deploying the disabled-by-default implementation.
 - Reversal: close unmerged PRs and invalidate the affected plan/task gate if material implementation evidence crosses a plan/spike trigger; after deployment, disable the feature flag and use the prior immutable release.
+
+## AD-044: Approve E20 spike revision 1 and prepare the implementation plan
+
+- Time: 2026-08-31.
+- Owner decision: `continue`, given in the ZCode session immediately after the awaiting-approval E20 spike, its proposed tasks, and [PR #244](https://github.com/Flippylolz/WEF/pull/244) were presented with the note that the next gate was explicit owner spike approval.
+- Selected approach: record the owner directive as approval of E20 `SPIKE.md` revision 1, promote E20-T1 and E20-T2 into `tasks/`, and prepare implementation plan revision 1 for separate owner review. Because PR #244 had not merged, the approval, promotion, and plan land as a follow-up commit on the same documentation branch rather than a stacked documentation PR.
+- Scope boundary: this decision authorizes task promotion and implementation planning only. It does not authorize application code, stylesheets, templates, tests, dependencies, configuration, or deployment; implementation-plan approval remains a separate owner gate before any code.
+- Rationale: E20 is the owner-selected epic for aligning the owner `/admin` console with the public dark design and repairing overlapping filters and forms; its research-only spike is complete, and the owner directed continuation through the stated approval gate, consistent with the AD-039/AD-041/AD-042 pattern of recording session directives as owner decisions.
+- Reversal: invalidate the spike and downstream planning artifacts if the owner withdraws approval or new evidence crosses a spike invalidation trigger.
+
+## AD-045: Approve E20 implementation plan revision 1 and begin task implementation
+
+- Time: 2026-08-31.
+- Owner decision: `I approve E20 implementation plan revision 1`.
+- Selected approach: record exact owner approval of E20 `IMPLEMENTATION_PLAN.md` revision 1, set E20-T1 to `ready` on its dedicated branch, and implement the tasks in plan order — E20-T1 (dark theme alignment) then E20-T2 (filter/form layout fixes) — one dedicated branch and pull request per task, stacked on the unmerged epic documentation PR #244 and retargeted to `main` after it merges.
+- Scope boundary: this approval authorizes the recorded plan revision's scope only (admin interface presentation, shared stylesheet, tests, screenshot evidence). It does not authorize merging without the repository's review/CI gates being green, admin behavior/permission changes, new dependencies, public-site changes, or production mutation.
+- Rationale: the owner supplied the exact revision-specific approval required by the workflow after reviewing the awaiting-approval plan in PR #244, matching the AD-039/AD-041/AD-042 approval pattern.
+- Reversal: invalidate the affected plan/task gates and close unmerged task PRs if the owner withdraws approval or material evidence crosses a plan/spike invalidation trigger.
