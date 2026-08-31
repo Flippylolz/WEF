@@ -34,6 +34,10 @@ new, edited, and deleted channel posts are processed safely without changing pub
   public readiness stayed available. See the redacted
   [E15 production evidence](../E15-telegram-ingestion-reliability/PRODUCTION_EVIDENCE.md).
 
+- On 2026-08-31 release `b71c99f` verified live media acquisition for reconciled ids
+  `29415`–`29434`; release `ab4f17a` added passive-event monitoring with NUC cron watch.
+  See [PRODUCTION_EVIDENCE.md](PRODUCTION_EVIDENCE.md) and [B003 observation runbook](B003_OBSERVATION_RUNBOOK.md).
+
 ## Milestones
 
 [M4](../../milestones/M4-live-telegram-updates.md)

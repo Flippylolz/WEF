@@ -92,11 +92,11 @@ Task completion metadata remains separate from E15-T3.
 ## Dependencies and gates
 
 - Dependencies: none (M3 prerequisite satisfied).
-- Deferred decision: [D-003](../../../decisions/deferred/D-003-telegram-channel-access.md) partially resolved for public identity; live access remains open.
+- Deferred decision: [D-003](../../../decisions/deferred/D-003-telegram-channel-access.md) partially resolved for public identity; deploy credentials/session and entity resolve are verified; passive edit/delete acceptance remains B-003.
 - Spike revision 2 and implementation plan revision 1 authorize this task.
 - Milestone: [M4](../../../milestones/M4-live-telegram-updates.md).
 
 ## Risks and notes
 
-- Missing GitHub/NUC Telegram secrets keep live acceptance open (B-003).
+- Residual B-003 acceptance is limited to passive edit/delete callbacks; credentials and session readiness are verified.
 - Public `t.me` reachability is necessary but not sufficient proof of API edit/delete delivery.

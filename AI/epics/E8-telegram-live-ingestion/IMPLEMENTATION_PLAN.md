@@ -79,3 +79,12 @@ owner activation exist.
 - [x] Sequence contains only promoted E8 tasks through E8-T5.
 - [x] No proposed task appears as executable work.
 - [x] Safety limit: worker Compose profile disabled by default; secrets remain owner-supplied.
+
+## Operational status (2026-08-31)
+
+This appendix records post-approval production state; it does not change approved revision 5.
+
+- E8-T1, E8-T2, and E8-T4 are `done`.
+- Production worker starts with the application; authorized session and live media acquisition are verified.
+- B-003 is narrowed to passive edit/delete callback evidence; monitor/cron watch is active on the NUC.
+- E8-T3 and E8-T5 remain `in_progress` until that evidence is captured.
