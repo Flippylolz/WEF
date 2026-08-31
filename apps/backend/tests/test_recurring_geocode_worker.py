@@ -101,7 +101,7 @@ async def test_process_once_refreshes_catalog_after_geocoding(
 
     refresh_calls: list[int] = []
 
-    async def _refresh(self: RecurringGeocodeWorker) -> tuple[int, int]:
+    async def _refresh(_self: RecurringGeocodeWorker) -> tuple[int, int]:
         refresh_calls.append(1)
         return 2, 3
 
