@@ -76,6 +76,8 @@ class Settings(BaseSettings):
     telegram_reconciliation_batch_size: int = Field(default=100, ge=1, le=100)
     telegram_reconciliation_max_messages: int = Field(default=500, ge=1, le=500)
     telegram_reconciliation_overlap: int = Field(default=20, ge=0, le=100)
+    telegram_recurring_geocode_interval_seconds: float = Field(default=60.0, ge=10, le=3600)
+    telegram_recurring_geocode_batch_size: int = Field(default=10, ge=1, le=100)
     ingestion_report_path: Path = Path("/app/media/reports/e2-dry-run")
     geoapify_api_key: SecretStr | None = None
     geoapify_requests_per_second: Decimal = Field(default=Decimal(4), gt=0, le=5)
