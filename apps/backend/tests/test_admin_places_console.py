@@ -139,6 +139,11 @@ async def test_set_point_page_renders_offer_evidence_and_form() -> None:
         assert "place_picker.js" in body
         assert 'name="csrftoken"' in body or "csrftoken" in body
         assert f'value="{summary.id}"' in body or f"value='{summary.id}'" in body
+        assert "color-scheme:dark" in body
+        assert "css/admin.css" in body
+        assert "background:var(--wef-canvas)" in body
+        assert "#ffffff" not in body
+        assert "color-scheme:light" not in body
 
 
 async def test_set_point_page_redirects_unknown_location() -> None:

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
-from starlette_admin import BaseAdmin
+from starlette_admin import BaseAdmin, DefaultTheme, TablerSettings
 
 from wef_backend.features.admin.interface.auth import OwnerAuthProvider
 from wef_backend.features.admin.interface.enrichment_views import OfferEnrichmentAdminView
@@ -24,6 +24,17 @@ if TYPE_CHECKING:
     from wef_backend.features.identity.application.identity import IdentityService
 
 _STATIC_DIR = Path(__file__).parent / "statics"
+_TEMPLATES_DIR = Path(__file__).parent / "templates"
+
+# E20-T1: render the console in the public site's dark color scheme; the exact
+# GitHub Dark (Primer) values are mapped onto Tabler in statics/css/admin.css.
+_THEME = DefaultTheme(
+    TablerSettings(
+        base="zinc",
+        primary="green",
+        mode="dark",
+    ),
+)
 
 
 def build_admin(
@@ -45,6 +56,8 @@ def build_admin(
         ),
         secret_key=secret_key,
         static_dir=str(_STATIC_DIR),
+        templates_dir=str(_TEMPLATES_DIR),
+        theme=_THEME,
         middlewares=[
             Middleware(AdminMutationGuardMiddleware, identity=identity),
             Middleware(

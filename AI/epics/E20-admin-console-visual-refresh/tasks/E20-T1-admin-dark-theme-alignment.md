@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E20-T1
 epic: E20
 title: "Align admin console theme with the public dark design"
-status: ready
+status: in_progress
 revision: 1
 priority: P1
 size: M
@@ -38,11 +38,11 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: feat/E20-T1-admin-dark-theme-alignment
   task_id: E20-T1
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-31T17:45:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/247"
 completion:
   completed_by: null
   completed_at: null
