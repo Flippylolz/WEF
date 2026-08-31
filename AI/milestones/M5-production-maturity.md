@@ -35,6 +35,12 @@ from loss of the production host.
 
 - E19-T1 through E19-T4 — `done` through PRs #226–#230.
 
+### [E20: Admin console visual refresh](../epics/E20-admin-console-visual-refresh/README.md)
+
+- E20-T1 and E20-T2 — `done` through green-CI PRs #247/#254 with a verified
+  production deploy on 2026-08-31 (deploy run 33429448184; `/admin` serving
+  the dark Primer-aligned console, health live/ready 200).
+
 ## Exit evidence
 
 - [ ] Quality, contract, architecture, and governance checks are truthful and fail closed.

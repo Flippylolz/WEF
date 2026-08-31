@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E20-T1
 epic: E20
 title: "Align admin console theme with the public dark design"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -44,10 +44,12 @@ branch:
   created_at: "2026-08-31T17:45:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/247"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "ZCode agent (owner-directed merge/closeout under AD-046)"
+  completed_at: "2026-08-31T19:35:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/247"
+  evidence:
+    - "Squash-merged to `main` as 1146d66 after all five required PR checks passed (CI run 33428730223)."
+    - "Shipped to production through deploy run 33429448184; production /admin/login verified serving `data-bs-theme=\"dark\"` and the shared stylesheet (health live/ready 200) on 2026-08-31."
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -151,6 +153,6 @@ shared admin stylesheet, and the hardcoded per-page light styles are removed.
 
 ## Done checklist
 
-- [ ] Acceptance criteria pass.
-- [ ] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
-- [ ] Completion actor, time, pull request, and evidence are recorded.
+- [x] Acceptance criteria pass.
+- [x] The global [definition of done](../../../workflow/DEFINITION_OF_DONE.md) passes.
+- [x] Completion actor, time, pull request, and evidence are recorded.
