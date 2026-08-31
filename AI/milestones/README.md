@@ -8,7 +8,7 @@ Milestones are verified outcome checkpoints, not dates, schedules, or permission
 2. [M2 — Historical dataset ready](M2-historical-dataset-ready.md) — `done`; complete-export reconciliation, geocoding/review, media, and API correctness/performance evidence are complete.
 3. [M3 — Public Dockerized MVP](M3-public-dockerized-mvp.md) — `done`; required E5/E6/E7 launch tasks and live HTTPS evidence were recorded 2026-08-20. E7-T5 backups remain deferred under ADR-015.
 4. [M4 — Live Telegram updates](M4-live-telegram-updates.md) — `planned`; code and the production service are delivered, but the 2026-08-27 missed-message incident makes E15's blocker-priority reconciliation/health/recovery evidence mandatory.
-5. [M5 — Production maturity](M5-production-maturity.md) — `planned`; E14-T1–T9 plus existing E7-T5 as a recovery prerequisite. The live service is maintainable, measurably reliable, observable, release-hardened, and restored from off-host backup in rehearsal.
+5. [M5 — Production maturity](M5-production-maturity.md) — `planned`; E17, E18, and E19 are `done`; E14-T1–T9 plus existing E7-T5 as a recovery prerequisite remain. The live service is maintainable, measurably reliable, observable, release-hardened, and restored from off-host backup in rehearsal.
 
 ## Current delivery constraints
 

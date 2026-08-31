@@ -21,8 +21,8 @@ not by speculative infrastructure or framework rewrites.
 ## Why this is E14
 
 E11 is already the completed **Scalable quick filters** epic, E12 is the completed
-**Database index audit** epic, and E13 is the in-progress **Dark map-first explorer**
-established in PR #174. This post-launch initiative therefore uses E14 so the two
+**Database index audit** epic, and E13 is the completed **Dark map-first explorer**
+established in PR #174. This post-launch initiative therefore uses E14 so the
 independently reviewable workstreams retain distinct identifiers.
 
 ## Approval state

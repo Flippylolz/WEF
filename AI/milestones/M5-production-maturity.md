@@ -22,9 +22,18 @@ from loss of the production host.
 
 ### [E17: Raw archive replay and filter integrity](../epics/E17-raw-archive-replay-and-filter-integrity/README.md)
 
-- E17-T1 through E17-T6, all currently non-actionable proposed tasks.
-- Completion is owner-gated: E17 is `done` only after the owner supplies a new data
-  backup that is replayed and promoted to production (E17-T6).
+- E17-T1 through E17-T6 — `done` through green-CI PRs #203/#208/#200/#201/#209/#211.
+- Owner backup replay and production promotion completed 2026-08-30 (release
+  `7a3e927`, deploy run 33280067325).
+
+### [E18: Owner location management and verification](../epics/E18-owner-location-verification/README.md)
+
+- E18-T1 and E18-T2 — `done` through green-CI PRs #217/#218 with verified deploys
+  on 2026-08-30.
+
+### [E19: AI-assisted owner catalog curation](../epics/E19-ai-assisted-place-curation/README.md)
+
+- E19-T1 through E19-T4 — `done` through PRs #226–#230.
 
 ## Exit evidence
 

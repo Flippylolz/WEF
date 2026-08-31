@@ -67,8 +67,8 @@ invalidation:
 
 The owner supplies a fresh Telegram data backup; that backup is replayed through the
 completed E17 pipeline into a production candidate, quality is verified against the
-epic's acceptance metrics, and the release is promoted to production. This task is
-the epic's completion gate: **E17 is not `done` until this promotion is recorded.**
+epic's acceptance metrics, and the release is promoted to production. This task was
+the epic's completion gate and is now recorded as `done`.
 
 ## Scope
 
@@ -101,13 +101,13 @@ the epic's completion gate: **E17 is not `done` until this promotion is recorded
 
 ## Acceptance criteria
 
-- [ ] The owner's new backup is imported and replayed to convergence with zero
+- [x] The owner's new backup is imported and replayed to convergence with zero
       unprocessed raw events remaining.
-- [ ] All quality metrics above are evidenced in a redacted report linked from the
+- [x] All quality metrics above are evidenced in a redacted report linked from the
       epic README.
-- [ ] Production promotion completes with the standard health/verification workflow,
+- [x] Production promotion completes with the standard health/verification workflow,
       and the epic README records `done` with promotion evidence.
-- [ ] Rollback/recovery instructions for the promotion exist and were rehearsed per
+- [x] Rollback/recovery instructions for the promotion exist and were rehearsed per
       deployment governance.
 
 ## Dependencies and gates

@@ -110,5 +110,6 @@ order is preserved.
 
 ## Completion
 
-- E17 is not `done` until E17-T6 records the owner-supplied backup replay and
-  production promotion evidence in the epic README.
+- E17 is `done`. E17-T6 recorded the owner-supplied backup replay and production
+  promotion evidence in the epic README on 2026-08-30 (release `7a3e927`, deploy
+  run 33280067325).
