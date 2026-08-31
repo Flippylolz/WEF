@@ -156,6 +156,7 @@ services:
       - "8000"
     networks:
       - application
+      - provider-egress
 
   web:
     image: ${WEF_WEB_IMAGE:?WEF_WEB_IMAGE digest is required}
