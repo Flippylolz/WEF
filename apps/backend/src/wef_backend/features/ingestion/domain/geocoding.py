@@ -12,7 +12,7 @@ from enum import StrEnum
 
 NORMALIZER_VERSION = "warsaw-address-v2"
 SCOPE_VERSION = "warsaw-scope-v1"
-REQUEST_VERSION = "forward-geocode-v1"
+REQUEST_VERSION = "forward-geocode-v2"
 REVIEW_POLICY_VERSION = "warsaw-review-v1"
 
 _WHITESPACE = re.compile(r"\s+")
@@ -36,7 +36,11 @@ _INLINE_PARENTHETICAL = re.compile(r"\s*\([^()]*\)")
 _LEADING_DECORATION = re.compile(r"^[\s•·\-\u2013—*]+")
 _ADDRESS_SEGMENT_SPLIT = re.compile(r"[,|]")
 _CITY_NAMES = re.compile(r"\b(?:warszawa|варшава|варшаві|warsaw)\b", re.IGNORECASE)
-_WARSAW_BOUNDS = (20.28, 51.94, 21.37, 52.37)
+# lon/lat order: west, south, east, north — shared with provider request filters.
+WARSAW_BOUNDS = (20.28, 51.94, 21.37, 52.37)
+_WARSAW_BOUNDS = WARSAW_BOUNDS
+WARSAW_BIAS_LON = Decimal("21.0122")
+WARSAW_BIAS_LAT = Decimal("52.2297")
 _DISTRICTS = {
     "bemowo": "Bemowo",
     "bialoleka": "Białołęka",

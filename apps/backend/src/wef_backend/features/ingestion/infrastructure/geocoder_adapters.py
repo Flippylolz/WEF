@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING, Protocol
 import httpx
 
 from wef_backend.features.ingestion.domain.geocoding import (
+    WARSAW_BIAS_LAT,
+    WARSAW_BIAS_LON,
+    WARSAW_BOUNDS,
     GeocodeErrorCode,
     GeocodePrecision,
     GeocodeProvider,
@@ -215,7 +218,13 @@ def _params(
 ) -> dict[str, str]:
     common = {"format": "json", "limit": "1"}
     if provider is GeocodeProvider.GEOAPIFY:
-        return {"text": query.normalized, "filter": "countrycode:pl", "apiKey": api_key or ""}
+        west, south, east, north = WARSAW_BOUNDS
+        return {
+            "text": query.normalized,
+            "filter": f"rect:{west},{south},{east},{north}|countrycode:pl",
+            "bias": f"proximity:{WARSAW_BIAS_LON},{WARSAW_BIAS_LAT}",
+            "apiKey": api_key or "",
+        }
     result = {**common, "q": query.normalized, "countrycodes": "pl"}
     if provider is GeocodeProvider.LOCATIONIQ:
         result["key"] = api_key or ""

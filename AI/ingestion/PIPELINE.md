@@ -191,7 +191,7 @@ For the seed import, the public Nominatim instance may be used only as a small, 
 - No autocomplete, recurring batch, or repeated query.
 - Clear OpenStreetMap attribution and license compliance.
 
-The importer must be able to stop and resume without repeating cached requests. Recurring Telegram ingestion uses the [D-002 recurring Geoapify retention](../decisions/deferred/D-002-recurring-geocoding-provider.md) from [E8-T4](../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md). The live `telegram-worker` runs a supervised background loop that geocodes pending locations on the same schedule; operator `wef-import geocode` remains available for bulk catch-up. Address normalization cleans Telegram-shaped pipes, Cyrillic street prefixes, and area words before the provider call. Locations left `ungeocoded` after a provider `no_result` are retried when the negative cache expires or the normalizer version advances.
+The importer must be able to stop and resume without repeating cached requests. Recurring Telegram ingestion uses the [D-002 recurring Geoapify retention](../decisions/deferred/D-002-recurring-geocoding-provider.md) from [E8-T4](../epics/E8-telegram-live-ingestion/tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md). The live `telegram-worker` runs a supervised background loop that geocodes pending locations on the same schedule; operator `wef-import geocode` remains available for bulk catch-up. Address normalization cleans Telegram-shaped pipes, Cyrillic street prefixes, and area words before the provider call. Geoapify forward requests use a Warsaw rectangle filter plus proximity bias (`forward-geocode-v2`) so ambiguous Polish street names do not resolve to other cities. Locations left `ungeocoded` after a provider `no_result`, or `needs_review` after an `out_of_scope` selection, are retried when the negative cache expires or the normalizer/request version advances.
 
 Sentinel policy: candidates whose address cannot be parsed share one durable `Unknown location`
 row (`normalized_location_key(None)`). That sentinel is an accounting placeholder, not an address:
@@ -376,14 +376,15 @@ evidence remain under E15-T3 and M4/B-003.
 7. Reconcile immediately and every 60 seconds: replay 20 recent message IDs, process
    ordered batches of at most 100, and cap each cycle at 500 messages. A process restart
    after disconnect performs the startup cycle again.
-8. A supervised `recurring_geocode` loop resolves pending `ungeocoded` locations every
-   60 seconds (configurable), up to 10 per cycle, through the same Geoapify cache and
-   durable budget machinery as historical import. Quota, rate, and transient provider
-   errors defer to the next UTC day or 15 minutes without stopping ingestion; failed
-   locations remain queued for the next cycle. After each non-empty cycle the worker
-   also accepts in-scope pending geocode pins and promotes only offers whose locations
-   are already accepted with coordinates (map-ready), leaving ungeocoded listings off
-   the public catalog.
+8. A supervised `recurring_geocode` loop resolves pending `ungeocoded` and retryable
+   `needs_review`/`out_of_scope` locations every 60 seconds (configurable), up to 10
+   per cycle, through the same Geoapify cache and durable budget machinery as
+   historical import. Quota, rate, and transient provider errors defer to the next
+   UTC day or 15 minutes without stopping ingestion; failed locations remain queued
+   for the next cycle. After each non-empty cycle the worker also accepts in-scope
+   pending geocode pins and promotes only offers whose locations are already
+   accepted with coordinates (map-ready), leaving ungeocoded listings off the
+   public catalog.
 
 Delivery is at least once. Idempotent source keys make replay safe.
 

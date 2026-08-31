@@ -20,7 +20,11 @@ from wef_backend.features.ingestion.application.complete_import import (
 )
 from wef_backend.features.ingestion.application.persistence import normalized_location_key
 from wef_backend.features.ingestion.domain import SourceIdentity, SourcePlatform
-from wef_backend.features.ingestion.domain.geocoding import GeocodeProvider
+from wef_backend.features.ingestion.domain.geocoding import (
+    NORMALIZER_VERSION,
+    REQUEST_VERSION,
+    GeocodeProvider,
+)
 from wef_backend.features.ingestion.infrastructure.complete_import_repository import (
     CompleteImportLeaseHeldError,
     SQLAlchemyCompleteImportRepository,
@@ -101,6 +105,132 @@ async def test_pending_locations_exclude_unknown_location_sentinel() -> None:
             await session.execute(
                 text("DELETE FROM locations WHERE id IN (:a, :b)"),
                 {"a": str(sentinel_id), "b": str(address_id)},
+            )
+            await session.commit()
+        await database.engine.dispose()
+
+
+async def test_pending_locations_retry_stale_request_and_out_of_scope() -> None:
+    """Stale request_version and out_of_scope needs_review rows re-enter the queue."""
+    assert TEST_DATABASE_URL is not None
+    await asyncio.to_thread(command.upgrade, alembic_config(_settings()), "head")
+    database = create_database_resources(TEST_DATABASE_URL)
+    repository = SQLAlchemyCompleteImportRepository(database.session_factory)
+    stale_out_of_scope_id = uuid4()
+    fresh_out_of_scope_id = uuid4()
+    stale_provider_error_id = uuid4()
+    result_ids = (uuid4(), uuid4(), uuid4())
+    future = datetime.now(UTC) + timedelta(days=7)
+
+    async with database.session_factory() as session:
+        for location_id, display, status, out_of_scope in (
+            (stale_out_of_scope_id, "ul. Stara 1, Warszawa", "needs_review", True),
+            (fresh_out_of_scope_id, "ul. Swieza 2, Warszawa", "needs_review", True),
+            (stale_provider_error_id, "ul. Blad 3, Warszawa", "ungeocoded", False),
+        ):
+            await session.execute(
+                text(
+                    "INSERT INTO locations (id, display_name, display_address, "
+                    "normalized_address, normalized_address_hash, precision, confidence, "
+                    "review_status, out_of_scope) "
+                    "VALUES (:id, :display, :display, :normalized, :key, 'unknown', 0, "
+                    ":status, :out_of_scope)"
+                ),
+                {
+                    "id": str(location_id),
+                    "display": display,
+                    "normalized": display.casefold(),
+                    "key": normalized_location_key(display),
+                    "status": status,
+                    "out_of_scope": out_of_scope,
+                },
+            )
+        for result_id, request_version, with_point, error_code in (
+            (result_ids[0], "forward-geocode-v1", True, None),
+            (result_ids[1], REQUEST_VERSION, True, None),
+            (result_ids[2], "forward-geocode-v1", False, "no_result"),
+        ):
+            await session.execute(
+                text(
+                    "INSERT INTO geocode_results ("
+                    "id, query_hash, query_original, query_normalized, normalizer_version, "
+                    "scope_version, request_version, provider, precision, confidence, "
+                    "within_scope, point, response_json, attribution_text, attempted_at, "
+                    "expires_at, error_code"
+                    ") VALUES ("
+                    ":id, :query_hash, 'ul. Retry', 'ul. retry, warszawa, pl', "
+                    ":normalizer_version, 'warsaw-scope-v1', :request_version, 'fixture', "
+                    "'unknown', 0, :within_scope, "
+                    "CASE WHEN :with_point THEN "
+                    "ST_SetSRID(ST_MakePoint(18.65, 54.35), 4326) ELSE NULL END, "
+                    "'{}'::jsonb, 'fixture', :attempted_at, :expires_at, :error_code)"
+                ),
+                {
+                    "id": str(result_id),
+                    "query_hash": (uuid4().hex + uuid4().hex)[:64],
+                    "normalizer_version": NORMALIZER_VERSION,
+                    "request_version": request_version,
+                    "within_scope": False if with_point else None,
+                    "with_point": with_point,
+                    "attempted_at": NOW,
+                    "expires_at": future,
+                    "error_code": error_code,
+                },
+            )
+        for location_id, result_id, reason_code, to_state in (
+            (stale_out_of_scope_id, result_ids[0], "out_of_scope", "needs_review"),
+            (fresh_out_of_scope_id, result_ids[1], "out_of_scope", "needs_review"),
+            (stale_provider_error_id, result_ids[2], "provider_error", "ungeocoded"),
+        ):
+            await session.execute(
+                text(
+                    "INSERT INTO location_geocode_selections ("
+                    "id, location_id, geocode_result_id, from_state, to_state, reason_code, "
+                    "actor_type, review_policy_version, selection_version, decided_at"
+                    ") VALUES ("
+                    ":id, :location_id, :result_id, 'ungeocoded', :to_state, :reason_code, "
+                    "'system', 'warsaw-review-v1', 1, :decided_at)"
+                ),
+                {
+                    "id": str(uuid4()),
+                    "location_id": str(location_id),
+                    "result_id": str(result_id),
+                    "to_state": to_state,
+                    "reason_code": reason_code,
+                    "decided_at": NOW,
+                },
+            )
+        await session.commit()
+    try:
+        pending_ids = {item.location_id for item in await repository.pending_locations()}
+        assert stale_out_of_scope_id in pending_ids
+        assert stale_provider_error_id in pending_ids
+        assert fresh_out_of_scope_id not in pending_ids
+    finally:
+        async with database.session_factory() as session:
+            await session.execute(
+                text("DELETE FROM location_geocode_selections WHERE location_id IN (:a, :b, :c)"),
+                {
+                    "a": str(stale_out_of_scope_id),
+                    "b": str(fresh_out_of_scope_id),
+                    "c": str(stale_provider_error_id),
+                },
+            )
+            await session.execute(
+                text("DELETE FROM geocode_results WHERE id IN (:a, :b, :c)"),
+                {
+                    "a": str(result_ids[0]),
+                    "b": str(result_ids[1]),
+                    "c": str(result_ids[2]),
+                },
+            )
+            await session.execute(
+                text("DELETE FROM locations WHERE id IN (:a, :b, :c)"),
+                {
+                    "a": str(stale_out_of_scope_id),
+                    "b": str(fresh_out_of_scope_id),
+                    "c": str(stale_provider_error_id),
+                },
             )
             await session.commit()
         await database.engine.dispose()
