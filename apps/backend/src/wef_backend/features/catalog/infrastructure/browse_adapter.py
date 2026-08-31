@@ -29,6 +29,7 @@ from wef_backend.features.catalog.domain import (
     MarketType,
     OfferVisibility,
 )
+from wef_backend.features.catalog.infrastructure.active_ai_origin import active_ai_origin_exists
 from wef_backend.features.catalog.infrastructure.map_query_adapter import (
     SQLAlchemyMapQueryAdapter,
 )
@@ -180,6 +181,7 @@ class SQLAlchemyCatalogBrowseAdapter(
                 OfferRow.floor_label,
                 OfferRow.delivery_label,
                 match_rank.label("match_rank"),
+                active_ai_origin_exists(OfferRow.id).label("has_active_ai_origin"),
             )
             .join(LocationRow, LocationRow.id == OfferRow.location_id)
             .where(*page_conditions)
@@ -232,6 +234,7 @@ class SQLAlchemyCatalogBrowseAdapter(
                     floor_label=row.floor_label,
                     delivery_label=row.delivery_label,
                     matches_filters=bool(row.match_rank),
+                    has_active_ai_origin=bool(row.has_active_ai_origin),
                 )
                 for row in rows
             ),
@@ -280,6 +283,7 @@ class SQLAlchemyCatalogBrowseAdapter(
                 LocationRow.confidence.label("location_confidence"),
                 func.ST_X(LocationRow.point).label("location_longitude"),
                 func.ST_Y(LocationRow.point).label("location_latitude"),
+                active_ai_origin_exists(OfferRow.id).label("has_active_ai_origin"),
             )
             .join(LocationRow, LocationRow.id == OfferRow.location_id)
             .where(*page_conditions)
@@ -329,6 +333,7 @@ class SQLAlchemyCatalogBrowseAdapter(
                         longitude=float(row.location_longitude),
                         latitude=float(row.location_latitude),
                     ),
+                    has_active_ai_origin=bool(row.has_active_ai_origin),
                 )
                 for row in rows
             ),

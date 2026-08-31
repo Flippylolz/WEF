@@ -945,6 +945,14 @@
           "data_confidence": {
             "$ref": "#/components/schemas/OfferDataConfidence"
           },
+          "data_origin": {
+            "enum": [
+              "parser",
+              "ai_assisted"
+            ],
+            "title": "Data Origin",
+            "type": "string"
+          },
           "delivery_label": {
             "anyOf": [
               {
@@ -1174,7 +1182,8 @@
           "media",
           "source_message_id",
           "verified_source_url",
-          "source_history"
+          "source_history",
+          "data_origin"
         ],
         "title": "OfferDetailResponse",
         "type": "object"
@@ -1319,6 +1328,14 @@
           },
           "data_confidence": {
             "$ref": "#/components/schemas/OfferDataConfidence"
+          },
+          "data_origin": {
+            "enum": [
+              "parser",
+              "ai_assisted"
+            ],
+            "title": "Data Origin",
+            "type": "string"
           },
           "delivery_label": {
             "anyOf": [
@@ -1480,7 +1497,8 @@
           "currency",
           "floor_label",
           "delivery_label",
-          "matches_filters"
+          "matches_filters",
+          "data_origin"
         ],
         "title": "OfferSummaryResponse",
         "type": "object"
@@ -1853,6 +1871,14 @@
           "data_confidence": {
             "$ref": "#/components/schemas/OfferDataConfidence"
           },
+          "data_origin": {
+            "enum": [
+              "parser",
+              "ai_assisted"
+            ],
+            "title": "Data Origin",
+            "type": "string"
+          },
           "delivery_label": {
             "anyOf": [
               {
@@ -2012,7 +2038,8 @@
           "currency",
           "floor_label",
           "delivery_label",
-          "location"
+          "location",
+          "data_origin"
         ],
         "title": "ViewportListingItemResponse",
         "type": "object"

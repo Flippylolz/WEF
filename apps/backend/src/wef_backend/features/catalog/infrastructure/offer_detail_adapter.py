@@ -23,6 +23,7 @@ from wef_backend.features.catalog.domain import (
     MarketType,
     OfferVisibility,
 )
+from wef_backend.features.catalog.infrastructure.active_ai_origin import active_ai_origin_exists
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
 from wef_backend.features.ingestion.infrastructure.models import (
     DevelopmentRow,
@@ -56,7 +57,11 @@ class SQLAlchemyOfferDetailAdapter(OfferDetailQueryPort):
     async def query_offer_detail(self, offer_id: UUID) -> OfferDetailRecord | None:
         """Return one visible offer detail or null when absent/non-public."""
         offer_statement = (
-            select(OfferRow, LocationRow)
+            select(
+                OfferRow,
+                LocationRow,
+                active_ai_origin_exists(OfferRow.id).label("has_active_ai_origin"),
+            )
             .join(LocationRow, LocationRow.id == OfferRow.location_id)
             .where(
                 OfferRow.id == offer_id,
@@ -70,7 +75,7 @@ class SQLAlchemyOfferDetailAdapter(OfferDetailQueryPort):
             offer_row = (await session.execute(offer_statement)).one_or_none()
             if offer_row is None:
                 return None
-            offer, location = offer_row
+            offer, location, has_active_ai_origin = offer_row
             development = await self._load_development(session, location.id)
             sources = await self._load_sources(session, offer.id)
             media = await self._load_media(session, offer.id)
@@ -133,6 +138,7 @@ class SQLAlchemyOfferDetailAdapter(OfferDetailQueryPort):
                 )
                 for item in sources
             ),
+            has_active_ai_origin=bool(has_active_ai_origin),
         )
 
     async def _load_development(

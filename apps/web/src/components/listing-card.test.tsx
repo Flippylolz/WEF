@@ -23,6 +23,7 @@ function listingFixture(
     market_type: "primary",
     display_name: "development · primary",
     data_confidence: "complete",
+    data_origin: "parser",
     published_at: "2026-08-01T10:00:00Z",
     currency: "PLN",
     price_min_minor: 80_000_000,
@@ -82,6 +83,11 @@ describe("ListingCard", () => {
     expect(screen.getByText("publishedOn:1 Aug 2026")).toBeVisible();
     expect(screen.queryByText("lowConfidence")).not.toBeInTheDocument();
     expect(screen.queryByText("partialData")).not.toBeInTheDocument();
+  });
+
+  it("shows the AI-assisted badge when data_origin is ai_assisted", () => {
+    renderCard({ data_origin: "ai_assisted" });
+    expect(screen.getByText("aiAssistedData")).toBeVisible();
   });
 
   it("omits missing values instead of inventing them", () => {

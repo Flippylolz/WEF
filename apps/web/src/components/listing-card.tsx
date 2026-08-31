@@ -91,6 +91,11 @@ export function ListingCard({
           {listing.data_confidence === "partial" ? (
             <span className="listing-card-partial">{t("partialData")}</span>
           ) : null}
+          {listing.data_origin === "ai_assisted" ? (
+            <span className="listing-card-ai-assisted">
+              {t("aiAssistedData")}
+            </span>
+          ) : null}
         </button>
         {showStar ? (
           <button

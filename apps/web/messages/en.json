@@ -113,6 +113,7 @@
     "storagePrice": "Storage",
     "includedInApartmentPrice": "Included in apartment price",
     "partialData": "Some structured values were not provided.",
+    "aiAssistedData": "AI-assisted data",
     "panelLabel": "Filters and results",
     "hidePanel": "Hide panel",
     "showPanel": "Show panel",

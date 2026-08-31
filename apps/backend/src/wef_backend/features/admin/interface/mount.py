@@ -10,6 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette_admin import BaseAdmin
 
 from wef_backend.features.admin.interface.auth import OwnerAuthProvider
+from wef_backend.features.admin.interface.enrichment_views import OfferEnrichmentAdminView
 from wef_backend.features.admin.interface.guards import AdminMutationGuardMiddleware
 from wef_backend.features.admin.interface.views import (
     AdminAuditsView,
@@ -57,6 +58,7 @@ def build_admin(
     )
     admin_app.add_view(UsersAdminView())
     admin_app.add_view(LocationsAdminView())
+    admin_app.add_view(OfferEnrichmentAdminView())
     admin_app.add_view(RevealAuditsView())
     admin_app.add_view(AdminAuditsView())
     return admin_app

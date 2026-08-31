@@ -37,6 +37,12 @@ from wef_backend.features.admin.application.offer_enrichment import (
     RevertOfferEnrichmentBatch,
     StartOfferEnrichmentBatch,
 )
+from wef_backend.features.admin.application.offer_enrichment_reporting import (
+    GetOfferEnrichmentBatchDetail,
+    ListOfferEnrichmentBatches,
+    ListParserGapEvents,
+    PreviewOfferEnrichmentBatch,
+)
 
 __all__ = [
     "AcceptPlaceCandidate",
@@ -50,16 +56,20 @@ __all__ = [
     "GeneratePlaceReview",
     "GeocodeCandidateSummary",
     "GetLocationForEdit",
+    "GetOfferEnrichmentBatchDetail",
     "GetPlaceReview",
     "ListAdminAccounts",
     "ListAdminAudits",
     "ListLocations",
+    "ListOfferEnrichmentBatches",
+    "ListParserGapEvents",
     "ListRevealAudits",
     "LocationAdminSummary",
     "LocationEditDetail",
     "LocationStatusFilter",
     "OfferContextSummary",
     "PauseOfferEnrichmentBatch",
+    "PreviewOfferEnrichmentBatch",
     "ProcessOfferEnrichmentItem",
     "ReactivateUser",
     "RejectPlace",

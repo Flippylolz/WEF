@@ -30,6 +30,12 @@ if TYPE_CHECKING:
         RevertOfferEnrichmentBatch,
         StartOfferEnrichmentBatch,
     )
+    from wef_backend.features.admin.application.offer_enrichment_reporting import (
+        GetOfferEnrichmentBatchDetail,
+        ListOfferEnrichmentBatches,
+        ListParserGapEvents,
+        PreviewOfferEnrichmentBatch,
+    )
     from wef_backend.features.identity.application.identity import (
         Clock,
         IdentityStore,
@@ -855,6 +861,10 @@ class AdminService:
     pause_offer_enrichment: PauseOfferEnrichmentBatch
     resume_offer_enrichment: ResumeOfferEnrichmentBatch
     revert_offer_enrichment: RevertOfferEnrichmentBatch
+    preview_offer_enrichment: PreviewOfferEnrichmentBatch
+    list_offer_enrichment_batches: ListOfferEnrichmentBatches
+    get_offer_enrichment_batch: GetOfferEnrichmentBatchDetail
+    list_parser_gap_events: ListParserGapEvents
     ai_curation_enabled: bool
 
 

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal, Protocol
 
 from wef_backend.features.catalog.application.browse_catalog import OfferDataConfidence
+from wef_backend.features.catalog.application.data_origin import DataOrigin, derive_data_origin
 from wef_backend.features.catalog.application.map_query import ConfidenceIndicator
 
 if TYPE_CHECKING:
@@ -128,6 +129,7 @@ class OfferDetailRecord:
     source_message_id: UUID | None
     verified_source_url: str | None
     source_history: tuple[SourceHistoryEntryDTO, ...]
+    has_active_ai_origin: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,6 +166,7 @@ class OfferDetailDTO:
     source_message_id: UUID | None
     verified_source_url: str | None
     source_history: tuple[SourceHistoryEntryDTO, ...]
+    data_origin: DataOrigin
 
 
 class OfferDetailQueryPort(Protocol):
@@ -235,6 +238,7 @@ class GetOfferDetail:
             source_message_id=record.source_message_id,
             verified_source_url=record.verified_source_url,
             source_history=record.source_history,
+            data_origin=derive_data_origin(has_active_ai_origin=record.has_active_ai_origin),
         )
 
 

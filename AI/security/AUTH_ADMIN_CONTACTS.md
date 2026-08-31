@@ -209,8 +209,8 @@ Owner capabilities:
   Groq secret, verified Zero Data Retention, or exact model gate is incomplete.
 - Preview and start a bounded batch that automatically fills eligible missing offer
   fields after the single owner submission; pause/resume it, inspect minimized
-  outcomes and parser-gap provenance, and request a guarded rollback (E19-T3
-  backend interactors; owner HTML controls in E19-T4).
+  outcomes and parser-gap provenance, and request a guarded rollback from
+  `/admin/offer-enrichment` (E19-T3 backend interactors; E19-T4 owner HTML).
   Detailed batch/source-offset/provider metadata remains owner-only. Public users
   receive only the coarse `ai_assisted` provenance label for displayed offer data.
 
@@ -223,8 +223,9 @@ Not allowed:
   address) or apply bulk location changes directly through generic model forms.
   E19-T2 permits only owner-confirmed, validator-mediated display-name/
   address/district corrections; E19-T3 adds missing-only, exact-evidence
-  batch offer autofill on the backend. Generic CRUD, overwrites, and unrestricted bulk changes
-  remain forbidden. Owner HTML, public `data_origin`, and badges remain E19-T4.
+  batch offer autofill on the backend; E19-T4 adds owner HTML controls, public
+  `data_origin`, and badges. Generic CRUD, overwrites, and unrestricted bulk changes
+  remain forbidden.
 - Change immutable usernames.
 - Delete/demote the last owner.
 - Perform generic writes directly from a Starlette Admin `ModelView`.

@@ -873,6 +873,11 @@ export interface components {
             /** Currency */
             currency: string | null;
             data_confidence: components["schemas"]["OfferDataConfidence"];
+            /**
+             * Data Origin
+             * @enum {string}
+             */
+            data_origin: "parser" | "ai_assisted";
             /** Delivery Label */
             delivery_label: string | null;
             development: components["schemas"]["DevelopmentSummaryResponse"] | null;
@@ -976,6 +981,11 @@ export interface components {
             /** Currency */
             currency: string | null;
             data_confidence: components["schemas"]["OfferDataConfidence"];
+            /**
+             * Data Origin
+             * @enum {string}
+             */
+            data_origin: "parser" | "ai_assisted";
             /** Delivery Label */
             delivery_label: string | null;
             /** Display Name */
@@ -1196,6 +1206,11 @@ export interface components {
             /** Currency */
             currency: string | null;
             data_confidence: components["schemas"]["OfferDataConfidence"];
+            /**
+             * Data Origin
+             * @enum {string}
+             */
+            data_origin: "parser" | "ai_assisted";
             /** Delivery Label */
             delivery_label: string | null;
             /** Display Name */

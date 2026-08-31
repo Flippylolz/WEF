@@ -275,6 +275,7 @@ async def test_facets_and_selected_location_offer_contracts() -> None:
     assert payload["total_count"] == 2
     assert payload["items"][0]["display_name"] == "development · primary"
     assert payload["items"][0]["data_confidence"] == "complete"
+    assert payload["items"][0]["data_origin"] == "parser"
     assert payload["items"][0]["parking_price_min_minor"] == 4_500_000
     assert payload["items"][0]["parking_price_max_minor"] == 4_500_000
     assert payload["items"][0]["storage_included_in_price"] is True
@@ -387,6 +388,7 @@ async def test_offer_detail_hides_absence_and_excludes_sensitive_fields() -> Non
     payload = response.json()
     assert response.status_code == status.HTTP_200_OK
     assert payload["public_source_text"] == "Masked public text only."
+    assert payload["data_origin"] == "parser"
     assert payload["verified_source_url"] is None
     assert payload["media"] == []
     assert "source_text_excerpt" not in response.text

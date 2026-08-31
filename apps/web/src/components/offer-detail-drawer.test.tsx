@@ -34,6 +34,7 @@ const detail: OfferDetail = {
   market_type: "primary",
   display_name: "development · primary",
   data_confidence: "complete",
+  data_origin: "parser",
   published_at: "2026-08-01T10:00:00Z",
   currency: "PLN",
   price_min_minor: 80_000_000,
@@ -186,6 +187,16 @@ describe("OfferDetailDrawer", () => {
     expect(
       screen.getByRole("link", { name: "detailOpenTelegram" }),
     ).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("shows the AI-assisted badge when data_origin is ai_assisted", async () => {
+    vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
+      state: "ready",
+      data: { ...detail, data_origin: "ai_assisted" },
+    });
+    renderDrawer();
+
+    expect(await screen.findByText("aiAssistedData")).toBeVisible();
   });
 
   it("shows non-link fallback when verified url is absent", async () => {

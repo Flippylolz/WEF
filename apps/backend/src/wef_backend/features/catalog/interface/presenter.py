@@ -15,6 +15,7 @@ from wef_backend.features.catalog.application import (
     OfferDataConfidence,
     ViewportListingPage,
 )
+from wef_backend.features.catalog.application.data_origin import DataOrigin
 from wef_backend.features.catalog.application.offer_detail import OfferDetailDTO
 from wef_backend.features.catalog.application.quick_filters import QuickFilterPreset
 from wef_backend.features.catalog.domain import ContentType, MarketType
@@ -141,6 +142,7 @@ class OfferSummaryResponse(BaseModel):
     floor_label: str | None
     delivery_label: str | None
     matches_filters: bool
+    data_origin: DataOrigin
 
 
 class LocationOfferPageResponse(BaseModel):
@@ -195,6 +197,7 @@ class ViewportListingItemResponse(BaseModel):
     floor_label: str | None
     delivery_label: str | None
     location: ListingLocationResponse
+    data_origin: DataOrigin
 
 
 class ViewportListingPageResponse(BaseModel):
@@ -301,6 +304,7 @@ class OfferDetailResponse(BaseModel):
     source_message_id: UUID | None
     verified_source_url: str | None
     source_history: tuple[SourceHistoryEntryResponse, ...]
+    data_origin: DataOrigin
 
 
 def present_location_map(
@@ -389,6 +393,7 @@ def present_location_offer_page(
                 floor_label=item.floor_label,
                 delivery_label=item.delivery_label,
                 matches_filters=item.matches_filters,
+                data_origin=item.data_origin,
             )
             for item in page.items
         ),
@@ -437,6 +442,7 @@ def present_viewport_listing_page(
                         coordinates=(item.location.longitude, item.location.latitude),
                     ),
                 ),
+                data_origin=item.data_origin,
             )
             for item in page.items
         ),
@@ -529,4 +535,5 @@ def present_offer_detail(detail: OfferDetailDTO) -> OfferDetailResponse:
             )
             for item in detail.source_history
         ),
+        data_origin=detail.data_origin,
     )

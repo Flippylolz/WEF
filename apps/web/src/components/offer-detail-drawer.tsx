@@ -223,6 +223,9 @@ function OfferDetailContent({
       {detail.data_confidence === "partial" ? (
         <p className="offer-detail-note">{t("partialData")}</p>
       ) : null}
+      {detail.data_origin === "ai_assisted" ? (
+        <p className="offer-detail-note">{t("aiAssistedData")}</p>
+      ) : null}
 
       <section aria-label={t("detailLocationLabel")}>
         <h3>{t("detailLocationLabel")}</h3>
