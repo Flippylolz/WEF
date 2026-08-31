@@ -85,6 +85,11 @@ describe("ListingCard", () => {
     expect(screen.queryByText("partialData")).not.toBeInTheDocument();
   });
 
+  it("shows the AI-assisted badge when data_origin is ai_assisted", () => {
+    renderCard({ data_origin: "ai_assisted" });
+    expect(screen.getByText("aiAssistedData")).toBeVisible();
+  });
+
   it("omits missing values instead of inventing them", () => {
     renderCard({
       price_min_minor: null,

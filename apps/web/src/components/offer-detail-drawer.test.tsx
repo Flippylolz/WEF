@@ -189,6 +189,16 @@ describe("OfferDetailDrawer", () => {
     ).toHaveAttribute("rel", "noopener noreferrer");
   });
 
+  it("shows the AI-assisted badge when data_origin is ai_assisted", async () => {
+    vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
+      state: "ready",
+      data: { ...detail, data_origin: "ai_assisted" },
+    });
+    renderDrawer();
+
+    expect(await screen.findByText("aiAssistedData")).toBeVisible();
+  });
+
   it("shows non-link fallback when verified url is absent", async () => {
     vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
       state: "ready",
