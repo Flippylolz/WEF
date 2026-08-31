@@ -1,0 +1,10 @@
+{# E20-T1: load the shared admin stylesheet after the Tabler vendor CSS on
+   every shell page (including login) so the public Primer token mapping in
+   statics/css/admin.css wins; standalone pages link the same file directly. #}
+{% extends "@core/base.html" %}
+
+{% block core_css %}
+{{ super() }}
+<link rel="stylesheet"
+      href="{{ static_url(request, 'css/admin.css', v=1) }}">
+{% endblock %}
