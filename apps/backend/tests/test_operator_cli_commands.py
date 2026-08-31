@@ -200,14 +200,22 @@ async def test_telegram_backfill_run_loads_secrets_and_disposes(
                 skipped_non_candidate=0,
             )
 
-    def _client(_secrets: TelegramWorkerSecrets) -> _Client:
+    def _client(_secrets: TelegramWorkerSecrets, **_kwargs: object) -> _Client:
         _ = _secrets
         return _Client()
+
+    class _MediaPipeline:
+        pass
+
+    def _media_pipeline(*_args: object, **_kwargs: object) -> _MediaPipeline:
+        calls.append("media_pipeline")
+        return _MediaPipeline()
 
     monkeypatch.setattr(telegram_backfill_command, "create_async_engine", _engine)
     monkeypatch.setattr(telegram_backfill_command, "async_sessionmaker", _session_factory)
     monkeypatch.setattr(telegram_backfill_command, "SQLAlchemyIngestionPersistence", _Store)
     monkeypatch.setattr(telegram_backfill_command, "TelethonLiveClient", _client)
+    monkeypatch.setattr(telegram_backfill_command, "build_live_media_pipeline", _media_pipeline)
     monkeypatch.setattr(telegram_backfill_command, "LiveTelegramBackfill", _Backfill)
     monkeypatch.setattr(
         telegram_backfill_command,

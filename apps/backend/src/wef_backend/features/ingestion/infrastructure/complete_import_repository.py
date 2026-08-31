@@ -18,6 +18,7 @@ from wef_backend.features.ingestion.application.complete_import import (
     RunLease,
 )
 from wef_backend.features.ingestion.application.persistence import normalized_location_key
+from wef_backend.features.ingestion.domain import SourceAnchor
 from wef_backend.features.ingestion.domain.geocoding import (
     NORMALIZER_VERSION,
     REQUEST_VERSION,
@@ -67,15 +68,6 @@ class LocationWorkItem:
     location_id: UUID
     address: str
     district: str | None
-
-
-@dataclass(frozen=True, slots=True)
-class SourceAnchor:
-    """Current source/revision identity and optional canonical offer."""
-
-    source_message_id: UUID
-    revision_id: UUID
-    offer_id: UUID | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -603,6 +595,5 @@ __all__ = [
     "ImportVerification",
     "LocationWorkItem",
     "SQLAlchemyCompleteImportRepository",
-    "SourceAnchor",
     "StaleCompleteImportLeaseError",
 ]

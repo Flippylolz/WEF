@@ -93,6 +93,7 @@ from wef_backend.features.ingestion.domain.model import (
     canonical_json_checksum,
     freeze_json,
 )
+from wef_backend.features.ingestion.domain.source_anchor import SourceAnchor
 
 __all__ = [
     "NORMALIZER_VERSION",
@@ -160,6 +161,7 @@ __all__ = [
     "RuleProvenance",
     "ScanCounts",
     "SelectionReason",
+    "SourceAnchor",
     "SourceIdentity",
     "SourceMetadata",
     "SourcePlatform",

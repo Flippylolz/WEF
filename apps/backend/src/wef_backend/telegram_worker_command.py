@@ -12,6 +12,7 @@ import structlog
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from wef_backend.features.admin.infrastructure.ai_enrichment_store import build_offer_origin_sync
+from wef_backend.features.ingestion.application.media_grouping import StatefulMediaGrouper
 from wef_backend.features.ingestion.application.raw_archive import RawEventDrainer
 from wef_backend.features.ingestion.application.telegram_events import (
     LiveEventQueue,
@@ -59,6 +60,10 @@ from wef_backend.recurring_geocode_worker import (
 )
 from wef_backend.settings import Settings, load_settings
 from wef_backend.telegram_credentials import secret_text, secrets_from_settings
+from wef_backend.telegram_media_wiring import (
+    build_live_media_pipeline,
+    live_media_download_limits,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -112,11 +117,27 @@ async def _run_connected_worker(  # noqa: PLR0913
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     """Subscribe and supervise every critical stage after authorization."""
+    media_grouper = StatefulMediaGrouper()
+    media_pipeline = build_live_media_pipeline(
+        session_factory,
+        source_root=settings.telegram_media_temp_path,
+        originals_root=settings.restricted_originals_path,
+        derivatives_root=settings.public_derivatives_path,
+        media_max_bytes=settings.media_max_bytes,
+        media_max_pixels=settings.media_max_pixels,
+        concurrency=settings.telegram_media_download_concurrency,
+        grouper=media_grouper,
+    )
     state = WorkerRuntimeState(release_sha=settings.release_sha)
     stop = asyncio.Event()
     queue = LiveEventQueue()
     client.subscribe_channel(identity.username, queue)
-    processor = LiveTelegramEventProcessor(store=store, client=client, archive=archive)
+    processor = LiveTelegramEventProcessor(
+        store=store,
+        client=client,
+        archive=archive,
+        media_pipeline=media_pipeline,
+    )
     processing_lock = asyncio.Lock()
     drainer = RawEventDrainer(
         archive=archive,
@@ -233,7 +254,14 @@ async def run_telegram_worker() -> None:
     phone = secret_text(settings.telegram_phone)
     login_code = secret_text(settings.telegram_login_code)
     password = secret_text(settings.telegram_2fa_password)
-    client = TelethonLiveClient(secrets)
+    client = TelethonLiveClient(
+        secrets,
+        media_temp_root=settings.telegram_media_temp_path,
+        media_limits=live_media_download_limits(
+            max_bytes=settings.media_max_bytes,
+            timeout_seconds=settings.telegram_media_download_timeout_seconds,
+        ),
+    )
     engine = create_async_engine(settings.database_url)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     store = SQLAlchemyIngestionPersistence(

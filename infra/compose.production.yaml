@@ -296,6 +296,9 @@ services:
       WEF_TELEGRAM_RECONCILIATION_BATCH_SIZE: ${WEF_TELEGRAM_RECONCILIATION_BATCH_SIZE:-100}
       WEF_TELEGRAM_RECONCILIATION_MAX_MESSAGES: ${WEF_TELEGRAM_RECONCILIATION_MAX_MESSAGES:-500}
       WEF_TELEGRAM_RECONCILIATION_OVERLAP: ${WEF_TELEGRAM_RECONCILIATION_OVERLAP:-20}
+      WEF_TELEGRAM_MEDIA_TEMP_PATH: /tmp/wef-telegram-media
+      WEF_RESTRICTED_ORIGINALS_PATH: /app/media/originals
+      WEF_PUBLIC_DERIVATIVES_PATH: /app/media/public
       WEF_TELEGRAM_RECURRING_GEOCODE_INTERVAL_SECONDS: ${WEF_TELEGRAM_RECURRING_GEOCODE_INTERVAL_SECONDS:-60}
       WEF_TELEGRAM_RECURRING_GEOCODE_BATCH_SIZE: ${WEF_TELEGRAM_RECURRING_GEOCODE_BATCH_SIZE:-10}
       WEF_GEOAPIFY_API_KEY: ${WEF_GEOAPIFY_API_KEY:-}
@@ -307,6 +310,16 @@ services:
       - type: bind
         source: ${WEF_ROOT:?WEF_ROOT is required}/secrets/telegram
         target: /var/lib/wef/telegram
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${WEF_ROOT:?WEF_ROOT is required}/media/originals
+        target: /app/media/originals
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${WEF_ROOT:?WEF_ROOT is required}/media/public
+        target: /app/media/public
         bind:
           create_host_path: false
     restart: unless-stopped
