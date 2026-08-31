@@ -80,4 +80,4 @@ None remaining for E8.
 
 ## Lifecycle
 
-Follow the [approval-gated workflow](../../workflow/README.md). Production starts `telegram-worker` with the application. Credentials/session, entity access, gap reconciliation, outage recovery, and live media acquisition are verified. B-003 remains narrowly open for real passive edit/delete callbacks.
+Follow the [approval-gated workflow](../../workflow/README.md). Production starts `telegram-worker` with the application. Credentials/session, entity access, gap reconciliation, outage recovery, and live media acquisition are verified. B-003 remains narrowly open for real passive edit/delete callbacks; use [B003 observation runbook](B003_OBSERVATION_RUNBOOK.md) when an event occurs.
