@@ -101,6 +101,10 @@ async def test_owner_sees_pending_locations_and_filters() -> None:
         assert "href='/admin/places?status=pending'" in body
         assert "href='/admin/places?status=all'" in body
         assert "< | a |" not in body
+        assert "class='places-tabs'" in body
+        assert " | " not in body.split("places-tabs", 1)[-1].split("</nav>", 1)[0]
+        assert "class='data-table'" in body
+        assert "class='table-wrap'" in body
 
         filtered = await client.get(f"{_PLACES_PATH}?status=accepted")
         assert "ul. Rozpatrzona 8" in filtered.text
@@ -139,9 +143,9 @@ async def test_set_point_page_renders_offer_evidence_and_form() -> None:
         assert "place_picker.js" in body
         assert 'name="csrftoken"' in body or "csrftoken" in body
         assert f'value="{summary.id}"' in body or f"value='{summary.id}'" in body
-        assert "color-scheme:dark" in body
+        assert "class='wef-page point-picker'" in body
         assert "css/admin.css" in body
-        assert "background:var(--wef-canvas)" in body
+        assert "<style>" not in body
         assert "#ffffff" not in body
         assert "color-scheme:light" not in body
 

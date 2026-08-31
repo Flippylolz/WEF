@@ -83,11 +83,11 @@ class UsersAdminView(CustomView):
             for account in accounts
         )
         html = (
-            "<table><thead><tr>"
+            "<div class='table-wrap'><table class='data-table'><thead><tr>"
             "<th>Username</th><th>Role</th><th>Status</th>"
             "<th>Must change</th><th>Id</th><th>Actions</th>"
             f"</tr></thead><tbody>{rows or '<tr><td colspan=6>No accounts</td></tr>'}"
-            "</tbody></table>"
+            "</tbody></table></div>"
         )
         return HtmlWidget(html=html)
 
@@ -152,7 +152,7 @@ async def _run_user_action(request: Request, action: str) -> Response:
 
 def _action_form(request: Request, action: str, user_id: UUID, label: str) -> str:
     return (
-        f"<form method='post' action='/admin/users/{action}' style='display:inline'>"
+        f"<form method='post' action='/admin/users/{action}'>"
         f"{csrf_input(request)}"
         f"<input type='hidden' name='user_id' value='{user_id}'/>"
         f"<button type='submit'>{escape(label)}</button></form> "
@@ -161,7 +161,7 @@ def _action_form(request: Request, action: str, user_id: UUID, label: str) -> st
 
 def _reset_form(request: Request, user_id: UUID) -> str:
     return (
-        "<form method='post' action='/admin/users/reset' style='display:inline'>"
+        "<form method='post' action='/admin/users/reset'>"
         f"{csrf_input(request)}"
         f"<input type='hidden' name='user_id' value='{user_id}'/>"
         "<input type='password' name='temporary_password' "
@@ -271,7 +271,7 @@ def _filter_tabs(filters: _ListFilters) -> str:
         + "</a>"
         for tab_status, label in _FILTER_TABS
     ]
-    return f"<nav class='places-tabs'>{' | '.join(anchors)}</nav>"
+    return f"<nav class='places-tabs'>{''.join(anchors)}</nav>"
 
 
 def _search_form(filters: _ListFilters) -> str:
@@ -295,7 +295,7 @@ def _place_action_form(
 ) -> str:
     """Render one CSRF-protected decision form preserving the filter state."""
     return (
-        f"<form method='post' action='/admin/places/{action}' style='display:inline' "
+        f"<form method='post' action='/admin/places/{action}' "
         "onsubmit=\"this.querySelectorAll('button').forEach(function(b){b.disabled=true})\">"
         f"{csrf_input(request)}"
         f"<input type='hidden' name='location_id' value='{place.id}'/>"
@@ -377,11 +377,11 @@ class LocationsAdminView(CustomView):
             f"{_filter_tabs(filters)}"
             f"{_search_form(filters)}"
             "</div>"
-            "<table><thead><tr>"
+            "<div class='table-wrap'><table class='data-table'><thead><tr>"
             "<th>Address</th><th>District</th><th>Status</th><th>Precision</th>"
             "<th>Confidence</th><th>Reason</th><th>Point</th><th>Offers</th><th>Actions</th>"
             f"</tr></thead><tbody>{rows or '<tr><td colspan=9>No locations</td></tr>'}"
-            "</tbody></table>"
+            "</tbody></table></div>"
         )
         return HtmlWidget(html=html)
 
@@ -686,47 +686,7 @@ def _set_point_document(
         "<!doctype html><html><head><meta charset='utf-8'/>"
         f"<title>Set point — {escape(summary.display_address)}</title>"
         "<link rel='stylesheet' href='/admin/static/css/admin.css?v=1'/>"
-        "<style>"
-        "html{color-scheme:dark}"
-        "body{font-family:var(--wef-font);margin:0;display:flex;"
-        "flex-direction:column;height:100vh;background:var(--wef-canvas);"
-        "color:var(--wef-text)}"
-        "header{padding:.6rem 1rem;border-bottom:1px solid var(--wef-border);"
-        "display:flex;gap:1rem;align-items:baseline}"
-        "main{flex:1;display:flex;min-height:0}"
-        "#evidence{width:360px;overflow:auto;padding:1rem;"
-        "border-right:1px solid var(--wef-border);box-sizing:border-box}"
-        "#map{flex:1;position:relative;overflow:hidden;"
-        "background:var(--wef-surface);cursor:crosshair;touch-action:none}"
-        "#map img{position:absolute;user-select:none;"
-        "-webkit-user-drag:none;pointer-events:none}"
-        "#marker,#ghost{position:absolute;width:14px;height:14px;"
-        "margin:-7px 0 0 -7px;border-radius:50%;pointer-events:none}"
-        "#marker{background:var(--wef-danger);border:2px solid #fff;"
-        "box-shadow:0 0 4px rgba(0,0,0,.5);z-index:6}"
-        "#ghost{background:var(--wef-focus);border:2px solid #fff;opacity:.7;z-index:5}"
-        ".toolbar{position:absolute;top:.5rem;left:.5rem;display:flex;"
-        "flex-direction:column;gap:.25rem;z-index:10}"
-        ".toolbar button{width:2rem;height:2rem;font-size:1.1rem}"
-        ".tile-error{position:absolute;bottom:.5rem;left:.5rem;right:.5rem;"
-        "background:var(--wef-warning-soft);color:var(--wef-warning);"
-        "border:1px solid var(--wef-warning);"
-        "padding:.4rem .6rem;font-size:.85rem;z-index:10;border-radius:4px}"
-        "form.point{padding:.75rem 1rem;border-top:1px solid var(--wef-border);"
-        "display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}"
-        ".error{background:var(--wef-danger-soft);color:var(--wef-danger);"
-        "padding:.5rem 1rem;border-bottom:1px solid var(--wef-danger)}"
-        ".offer{border:1px solid var(--wef-border);border-radius:6px;"
-        "padding:.5rem;margin:.5rem 0;font-size:.85rem;color:var(--wef-text)}"
-        "h3{color:var(--wef-text)}"
-        ".offer blockquote{margin:.4rem 0;border-left:3px solid var(--wef-border);"
-        "padding-left:.5rem;white-space:pre-wrap}"
-        ".muted{color:var(--wef-muted)}"
-        "dl{display:grid;grid-template-columns:auto 1fr;"
-        "gap:.25rem .75rem;font-size:.9rem}"
-        "dt{font-weight:600}"
-        "dd{margin:0;overflow-wrap:anywhere}"
-        "</style></head><body>"
+        "</head><body class='wef-page point-picker'>"
         "<header>"
         f"<a href='{_places_url(filters)}'>&larr; Locations</a>"
         f"<strong>{escape(summary.display_address)}</strong>"
@@ -909,42 +869,28 @@ def _ai_review_document(
             f"<input type='hidden' name='status' value='{escape(filters.status.value)}'/>"
             f"<input type='hidden' name='search' value='{escape(filters.search or '')}'/>"
             "<p>No change is selected by default. Choose each field to apply.</p>"
-            "<table><thead><tr>"
+            "<div class='table-wrap'><table><thead><tr>"
             "<th>Apply</th><th>Action</th><th>Current</th><th>Proposed</th>"
             "<th>Confidence</th><th>Evidence</th><th>Rationale</th>"
             f"</tr></thead><tbody>{_field_rows(run) or '<tr><td colspan=7>No fields</td></tr>'}"
-            "</tbody></table>"
+            "</tbody></table></div>"
             "<button type='submit'>Apply selected fields</button>"
             "</form>"
         )
     else:
         apply_form = (
-            "<table><thead><tr>"
+            "<div class='table-wrap'><table><thead><tr>"
             "<th>Field</th><th>Action</th><th>Current</th><th>Proposed</th>"
             "<th>Confidence</th><th>Evidence</th><th>Rationale</th>"
             f"</tr></thead><tbody>{_field_rows(run) or '<tr><td colspan=7>No fields</td></tr>'}"
-            "</tbody></table>"
+            "</tbody></table></div>"
         )
     verdict = run.verdict or run.state.value
     return (
         "<!doctype html><html lang='en'><head><meta charset='utf-8'/>"
         "<title>Review with AI</title>"
         "<link rel='stylesheet' href='/admin/static/css/admin.css?v=1'/>"
-        "<style>"
-        "html{color-scheme:dark}"
-        "body{font-family:var(--wef-font);margin:1rem;"
-        "background:var(--wef-canvas);color:var(--wef-text)}"
-        ".error{background:var(--wef-danger-soft);color:var(--wef-danger);"
-        "padding:.5rem 1rem}"
-        "table{border-collapse:collapse;width:100%;margin:1rem 0}"
-        "th,td{border:1px solid var(--wef-border);padding:.4rem .5rem;"
-        "text-align:left;overflow-wrap:anywhere}"
-        ".muted{color:var(--wef-muted)}"
-        "a{color:var(--wef-focus)}"
-        "button{background:var(--wef-surface-raised);color:var(--wef-text);"
-        "border:1px solid var(--wef-border);border-radius:6px;"
-        "padding:.3rem .75rem}"
-        "</style></head><body>"
+        "</head><body class='wef-page review-page'>"
         f"<a href='{_places_url(filters)}'>&larr; Locations</a>"
         "<h1>Review with AI</h1>"
         f"{error_banner}"

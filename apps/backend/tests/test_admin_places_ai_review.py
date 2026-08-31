@@ -191,9 +191,9 @@ async def test_generate_shows_coverage_diffs_and_unselected_fields() -> None:
         assert "checked" not in body.lower()
         assert "Apply selected fields" in body
         assert "Coordinates are not changed" in body
-        assert "color-scheme:dark" in body
+        assert "class='wef-page review-page'" in body
         assert "css/admin.css" in body
-        assert "background:var(--wef-canvas)" in body
+        assert "<style>" not in body
         assert "color-scheme:light" not in body
 
 

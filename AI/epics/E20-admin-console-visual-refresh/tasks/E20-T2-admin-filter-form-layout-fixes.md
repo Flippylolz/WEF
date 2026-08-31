@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E20-T2
 epic: E20
 title: "Fix admin filter and form layout defects"
-status: draft
+status: in_progress
 revision: 1
 priority: P1
 size: M
@@ -33,17 +33,18 @@ implementation_gate:
   verified_by: "ZCode agent (AD-045)"
   verified_at: "2026-08-31T17:40:00Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: "ZCode agent (AD-045)"
+  verified_at: "2026-08-31T18:00:00Z"
+  evidence:
+    - "E20-T1: branch feat/E20-T1-admin-dark-theme-alignment, pull request https://github.com/Flippylolz/WEF/pull/247, head d5127ca — direct stack ancestor of this task branch."
 branch:
   required: true
-  name: null
+  name: feat/E20-T2-admin-filter-form-layout-fixes
   task_id: E20-T2
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-08-31T18:00:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/254"
 completion:
   completed_by: null
   completed_at: null
