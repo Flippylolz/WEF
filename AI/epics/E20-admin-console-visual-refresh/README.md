@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E20
 title: "Admin console visual refresh"
-status: selected
+status: planning
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -70,13 +70,17 @@ framework or public-facing change is introduced.
 - [ADR-012](../../decisions/adr/ADR-012-backend-centric-modular-monolith.md)
 - [ADR-016](../../decisions/adr/ADR-016-pseudonymous-accounts-owner-console.md)
 
-## Proposed tasks
+## Promoted tasks
 
-- [E20-T1: Align admin console theme with the public dark design](proposed-tasks/E20-T1-admin-dark-theme-alignment.md) — P1/M, M5
-- [E20-T2: Fix admin filter and form layout defects](proposed-tasks/E20-T2-admin-filter-form-layout-fixes.md) — P1/M, M5
+- [E20-T1: Align admin console theme with the public dark design](tasks/E20-T1-admin-dark-theme-alignment.md) — promoted/`draft`, P1/M, M5
+- [E20-T2: Fix admin filter and form layout defects](tasks/E20-T2-admin-filter-form-layout-fixes.md) — promoted/`draft`, P1/M, M5
 
 ## Approval state
 
-- Epic workspace status: `selected` by the owner on 2026-08-31.
-- `SPIKE.md` revision 1 awaits owner approval; proposed tasks are
-  non-actionable until promotion after that approval.
+- Epic workspace status: `planning`.
+- `SPIKE.md` revision 1 was owner-approved on 2026-08-31 under AD-044
+  (owner directive recorded in the [autonomous decision
+  log](../../workflow/AUTONOMOUS_DECISIONS.md)).
+- [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) revision 1 awaits owner
+  approval; E20-T1/E20-T2 remain `draft` and non-actionable until that gate
+  clears.

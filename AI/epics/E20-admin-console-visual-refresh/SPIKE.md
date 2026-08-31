@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E20
 title: "Admin console visual refresh research"
-status: awaiting_approval
+status: approved
 revision: 1
 owner: owner
 research_only: true
@@ -18,11 +18,11 @@ proposed_task_ids:
   - E20-T2
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Flippylolz"
+  decided_at: "2026-08-31T17:35:00Z"
+  approved_revision: 1
+  evidence: "AD-044; owner directive in ZCode session on 2026-08-31: 'continue' — given in response to the presented awaiting-approval spike and PR #244 with the note that the next step was owner spike approval."
 invalidation:
   invalidated_by: null
   invalidated_at: null
