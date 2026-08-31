@@ -116,3 +116,16 @@ Then update:
 - Release `b71c99f` deployed; checkpoint aligned at `29434`.
 - Live media acquisition verified for ids `29415`–`29434`.
 - `last_event_received_at` remains null; no passive edit/delete observed yet.
+
+## Optional cron monitor (NUC)
+
+Poll worker status and exit non-zero when a passive event appears so operators can
+capture evidence promptly:
+
+```bash
+python3 /home/nuc/wef/releases/current/scripts/deploy/check_telegram_passive_events.py
+```
+
+Exit codes: `0` healthy/no passive event; `2` passive event detected (run capture steps
+above); `1` error or unhealthy worker. Schedule every 15 minutes only after placing the
+script on the NUC from a deployed release checkout.
