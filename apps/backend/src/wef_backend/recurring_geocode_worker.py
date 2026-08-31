@@ -1,4 +1,4 @@
-"""Background recurring geocoding for live-ingested ungeocoded locations."""
+"""Background recurring geocoding for live-ingested pending locations."""
 
 from __future__ import annotations
 

@@ -18,6 +18,9 @@ from wef_backend.features.ingestion.application.geocoding import (
     ResolveGeocode,
 )
 from wef_backend.features.ingestion.domain.geocoding import (
+    WARSAW_BIAS_LAT,
+    WARSAW_BIAS_LON,
+    WARSAW_BOUNDS,
     GeocodeCacheKey,
     GeocodeErrorCode,
     GeocodePrecision,
@@ -441,7 +444,11 @@ async def test_hosted_adapters_map_sanitized_provider_shapes_without_fanout() ->
     mapped = await geoapify.geocode(normalize_geocode_query("Marszałkowska 1"))
     assert mapped.precision is GeocodePrecision.BUILDING
     assert mapped.within_scope is True
-    assert geoapify_transport.calls[0][1]["apiKey"] == "not-logged"
+    geoapify_params = geoapify_transport.calls[0][1]
+    west, south, east, north = WARSAW_BOUNDS
+    assert geoapify_params["apiKey"] == "not-logged"
+    assert geoapify_params["filter"] == f"rect:{west},{south},{east},{north}|countrycode:pl"
+    assert geoapify_params["bias"] == f"proximity:{WARSAW_BIAS_LON},{WARSAW_BIAS_LAT}"
     assert dict(mapped.diagnostic) == {"result_type": "building"}
 
     locationiq_transport = FakeTransport(

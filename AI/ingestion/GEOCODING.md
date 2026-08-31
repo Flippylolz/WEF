@@ -6,6 +6,10 @@
 - Live ingestion later: a small number of new/changed posts per day.
 - Every successful response is persisted in `GeocodeResult`; the application never geocodes again on page views.
 - Queries are restricted/bias-validated to Warsaw/Poland and rejected/reviewed when out of bounds or low precision.
+- Live Geoapify forward requests (`REQUEST_VERSION=forward-geocode-v2`) send
+  `filter=rect:<Warsaw bounds>|countrycode:pl` and `bias=proximity:<city center>`
+  so same-named streets outside Warsaw are not preferred; results are still
+  validated with `within_warsaw` before acceptance.
 
 This is a low-volume backend workload. A free hosted production allowance is operationally safer than running a search index on the current shared 8 GB NUC.
 
