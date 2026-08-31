@@ -45,7 +45,7 @@ branch:
   task_id: E19-T3
   one_task_only: true
   created_at: "2026-08-31T00:00:00Z"
-  pull_request: null
+  pull_request: "https://github.com/Flippylolz/WEF/pull/228"
 completion:
   completed_by: null
   completed_at: null
@@ -175,7 +175,7 @@ revert for still-matching values.
 
 - [x] Status passed through `ready`.
 - [x] One new branch contains this task ID.
-- [ ] The branch and pull request contain this task only.
+- [x] The branch and pull request contain this task only.
 - [x] `branch.name` and `branch.created_at` are recorded before setting `in_progress`.
 
 ## Done checklist
