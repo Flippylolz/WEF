@@ -121,6 +121,7 @@ class AiCurationRuntime:
     max_input_tokens: int = _MAX_INPUT_TOKENS
     max_output_tokens: int = _MAX_OUTPUT_TOKENS
     max_sources: int = _MAX_SOURCES
+    auto_apply_fields: frozenset[str] = frozenset()
 
     @property
     def active(self) -> bool:

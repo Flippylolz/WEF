@@ -29,6 +29,7 @@ from wef_backend.features.ingestion.application.persistence import (
     IngestionPersistencePort,
     MessageOutcome,
     MessagePersistOutcome,
+    OfferFieldOriginSync,
     PersistableMessage,
     PersistenceBatchError,
     RunCheckpoint,
@@ -67,6 +68,48 @@ if TYPE_CHECKING:
 
 _SIGNED_64 = (1 << 63) - 1
 _PRIMARY_RELATIONSHIP = "primary"
+_FIELD_COLUMNS = {
+    "market_type": "market_type",
+    "currency": "currency",
+    "apartment_price_min": "price_min_minor",
+    "apartment_price_max": "price_max_minor",
+    "parking_price_min": "parking_price_min_minor",
+    "parking_price_max": "parking_price_max_minor",
+    "parking_included_in_price": "parking_included_in_price",
+    "storage_price_min": "storage_price_min_minor",
+    "storage_price_max": "storage_price_max_minor",
+    "storage_included_in_price": "storage_included_in_price",
+    "area_min_sqm": "area_min_sqm",
+    "area_max_sqm": "area_max_sqm",
+    "rooms_min": "rooms_min",
+    "rooms_max": "rooms_max",
+    "floor_label": "floor_label",
+    "delivery_label": "delivery_label",
+}
+
+
+def _allowlisted_parser_values(values: dict[str, object]) -> dict[str, object]:
+    """Project canonical offer columns onto allowlisted enrichment fields."""
+    area_min = values.get("area_min_sqm")
+    area_max = values.get("area_max_sqm")
+    return {
+        "market_type": values.get("market_type"),
+        "currency": values.get("currency"),
+        "apartment_price_min": values.get("price_min_minor"),
+        "apartment_price_max": values.get("price_max_minor"),
+        "parking_price_min": values.get("parking_price_min_minor"),
+        "parking_price_max": values.get("parking_price_max_minor"),
+        "parking_included_in_price": bool(values.get("parking_included_in_price")),
+        "storage_price_min": values.get("storage_price_min_minor"),
+        "storage_price_max": values.get("storage_price_max_minor"),
+        "storage_included_in_price": bool(values.get("storage_included_in_price")),
+        "area_min_sqm": None if area_min is None else str(area_min),
+        "area_max_sqm": None if area_max is None else str(area_max),
+        "rooms_min": values.get("rooms_min"),
+        "rooms_max": values.get("rooms_max"),
+        "floor_label": values.get("floor_label"),
+        "delivery_label": values.get("delivery_label"),
+    }
 
 
 def _lock_id(source_key: str) -> int:
@@ -102,6 +145,21 @@ class _MessageResult:
     outcome: MessageOutcome
     offer_created: bool
     revision_number: int
+    offer_id: UUID | None = None
+    parser_version: str | None = None
+    parser_values: dict[str, object] | None = None
+    source_changed: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class _OfferPersistResult:
+    """Offer upsert identity used after the persist transaction commits."""
+
+    created: bool
+    offer_id: UUID
+    source_changed: bool
+    parser_version: str
+    parser_values: dict[str, object]
 
 
 class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
@@ -112,10 +170,12 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
         session_factory: async_sessionmaker[AsyncSession],
         *,
         contact_cipher: ContactCipher | None = None,
+        field_origin_sync: OfferFieldOriginSync | None = None,
     ) -> None:
         """Store the lazy session factory and optional contact cipher."""
         self._session_factory = session_factory
         self._contact_cipher = contact_cipher
+        self._field_origin_sync = field_origin_sync
 
     def run_lock(self, source_key: str) -> RunLock:
         """Hold one session-level advisory lock for the complete run."""
@@ -252,6 +312,8 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             raise
         except Exception as error:
             raise PersistenceBatchError(redacted_error_summary(error)) from error
+        for result in results:
+            await self._notify_origin_sync(result)
         offers_created = sum(1 for result in results if result.offer_created)
         return outcomes, acknowledged, acknowledged_counts, offers_created
 
@@ -300,6 +362,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             raise
         except Exception as error:
             raise PersistenceBatchError(redacted_error_summary(error)) from error
+        await self._notify_origin_sync(result)
         return outcome, acknowledged, acknowledged_counts, int(result.offer_created)
 
     async def mark_source_deleted(
@@ -479,21 +542,34 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
 
         listing = persistable.extraction.listing if persistable.extraction else None
         offer_created = False
+        offer_id = None
+        source_changed = False
+        parser_version = None
+        parser_values = None
         if listing is None:
             if outcome is MessageOutcome.CREATED:
                 outcome = MessageOutcome.SKIPPED_NON_CANDIDATE
         else:
-            offer_created = await self._persist_offer(
+            persisted = await self._persist_offer(
                 session,
                 listing=listing,
                 raw=raw,
                 message_id=message_id_for_offer,
                 revision_id=anchor_revision_id,
             )
+            offer_created = persisted.created
+            offer_id = persisted.offer_id
+            source_changed = persisted.source_changed
+            parser_version = persisted.parser_version
+            parser_values = persisted.parser_values
         return _MessageResult(
             outcome=outcome,
             offer_created=offer_created,
             revision_number=revision_number,
+            offer_id=offer_id,
+            source_changed=source_changed,
+            parser_version=parser_version,
+            parser_values=parser_values,
         )
 
     async def _resolve_location(
@@ -635,7 +711,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
         raw: RawMessage,
         message_id: UUID,
         revision_id: UUID,
-    ) -> bool:
+    ) -> _OfferPersistResult:
         """Upsert the canonical offer and its revision-anchored provenance."""
         existing_offer_id = await session.scalar(
             select(OfferSourceRow.offer_id)
@@ -647,11 +723,16 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
         )
         location_id = await self._resolve_location(session, listing)
         values = self._offer_values(listing, raw, location_id)
+        parser_values = _allowlisted_parser_values(values)
         offer_id = existing_offer_id
         if offer_id is None:
             offer_id = uuid4()
             session.add(OfferRow(id=offer_id, **values))
         else:
+            if self._field_origin_sync is not None:
+                protected = await self._field_origin_sync.protected_field_names(offer_id)
+                for field_name in protected:
+                    values.pop(_FIELD_COLUMNS[field_name], None)
             await session.execute(
                 update(OfferRow).where(OfferRow.id == offer_id).values(**values),
             )
@@ -663,31 +744,54 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             )
             .limit(1),
         )
-        if existing_link is not None:
-            return False
-        confidence = (
-            confidence_score(listing.content_type.provenance.confidence)
-            if listing.content_type is not None
-            else 0.5
-        )
-        session.add(
-            OfferSourceRow(
-                id=uuid4(),
+        source_changed = existing_link is None
+        if existing_link is None:
+            confidence = (
+                confidence_score(listing.content_type.provenance.confidence)
+                if listing.content_type is not None
+                else 0.5
+            )
+            session.add(
+                OfferSourceRow(
+                    id=uuid4(),
+                    offer_id=offer_id,
+                    source_message_id=message_id,
+                    source_message_revision_id=revision_id,
+                    relationship=_PRIMARY_RELATIONSHIP,
+                    confidence=Decimal(str(confidence)).quantize(Decimal("0.001")),
+                    extraction_json=json.loads(build_extraction_json(listing)),
+                ),
+            )
+            await self._persist_contacts(
+                session,
                 offer_id=offer_id,
                 source_message_id=message_id,
-                source_message_revision_id=revision_id,
-                relationship=_PRIMARY_RELATIONSHIP,
-                confidence=Decimal(str(confidence)).quantize(Decimal("0.001")),
-                extraction_json=json.loads(build_extraction_json(listing)),
-            ),
-        )
-        await self._persist_contacts(
-            session,
+                listing=listing,
+            )
+        return _OfferPersistResult(
+            created=existing_offer_id is None,
             offer_id=offer_id,
-            source_message_id=message_id,
-            listing=listing,
+            source_changed=source_changed,
+            parser_version=listing.parser_version,
+            parser_values=parser_values,
         )
-        return existing_offer_id is None
+
+    async def _notify_origin_sync(self, result: _MessageResult) -> None:
+        """Compare or invalidate AI origins after a committed offer upsert."""
+        if (
+            self._field_origin_sync is None
+            or result.offer_id is None
+            or result.parser_values is None
+            or result.parser_version is None
+        ):
+            return
+        await self._field_origin_sync.after_offer_upsert(
+            offer_id=result.offer_id,
+            parser_values=result.parser_values,
+            parser_version=result.parser_version,
+            source_changed=result.source_changed,
+            actor_id="parser-replay",
+        )
 
     async def _persist_contacts(
         self,

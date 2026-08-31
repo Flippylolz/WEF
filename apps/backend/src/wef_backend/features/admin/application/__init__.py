@@ -30,6 +30,13 @@ from wef_backend.features.admin.application.ai_review import (
     GeneratePlaceReview,
     GetPlaceReview,
 )
+from wef_backend.features.admin.application.offer_enrichment import (
+    PauseOfferEnrichmentBatch,
+    ProcessOfferEnrichmentItem,
+    ResumeOfferEnrichmentBatch,
+    RevertOfferEnrichmentBatch,
+    StartOfferEnrichmentBatch,
+)
 
 __all__ = [
     "AcceptPlaceCandidate",
@@ -52,10 +59,15 @@ __all__ = [
     "LocationEditDetail",
     "LocationStatusFilter",
     "OfferContextSummary",
+    "PauseOfferEnrichmentBatch",
+    "ProcessOfferEnrichmentItem",
     "ReactivateUser",
     "RejectPlace",
+    "ResumeOfferEnrichmentBatch",
     "RevealAuditSummary",
+    "RevertOfferEnrichmentBatch",
     "RevokeUserSessions",
     "SetPlacePoint",
+    "StartOfferEnrichmentBatch",
     "UnresolvePlace",
 ]

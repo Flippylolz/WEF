@@ -505,7 +505,7 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
     monkeypatch.setattr(
         telegram_worker_command,
         "SQLAlchemyIngestionPersistence",
-        lambda _factory: object(),
+        lambda _factory, **_kwargs: object(),
     )
     monkeypatch.setattr(
         telegram_worker_command,
@@ -620,7 +620,7 @@ async def test_run_telegram_worker_ignores_persist_oserror(  # noqa: C901
     monkeypatch.setattr(
         telegram_worker_command,
         "SQLAlchemyIngestionPersistence",
-        lambda _factory: object(),
+        lambda _factory, **_kwargs: object(),
     )
     monkeypatch.setattr(
         telegram_worker_command,

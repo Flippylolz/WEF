@@ -185,6 +185,10 @@ async def _purge_identity_tables(database_url: str) -> None:
             )
             if not exists:
                 return
+            await session.execute(text("DELETE FROM place_ai_review_runs"))
+            await session.execute(text("DELETE FROM offer_ai_field_events"))
+            await session.execute(text("DELETE FROM offer_ai_enrichment_items"))
+            await session.execute(text("DELETE FROM offer_ai_enrichment_batches"))
             await session.execute(text("DELETE FROM admin_audit_events"))
             await session.execute(text("DELETE FROM auth_sessions"))
             await session.execute(text("DELETE FROM users"))

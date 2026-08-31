@@ -218,3 +218,35 @@ async def test_place_ai_review_runs_schema_exists_at_head() -> None:
         assert revision == EXPECTED_DATABASE_REVISION
     finally:
         await database.engine.dispose()
+
+
+async def test_offer_ai_enrichment_schema_exists_at_head() -> None:
+    """The E19-T3 provenance tables are present at the expected revision."""
+    assert TEST_DATABASE_URL is not None
+    settings = Settings(
+        env="test",
+        database_url=TEST_DATABASE_URL,
+        alembic_config=Path("alembic.ini"),
+    )
+    database = create_database_resources(TEST_DATABASE_URL)
+    try:
+        await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
+        async with database.session_factory() as session:
+            batches = await session.scalar(
+                text("SELECT to_regclass('public.offer_ai_enrichment_batches')"),
+            )
+            items = await session.scalar(
+                text("SELECT to_regclass('public.offer_ai_enrichment_items')"),
+            )
+            events = await session.scalar(
+                text("SELECT to_regclass('public.offer_ai_field_events')"),
+            )
+            origins = await session.scalar(text("SELECT to_regclass('public.offer_field_origins')"))
+            revision = await session.scalar(text("SELECT version_num FROM alembic_version"))
+        assert batches is not None
+        assert items is not None
+        assert events is not None
+        assert origins is not None
+        assert revision == EXPECTED_DATABASE_REVISION
+    finally:
+        await database.engine.dispose()

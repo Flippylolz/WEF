@@ -210,7 +210,7 @@ Fields:
   and applied field names.
 - At most one `pending` run per location.
 
-### OfferAiEnrichmentBatch and OfferAiEnrichmentItem (planned E19)
+### OfferAiEnrichmentBatch and OfferAiEnrichmentItem (E19-T3)
 
 An owner-authorized, resumable missing-field autofill cohort and its immutable item
 scope.
@@ -234,7 +234,7 @@ The candidate set is frozen when the owner starts the batch. A default batch has
 offers and an owner may queue at most 200; execution pauses at the shared daily
 provider-call limit and resumes from the checkpoint.
 
-### OfferAiFieldEvent (planned E19)
+### OfferAiFieldEvent (E19-T3)
 
 Append-only lifecycle and parser-feedback history for one candidate field.
 
@@ -253,7 +253,7 @@ The evidence offsets must slice the exact retained immutable source revision and
 must not intersect a contact span. The event stores neither the evidence text nor
 any raw prompt/provider response/error body.
 
-### OfferFieldOrigin (planned E19)
+### OfferFieldOrigin (E19-T3)
 
 Current canonical origin for an offer field, separate from append-only history.
 

@@ -209,7 +209,8 @@ Owner capabilities:
   Groq secret, verified Zero Data Retention, or exact model gate is incomplete.
 - Preview and start a bounded batch that automatically fills eligible missing offer
   fields after the single owner submission; pause/resume it, inspect minimized
-  outcomes and parser-gap provenance, and request a guarded rollback (planned E19-T3/T4).
+  outcomes and parser-gap provenance, and request a guarded rollback (E19-T3
+  backend interactors; owner HTML controls in E19-T4).
   Detailed batch/source-offset/provider metadata remains owner-only. Public users
   receive only the coarse `ai_assisted` provenance label for displayed offer data.
 
@@ -220,10 +221,10 @@ Not allowed:
 - Reveal a contact through the audit screen.
 - Edit non-coordinate location fields (display name, district, normalized
   address) or apply bulk location changes directly through generic model forms.
-  Planned E19-T2 permits only owner-confirmed, validator-mediated display-name/
-  address/district corrections; planned E19-T3/T4 add missing-only, exact-evidence
-  batch offer autofill. Generic CRUD, overwrites, and unrestricted bulk changes
-  remain forbidden.
+  E19-T2 permits only owner-confirmed, validator-mediated display-name/
+  address/district corrections; E19-T3 adds missing-only, exact-evidence
+  batch offer autofill on the backend. Generic CRUD, overwrites, and unrestricted bulk changes
+  remain forbidden. Owner HTML, public `data_origin`, and badges remain E19-T4.
 - Change immutable usernames.
 - Delete/demote the last owner.
 - Perform generic writes directly from a Starlette Admin `ModelView`.
@@ -238,6 +239,11 @@ Admin actions invoke owner-authorized interactors such as:
 - `GeneratePlaceReview`.
 - `GetPlaceReview`.
 - `ApplyPlaceReview`.
+- `StartOfferEnrichmentBatch`.
+- `ProcessOfferEnrichmentItem`.
+- `PauseOfferEnrichmentBatch`.
+- `ResumeOfferEnrichmentBatch`.
+- `RevertOfferEnrichmentBatch`.
 
 Each mutation creates `AdminAuditEvent` with owner user ID, target user/entity, action, timestamp, request ID, and outcome. It never stores passwords, tokens, or contact values.
 

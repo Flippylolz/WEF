@@ -41,7 +41,7 @@ Every full or sample import produces a machine-readable and human-readable repor
 
 Counts at each stage must reconcile to input records; failures are categorized rather than silently skipped.
 
-## AI enrichment and parser-gap accounting (planned E19)
+## AI enrichment and parser-gap accounting (E19-T3)
 
 An AI-filled field is not ground truth. Batch reports reconcile candidate offers
 and field proposals into applied, no-evidence, conflict, invalid, stale,
@@ -49,8 +49,8 @@ below-quality-threshold, provider-failed, and untouched outcomes. Report metrics
 include field name, parser/model/prompt/schema versions, token/latency totals, and
 source revision/evidence-offset coverage without raw source text or contacts.
 
-Every active AI-filled field is labelled `ai_assisted` in offer presentation and
-has durable current origin plus append-only history. The parser-improvement backlog
+Every active AI-filled field has durable current origin plus append-only history.
+E19-T4 labels those fields `ai_assisted` in offer presentation. The parser-improvement backlog
 is built from reviewed gap records: typed expected value, exact immutable-source
 offsets, and the parser version that missed it. Maintainers must verify candidates
 before adding synthetic/redacted fixtures or parser rules. A later replay records
