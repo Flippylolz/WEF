@@ -22,7 +22,7 @@ new, edited, and deleted channel posts are processed safely without changing pub
 - [Implementation plan](IMPLEMENTATION_PLAN.md): `approved`, revision 5; authorizes E8-T1, E8-T4, E8-T2, E8-T3, and E8-T5.
 - [E8-T1](tasks/E8-T1-confirm-channel-identity-and-access.md): promoted, `in_progress` (production credentials/session and real entity resolution are verified; completion bookkeeping remains separate).
 - [E8-T4](tasks/E8-T4-revalidate-geocoder-for-recurring-ingestion.md): promoted, `done`.
-- [E8-T2](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): promoted, `in_progress` (real authorized backfill is accepted; live media download shipped through PR #243 with production acquisition evidence still B-003).
+- [E8-T2](tasks/E8-T2-implement-secure-telethon-session-and-backfill.md): promoted, `in_progress` (real authorized backfill and live media acquisition accepted through PR #243 deploy; production evidence in [PRODUCTION_EVIDENCE.md](PRODUCTION_EVIDENCE.md)).
 - [E8-T3](tasks/E8-T3-implement-live-new-edit-delete-processing.md): promoted, `in_progress` (real authorized subscription is running; no real passive new/edit/delete callback was observed).
 - [E8-T5](tasks/E8-T5-production-reconciliation-and-worker-alerting.md): promoted, `in_progress` (production gap and outage acceptance are satisfied by E15; real passive events/media remain open upstream).
 - On 2026-08-27 the connected production worker missed Telegram messages `29203`
@@ -80,4 +80,4 @@ None remaining for E8.
 
 ## Lifecycle
 
-Follow the [approval-gated workflow](../../workflow/README.md). Production starts `telegram-worker` with the application. Credentials/session, entity access, gap reconciliation, and outage recovery are verified. B-003 remains narrowly open for real passive new/edit/delete callbacks and live media acquisition.
+Follow the [approval-gated workflow](../../workflow/README.md). Production starts `telegram-worker` with the application. Credentials/session, entity access, gap reconciliation, outage recovery, and live media acquisition are verified. B-003 remains narrowly open for real passive edit/delete callbacks.
