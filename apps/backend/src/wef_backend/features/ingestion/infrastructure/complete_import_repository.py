@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, cast
 from uuid import UUID, uuid4
 
@@ -34,7 +34,6 @@ from wef_backend.features.ingestion.infrastructure.models import (
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
-    from datetime import timedelta
 
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -48,6 +47,11 @@ class CompleteImportLeaseHeldError(RuntimeError):
 
 class StaleCompleteImportLeaseError(RuntimeError):
     """A fenced owner attempted to checkpoint after takeover."""
+
+
+RECURRING_GEOCODE_SOURCE_CHECKSUM = "recurring-live-geocode"
+_RECURRING_GEOCODE_OWNER = "recurring-geocode"
+_RECURRING_GEOCODE_LEASE = timedelta(days=3650)
 
 
 @dataclass(frozen=True, slots=True)
@@ -323,6 +327,61 @@ class SQLAlchemyCompleteImportRepository:
                 .values(status=status, error_code=error_code, completed_at=completed_at),
             )
 
+    async def resolve_source_channel_id(self, channel: SourceIdentity) -> UUID | None:
+        """Return the durable channel id when the source has been persisted."""
+        async with self._session_factory() as session:
+            return await self._channel_id(session, channel)
+
+    async def recurring_geocode_run_id(
+        self,
+        *,
+        source_channel_id: UUID,
+        pipeline_version: str,
+        now: datetime,
+    ) -> UUID:
+        """Ensure one sentinel import run exists for recurring provider attempts."""
+        async with self._session_factory() as session, session.begin():
+            run_id = uuid4()
+            inserted = await session.scalar(
+                insert(CompleteImportRunRow)
+                .values(
+                    id=run_id,
+                    source_channel_id=source_channel_id,
+                    source_checksum=RECURRING_GEOCODE_SOURCE_CHECKSUM,
+                    source_size=0,
+                    pipeline_version=pipeline_version,
+                    status=CompleteImportStatus.RUNNING.value,
+                    stage=CompleteImportStage.GEOCODE.value,
+                    owner_id=_RECURRING_GEOCODE_OWNER,
+                    fencing_token=1,
+                    lease_expires_at=now + _RECURRING_GEOCODE_LEASE,
+                    checkpoint_json={},
+                    counts_json={},
+                    pause_reason=None,
+                    next_eligible_at=None,
+                    started_at=now,
+                    updated_at=now,
+                    finished_at=None,
+                )
+                .on_conflict_do_nothing(
+                    constraint="uq_complete_import_runs_identity",
+                )
+                .returning(CompleteImportRunRow.id),
+            )
+            if inserted is not None:
+                return inserted
+            existing = await session.scalar(
+                select(CompleteImportRunRow.id).where(
+                    CompleteImportRunRow.source_channel_id == source_channel_id,
+                    CompleteImportRunRow.source_checksum == RECURRING_GEOCODE_SOURCE_CHECKSUM,
+                    CompleteImportRunRow.pipeline_version == pipeline_version,
+                ),
+            )
+            if existing is None:
+                message = "recurring geocode run disappeared during ensure"
+                raise RuntimeError(message)
+            return existing
+
     async def pending_locations(self) -> Sequence[LocationWorkItem]:
         """Return address-bearing locations never processed by review policy."""
         async with self._session_factory() as session:
@@ -497,6 +556,7 @@ class SQLAlchemyCompleteImportRepository:
 
 
 __all__ = [
+    "RECURRING_GEOCODE_SOURCE_CHECKSUM",
     "CompleteImportLeaseHeldError",
     "ImportVerification",
     "LocationWorkItem",

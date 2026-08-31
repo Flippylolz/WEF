@@ -41,6 +41,30 @@ class SQLAlchemyPromotePublicCatalogAdapter:
             await session.commit()
             return int(result.rowcount or 0)
 
+    async def promote_map_ready_offers(self) -> int:
+        """Publish needs_review offers whose locations are accepted with a public pin."""
+        async with self._session_factory() as session:
+            result = cast(
+                "CursorResult[Any]",
+                await session.execute(
+                    update(OfferRow)
+                    .where(
+                        OfferRow.visibility == OfferVisibility.NEEDS_REVIEW.value,
+                        OfferRow.parser_version != SYNTHETIC_PARSER_VERSION,
+                        OfferRow.location_id.in_(
+                            select(LocationRow.id).where(
+                                LocationRow.review_status == LocationReviewStatus.ACCEPTED.value,
+                                LocationRow.out_of_scope.is_(False),
+                                LocationRow.point.is_not(None),
+                            ),
+                        ),
+                    )
+                    .values(visibility=OfferVisibility.VISIBLE.value),
+                ),
+            )
+            await session.commit()
+            return int(result.rowcount or 0)
+
     async def hide_synthetic_offers(self) -> int:
         """Hide any remaining synthetic seed offers from public APIs."""
         async with self._session_factory() as session:

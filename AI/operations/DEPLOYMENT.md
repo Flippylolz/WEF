@@ -50,7 +50,7 @@ Production services:
 - `web`: internal port only.
 - `api`: internal port only.
 - `db`: an application-owned PostgreSQL/PostGIS container on the internal network only, with a persistent host-backed volume.
-- `telegram-worker`: one replica. Host env comes from the deploy-managed `production.env` (`WEF_TELEGRAM_API_ID`, `WEF_TELEGRAM_API_HASH`, optional `WEF_TELEGRAM_SESSION` / `WEF_TELEGRAM_PHONE`). Generated sessions persist under `${WEF_ROOT}/secrets/telegram/` (mode 0700). Ordinary production deploys start the worker after API/web/edge; the container healthcheck requires fresh transport, serialized-consumer state, and reconciliation completed within three minutes. It never gates public readiness.
+- `telegram-worker`: one replica. Host env comes from the deploy-managed `production.env` (`WEF_TELEGRAM_API_ID`, `WEF_TELEGRAM_API_HASH`, optional `WEF_TELEGRAM_SESSION` / `WEF_TELEGRAM_PHONE`, plus `WEF_GEOAPIFY_API_KEY` for the supervised `recurring_geocode` loop). Generated sessions persist under `${WEF_ROOT}/secrets/telegram/` (mode 0700). Ordinary production deploys start the worker after API/web/edge; the container healthcheck requires fresh transport, serialized-consumer state, and reconciliation completed within three minutes. The worker geocodes pending live locations every 60 seconds (default), accepts in-scope pending pins, and promotes map-ready offers without gating public readiness.
 
 The importer is a run-to-completion command, not an always-running service. The production Compose project is explicitly named `wef-production`; it does not reuse an existing container, network, volume, database, or Compose project.
 

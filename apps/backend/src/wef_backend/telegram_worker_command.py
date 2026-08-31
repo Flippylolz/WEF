@@ -6,6 +6,7 @@ import asyncio
 import sys
 from contextlib import suppress
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 import structlog
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -52,8 +53,15 @@ from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store 
 )
 from wef_backend.features.ingestion.infrastructure.telethon_client import TelethonLiveClient
 from wef_backend.logging_config import configure_logging, configure_safe_telethon_logging
+from wef_backend.recurring_geocode_worker import (
+    RecurringGeocodeWorker,
+    maintain_recurring_geocode,
+)
 from wef_backend.settings import Settings, load_settings
 from wef_backend.telegram_credentials import secret_text, secrets_from_settings
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger("wef.telegram_worker")
 
@@ -101,6 +109,7 @@ async def _run_connected_worker(  # noqa: PLR0913
     store: SQLAlchemyIngestionPersistence,
     archive: SQLAlchemyRawEventArchive,
     checkpoint_store: TelegramCheckpointStore,
+    session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     """Subscribe and supervise every critical stage after authorization."""
     state = WorkerRuntimeState(release_sha=settings.release_sha)
@@ -120,6 +129,11 @@ async def _run_connected_worker(  # noqa: PLR0913
         client=client,
         processor=processor,
         processing_lock=processing_lock,
+    )
+    geocode_worker = RecurringGeocodeWorker(
+        settings=settings,
+        session_factory=session_factory,
+        channel=identity,
     )
     logger.info(
         "telegram_worker_started",
@@ -198,6 +212,11 @@ async def _run_connected_worker(  # noqa: PLR0913
                     stop=stop,
                     interval=settings.telegram_reconciliation_interval_seconds,
                 ),
+                "recurring_geocode": maintain_recurring_geocode(
+                    geocode_worker,
+                    stop=stop,
+                    interval=settings.telegram_recurring_geocode_interval_seconds,
+                ),
             },
             stop=stop,
         )
@@ -244,6 +263,7 @@ async def run_telegram_worker() -> None:
             store=store,
             archive=SQLAlchemyRawEventArchive(session_factory),
             checkpoint_store=checkpoint_store,
+            session_factory=session_factory,
         )
     finally:
         await client.disconnect()
