@@ -10,13 +10,13 @@ from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
 
-NORMALIZER_VERSION = "warsaw-address-v1"
+NORMALIZER_VERSION = "warsaw-address-v2"
 SCOPE_VERSION = "warsaw-scope-v1"
 REQUEST_VERSION = "forward-geocode-v1"
 REVIEW_POLICY_VERSION = "warsaw-review-v1"
 
 _WHITESPACE = re.compile(r"\s+")
-_PUNCTUATION = re.compile(r"\s*[,;]+\s*")
+_PUNCTUATION = re.compile(r"\s*[,;|]+\s*")
 _STREET_PREFIX = re.compile(
     r"^(?:ul(?:ica)?\.?|вул(?:иця)?\.?|ул(?:ица)?\.?)\s*",
     re.IGNORECASE,
@@ -25,8 +25,15 @@ _STREET_TOKEN = re.compile(
     r"(?<!\w)(?:ulica|aleja|osiedle|plac|улица|ul|al|os|pl|вул|ул)(?!\w)\.?",
     re.IGNORECASE,
 )
+_INLINE_STREET_PREFIX = re.compile(
+    r"(?<!\w)(?:ul(?:ica)?|вул(?:иця)?|ул(?:ица)?)\.?\s+",
+    re.IGNORECASE,
+)
 _AREA_WORD_PREFIX = re.compile(r"^\s*(?:район|district|dzielnica)\s+", re.IGNORECASE)
+_INLINE_AREA_WORD = re.compile(r"(?<!\w)(?:район|district|dzielnica)\s+", re.IGNORECASE)
 _AREA_SUFFIX_PARENTHETICAL = re.compile(r"\s*\([^()]*\)\s*$")
+_INLINE_PARENTHETICAL = re.compile(r"\s*\([^()]*\)")
+_LEADING_DECORATION = re.compile(r"^[\s•·\-\u2013—*]+")
 _ADDRESS_SEGMENT_SPLIT = re.compile(r"[,|]")
 _CITY_NAMES = re.compile(r"\b(?:warszawa|варшава|варшаві|warsaw)\b", re.IGNORECASE)
 _WARSAW_BOUNDS = (20.28, 51.94, 21.37, 52.37)
@@ -221,11 +228,15 @@ def normalize_geocode_query(source: str, district: str | None = None) -> Normali
     """Normalize supported Warsaw forms without replacing the display value."""
     original = source
     value = unicodedata.normalize("NFKC", source).strip()
+    value = _LEADING_DECORATION.sub("", value)
+    value = _INLINE_STREET_PREFIX.sub("ul. ", value)
     value = _STREET_PREFIX.sub("ul. ", value)
+    value = _INLINE_AREA_WORD.sub("", value)
     value = _CITY_NAMES.sub("Warszawa", value)
+    value = _INLINE_PARENTHETICAL.sub("", value)
     value = _PUNCTUATION.sub(", ", value)
     value = _WHITESPACE.sub(" ", value).strip(" ,")
-    normalized_district = canonical_warsaw_district(district)
+    normalized_district = canonical_warsaw_district(district) or warsaw_district_in(original)
     folded = value.casefold()
     if "warszawa" not in folded:
         value = f"{value}, Warszawa"
