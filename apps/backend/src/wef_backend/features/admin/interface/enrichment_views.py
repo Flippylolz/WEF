@@ -44,20 +44,7 @@ def _page(title: str, body: str) -> HTMLResponse:
         f"<!doctype html><html lang='en'><head><meta charset='utf-8'>"
         f"<title>{escape(title)}</title>"
         "<link rel='stylesheet' href='/admin/static/css/admin.css?v=1'>"
-        "<style>"
-        "html{color-scheme:dark}"
-        "body{font-family:var(--wef-font);margin:1rem;"
-        "background:var(--wef-canvas);color:var(--wef-text)}"
-        "table{border-collapse:collapse;width:100%}"
-        "th,td{border:1px solid var(--wef-border);padding:.4rem}"
-        ".warn{background:var(--wef-warning-soft);color:var(--wef-warning);"
-        "border:1px solid var(--wef-warning);padding:.5rem;margin:.5rem 0}"
-        ".admin-actions form{display:inline}"
-        "a{color:var(--wef-focus)}"
-        "button{background:var(--wef-surface-raised);color:var(--wef-text);"
-        "border:1px solid var(--wef-border);border-radius:6px;"
-        "padding:.3rem .75rem}"
-        "</style></head><body>"
+        f"</head><body class='wef-page enrichment-page'>"
         f"<h1>{escape(title)}</h1>"
         f"{body}"
         "<p><a href='/admin/offer-enrichment'>Back to batches</a></p>"
@@ -103,10 +90,10 @@ class OfferEnrichmentAdminView(CustomView):
         body = (
             "<p><a href='/admin/offer-enrichment/preview'>Preview candidates</a> · "
             "<a href='/admin/offer-enrichment/parser-gaps'>Parser-gap report</a></p>"
-            "<table><thead><tr>"
+            "<div class='table-wrap'><table class='data-table'><thead><tr>"
             "<th>Batch</th><th>State</th><th>Scope</th><th>Processed</th>"
             "<th>Applied</th><th>Skipped</th><th>Failed</th><th>Created</th>"
-            f"</tr></thead><tbody>{rows or '<tr><td colspan=8>No batches yet</td></tr>'}</tbody></table>"
+            f"</tr></thead><tbody>{rows or '<tr><td colspan=8>No batches yet</td></tr>'}</tbody></table></div>"
         )
         return _page("Offer enrichment", body)
 
@@ -233,14 +220,14 @@ class OfferEnrichmentAdminView(CustomView):
                 f"Failed {batch.failed_count}</p>"
                 f"<p class='admin-actions'>{controls}</p>"
                 "<h2>Items</h2>"
-                "<table><thead><tr><th>#</th><th>Offer</th><th>State</th><th>Outcome</th>"
-                f"</tr></thead><tbody>{item_rows or '<tr><td colspan=4>No items</td></tr>'}</tbody></table>"
+                "<div class='table-wrap'><table class='data-table'><thead><tr><th>#</th><th>Offer</th><th>State</th><th>Outcome</th>"
+                f"</tr></thead><tbody>{item_rows or '<tr><td colspan=4>No items</td></tr>'}</tbody></table></div>"
                 "<h2>Field events</h2>"
-                "<table><thead><tr><th>Field</th><th>Outcome</th><th>Reason</th><th>Value</th>"
-                f"</tr></thead><tbody>{event_rows or '<tr><td colspan=4>No events</td></tr>'}</tbody></table>"
+                "<div class='table-wrap'><table class='data-table'><thead><tr><th>Field</th><th>Outcome</th><th>Reason</th><th>Value</th>"
+                f"</tr></thead><tbody>{event_rows or '<tr><td colspan=4>No events</td></tr>'}</tbody></table></div>"
                 "<h2>Active AI origins</h2>"
-                "<table><thead><tr><th>Offer</th><th>Field</th><th>State</th><th>Parser</th>"
-                f"</tr></thead><tbody>{origin_rows or '<tr><td colspan=4>None</td></tr>'}</tbody></table>"
+                "<div class='table-wrap'><table class='data-table'><thead><tr><th>Offer</th><th>Field</th><th>State</th><th>Parser</th>"
+                f"</tr></thead><tbody>{origin_rows or '<tr><td colspan=4>None</td></tr>'}</tbody></table></div>"
             )
             return _page("Batch progress", body)
         return RedirectResponse("/admin/offer-enrichment", status_code=303)
@@ -330,10 +317,10 @@ class OfferEnrichmentAdminView(CustomView):
         body = (
             "<p><a href='/admin/offer-enrichment/parser-gaps/export.json'>Export JSON</a> · "
             "<a href='/admin/offer-enrichment/parser-gaps/export.csv'>Export CSV</a></p>"
-            "<table><thead><tr>"
+            "<div class='table-wrap'><table class='data-table'><thead><tr>"
             "<th>Offer</th><th>Field</th><th>Outcome</th><th>Value</th>"
             "<th>Parser</th><th>Model</th><th>Prompt</th><th>Schema</th><th>Offsets</th>"
-            f"</tr></thead><tbody>{rows or '<tr><td colspan=9>No parser-gap events</td></tr>'}</tbody></table>"
+            f"</tr></thead><tbody>{rows or '<tr><td colspan=9>No parser-gap events</td></tr>'}</tbody></table></div>"
         )
         return _page("Parser-gap report", body)
 

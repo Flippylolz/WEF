@@ -1,4 +1,4 @@
-"""E20-T1: the admin console renders with the public dark design tokens."""
+"""E20-T1/T2: the admin console renders with the public dark design tokens."""
 
 from tests.test_admin_api import admin_client
 from wef_backend.features.admin.interface.enrichment_views import _page
@@ -33,16 +33,18 @@ async def test_shared_admin_stylesheet_serves_primer_tokens() -> None:
         assert "--wef-canvas: #0d1117" in sheet.text
         assert "--wef-accent: #3fb950" in sheet.text
         assert '[data-bs-theme="dark"]' in sheet.text
+        assert ".places-tabs" in sheet.text
+        assert ".data-table" in sheet.text
+        assert ".point-picker" in sheet.text
 
 
-def test_enrichment_page_shell_uses_dark_tokens() -> None:
-    """Standalone pages consume the shared tokens with no light leftovers."""
+def test_enrichment_page_shell_uses_shared_layout() -> None:
+    """Standalone pages share the stylesheet with no per-page style blocks."""
     response = _page("Batches", "<p>body</p>")
     body = bytes(response.body).decode()
-    assert "color-scheme:dark" in body
+    assert "class='wef-page enrichment-page'" in body
     assert "css/admin.css" in body
-    assert "background:var(--wef-canvas)" in body
-    assert "color:var(--wef-text)" in body
+    assert "<style>" not in body
     assert "#fff" not in body
     assert "#ddd" not in body
     assert "color-scheme:light" not in body

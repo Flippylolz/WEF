@@ -58,3 +58,335 @@
   --tblr-code-color: var(--wef-text);
   --tblr-table-border-color: var(--wef-border);
 }
+
+/*
+ * E20-T2 layout: shared layout for the shell widgets and the standalone
+ * pages, replacing the former per-page inline <style> blocks. Standalone
+ * page bodies carry `wef-page` plus a page-specific class; shell widgets
+ * use the places/data-table/admin-actions classes in their markup.
+ */
+
+/* --- Standalone page base --- */
+
+.wef-page {
+  background: var(--wef-canvas);
+  color: var(--wef-text);
+  font-family: var(--wef-font);
+}
+
+.review-page,
+.enrichment-page {
+  margin: 1rem;
+}
+
+.wef-page a {
+  color: var(--wef-focus);
+}
+
+.wef-page h1,
+.wef-page h3 {
+  color: var(--wef-text);
+}
+
+.wef-page button {
+  background: var(--wef-surface-raised);
+  color: var(--wef-text);
+  border: 1px solid var(--wef-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+}
+
+.wef-page .muted {
+  color: var(--wef-muted);
+}
+
+.wef-page .error {
+  background: var(--wef-danger-soft);
+  color: var(--wef-danger);
+  border: 1px solid var(--wef-danger);
+  padding: 0.5rem 1rem;
+}
+
+.wef-page .warn {
+  background: var(--wef-warning-soft);
+  color: var(--wef-warning);
+  border: 1px solid var(--wef-warning);
+  padding: 0.5rem;
+}
+
+.wef-page table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.wef-page th,
+.wef-page td {
+  border: 1px solid var(--wef-border);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.review-page table {
+  margin: 1rem 0;
+}
+
+.wef-page blockquote {
+  margin: 0.4rem 0;
+  border-left: 3px solid var(--wef-border);
+  padding-left: 0.5rem;
+  white-space: pre-wrap;
+}
+
+/* --- Set-point page --- */
+
+.point-picker {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.point-picker header {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--wef-border);
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.point-picker main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.point-picker #evidence {
+  width: min(360px, 42vw);
+  overflow: auto;
+  padding: 1rem;
+  border-right: 1px solid var(--wef-border);
+  box-sizing: border-box;
+}
+
+.point-picker #map {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--wef-surface);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.point-picker #map img {
+  position: absolute;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.point-picker #marker,
+.point-picker #ghost {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.point-picker #marker {
+  background: var(--wef-danger);
+  border: 2px solid #fff;
+  box-shadow: 0 0 4px rgb(0 0 0 / 50%);
+  z-index: 6;
+}
+
+.point-picker #ghost {
+  background: var(--wef-focus);
+  border: 2px solid #fff;
+  opacity: 0.7;
+  z-index: 5;
+}
+
+.point-picker .toolbar {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  z-index: 10;
+}
+
+.point-picker .toolbar button {
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.1rem;
+  padding: 0;
+}
+
+.point-picker .tile-error {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  right: 0.5rem;
+  background: var(--wef-warning-soft);
+  color: var(--wef-warning);
+  border: 1px solid var(--wef-warning);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  z-index: 10;
+  border-radius: 4px;
+}
+
+.point-picker form.point {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--wef-border);
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.point-picker form.point input {
+  width: 9.5rem;
+  max-width: 100%;
+  background: var(--wef-surface);
+  border: 1px solid var(--wef-border);
+  color: var(--wef-text);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+}
+
+.point-picker .offer {
+  border: 1px solid var(--wef-border);
+  border-radius: 6px;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+
+.point-picker dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.point-picker dt {
+  font-weight: 600;
+}
+
+.point-picker dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 860px) {
+  .point-picker main {
+    flex-direction: column;
+  }
+
+  .point-picker #evidence {
+    width: auto;
+    max-height: 45vh;
+    border-right: none;
+    border-bottom: 1px solid var(--wef-border);
+  }
+
+  .point-picker #map {
+    min-height: 50vh;
+  }
+
+  .point-picker form.point input {
+    width: 100%;
+  }
+}
+
+/* --- Shell widgets (Users, Locations inside the Tabler card) --- */
+
+.places-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.places-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.4rem;
+}
+
+.places-tabs a {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--wef-border);
+  border-radius: 6px;
+}
+
+.places-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.places-search input[type="search"] {
+  background: var(--wef-surface);
+  border: 1px solid var(--wef-border);
+  color: var(--wef-text);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+}
+
+.places-search button,
+.admin-actions button {
+  background: var(--wef-surface-raised);
+  color: var(--wef-text);
+  border: 1px solid var(--wef-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+}
+
+.places-search input,
+.admin-actions input {
+  background: var(--wef-surface);
+  border: 1px solid var(--wef-border);
+  color: var(--wef-text);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid var(--wef-border);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.admin-actions form {
+  display: contents;
+}
+
+.data-table th {
+  white-space: nowrap;
+}
