@@ -386,7 +386,9 @@ class OfferEnrichmentAdminView(CustomView):
                     str(event.offer_id),
                     event.field_name,
                     event.outcome.value,
-                    event.applied_value if event.applied_value is not None else event.proposed_value,
+                    event.applied_value
+                    if event.applied_value is not None
+                    else event.proposed_value,
                     str(event.source_message_revision_id)
                     if event.source_message_revision_id
                     else "",

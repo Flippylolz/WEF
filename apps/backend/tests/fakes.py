@@ -1003,11 +1003,7 @@ class FakeOfferAiEnrichmentStore:
         *,
         limit: int = 20,
     ) -> tuple[OfferAiEnrichmentBatch, ...]:
-        owned = [
-            batch
-            for batch in self.batches.values()
-            if batch.owner_user_id == owner_id
-        ]
+        owned = [batch for batch in self.batches.values() if batch.owner_user_id == owner_id]
         owned.sort(key=lambda batch: batch.created_at, reverse=True)
         return tuple(owned[:limit])
 

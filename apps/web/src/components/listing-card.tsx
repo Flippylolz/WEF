@@ -92,7 +92,9 @@ export function ListingCard({
             <span className="listing-card-partial">{t("partialData")}</span>
           ) : null}
           {listing.data_origin === "ai_assisted" ? (
-            <span className="listing-card-ai-assisted">{t("aiAssistedData")}</span>
+            <span className="listing-card-ai-assisted">
+              {t("aiAssistedData")}
+            </span>
           ) : null}
         </button>
         {showStar ? (
