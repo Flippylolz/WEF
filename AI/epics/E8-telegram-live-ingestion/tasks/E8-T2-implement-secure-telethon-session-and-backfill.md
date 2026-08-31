@@ -37,8 +37,8 @@ persistence port—without enabling the production worker or changing public con
   `external_message_id` as the live cursor).
 - [x] Live Telethon acceptance against a real authorized session (channel `2180077318`,
   bounded head `29335`, redacted E15 production evidence).
-- [ ] Bounded media download to worker temp then storage (text-first backfill shipped;
-  media bytes remain follow-up within this task or a tight successor).
+- [x] Bounded media download to worker temp then storage through the shared E3 media
+  pipeline (`telethon_live_media`, `LiveMediaPipeline`, worker/backfill wiring).
 
 The real backfill recovered every ID from `29203` through `29335` and repeated without
 canonical changes. The run created no media assets, so media acceptance remains open.

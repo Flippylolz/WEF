@@ -24,6 +24,10 @@ from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
 from wef_backend.features.ingestion.infrastructure.telethon_client import TelethonLiveClient
 from wef_backend.settings import load_settings
 from wef_backend.telegram_credentials import secrets_from_settings
+from wef_backend.telegram_media_wiring import (
+    build_live_media_pipeline,
+    live_media_download_limits,
+)
 
 if TYPE_CHECKING:
     from wef_backend.features.ingestion.application.telegram_live import LiveBackfillResult
@@ -83,9 +87,29 @@ async def run_backfill(
         session_factory,
         field_origin_sync=build_offer_origin_sync(session_factory),
     )
-    client = TelethonLiveClient(secrets)
+    client = TelethonLiveClient(
+        secrets,
+        media_temp_root=settings.telegram_media_temp_path,
+        media_limits=live_media_download_limits(
+            max_bytes=settings.media_max_bytes,
+            timeout_seconds=settings.telegram_media_download_timeout_seconds,
+        ),
+    )
+    media_pipeline = build_live_media_pipeline(
+        session_factory,
+        source_root=settings.telegram_media_temp_path,
+        originals_root=settings.restricted_originals_path,
+        derivatives_root=settings.public_derivatives_path,
+        media_max_bytes=settings.media_max_bytes,
+        media_max_pixels=settings.media_max_pixels,
+        concurrency=settings.telegram_media_download_concurrency,
+    )
     try:
-        return await LiveTelegramBackfill(store=store, client=client)(
+        return await LiveTelegramBackfill(
+            store=store,
+            client=client,
+            media_pipeline=media_pipeline,
+        )(
             LiveBackfillRequest(
                 identity=_identity_from_settings(),
                 resume_after_external_id=resume_after,

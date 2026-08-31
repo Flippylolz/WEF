@@ -23,9 +23,14 @@ from wef_backend.features.ingestion.domain.telegram_secrets import (
     TelegramLoginCodeError,
     TelegramSecretError,
 )
+from wef_backend.features.ingestion.infrastructure.telethon_live_media import (
+    LiveMediaDownloadLimits,
+    download_live_message_media,
+)
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Awaitable, Callable
+    from pathlib import Path
 
     from wef_backend.features.ingestion.domain.telegram_secrets import TelegramWorkerSecrets
 
@@ -38,6 +43,8 @@ class TelethonLiveClient:
         secrets: TelegramWorkerSecrets,
         *,
         sleep: Callable[[float], Awaitable[None]] | None = None,
+        media_temp_root: Path | None = None,
+        media_limits: LiveMediaDownloadLimits | None = None,
     ) -> None:
         """Build a client from worker secrets without echoing session material."""
         # flood_sleep_threshold=0: we own flood waits explicitly.
@@ -48,6 +55,8 @@ class TelethonLiveClient:
             flood_sleep_threshold=0,
         )
         self._sleep = sleep
+        self._media_temp_root = media_temp_root
+        self._media_limits = media_limits
 
     def save_session(self) -> str:
         """Return the current Telethon string session (never log it)."""
@@ -142,8 +151,9 @@ class TelethonLiveClient:
         async def _on_new(event: object) -> None:
             try:
                 message = getattr(event, "message", event)
+                live = await self.enrich_message(message)
                 await queue.put(
-                    new_or_edit_event_from_telethon(message, kind=LiveTelegramEventKind.NEW),
+                    new_or_edit_event_from_telethon(live, kind=LiveTelegramEventKind.NEW),
                 )
             except Exception as error:  # noqa: BLE001
                 await queue.fail(error)
@@ -151,8 +161,9 @@ class TelethonLiveClient:
         async def _on_edit(event: object) -> None:
             try:
                 message = getattr(event, "message", event)
+                live = await self.enrich_message(message)
                 await queue.put(
-                    new_or_edit_event_from_telethon(message, kind=LiveTelegramEventKind.EDIT),
+                    new_or_edit_event_from_telethon(live, kind=LiveTelegramEventKind.EDIT),
                 )
             except Exception as error:  # noqa: BLE001
                 await queue.fail(error)
@@ -172,6 +183,30 @@ class TelethonLiveClient:
         """Block until the Telethon client disconnects."""
         await self._client.run_until_disconnected()
 
+    async def enrich_message(self, message: object) -> LiveTelegramMessage:
+        """Convert one Telethon message and optionally download bounded media."""
+        live = _to_live_message(message)
+        if self._media_temp_root is None or self._media_limits is None:
+            return live
+        if getattr(message, "media", None) is None:
+            return live
+        media = await download_live_message_media(
+            self._client,
+            message,
+            temp_root=self._media_temp_root,
+            limits=self._media_limits,
+        )
+        if not media:
+            return live
+        return LiveTelegramMessage(
+            external_message_id=live.external_message_id,
+            text=live.text,
+            published_at=live.published_at,
+            edited_at=live.edited_at,
+            media_group_id=live.media_group_id,
+            media=media,
+        )
+
     async def iter_messages(
         self,
         *,
@@ -188,7 +223,7 @@ class TelethonLiveClient:
                 reverse=reverse,
                 limit=limit,
             ):
-                yield _to_live_message(message)
+                yield await self.enrich_message(message)
         except FloodWaitError as error:
             await self._wait_flood(error.seconds)
             async for message in self._client.iter_messages(
@@ -197,7 +232,7 @@ class TelethonLiveClient:
                 reverse=reverse,
                 limit=limit,
             ):
-                yield _to_live_message(message)
+                yield await self.enrich_message(message)
 
     async def _wait_flood(self, seconds: int) -> None:
         sleeper = self._sleep or asyncio.sleep

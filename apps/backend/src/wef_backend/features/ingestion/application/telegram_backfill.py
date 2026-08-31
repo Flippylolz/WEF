@@ -23,8 +23,10 @@ from wef_backend.features.ingestion.application.telegram_live import (
 )
 
 if TYPE_CHECKING:
+    from wef_backend.features.ingestion.application.live_media import LiveMediaPipeline
     from wef_backend.features.ingestion.application.persistence import IngestionPersistencePort
     from wef_backend.features.ingestion.application.telegram_live import TelegramLiveClientPort
+    from wef_backend.features.ingestion.domain.model import SourceIdentity
     from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
 
 _DEFAULT_BATCH = 50
@@ -49,6 +51,7 @@ class LiveTelegramBackfill:
 
     store: IngestionPersistencePort
     client: TelegramLiveClientPort
+    media_pipeline: LiveMediaPipeline | None = None
 
     async def __call__(self, request: LiveBackfillRequest) -> LiveBackfillResult:
         """Run a restartable live backfill window under the channel advisory lock."""
@@ -103,6 +106,7 @@ class LiveTelegramBackfill:
                                 checkpoint=checkpoint,
                                 counts=counts,
                             )
+                            await self._process_batch_media(channel, batch)
                             batch.clear()
                     if batch:
                         _, checkpoint, counts, _ = await self.store.persist_batch(
@@ -112,6 +116,7 @@ class LiveTelegramBackfill:
                             checkpoint=checkpoint,
                             counts=counts,
                         )
+                        await self._process_batch_media(channel, batch)
                 except PersistenceBatchError as error:
                     await self.store.finish_run(
                         run_id=run_id,
@@ -144,3 +149,17 @@ class LiveTelegramBackfill:
                 )
         finally:
             await self.client.disconnect()
+
+    async def _process_batch_media(
+        self,
+        channel: SourceIdentity,
+        batch: list[tuple[PersistableMessage, int]],
+    ) -> None:
+        """Store media for one committed batch without blocking checkpoint advancement."""
+        if self.media_pipeline is None:
+            return
+        for persistable, _ in batch:
+            raw = persistable.raw
+            if not raw.media:
+                continue
+            await self.media_pipeline.process_message(channel=channel, raw=raw)

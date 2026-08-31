@@ -9,6 +9,9 @@ from wef_backend.features.ingestion.application.telegram_events import (
     LiveTelegramEvent,
     LiveTelegramEventKind,
 )
+from wef_backend.features.ingestion.application.telegram_live import (
+    LiveTelegramMessage,
+)
 from wef_backend.features.ingestion.infrastructure.telethon_client import _to_live_message
 
 if TYPE_CHECKING:
@@ -16,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def new_or_edit_event_from_telethon(
-    message: object,
+    message: LiveTelegramMessage | object,
     *,
     kind: LiveTelegramEventKind,
     received_at: datetime | None = None,
@@ -25,9 +28,14 @@ def new_or_edit_event_from_telethon(
     if kind not in {LiveTelegramEventKind.NEW, LiveTelegramEventKind.EDIT}:
         message_text = "kind must be new or edit"
         raise ValueError(message_text)
+    live = (
+        message
+        if isinstance(message, LiveTelegramMessage)
+        else _to_live_message(message)
+    )
     return LiveTelegramEvent(
         kind=kind,
-        message=_to_live_message(message),
+        message=live,
         received_at=received_at or datetime.now(UTC),
     )
 

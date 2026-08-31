@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Protocol
 
 from wef_backend.features.ingestion.domain.model import (
+    MediaDescriptor,
     RawMessage,
     SourceIdentity,
     SourcePlatform,
@@ -43,6 +44,7 @@ class LiveTelegramMessage:
     published_at: datetime
     edited_at: datetime | None
     media_group_id: str | None = None
+    media: tuple[MediaDescriptor, ...] = ()
 
 
 class TelegramLiveClientPort(Protocol):
@@ -105,7 +107,28 @@ def live_message_payload(message: LiveTelegramMessage) -> dict[str, object]:
         payload["edited_unixtime"] = str(int(message.edited_at.timestamp()))
     if message.media_group_id is not None:
         payload["media_group_id"] = message.media_group_id
+    if message.media:
+        _apply_primary_media_fields(payload, message.media[0])
     return payload
+
+
+def _apply_primary_media_fields(payload: dict[str, object], descriptor: MediaDescriptor) -> None:
+    """Mirror historical export media keys for the first live descriptor."""
+    if descriptor.kind.value == "photo":
+        payload["photo"] = descriptor.path
+    elif descriptor.kind.value in {"video", "file"}:
+        payload["file"] = descriptor.path
+        payload["media_type"] = "video_file" if descriptor.kind.value == "video" else "file"
+    if descriptor.mime_type is not None:
+        payload["mime_type"] = descriptor.mime_type
+    if descriptor.size_bytes is not None:
+        payload["file_size"] = descriptor.size_bytes
+    if descriptor.width is not None:
+        payload["width"] = descriptor.width
+    if descriptor.height is not None:
+        payload["height"] = descriptor.height
+    if descriptor.duration_seconds is not None:
+        payload["duration_seconds"] = descriptor.duration_seconds
 
 
 def live_message_to_raw(
@@ -129,7 +152,7 @@ def live_message_to_raw(
         text=message.text,
         original_text=freeze_json(message.text),
         text_entities=(),
-        media=(),
+        media=message.media,
         raw_payload=frozen_payload,
         checksum=canonical_json_checksum(payload),
         media_group_id=message.media_group_id,

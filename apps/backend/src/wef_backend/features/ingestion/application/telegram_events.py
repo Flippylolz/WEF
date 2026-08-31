@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
     from uuid import UUID
 
+    from wef_backend.features.ingestion.application.live_media import LiveMediaPipeline
     from wef_backend.features.ingestion.application.persistence import IngestionPersistencePort
     from wef_backend.features.ingestion.application.telegram_live import (
         LiveTelegramMessage,
@@ -207,6 +208,7 @@ class LiveTelegramEventProcessor:
     store: IngestionPersistencePort
     client: TelegramLiveClientPort
     archive: RawEventArchivePort | None = None
+    media_pipeline: LiveMediaPipeline | None = None
 
     @staticmethod
     def _delete_totals(
@@ -354,6 +356,8 @@ class LiveTelegramEventProcessor:
                                 else "processed"
                             ),
                         )
+                    if self.media_pipeline is not None and raw.media:
+                        await self.media_pipeline.process_message(channel=channel, raw=raw)
                     messages_persisted += 1
             except PersistenceBatchError as error:
                 await self.store.finish_run(

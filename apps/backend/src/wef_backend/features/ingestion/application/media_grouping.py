@@ -44,6 +44,35 @@ class _GroupingState:
         self.active_at = published_at
 
 
+@dataclass(slots=True)
+class StatefulMediaGrouper:
+    """Incremental grouping state for live ingestion batches."""
+
+    grouping_version: str = GROUPING_VERSION
+    _state: _GroupingState = field(default_factory=_GroupingState)
+
+    def ingest(self, item: GroupingInput) -> tuple[MediaDisposition, ...]:
+        """Associate one chronological message and advance internal state."""
+        if not self.grouping_version:
+            error = "grouping version must not be empty"
+            raise ValueError(error)
+        message = item.message
+        _validate_chronology(self._state, message)
+        if message.message_type == "service":
+            self._state.clear_active()
+            dispositions = tuple(
+                _unassociated(message, UnassociatedMediaReason.SERVICE_BOUNDARY),
+            )
+        elif item.candidate.is_candidate:
+            dispositions = tuple(_candidate_media(message, self._state, self.grouping_version))
+        else:
+            dispositions = tuple(
+                _non_candidate_media(message, self._state, self.grouping_version),
+            )
+        self._state.last_seen_at = message.published_at
+        return dispositions
+
+
 def group_media(
     records: Iterable[GroupingInput],
     *,
@@ -53,18 +82,9 @@ def group_media(
     if not grouping_version:
         error = "grouping version must not be empty"
         raise ValueError(error)
-    state = _GroupingState()
+    grouper = StatefulMediaGrouper(grouping_version=grouping_version)
     for item in records:
-        message = item.message
-        _validate_chronology(state, message)
-        if message.message_type == "service":
-            state.clear_active()
-            yield from _unassociated(message, UnassociatedMediaReason.SERVICE_BOUNDARY)
-        elif item.candidate.is_candidate:
-            yield from _candidate_media(message, state, grouping_version)
-        else:
-            yield from _non_candidate_media(message, state, grouping_version)
-        state.last_seen_at = message.published_at
+        yield from grouper.ingest(item)
 
 
 def _validate_chronology(state: _GroupingState, message: RawMessage) -> None:
