@@ -44,3 +44,15 @@ new-message callbacks; those remain under B-003.
 - Closing B-003 still requires a safely observable edit/delete sequence (organic or
   explicitly coordinated). Do not create or alter source-channel posts without separate
   authority. When an event occurs, follow [B003 observation runbook](B003_OBSERVATION_RUNBOOK.md).
+
+## Passive edit/delete watch (ongoing)
+
+- Watch started: 2026-08-31 UTC after deploy `ab4f17aba120138de6e7a353c78202601521047f`
+  (PR #250 passive-event monitor).
+- NUC cron polls `check_telegram_passive_events.py` every 15 minutes via
+  `releases/current` and appends to `/home/nuc/wef/state/passive-event-check.log`.
+- Manual probe at `2026-08-31T18:17Z`: worker release `ab4f17a`, remote/local head
+  `29434`, transport connected, consumer running, `last_event_received_at` null,
+  monitor exit `0`.
+- B-003 closure trigger: monitor exit `2` or non-null `last_event_received_at` plus
+  runbook capture steps for edit/delete semantics.
