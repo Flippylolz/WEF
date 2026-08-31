@@ -27,10 +27,8 @@ applies no filter logic of its own.
 
 - The owner selected E17 on 2026-08-29 after PR #197 fixed the immediate
   "Unknown location" defect and exposed the structural gaps this epic closes.
-- Promoted tasks are expected to be `P1`: required for a safe public production
-  launch state, not an active outage.
-- E17 takes precedence over ordinary feature work until its production completion
-  gate in E17-T6 is satisfied.
+- Promoted tasks were `P1`: required for a safe public production launch state,
+  not an active outage.
 
 ## Completion state (2026-08-30)
 
@@ -84,12 +82,11 @@ promoted (Release and deploy production run 33280067325). See
 
 ## Workspace state
 
+- Epic workspace status: `done`.
 - [Spike](SPIKE.md): revision 1, owner-approved 2026-08-29.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, owner-approved
   2026-08-29.
 - [E17-T1](tasks/E17-T1-raw-event-archive-and-background-processing.md) through
   [E17-T6](tasks/E17-T6-owner-backup-replay-and-production-promotion.md): promoted
-  2026-08-29; `tasks/` is the single authoritative location (no `proposed-tasks/`
-  remains).
-- Completion gate: epic becomes `done` only through E17-T6's owner-supplied backup
-  replay and production promotion evidence.
+  2026-08-29 and completed through green-CI PRs #203/#208/#200/#201/#209/#211;
+  `tasks/` is the single authoritative location (no `proposed-tasks/` remains).

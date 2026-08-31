@@ -350,6 +350,7 @@ This append-only log records choices made while the owner delegated overnight MV
 - Scope boundary: this decision authorizes task refinement, promotion, and implementation planning only. It does not authorize application code, tests, dependencies, migrations, infrastructure, deployment, production mutation, or recovery operations.
 - Recovery boundary: E14-T9 remains proposed and non-actionable while ADR-015 and E7-T5 defer off-host backups; a later owner decision must define that recovery scope before promotion.
 - Rationale: E14 is the selected unfinished epic other than E17, its research-only spike is complete, and the owner supplied the exact revision-specific approval required by the workflow.
+- Update 2026-08-30: E17 completed through E17-T6; E14 remains the selected unfinished M5 epic awaiting implementation-plan approval.
 - Reversal: invalidate the spike and downstream planning artifacts if the owner withdraws approval or new evidence crosses a spike invalidation trigger.
 
 ## AD-042: Approve E19 spike revision 4
