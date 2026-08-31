@@ -134,8 +134,61 @@ async def test_get_offer_detail_decorates_summary_fields() -> None:
     )
     assert detail is not None
     assert detail.display_name == "unit · secondary"
+    assert detail.data_origin == "parser"
     assert detail.data_confidence.value == "complete"
     assert detail.public_source_text == "Masked public text only."
     assert detail.development is not None
     assert detail.media[0].thumbnail_url is not None
     assert detail.media[0].thumbnail_url.startswith("/media/")
+
+
+async def test_get_offer_detail_marks_active_ai_origin() -> None:
+    """Expose ai_assisted when persistence reports an active AI-origin field."""
+
+    class FakeOfferDetailQuery:
+        async def query_offer_detail(self, offer_id: UUID) -> OfferDetailRecord | None:
+            del offer_id
+            return OfferDetailRecord(
+                id=UUID("20000000-0000-4000-8000-000000000002"),
+                content_type=ContentType.UNIT,
+                market_type=MarketType.SECONDARY,
+                published_at=datetime(2026, 7, 18, 9, 30, tzinfo=UTC),
+                currency="PLN",
+                price_min_minor=105_000_000,
+                price_max_minor=105_000_000,
+                parking_price_min_minor=None,
+                parking_price_max_minor=None,
+                parking_included_in_price=False,
+                storage_price_min_minor=None,
+                storage_price_max_minor=None,
+                storage_included_in_price=False,
+                area_min_sqm=Decimal("48.20"),
+                area_max_sqm=Decimal("48.20"),
+                rooms_min=2,
+                rooms_max=2,
+                floor_label="4",
+                delivery_label=None,
+                public_source_text="Masked public text only.",
+                parser_version="synthetic-m1-v1",
+                location=LocationSummaryDTO(
+                    id=UUID("10000000-0000-4000-8000-000000000001"),
+                    display_name="Synthetic Central Residence",
+                    display_address="Synthetic address 1",
+                    district="srodmiescie",
+                    coordinate_precision="building",
+                    confidence=ConfidenceIndicator.HIGH,
+                ),
+                development=None,
+                field_confidence=(),
+                media=(),
+                source_message_id=None,
+                verified_source_url=None,
+                source_history=(),
+                has_active_ai_origin=True,
+            )
+
+    detail = await GetOfferDetail(FakeOfferDetailQuery())(
+        UUID("20000000-0000-4000-8000-000000000002"),
+    )
+    assert detail is not None
+    assert detail.data_origin == "ai_assisted"

@@ -23,6 +23,7 @@ function listingFixture(
     market_type: "primary",
     display_name: "development · primary",
     data_confidence: "complete",
+    data_origin: "parser",
     published_at: "2026-08-01T10:00:00Z",
     currency: "PLN",
     price_min_minor: 80_000_000,

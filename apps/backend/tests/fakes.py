@@ -64,6 +64,12 @@ from wef_backend.features.admin.application.offer_enrichment import (
     offer_input_fingerprint,
     value_fingerprint,
 )
+from wef_backend.features.admin.application.offer_enrichment_reporting import (
+    GetOfferEnrichmentBatchDetail,
+    ListOfferEnrichmentBatches,
+    ListParserGapEvents,
+    PreviewOfferEnrichmentBatch,
+)
 from wef_backend.features.catalog.application import (
     FacetSnapshot,
     ListingBrowseRecord,
@@ -991,6 +997,39 @@ class FakeOfferAiEnrichmentStore:
     async def get_batch(self, batch_id: UUID) -> OfferAiEnrichmentBatch | None:
         return self.batches.get(batch_id)
 
+    async def list_owner_batches(
+        self,
+        owner_id: UUID,
+        *,
+        limit: int = 20,
+    ) -> tuple[OfferAiEnrichmentBatch, ...]:
+        owned = [
+            batch
+            for batch in self.batches.values()
+            if batch.owner_user_id == owner_id
+        ]
+        owned.sort(key=lambda batch: batch.created_at, reverse=True)
+        return tuple(owned[:limit])
+
+    async def list_batch_items(self, batch_id: UUID) -> tuple[OfferAiEnrichmentItem, ...]:
+        items = [item for item in self.items.values() if item.batch_id == batch_id]
+        items.sort(key=lambda item: item.ordinal)
+        return tuple(items)
+
+    async def list_batch_field_events(self, batch_id: UUID) -> tuple[OfferAiFieldEvent, ...]:
+        return tuple(event for event in self.events if event.batch_id == batch_id)
+
+    async def list_owner_parser_gap_events(
+        self,
+        owner_id: UUID,
+        *,
+        limit: int = 500,
+    ) -> tuple[OfferAiFieldEvent, ...]:
+        owned = {batch.id for batch in self.batches.values() if batch.owner_user_id == owner_id}
+        events = [event for event in self.events if event.batch_id in owned]
+        events.sort(key=lambda event: event.created_at, reverse=True)
+        return tuple(events[:limit])
+
     async def set_batch_state(
         self,
         batch_id: UUID,
@@ -1309,6 +1348,10 @@ def build_admin_service(
             audit_store,
             time_source,
         ),
+        preview_offer_enrichment=PreviewOfferEnrichmentBatch(offer_enrichment, ai_runtime),
+        list_offer_enrichment_batches=ListOfferEnrichmentBatches(offer_enrichment),
+        get_offer_enrichment_batch=GetOfferEnrichmentBatchDetail(offer_enrichment),
+        list_parser_gap_events=ListParserGapEvents(offer_enrichment),
         ai_curation_enabled=ai_runtime.active,
     )
 

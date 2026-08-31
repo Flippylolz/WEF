@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E19-T4
 epic: E19
 title: "AI enrichment controls, labels, and parser-gap reporting"
-status: draft
+status: in_progress
 revision: 2
 priority: P0
 size: M
@@ -35,16 +35,18 @@ implementation_gate:
   verified_by: "Cursor Agent (AD-043)"
   verified_at: "2026-08-30T21:36:00Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Cursor Agent (E19-T4)"
+  verified_at: "2026-08-31T05:45:00Z"
+  evidence:
+    - "E19-T2 done through PR #227"
+    - "E19-T3 done through PR #228 (45094ba)"
 branch:
   required: true
-  name: null
+  name: feat/E19-T4-ai-enrichment-controls-and-reporting
   task_id: E19-T4
   one_task_only: true
-  created_at: null
+  created_at: "2026-08-31T05:45:00Z"
   pull_request: null
 completion:
   completed_by: null

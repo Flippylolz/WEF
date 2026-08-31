@@ -219,6 +219,75 @@ class SQLAlchemyOfferAiEnrichmentStore:
                 return None
             return _batch_from_row(row)
 
+    async def list_owner_batches(
+        self,
+        owner_id: UUID,
+        *,
+        limit: int = 20,
+    ) -> tuple[OfferAiEnrichmentBatch, ...]:
+        """Return recent enrichment batches for one owner."""
+        async with self._session_factory() as session:
+            stmt = (
+                select(OfferAiEnrichmentBatchRow)
+                .where(OfferAiEnrichmentBatchRow.owner_user_id == owner_id)
+                .order_by(OfferAiEnrichmentBatchRow.created_at.desc())
+                .limit(limit)
+            )
+            rows = await session.scalars(stmt)
+        return tuple(_batch_from_row(row) for row in rows)
+
+    async def list_batch_items(self, batch_id: UUID) -> tuple[OfferAiEnrichmentItem, ...]:
+        """Return all items for one batch in ordinal order."""
+        async with self._session_factory() as session:
+            stmt = (
+                select(OfferAiEnrichmentItemRow)
+                .where(OfferAiEnrichmentItemRow.batch_id == batch_id)
+                .order_by(OfferAiEnrichmentItemRow.ordinal)
+            )
+            rows = await session.scalars(stmt)
+        return tuple(_item_from_row(row) for row in rows)
+
+    async def list_batch_field_events(self, batch_id: UUID) -> tuple[OfferAiFieldEvent, ...]:
+        """Return append-only field events for one batch."""
+        async with self._session_factory() as session:
+            stmt = (
+                select(OfferAiFieldEventRow)
+                .where(OfferAiFieldEventRow.batch_id == batch_id)
+                .order_by(OfferAiFieldEventRow.created_at, OfferAiFieldEventRow.id)
+            )
+            rows = await session.scalars(stmt)
+        return tuple(_event_from_row(row) for row in rows)
+
+    async def list_owner_parser_gap_events(
+        self,
+        owner_id: UUID,
+        *,
+        limit: int = 500,
+    ) -> tuple[OfferAiFieldEvent, ...]:
+        """Return redacted parser-gap events across an owner's batches."""
+        gap_outcomes = (
+            FieldEventOutcome.APPLIED.value,
+            FieldEventOutcome.PARSER_CONFLICTING.value,
+            FieldEventOutcome.SKIPPED.value,
+            FieldEventOutcome.PROPOSED.value,
+        )
+        async with self._session_factory() as session:
+            stmt = (
+                select(OfferAiFieldEventRow)
+                .join(
+                    OfferAiEnrichmentBatchRow,
+                    OfferAiEnrichmentBatchRow.id == OfferAiFieldEventRow.batch_id,
+                )
+                .where(
+                    OfferAiEnrichmentBatchRow.owner_user_id == owner_id,
+                    OfferAiFieldEventRow.outcome.in_(gap_outcomes),
+                )
+                .order_by(OfferAiFieldEventRow.created_at.desc(), OfferAiFieldEventRow.id.desc())
+                .limit(limit)
+            )
+            rows = await session.scalars(stmt)
+        return tuple(_event_from_row(row) for row in rows)
+
     async def set_batch_state(
         self,
         batch_id: UUID,

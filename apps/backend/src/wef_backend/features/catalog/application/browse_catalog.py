@@ -11,6 +11,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
 
+from wef_backend.features.catalog.application.data_origin import DataOrigin, derive_data_origin
 from wef_backend.features.catalog.application.map_query import ConfidenceIndicator
 
 if TYPE_CHECKING:
@@ -213,6 +214,7 @@ class OfferBrowseRecord:
     floor_label: str | None
     delivery_label: str | None
     matches_filters: bool
+    has_active_ai_origin: bool = False
 
     @property
     def match_rank(self) -> int:
@@ -272,6 +274,7 @@ class OfferSummaryDTO:
     floor_label: str | None
     delivery_label: str | None
     matches_filters: bool
+    data_origin: DataOrigin
 
 
 @dataclass(frozen=True, slots=True)
@@ -368,6 +371,7 @@ class BrowseLocationOffers:
             floor_label=record.floor_label,
             delivery_label=record.delivery_label,
             matches_filters=record.matches_filters,
+            data_origin=derive_data_origin(has_active_ai_origin=record.has_active_ai_origin),
         )
 
 
@@ -409,6 +413,7 @@ class ListingBrowseRecord:
     floor_label: str | None
     delivery_label: str | None
     location: ListingLocationContext
+    has_active_ai_origin: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -473,6 +478,7 @@ class ListingSummaryDTO:
     floor_label: str | None
     delivery_label: str | None
     location: ListingLocationDTO
+    data_origin: DataOrigin
 
 
 @dataclass(frozen=True, slots=True)
@@ -580,4 +586,5 @@ class BrowseViewportListings:
                 longitude=record.location.longitude,
                 latitude=record.location.latitude,
             ),
+            data_origin=derive_data_origin(has_active_ai_origin=record.has_active_ai_origin),
         )

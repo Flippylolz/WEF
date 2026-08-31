@@ -309,6 +309,30 @@ old AI origin stale and clears the canonical field only when it still matches th
 AI-applied value; a mismatch becomes an owner-review conflict. Stale AI values are
 never served.
 
+### Owner enrichment controls (E19-T4)
+
+Owner-only HTML at `/admin/offer-enrichment` wraps the E19-T3 interactors:
+
+- **Preview** lists the immutable missing-field cohort, queue depth, and free-tier
+  pacing estimate. **Start batch** is the only confirmation before eligible fields
+  are written automatically.
+- **Batch detail** shows processed/applied/skipped/failed counts, item outcomes,
+  active AI origins, and POST/303 controls to process the next item, pause, resume,
+  or revert still-matching applied values.
+- **Parser-gap report** at `/admin/offer-enrichment/parser-gaps` groups redacted
+  field events by offer, field, parser version, and model/prompt/schema versions.
+  JSON/CSV export includes typed values and source offsets only—never raw source
+  text, contacts, prompts, or provider bodies.
+
+Activation requires `WEF_AI_CURATION_ENABLED=true`, a Groq API secret, verified Zero
+Data Retention, and the exact approved model gate. When the flag or gate is
+incomplete, the console shows a disable notice and public users continue to receive
+`data_origin="parser"` unless an active AI origin already exists. Disabling the
+feature stops new batches but does not delete append-only provenance rows; public
+badges disappear when no active AI origin remains on displayed fields. Roll back
+applied values through the batch revert control or by redeploying a prior image;
+provenance tables are retained for audit either way.
+
 ## Historical import runbook
 
 1. Verify free disk space for database, selected media, and temporary derivatives.
