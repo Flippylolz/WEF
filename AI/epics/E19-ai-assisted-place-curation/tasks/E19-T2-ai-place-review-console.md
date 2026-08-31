@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E19-T2
 epic: E19
 title: "Owner AI place-review console and production controls"
-status: in_progress
+status: done
 revision: 3
 priority: P0
 size: M
@@ -47,10 +47,12 @@ branch:
   created_at: "2026-08-30T23:20:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/227"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (owner-directed E19 mission under AD-042/AD-043)"
+  completed_at: "2026-08-30T23:45:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/227"
+  evidence:
+    - "Merged as d8673dc on main through https://github.com/Flippylolz/WEF/pull/227."
+    - "Owner Review with AI console on /admin/places with generate/apply POST flows, escaped diffs, and admin HTTP tests."
 invalidation:
   invalidated_by: null
   invalidated_at: null

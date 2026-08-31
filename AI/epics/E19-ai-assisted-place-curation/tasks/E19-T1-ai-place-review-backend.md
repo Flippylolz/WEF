@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E19-T1
 epic: E19
 title: "Groq AI foundation and guarded place-review backend"
-status: in_progress
+status: done
 revision: 4
 priority: P0
 size: L
@@ -48,10 +48,12 @@ branch:
   created_at: "2026-08-30T21:43:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/226"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (owner-directed E19 mission under AD-042/AD-043)"
+  completed_at: "2026-08-30T23:05:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/226"
+  evidence:
+    - "Merged as 1120312 on main through https://github.com/Flippylolz/WEF/pull/226."
+    - "Groq adapter, place_ai_review_runs migration, masked source reader, and guarded generate/apply interactors with unit and PostGIS integration coverage."
 invalidation:
   invalidated_by: null
   invalidated_at: null
