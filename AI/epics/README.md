@@ -225,7 +225,7 @@ The workflow's [expanded definition of done](../workflow/DEFINITION_OF_DONE.md) 
 - WCAG 2.2 AA public flows: E5-T4, E6-T1.
 - Matching/non-matching related-offer disclosure: E4-T2, E5-T3.
 - Shared Nginx/Certbot TLS for WEF while preserving AI Forecast on `:3000`: E7-T8 through E7-T10.
-- Anonymous browsing plus username/password registration, owner administration, and audited contact reveal: E6-T4 through E6-T7, E7-T10, E7-T7.
+- Anonymous browsing plus username/password registration, owner administration, and audited contact reveal: E6-T4 through E6-T7, E7-T10, E7-T7, E20-T1, E20-T2 (owner console visual alignment and layout repairs).
 - English-first i18n-keyed interface: E6-T6.
 - Verified Telegram links: E4-T3, E5-T3, then E8-T1 for live data.
 - Import traceability and failure accounting: E2-T4, E3-T2, E3-T5.
