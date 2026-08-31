@@ -6,6 +6,7 @@ This domain owns historical and live source adapters, the canonical parsing/norm
 
 - [Ingestion pipeline](PIPELINE.md) — historical import, shared canonical pipeline, reporting, review, and future Telethon adapter.
 - [Geocoding](GEOCODING.md) — provider options, Warsaw/Poland constraints, caching, review, and provider-selection gates.
+- [Ungeocoded backlog and AI-assisted recovery](UNGEOCODED_BACKLOG_AND_AI_RECOVERY.md) — Groq enablement, place-review vs offer-enrichment, and clearing remaining ungeocoded pins.
 
 ## Invariants
 
