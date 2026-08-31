@@ -70,6 +70,11 @@ async def test_process_once_defers_until_next_utc_day_on_budget_error(
         "wef_backend.recurring_geocode_worker.ResolveGeocode",
         lambda *_args, **_kwargs: _ResolverRaisesBudget(),
     )
+
+    async def _noop_refresh(_self: RecurringGeocodeWorker) -> tuple[int, int]:
+        return 0, 0
+
+    monkeypatch.setattr(RecurringGeocodeWorker, "_refresh_live_catalog", _noop_refresh)
     worker = RecurringGeocodeWorker(
         settings=Settings(geoapify_api_key=_secret("test-key")),
         session_factory=object(),  # type: ignore[arg-type]
@@ -82,6 +87,34 @@ async def test_process_once_defers_until_next_utc_day_on_budget_error(
     second = await worker.process_once()
     assert second.skipped
     assert second.processed == 0
+
+
+@pytest.mark.asyncio
+async def test_process_once_refreshes_catalog_when_queue_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_repo = _FakeRepository(channel_id=uuid4(), pending=())
+    monkeypatch.setattr(
+        "wef_backend.recurring_geocode_worker.SQLAlchemyCompleteImportRepository",
+        lambda _factory: fake_repo,
+    )
+    refresh_calls: list[int] = []
+
+    async def _refresh(_self: RecurringGeocodeWorker) -> tuple[int, int]:
+        refresh_calls.append(1)
+        return 0, 1
+
+    monkeypatch.setattr(RecurringGeocodeWorker, "_refresh_live_catalog", _refresh)
+    worker = RecurringGeocodeWorker(
+        settings=Settings(geoapify_api_key=_secret("test-key")),
+        session_factory=object(),  # type: ignore[arg-type]
+        channel=default_live_channel_identity(),
+    )
+
+    result = await worker.process_once()
+    assert result.processed == 0
+    assert result.offers_promoted == 1
+    assert refresh_calls == [1]
 
 
 @pytest.mark.asyncio
