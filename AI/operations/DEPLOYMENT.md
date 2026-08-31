@@ -322,9 +322,14 @@ Activation (all required; fail closed otherwise):
    in git.
 3. Keep `WEF_GROQ_MODEL=openai/gpt-oss-20b` (exact allowlist).
 4. Set `WEF_AI_CURATION_ENABLED=true` last.
+5. Attach the **`api` service to `provider-egress`** in production Compose (merged
+   #241). Without it, Groq HTTPS/DNS from `api` fails even when secrets are present.
 
 Until those gates are complete, `/admin/places` omits **Review with AI**. Existing
 location administration continues.
+
+For clearing the historical `ungeocoded` backlog with place review, see
+[Ungeocoded backlog and AI-assisted recovery](../ingestion/UNGEOCODED_BACKLOG_AND_AI_RECOVERY.md).
 
 Smoke after a release that includes the console (do not mutate real offers):
 
