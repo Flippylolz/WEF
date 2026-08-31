@@ -82,7 +82,6 @@ async def _prepare() -> DatabaseResources:
                 "DELETE FROM offer_sources",
                 "DELETE FROM offers",
                 "DELETE FROM developments",
-                "UPDATE source_messages SET current_revision_id = NULL",
                 "DELETE FROM source_messages",
                 "DELETE FROM ingest_runs",
                 "UPDATE locations SET selected_geocode_result_id = NULL",

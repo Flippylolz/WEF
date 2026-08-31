@@ -208,8 +208,6 @@ async def _purge() -> None:
                 "DELETE FROM offer_sources",
                 "DELETE FROM offers",
                 "DELETE FROM developments",
-                "UPDATE source_messages SET current_revision_id = NULL",
-                "DELETE FROM source_message_revisions",
                 "DELETE FROM source_messages",
                 "DELETE FROM ingest_runs",
                 "DELETE FROM source_channels",
