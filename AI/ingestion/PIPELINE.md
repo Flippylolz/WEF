@@ -289,7 +289,7 @@ Commit only reviewed synthetic/redacted fixtures:
 
 Golden outputs include source identity, parsed typed values, confidence/reasons, normalized location, and media associations.
 
-### AI parser-gap feedback (planned E19)
+### AI parser-gap feedback (E19-T3)
 
 Owner-started AI offer autofill never mutates parser provenance in
 `OfferSource.extraction_json`. Each applied or rejected candidate records a typed

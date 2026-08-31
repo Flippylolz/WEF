@@ -200,6 +200,11 @@ async def _purge() -> None:
     try:
         async with database.session_factory() as session:
             for statement in (
+                "DELETE FROM offer_field_origins",
+                "DELETE FROM offer_ai_field_events",
+                "DELETE FROM offer_ai_enrichment_items",
+                "DELETE FROM offer_ai_enrichment_batches",
+                "DELETE FROM place_ai_review_runs",
                 "DELETE FROM offer_sources",
                 "DELETE FROM offers",
                 "DELETE FROM developments",

@@ -66,6 +66,10 @@ async def _prepare() -> DatabaseResources:
     async with database.session_factory() as session:
         for statement in (
             "DELETE FROM place_ai_review_runs",
+            "DELETE FROM offer_field_origins",
+            "DELETE FROM offer_ai_field_events",
+            "DELETE FROM offer_ai_enrichment_items",
+            "DELETE FROM offer_ai_enrichment_batches",
             "DELETE FROM location_geocode_selections",
             "DELETE FROM admin_audit_events",
             "DELETE FROM offer_sources",

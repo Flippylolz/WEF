@@ -21,16 +21,22 @@ from wef_backend.features.admin.application import (
     ListAdminAudits,
     ListLocations,
     ListRevealAudits,
+    PauseOfferEnrichmentBatch,
+    ProcessOfferEnrichmentItem,
     ReactivateUser,
     RejectPlace,
+    ResumeOfferEnrichmentBatch,
+    RevertOfferEnrichmentBatch,
     RevokeUserSessions,
     SetPlacePoint,
+    StartOfferEnrichmentBatch,
     UnresolvePlace,
 )
 from wef_backend.features.admin.application.ai_review import AiCurationRuntime
 from wef_backend.features.admin.infrastructure import (
     SQLAlchemyAdminAuditStore,
     SQLAlchemyLocationAdminStore,
+    SQLAlchemyOfferAiEnrichmentStore,
     SQLAlchemyPlaceAiReviewStore,
     SQLAlchemyRevealAuditReader,
 )
@@ -151,6 +157,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
     admin_audit_store = SQLAlchemyAdminAuditStore(database.session_factory)
     location_admin_store = SQLAlchemyLocationAdminStore(database.session_factory)
     place_ai_review_store = SQLAlchemyPlaceAiReviewStore(database.session_factory)
+    offer_ai_enrichment_store = SQLAlchemyOfferAiEnrichmentStore(database.session_factory)
     reveal_audit_reader = SQLAlchemyRevealAuditReader(database.session_factory)
     admin_secret = (
         runtime_settings.admin_session_secret.get_secret_value()
@@ -186,6 +193,33 @@ def build_services(settings: Settings | None = None) -> AppServices:
         ai_runtime,
     )
     get_place_review = GetPlaceReview(place_ai_review_store)
+    start_offer_enrichment = StartOfferEnrichmentBatch(
+        offer_ai_enrichment_store,
+        admin_audit_store,
+        clock,
+        ai_runtime,
+    )
+    process_offer_enrichment = ProcessOfferEnrichmentItem(
+        offer_ai_enrichment_store,
+        groq_provider,
+        admin_audit_store,
+        clock,
+        ai_runtime,
+        reviews=place_ai_review_store,
+    )
+    pause_offer_enrichment = PauseOfferEnrichmentBatch(
+        offer_ai_enrichment_store,
+        admin_audit_store,
+    )
+    resume_offer_enrichment = ResumeOfferEnrichmentBatch(
+        offer_ai_enrichment_store,
+        admin_audit_store,
+    )
+    revert_offer_enrichment = RevertOfferEnrichmentBatch(
+        offer_ai_enrichment_store,
+        admin_audit_store,
+        clock,
+    )
     if runtime_settings.env == "production" and runtime_settings.admin_session_secret is None:
         msg = "WEF_ADMIN_SESSION_SECRET is required in production"
         raise RuntimeError(msg)
@@ -287,6 +321,11 @@ def build_services(settings: Settings | None = None) -> AppServices:
             generate_place_review=generate_place_review,
             apply_place_review=apply_place_review,
             get_place_review=get_place_review,
+            start_offer_enrichment=start_offer_enrichment,
+            process_offer_enrichment=process_offer_enrichment,
+            pause_offer_enrichment=pause_offer_enrichment,
+            resume_offer_enrichment=resume_offer_enrichment,
+            revert_offer_enrichment=revert_offer_enrichment,
             ai_curation_enabled=ai_runtime.active,
         ),
         auth_cookie_secure=runtime_settings.env == "production",

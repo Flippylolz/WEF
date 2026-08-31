@@ -41,6 +41,29 @@ from wef_backend.features.admin.application.ai_review import (
     SourceRevisionEvidence,
     StructuredCompletion,
 )
+from wef_backend.features.admin.application.offer_enrichment import (
+    BatchState,
+    FieldEventOutcome,
+    ItemOutcome,
+    ItemState,
+    OfferAiEnrichmentBatch,
+    OfferAiEnrichmentItem,
+    OfferAiFieldEvent,
+    OfferEnrichmentSnapshot,
+    OfferFieldOrigin,
+    OriginKind,
+    OriginState,
+    PauseOfferEnrichmentBatch,
+    ProcessOfferEnrichmentItem,
+    ResumeOfferEnrichmentBatch,
+    RevertOfferEnrichmentBatch,
+    StartOfferEnrichmentBatch,
+    current_field_value,
+    is_missing,
+    missing_fields,
+    offer_input_fingerprint,
+    value_fingerprint,
+)
 from wef_backend.features.catalog.application import (
     FacetSnapshot,
     ListingBrowseRecord,
@@ -907,6 +930,307 @@ class FakePlaceAiReviewStore:
         return AiApplyStatus.APPLIED
 
 
+def _offer_with(snapshot: OfferEnrichmentSnapshot, **changes: object) -> OfferEnrichmentSnapshot:
+    return replace(snapshot, **changes)  # type: ignore[arg-type]
+
+
+@dataclass
+class FakeOfferAiEnrichmentStore:
+    """In-memory enrichment persistence for interactor tests."""
+
+    snapshots: dict[UUID, OfferEnrichmentSnapshot] = field(default_factory=dict)
+    sources: dict[UUID, tuple[SourceRevisionEvidence, ...]] = field(default_factory=dict)
+    batches: dict[UUID, OfferAiEnrichmentBatch] = field(default_factory=dict)
+    items: dict[UUID, OfferAiEnrichmentItem] = field(default_factory=dict)
+    events: list[OfferAiFieldEvent] = field(default_factory=list)
+    origins: dict[tuple[UUID, str], OfferFieldOrigin] = field(default_factory=dict)
+
+    async def count_owner_queued_items(self, owner_id: UUID) -> int:
+        open_ids = {
+            batch.id
+            for batch in self.batches.values()
+            if batch.owner_user_id == owner_id
+            and batch.state in {BatchState.QUEUED, BatchState.RUNNING, BatchState.PAUSED}
+        }
+        return sum(1 for item in self.items.values() if item.batch_id in open_ids)
+
+    async def count_owner_provider_calls_since(self, owner_id: UUID, *, since: datetime) -> int:
+        owned = {batch.id for batch in self.batches.values() if batch.owner_user_id == owner_id}
+        return sum(
+            1
+            for item in self.items.values()
+            if item.batch_id in owned
+            and item.provider_called_at is not None
+            and item.provider_called_at >= since
+        )
+
+    async def list_missing_offer_ids(self, *, limit: int) -> tuple[UUID, ...]:
+        missing = [snapshot.id for snapshot in self.snapshots.values() if missing_fields(snapshot)]
+        return tuple(missing[:limit])
+
+    async def get_offer_snapshot(self, offer_id: UUID) -> OfferEnrichmentSnapshot | None:
+        return self.snapshots.get(offer_id)
+
+    async def list_offer_source_revisions(
+        self,
+        offer_id: UUID,
+        *,
+        limit: int,
+    ) -> tuple[SourceRevisionEvidence, ...]:
+        return self.sources.get(offer_id, ())[:limit]
+
+    async def insert_batch(
+        self,
+        batch: OfferAiEnrichmentBatch,
+        items: tuple[OfferAiEnrichmentItem, ...],
+    ) -> None:
+        self.batches[batch.id] = batch
+        for item in items:
+            self.items[item.id] = item
+
+    async def get_batch(self, batch_id: UUID) -> OfferAiEnrichmentBatch | None:
+        return self.batches.get(batch_id)
+
+    async def set_batch_state(
+        self,
+        batch_id: UUID,
+        *,
+        state: BatchState,
+        failure_category: str | None = None,
+        started_at: datetime | None = None,
+        finished_at: datetime | None = None,
+    ) -> OfferAiEnrichmentBatch:
+        batch = self.batches[batch_id]
+        updated = replace(
+            batch,
+            state=state,
+            failure_category=(
+                batch.failure_category if failure_category is None else failure_category
+            ),
+            started_at=batch.started_at if started_at is None else started_at,
+            finished_at=batch.finished_at if finished_at is None else finished_at,
+        )
+        self.batches[batch_id] = updated
+        return updated
+
+    async def next_item(self, batch_id: UUID) -> OfferAiEnrichmentItem | None:
+        queued = [
+            item
+            for item in self.items.values()
+            if item.batch_id == batch_id and item.state in {ItemState.QUEUED, ItemState.PROCESSING}
+        ]
+        queued.sort(key=lambda item: item.ordinal)
+        return queued[0] if queued else None
+
+    async def get_item(self, item_id: UUID) -> OfferAiEnrichmentItem | None:
+        return self.items.get(item_id)
+
+    async def mark_item_processing(self, item: OfferAiEnrichmentItem, *, now: datetime) -> None:
+        del now
+        self.items[item.id] = replace(
+            item,
+            state=ItemState.PROCESSING,
+            attempt_count=item.attempt_count + 1,
+        )
+
+    async def complete_item(
+        self,
+        *,
+        item: OfferAiEnrichmentItem,
+        outcome: ItemOutcome,
+        state: ItemState,
+        now: datetime,
+        provider_called_at: datetime | None,
+        events: tuple[OfferAiFieldEvent, ...],
+        apply_values: dict[str, object],
+        origins: tuple[OfferFieldOrigin, ...],
+        fingerprint: str,
+    ) -> ItemOutcome:
+        snapshot = self.snapshots.get(item.offer_id)
+        if snapshot is None:
+            return ItemOutcome.STALE
+        revisions = self.sources.get(item.offer_id, ())
+        current = offer_input_fingerprint(
+            snapshot,
+            tuple(revision.revision_id for revision in revisions),
+            tuple(revision.checksum for revision in revisions),
+        )
+        del fingerprint
+        apply_values = {
+            name: value for name, value in apply_values.items() if is_missing(snapshot, name)
+        }
+        origins = tuple(origin for origin in origins if origin.field_name in apply_values)
+        if apply_values and current != item.input_fingerprint:
+            outcome = ItemOutcome.STALE
+            state = ItemState.FAILED
+            apply_values = {}
+            origins = ()
+        if not apply_values:
+            origins = ()
+            if outcome is ItemOutcome.APPLIED:
+                outcome = ItemOutcome.NO_MISSING
+                state = ItemState.SKIPPED
+        events = tuple(
+            event
+            for event in events
+            if event.outcome is not FieldEventOutcome.APPLIED or event.field_name in apply_values
+        )
+        if apply_values:
+            updates: dict[str, object] = {}
+            for name, value in apply_values.items():
+                if name in {"area_min_sqm", "area_max_sqm"}:
+                    updates[name] = Decimal(str(value))
+                else:
+                    updates[name] = value
+            self.snapshots[item.offer_id] = _offer_with(snapshot, updated_at=now, **updates)
+        for origin in origins:
+            self.origins[(origin.offer_id, origin.field_name)] = origin
+        self.events.extend(events)
+        self.items[item.id] = replace(
+            item,
+            state=state,
+            outcome=outcome,
+            processed_at=now,
+            provider_called_at=provider_called_at,
+        )
+        batch = self.batches[item.batch_id]
+        self.batches[item.batch_id] = replace(
+            batch,
+            processed_count=batch.processed_count + 1,
+            applied_count=batch.applied_count + (1 if outcome is ItemOutcome.APPLIED else 0),
+            skipped_count=batch.skipped_count
+            + (0 if outcome is ItemOutcome.APPLIED or state is ItemState.FAILED else 1),
+            failed_count=batch.failed_count + (1 if state is ItemState.FAILED else 0),
+            checkpoint_ordinal=item.ordinal + 1,
+        )
+        return outcome
+
+    async def list_applied_events(self, batch_id: UUID) -> tuple[OfferAiFieldEvent, ...]:
+        return tuple(
+            event
+            for event in self.events
+            if event.batch_id == batch_id and event.outcome is FieldEventOutcome.APPLIED
+        )
+
+    async def revert_applied_event(
+        self,
+        event: OfferAiFieldEvent,
+        *,
+        actor_id: str,
+        now: datetime,
+    ) -> bool:
+        snapshot = self.snapshots.get(event.offer_id)
+        if snapshot is None:
+            return False
+        current = current_field_value(snapshot, event.field_name)
+        if value_fingerprint(current) != value_fingerprint(event.applied_value):
+            return False
+        cleared: object
+        if event.field_name == "market_type":
+            cleared = "unknown"
+        elif event.field_name in {"parking_included_in_price", "storage_included_in_price"}:
+            cleared = False
+        else:
+            cleared = None
+        self.snapshots[event.offer_id] = _offer_with(snapshot, **{event.field_name: cleared})
+        origin = self.origins.get((event.offer_id, event.field_name))
+        if origin is not None:
+            self.origins[(event.offer_id, event.field_name)] = replace(
+                origin,
+                state=OriginState.STALE,
+                updated_at=now,
+            )
+        self.events.append(
+            replace(
+                event,
+                id=uuid4(),
+                outcome=FieldEventOutcome.ROLLED_BACK,
+                reason="reverted",
+                applied_value=None,
+                actor_id=actor_id,
+                created_at=now,
+            ),
+        )
+        return True
+
+    async def list_active_ai_origins(self, offer_id: UUID) -> tuple[OfferFieldOrigin, ...]:
+        return tuple(
+            origin
+            for origin in self.origins.values()
+            if origin.offer_id == offer_id
+            and origin.origin is OriginKind.AI
+            and origin.state is OriginState.ACTIVE
+        )
+
+    async def protected_field_names(self, offer_id: UUID) -> frozenset[str]:
+        return frozenset(
+            origin.field_name
+            for origin in self.origins.values()
+            if origin.offer_id == offer_id
+            and origin.origin is OriginKind.AI
+            and origin.state in {OriginState.ACTIVE, OriginState.CONFLICTING}
+        )
+
+    async def invalidate_or_conflict_origin(
+        self,
+        origin: OfferFieldOrigin,
+        *,
+        current_value: object,
+        now: datetime,
+        actor_id: str,
+    ) -> FieldEventOutcome:
+        del current_value, actor_id
+        snapshot = self.snapshots[origin.offer_id]
+        current = current_field_value(snapshot, origin.field_name)
+        matches = value_fingerprint(current) == origin.value_fingerprint
+        if matches:
+            cleared: object = "unknown" if origin.field_name == "market_type" else None
+            if origin.field_name in {"parking_included_in_price", "storage_included_in_price"}:
+                cleared = False
+            self.snapshots[origin.offer_id] = _offer_with(snapshot, **{origin.field_name: cleared})
+            state = OriginState.STALE
+            outcome = FieldEventOutcome.INVALIDATED
+        else:
+            state = OriginState.CONFLICTING
+            outcome = FieldEventOutcome.SKIPPED
+        self.origins[(origin.offer_id, origin.field_name)] = replace(
+            origin,
+            state=state,
+            updated_at=now,
+        )
+        return outcome
+
+    async def record_parser_comparison(
+        self,
+        origin: OfferFieldOrigin,
+        *,
+        parser_value: object,
+        parser_version: str,
+        now: datetime,
+        actor_id: str,
+    ) -> FieldEventOutcome:
+        del actor_id
+        matches = value_fingerprint(parser_value) == origin.value_fingerprint
+        if matches:
+            self.origins[(origin.offer_id, origin.field_name)] = replace(
+                origin,
+                origin=OriginKind.PARSER,
+                field_event_id=None,
+                parser_version=parser_version,
+                canonical_value=parser_value,
+                value_fingerprint=value_fingerprint(parser_value),
+                state=OriginState.ACTIVE,
+                updated_at=now,
+            )
+            return FieldEventOutcome.PARSER_CONFIRMED
+        self.origins[(origin.offer_id, origin.field_name)] = replace(
+            origin,
+            state=OriginState.CONFLICTING,
+            updated_at=now,
+        )
+        return FieldEventOutcome.PARSER_CONFLICTING
+
+
 def build_admin_service(
     *,
     store: FakeIdentityStore | None = None,
@@ -916,6 +1240,7 @@ def build_admin_service(
     hasher: FakeHasher | None = None,
     clock: FakeClock | None = None,
     review_store: FakePlaceAiReviewStore | None = None,
+    enrichment_store: FakeOfferAiEnrichmentStore | None = None,
     provider: FakeChatCompletions | None = None,
     runtime: AiCurationRuntime | None = None,
 ) -> AdminService:
@@ -927,6 +1252,7 @@ def build_admin_service(
     password_hasher = hasher or FakeHasher()
     time_source = clock or FakeClock()
     place_reviews = review_store or FakePlaceAiReviewStore()
+    offer_enrichment = enrichment_store or FakeOfferAiEnrichmentStore()
     ai_runtime = runtime or _inactive_ai_runtime()
     completions = provider or FakeChatCompletions()
     return AdminService(
@@ -962,6 +1288,27 @@ def build_admin_service(
             ai_runtime,
         ),
         get_place_review=GetPlaceReview(place_reviews),
+        start_offer_enrichment=StartOfferEnrichmentBatch(
+            offer_enrichment,
+            audit_store,
+            time_source,
+            ai_runtime,
+        ),
+        process_offer_enrichment=ProcessOfferEnrichmentItem(
+            offer_enrichment,
+            completions,
+            audit_store,
+            time_source,
+            ai_runtime,
+            reviews=place_reviews,
+        ),
+        pause_offer_enrichment=PauseOfferEnrichmentBatch(offer_enrichment, audit_store),
+        resume_offer_enrichment=ResumeOfferEnrichmentBatch(offer_enrichment, audit_store),
+        revert_offer_enrichment=RevertOfferEnrichmentBatch(
+            offer_enrichment,
+            audit_store,
+            time_source,
+        ),
         ai_curation_enabled=ai_runtime.active,
     )
 

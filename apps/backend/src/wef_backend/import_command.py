@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from wef_backend.database import create_database_resources
+from wef_backend.features.admin.infrastructure.ai_enrichment_store import build_offer_origin_sync
 from wef_backend.features.contacts.infrastructure import (
     AesGcmContactCipher,
     decode_secret_key,
@@ -589,6 +590,7 @@ async def run_import(args: argparse.Namespace, settings: Settings) -> dict[str, 
     persistence = SQLAlchemyIngestionPersistence(
         database.session_factory,
         contact_cipher=contact_cipher,
+        field_origin_sync=build_offer_origin_sync(database.session_factory),
     )
     try:
         if args.command == "dry-run":

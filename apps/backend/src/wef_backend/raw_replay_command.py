@@ -9,6 +9,7 @@ import sys
 from dataclasses import asdict
 
 from wef_backend.database import create_database_resources
+from wef_backend.features.admin.infrastructure.ai_enrichment_store import build_offer_origin_sync
 from wef_backend.features.ingestion.application.raw_replay import RawParserReplayer
 from wef_backend.features.ingestion.domain.telegram_channel import (
     default_live_channel_identity,
@@ -34,7 +35,10 @@ async def run(*, seed_archive: bool = False) -> dict[str, int]:
         else:
             payload_seed = {}
         replayer = RawParserReplayer(
-            store=SQLAlchemyIngestionPersistence(database.session_factory),
+            store=SQLAlchemyIngestionPersistence(
+                database.session_factory,
+                field_origin_sync=build_offer_origin_sync(database.session_factory),
+            ),
             source=archive,
             identity=default_live_channel_identity(),
         )

@@ -18,6 +18,10 @@ from wef_backend.features.admin.application.ai_review import (
     SourceRevisionEvidence,
     location_snapshot_version,
 )
+from wef_backend.features.admin.infrastructure.ai_enrichment_models import (
+    OfferAiEnrichmentBatchRow,
+    OfferAiEnrichmentItemRow,
+)
 from wef_backend.features.admin.infrastructure.ai_models import PlaceAiReviewRunRow
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
 from wef_backend.features.ingestion.domain.geocoding import (
@@ -123,14 +127,27 @@ class SQLAlchemyPlaceAiReviewStore:
         return int(count or 0)
 
     async def count_owner_runs_since(self, owner_id: UUID, *, since: datetime) -> int:
-        """Count this owner's review runs created at or after ``since``."""
+        """Count this owner's review runs and enrichment provider calls since ``since``."""
         async with self._session_factory() as session:
-            stmt = select(func.count()).where(
-                PlaceAiReviewRunRow.owner_user_id == owner_id,
-                PlaceAiReviewRunRow.created_at >= since,
+            place = await session.scalar(
+                select(func.count()).where(
+                    PlaceAiReviewRunRow.owner_user_id == owner_id,
+                    PlaceAiReviewRunRow.created_at >= since,
+                ),
             )
-            count = await session.scalar(stmt)
-        return int(count or 0)
+            enrichment = await session.scalar(
+                select(func.count())
+                .select_from(OfferAiEnrichmentItemRow)
+                .join(
+                    OfferAiEnrichmentBatchRow,
+                    OfferAiEnrichmentBatchRow.id == OfferAiEnrichmentItemRow.batch_id,
+                )
+                .where(
+                    OfferAiEnrichmentBatchRow.owner_user_id == owner_id,
+                    OfferAiEnrichmentItemRow.provider_called_at >= since,
+                ),
+            )
+        return int(place or 0) + int(enrichment or 0)
 
     async def insert_run(self, run: PlaceReviewRun) -> bool:
         """Persist a new run. False when a pending run already exists."""

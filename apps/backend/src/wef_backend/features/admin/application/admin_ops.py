@@ -23,6 +23,13 @@ if TYPE_CHECKING:
         GeneratePlaceReview,
         GetPlaceReview,
     )
+    from wef_backend.features.admin.application.offer_enrichment import (
+        PauseOfferEnrichmentBatch,
+        ProcessOfferEnrichmentItem,
+        ResumeOfferEnrichmentBatch,
+        RevertOfferEnrichmentBatch,
+        StartOfferEnrichmentBatch,
+    )
     from wef_backend.features.identity.application.identity import (
         Clock,
         IdentityStore,
@@ -843,6 +850,11 @@ class AdminService:
     generate_place_review: GeneratePlaceReview
     apply_place_review: ApplyPlaceReview
     get_place_review: GetPlaceReview
+    start_offer_enrichment: StartOfferEnrichmentBatch
+    process_offer_enrichment: ProcessOfferEnrichmentItem
+    pause_offer_enrichment: PauseOfferEnrichmentBatch
+    resume_offer_enrichment: ResumeOfferEnrichmentBatch
+    revert_offer_enrichment: RevertOfferEnrichmentBatch
     ai_curation_enabled: bool
 
 

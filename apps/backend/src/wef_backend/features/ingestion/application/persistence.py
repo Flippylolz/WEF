@@ -83,6 +83,26 @@ class PersistenceBatchError(RuntimeError):
         super().__init__(f"ingestion batch failed: {category}")
 
 
+class OfferFieldOriginSync(Protocol):
+    """Optional parser-upsert hook implemented by admin provenance."""
+
+    async def protected_field_names(self, offer_id: UUID) -> frozenset[str]:
+        """Return AI-owned fields that parser upsert must not clobber."""
+        ...
+
+    async def after_offer_upsert(
+        self,
+        *,
+        offer_id: UUID,
+        parser_values: dict[str, object],
+        parser_version: str,
+        source_changed: bool,
+        actor_id: str,
+    ) -> None:
+        """Invalidate or compare AI origins after a committed offer upsert."""
+        ...
+
+
 @dataclass(frozen=True, slots=True)
 class PersistableMessage:
     """One raw source message paired with its extraction result."""
