@@ -212,4 +212,3 @@ def test_live_media_download_limits_factory() -> None:
     limits = live_media_download_limits(max_bytes=100, timeout_seconds=3.0)
     assert limits.max_bytes == 100
     assert limits.timeout_seconds == 3.0
-

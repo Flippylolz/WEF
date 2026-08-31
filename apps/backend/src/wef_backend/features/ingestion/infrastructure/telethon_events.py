@@ -28,11 +28,7 @@ def new_or_edit_event_from_telethon(
     if kind not in {LiveTelegramEventKind.NEW, LiveTelegramEventKind.EDIT}:
         message_text = "kind must be new or edit"
         raise ValueError(message_text)
-    live = (
-        message
-        if isinstance(message, LiveTelegramMessage)
-        else _to_live_message(message)
-    )
+    live = message if isinstance(message, LiveTelegramMessage) else _to_live_message(message)
     return LiveTelegramEvent(
         kind=kind,
         message=live,
