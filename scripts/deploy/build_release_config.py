@@ -94,6 +94,38 @@ def _optional_bootstrap_owner(values: dict[str, str]) -> None:
     values["WEF_BOOTSTRAP_OWNER_PASSWORD"] = bootstrap_password
 
 
+def _optional_groq_curation(values: dict[str, str]) -> None:
+    """Attach optional Groq AI curation settings when a key is present.
+
+    Absence keeps AI off and must not fail deploy. Activation still requires
+    WEF_AI_CURATION_ENABLED=true and WEF_GROQ_ZDR_VERIFIED=true at runtime.
+    """
+    groq_api_key = os.environ.get("WEF_GROQ_API_KEY", "").strip()
+    if not groq_api_key:
+        return
+    if not SAFE_PROVIDER_KEY.fullmatch(groq_api_key):
+        msg = "Groq API key is not safe for a Compose environment file"
+        raise ValueError(msg)
+    model = os.environ.get("WEF_GROQ_MODEL", "openai/gpt-oss-20b").strip()
+    if model != "openai/gpt-oss-20b":
+        msg = "Groq model must be exactly openai/gpt-oss-20b"
+        raise ValueError(msg)
+    enabled = os.environ.get("WEF_AI_CURATION_ENABLED", "false").strip().lower()
+    zdr = os.environ.get("WEF_GROQ_ZDR_VERIFIED", "false").strip().lower()
+    if enabled not in {"true", "false"} or zdr not in {"true", "false"}:
+        msg = "Groq enablement flags must be true or false"
+        raise ValueError(msg)
+    timeout = os.environ.get("WEF_GROQ_TIMEOUT_SECONDS", "30").strip()
+    if not re.fullmatch(r"(?:[1-9]|[1-9][0-9]|1[01][0-9]|120)", timeout):
+        msg = "Groq timeout must be an integer from 1 to 120"
+        raise ValueError(msg)
+    values["WEF_GROQ_API_KEY"] = groq_api_key
+    values["WEF_GROQ_MODEL"] = model
+    values["WEF_AI_CURATION_ENABLED"] = enabled
+    values["WEF_GROQ_ZDR_VERIFIED"] = zdr
+    values["WEF_GROQ_TIMEOUT_SECONDS"] = timeout
+
+
 def build_values(
     context: ConfigBuildContext,
 ) -> dict[str, str]:
@@ -155,6 +187,7 @@ def build_values(
         "WEF_WEB_IMAGE": context.web_image,
     }
     _optional_bootstrap_owner(values)
+    _optional_groq_curation(values)
     if telegram_session is not None:
         values["WEF_TELEGRAM_SESSION"] = telegram_session
     if telegram_phone is not None:

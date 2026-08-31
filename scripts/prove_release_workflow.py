@@ -149,6 +149,42 @@ def assert_release_configuration() -> None:
 
     assert "safe%3A%2Fpassword-0123456789abcdef" in values["WEF_DATABASE_URL"]
     assert values["WEF_GEOAPIFY_API_KEY"] == "fixture-geoapify-key-0123456789"
+    assert "WEF_GROQ_API_KEY" not in values
+
+    groq_environment = {
+        **environment,
+        "WEF_GROQ_API_KEY": "gsk_fixture-groq-key-0123456789abcdef",
+        "WEF_AI_CURATION_ENABLED": "false",
+        "WEF_GROQ_MODEL": "openai/gpt-oss-20b",
+        "WEF_GROQ_ZDR_VERIFIED": "false",
+        "WEF_GROQ_TIMEOUT_SECONDS": "30",
+    }
+    previous_with_groq = {key: os.environ.get(key) for key in groq_environment}
+    os.environ.update(groq_environment)
+    try:
+        with_groq = build_values(
+            ConfigBuildContext(
+                release=ReleaseContext(
+                    root=Path("/home/nuc/wef"),
+                    release_dir=Path(f"/home/nuc/wef/releases/{RELEASE_SHA}"),
+                    release_sha=RELEASE_SHA,
+                    public_port=3100,
+                ),
+                bind_address="0.0.0.0",
+                backend_image=f"ghcr.io/flippylolz/wef-backend@{BACKEND_DIGEST}",
+                web_image=f"ghcr.io/flippylolz/wef-web@{WEB_DIGEST}",
+            ),
+        )
+    finally:
+        for key, value in previous_with_groq.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+    assert with_groq["WEF_GROQ_API_KEY"].startswith("gsk_fixture")
+    assert with_groq["WEF_AI_CURATION_ENABLED"] == "false"
+    assert with_groq["WEF_GROQ_ZDR_VERIFIED"] == "false"
+
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "production.env"
         write_environment(path, values)
