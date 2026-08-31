@@ -113,9 +113,11 @@ Then update:
 
 ## Current observation state (2026-08-31 UTC)
 
-- Release `b71c99f` deployed; checkpoint aligned at `29434`.
-- Live media acquisition verified for ids `29415`–`29434`.
+- Release `ab4f17a` deployed; checkpoint aligned at `29434`.
+- Live media acquisition verified for ids `29415`–`29434` (deploy `b71c99f`).
 - `last_event_received_at` remains null; no passive edit/delete observed yet.
+- NUC cron polls every 15 minutes via `releases/current/.../check_telegram_passive_events.py`
+  and appends to `/home/nuc/wef/state/passive-event-check.log` (exit `2` means capture evidence).
 
 ## Optional cron monitor (NUC)
 
