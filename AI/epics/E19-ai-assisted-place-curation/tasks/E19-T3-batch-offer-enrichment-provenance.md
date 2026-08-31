@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E19-T3
 epic: E19
 title: "Batch offer autofill and parser-gap provenance"
-status: in_progress
+status: done
 revision: 2
 priority: P0
 size: L
@@ -47,10 +47,12 @@ branch:
   created_at: "2026-08-31T00:00:00Z"
   pull_request: "https://github.com/Flippylolz/WEF/pull/228"
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Cursor Agent (owner-directed E19 mission under AD-042/AD-043)"
+  completed_at: "2026-08-31T05:30:00Z"
+  pull_request: "https://github.com/Flippylolz/WEF/pull/228"
+  evidence:
+    - "Merged as 45094ba on main through https://github.com/Flippylolz/WEF/pull/228."
+    - "offer_ai_enrichment migration, batch interactors, provenance stores, ingestion invalidation/replay hooks, unit tests, and PostGIS integration coverage; CI run 33360534437 green with 522 backend tests at 90.20% coverage."
 invalidation:
   invalidated_by: null
   invalidated_at: null
