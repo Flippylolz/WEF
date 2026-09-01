@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
+from types import SimpleNamespace
+from typing import Self
+from unittest.mock import AsyncMock
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import text
@@ -21,12 +26,140 @@ from wef_backend.features.ingestion.application.persistence import (
     PersistHistoricalIngestion,
     RunMetadata,
 )
+from wef_backend.features.ingestion.infrastructure import parse_issue_backfill as backfill_module
 from wef_backend.features.ingestion.infrastructure.parse_issue_backfill import (
     backfill_parse_issues,
 )
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
+
+
+def test_payload_for_message_falls_back_to_external_id() -> None:
+    payload = backfill_module._payload_for_message(payload="", external_message_id=99)  # noqa: SLF001
+    assert payload == {"id": 99}
+
+
+def test_row_to_raw_builds_message_from_projection() -> None:
+    message = SimpleNamespace(
+        external_message_id=12,
+        published_at=datetime(2026, 8, 1, 12, 0, tzinfo=UTC),
+        edited_at=None,
+        message_type="message",
+        text_original="hello",
+        raw_payload_json={"id": 12, "text": "hello"},
+        raw_checksum="a" * 64,
+        source_channel_id=uuid4(),
+        id=uuid4(),
+        current_revision_id=uuid4(),
+    )
+    raw = backfill_module._row_to_raw(  # noqa: SLF001
+        message=message,
+        channel_external_id="2180077318",
+        channel_name="Test channel",
+    )
+    assert raw.external_message_id == 12
+    assert raw.text == "hello"
+    assert raw.source.channel_id == "2180077318"
+
+
+@pytest.mark.asyncio
+async def test_backfill_parse_issues_respects_limit_and_batches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[int] = []
+
+    async def _fake_process_batch(_session: object, *, batch_size: int) -> tuple[int, int, int]:
+        calls.append(batch_size)
+        if len(calls) == 1:
+            return 4, 1, 5
+        return 0, 0, 0
+
+    monkeypatch.setattr(backfill_module, "_process_batch", _fake_process_batch)
+
+    class _Session:
+        async def __aenter__(self) -> Self:
+            return self
+
+        async def __aexit__(self, *_args: object) -> None:
+            return None
+
+        def begin(self) -> _Begin:
+            return _Begin(self)
+
+    class _Begin:
+        def __init__(self, session: _Session) -> None:
+            self._session = session
+
+        async def __aenter__(self) -> _Session:
+            return self._session
+
+        async def __aexit__(self, *_args: object) -> None:
+            return None
+
+    class _SessionFactory:
+        def __call__(self) -> _Session:
+            return _Session()
+
+    summary = await backfill_parse_issues(_SessionFactory(), limit=5, batch_size=10)
+    assert summary.processed == 5
+    assert summary.inserted == 4
+    assert summary.skipped_clean == 1
+    assert summary.batches == 1
+    assert calls == [5]
+
+
+@pytest.mark.asyncio
+async def test_backfill_parse_issues_rejects_non_positive_batch_size() -> None:
+    with pytest.raises(ValueError, match="batch_size must be positive"):
+        await backfill_parse_issues(AsyncMock(), batch_size=0)
+
+
+@pytest.mark.asyncio
+async def test_backfill_parse_issues_command_run_disposes_engine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    disposed = False
+
+    class _Engine:
+        async def dispose(self) -> None:
+            nonlocal disposed
+            disposed = True
+
+    class _Database:
+        session_factory = object()
+        engine = _Engine()
+
+    async def _fake_backfill(
+        *_args: object,
+        **_kwargs: object,
+    ) -> backfill_module.ParseIssueBackfillSummary:
+        return backfill_module.ParseIssueBackfillSummary(
+            processed=0,
+            inserted=0,
+            skipped_clean=0,
+            batches=0,
+        )
+
+    monkeypatch.setattr(
+        backfill_parse_issues_command,
+        "load_settings",
+        lambda: SimpleNamespace(database_url="postgresql+asyncpg://example/unused"),
+    )
+    monkeypatch.setattr(
+        backfill_parse_issues_command,
+        "create_database_resources",
+        lambda _url: _Database(),
+    )
+    monkeypatch.setattr(backfill_parse_issues_command, "backfill_parse_issues", _fake_backfill)
+    payload = await backfill_parse_issues_command.run(limit=10, batch_size=25)
+    assert payload == {
+        "processed": 0,
+        "inserted": 0,
+        "skipped_clean": 0,
+        "batches": 0,
+    }
+    assert disposed is True
 
 
 @pytest.mark.asyncio
