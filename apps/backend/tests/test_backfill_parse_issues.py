@@ -5,12 +5,13 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from types import SimpleNamespace
-from typing import Self
+from typing import Self, cast
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from tests.test_persistence_application import _raw
 from tests.test_persistence_integration import (
@@ -27,6 +28,7 @@ from wef_backend.features.ingestion.application.persistence import (
     RunMetadata,
 )
 from wef_backend.features.ingestion.infrastructure import parse_issue_backfill as backfill_module
+from wef_backend.features.ingestion.infrastructure.models import SourceMessageRow
 from wef_backend.features.ingestion.infrastructure.parse_issue_backfill import (
     backfill_parse_issues,
 )
@@ -41,17 +43,20 @@ def test_payload_for_message_falls_back_to_external_id() -> None:
 
 
 def test_row_to_raw_builds_message_from_projection() -> None:
-    message = SimpleNamespace(
-        external_message_id=12,
-        published_at=datetime(2026, 8, 1, 12, 0, tzinfo=UTC),
-        edited_at=None,
-        message_type="message",
-        text_original="hello",
-        raw_payload_json={"id": 12, "text": "hello"},
-        raw_checksum="a" * 64,
-        source_channel_id=uuid4(),
-        id=uuid4(),
-        current_revision_id=uuid4(),
+    message = cast(
+        SourceMessageRow,
+        SimpleNamespace(
+            external_message_id=12,
+            published_at=datetime(2026, 8, 1, 12, 0, tzinfo=UTC),
+            edited_at=None,
+            message_type="message",
+            text_original="hello",
+            raw_payload_json={"id": 12, "text": "hello"},
+            raw_checksum="a" * 64,
+            source_channel_id=uuid4(),
+            id=uuid4(),
+            current_revision_id=uuid4(),
+        ),
     )
     raw = backfill_module._row_to_raw(  # noqa: SLF001
         message=message,
@@ -101,7 +106,11 @@ async def test_backfill_parse_issues_respects_limit_and_batches(
         def __call__(self) -> _Session:
             return _Session()
 
-    summary = await backfill_parse_issues(_SessionFactory(), limit=5, batch_size=10)
+    summary = await backfill_parse_issues(
+        cast(async_sessionmaker[AsyncSession], _SessionFactory()),
+        limit=5,
+        batch_size=10,
+    )
     assert summary.processed == 5
     assert summary.inserted == 4
     assert summary.skipped_clean == 1
