@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
@@ -23,6 +24,7 @@ from wef_backend.features.admin.application.ingestion_ai_parse import (
     IngestionAiApplyOutcome,
     IngestionAiApplyStatus,
     IngestionAiParseOutcome,
+    IngestionAiParseRun,
     IngestionAiParseStatus,
 )
 from wef_backend.settings import Settings
@@ -98,7 +100,10 @@ async def test_load_candidates_maps_rows() -> None:
 async def test_run_batch_generate_only_skips_apply(monkeypatch: pytest.MonkeyPatch) -> None:
     owner_id = uuid4()
     revision_id = uuid4()
-    run = SimpleNamespace(id=uuid4(), offer_id=None)
+    run = cast(
+        "IngestionAiParseRun",
+        SimpleNamespace(id=uuid4(), offer_id=None),
+    )
 
     monkeypatch.setattr(
         "wef_backend.batch_ingestion_ai_parse_command.resolve_owner_id",
@@ -157,7 +162,10 @@ async def test_run_batch_links_generates_and_applies(monkeypatch: pytest.MonkeyP
     revision_id = uuid4()
     run_id = uuid4()
     offer_id = uuid4()
-    run = SimpleNamespace(id=run_id, offer_id=offer_id)
+    run = cast(
+        "IngestionAiParseRun",
+        SimpleNamespace(id=run_id, offer_id=offer_id),
+    )
 
     monkeypatch.setattr(
         "wef_backend.batch_ingestion_ai_parse_command.resolve_owner_id",
@@ -229,7 +237,10 @@ async def test_run_batch_records_generate_and_apply_failures(
     owner_id = uuid4()
     revision_ok = uuid4()
     revision_fail = uuid4()
-    run = SimpleNamespace(id=uuid4(), offer_id=None)
+    run = cast(
+        "IngestionAiParseRun",
+        SimpleNamespace(id=uuid4(), offer_id=None),
+    )
 
     monkeypatch.setattr(
         "wef_backend.batch_ingestion_ai_parse_command.resolve_owner_id",
