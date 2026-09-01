@@ -50,7 +50,7 @@ async def insert_parse_issue(session: AsyncSession, record: ParseIssueInsert) ->
 class SQLAlchemyParseIssueStore:
     """Read recent parse issues for owner admin reporting."""
 
-    def __init__(self, session_factory: async_sessionmaker) -> None:
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         """Store the async session factory."""
         self._session_factory = session_factory
 
