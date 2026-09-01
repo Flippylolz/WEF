@@ -7,10 +7,10 @@ import asyncio
 import json
 import sys
 from dataclasses import asdict, dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID, uuid4
 
-from sqlalchemy import text
+from sqlalchemy import CursorResult, text
 
 from wef_backend.composition import build_services
 from wef_backend.database import create_database_resources
@@ -174,7 +174,10 @@ async def link_existing_offers(
 ) -> int:
     """Attach offer_id on parse issues that already have a primary offer."""
     async with session_factory() as session:
-        result = await session.execute(_LINK_EXISTING_OFFERS_SQL)
+        result = cast(
+            "CursorResult[Any]",
+            await session.execute(_LINK_EXISTING_OFFERS_SQL),
+        )
         await session.commit()
         return int(result.rowcount or 0)
 
