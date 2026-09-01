@@ -315,8 +315,9 @@ on retained messages that have no `offer_sources` row and no existing ledger ent
 it is idempotent and safe to rerun after partial batches.
 
 Parser `e2-v6` adds Elestate-format coverage: `Стоимость` price labels, `Продажа`
-headers, and `#N_комнатная` / `N-комнатная` room tags. Recover historical misses
-with `wef-replay-parser` after deploy.
+headers, and `#N_комнатная` / `N-комнатная` room tags. Parser `e2-v7` extends this
+to Ukrainian Elestate posts: `Купівля`, `Ціна`/`вартість`, `N-кімнатна`, and
+`ринок` market labels. Recover historical misses with `wef-replay-parser` after deploy.
 
 ### Owner enrichment controls (E19-T4)
 
