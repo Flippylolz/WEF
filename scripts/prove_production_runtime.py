@@ -83,6 +83,7 @@ def main() -> int:
         for relative in ("postgres", "media", "caddy-data", "state"):
             (root / relative).mkdir(parents=True)
         (root / "media/public").mkdir(parents=True)
+        (root / "state/telegram-worker-health.json").write_text("{}", encoding="utf-8")
         (root / "secrets/telegram").mkdir(parents=True)
         release_dir.mkdir(parents=True)
         config_dir.mkdir(parents=True)
