@@ -97,6 +97,7 @@ class FailingStore(SQLAlchemyIngestionPersistence):
         *,
         channel_id: object,
         persistable: PersistableMessage,
+        run_id: object | None = None,
     ) -> object:
         """Raise the scripted failure before the message is reconciled."""
         if persistable.raw.external_message_id == self._fail_on_message_id:
@@ -106,6 +107,7 @@ class FailingStore(SQLAlchemyIngestionPersistence):
             session,  # type: ignore[arg-type]
             channel_id=channel_id,  # type: ignore[arg-type]
             persistable=persistable,
+            run_id=run_id,  # type: ignore[arg-type]
         )
 
 
@@ -171,10 +173,18 @@ def _candidate(
 
 
 def _plain(message_id: int, text: str, checksum: str) -> PersistableMessage:
-    """Build one persistable non-candidate message."""
+    """Build one persistable non-candidate message with parser metadata."""
+    decision = CandidateDecision(
+        parser_version="integration@1",
+        is_candidate=False,
+        score=0,
+        threshold=3,
+        content_type=None,
+        signals=(),
+    )
     return PersistableMessage(
         raw=_raw(message_id=message_id, text=text, checksum=checksum),
-        extraction=None,
+        extraction=ExtractionResult(decision=decision, listing=None),
     )
 
 
@@ -206,6 +216,7 @@ async def _purge() -> None:
                 "DELETE FROM offer_ai_enrichment_items",
                 "DELETE FROM offer_ai_enrichment_batches",
                 "DELETE FROM place_ai_review_runs",
+                "DELETE FROM source_message_parse_issues",
                 "DELETE FROM offer_sources",
                 "DELETE FROM offers",
                 "DELETE FROM developments",
@@ -269,6 +280,22 @@ async def test_migration_and_replay_reconciliation() -> None:
     assert offer_source_count == 2
     assert run.status == "succeeded"
     assert run.seen == "3"
+    async with database.session_factory() as session:
+        parse_issue_count = await session.scalar(
+            text("SELECT count(*) FROM source_message_parse_issues"),
+        )
+        parse_issue = (
+            await session.execute(
+                text(
+                    "SELECT issue_outcome, message_outcome, external_message_id "
+                    "FROM source_message_parse_issues LIMIT 1"
+                ),
+            )
+        ).one()
+    assert parse_issue_count == 1
+    assert parse_issue.issue_outcome == "parser_miss"
+    assert parse_issue.message_outcome == "skipped_non_candidate"
+    assert parse_issue.external_message_id == 2
 
     replay = await service(
         channel=_raw().source,

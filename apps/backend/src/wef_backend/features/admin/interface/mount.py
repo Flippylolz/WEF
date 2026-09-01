@@ -12,6 +12,7 @@ from starlette_admin import BaseAdmin, DefaultTheme, TablerSettings
 from wef_backend.features.admin.interface.auth import OwnerAuthProvider
 from wef_backend.features.admin.interface.enrichment_views import OfferEnrichmentAdminView
 from wef_backend.features.admin.interface.guards import AdminMutationGuardMiddleware
+from wef_backend.features.admin.interface.parse_issue_views import IngestionIssuesAdminView
 from wef_backend.features.admin.interface.views import (
     AdminAuditsView,
     LocationsAdminView,
@@ -72,6 +73,7 @@ def build_admin(
     admin_app.add_view(UsersAdminView())
     admin_app.add_view(LocationsAdminView())
     admin_app.add_view(OfferEnrichmentAdminView())
+    admin_app.add_view(IngestionIssuesAdminView())
     admin_app.add_view(RevealAuditsView())
     admin_app.add_view(AdminAuditsView())
     return admin_app

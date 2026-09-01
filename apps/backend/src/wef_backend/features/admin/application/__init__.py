@@ -43,6 +43,9 @@ from wef_backend.features.admin.application.offer_enrichment_reporting import (
     ListParserGapEvents,
     PreviewOfferEnrichmentBatch,
 )
+from wef_backend.features.admin.application.parse_issue_reporting import (
+    ListParseIssueEvents,
+)
 
 __all__ = [
     "AcceptPlaceCandidate",
@@ -62,6 +65,7 @@ __all__ = [
     "ListAdminAudits",
     "ListLocations",
     "ListOfferEnrichmentBatches",
+    "ListParseIssueEvents",
     "ListParserGapEvents",
     "ListRevealAudits",
     "LocationAdminSummary",

@@ -70,6 +70,9 @@ from wef_backend.features.admin.application.offer_enrichment_reporting import (
     ListParserGapEvents,
     PreviewOfferEnrichmentBatch,
 )
+from wef_backend.features.admin.application.parse_issue_reporting import (
+    ListParseIssueEvents,
+)
 from wef_backend.features.catalog.application import (
     FacetSnapshot,
     ListingBrowseRecord,
@@ -125,6 +128,7 @@ from wef_backend.features.identity.application.view_history import (
     ViewHistoryService,
 )
 from wef_backend.features.identity.domain.model import Account, AccountSession, UserRole
+from wef_backend.features.ingestion.domain.parse_issue import SourceMessageParseIssue
 
 
 @dataclass(frozen=True, slots=True)
@@ -1266,6 +1270,16 @@ class FakeOfferAiEnrichmentStore:
         return FieldEventOutcome.PARSER_CONFLICTING
 
 
+class FakeParseIssueStore:
+    """In-memory parse issue store."""
+
+    def __init__(self) -> None:
+        self.issues: list[SourceMessageParseIssue] = []
+
+    async def list_recent(self, *, limit: int = 500) -> tuple[SourceMessageParseIssue, ...]:
+        return tuple(self.issues[:limit])
+
+
 def build_admin_service(
     *,
     store: FakeIdentityStore | None = None,
@@ -1276,6 +1290,7 @@ def build_admin_service(
     clock: FakeClock | None = None,
     review_store: FakePlaceAiReviewStore | None = None,
     enrichment_store: FakeOfferAiEnrichmentStore | None = None,
+    parse_issue_store: FakeParseIssueStore | None = None,
     provider: FakeChatCompletions | None = None,
     runtime: AiCurationRuntime | None = None,
 ) -> AdminService:
@@ -1288,6 +1303,7 @@ def build_admin_service(
     time_source = clock or FakeClock()
     place_reviews = review_store or FakePlaceAiReviewStore()
     offer_enrichment = enrichment_store or FakeOfferAiEnrichmentStore()
+    parse_issues = parse_issue_store or FakeParseIssueStore()
     ai_runtime = runtime or _inactive_ai_runtime()
     completions = provider or FakeChatCompletions()
     return AdminService(
@@ -1348,6 +1364,7 @@ def build_admin_service(
         list_offer_enrichment_batches=ListOfferEnrichmentBatches(offer_enrichment),
         get_offer_enrichment_batch=GetOfferEnrichmentBatchDetail(offer_enrichment),
         list_parser_gap_events=ListParserGapEvents(offer_enrichment),
+        list_parse_issue_events=ListParseIssueEvents(parse_issues),
         ai_curation_enabled=ai_runtime.active,
     )
 
