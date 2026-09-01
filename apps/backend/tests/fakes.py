@@ -1288,6 +1288,19 @@ class FakeParseIssueStore:
     async def list_recent(self, *, limit: int = 500) -> tuple[SourceMessageParseIssue, ...]:
         return tuple(self.issues[:limit])
 
+    async def link_offer_for_message(
+        self,
+        *,
+        source_message_id: UUID,
+        offer_id: UUID,
+    ) -> int:
+        linked = 0
+        for index, issue in enumerate(self.issues):
+            if issue.source_message_id == source_message_id and issue.offer_id is None:
+                self.issues[index] = replace(issue, offer_id=offer_id)
+                linked += 1
+        return linked
+
 
 @dataclass
 class FakeIngestionAiParseStore:
@@ -1477,6 +1490,7 @@ def build_admin_service(
         apply_ingestion_ai_parse=ApplyIngestionAiParse(
             ingestion_ai_parse,
             owner_ai_persistence,
+            parse_issues,
             audit_store,
             time_source,
             ai_runtime,

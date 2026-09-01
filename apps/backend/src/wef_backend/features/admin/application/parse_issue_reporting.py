@@ -18,6 +18,19 @@ class ParseIssueReportingStore(Protocol):
         ...
 
 
+class ParseIssueOfferLinkStore(Protocol):
+    """Link recovered offers back onto parse issue ledger rows."""
+
+    async def link_offer_for_message(
+        self,
+        *,
+        source_message_id: UUID,
+        offer_id: UUID,
+    ) -> int:
+        """Attach one offer id to unset parse issue rows for the same message."""
+        ...
+
+
 class ListParseIssueEvents:
     """Return bounded parse issue rows for reporting/export."""
 

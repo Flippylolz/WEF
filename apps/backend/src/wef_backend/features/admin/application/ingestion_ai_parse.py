@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 # Interactors share one module; keep field-gate branches local.
-# ruff: noqa: C901, PLR0911, PLR0913, PLR0915, S101
+# ruff: noqa: C901, PLR0911, PLR0913, PLR0915, PLR0917, S101
 import hashlib
 import json
 from dataclasses import dataclass
@@ -46,6 +46,9 @@ from wef_backend.features.ingestion.domain.extraction import (
 )
 
 if TYPE_CHECKING:
+    from wef_backend.features.admin.application.parse_issue_reporting import (
+        ParseIssueOfferLinkStore,
+    )
     from wef_backend.features.identity.application.identity import Clock
 
 INGESTION_AI_PARSE_PROMPT_VERSION = "ingestion-ai-parse-v1"
@@ -988,6 +991,7 @@ class ApplyIngestionAiParse:
         self,
         store: IngestionAiParseStore,
         persistence: OwnerAiListingPersistencePort,
+        parse_issues: ParseIssueOfferLinkStore,
         audits: AdminAuditStore,
         clock: Clock,
         runtime: AiCurationRuntime,
@@ -995,9 +999,21 @@ class ApplyIngestionAiParse:
         """Initialize collaborators."""
         self._store = store
         self._persistence = persistence
+        self._parse_issues = parse_issues
         self._audits = audits
         self._clock = clock
         self._runtime = runtime
+
+    async def _link_parse_issue_offer(
+        self,
+        *,
+        source_message_id: UUID,
+        offer_id: UUID,
+    ) -> None:
+        await self._parse_issues.link_offer_for_message(
+            source_message_id=source_message_id,
+            offer_id=offer_id,
+        )
 
     async def _record(
         self,
@@ -1036,6 +1052,11 @@ class ApplyIngestionAiParse:
         now = self._clock.now()
         if run.state is ReviewRunState.APPLIED:
             await self._record(owner_id, revision_id, request_id, AdminOutcome.ALLOWED)
+            if run.offer_id is not None:
+                await self._link_parse_issue_offer(
+                    source_message_id=run.source_message_id,
+                    offer_id=run.offer_id,
+                )
             return IngestionAiApplyOutcome(
                 status=IngestionAiApplyStatus.APPLIED,
                 run=run,
@@ -1070,6 +1091,10 @@ class ApplyIngestionAiParse:
         updated = await self._store.get_run(run_id)
         if status is IngestionAiApplyStatus.APPLIED:
             await self._record(owner_id, revision_id, request_id, AdminOutcome.ALLOWED)
+            await self._link_parse_issue_offer(
+                source_message_id=run.source_message_id,
+                offer_id=offer_id,
+            )
         else:
             await self._record(owner_id, revision_id, request_id, AdminOutcome.DENIED)
         return IngestionAiApplyOutcome(

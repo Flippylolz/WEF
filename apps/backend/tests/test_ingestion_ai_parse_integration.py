@@ -38,8 +38,20 @@ from wef_backend.features.admin.infrastructure.store import SQLAlchemyAdminAudit
 from wef_backend.features.catalog.infrastructure.models import OfferRow
 from wef_backend.features.identity.domain.model import UserRole
 from wef_backend.features.identity.infrastructure.models import UserRow
-from wef_backend.features.ingestion.application.persistence import PersistenceBatchError
-from wef_backend.features.ingestion.infrastructure.models import OfferSourceRow
+from wef_backend.features.ingestion.application.parse_issue_serialization import ParseIssueInsert
+from wef_backend.features.ingestion.application.persistence import (
+    MessageOutcome,
+    PersistenceBatchError,
+)
+from wef_backend.features.ingestion.domain.parse_issue import ParseIssueOutcome
+from wef_backend.features.ingestion.infrastructure.models import (
+    OfferSourceRow,
+    SourceMessageParseIssueRow,
+)
+from wef_backend.features.ingestion.infrastructure.parse_issue_store import (
+    SQLAlchemyParseIssueStore,
+    insert_parse_issue,
+)
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
@@ -170,7 +182,35 @@ async def test_ingestion_ai_parse_generate_and_apply_creates_offer() -> None:
     database = await _prepare()
     owner_id = await _seed_owner(database)
     message_id, revision_id = await _seed_parse_miss(database)
+    async with database.session_factory() as session, session.begin():
+        await insert_parse_issue(
+            session,
+            ParseIssueInsert(
+                id=uuid4(),
+                source_channel_id=await session.scalar(
+                    text("SELECT source_channel_id FROM source_messages WHERE id = :id"),
+                    {"id": message_id},
+                ),
+                source_message_id=message_id,
+                source_message_revision_id=revision_id,
+                external_message_id=29435,
+                ingest_run_id=None,
+                parser_version="e2-v5",
+                score=3,
+                threshold=5,
+                is_candidate=False,
+                signals_json=(),
+                warnings_json=(),
+                issue_outcome=ParseIssueOutcome.PARSER_MISS,
+                message_outcome=MessageOutcome.SKIPPED_NON_CANDIDATE,
+                boundary_band="non_candidate_one_below_threshold",
+                signal_combination="price_marker",
+                text_excerpt_redacted="Mokotów listing without enough markers",
+                offer_id=None,
+            ),
+        )
     store = SQLAlchemyIngestionAiParseStore(database.session_factory)
+    parse_issue_store = SQLAlchemyParseIssueStore(database.session_factory)
     persistence = SQLAlchemyIngestionPersistence(database.session_factory)
     audits = SQLAlchemyAdminAuditStore(database.session_factory)
     clock = FakeClock(_NOW)
@@ -181,7 +221,7 @@ async def test_ingestion_ai_parse_generate_and_apply_creates_offer() -> None:
         clock,
         _runtime(),
     )
-    apply = ApplyIngestionAiParse(store, persistence, audits, clock, _runtime())
+    apply = ApplyIngestionAiParse(store, persistence, parse_issue_store, audits, clock, _runtime())
     generated = await generate(
         owner_id=owner_id,
         source_message_revision_id=revision_id,
@@ -208,8 +248,14 @@ async def test_ingestion_ai_parse_generate_and_apply_creates_offer() -> None:
         source_count = await session.scalar(
             select(OfferSourceRow.id).where(OfferSourceRow.source_message_id == message_id),
         )
+        linked_offer_id = await session.scalar(
+            select(SourceMessageParseIssueRow.offer_id).where(
+                SourceMessageParseIssueRow.source_message_id == message_id,
+            ),
+        )
     assert offer_count is not None
     assert source_count is not None
+    assert linked_offer_id == applied.offer_id
 
 
 @pytest.mark.asyncio

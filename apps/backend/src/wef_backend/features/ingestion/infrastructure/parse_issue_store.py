@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC
 from typing import TYPE_CHECKING
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from wef_backend.features.ingestion.domain.parse_issue import (
     ParseIssueOutcome,
@@ -14,6 +14,8 @@ from wef_backend.features.ingestion.domain.parse_issue import (
 from wef_backend.features.ingestion.infrastructure.models import SourceMessageParseIssueRow
 
 if TYPE_CHECKING:
+    from uuid import UUID
+
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
     from wef_backend.features.ingestion.application.parse_issue_serialization import (
@@ -65,6 +67,25 @@ class SQLAlchemyParseIssueStore:
                 )
             ).all()
             return tuple(_to_domain(row) for row in rows)
+
+    async def link_offer_for_message(
+        self,
+        *,
+        source_message_id: UUID,
+        offer_id: UUID,
+    ) -> int:
+        """Attach one offer id to parse issue rows that still have no offer link."""
+        async with self._session_factory() as session:
+            updated = await session.execute(
+                update(SourceMessageParseIssueRow)
+                .where(
+                    SourceMessageParseIssueRow.source_message_id == source_message_id,
+                    SourceMessageParseIssueRow.offer_id.is_(None),
+                )
+                .values(offer_id=offer_id),
+            )
+            await session.commit()
+            return int(getattr(updated, "rowcount", 0) or 0)
 
 
 def _to_domain(row: SourceMessageParseIssueRow) -> SourceMessageParseIssue:
