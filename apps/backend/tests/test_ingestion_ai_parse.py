@@ -788,6 +788,15 @@ def test_build_listing_candidate_from_ai_maps_price_and_label_fields() -> None:
     assert listing.delivery is not None
 
 
+def test_build_listing_candidate_from_ai_accepts_zl_currency_symbol() -> None:
+    """Groq may propose zł symbols; apply normalizes them to PLN."""
+    context = _context()
+    fields = _listing_fields(currency="zł")
+    listing = build_listing_candidate_from_ai(context=context, proposed_fields=fields)
+    assert listing.apartment_price is not None
+    assert listing.apartment_price.value.currency == "PLN"
+
+
 def test_build_listing_candidate_from_ai_requires_core_fields() -> None:
     """Apply rejects proposals missing required listing fields."""
     context = _context()
