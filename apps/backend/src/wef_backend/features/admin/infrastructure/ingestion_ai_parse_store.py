@@ -202,6 +202,23 @@ class SQLAlchemyIngestionAiParseStore:
             await session.commit()
             return IngestionAiApplyStatus.APPLIED
 
+    async def mark_failed(self, run_id: UUID) -> bool:
+        """Dismiss one pending run so the revision can be regenerated."""
+        async with self._session_factory() as session:
+            updated = await session.execute(
+                update(IngestionAiParseRunRow)
+                .where(
+                    IngestionAiParseRunRow.id == run_id,
+                    IngestionAiParseRunRow.state == ReviewRunState.PENDING.value,
+                )
+                .values(state=ReviewRunState.FAILED.value),
+            )
+            if int(getattr(updated, "rowcount", 0) or 0) != 1:
+                await session.rollback()
+                return False
+            await session.commit()
+            return True
+
     async def _external_message_id(self, session: AsyncSession, message_id: UUID) -> int:
         external = await session.scalar(
             select(SourceMessageRow.external_message_id).where(SourceMessageRow.id == message_id),

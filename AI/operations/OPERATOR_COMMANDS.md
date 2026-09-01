@@ -116,7 +116,10 @@ templates (`застройщика`, `0% комиссии`), and rows that alrea
 
 **Skip reasons** mirror admin denials: `offer_exists`, `daily_limit`, `disabled`,
 `in_flight`, `revision_not_found`, apply denials, and `AdminDeniedError` messages
-(for example `proposal missing required fields`).
+(for example `proposal missing required fields`). Unapplyable pending runs are
+marked **`failed`** on apply so the revision is not blocked until the 24-hour expiry.
+Generate also persists **`proposal_incomplete`** as `failed` when Groq omits required
+apply fields (`location`, `apartment_price_min`, `currency`).
 
 **Recommended workflow:**
 
