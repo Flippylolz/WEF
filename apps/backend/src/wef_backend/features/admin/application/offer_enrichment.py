@@ -498,15 +498,23 @@ def canonicalize_offer_field(field_name: str, value: object) -> object:
     return label
 
 
-def resolve_evidence_offsets(
-    source_text: str,
-    fragment: str,
-) -> tuple[int, int]:
-    """Return unique non-contact offsets of ``fragment`` in the source text."""
+def _evidence_fragment_variants(fragment: str) -> tuple[str, ...]:
+    """Return exact and common Groq formatting variants for one evidence fragment."""
     needle = str(fragment)
-    if not needle.strip():
-        message = "evidence fragment is empty"
-        raise AdminDeniedError(message)
+    variants: list[str] = [needle]
+    for candidate in (
+        needle.replace(": ", ":\n"),
+        needle.replace(": •", ":\n•"),
+        needle.replace(":\n•", ": •"),
+        needle.replace("\n", " "),
+        needle.replace(": ", ":\n").replace(" \n", "\n"),
+    ):
+        if candidate not in variants:
+            variants.append(candidate)
+    return tuple(variants)
+
+
+def _resolve_unique_match(source_text: str, needle: str) -> tuple[int, int]:
     start = source_text.find(needle)
     if start < 0:
         message = "evidence fragment not found"
@@ -521,6 +529,27 @@ def resolve_evidence_offsets(
             message = "evidence intersects a contact span"
             raise AdminDeniedError(message)
     return start, end
+
+
+def resolve_evidence_offsets(
+    source_text: str,
+    fragment: str,
+) -> tuple[int, int]:
+    """Return unique non-contact offsets of ``fragment`` in the source text."""
+    needle = str(fragment)
+    if not needle.strip():
+        message = "evidence fragment is empty"
+        raise AdminDeniedError(message)
+    last_error = "evidence fragment not found"
+    for candidate in _evidence_fragment_variants(needle):
+        try:
+            return _resolve_unique_match(source_text, candidate)
+        except AdminDeniedError as exc:
+            last_error = str(exc)
+            if last_error == "evidence fragment is ambiguous":
+                raise
+    message = last_error
+    raise AdminDeniedError(message)
 
 
 def parse_offer_enrichment_payload(

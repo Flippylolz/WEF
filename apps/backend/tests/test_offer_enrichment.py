@@ -206,6 +206,14 @@ def test_evidence_must_be_unique_and_outside_contacts() -> None:
         resolve_evidence_offsets(_SOURCE, _PHONE)
 
 
+def test_evidence_accepts_colon_newline_whitespace_variants() -> None:
+    """Groq may collapse section headers onto one line; matching stays unique."""
+    source = "💰 Условия:\n• Цена: 1 490 000 zł"
+    fragment = "💰 Условия: • Цена: 1 490 000 zł"
+    start, end = resolve_evidence_offsets(source, fragment)
+    assert source[start:end] == "💰 Условия:\n• Цена: 1 490 000 zł"
+
+
 def test_payload_rejects_extras_and_skips_filled_fields() -> None:
     """Unknown keys fail closed; already-present fields are ignored."""
     revision_id = str(uuid4())
