@@ -319,6 +319,25 @@ headers, and `#N_комнатная` / `N-комнатная` room tags. Parser 
 to Ukrainian Elestate posts: `Купівля`, `Ціна`/`вартість`, `N-кімнатна`, and
 `ринок` market labels. Recover historical misses with `wef-replay-parser` after deploy.
 
+### Parse-issue AI listing proposals (E21-T2)
+
+Owner-only HTML at `/admin/ingestion-issues` lists deterministic parse misses from the
+E21-T1 ledger. When AI curation is active and the message has no primary offer, the
+owner can open **Review**, request **Generate AI listing proposal**, inspect
+evidence-backed fields, and **Apply** one pending proposal to create an offer.
+
+- Runs persist in `ingestion_ai_parse_runs` (migration `20260901_0018`) with a partial
+  unique index on pending revision, 24-hour expiry, and the same fail-closed gates as
+  place review and offer enrichment (enabled flag, ZDR, model allowlist, daily limit,
+  masked source text).
+- Applied offers use parser version `ai-parse-v1`; live ingest never calls Groq
+  automatically.
+- Denied paths (unknown revision, offer already exists, in-flight pending run, masking
+  failure, daily limit, disabled curation) redirect back to review with a bounded reason.
+
+Activation uses the same `WEF_AI_CURATION_ENABLED`, Groq secret, and ZDR settings
+documented under owner enrichment controls below.
+
 ### Owner enrichment controls (E19-T4)
 
 Owner-only HTML at `/admin/offer-enrichment` wraps the E19-T3 interactors:
