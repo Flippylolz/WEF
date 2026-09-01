@@ -735,10 +735,7 @@ class SourceMessageParseIssueRow(IngestionBase):
     boundary_band: Mapped[str] = mapped_column(String(40))
     signal_combination: Mapped[str] = mapped_column(String(128))
     text_excerpt_redacted: Mapped[str] = mapped_column(Text)
-    offer_id: Mapped[UUID | None] = mapped_column(
-        Uuid(as_uuid=True),
-        ForeignKey("offers.id", ondelete="RESTRICT"),
-    )
+    offer_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.current_timestamp(),

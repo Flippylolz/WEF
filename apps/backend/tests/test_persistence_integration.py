@@ -171,10 +171,18 @@ def _candidate(
 
 
 def _plain(message_id: int, text: str, checksum: str) -> PersistableMessage:
-    """Build one persistable non-candidate message."""
+    """Build one persistable non-candidate message with parser metadata."""
+    decision = CandidateDecision(
+        parser_version="integration@1",
+        is_candidate=False,
+        score=0,
+        threshold=3,
+        content_type=None,
+        signals=(),
+    )
     return PersistableMessage(
         raw=_raw(message_id=message_id, text=text, checksum=checksum),
-        extraction=None,
+        extraction=ExtractionResult(decision=decision, listing=None),
     )
 
 
