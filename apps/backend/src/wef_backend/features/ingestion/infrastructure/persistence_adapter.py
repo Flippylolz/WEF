@@ -569,19 +569,17 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             source_changed = persisted.source_changed
             parser_version = persisted.parser_version
             parser_values = persisted.parser_values
-        if persistable.extraction is not None:
-            issue = build_parse_issue_insert(
-                extraction=persistable.extraction,
-                raw=raw,
-                message_outcome=outcome,
-                channel_id=channel_id,
-                source_message_id=message_id_for_offer,
-                source_message_revision_id=anchor_revision_id,
-                ingest_run_id=run_id,
-                offer_id=offer_id,
-            )
-            if issue is not None:
-                await insert_parse_issue(session, issue)
+        await self._persist_parse_issue_if_needed(
+            session,
+            persistable=persistable,
+            raw=raw,
+            message_outcome=outcome,
+            channel_id=channel_id,
+            source_message_id=message_id_for_offer,
+            source_message_revision_id=anchor_revision_id,
+            ingest_run_id=run_id,
+            offer_id=offer_id,
+        )
         return _MessageResult(
             outcome=outcome,
             offer_created=offer_created,
@@ -591,6 +589,37 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             parser_version=parser_version,
             parser_values=parser_values,
         )
+
+    async def _persist_parse_issue_if_needed(  # noqa: PLR0913
+        self,
+        session: AsyncSession,
+        *,
+        persistable: PersistableMessage,
+        raw: RawMessage,
+        message_outcome: MessageOutcome,
+        channel_id: UUID,
+        source_message_id: UUID,
+        source_message_revision_id: UUID,
+        ingest_run_id: UUID | None,
+        offer_id: UUID | None,
+    ) -> None:
+        """Append one parse issue row after source message rows are flushed."""
+        if persistable.extraction is None:
+            return
+        issue = build_parse_issue_insert(
+            extraction=persistable.extraction,
+            raw=raw,
+            message_outcome=message_outcome,
+            channel_id=channel_id,
+            source_message_id=source_message_id,
+            source_message_revision_id=source_message_revision_id,
+            ingest_run_id=ingest_run_id,
+            offer_id=offer_id,
+        )
+        if issue is None:
+            return
+        await session.flush()
+        await insert_parse_issue(session, issue)
 
     async def _resolve_location(
         self,
