@@ -192,6 +192,7 @@ class SQLAlchemyGeocodeStore(GeocodeStorePort):
             if durable is None:
                 message = "geocode cache row missing after completion"
                 raise RuntimeError(message)
+            await session.delete(current)
             return durable
 
     async def abandon_miss(

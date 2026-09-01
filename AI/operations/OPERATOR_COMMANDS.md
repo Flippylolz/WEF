@@ -165,6 +165,31 @@ lineage). **Output:** `locations_accepted`, `map_eligible_locations`,
 The worker's `recurring_geocode` loop also calls map-ready promotion
 (`promote_map_ready_offers`) after geocoding; manual runs are for operator catch-up.
 
+If `telegram-worker` logs `recurring_geocode_cycle_failed` with
+`CacheWaitExpiredError`, stale `geocode_miss_claims` rows may be blocking the
+fence. Clear completed claims (safe once results are in `geocode_results`):
+
+```bash
+$COMPOSE exec -T api python -c "
+import asyncio
+from sqlalchemy import text
+from wef_backend.database import create_database_resources
+from wef_backend.settings import load_settings
+async def main():
+    db = create_database_resources(load_settings().database_url)
+    async with db.session_factory() as s:
+        deleted = (await s.execute(text(
+            \"DELETE FROM geocode_miss_claims WHERE completed_geocode_result_id IS NOT NULL RETURNING 1\"
+        ))).all()
+        await s.commit()
+        print({\"deleted_completed_claims\": len(deleted)})
+    await db.engine.dispose()
+asyncio.run(main())
+"
+```
+
+Releases after the geocode-claim cleanup fix delete completed claims automatically.
+
 ### `wef-revalidate-recurring-geocoder`
 
 **Container:** `telegram-worker` (optional `--live-check` for provider probe).

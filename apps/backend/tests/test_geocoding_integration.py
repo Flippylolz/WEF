@@ -207,6 +207,13 @@ async def test_claim_lease_takeover_fences_stale_owner() -> None:
         expires_at=NOW + timedelta(hours=24),
     )
     assert await first.get_cached(key) is not None
+    reclaimed = await second.claim_miss(
+        key,
+        owner_id="owner-three",
+        now=NOW + timedelta(seconds=12),
+        lease_expires_at=NOW + timedelta(seconds=22),
+    )
+    assert reclaimed.disposition is ClaimDisposition.OWNER
     await database.engine.dispose()
 
 
