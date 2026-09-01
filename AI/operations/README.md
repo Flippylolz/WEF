@@ -5,6 +5,7 @@ This domain owns deployment behavior, production-host constraints, configuration
 ## Canonical documents
 
 - [Deployment](DEPLOYMENT.md) — local/production environments, images, live shared Nginx topology, Caddy rollback path, CI/CD, configuration, health checks, rollback, and readiness.
+- [Operator commands](OPERATOR_COMMANDS.md) — backend CLI reference (`wef-batch-ingestion-ai-parse`, geocode/catalog tools, Telegram worker commands): containers, flags, quotas, and production compose examples.
 - [Production server](SERVER.md) — inspected host capacity, workloads, ports, paths, permissions, persistence, transfer, and non-interference checks.
 - [Rollback rehearsal](ROLLBACK_REHEARSAL.md) — healthy activation, reviewed failure injection, restoration evidence, and enable/abort gates.
 - [Nginx and TLS](NGINX_TLS.md) — live WEF-only shared Nginx ingress, free Certbot/Let's Encrypt renewal, unchanged AI Forecast port `3000`, evidence, and rollback.

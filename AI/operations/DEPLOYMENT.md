@@ -331,6 +331,11 @@ location administration continues.
 For clearing the historical `ungeocoded` backlog with place review, see
 [Ungeocoded backlog and AI-assisted recovery](../ingestion/UNGEOCODED_BACKLOG_AND_AI_RECOVERY.md).
 
+Backend operator CLIs (`wef-batch-ingestion-ai-parse`, `wef-backfill-parse-issues`,
+`wef-accept-pending-geocode-pins`, and related commands) are catalogued in
+[OPERATOR_COMMANDS.md](OPERATOR_COMMANDS.md) with container placement, flags, and
+production compose examples.
+
 Smoke after a release that includes the console (do not mutate real offers):
 
 - `/api/v1/health/live` and `/api/v1/health/ready` succeed without Groq.

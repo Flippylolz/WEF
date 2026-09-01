@@ -29,3 +29,5 @@ used by place review and offer enrichment.
 Four parse misses on `wef_hist_candidate` were recovered via `/admin/ingestion-issues`
 generate/apply; three gained map pins after worker geocode, one (Serock) remains
 `needs_review` off-map by design. Operator notes: [UNGEOCODED_BACKLOG_AND_AI_RECOVERY.md](../../ingestion/UNGEOCODED_BACKLOG_AND_AI_RECOVERY.md#e21-ingestion-ai-parse-recovery-2026-09-01).
+Batch CLI (`wef-batch-ingestion-ai-parse`, `wef-backfill-parse-issues`):
+[OPERATOR_COMMANDS.md](../../operations/OPERATOR_COMMANDS.md#parse-issue-ledger-e21).
