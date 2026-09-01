@@ -82,3 +82,64 @@ class PlaceAiReviewRunRow(AdminBase):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     applied_fields: Mapped[object] = mapped_column(JSONB)
+
+
+class IngestionAiParseRunRow(AdminBase):
+    """Expiring structured ingestion AI parse run without prompt or source bodies."""
+
+    __tablename__ = "ingestion_ai_parse_runs"
+    __table_args__ = (
+        CheckConstraint(
+            "state IN ('pending', 'applied', 'expired', 'failed')",
+            name="ck_ingestion_ai_parse_runs_state",
+        ),
+        CheckConstraint(
+            "model = 'openai/gpt-oss-20b'",
+            name="ck_ingestion_ai_parse_runs_model",
+        ),
+        CheckConstraint(
+            "provider_outcome IN ("
+            "'succeeded', 'timeout', 'refusal', 'quota', 'rate_limited', "
+            "'network', 'schema', 'disabled')",
+            name="ck_ingestion_ai_parse_runs_provider_outcome",
+        ),
+        Index("ix_ingestion_ai_parse_runs_owner_created", "owner_user_id", "created_at"),
+        Index(
+            "ix_ingestion_ai_parse_runs_revision_state",
+            "source_message_revision_id",
+            "state",
+        ),
+        Index(
+            "uq_ingestion_ai_parse_runs_pending_revision",
+            "source_message_revision_id",
+            unique=True,
+            postgresql_where=text("state = 'pending'"),
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    owner_user_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
+    source_message_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
+    source_message_revision_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
+    external_message_id: Mapped[int] = mapped_column(Integer)
+    state: Mapped[str] = mapped_column(String(16))
+    model: Mapped[str] = mapped_column(String(64))
+    prompt_version: Mapped[str] = mapped_column(String(64))
+    schema_version: Mapped[str] = mapped_column(String(64))
+    input_fingerprint: Mapped[str] = mapped_column(String(64))
+    source_checksum: Mapped[str] = mapped_column(String(64))
+    proposed_fields: Mapped[object] = mapped_column(JSONB)
+    verdict: Mapped[str | None] = mapped_column(String(32))
+    warnings: Mapped[object] = mapped_column(JSONB)
+    token_input: Mapped[int | None] = mapped_column(Integer)
+    token_output: Mapped[int | None] = mapped_column(Integer)
+    provider_latency_ms: Mapped[int | None] = mapped_column(Integer)
+    provider_outcome: Mapped[str] = mapped_column(String(32))
+    provider_request_id: Mapped[str | None] = mapped_column(String(128))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    offer_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))

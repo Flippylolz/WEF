@@ -38,8 +38,14 @@ from wef_backend.features.admin.application import (
     UnresolvePlace,
 )
 from wef_backend.features.admin.application.ai_review import AiCurationRuntime
+from wef_backend.features.admin.application.ingestion_ai_parse import (
+    ApplyIngestionAiParse,
+    GenerateIngestionAiParse,
+    GetIngestionAiParse,
+)
 from wef_backend.features.admin.infrastructure import (
     SQLAlchemyAdminAuditStore,
+    SQLAlchemyIngestionAiParseStore,
     SQLAlchemyLocationAdminStore,
     SQLAlchemyOfferAiEnrichmentStore,
     SQLAlchemyPlaceAiReviewStore,
@@ -102,6 +108,9 @@ from wef_backend.features.identity.infrastructure import (
 )
 from wef_backend.features.ingestion.infrastructure.parse_issue_store import (
     SQLAlchemyParseIssueStore,
+)
+from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
+    SQLAlchemyIngestionPersistence,
 )
 from wef_backend.middleware.public_rate_limit import RateLimiter
 from wef_backend.migration import EXPECTED_DATABASE_REVISION
@@ -167,6 +176,8 @@ def build_services(settings: Settings | None = None) -> AppServices:
     place_ai_review_store = SQLAlchemyPlaceAiReviewStore(database.session_factory)
     offer_ai_enrichment_store = SQLAlchemyOfferAiEnrichmentStore(database.session_factory)
     parse_issue_store = SQLAlchemyParseIssueStore(database.session_factory)
+    ingestion_ai_parse_store = SQLAlchemyIngestionAiParseStore(database.session_factory)
+    ingestion_persistence = SQLAlchemyIngestionPersistence(database.session_factory)
     reveal_audit_reader = SQLAlchemyRevealAuditReader(database.session_factory)
     admin_secret = (
         runtime_settings.admin_session_secret.get_secret_value()
@@ -202,6 +213,21 @@ def build_services(settings: Settings | None = None) -> AppServices:
         ai_runtime,
     )
     get_place_review = GetPlaceReview(place_ai_review_store)
+    generate_ingestion_ai_parse = GenerateIngestionAiParse(
+        ingestion_ai_parse_store,
+        groq_provider,
+        admin_audit_store,
+        clock,
+        ai_runtime,
+    )
+    apply_ingestion_ai_parse = ApplyIngestionAiParse(
+        ingestion_ai_parse_store,
+        ingestion_persistence,
+        admin_audit_store,
+        clock,
+        ai_runtime,
+    )
+    get_ingestion_ai_parse = GetIngestionAiParse(ingestion_ai_parse_store)
     start_offer_enrichment = StartOfferEnrichmentBatch(
         offer_ai_enrichment_store,
         admin_audit_store,
@@ -343,6 +369,9 @@ def build_services(settings: Settings | None = None) -> AppServices:
             get_offer_enrichment_batch=GetOfferEnrichmentBatchDetail(offer_ai_enrichment_store),
             list_parser_gap_events=ListParserGapEvents(offer_ai_enrichment_store),
             list_parse_issue_events=ListParseIssueEvents(parse_issue_store),
+            generate_ingestion_ai_parse=generate_ingestion_ai_parse,
+            apply_ingestion_ai_parse=apply_ingestion_ai_parse,
+            get_ingestion_ai_parse=get_ingestion_ai_parse,
             ai_curation_enabled=ai_runtime.active,
         ),
         auth_cookie_secure=runtime_settings.env == "production",
