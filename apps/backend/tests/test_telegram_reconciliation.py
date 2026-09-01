@@ -214,6 +214,28 @@ async def test_reconciler_replays_overlap_and_classifies_edits() -> None:
 
 
 @pytest.mark.asyncio
+async def test_reconciler_invokes_prepare_cycle_before_overlap_replay() -> None:
+    resets: list[str] = []
+    processor = _Processor()
+    reconciler = TelegramCheckpointReconciler(
+        store=_CheckpointStore(checkpoint=100, max_id=100),
+        client=_client(tuple(_message(item) for item in range(91, 106))),
+        processor=processor,
+        processing_lock=asyncio.Lock(),
+        prepare_cycle=lambda: resets.append("reset"),
+    )
+
+    await reconciler(
+        TelegramReconciliationRequest(
+            identity=default_live_channel_identity(),
+            overlap=10,
+        ),
+    )
+
+    assert resets == ["reset"]
+
+
+@pytest.mark.asyncio
 async def test_checkpoint_falls_back_to_persisted_max_on_first_live_run() -> None:
     checkpoint = await read_durable_telegram_checkpoint(
         _CheckpointStore(checkpoint=None, max_id=42),

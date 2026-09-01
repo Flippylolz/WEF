@@ -51,6 +51,10 @@ class StatefulMediaGrouper:
     grouping_version: str = GROUPING_VERSION
     _state: _GroupingState = field(default_factory=_GroupingState)
 
+    def reset(self) -> None:
+        """Clear incremental state before a bounded reconciliation replay."""
+        self._state = _GroupingState()
+
     def ingest(self, item: GroupingInput) -> tuple[MediaDisposition, ...]:
         """Associate one chronological message and advance internal state."""
         if not self.grouping_version:

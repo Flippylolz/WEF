@@ -17,7 +17,7 @@ MAX_RECONCILIATION_BATCH_SIZE = 100
 MAX_RECONCILIATION_MESSAGES = 500
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
     from wef_backend.features.ingestion.application.telegram_events import (
         LiveEventBatchResult,
@@ -123,6 +123,7 @@ class TelegramCheckpointReconciler:
     client: TelegramLiveClientPort
     processor: LiveReconciliationProcessor
     processing_lock: asyncio.Lock
+    prepare_cycle: Callable[[], None] | None = None
 
     async def __call__(
         self,
@@ -130,6 +131,8 @@ class TelegramCheckpointReconciler:
     ) -> TelegramReconciliationResult:
         """Run one bounded cycle while excluding passive-event persistence."""
         async with self.processing_lock:
+            if self.prepare_cycle is not None:
+                self.prepare_cycle()
             starting_checkpoint = await read_durable_telegram_checkpoint(
                 self.store,
                 channel_external_id=request.identity.channel_id,

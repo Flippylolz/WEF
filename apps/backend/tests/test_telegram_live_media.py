@@ -11,6 +11,7 @@ from uuid import uuid4
 import pytest
 from telethon.tl.types import MessageMediaPhoto
 
+from wef_backend.features.ingestion.application.extraction import extract_listing
 from wef_backend.features.ingestion.application.live_media import LiveMediaPipeline
 from wef_backend.features.ingestion.application.media_grouping import StatefulMediaGrouper
 from wef_backend.features.ingestion.application.telegram_live import (
@@ -18,7 +19,7 @@ from wef_backend.features.ingestion.application.telegram_live import (
     live_message_to_raw,
     source_identity_from_channel,
 )
-from wef_backend.features.ingestion.domain import SourceAnchor
+from wef_backend.features.ingestion.domain import GroupingInput, SourceAnchor
 from wef_backend.features.ingestion.domain.model import MediaDescriptor, MediaKind
 from wef_backend.features.ingestion.domain.telegram_channel import default_live_channel_identity
 from wef_backend.features.ingestion.infrastructure.telethon_live_media import (
@@ -210,3 +211,35 @@ def test_live_media_download_limits_factory() -> None:
     limits = live_media_download_limits(max_bytes=100, timeout_seconds=3.0)
     assert limits.max_bytes == 100
     assert limits.timeout_seconds == 3.0
+
+
+def test_live_media_grouper_reset_before_overlap_replay() -> None:
+    """Consumer chronology followed by reconciliation reset avoids ValueError."""
+    grouper = StatefulMediaGrouper()
+    identity = source_identity_from_channel(default_live_channel_identity())
+    newer = live_message_to_raw(
+        LiveTelegramMessage(
+            external_message_id=105,
+            text="Cena: 4500 PLN, 2 pokoje, Mokotów",
+            published_at=datetime(2026, 9, 1, 7, 41, 28, tzinfo=UTC),
+            edited_at=None,
+            media=(MediaDescriptor(kind=MediaKind.PHOTO, path="105/0.jpg"),),
+        ),
+        identity=identity,
+    )
+    older = live_message_to_raw(
+        LiveTelegramMessage(
+            external_message_id=91,
+            text="",
+            published_at=datetime(2026, 9, 1, 7, 40, 0, tzinfo=UTC),
+            edited_at=None,
+            media=(MediaDescriptor(kind=MediaKind.PHOTO, path="91/0.jpg"),),
+        ),
+        identity=identity,
+    )
+    grouper.ingest(GroupingInput(message=newer, candidate=extract_listing(newer).decision))
+    grouper.reset()
+    dispositions = grouper.ingest(
+        GroupingInput(message=older, candidate=extract_listing(older).decision),
+    )
+    assert dispositions[0].unassociated_reason is not None

@@ -16,6 +16,7 @@ from wef_backend.features.ingestion.application import (
     detect_candidate,
     group_media,
 )
+from wef_backend.features.ingestion.application.media_grouping import StatefulMediaGrouper
 from wef_backend.features.ingestion.domain import (
     Confidence,
     GroupingInput,
@@ -251,6 +252,19 @@ def test_grouping_is_lazy_and_rejects_non_chronological_input() -> None:
         )
     with pytest.raises(ValueError, match="version"):
         tuple(group_media((), grouping_version=""))
+
+
+def test_stateful_grouper_reset_allows_reconciliation_overlap_replay() -> None:
+    """Reset clears live chronology state before bounded overlap replay."""
+    grouper = StatefulMediaGrouper()
+    newer = _message(502, 20, text="Kupno | Mieszkanie", media_kinds=(MediaKind.PHOTO,))
+    older = _message(501, 10, text="Kupno | Mieszkanie", media_kinds=(MediaKind.PHOTO,))
+    grouper.ingest(_input(newer, expected_candidate=True))
+    with pytest.raises(ValueError, match="chronological"):
+        grouper.ingest(_input(older, expected_candidate=True))
+    grouper.reset()
+    dispositions = grouper.ingest(_input(older, expected_candidate=True))
+    assert dispositions[0].association is not None
 
 
 def test_media_domain_values_reject_mixed_or_duplicate_shapes() -> None:
