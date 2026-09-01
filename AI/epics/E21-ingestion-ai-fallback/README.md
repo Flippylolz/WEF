@@ -21,3 +21,11 @@ used by place review and offer enrichment.
 
 - E21-T1: Parse issue ledger — `done` through PR #259
 - E21-T2: Owner-triggered AI listing proposal from parse issues — `done` through PR #263 (`477d648`, migration `20260901_0018`)
+- E21-T3: Link parse issues to applied offers — `done` through PR #267 (`e6d5b85`)
+- Groq apply hardening (aliases, evidence tolerance) — `done` through PR #268–#271 (`89c940f`)
+
+## Production recovery (2026-09-01)
+
+Four parse misses on `wef_hist_candidate` were recovered via `/admin/ingestion-issues`
+generate/apply; three gained map pins after worker geocode, one (Serock) remains
+`needs_review` off-map by design. Operator notes: [UNGEOCODED_BACKLOG_AND_AI_RECOVERY.md](../../ingestion/UNGEOCODED_BACKLOG_AND_AI_RECOVERY.md#e21-ingestion-ai-parse-recovery-2026-09-01).
