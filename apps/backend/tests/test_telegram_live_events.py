@@ -60,6 +60,8 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Mapping, Sequence
     from uuid import UUID
 
+    from wef_backend.features.ingestion.domain.extraction import ListingCandidate
+
 
 class _FakeStore:
     """Persistence stand-in covering upsert, checkpoint, and delete lineage."""
@@ -194,6 +196,16 @@ class _FakeStore:
                 ),
             )
         return tuple(outcomes)
+
+    async def persist_owner_ai_listing(
+        self,
+        *,
+        source_message_revision_id: UUID,
+        listing: ListingCandidate,
+    ) -> UUID:
+        """Stub owner AI listing persistence for protocol conformance."""
+        _ = (source_message_revision_id, listing)
+        return uuid4()
 
     async def finish_run(
         self,

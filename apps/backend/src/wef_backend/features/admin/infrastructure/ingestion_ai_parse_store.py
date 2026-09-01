@@ -196,7 +196,7 @@ class SQLAlchemyIngestionAiParseStore:
                     offer_id=offer_id,
                 ),
             )
-            if updated.rowcount != 1:
+            if int(getattr(updated, "rowcount", 0) or 0) != 1:
                 await session.rollback()
                 return IngestionAiApplyStatus.COLLISION
             await session.commit()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 import pytest
@@ -50,7 +51,7 @@ def _context(*, text: str = "Mokotów 2 pokoje 850 000 zł") -> RevisionParseCon
     )
 
 
-def _payload(*, fragment: str = "850 000 zł") -> dict[str, object]:
+def _payload(*, fragment: str = "850 000 zł") -> dict[str, Any]:
     return {
         "verdict": IngestionAiParseVerdict.LISTING_PROPOSED.value,
         "fields": [
@@ -139,8 +140,11 @@ def test_parse_ingestion_ai_parse_payload_rejects_unknown_fields() -> None:
 
 def test_ingestion_ai_parse_json_schema_lists_listing_fields() -> None:
     """Structured output schema exposes listing field names."""
-    schema = ingestion_ai_parse_json_schema()
-    field_names = schema["properties"]["fields"]["items"]["properties"]["field_name"]["enum"]
+    schema = cast("dict[str, Any]", ingestion_ai_parse_json_schema())
+    field_names = cast(
+        "list[str]",
+        schema["properties"]["fields"]["items"]["properties"]["field_name"]["enum"],
+    )
     assert "location" in field_names
     assert "apartment_price_min" in field_names
 
@@ -845,11 +849,14 @@ def test_parse_ingestion_ai_parse_payload_rejects_invalid_shapes(payload: object
 
 def _listing_fields(**overrides: object) -> tuple[dict[str, object], ...]:
     payload = _payload()
-    for field in payload["fields"]:
+    fields = payload["fields"]
+    assert isinstance(fields, list)
+    for field in fields:
+        assert isinstance(field, dict)
         name = str(field["field_name"])
         if name in overrides:
             field["proposed_value"] = overrides.pop(name)
-    payload["fields"].extend(
+    fields.extend(
         {
             "field_name": name,
             "proposed_value": value,

@@ -925,24 +925,24 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             if revision is None:
                 message = "source message revision not found"
                 raise PersistenceBatchError(message)
-            message = await session.get(SourceMessageRow, revision.source_message_id)
-            if message is None:
-                msg = "source message not found"
-                raise PersistenceBatchError(msg)
-            channel = await session.get(SourceChannelRow, message.source_channel_id)
+            source_message = await session.get(SourceMessageRow, revision.source_message_id)
+            if source_message is None:
+                message = "source message not found"
+                raise PersistenceBatchError(message)
+            channel = await session.get(SourceChannelRow, source_message.source_channel_id)
             if channel is None:
-                msg = "source channel not found"
-                raise PersistenceBatchError(msg)
+                message = "source channel not found"
+                raise PersistenceBatchError(message)
             raw = _raw_message_from_stored_revision(
                 revision=revision,
-                message=message,
+                message=source_message,
                 channel=channel,
             )
             result = await self._persist_offer(
                 session,
                 listing=listing,
                 raw=raw,
-                message_id=message.id,
+                message_id=source_message.id,
                 revision_id=revision.id,
             )
             await session.commit()

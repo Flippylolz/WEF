@@ -62,6 +62,8 @@ if TYPE_CHECKING:
     from pathlib import Path
     from uuid import UUID
 
+    from wef_backend.features.ingestion.domain.extraction import ListingCandidate
+
 
 def test_load_telegram_worker_secrets_from_env_values() -> None:
     secrets = load_telegram_worker_secrets(
@@ -282,6 +284,16 @@ class _FakeStore:
             )
             for external_id in external_message_ids
         )
+
+    async def persist_owner_ai_listing(
+        self,
+        *,
+        source_message_revision_id: UUID,
+        listing: ListingCandidate,
+    ) -> UUID:
+        """Stub owner AI listing persistence for protocol conformance."""
+        _ = (source_message_revision_id, listing)
+        return uuid4()
 
     async def finish_run(
         self,

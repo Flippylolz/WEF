@@ -13,12 +13,7 @@ from alembic import command
 from sqlalchemy import select, text
 
 from tests.fakes import FakeChatCompletions, FakeClock
-from tests.test_ingestion_ai_parse import (
-    _context,
-    _payload,
-    build_listing_candidate_from_ai,
-    parse_ingestion_ai_parse_payload,
-)
+from tests.test_ingestion_ai_parse import _context, _payload
 from wef_backend.database import DatabaseResources, create_database_resources
 from wef_backend.features.admin.application.ai_review import (
     ALLOWED_GROQ_MODEL,
@@ -33,6 +28,8 @@ from wef_backend.features.admin.application.ingestion_ai_parse import (
     IngestionAiParseRun,
     IngestionAiParseStatus,
     IngestionAiParseVerdict,
+    build_listing_candidate_from_ai,
+    parse_ingestion_ai_parse_payload,
 )
 from wef_backend.features.admin.infrastructure.ingestion_ai_parse_store import (
     SQLAlchemyIngestionAiParseStore,
