@@ -97,6 +97,7 @@ class FailingStore(SQLAlchemyIngestionPersistence):
         *,
         channel_id: object,
         persistable: PersistableMessage,
+        run_id: object | None = None,
     ) -> object:
         """Raise the scripted failure before the message is reconciled."""
         if persistable.raw.external_message_id == self._fail_on_message_id:
@@ -106,6 +107,7 @@ class FailingStore(SQLAlchemyIngestionPersistence):
             session,  # type: ignore[arg-type]
             channel_id=channel_id,  # type: ignore[arg-type]
             persistable=persistable,
+            run_id=run_id,  # type: ignore[arg-type]
         )
 
 
