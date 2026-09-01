@@ -284,7 +284,9 @@ def ingestion_ai_parse_json_schema() -> dict[str, object]:
     }
 
 
-def parse_ingestion_ai_parse_payload(payload: object) -> tuple[str, tuple[dict[str, object], ...], tuple[str, ...]]:
+def parse_ingestion_ai_parse_payload(
+    payload: object,
+) -> tuple[str, tuple[dict[str, object], ...], tuple[str, ...]]:
     """Parse provider JSON and reject unknown shapes."""
     if not isinstance(payload, dict):
         raise ProviderRequestError(ProviderOutcome.SCHEMA)
@@ -503,7 +505,9 @@ def build_listing_candidate_from_ai(
     market_field = by_name.get("market_type")
     market_value = MarketType.UNKNOWN
     if market_field is not None:
-        market_value = MarketType(str(_canonical_field_value("market_type", market_field["proposed_value"])))
+        market_value = MarketType(
+            str(_canonical_field_value("market_type", market_field["proposed_value"]))
+        )
     district_field = by_name.get("district")
     development_field = by_name.get("development_name")
     parking_min_field = by_name.get("parking_price_min")
@@ -519,7 +523,9 @@ def build_listing_candidate_from_ai(
     floor_field = by_name.get("floor_label")
     delivery_field = by_name.get("delivery_label")
 
-    def money_range(min_field: dict[str, object] | None, max_field: dict[str, object] | None) -> MoneyRange | None:
+    def money_range(
+        min_field: dict[str, object] | None, max_field: dict[str, object] | None
+    ) -> MoneyRange | None:
         if min_field is None:
             return None
         lower = _as_decimal(min_field["proposed_value"])
@@ -680,7 +686,9 @@ def build_listing_candidate_from_ai(
             _extracted(
                 source_text=source_text,
                 field=delivery_field,
-                value=str(_canonical_field_value("delivery_label", delivery_field["proposed_value"])),
+                value=str(
+                    _canonical_field_value("delivery_label", delivery_field["proposed_value"])
+                ),
             )
             if delivery_field is not None
             else None
@@ -727,7 +735,9 @@ def _failed_run(
     )
 
 
-def _provider_messages(context: RevisionParseContext, masked_text: str) -> tuple[dict[str, str], ...]:
+def _provider_messages(
+    context: RevisionParseContext, masked_text: str
+) -> tuple[dict[str, str], ...]:
     return (
         {"role": "system", "content": _SYSTEM_PROMPT},
         {
