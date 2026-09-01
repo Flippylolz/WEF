@@ -511,7 +511,29 @@ def _evidence_fragment_variants(fragment: str) -> tuple[str, ...]:
     ):
         if candidate not in variants:
             variants.append(candidate)
+    lines = [line for line in needle.splitlines() if line.strip()]
+    if len(lines) >= 2:  # noqa: PLR2004
+        for joiner in ("\n", "\n\n"):
+            reordered = joiner.join(reversed(lines))
+            if reordered not in variants:
+                variants.append(reordered)
     return tuple(variants)
+
+
+def _resolve_first_non_contact_match(source_text: str, needle: str) -> tuple[int, int]:
+    start = 0
+    while start <= len(source_text):
+        found = source_text.find(needle, start)
+        if found < 0:
+            message = "evidence fragment not found"
+            raise AdminDeniedError(message)
+        end = found + len(needle)
+        contacts = extract_contact_spans(source_text)
+        if not any(found < contact.span.end and end > contact.span.start for contact in contacts):
+            return found, end
+        start = found + 1
+    message = "evidence fragment not found"
+    raise AdminDeniedError(message)
 
 
 def _resolve_unique_match(source_text: str, needle: str) -> tuple[int, int]:
@@ -534,8 +556,10 @@ def _resolve_unique_match(source_text: str, needle: str) -> tuple[int, int]:
 def resolve_evidence_offsets(
     source_text: str,
     fragment: str,
+    *,
+    allow_ambiguous_first_match: bool = False,
 ) -> tuple[int, int]:
-    """Return unique non-contact offsets of ``fragment`` in the source text."""
+    """Return non-contact offsets of ``fragment`` in the source text."""
     needle = str(fragment)
     if not needle.strip():
         message = "evidence fragment is empty"
@@ -546,7 +570,12 @@ def resolve_evidence_offsets(
             return _resolve_unique_match(source_text, candidate)
         except AdminDeniedError as exc:
             last_error = str(exc)
-            if last_error == "evidence fragment is ambiguous":
+            if last_error == "evidence fragment is ambiguous" and allow_ambiguous_first_match:
+                try:
+                    return _resolve_first_non_contact_match(source_text, candidate)
+                except AdminDeniedError as fallback_exc:
+                    last_error = str(fallback_exc)
+            elif last_error == "evidence fragment is ambiguous":
                 raise
     message = last_error
     raise AdminDeniedError(message)

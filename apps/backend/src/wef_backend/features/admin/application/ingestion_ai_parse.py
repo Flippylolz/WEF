@@ -424,7 +424,11 @@ def _provenance(
     fragment: str,
     confidence: str,
 ) -> RuleProvenance:
-    start, end = resolve_evidence_offsets(source_text, fragment)
+    start, end = resolve_evidence_offsets(
+        source_text,
+        fragment,
+        allow_ambiguous_first_match=True,
+    )
     return RuleProvenance(
         rule_id=_AI_RULE_ID,
         rule_version=_AI_RULE_VERSION,
