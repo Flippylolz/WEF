@@ -139,6 +139,7 @@ services:
       - "8000"
     networks:
       - application
+      - provider-egress
 
   web:
     image: wef-web:local
