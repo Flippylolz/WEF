@@ -32,6 +32,13 @@ x-backend-environment: &backend-environment
   WEF_LOG_LEVEL: ${WEF_LOG_LEVEL:-info}
   WEF_RELEASE_SHA: ${WEF_RELEASE_SHA:?WEF_RELEASE_SHA is required}
 
+x-telegram-status-environment: &telegram-status-environment
+  WEF_TELEGRAM_API_ID: ${WEF_TELEGRAM_API_ID:-}
+  WEF_TELEGRAM_API_HASH: ${WEF_TELEGRAM_API_HASH:-}
+  WEF_TELEGRAM_SESSION: ${WEF_TELEGRAM_SESSION:-}
+  WEF_TELEGRAM_SESSION_PATH: /var/lib/wef/telegram/session
+  WEF_TELEGRAM_RUNTIME_HEALTH_PATH: /var/lib/wef/state/telegram-worker-health.json
+
 services:
   db-permissions:
     profiles:
@@ -133,7 +140,9 @@ services:
 
   api:
     image: ${WEF_BACKEND_IMAGE:?WEF_BACKEND_IMAGE digest is required}
-    environment: *backend-environment
+    environment:
+      <<: [*backend-environment, *telegram-status-environment]
+      WEF_TELEGRAM_RUNTIME_HEALTH_PATH: /tmp/wef-telegram-worker.health.json
     <<: *application-security
     restart: unless-stopped
     stop_grace_period: 15s
@@ -149,6 +158,12 @@ services:
       - type: bind
         source: ${WEF_ROOT:?WEF_ROOT is required}/media/public
         target: /app/media/public
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${WEF_ROOT:?WEF_ROOT is required}/state/telegram-worker-health.json
+        target: /tmp/wef-telegram-worker.health.json
         read_only: true
         bind:
           create_host_path: false
@@ -286,12 +301,11 @@ services:
       retries: 3
       start_period: 60s
     environment:
-      <<: *backend-environment
+      <<: [*backend-environment, *telegram-status-environment]
       WEF_TELEGRAM_API_ID: ${WEF_TELEGRAM_API_ID:?WEF_TELEGRAM_API_ID is required}
       WEF_TELEGRAM_API_HASH: ${WEF_TELEGRAM_API_HASH:?WEF_TELEGRAM_API_HASH is required}
       WEF_TELEGRAM_SESSION: ${WEF_TELEGRAM_SESSION:-}
       WEF_TELEGRAM_PHONE: ${WEF_TELEGRAM_PHONE:-}
-      WEF_TELEGRAM_SESSION_PATH: /var/lib/wef/telegram/session
       WEF_TELEGRAM_RECONCILIATION_INTERVAL_SECONDS: ${WEF_TELEGRAM_RECONCILIATION_INTERVAL_SECONDS:-60}
       WEF_TELEGRAM_RECONCILIATION_BATCH_SIZE: ${WEF_TELEGRAM_RECONCILIATION_BATCH_SIZE:-100}
       WEF_TELEGRAM_RECONCILIATION_MAX_MESSAGES: ${WEF_TELEGRAM_RECONCILIATION_MAX_MESSAGES:-500}
@@ -310,6 +324,11 @@ services:
       - type: bind
         source: ${WEF_ROOT:?WEF_ROOT is required}/secrets/telegram
         target: /var/lib/wef/telegram
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${WEF_ROOT:?WEF_ROOT is required}/state
+        target: /var/lib/wef/state
         bind:
           create_host_path: false
       - type: bind
