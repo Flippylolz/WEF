@@ -116,9 +116,42 @@ Prioritize by linked offer count. Respect **20/day** and **~2 s** spacing.
 2. **Apply** address (and district only when canonical).
 3. **Geocode** via `telegram-worker` (Geoapify) — not from `api` unless
    `WEF_GEOAPIFY_API_KEY` is on the shared backend environment.
-4. Run `wef-accept-pending-geocode-pins` and `wef-promote-public-catalog` if needed.
+4. Run `wef-accept-pending-geocode-pins` from `telegram-worker`, then promote
+   **map-ready offers only** (the worker uses `promote_map_ready_offers`; avoid
+   bulk `wef-promote-public-catalog` for live recovery — it publishes every
+   `needs_review` offer, including listings still without pins).
 
 Do not bulk-generate merely to demo the feature.
+
+### E21 ingestion AI parse recovery (2026-09-01)
+
+Owner **generate/apply** on `/admin/ingestion-issues` creates offers with
+`parser_version=ai-parse-v1`. Apply now links `source_message_parse_issues.offer_id`
+so recovered rows drop the Review link (PR #267).
+
+Production smoke/recovery on `wef_hist_candidate`:
+
+| Message | Outcome | Map |
+|---------|---------|-----|
+| 29435 | Warsaw apt — geocoded, **visible** | yes |
+| 29425 | Józefosław townhome — geocoded, **visible** | yes |
+| 29159 | Warsaw apt (repost) — geocoded, **visible** | yes |
+| 29445 | Dosin/Serock house — **ungeocoded** (outside Warsaw Geoapify scope) | no — stays `needs_review` until manual pin (E18) or rejection |
+
+Groq apply hardening shipped in #268–#271 (currency/market aliases, evidence
+whitespace/reorder/ambiguity).
+
+Operator geocode catch-up for AI-created locations (Geoapify key is on
+**`telegram-worker` only**, not `api` — by design):
+
+```bash
+COMPOSE="docker compose --project-name wef-production \
+  --env-file /home/nuc/wef/secrets/current/production.env \
+  --file /home/nuc/wef/releases/current/compose.production.yaml"
+$COMPOSE exec -T telegram-worker wef-accept-pending-geocode-pins
+# Worker promotes map-ready offers each recurring_geocode cycle; do not run
+# wef-promote-public-catalog unless doing a historical bulk promotion pass.
+```
 
 ### Offer enrichment (separate)
 
@@ -131,7 +164,8 @@ rooms, area). It does not fix `ungeocoded` locations.
 - Groq deploy wiring: #238, #240
 - API provider egress: #241
 - [GEOCODING.md](GEOCODING.md) — provider request shape
-- [PIPELINE.md](PIPELINE.md) — recurring geocode and retry policy
+- E21 parse-issue offer link + AI apply hardening: #267–#271
+- [PIPELINE.md](PIPELINE.md) — E21-T2 ingestion AI parse; recurring geocode policy
 - [ADR-022](../decisions/adr/ADR-022-use-groq-gpt-oss-for-place-review-and-offer-enrichment.md)
 
 ## Security
