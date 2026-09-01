@@ -334,6 +334,16 @@ class FakeStore:
             for external_id in external_message_ids
         )
 
+    async def persist_owner_ai_listing(
+        self,
+        *,
+        source_message_revision_id: UUID,
+        listing: ListingCandidate,
+    ) -> UUID:
+        """Stub owner AI listing persistence for protocol conformance."""
+        _ = (source_message_revision_id, listing)
+        return uuid4()
+
     async def finish_run(
         self,
         *,

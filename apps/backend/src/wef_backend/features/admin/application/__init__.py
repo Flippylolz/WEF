@@ -30,6 +30,11 @@ from wef_backend.features.admin.application.ai_review import (
     GeneratePlaceReview,
     GetPlaceReview,
 )
+from wef_backend.features.admin.application.ingestion_ai_parse import (
+    ApplyIngestionAiParse,
+    GenerateIngestionAiParse,
+    GetIngestionAiParse,
+)
 from wef_backend.features.admin.application.offer_enrichment import (
     PauseOfferEnrichmentBatch,
     ProcessOfferEnrichmentItem,
@@ -53,11 +58,14 @@ __all__ = [
     "AdminDeniedError",
     "AdminOutcome",
     "AdminService",
+    "ApplyIngestionAiParse",
     "ApplyPlaceReview",
     "DisableUser",
     "ForceResetUserPassword",
+    "GenerateIngestionAiParse",
     "GeneratePlaceReview",
     "GeocodeCandidateSummary",
+    "GetIngestionAiParse",
     "GetLocationForEdit",
     "GetOfferEnrichmentBatchDetail",
     "GetPlaceReview",

@@ -297,6 +297,15 @@ class IngestionPersistencePort(Protocol):
         """Record the terminal run state."""
         ...
 
+    async def persist_owner_ai_listing(
+        self,
+        *,
+        source_message_revision_id: UUID,
+        listing: ListingCandidate,
+    ) -> UUID:
+        """Create or update one offer from an owner-approved AI listing proposal."""
+        ...
+
 
 def money_to_minor(amount: Decimal) -> int:
     """Convert source major units to integer minor units."""

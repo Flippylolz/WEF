@@ -23,6 +23,11 @@ if TYPE_CHECKING:
         GeneratePlaceReview,
         GetPlaceReview,
     )
+    from wef_backend.features.admin.application.ingestion_ai_parse import (
+        ApplyIngestionAiParse,
+        GenerateIngestionAiParse,
+        GetIngestionAiParse,
+    )
     from wef_backend.features.admin.application.offer_enrichment import (
         PauseOfferEnrichmentBatch,
         ProcessOfferEnrichmentItem,
@@ -869,6 +874,9 @@ class AdminService:
     get_offer_enrichment_batch: GetOfferEnrichmentBatchDetail
     list_parser_gap_events: ListParserGapEvents
     list_parse_issue_events: ListParseIssueEvents
+    generate_ingestion_ai_parse: GenerateIngestionAiParse
+    apply_ingestion_ai_parse: ApplyIngestionAiParse
+    get_ingestion_ai_parse: GetIngestionAiParse
     ai_curation_enabled: bool
 
 

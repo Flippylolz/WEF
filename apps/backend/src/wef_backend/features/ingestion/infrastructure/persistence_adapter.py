@@ -52,6 +52,7 @@ from wef_backend.features.ingestion.application.persistence import (
     normalized_location_key,
     redacted_error_summary,
 )
+from wef_backend.features.ingestion.domain.model import RawMessage, SourceIdentity, SourcePlatform
 from wef_backend.features.ingestion.infrastructure.models import (
     DevelopmentRow,
     IngestRunRow,
@@ -68,7 +69,6 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
     from wef_backend.features.ingestion.domain.extraction import ListingCandidate
-    from wef_backend.features.ingestion.domain.model import RawMessage
 
 _SIGNED_64 = (1 << 63) - 1
 _PRIMARY_RELATIONSHIP = "primary"
@@ -912,3 +912,72 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                 ),
             )
             await session.commit()
+
+    async def persist_owner_ai_listing(
+        self,
+        *,
+        source_message_revision_id: UUID,
+        listing: ListingCandidate,
+    ) -> UUID:
+        """Create or update one offer from an owner-approved AI listing proposal."""
+        async with self._session_factory() as session:
+            revision = await session.get(SourceMessageRevisionRow, source_message_revision_id)
+            if revision is None:
+                message = "source message revision not found"
+                raise PersistenceBatchError(message)
+            source_message = await session.get(SourceMessageRow, revision.source_message_id)
+            if source_message is None:
+                message = "source message not found"
+                raise PersistenceBatchError(message)
+            channel = await session.get(SourceChannelRow, source_message.source_channel_id)
+            if channel is None:
+                message = "source channel not found"
+                raise PersistenceBatchError(message)
+            raw = _raw_message_from_stored_revision(
+                revision=revision,
+                message=source_message,
+                channel=channel,
+            )
+            result = await self._persist_offer(
+                session,
+                listing=listing,
+                raw=raw,
+                message_id=source_message.id,
+                revision_id=revision.id,
+            )
+            await session.commit()
+            return result.offer_id
+
+
+def _raw_message_from_stored_revision(
+    *,
+    revision: SourceMessageRevisionRow,
+    message: SourceMessageRow,
+    channel: SourceChannelRow,
+) -> RawMessage:
+    """Rebuild one replayable raw message from persisted revision rows."""
+    entities = revision.entities_json
+    payload = revision.raw_payload_json
+    if not isinstance(entities, list):
+        entities = []
+    if not isinstance(payload, dict):
+        payload = {"id": message.external_message_id}
+    return RawMessage(
+        source=SourceIdentity(
+            platform=SourcePlatform(channel.platform),
+            channel_id=channel.external_id,
+            channel_name=channel.display_name,
+            channel_type="public_channel",
+        ),
+        external_message_id=message.external_message_id,
+        reply_to_message_id=None,
+        published_at=revision.published_at,
+        edited_at=revision.edited_at,
+        message_type=revision.message_type,
+        text=revision.text_original,
+        original_text=revision.text_original,
+        text_entities=tuple(entities),
+        media=(),
+        raw_payload=payload,
+        checksum=revision.raw_checksum,
+    )

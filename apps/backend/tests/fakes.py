@@ -41,6 +41,14 @@ from wef_backend.features.admin.application.ai_review import (
     SourceRevisionEvidence,
     StructuredCompletion,
 )
+from wef_backend.features.admin.application.ingestion_ai_parse import (
+    ApplyIngestionAiParse,
+    GenerateIngestionAiParse,
+    GetIngestionAiParse,
+    IngestionAiApplyStatus,
+    IngestionAiParseRun,
+    RevisionParseContext,
+)
 from wef_backend.features.admin.application.offer_enrichment import (
     BatchState,
     FieldEventOutcome,
@@ -128,6 +136,7 @@ from wef_backend.features.identity.application.view_history import (
     ViewHistoryService,
 )
 from wef_backend.features.identity.domain.model import Account, AccountSession, UserRole
+from wef_backend.features.ingestion.domain.extraction import ListingCandidate
 from wef_backend.features.ingestion.domain.parse_issue import SourceMessageParseIssue
 
 
@@ -1280,6 +1289,95 @@ class FakeParseIssueStore:
         return tuple(self.issues[:limit])
 
 
+@dataclass
+class FakeIngestionAiParseStore:
+    """In-memory ingestion AI parse store for admin tests."""
+
+    contexts: dict[UUID, RevisionParseContext] = field(default_factory=dict)
+    runs: dict[UUID, IngestionAiParseRun] = field(default_factory=dict)
+    offers: set[UUID] = field(default_factory=set)
+    applied_offers: dict[UUID, UUID] = field(default_factory=dict)
+    force_insert_failure: bool = False
+    mark_applied_status: IngestionAiApplyStatus | None = None
+
+    async def get_revision_context(self, revision_id: UUID) -> RevisionParseContext | None:
+        return self.contexts.get(revision_id)
+
+    async def has_primary_offer(self, message_id: UUID) -> bool:
+        return message_id in self.offers
+
+    async def get_pending_run(self, revision_id: UUID) -> IngestionAiParseRun | None:
+        for run in self.runs.values():
+            if (
+                run.source_message_revision_id == revision_id
+                and run.state is ReviewRunState.PENDING
+            ):
+                return run
+        return None
+
+    async def count_owner_runs_since(self, owner_id: UUID, *, since: datetime) -> int:
+        _ = owner_id
+        _ = since
+        return len(self.runs)
+
+    async def insert_run(self, run: IngestionAiParseRun) -> bool:
+        pending = await self.get_pending_run(run.source_message_revision_id)
+        if self.force_insert_failure or pending is not None:
+            return False
+        self.runs[run.id] = run
+        return True
+
+    async def get_run(self, run_id: UUID) -> IngestionAiParseRun | None:
+        return self.runs.get(run_id)
+
+    async def mark_applied(
+        self,
+        run_id: UUID,
+        *,
+        offer_id: UUID,
+        applied_at: datetime,
+    ) -> IngestionAiApplyStatus:
+        run = self.runs.get(run_id)
+        if run is None:
+            return IngestionAiApplyStatus.UNKNOWN
+        if run.state is ReviewRunState.APPLIED:
+            return IngestionAiApplyStatus.APPLIED
+        if run.state is not ReviewRunState.PENDING:
+            return IngestionAiApplyStatus.STALE
+        if (
+            self.mark_applied_status is not None
+            and self.mark_applied_status is not IngestionAiApplyStatus.APPLIED
+        ):
+            return self.mark_applied_status
+        updated = replace(
+            run,
+            state=ReviewRunState.APPLIED,
+            applied_at=applied_at,
+            offer_id=offer_id,
+        )
+        self.runs[run_id] = updated
+        self.applied_offers[run_id] = offer_id
+        self.offers.add(run.source_message_id)
+        return IngestionAiApplyStatus.APPLIED
+
+
+@dataclass
+class FakeOwnerAiListingPersistence:
+    """Capture owner AI listing persistence calls in tests."""
+
+    offers: dict[UUID, ListingCandidate] = field(default_factory=dict)
+
+    async def persist_owner_ai_listing(
+        self,
+        *,
+        source_message_revision_id: UUID,
+        listing: ListingCandidate,
+    ) -> UUID:
+        offer_id = uuid4()
+        self.offers[source_message_revision_id] = listing
+        return offer_id
+
+
 def build_admin_service(
     *,
     store: FakeIdentityStore | None = None,
@@ -1291,6 +1389,8 @@ def build_admin_service(
     review_store: FakePlaceAiReviewStore | None = None,
     enrichment_store: FakeOfferAiEnrichmentStore | None = None,
     parse_issue_store: FakeParseIssueStore | None = None,
+    ingestion_ai_parse_store: FakeIngestionAiParseStore | None = None,
+    owner_ai_listing_persistence: FakeOwnerAiListingPersistence | None = None,
     provider: FakeChatCompletions | None = None,
     runtime: AiCurationRuntime | None = None,
 ) -> AdminService:
@@ -1304,6 +1404,8 @@ def build_admin_service(
     place_reviews = review_store or FakePlaceAiReviewStore()
     offer_enrichment = enrichment_store or FakeOfferAiEnrichmentStore()
     parse_issues = parse_issue_store or FakeParseIssueStore()
+    ingestion_ai_parse = ingestion_ai_parse_store or FakeIngestionAiParseStore()
+    owner_ai_persistence = owner_ai_listing_persistence or FakeOwnerAiListingPersistence()
     ai_runtime = runtime or _inactive_ai_runtime()
     completions = provider or FakeChatCompletions()
     return AdminService(
@@ -1365,6 +1467,21 @@ def build_admin_service(
         get_offer_enrichment_batch=GetOfferEnrichmentBatchDetail(offer_enrichment),
         list_parser_gap_events=ListParserGapEvents(offer_enrichment),
         list_parse_issue_events=ListParseIssueEvents(parse_issues),
+        generate_ingestion_ai_parse=GenerateIngestionAiParse(
+            ingestion_ai_parse,
+            completions,
+            audit_store,
+            time_source,
+            ai_runtime,
+        ),
+        apply_ingestion_ai_parse=ApplyIngestionAiParse(
+            ingestion_ai_parse,
+            owner_ai_persistence,
+            audit_store,
+            time_source,
+            ai_runtime,
+        ),
+        get_ingestion_ai_parse=GetIngestionAiParse(ingestion_ai_parse),
         ai_curation_enabled=ai_runtime.active,
     )
 
