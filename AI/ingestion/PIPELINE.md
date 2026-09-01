@@ -302,6 +302,11 @@ tasks. Model output is not ground truth and never modifies executable rules,
 versions, fixtures, or training data automatically.
 
 During `wef-replay-parser`, a new deterministic value matching an active AI value
+
+Historical non-offer messages ingested before the parse-issue ledger (E21-T1) can be
+backfilled with `wef-backfill-parse-issues`. The command re-runs the current parser
+on retained messages that have no `offer_sources` row and no existing ledger entry;
+it is idempotent and safe to rerun after partial batches.
 records `parser_confirmed` and transfers current field origin to the parser. A
 different value records `parser_conflicting` and routes the offer to owner review;
 replay does not silently choose or erase the AI history. A source edit marks the
