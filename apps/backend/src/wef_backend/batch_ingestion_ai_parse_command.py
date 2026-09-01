@@ -124,10 +124,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--link-existing-offers",
         action="store_true",
-        help=(
-            "Before batching, link parse issues to existing primary offers "
-            "via offer_sources"
-        ),
+        help=("Before batching, link parse issues to existing primary offers via offer_sources"),
     )
     parser.add_argument(
         "--min-text-length",
