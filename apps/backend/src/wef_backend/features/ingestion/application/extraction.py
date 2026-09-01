@@ -38,7 +38,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v5"
+PARSER_VERSION = "e2-v6"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
@@ -55,7 +55,11 @@ _NUMBER = (
 _VALUE_SUFFIX = r"\s*(?:[:|]\s*|[\u2013\u2014-]\s+)(?P<value>[^\r\n]+)"
 _NUMBER_PATTERN = re.compile(_NUMBER)
 _ROOM_TAG_PATTERN = re.compile(
-    r"#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|комнат[аы]?)(?!\w)",
+    r"#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|комнат(?:ная|ные|[аы])?)(?!\w)",
+    _FLAGS,
+)
+_ROOM_HYPHEN_PATTERN = re.compile(
+    r"\b(?P<rooms>\d+)\s*-\s*комнат(?:ная|ные)\b",
     _FLAGS,
 )
 _ROOM_RANGE_PATTERN = re.compile(
@@ -114,7 +118,8 @@ _CANDIDATE_RULES = (
         5,
         ContentType.UNIT,
         re.compile(
-            r"(?:^|\n)\s*(?:покупка|kupno|for sale)\s*[|:\u2013\u2014-]",
+            r"(?:^|\n)\s*(?:[\U0001F3D9\U0001F3E0\U0001F3E1]\ufe0f?\s*)?"
+            r"(?:покупка|продажа|kupno|for sale)\s*[|:\u2013\u2014-]",
             _FLAGS,
         ),
     ),
@@ -134,7 +139,7 @@ _CANDIDATE_RULES = (
         CandidateReason.PRICE_MARKER,
         2,
         None,
-        re.compile(r"\b(?:cena|price|цен[аы])\b", _FLAGS),
+        re.compile(r"\b(?:cena|price|цен[аы]|стоимость)\b", _FLAGS),
     ),
     _CandidateRule(
         CandidateReason.AREA_MARKER,
@@ -147,7 +152,8 @@ _CANDIDATE_RULES = (
         1,
         None,
         re.compile(
-            r"(?:#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|комнат[аы]?)(?!\w)"
+            r"(?:#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|комнат(?:ная|ные|[аы])?)(?!\w)"
+            r"|\b\d+\s*-\s*комнат(?:ная|ные)\b"
             r"|\b(?:pokoje?|rooms?|комнат[аы]?|pok\.)\s*"
             r"(?:[:|]|\u2013|\u2014|-))",
             _FLAGS,
@@ -183,7 +189,8 @@ _DEVELOPMENT_PATTERN = re.compile(
     _FLAGS,
 )
 _APARTMENT_PRICE_PATTERN = re.compile(
-    rf"(?:cena(?: mieszkania)?|apartment price|price|цена(?: квартиры)?){_VALUE_SUFFIX}",
+    rf"(?:cena(?: mieszkania)?|apartment price|price|цена(?: квартиры)?|стоимость(?: квартиры)?)"
+    rf"{_VALUE_SUFFIX}",
     _FLAGS,
 )
 _PARKING_PATTERN = re.compile(rf"(?:parking|паркинг|miejsce postojowe){_VALUE_SUFFIX}", _FLAGS)
@@ -656,6 +663,29 @@ def _range_field[T](  # noqa: PLR0913, PLR0917
     return _unique_parsed_value(text, parsed, field_name, parser_version, warnings)
 
 
+def _append_hyphenated_room_tags(
+    matches: tuple[re.Match[str], ...],
+    *,
+    warnings: list[ExtractionWarning],
+) -> list[tuple[IntegerRange, SourceSpan]]:
+    """Parse N-комнатная room labels into bounded integer ranges."""
+    parsed: list[tuple[IntegerRange, SourceSpan]] = []
+    for match in matches:
+        room = int(match.group("rooms"))
+        span = SourceSpan(*match.span())
+        if not 0 < room <= _MAX_ROOM_COUNT:
+            warnings.append(
+                ExtractionWarning(
+                    code=ExtractionWarningCode.INVALID_RANGE,
+                    field_name="rooms",
+                    spans=(span,),
+                )
+            )
+            continue
+        parsed.append((IntegerRange(lower=room, upper=room), span))
+    return parsed
+
+
 def _rooms_field(
     text: str,
     parser_version: str,
@@ -663,6 +693,7 @@ def _rooms_field(
 ) -> ExtractedValue[IntegerRange] | None:
     labeled_matches = tuple(_ROOMS_PATTERN.finditer(text))
     tag_matches = tuple(_ROOM_TAG_PATTERN.finditer(text))
+    hyphen_matches = tuple(_ROOM_HYPHEN_PATTERN.finditer(text))
     parsed: list[tuple[IntegerRange, SourceSpan]] = []
     for match in labeled_matches:
         value = _trimmed_value(text, match)
@@ -688,6 +719,9 @@ def _rooms_field(
             )
             continue
         valid_tag_ranges.append((room_range, span))
+    valid_tag_ranges.extend(
+        _append_hyphenated_room_tags(hyphen_matches, warnings=warnings),
+    )
     if valid_tag_ranges:
         parsed.append(
             (
