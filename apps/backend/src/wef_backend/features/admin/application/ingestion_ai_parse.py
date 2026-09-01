@@ -91,6 +91,10 @@ _MARKET_ALIASES = {
     "rent": "unknown",
     "rental": "unknown",
     "lease": "unknown",
+    "residential": "unknown",
+    "house": "secondary",
+    "townhouse": "secondary",
+    "apartment": "unknown",
 }
 ALLOWED_LISTING_FIELDS = (
     "location",
