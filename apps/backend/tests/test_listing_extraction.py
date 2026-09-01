@@ -676,3 +676,29 @@ def test_hyphenated_komnatnaya_room_count_is_detected() -> None:
     assert listing is not None
     assert listing.rooms is not None
     assert listing.rooms.value == IntegerRange(4, 4)
+
+
+def test_kupivlia_header_and_tsina_price_promote_ukrainian_elestate_format() -> None:
+    """Ukrainian Elestate posts use Купівля headers and Ціна price labels."""
+    text = (
+        "🏙 Купівля | Вторинний ринок | Варшава\n"
+        "📍 вул. Geodezyjna | район Białołęka (Grodzisk) #2_комнаты\n\n"
+        "🛋 2-кімнатна квартира у сучасному комплексі Lewandów Leśny\n"  # noqa: RUF001
+        "📐 62 м² | 2 поверх із 3 | Будинок 2010 року\n\n"
+        "💰 Ціна: 850 000 zł + паркінг: 30 000 zł"
+    )
+    result = _candidate(text)
+    assert result.decision.is_candidate is True
+    assert {signal.reason for signal in result.decision.signals} >= {
+        CandidateReason.PURCHASE_HEADER,
+        CandidateReason.PRICE_MARKER,
+    }
+    listing = result.listing
+    assert listing is not None
+    assert listing.apartment_price is not None
+    assert listing.apartment_price.value.amount == DecimalRange(
+        Decimal(850_000),
+        Decimal(850_000),
+    )
+    assert listing.rooms is not None
+    assert listing.rooms.value == IntegerRange(2, 2)

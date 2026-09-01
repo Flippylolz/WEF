@@ -38,7 +38,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v6"
+PARSER_VERSION = "e2-v7"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
@@ -54,12 +54,13 @@ _NUMBER = (
 )
 _VALUE_SUFFIX = r"\s*(?:[:|]\s*|[\u2013\u2014-]\s+)(?P<value>[^\r\n]+)"
 _NUMBER_PATTERN = re.compile(_NUMBER)
+_ROOM_SLUG = r"(?:комнат(?:ная|ные|[аы])|кімнат(?:на|ні))"
 _ROOM_TAG_PATTERN = re.compile(
-    r"#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|комнат(?:ная|ные|[аы])?)(?!\w)",
+    rf"#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|{_ROOM_SLUG})(?!\w)",
     _FLAGS,
 )
 _ROOM_HYPHEN_PATTERN = re.compile(
-    r"\b(?P<rooms>\d+)\s*-\s*комнат(?:ная|ные)\b",
+    r"\b(?P<rooms>\d+)\s*-\s*(?:комнат(?:ная|ные)|кімнат(?:на|ні))\b",
     _FLAGS,
 )
 _ROOM_RANGE_PATTERN = re.compile(
@@ -119,7 +120,7 @@ _CANDIDATE_RULES = (
         ContentType.UNIT,
         re.compile(
             r"(?:^|\n)\s*(?:[\U0001F3D9\U0001F3E0\U0001F3E1]\ufe0f?\s*)?"
-            r"(?:покупка|продажа|kupno|for sale)\s*[|:\u2013\u2014-]",
+            r"(?:покупка|продажа|купівля|kupno|for sale)\s*[|:\u2013\u2014-]",
             _FLAGS,
         ),
     ),
@@ -139,7 +140,7 @@ _CANDIDATE_RULES = (
         CandidateReason.PRICE_MARKER,
         2,
         None,
-        re.compile(r"\b(?:cena|price|цен[аы]|стоимость)\b", _FLAGS),
+        re.compile(r"\b(?:cena|price|цен[аы]|стоимость|ціна|вартість)\b", _FLAGS),
     ),
     _CandidateRule(
         CandidateReason.AREA_MARKER,
@@ -152,8 +153,8 @@ _CANDIDATE_RULES = (
         1,
         None,
         re.compile(
-            r"(?:#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|комнат(?:ная|ные|[аы])?)(?!\w)"
-            r"|\b\d+\s*-\s*комнат(?:ная|ные)\b"
+            rf"(?:#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|{_ROOM_SLUG})(?!\w)"
+            r"|\b\d+\s*-\s*(?:комнат(?:ная|ные)|кімнат(?:на|ні))\b"
             r"|\b(?:pokoje?|rooms?|комнат[аы]?|pok\.)\s*"
             r"(?:[:|]|\u2013|\u2014|-))",
             _FLAGS,
@@ -168,7 +169,7 @@ _CANDIDATE_RULES = (
 )
 
 _MARKET_PATTERN = re.compile(
-    rf"(?:rynek|market|рынок){_VALUE_SUFFIX}",
+    rf"(?:rynek|market|рынок|ринок){_VALUE_SUFFIX}",
     _FLAGS,
 )
 _LOCATION_PATTERN = re.compile(
@@ -189,17 +190,24 @@ _DEVELOPMENT_PATTERN = re.compile(
     _FLAGS,
 )
 _APARTMENT_PRICE_PATTERN = re.compile(
-    rf"(?:cena(?: mieszkania)?|apartment price|price|цена(?: квартиры)?|стоимость(?: квартиры)?)"
+    rf"(?:cena(?: mieszkania)?|apartment price|price|цена(?: квартиры)?|стоимость(?: квартиры)?|"
+    rf"ціна|вартість)"
     rf"{_VALUE_SUFFIX}",
     _FLAGS,
 )
-_PARKING_PATTERN = re.compile(rf"(?:parking|паркинг|miejsce postojowe){_VALUE_SUFFIX}", _FLAGS)
+_PARKING_PATTERN = re.compile(
+    rf"(?:parking|паркинг|паркінг|miejsce postojowe){_VALUE_SUFFIX}",
+    _FLAGS,
+)
 _STORAGE_PATTERN = re.compile(
     rf"(?:storage|комора|кладов(?:ая|ка)|kom[oó]rka lokatorska){_VALUE_SUFFIX}",
     _FLAGS,
 )
 _AREA_PATTERN = re.compile(rf"(?:powierzchnia|area|площадь){_VALUE_SUFFIX}", _FLAGS)
-_ROOMS_PATTERN = re.compile(rf"(?:pokoje?|rooms?|комнат[аы]?){_VALUE_SUFFIX}", _FLAGS)
+_ROOMS_PATTERN = re.compile(
+    rf"(?:pokoje?|rooms?|комнат[аы]?|кімнат(?:на|ні)?){_VALUE_SUFFIX}",
+    _FLAGS,
+)
 _FLOOR_PATTERN = re.compile(rf"(?:pi[eę]tro|floor|этаж){_VALUE_SUFFIX}", _FLAGS)
 _DELIVERY_PATTERN = re.compile(
     rf"(?:oddanie|delivery|completion|сдача|готовность){_VALUE_SUFFIX}",
@@ -806,7 +814,14 @@ def _decimal_range(value: str) -> DecimalRange | None:
         return None
 
 
+def _primary_money_fragment(value: str) -> str:
+    """Keep the first priced fragment when add-ons are appended with plus separators."""
+    parts = re.split(r"\s+\+\s+", value, maxsplit=1)
+    return parts[0] if parts else value
+
+
 def _money_amount_range(value: str) -> DecimalRange | None:
+    value = _primary_money_fragment(value)
     context_spans = tuple(match.span() for match in _PER_AREA_CONTEXT_PATTERN.finditer(value))
     amount_matches = tuple(
         match
@@ -825,6 +840,7 @@ def _money_amount_range(value: str) -> DecimalRange | None:
 
 
 def _money_currency(value: str) -> str | None:
+    value = _primary_money_fragment(value)
     context = _PER_AREA_CONTEXT_PATTERN.search(value)
     primary_value = value[: context.start()] if context is not None else value
     return _currency(primary_value)
