@@ -618,3 +618,61 @@ def test_extraction_domain_values_reject_contradictory_shapes() -> None:
             decision=decision,
             listing=_candidate("Kupno | Mieszkanie").listing,
         )
+
+
+def test_stoimost_price_marker_promotes_elestate_format_to_candidate() -> None:
+    """Elestate posts label apartment cost as Стоимость rather than Цена."""
+    text = (
+        "🏡 Квартира на продажу | 64,43 m² | 4 комнаты\n"
+        "📐 64,43 m² | 4 комнаты\n"
+        "💰 Условия:\n"
+        "• Стоимость: 935 374 zł\n"
+        "📩 @irynaelestate"
+    )
+    result = _candidate(text)
+    assert result.decision.is_candidate is True
+    assert {signal.reason for signal in result.decision.signals} >= {
+        CandidateReason.UNIT_MARKER,
+        CandidateReason.PRICE_MARKER,
+    }
+    listing = result.listing
+    assert listing is not None
+    assert listing.apartment_price is not None
+    assert listing.apartment_price.value.amount == DecimalRange(
+        Decimal(935374),
+        Decimal(935374),
+    )
+
+
+def test_prodazha_header_and_komnatnaya_room_tag_are_candidates() -> None:
+    """Secondary-market posts use Продажа headers and #N_комнатная room tags."""
+    text = (
+        "🏙 Продажа | Вторичный рынок | Варшава\n\n"
+        "📍 Район Mokotów | ул. Kwitnących Jabłoni\n\n"
+        "🛋 #2_комнатная\n"
+        "📐 37,23 м² | 1 этаж из 2\n"
+        "Цена: 899 000 zł"
+    )
+    result = _candidate(text)
+    assert result.decision.is_candidate is True
+    listing = result.listing
+    assert listing is not None
+    assert listing.rooms is not None
+    assert listing.rooms.value == IntegerRange(2, 2)
+
+
+def test_hyphenated_komnatnaya_room_count_is_detected() -> None:
+    """Some posts omit the # prefix and use N-комнатная instead."""
+    text = (
+        "🏙 Покупка | Первичный рынок | Варшава\n"
+        "📍 ул. Skrajna | район Ząbki\n\n"
+        "🛋 4-комнатная\n"
+        "📐 88,14 m² | 3 этаж\n"
+        "Стоимость: 1 250 000 zł"
+    )
+    result = _candidate(text)
+    assert result.decision.is_candidate is True
+    listing = result.listing
+    assert listing is not None
+    assert listing.rooms is not None
+    assert listing.rooms.value == IntegerRange(4, 4)
