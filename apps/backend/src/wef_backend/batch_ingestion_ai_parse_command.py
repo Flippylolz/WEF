@@ -102,7 +102,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--owner-id",
         type=UUID,
         default=None,
-        help="Owner user id (defaults to the configured bootstrap owner account)",
+        help="Owner user id (defaults to bootstrap owner or the sole owner account)",
     )
     parser.add_argument(
         "--limit",
@@ -141,30 +141,42 @@ async def resolve_owner_id(
     *,
     owner_id: UUID | None,
 ) -> UUID:
-    """Resolve the owner id from CLI input or bootstrap settings."""
+    """Resolve the owner id from CLI input, bootstrap username, or sole owner row."""
     if owner_id is not None:
         return owner_id
     username = settings.bootstrap_owner_username
-    if not username:
-        message = "bootstrap owner username is not configured"
-        raise RuntimeError(message)
     async with session_factory() as session:
-        resolved = (
-            await session.execute(
-                text(
-                    """
-                    SELECT id
-                    FROM users
-                    WHERE username = :username
-                      AND role = 'owner'
-                    LIMIT 1
-                    """,
-                ),
-                {"username": username},
-            )
-        ).scalar_one_or_none()
+        if username:
+            resolved = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT id
+                        FROM users
+                        WHERE username = :username
+                          AND role = 'owner'
+                        LIMIT 1
+                        """,
+                    ),
+                    {"username": username},
+                )
+            ).scalar_one_or_none()
+        else:
+            resolved = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT id
+                        FROM users
+                        WHERE role = 'owner'
+                        ORDER BY created_at
+                        LIMIT 1
+                        """,
+                    ),
+                )
+            ).scalar_one_or_none()
     if resolved is None:
-        message = "bootstrap owner account was not found"
+        message = "owner account was not found"
         raise RuntimeError(message)
     return UUID(str(resolved))
 

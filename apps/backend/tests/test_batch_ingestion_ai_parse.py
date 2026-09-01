@@ -72,6 +72,21 @@ async def test_resolve_owner_id_loads_bootstrap_owner() -> None:
 
 
 @pytest.mark.asyncio
+async def test_resolve_owner_id_falls_back_to_sole_owner() -> None:
+    owner_id = uuid4()
+    session = AsyncMock()
+    lookup = MagicMock()
+    lookup.scalar_one_or_none.return_value = owner_id
+    session.execute = AsyncMock(return_value=lookup)
+    resolved = await resolve_owner_id(
+        _async_session_factory(session),
+        Settings(),
+        owner_id=None,
+    )
+    assert resolved == owner_id
+
+
+@pytest.mark.asyncio
 async def test_link_existing_offers_returns_rowcount() -> None:
     session = AsyncMock()
     update_result = MagicMock()
