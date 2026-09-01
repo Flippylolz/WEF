@@ -165,9 +165,16 @@ lineage). **Output:** `locations_accepted`, `map_eligible_locations`,
 The worker's `recurring_geocode` loop also calls map-ready promotion
 (`promote_map_ready_offers`) after geocoding; manual runs are for operator catch-up.
 
-If `telegram-worker` logs `recurring_geocode_cycle_failed` with
-`CacheWaitExpiredError`, stale `geocode_miss_claims` rows may be blocking the
-fence. Clear completed claims (safe once results are in `geocode_results`):
+**After a backend release that changes geocoding behavior**, recreate the worker so
+it runs the new image (ordinary `compose up -d` may leave the old container running):
+
+```bash
+$COMPOSE up -d --force-recreate telegram-worker
+```
+
+On releases **before** the geocode-claim cleanup fix (#280, `2bebdfeb+`), completed
+`geocode_miss_claims` rows could block cycles with `CacheWaitExpiredError`. On those
+releases only, clear completed claims (safe once results are in `geocode_results`):
 
 ```bash
 $COMPOSE exec -T api python -c "
@@ -188,7 +195,8 @@ asyncio.run(main())
 "
 ```
 
-Releases after the geocode-claim cleanup fix delete completed claims automatically.
+Current releases (`2bebdfeb+`) delete completed claims automatically in
+`complete_miss`; `miss_claims` should stay near **0** when recurring geocode is healthy.
 
 ### `wef-revalidate-recurring-geocoder`
 
