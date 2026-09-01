@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 # Interactors share one module; keep field-gate branches local.
-# ruff: noqa: C901, E501, PLR0911, PLR0912, PLR0913, PLR0915, S101
+# ruff: noqa: C901, PLR0911, PLR0912, PLR0913, PLR0915, S101
 import hashlib
 import json
 from dataclasses import dataclass
