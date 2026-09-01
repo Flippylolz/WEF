@@ -10,6 +10,7 @@ from geoalchemy2 import Geometry
 from geoalchemy2.elements import WKBElement  # noqa: TC002 - resolved by SQLAlchemy
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -682,6 +683,69 @@ class OfferMediaRow(IngestionBase):
     position: Mapped[int] = mapped_column(Integer)
     association_rule: Mapped[str] = mapped_column(String(24))
     association_confidence: Mapped[Decimal] = mapped_column(Numeric(4, 3))
+
+
+class SourceMessageParseIssueRow(IngestionBase):
+    """Append-only parse miss/incomplete ledger for ingestion reporting."""
+
+    __tablename__ = "source_message_parse_issues"
+    __table_args__ = (
+        CheckConstraint(
+            "issue_outcome IN ('parser_miss', 'parser_incomplete')",
+            name="ck_source_message_parse_issues_issue_outcome",
+        ),
+        CheckConstraint(
+            (
+                "message_outcome IN "
+                "('created', 'unchanged', 'revised', 'skipped_non_candidate')"
+            ),
+            name="ck_source_message_parse_issues_message_outcome",
+        ),
+        Index("ix_source_message_parse_issues_created", "created_at"),
+        Index(
+            "ix_source_message_parse_issues_outcome_created",
+            "issue_outcome",
+            "created_at",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    source_channel_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("source_channels.id", ondelete="RESTRICT"),
+    )
+    source_message_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("source_messages.id", ondelete="RESTRICT"),
+    )
+    source_message_revision_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("source_message_revisions.id", ondelete="RESTRICT"),
+    )
+    external_message_id: Mapped[int] = mapped_column(BigInteger)
+    ingest_run_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("ingest_runs.id", ondelete="RESTRICT"),
+    )
+    parser_version: Mapped[str] = mapped_column(String(40))
+    score: Mapped[int] = mapped_column(Integer)
+    threshold: Mapped[int] = mapped_column(Integer)
+    is_candidate: Mapped[bool] = mapped_column(Boolean)
+    signals_json: Mapped[object] = mapped_column(JSONB)
+    warnings_json: Mapped[object] = mapped_column(JSONB)
+    issue_outcome: Mapped[str] = mapped_column(String(32))
+    message_outcome: Mapped[str] = mapped_column(String(32))
+    boundary_band: Mapped[str] = mapped_column(String(40))
+    signal_combination: Mapped[str] = mapped_column(String(128))
+    text_excerpt_redacted: Mapped[str] = mapped_column(Text)
+    offer_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("offers.id", ondelete="RESTRICT"),
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.current_timestamp(),
+    )
 
 
 class TelegramRawEventRow(IngestionBase):

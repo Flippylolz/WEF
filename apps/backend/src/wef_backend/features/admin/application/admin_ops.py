@@ -36,6 +36,9 @@ if TYPE_CHECKING:
         ListParserGapEvents,
         PreviewOfferEnrichmentBatch,
     )
+    from wef_backend.features.admin.application.parse_issue_reporting import (
+        ListParseIssueEvents,
+    )
     from wef_backend.features.identity.application.identity import (
         Clock,
         IdentityStore,
@@ -865,6 +868,7 @@ class AdminService:
     list_offer_enrichment_batches: ListOfferEnrichmentBatches
     get_offer_enrichment_batch: GetOfferEnrichmentBatchDetail
     list_parser_gap_events: ListParserGapEvents
+    list_parse_issue_events: ListParseIssueEvents
     ai_curation_enabled: bool
 
 

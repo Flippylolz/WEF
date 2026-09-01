@@ -22,6 +22,7 @@ from wef_backend.features.admin.application import (
     ListAdminAudits,
     ListLocations,
     ListOfferEnrichmentBatches,
+    ListParseIssueEvents,
     ListParserGapEvents,
     ListRevealAudits,
     PauseOfferEnrichmentBatch,
@@ -99,6 +100,9 @@ from wef_backend.features.identity.infrastructure import (
     SQLAlchemyViewHistoryStore,
     SystemClock,
 )
+from wef_backend.features.ingestion.infrastructure.parse_issue_store import (
+    SQLAlchemyParseIssueStore,
+)
 from wef_backend.middleware.public_rate_limit import RateLimiter
 from wef_backend.migration import EXPECTED_DATABASE_REVISION
 from wef_backend.settings import Settings, load_settings
@@ -162,6 +166,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
     location_admin_store = SQLAlchemyLocationAdminStore(database.session_factory)
     place_ai_review_store = SQLAlchemyPlaceAiReviewStore(database.session_factory)
     offer_ai_enrichment_store = SQLAlchemyOfferAiEnrichmentStore(database.session_factory)
+    parse_issue_store = SQLAlchemyParseIssueStore(database.session_factory)
     reveal_audit_reader = SQLAlchemyRevealAuditReader(database.session_factory)
     admin_secret = (
         runtime_settings.admin_session_secret.get_secret_value()
@@ -337,6 +342,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
             list_offer_enrichment_batches=ListOfferEnrichmentBatches(offer_ai_enrichment_store),
             get_offer_enrichment_batch=GetOfferEnrichmentBatchDetail(offer_ai_enrichment_store),
             list_parser_gap_events=ListParserGapEvents(offer_ai_enrichment_store),
+            list_parse_issue_events=ListParseIssueEvents(parse_issue_store),
             ai_curation_enabled=ai_runtime.active,
         ),
         auth_cookie_secure=runtime_settings.env == "production",

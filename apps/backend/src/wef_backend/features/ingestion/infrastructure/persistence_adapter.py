@@ -24,6 +24,9 @@ from wef_backend.features.contacts.application.reveal import (
 )
 from wef_backend.features.contacts.domain.model import ContactKind as StoredContactKind
 from wef_backend.features.contacts.infrastructure.models import ContactPointRow
+from wef_backend.features.ingestion.application.parse_issue_serialization import (
+    build_parse_issue_insert,
+)
 from wef_backend.features.ingestion.application.persistence import (
     DeletionOutcomeKind,
     IngestionPersistencePort,
@@ -57,6 +60,7 @@ from wef_backend.features.ingestion.infrastructure.models import (
     SourceMessageRevisionRow,
     SourceMessageRow,
 )
+from wef_backend.features.ingestion.infrastructure.parse_issue_store import insert_parse_issue
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Sequence
@@ -283,6 +287,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                         session,
                         channel_id=channel_id,
                         persistable=persistable,
+                        run_id=run_id,
                     )
                     results.append(result)
                     outcomes.append(
@@ -334,6 +339,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                     session,
                     channel_id=channel_id,
                     persistable=message,
+                    run_id=run_id,
                 )
                 outcome = MessagePersistOutcome(
                     external_message_id=message.raw.external_message_id,
@@ -433,6 +439,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
         *,
         channel_id: UUID,
         persistable: PersistableMessage,
+        run_id: UUID | None = None,
     ) -> _MessageResult:
         """Reconcile one message and its candidate offer in this transaction."""
         raw = persistable.raw
@@ -562,6 +569,19 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             source_changed = persisted.source_changed
             parser_version = persisted.parser_version
             parser_values = persisted.parser_values
+        if persistable.extraction is not None:
+            issue = build_parse_issue_insert(
+                extraction=persistable.extraction,
+                raw=raw,
+                message_outcome=outcome,
+                channel_id=channel_id,
+                source_message_id=message_id_for_offer,
+                source_message_revision_id=anchor_revision_id,
+                ingest_run_id=run_id,
+                offer_id=offer_id,
+            )
+            if issue is not None:
+                await insert_parse_issue(session, issue)
         return _MessageResult(
             outcome=outcome,
             offer_created=offer_created,
