@@ -213,6 +213,7 @@ def assert_topology(model: dict[str, Any]) -> None:  # noqa: PLR0915
     }
     assert "WEF_GEOAPIFY_API_KEY" not in services["api"]["environment"]
     assert "WEF_GEOAPIFY_API_KEY" not in services["web"]["environment"]
+    assert set(services["api"]["networks"]) == {"application", "provider-egress"}
     assert set(services["edge"]["networks"]) == {"application", "edge"}
     assert services["edge"]["user"] == "1000:1000"
     assert services["edge"]["cap_drop"] == ["ALL"]
