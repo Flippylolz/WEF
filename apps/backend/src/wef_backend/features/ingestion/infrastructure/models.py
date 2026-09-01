@@ -695,7 +695,7 @@ class SourceMessageParseIssueRow(IngestionBase):
             name="ck_source_message_parse_issues_issue_outcome",
         ),
         CheckConstraint(
-            ("message_outcome IN ('created', 'unchanged', 'revised', 'skipped_non_candidate')"),
+            "message_outcome IN ('created', 'unchanged', 'revised', 'skipped_non_candidate')",
             name="ck_source_message_parse_issues_message_outcome",
         ),
         Index("ix_source_message_parse_issues_created", "created_at"),

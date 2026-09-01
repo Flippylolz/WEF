@@ -45,7 +45,7 @@ def upgrade() -> None:
             name="ck_source_message_parse_issues_issue_outcome",
         ),
         sa.CheckConstraint(
-            ("message_outcome IN ('created', 'unchanged', 'revised', 'skipped_non_candidate')"),
+            "message_outcome IN ('created', 'unchanged', 'revised', 'skipped_non_candidate')",
             name="ck_source_message_parse_issues_message_outcome",
         ),
         sa.ForeignKeyConstraint(
