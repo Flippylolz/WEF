@@ -59,6 +59,9 @@ def _row_to_raw(
         external_message_id=message.external_message_id,
     )
     frozen = freeze_json(dict(payload))
+    if not isinstance(frozen, Mapping):
+        error = "source message payload must freeze as an object"
+        raise TypeError(error)
     return RawMessage(
         source=SourceIdentity(
             platform=SourcePlatform.TELEGRAM,
