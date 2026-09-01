@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E21
 title: "Ingestion AI fallback on parse miss"
-status: in_progress
+status: done
 milestones: [M5]
 owner: owner
 ---
@@ -20,4 +20,4 @@ used by place review and offer enrichment.
 ## Promoted tasks
 
 - E21-T1: Parse issue ledger — `done` through PR #259
-- E21-T2: Owner-triggered AI listing proposal from parse issues — `in_progress` on branch `feat/E21-T2-ingestion-ai-fallback`
+- E21-T2: Owner-triggered AI listing proposal from parse issues — `done` through PR #263 (`477d648`, migration `20260901_0018`)
