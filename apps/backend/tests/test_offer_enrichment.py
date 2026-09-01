@@ -214,6 +214,27 @@ def test_evidence_accepts_colon_newline_whitespace_variants() -> None:
     assert source[start:end] == "💰 Условия:\n• Цена: 1 490 000 zł"
 
 
+def test_evidence_accepts_reordered_multiline_blocks() -> None:
+    """Groq may reorder adjacent lines inside one evidence fragment."""
+    source = "📐 130 м² | 4 комнаты\n🏡 Дом-близнец\n\n📍 Dosin"
+    fragment = "🏡 Дом-близнец\n\n📐 130 м² | 4 комнаты"
+    start, end = resolve_evidence_offsets(source, fragment)
+    assert source[start:end] == "📐 130 м² | 4 комнаты\n🏡 Дом-близнец"
+
+
+def test_evidence_can_use_first_match_for_ingestion_ai_only() -> None:
+    """Ingestion AI apply may anchor repeated short labels on the first safe span."""
+    source = "Warszawa listing in Warszawa"
+    start, end = resolve_evidence_offsets(
+        source,
+        "Warszawa",
+        allow_ambiguous_first_match=True,
+    )
+    assert source[start:end] == "Warszawa"
+    with pytest.raises(AdminDeniedError, match="ambiguous"):
+        resolve_evidence_offsets(source, "Warszawa")
+
+
 def test_payload_rejects_extras_and_skips_filled_fields() -> None:
     """Unknown keys fail closed; already-present fields are ignored."""
     revision_id = str(uuid4())
