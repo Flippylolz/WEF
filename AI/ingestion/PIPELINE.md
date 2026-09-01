@@ -338,6 +338,20 @@ evidence-backed fields, and **Apply** one pending proposal to create an offer.
 Activation uses the same `WEF_AI_CURATION_ENABLED`, Groq secret, and ZDR settings
 documented under owner enrichment controls below.
 
+Operator batch catch-up (after UI smoke or when the ledger is large):
+
+```bash
+# From api container; link rows that already have primary offers, then generate/apply
+# distinct parser_miss revisions with default 2.5 s spacing (~30 Groq RPM).
+wef-batch-ingestion-ai-parse --link-existing-offers --limit 10
+```
+
+The command respects the application **20 generate runs per owner per UTC day**
+(`ingestion_ai_parse_runs` only). Pace calls for Groq **~30 requests/minute**; do
+not confuse the provider RPM limit with the WEF daily budget. Geocode and
+map-ready promotion remain on `telegram-worker` — do not run parallel manual
+geocode cycles while the worker is active.
+
 ### Owner enrichment controls (E19-T4)
 
 Owner-only HTML at `/admin/offer-enrichment` wraps the E19-T3 interactors:

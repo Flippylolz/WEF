@@ -7,10 +7,12 @@ import json
 import pytest
 
 from wef_backend import (
+    batch_ingestion_ai_parse_command,
     recurring_geocoder_command,
     telegram_backfill_command,
     telegram_channel_command,
 )
+from wef_backend.batch_ingestion_ai_parse_command import BatchIngestionAiParseSummary
 from wef_backend.features.ingestion.application.telegram_channel_verify import (
     TelegramChannelVerification,
 )
@@ -231,3 +233,26 @@ async def test_telegram_backfill_run_loads_secrets_and_disposes(
     assert result.verified_channel_id == "2180077318"
     assert "engine" in calls
     assert "backfill" in calls
+
+
+def test_batch_ingestion_ai_parse_command_prints_summary(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    async def _fake_run_batch(
+        _options: batch_ingestion_ai_parse_command.BatchIngestionAiParseOptions,
+    ) -> BatchIngestionAiParseSummary:
+        return BatchIngestionAiParseSummary(
+            linked_existing_offers=2,
+            candidates_considered=3,
+            generated=2,
+            applied=1,
+            skipped={"offer_exists": 1},
+        )
+
+    monkeypatch.setattr(batch_ingestion_ai_parse_command, "run_batch", _fake_run_batch)
+    batch_ingestion_ai_parse_command.main([])
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["linked_existing_offers"] == 2
+    assert payload["applied"] == 1
+    assert payload["skipped"] == {"offer_exists": 1}
