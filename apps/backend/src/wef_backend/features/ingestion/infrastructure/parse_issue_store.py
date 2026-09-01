@@ -14,7 +14,6 @@ from wef_backend.features.ingestion.domain.parse_issue import (
 from wef_backend.features.ingestion.infrastructure.models import SourceMessageParseIssueRow
 
 if TYPE_CHECKING:
-
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
     from wef_backend.features.ingestion.application.parse_issue_serialization import (
