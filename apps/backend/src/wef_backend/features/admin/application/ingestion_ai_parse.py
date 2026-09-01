@@ -76,6 +76,22 @@ _CURRENCY_ALIASES = {
     "gbp": "GBP",
 }
 _ALLOWED_MARKETS = frozenset({"primary", "secondary", "unknown"})
+_MARKET_ALIASES = {
+    "sale": "secondary",
+    "sell": "secondary",
+    "resale": "secondary",
+    "secondary market": "secondary",
+    "wtórny": "secondary",
+    "wtorny": "secondary",
+    "used": "secondary",
+    "primary market": "primary",
+    "new": "primary",
+    "developer": "primary",
+    "pierwotny": "primary",
+    "rent": "unknown",
+    "rental": "unknown",
+    "lease": "unknown",
+}
 ALLOWED_LISTING_FIELDS = (
     "location",
     "district",
@@ -461,13 +477,22 @@ def _normalize_currency(value: object) -> str:
     raise AdminDeniedError(message)
 
 
+def _normalize_market_type(value: object) -> str:
+    """Map common transaction/market labels onto canonical market types."""
+    raw = str(value).strip()
+    alias = _MARKET_ALIASES.get(raw.casefold())
+    if alias is not None:
+        return alias
+    market = raw.casefold()
+    if market in _ALLOWED_MARKETS:
+        return market
+    message = "unsupported market type"
+    raise AdminDeniedError(message)
+
+
 def _canonical_field_value(field_name: str, value: object) -> object:
     if field_name == "market_type":
-        market = str(value).casefold()
-        if market not in _ALLOWED_MARKETS:
-            message = "unsupported market type"
-            raise AdminDeniedError(message)
-        return market
+        return _normalize_market_type(value)
     if field_name == "currency":
         return _normalize_currency(value)
     if field_name in {"parking_included_in_price", "storage_included_in_price"}:

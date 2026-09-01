@@ -868,6 +868,15 @@ def test_build_listing_candidate_from_ai_accepts_zl_currency_symbol() -> None:
     assert listing.apartment_price.value.currency == "PLN"
 
 
+def test_build_listing_candidate_from_ai_accepts_sale_market_alias() -> None:
+    """Groq may propose sale labels; apply normalizes them to secondary."""
+    context = _context(text="Mokotów 2 pokoje sale 850 000 zł")
+    fields = _listing_fields(market_type="sale")
+    listing = build_listing_candidate_from_ai(context=context, proposed_fields=fields)
+    assert listing.market_type is not None
+    assert listing.market_type.value == "secondary"
+
+
 def test_build_listing_candidate_from_ai_requires_core_fields() -> None:
     """Apply rejects proposals missing required listing fields."""
     context = _context()
