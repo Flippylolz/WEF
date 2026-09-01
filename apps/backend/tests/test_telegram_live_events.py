@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -43,6 +44,7 @@ from wef_backend.features.ingestion.application.telegram_live import (
     LiveTelegramMessage,
     TelegramChannelEntity,
 )
+from wef_backend.features.ingestion.domain.model import MediaDescriptor, MediaKind
 from wef_backend.features.ingestion.domain.telegram_channel import (
     default_live_channel_identity,
 )
@@ -319,6 +321,51 @@ async def test_edit_below_checkpoint_does_not_rewind_cursor() -> None:
     )
     assert result.revised == 1 or result.created == 1
     assert result.checkpoint_external_message_id == 50
+
+
+@pytest.mark.asyncio
+async def test_unchanged_replay_skips_live_media_pipeline() -> None:
+    identity = default_live_channel_identity()
+    client = FakeTelegramLiveClient(
+        entity=TelegramChannelEntity(
+            username=identity.username,
+            channel_id=identity.channel_id,
+            title=identity.channel_title,
+        ),
+    )
+    store = _FakeStore()
+    media_pipeline = AsyncMock()
+    media_pipeline.process_message = AsyncMock(return_value=0)
+    processor = LiveTelegramEventProcessor(
+        store=store,
+        client=client,
+        media_pipeline=media_pipeline,
+    )
+    text = "Cena: 4500 PLN, 2 pokoje, Mokotów"
+    message = LiveTelegramMessage(
+        external_message_id=20,
+        text=text,
+        published_at=datetime(2024, 6, 1, 12, 0, tzinfo=UTC),
+        edited_at=None,
+        media=(
+            MediaDescriptor(
+                kind=MediaKind.PHOTO,
+                path="20/0.jpg",
+                mime_type="image/jpeg",
+            ),
+        ),
+    )
+    await processor(
+        identity=identity,
+        events=(LiveTelegramEvent(kind=LiveTelegramEventKind.NEW, message=message),),
+    )
+    media_pipeline.process_message.assert_awaited_once()
+    media_pipeline.process_message.reset_mock()
+    await processor(
+        identity=identity,
+        events=(LiveTelegramEvent(kind=LiveTelegramEventKind.NEW, message=message),),
+    )
+    media_pipeline.process_message.assert_not_awaited()
 
 
 @pytest.mark.asyncio

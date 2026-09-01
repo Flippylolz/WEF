@@ -150,6 +150,7 @@ async def _run_connected_worker(  # noqa: PLR0913
         client=client,
         processor=processor,
         processing_lock=processing_lock,
+        prepare_cycle=media_grouper.reset,
     )
     geocode_worker = RecurringGeocodeWorker(
         settings=settings,

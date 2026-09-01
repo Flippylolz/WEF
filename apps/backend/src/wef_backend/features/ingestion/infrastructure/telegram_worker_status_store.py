@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
 
-from wef_backend.features.ingestion.application.persistence import RunMode
+from wef_backend.features.ingestion.application.persistence import RunMode, RunStatus
 from wef_backend.features.ingestion.infrastructure.models import (
     IngestRunRow,
     SourceChannelRow,
@@ -68,8 +68,15 @@ class SQLAlchemyTelegramWorkerStatusStore:
                 .where(
                     IngestRunRow.source_channel_id == channel_id,
                     IngestRunRow.mode == RunMode.LIVE.value,
+                    IngestRunRow.status.in_(
+                        (
+                            RunStatus.SUCCEEDED.value,
+                            RunStatus.FAILED.value,
+                        ),
+                    ),
+                    IngestRunRow.finished_at.is_not(None),
                 )
-                .order_by(IngestRunRow.started_at.desc())
+                .order_by(IngestRunRow.finished_at.desc())
                 .limit(1),
             )
             first = row.first()

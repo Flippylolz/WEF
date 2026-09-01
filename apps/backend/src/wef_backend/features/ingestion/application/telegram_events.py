@@ -356,7 +356,11 @@ class LiveTelegramEventProcessor:
                                 else "processed"
                             ),
                         )
-                    if self.media_pipeline is not None and raw.media:
+                    if (
+                        self.media_pipeline is not None
+                        and raw.media
+                        and persist_outcome.outcome is not MessageOutcome.UNCHANGED
+                    ):
                         await self.media_pipeline.process_message(channel=channel, raw=raw)
                     messages_persisted += 1
             except PersistenceBatchError as error:
