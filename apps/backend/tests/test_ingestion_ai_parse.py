@@ -631,6 +631,79 @@ async def test_apply_ingestion_ai_parse_denies_unknown_run() -> None:
 
 
 @pytest.mark.asyncio
+async def test_apply_ingestion_ai_parse_marks_unapplyable_pending_run_failed() -> None:
+    """Invalid proposals dismiss the pending run so the revision can be retried."""
+    context = _context()
+    store = FakeIngestionAiParseStore(contexts={context.revision_id: context})
+    run_id = uuid4()
+    owner_id = uuid4()
+    store.runs[run_id] = _pending_run(
+        context=context,
+        owner_id=owner_id,
+        run_id=run_id,
+        fields=(
+            {
+                "field_name": "location",
+                "proposed_value": "Mokotów",
+                "evidence_fragment": "Mokotów",
+                "confidence": "high",
+            },
+        ),
+    )
+    with pytest.raises(AdminDeniedError, match="proposal missing required fields"):
+        await ApplyIngestionAiParse(
+            store,
+            FakeOwnerAiListingPersistence(),
+            FakeParseIssueStore(),
+            FakeAdminAuditStore(),
+            FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+            active_ai_runtime(),
+        )(
+            owner_id=owner_id,
+            run_id=run_id,
+            request_id=uuid4(),
+        )
+    updated = await store.get_run(run_id)
+    assert updated is not None
+    assert updated.state is ReviewRunState.FAILED
+
+
+@pytest.mark.asyncio
+async def test_generate_ingestion_ai_parse_fails_incomplete_listing_proposal() -> None:
+    """Incomplete listing proposals persist as failed runs, not pending blockers."""
+    context = _context()
+    store = FakeIngestionAiParseStore(contexts={context.revision_id: context})
+    incomplete = {
+        "verdict": IngestionAiParseVerdict.LISTING_PROPOSED.value,
+        "fields": [
+            {
+                "field_name": "location",
+                "proposed_value": "Mokotów",
+                "evidence_fragment": "Mokotów",
+                "confidence": "high",
+            },
+        ],
+        "warnings": [],
+    }
+    outcome = await GenerateIngestionAiParse(
+        store,
+        FakeChatCompletions(payload=incomplete),
+        FakeAdminAuditStore(),
+        FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+        active_ai_runtime(),
+    )(
+        owner_id=uuid4(),
+        source_message_revision_id=context.revision_id,
+        request_id=uuid4(),
+    )
+    assert outcome.status is IngestionAiParseStatus.FAILED
+    assert outcome.reason == "proposal_incomplete"
+    assert outcome.run is not None
+    assert outcome.run.state is ReviewRunState.FAILED
+    assert await store.get_pending_run(context.revision_id) is None
+
+
+@pytest.mark.asyncio
 async def test_apply_ingestion_ai_parse_denies_expired_run() -> None:
     """Apply refuses expired pending runs."""
     context = _context()

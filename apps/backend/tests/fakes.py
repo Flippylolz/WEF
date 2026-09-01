@@ -1373,6 +1373,13 @@ class FakeIngestionAiParseStore:
         self.offers.add(run.source_message_id)
         return IngestionAiApplyStatus.APPLIED
 
+    async def mark_failed(self, run_id: UUID) -> bool:
+        run = self.runs.get(run_id)
+        if run is None or run.state is not ReviewRunState.PENDING:
+            return False
+        self.runs[run_id] = replace(run, state=ReviewRunState.FAILED)
+        return True
+
 
 @dataclass
 class FakeOwnerAiListingPersistence:
