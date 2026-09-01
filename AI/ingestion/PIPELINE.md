@@ -338,10 +338,13 @@ evidence-backed fields, and **Apply** one pending proposal to create an offer.
 Activation uses the same `WEF_AI_CURATION_ENABLED`, Groq secret, and ZDR settings
 documented under owner enrichment controls below.
 
-Operator batch catch-up (after UI smoke or when the ledger is large):
+Operator batch catch-up (after UI smoke or when the ledger is large): use
+**`wef-batch-ingestion-ai-parse`** from the **`api`** container. Full flags, JSON
+output, compose examples, and the post-run geocode workflow are documented in
+[OPERATOR_COMMANDS.md](../operations/OPERATOR_COMMANDS.md#wef-batch-ingestion-ai-parse).
 
 ```bash
-# From api container; link rows that already have primary offers, then generate/apply
+# Link ledger rows that already have primary offers (no Groq), then generate/apply
 # distinct parser_miss revisions with default 2.5 s spacing (~30 Groq RPM).
 wef-batch-ingestion-ai-parse --link-existing-offers --limit 10
 ```
@@ -351,6 +354,9 @@ The command respects the application **20 generate runs per owner per UTC day**
 not confuse the provider RPM limit with the WEF daily budget. Geocode and
 map-ready promotion remain on `telegram-worker` — do not run parallel manual
 geocode cycles while the worker is active.
+
+Historical ledger backfill before batching: **`wef-backfill-parse-issues`** (see
+[OPERATOR_COMMANDS.md](../operations/OPERATOR_COMMANDS.md#wef-backfill-parse-issues)).
 
 ### Owner enrichment controls (E19-T4)
 

@@ -110,7 +110,12 @@ Direct Geoapify retry without AI did **not** resolve the street-name bucket afte
 
 ### Batch catch-up (after UTC quota reset)
 
-Prioritize by linked offer count. Respect **20/day** and **~2 s** spacing.
+Prioritize by linked offer count. Respect the **WEF 20/day** application budget
+(place review / enrichment share one counter; ingestion AI parse has a separate
+counter) and **~2.5 s** spacing for Groq **~30 RPM**. See
+[OPERATOR_COMMANDS.md](../operations/OPERATOR_COMMANDS.md#groq-rate-and-application-budgets).
+
+**Place review (ungeocoded locations):**
 
 1. **Generate** place review (Groq via `api`).
 2. **Apply** address (and district only when canonical).
@@ -120,6 +125,11 @@ Prioritize by linked offer count. Respect **20/day** and **~2 s** spacing.
    **map-ready offers only** (the worker uses `promote_map_ready_offers`; avoid
    bulk `wef-promote-public-catalog` for live recovery — it publishes every
    `needs_review` offer, including listings still without pins).
+
+**Parse-issue recovery (E21):** use `wef-batch-ingestion-ai-parse` from `api`
+instead of clicking through `/admin/ingestion-issues` — start with
+`--link-existing-offers`, then `--limit` up to the daily generate budget. Full
+workflow: [OPERATOR_COMMANDS.md](../operations/OPERATOR_COMMANDS.md#wef-batch-ingestion-ai-parse).
 
 Do not bulk-generate merely to demo the feature.
 
@@ -166,6 +176,7 @@ rooms, area). It does not fix `ungeocoded` locations.
 - [GEOCODING.md](GEOCODING.md) — provider request shape
 - E21 parse-issue offer link + AI apply hardening: #267–#271
 - [PIPELINE.md](PIPELINE.md) — E21-T2 ingestion AI parse; recurring geocode policy
+- [OPERATOR_COMMANDS.md](../operations/OPERATOR_COMMANDS.md) — backend operator CLIs
 - [ADR-022](../decisions/adr/ADR-022-use-groq-gpt-oss-for-place-review-and-offer-enrichment.md)
 
 ## Security
