@@ -223,6 +223,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
     apply_ingestion_ai_parse = ApplyIngestionAiParse(
         ingestion_ai_parse_store,
         ingestion_persistence,
+        parse_issue_store,
         admin_audit_store,
         clock,
         ai_runtime,

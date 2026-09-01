@@ -15,6 +15,7 @@ from tests.fakes import (
     FakeClock,
     FakeIngestionAiParseStore,
     FakeOwnerAiListingPersistence,
+    FakeParseIssueStore,
     _inactive_ai_runtime,
     active_ai_runtime,
 )
@@ -38,6 +39,11 @@ from wef_backend.features.admin.application.ingestion_ai_parse import (
     build_listing_candidate_from_ai,
     ingestion_ai_parse_json_schema,
     parse_ingestion_ai_parse_payload,
+)
+from wef_backend.features.ingestion.application.persistence import MessageOutcome
+from wef_backend.features.ingestion.domain.parse_issue import (
+    ParseIssueOutcome,
+    SourceMessageParseIssue,
 )
 
 
@@ -191,6 +197,7 @@ async def test_apply_ingestion_ai_parse_is_idempotent_for_applied_runs() -> None
     outcome = await ApplyIngestionAiParse(
         store,
         persistence,
+        FakeParseIssueStore(),
         FakeAdminAuditStore(),
         FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
         active_ai_runtime(),
@@ -223,6 +230,7 @@ async def test_apply_ingestion_ai_parse_denies_stale_checksum() -> None:
         await ApplyIngestionAiParse(
             store,
             persistence,
+            FakeParseIssueStore(),
             FakeAdminAuditStore(),
             FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
             active_ai_runtime(),
@@ -330,6 +338,7 @@ async def test_apply_ingestion_ai_parse_denies_non_listing_verdict() -> None:
         await ApplyIngestionAiParse(
             store,
             persistence,
+            FakeParseIssueStore(),
             FakeAdminAuditStore(),
             FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
             active_ai_runtime(),
@@ -359,6 +368,7 @@ async def test_apply_ingestion_ai_parse_persists_offer() -> None:
     outcome = await ApplyIngestionAiParse(
         store,
         persistence,
+        FakeParseIssueStore(),
         FakeAdminAuditStore(),
         FakeClock(now),
         active_ai_runtime(),
@@ -369,6 +379,62 @@ async def test_apply_ingestion_ai_parse_persists_offer() -> None:
     )
     assert outcome.status is IngestionAiApplyStatus.APPLIED
     assert context.revision_id in persistence.offers
+
+
+@pytest.mark.asyncio
+async def test_apply_ingestion_ai_parse_links_parse_issue_offer() -> None:
+    """Apply attaches the new offer id to parse issue rows for the source message."""
+    context = _context()
+    store = FakeIngestionAiParseStore(contexts={context.revision_id: context})
+    persistence = FakeOwnerAiListingPersistence()
+    parse_issues = FakeParseIssueStore()
+    parse_issues.issues.append(
+        SourceMessageParseIssue(
+            id=uuid4(),
+            source_channel_id=uuid4(),
+            source_message_id=context.message_id,
+            source_message_revision_id=context.revision_id,
+            external_message_id=context.external_message_id,
+            ingest_run_id=None,
+            parser_version="e2-v5",
+            score=3,
+            threshold=5,
+            is_candidate=False,
+            signals_json=(),
+            warnings_json=(),
+            issue_outcome=ParseIssueOutcome.PARSER_MISS,
+            message_outcome=MessageOutcome.SKIPPED_NON_CANDIDATE.value,
+            boundary_band="non_candidate_one_below_threshold",
+            signal_combination="price_marker",
+            text_excerpt_redacted="Mokotów listing without enough markers",
+            offer_id=None,
+            created_at=datetime(2026, 9, 1, 12, 0, tzinfo=UTC),
+        ),
+    )
+    _verdict, fields, _warnings = parse_ingestion_ai_parse_payload(_payload())
+    run_id = uuid4()
+    owner_id = uuid4()
+    store.runs[run_id] = _pending_run(
+        context=context,
+        owner_id=owner_id,
+        run_id=run_id,
+        fields=fields,
+    )
+    outcome = await ApplyIngestionAiParse(
+        store,
+        persistence,
+        parse_issues,
+        FakeAdminAuditStore(),
+        FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+        active_ai_runtime(),
+    )(
+        owner_id=owner_id,
+        run_id=run_id,
+        request_id=uuid4(),
+    )
+    assert outcome.status is IngestionAiApplyStatus.APPLIED
+    assert outcome.offer_id is not None
+    assert parse_issues.issues[0].offer_id == outcome.offer_id
 
 
 @pytest.mark.asyncio
@@ -553,6 +619,7 @@ async def test_apply_ingestion_ai_parse_denies_unknown_run() -> None:
         await ApplyIngestionAiParse(
             FakeIngestionAiParseStore(),
             FakeOwnerAiListingPersistence(),
+            FakeParseIssueStore(),
             FakeAdminAuditStore(),
             FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
             active_ai_runtime(),
@@ -584,6 +651,7 @@ async def test_apply_ingestion_ai_parse_denies_expired_run() -> None:
         await ApplyIngestionAiParse(
             store,
             FakeOwnerAiListingPersistence(),
+            FakeParseIssueStore(),
             FakeAdminAuditStore(),
             FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
             active_ai_runtime(),
@@ -657,6 +725,7 @@ async def test_apply_ingestion_ai_parse_denies_when_disabled() -> None:
         await ApplyIngestionAiParse(
             store,
             FakeOwnerAiListingPersistence(),
+            FakeParseIssueStore(),
             FakeAdminAuditStore(),
             FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
             _inactive_ai_runtime(),
@@ -686,6 +755,7 @@ async def test_apply_ingestion_ai_parse_denies_when_offer_exists() -> None:
         await ApplyIngestionAiParse(
             store,
             FakeOwnerAiListingPersistence(),
+            FakeParseIssueStore(),
             FakeAdminAuditStore(),
             FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
             active_ai_runtime(),
@@ -716,6 +786,7 @@ async def test_apply_ingestion_ai_parse_handles_mark_collision() -> None:
     outcome = await ApplyIngestionAiParse(
         store,
         FakeOwnerAiListingPersistence(),
+        FakeParseIssueStore(),
         FakeAdminAuditStore(),
         FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
         active_ai_runtime(),
