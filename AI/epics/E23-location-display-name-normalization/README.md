@@ -1,0 +1,74 @@
+---
+schema: ai-workflow/epic@1
+id: E23
+title: "Location display name normalization"
+status: planning
+milestones: [M5]
+owner: owner
+spike: SPIKE.md
+implementation_plan: null
+---
+
+# E23: Location display name normalization
+
+## Outcome
+
+Location names shown on the map, in the results list, and in offer details are
+consistent, localized (Polish-forward), and free of raw source-post fragments.
+Visitors see names like `ul. Wołoska, Służewiec, Mokotów, Warszawa` instead of
+`ул. Dziekońskiego | Warszawa, Mokotów`, `Улица: Habicha 9`, or bullet lines
+such as `• Трамвайная остановка - 2779 м`.
+
+## User problem
+
+The catalog currently writes each location's display name verbatim from the
+source post's location line: `normalize_location_text` only collapses
+whitespace. A production measurement on 2026-09-02 (2,055 locations in the
+default metro view) found:
+
+- **639 locations (31%)** carry Cyrillic-template names (`ул. …`, `Улица: …`,
+  `Район …`).
+- **3 locations** carry raw bullet/distance fragments as their entire name.
+- **6 locations** sit just outside the Warsaw boundary (Pruszków ×4, Piaseczno
+  area ×2). These are genuine neighboring-town offers, not geocoding errors.
+
+A third of the catalog reading like an untranslated Telegram export undermines
+trust in an otherwise curated product.
+
+## User story
+
+As a buyer browsing the map, I want every pin and result to show a clean,
+consistent place name so that I can trust the catalog and compare locations
+without parsing raw source text.
+
+## Scope (candidate; gated behind spike approval)
+
+- Canonical display-name rules for new locations: map Cyrillic labels
+  (`ул.`, `Улица:`, `Район …`) to Polish-forward templates, strip markdown
+  bullets/emoji/decoration, and prefer `street, district, Warszawa` ordering.
+- A one-time backfill that renames **existing non-verified** locations from the
+  retained raw evidence, keeping `normalized_address_hash` (identity) and
+  E18 review state stable.
+- Owner-verified locations keep their curated names.
+- Parser replay coverage proving renames from the archived raw events.
+
+## Non-goals
+
+- No change to location identity (`normalized_address_hash`), geocoding
+  coordinates, or review workflow.
+- No bulk edits through generic admin forms (E18 console remains the
+  curation path).
+- Translating street names themselves; only label templates and decoration.
+
+## Owner decision points
+
+1. Approve the canonical naming template (shape, language policy, degenerate
+   cases).
+2. Near-suburb coverage: keep the 6 out-of-boundary locations, filter them, or
+   badge them as "nearby" (product-scope call, independent of naming).
+3. Confirm verified-location exemption from the backfill.
+
+## Dependencies
+
+- E17 raw-archive replay (backfill provenance and rename mechanism).
+- E18 owner location console (curation of the 3 fragment names).
