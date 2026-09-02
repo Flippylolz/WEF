@@ -769,20 +769,23 @@ def test_property_type_ukrainian_budynok_does_not_conflict_with_apartment() -> N
 def test_property_type_classifies_slavic_house_phrases() -> None:
     """Ukrainian/Russian house ads classify without bare-building false positives."""
     dim = _candidate(
-        "🏙 Купівля | Вторинний ринок\nДім на продаж у Варшаві\n💰 Ціна: 2 000 000 zł",
+        "🏙 Купівля | Вторинний ринок\nДім на продаж у Варшаві\n💰 Ціна: 2 000 000 zł",  # noqa: RUF001
     )
     modern = _candidate(
-        "🏙 Покупка | Вторичный рынок\nСовременный дом | 125 м² | 5 комнат\n💰 Цена: 2 000 000 zł",
+        "🏙 Покупка | Вторичный рынок\nСовременный дом | 125 м² | 5 комнат\n💰 Цена: 2 000 000 zł",  # noqa: RUF001
     )
     sale = _candidate(
-        "🏙 Покупка | Вторичный рынок\nДом на продажу | 150 м² | 4 комнаты\n💰 Цена: 1 800 000 zł",
+        "🏙 Покупка | Вторичный рынок\nДом на продажу | 150 м² | 4 комнаты\n💰 Цена: 1 800 000 zł",  # noqa: RUF001
     )
 
-    assert dim.listing is not None and dim.listing.property_type is not None
+    assert dim.listing is not None
+    assert dim.listing.property_type is not None
     assert dim.listing.property_type.value is PropertyType.HOUSE
-    assert modern.listing is not None and modern.listing.property_type is not None
+    assert modern.listing is not None
+    assert modern.listing.property_type is not None
     assert modern.listing.property_type.value is PropertyType.HOUSE
-    assert sale.listing is not None and sale.listing.property_type is not None
+    assert sale.listing is not None
+    assert sale.listing.property_type is not None
     assert sale.listing.property_type.value is PropertyType.HOUSE
 
 
