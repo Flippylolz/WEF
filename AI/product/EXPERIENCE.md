@@ -134,3 +134,24 @@ Filter semantics:
   retain typed expected values plus exact source offsets. Parser replay can confirm
   or flag conflicts, but model output never changes parser code or fixtures without
   maintainer review.
+
+### P-010: Property type classification and filtering
+
+- Each offer carries one backend-owned physical property type: `apartment`,
+  `house`, `semi_detached`, or `unknown`.
+- **House** means a standalone/detached house. **Semi-detached house** is the
+  English product label for Polish `bliźniak`.
+- Property type is distinct from content type (development post vs individual
+  unit) and market type (primary vs secondary). It belongs to the offer rather
+  than the location or development.
+- Classification requires explicit source evidence with parser provenance.
+  Ambiguous, conflicting, or unsupported evidence remains `unknown`; the system
+  does not guess from numeric values, photos, location, or another category.
+- The public filter offers Apartment, House, and Semi-detached house with multiple
+  values selectable. Values OR within this group and AND with other active groups.
+- With no property-type selection, classified and unknown offers remain eligible.
+  With an active selection, unknown offers do not match.
+- Map pins, viewport results, selected-location matching counts, offer summaries,
+  and offer details use the same backend-owned value and filter semantics.
+- Filter state is encoded as repeated `property_type` URL parameters and survives
+  reload, sharing, and browser back/forward navigation.
