@@ -18,6 +18,9 @@ from wef_backend.features.catalog.application.offer_detail import (
     LocationSummaryDTO,
 )
 from wef_backend.features.catalog.domain import ContentType, MarketType
+from wef_backend.features.catalog.infrastructure.offer_detail_adapter import (
+    collapse_source_revisions,
+)
 
 
 def test_confidence_indicator_thresholds() -> None:
@@ -192,3 +195,39 @@ async def test_get_offer_detail_marks_active_ai_origin() -> None:
     )
     assert detail is not None
     assert detail.data_origin == "ai_assisted"
+
+
+def test_collapse_source_revisions_keeps_latest_revision_per_message() -> None:
+    """Collapse revision rows of one message into a single history entry."""
+
+    def _row(message_id: UUID, relationship: str, edited_at: datetime | None) -> dict[str, object]:
+        return {
+            "relationship": relationship,
+            "extraction_json": {},
+            "source_message_id": message_id,
+            "external_message_id": 7,
+            "published_at": datetime(2026, 9, 1, 12, 41, tzinfo=UTC),
+            "edited_at": edited_at,
+            "verified_link_base": "https://t.me/elestate_warszawa",
+            "username": "elestate_warszawa",
+        }
+
+    message_a = UUID("30000000-0000-4000-8000-000000000001")
+    message_b = UUID("30000000-0000-4000-8000-000000000002")
+    rows = [
+        # Newest-first, as produced by the adapter query.
+        _row(message_a, "primary", datetime(2026, 9, 1, 14, 12, tzinfo=UTC)),
+        _row(message_a, "primary", datetime(2026, 9, 1, 14, 12, tzinfo=UTC)),
+        _row(message_a, "primary", None),
+        _row(message_b, "repost", None),
+    ]
+
+    collapsed = collapse_source_revisions(rows)
+
+    assert [entry["source_message_id"] for entry in collapsed] == [message_a, message_b]
+    assert collapsed[0]["edited_at"] == datetime(2026, 9, 1, 14, 12, tzinfo=UTC)
+
+
+def test_collapse_source_revisions_empty_history() -> None:
+    """Pass through an empty history unchanged."""
+    assert collapse_source_revisions([]) == []
