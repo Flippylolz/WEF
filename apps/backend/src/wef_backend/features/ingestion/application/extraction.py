@@ -521,8 +521,7 @@ def _parse_property_type_label(value: str) -> PropertyType | None:
     if any(token in folded for token in ("mieszkan", "apart", "flat", "studio", "кварт", "апарт")):
         return PropertyType.APARTMENT
     if any(
-        token in folded
-        for token in ("dom", "house", "villa", "willa", "дом", "дім", "особняк")
+        token in folded for token in ("dom", "house", "villa", "willa", "дом", "дім", "особняк")
     ):
         return PropertyType.HOUSE
     return None
