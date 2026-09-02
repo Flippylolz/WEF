@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E14-T1
 epic: E14
 title: "Make quality and governance gates truthful"
-status: draft
+status: ready
 revision: 1
 priority: P1
 size: M

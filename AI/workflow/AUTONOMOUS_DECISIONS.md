@@ -397,3 +397,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Execution notes: another agent's E8 commits landed on `main` during review, so #244/#247/#254 were refreshed onto the new `main` (conflicting registry paragraphs reconciled to keep both the E8 watch-state updates and the E20 entries) before their final green-CI merges. Production verification after deploy run 33429448184: `/api/v1/health/live` and `/api/v1/health/ready` return 200 and `/admin/login` serves `data-bs-theme="dark"` with the shared stylesheet.
 - Rationale: the owner supplied the merge direction after reviewing each PR's green required checks, matching the AD-040/AD-043 pattern of session directives authorizing green-CI merge sequences.
 - Reversal: revert the squash commits on `main` and redeploy the prior release if the owner withdraws the decision or production evidence shows a regression.
+
+## AD-047: Approve E14 implementation plan revision 1 and begin E14-T1
+
+- Time: 2026-09-02.
+- Owner decision: `continue`, given in the Cloud Agent session after [PR #296](https://github.com/Flippylolz/WEF/pull/296) (epic worktree cleanup docs) reached green CI and E14 remained the selected unfinished M5 epic with implementation plan revision 1 awaiting owner approval.
+- Selected approach: record the owner directive as approval of E14 `IMPLEMENTATION_PLAN.md` revision 1 under AD-009 continue authority, set E14 to `in_progress`, move E14-T1 to `ready`, and implement E14-T1 on its dedicated branch/PR before later tasks. E14-T9 remains proposed/non-actionable behind ADR-015/E7-T5.
+- Scope boundary: this approval authorizes only the recorded plan revision's eight promoted tasks (T1–T8). It does not authorize E14-T9 recovery work, new production dependencies beyond those named in the plan, SaaS telemetry, branch-protection changes, or merging without green required CI.
+- Safety limit: stop before implementation if a task requires a material deviation, new architecture, weaker privacy control, or production mutation outside the task boundary. No Kubernetes, Redis, queue, replica, CDN, or paid GitHub feature is authorized.
+- Reversal: invalidate the affected plan/task gates and close unmerged PRs if the owner withdraws approval or material evidence crosses a plan/spike invalidation trigger.

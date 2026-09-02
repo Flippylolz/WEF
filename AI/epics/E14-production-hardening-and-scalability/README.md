@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E14
 title: "Production hardening and scalability"
-status: planning
+status: in_progress
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -27,12 +27,11 @@ independently reviewable workstreams retain distinct identifiers.
 
 ## Approval state
 
-- Epic workspace: `planning` after the owner approved spike revision 1 on 2026-08-29.
+- Epic workspace: `in_progress` after the owner approved implementation plan revision 1 under AD-047 on 2026-09-02.
 - [Research spike](SPIKE.md): revision 1, owner-approved under AD-041.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, `awaiting_approval`;
-  implementation remains prohibited until its separate owner decision.
-- E14-T1 through E14-T8 are promoted/`draft`; E14-T9 remains proposed and
-  non-actionable behind ADR-015/E7-T5.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): revision 1, owner-approved under AD-047; authorizes E14-T1 through E14-T8.
+- [E14-T1](tasks/E14-T1-make-quality-and-governance-gates-truthful.md): promoted, `ready` / `in_progress`.
+- E14-T2 through E14-T8 remain promoted/`draft` until their predecessor tasks complete; E14-T9 remains proposed and non-actionable behind ADR-015/E7-T5.
 
 ## Audit baseline
 

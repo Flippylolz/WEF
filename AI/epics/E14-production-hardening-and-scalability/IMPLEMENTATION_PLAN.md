@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E14
 title: "Production hardening and scalability delivery"
-status: awaiting_approval
+status: approved
 revision: 1
 owner: owner
 spike_revision: 1
@@ -25,11 +25,11 @@ task_sequence:
     revision: 1
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Dmytro Leshchenko (owner continue under AD-009; recorded as AD-047)"
+  decided_at: "2026-09-02T15:20:00Z"
+  approved_revision: 1
+  evidence: "Cloud Agent session continue after PR #296 green CI; AD-047 in AI/workflow/AUTONOMOUS_DECISIONS.md"
 invalidation:
   invalidated_by: null
   invalidated_at: null
