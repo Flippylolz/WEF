@@ -47,6 +47,25 @@ _THUMBNAIL_WEBP = "thumbnail_webp_v1"
 _THUMBNAIL_JPEG = "thumbnail_jpeg_v1"
 
 
+def collapse_source_revisions(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep one history entry per source message.
+
+    ``offer_sources`` stores one row per (offer, source revision), while the
+    public history contract carries no revision identity: without collapsing,
+    several revisions of the same message surface as identical entries. Rows
+    arrive newest-first, so the first row per message is the latest revision.
+    """
+    collapsed: list[dict[str, Any]] = []
+    seen_messages: set[UUID] = set()
+    for row in rows:
+        message_id = row["source_message_id"]
+        if message_id in seen_messages:
+            continue
+        seen_messages.add(message_id)
+        collapsed.append(row)
+    return collapsed
+
+
 class SQLAlchemyOfferDetailAdapter(OfferDetailQueryPort):
     """Load one public offer detail with source and media context."""
 
