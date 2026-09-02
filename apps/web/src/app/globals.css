@@ -50,7 +50,9 @@ body {
   position: fixed;
   z-index: 20;
   right: max(0.5rem, env(safe-area-inset-right));
-  bottom: max(0.5rem, env(safe-area-inset-bottom));
+  /* Clear the MapLibre attribution control, which shares the bottom-right
+     corner and must stay fully visible (OpenFreeMap/OSM license). */
+  bottom: calc(2.75rem + max(env(safe-area-inset-bottom), 0rem));
   border: 1px solid var(--border);
   border-radius: 0.35rem;
   background: rgb(22 27 34 / 85%);
