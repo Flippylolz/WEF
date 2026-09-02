@@ -191,6 +191,25 @@ describe("OfferDetailDrawer", () => {
     ).toHaveAttribute("rel", "noopener noreferrer");
   });
 
+  it("exposes a single close control to assistive technology", async () => {
+    vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
+      state: "ready",
+      data: detail,
+    });
+    renderDrawer();
+
+    await screen.findByText("development · primary");
+    const scrim = screen
+      .getByTestId("offer-detail-overlay")
+      .querySelector(".offer-detail-scrim");
+    expect(scrim).not.toBeNull();
+    expect(scrim).toHaveAttribute("aria-hidden", "true");
+    expect(scrim).toHaveAttribute("tabindex", "-1");
+    expect(screen.getAllByRole("button", { name: "detailClose" })).toHaveLength(
+      1,
+    );
+  });
+
   it("falls back to raw parser field names and hides duplicate addresses", async () => {
     vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
       state: "ready",
