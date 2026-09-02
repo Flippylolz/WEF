@@ -802,6 +802,18 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             .limit(1),
         )
         source_changed = existing_link is None
+        contacts_due = existing_link is None
+        if existing_link is not None and self._contact_cipher is not None:
+            # Backfill: pre-cipher ingests stored masked text without contact
+            # rows; re-encountering an unchanged message is the only replay
+            # path that can restore them.
+            offer_has_contacts = (
+                await session.scalar(
+                    select(ContactPointRow.id).where(ContactPointRow.offer_id == offer_id).limit(1),
+                )
+                is not None
+            )
+            contacts_due = not offer_has_contacts
         if existing_link is None:
             confidence = (
                 confidence_score(listing.content_type.provenance.confidence)
@@ -819,6 +831,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                     extraction_json=json.loads(build_extraction_json(listing)),
                 ),
             )
+        if contacts_due:
             await self._persist_contacts(
                 session,
                 offer_id=offer_id,
