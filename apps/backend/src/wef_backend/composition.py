@@ -147,6 +147,22 @@ class AppServices:
     public_rate_limiter: RateLimiter
 
 
+def build_contact_cipher(settings: Settings) -> AesGcmContactCipher:
+    """Build the contact cipher from configured deployment keys."""
+    return AesGcmContactCipher(
+        encryption_key=decode_secret_key(
+            settings.contact_encryption_key.get_secret_value()
+            if settings.contact_encryption_key is not None
+            else None,
+        ),
+        hmac_key=decode_secret_key(
+            settings.contact_hmac_key.get_secret_value()
+            if settings.contact_hmac_key is not None
+            else None,
+        ),
+    )
+
+
 def build_services(settings: Settings | None = None) -> AppServices:
     """Wire concrete adapters to inward-owned application contracts."""
     runtime_settings = settings or load_settings()
@@ -161,18 +177,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
     hasher = PwdlibPasswordHasher()
     tokens = SecretsTokenService()
     clock = SystemClock()
-    contact_cipher = AesGcmContactCipher(
-        encryption_key=decode_secret_key(
-            runtime_settings.contact_encryption_key.get_secret_value()
-            if runtime_settings.contact_encryption_key is not None
-            else None,
-        ),
-        hmac_key=decode_secret_key(
-            runtime_settings.contact_hmac_key.get_secret_value()
-            if runtime_settings.contact_hmac_key is not None
-            else None,
-        ),
-    )
+    contact_cipher = build_contact_cipher(runtime_settings)
     contact_rate_limiter = MemoryRateLimiter()
     admin_audit_store = SQLAlchemyAdminAuditStore(database.session_factory)
     location_admin_store = SQLAlchemyLocationAdminStore(database.session_factory)
