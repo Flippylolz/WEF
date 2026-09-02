@@ -70,10 +70,12 @@ describe("AppliedFilterChips", () => {
     });
 
     expect(countAppliedGroups({ ...DEFAULT_MAP_SEARCH_STATE })).toBe(0);
-    expect(countAppliedGroups({
-      ...DEFAULT_MAP_SEARCH_STATE,
-      propertyTypes: ["house"],
-    })).toBe(1);
+    expect(
+      countAppliedGroups({
+        ...DEFAULT_MAP_SEARCH_STATE,
+        propertyTypes: ["house"],
+      }),
+    ).toBe(1);
     expect(screen.getByText("PLN 800,000 – PLN 1,250,000")).toBeInTheDocument();
     expect(screen.getByText("≥ 35 m²")).toBeInTheDocument();
     expect(screen.getByText("roomsLabel")).toBeInTheDocument();
@@ -83,7 +85,9 @@ describe("AppliedFilterChips", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("marketType.secondary")).toBeInTheDocument();
     expect(screen.getByText("contentType.unit")).toBeInTheDocument();
-    expect(screen.getByText("propertyType.house, propertyType.apartment")).toBeInTheDocument();
+    expect(
+      screen.getByText("propertyType.house, propertyType.apartment"),
+    ).toBeInTheDocument();
     expect(screen.getByText(/1 Aug 2026/)).toBeInTheDocument();
   });
 

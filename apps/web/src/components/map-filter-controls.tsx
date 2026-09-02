@@ -237,7 +237,10 @@ export function MapFilterControls({
               onChange={() =>
                 setDraft((current) => ({
                   ...current,
-                  propertyTypes: toggleValue(current.propertyTypes, propertyType),
+                  propertyTypes: toggleValue(
+                    current.propertyTypes,
+                    propertyType,
+                  ),
                 }))
               }
             />

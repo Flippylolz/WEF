@@ -711,9 +711,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             "location_id": location_id,
             "content_type": (listing.content_type.value if listing.content_type else "unit"),
             "market_type": (listing.market_type.value if listing.market_type else "unknown"),
-            "property_type": (
-                listing.property_type.value if listing.property_type else "unknown"
-            ),
+            "property_type": (listing.property_type.value if listing.property_type else "unknown"),
             "visibility": "needs_review",
             "published_at": raw.published_at,
             "latest_source_at": raw.edited_at or raw.published_at,

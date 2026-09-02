@@ -3,7 +3,8 @@ import type { components, operations } from "@/generated/api";
 export type ContentType = components["schemas"]["ContentType"];
 export type MarketType = components["schemas"]["MarketType"];
 export type PropertyType = components["schemas"]["PropertyType"];
-export type FilterablePropertyType = components["schemas"]["FilterablePropertyType"];
+export type FilterablePropertyType =
+  components["schemas"]["FilterablePropertyType"];
 export type MapLocationQuery =
   operations["queryMapLocations"]["parameters"]["query"];
 
