@@ -2,16 +2,16 @@
 schema: ai-docs/adr@1
 id: ADR-017
 title: Operate without enforced GitHub branch protection
-status: accepted
+status: superseded
 date: 2026-08-12
 supersedes: [ADR-009]
-superseded_by: []
+superseded_by: [ADR-023]
 resolves: [D-007]
 ---
 
 # ADR-017: Operate without enforced GitHub branch protection
 
-- Status: accepted for current scope
+- Status: superseded on 2026-09-02 by [ADR-023](ADR-023-enforce-main-branch-protection.md) after the repository became public and eligible for enforced protection.
 - Date: 2026-08-12
 - Decision: GitHub Pro and private-repository rulesets are completely out of scope. Continue feature/spike/fix branches, pull requests, CI, main-only deploy checks, and the custom Dependabot merge controller as workflow conventions without claiming GitHub-enforced `main` protection.
 - Rationale: the owner explicitly accepts the missing enforcement.

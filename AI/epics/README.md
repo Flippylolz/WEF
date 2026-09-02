@@ -72,7 +72,7 @@ After the relevant epic gates are approved:
 12. E1-T6 — enable Dependabot update pull requests without auto-merge.
 13. E1-T7 — add the scheduled owner-label/check/bot-commit merge controller.
 
-The synthetic map sequence deliberately excludes historical import, the complete export, network geocoding, media, auth/contacts, and Telegram credentials. E2-T1 separately begins the read-only historical source boundary and safe fixture corpus without replacing the persisted M1 seed. E1-T5 is cancelled because GitHub-enforced branch protection is out of scope; procedural branch/PR/CI rules remain mandatory.
+The synthetic map sequence deliberately excludes historical import, the complete export, network geocoding, media, auth/contacts, and Telegram credentials. E2-T1 separately begins the read-only historical source boundary and safe fixture corpus without replacing the persisted M1 seed. E1-T5 remains cancelled as historical traceability for the original private-repository constraint; ADR-023 records the later owner-directed protection of public-repository branch `main`.
 
 ## Task dependency and traceability registry
 
@@ -240,7 +240,7 @@ The workflow's [expanded definition of done](../workflow/DEFINITION_OF_DONE.md) 
   complete source descriptions: E19-T1 through E19-T4.
 - Owner-triggered ingestion AI parse fallback on deterministic parse misses,
   with explicit apply and parse-issue offer linking: E21 (PRs #259–#272).
-- Procedural feature branches/hotfix ownership plus required CI workflows: E1-T4 and [repository and change rules](../governance/REPOSITORY_RULES.md); enforced `main` protection is out of scope.
+- Protected feature-branch/hotfix ownership plus required CI workflows: E1-T4, ADR-023, and [repository and change rules](../governance/REPOSITORY_RULES.md).
 - Dependabot update pull requests: E1-T6.
 - Scheduled owner-label/check/bot-commit-gated Dependabot merge workaround: E1-T7.
 - Persistent PostgreSQL/media/checkpoint data outside Git: E3-T1, E3-T2, E3-T4, E7-T1; backups are deferred in E7-T5.

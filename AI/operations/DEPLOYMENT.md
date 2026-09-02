@@ -160,7 +160,7 @@ Complete inspected details and the transfer runbook are in the [production serve
 
 ## GitHub repository controls
 
-- GitHub-enforced `main` protection is out of scope under [ADR-017](../decisions/adr/ADR-017-no-enforced-branch-protection.md); follow branch/PR/CI rules procedurally and do not claim technical enforcement.
+- GitHub branch protection enforces the `main` pull-request, review, strict CI, conversation-resolution, linear-history, force-push, and deletion rules under [ADR-023](../decisions/adr/ADR-023-enforce-main-branch-protection.md). The merged-PR release check remains defense in depth for the audited administrator exception.
 - Use GitHub Actions variables for non-secret configuration and Actions secrets for sensitive configuration without depending on paid environment protection.
 - Every successful merge/push to `main` automatically builds and publishes a release candidate.
 - E7-T4 completed the rollback rehearsal; `AUTO_DEPLOY_ENABLED=true` is the current repository value (verified 2026-08-26). Automatic deployment still fails closed unless the exact SHA is associated with a merged PR and every release job succeeds.

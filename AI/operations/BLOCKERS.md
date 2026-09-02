@@ -31,14 +31,12 @@ This append-only log records blockers that could not be safely resolved autonomo
   worker status for remote/local alignment. Absence-based polling never infers deletion,
   so production edit/delete claims remain withheld until E8 evidence exists.
 
-### B-005: GitHub-enforced branch protection unavailable
-
-- Impact: reviews/checks are procedural rather than platform-enforced.
-- Current state: accepted under ADR-017; GitHub Pro is out of scope.
-- Needed from owner: none unless account/repository eligibility changes.
-- Safe workaround: one-task PRs, stable CI checks, base-first stack merging, and main-SHA deploy verification.
-
 ## Resolved during overnight work
+
+### R-012 / B-005: GitHub-enforced branch protection
+
+- Resolution: the public repository became eligible and `main` branch protection was enabled on 2026-09-02 under ADR-023 with pull requests, one approval, stale-review dismissal, approval after the latest push, resolved conversations, strict required CI, linear history, and force-push/deletion blocking.
+- Effect: ordinary updates are platform-gated. The owner-only administrator bypass and merged-PR deployment verification remain audited defense-in-depth controls.
 
 ### R-011 / B-004: Recurring production geocoder revalidation
 

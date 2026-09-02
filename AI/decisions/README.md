@@ -20,12 +20,12 @@ None.
 - [ADR-014 — GitHub Actions owns deploy-time configuration](adr/ADR-014-actions-owned-deploy-configuration.md)
 - [ADR-015 — Defer backups and accept single-host data-loss risk](adr/ADR-015-defer-backups.md)
 - [ADR-016 — Username/password accounts and owner-only admin console](adr/ADR-016-pseudonymous-accounts-owner-console.md)
-- [ADR-017 — Operate without enforced GitHub branch protection](adr/ADR-017-no-enforced-branch-protection.md)
 - [ADR-018 — Allow ordered stacked pull request implementation](adr/ADR-018-ordered-stacked-pull-requests.md)
 - [ADR-019 — Separate the anonymous HTTP rehearsal from public launch](adr/ADR-019-anonymous-http-production-rehearsal.md)
 - [ADR-020 — Use Nginx as the shared TLS ingress](adr/ADR-020-use-nginx-shared-tls-ingress.md)
 - [ADR-021 — Use cached provider-neutral geocoding with Geoapify for the historical import](adr/ADR-021-use-cached-provider-neutral-geocoding.md) — accepted through the owner's merged PR #59; recurring use retained via D-002/E8-T4.
 - [ADR-022 — Use Groq-hosted GPT-OSS 20B for place review and offer enrichment](adr/ADR-022-use-groq-gpt-oss-for-place-review-and-offer-enrichment.md) — accepted provider/model, confirmed-place-review, and missing-only batch-autofill boundaries for E19; spike revision 4 and plan revision 1 are owner-approved under AD-042/AD-043; paid usage and production activation remain gated on a Groq secret and verified Zero Data Retention.
+- [ADR-023 — Enforce main branch protection](adr/ADR-023-enforce-main-branch-protection.md)
 
 ## Partially superseded
 
@@ -34,11 +34,15 @@ None.
 - [ADR-010 — Isolate WEF on the shared NUC](adr/ADR-010-isolate-wef-shared-nuc.md) — application/data isolation remains current; [ADR-020](adr/ADR-020-use-nginx-shared-tls-ingress.md) permits only the reviewed shared Nginx ingress migration.
 - [ADR-011 — In-house accounts gate contact reveal](adr/ADR-011-accounts-gate-contact-reveal.md) — anonymous browsing and the audited reveal boundary remain current; [ADR-016](adr/ADR-016-pseudonymous-accounts-owner-console.md) supersedes its email-based identity details.
 
+## Superseded
+
+- [ADR-017 — Operate without enforced GitHub branch protection](adr/ADR-017-no-enforced-branch-protection.md) — superseded by [ADR-023](adr/ADR-023-enforce-main-branch-protection.md) after the public repository became eligible for platform enforcement.
+
 ## Resolved/out-of-scope
 
 - [D-004 — Authentication and curation](deferred/D-004-authentication-curation.md) — resolved by [ADR-016](adr/ADR-016-pseudonymous-accounts-owner-console.md).
 - [D-006 — UI languages](deferred/D-006-ui-languages.md) — resolved for the initial release by the canonical [Product Quality language section](../product/QUALITY.md#language) (`product/QUALITY`, a document key rather than an ADR/deferred-decision ID).
-- [D-007 — GitHub protection eligibility](deferred/D-007-github-protection-eligibility.md) — resolved as out of scope by [ADR-017](adr/ADR-017-no-enforced-branch-protection.md); E1-T5 is cancelled.
+- [D-007 — GitHub protection eligibility](deferred/D-007-github-protection-eligibility.md) — historical private-repository eligibility blocker resolved out of scope by ADR-017; [ADR-023](adr/ADR-023-enforce-main-branch-protection.md) records the later public-repository enforcement decision. E1-T5 remains cancelled as a historical task.
 - [D-008 — Transactional email provider](deferred/D-008-transactional-email-provider.md) — resolved as out of scope by [ADR-016](adr/ADR-016-pseudonymous-accounts-owner-console.md).
 
 ## Deferred/revalidation
@@ -58,6 +62,7 @@ D-004   ---------------------- resolved by ----> ADR-016
 D-008   ---------------- resolved/out-of-scope -> ADR-016
 ADR-009 -- enforcement assumption superseded --> ADR-017
 D-007   ---------------- resolved/out-of-scope -> ADR-017
+ADR-017 -- procedural-only policy superseded --> ADR-023
 ADR-010 -- public edge assumption superseded --> ADR-020
 ```
 
@@ -69,6 +74,7 @@ Direct graph links:
 - [D-008](deferred/D-008-transactional-email-provider.md) → [ADR-016](adr/ADR-016-pseudonymous-accounts-owner-console.md)
 - [ADR-009](adr/ADR-009-feature-branch-development.md) → [ADR-017](adr/ADR-017-no-enforced-branch-protection.md)
 - [D-007](deferred/D-007-github-protection-eligibility.md) → [ADR-017](adr/ADR-017-no-enforced-branch-protection.md)
+- [ADR-017](adr/ADR-017-no-enforced-branch-protection.md) → [ADR-023](adr/ADR-023-enforce-main-branch-protection.md)
 - [ADR-010](adr/ADR-010-isolate-wef-shared-nuc.md) → [ADR-020](adr/ADR-020-use-nginx-shared-tls-ingress.md)
 
 ## Status rules
