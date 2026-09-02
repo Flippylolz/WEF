@@ -13,6 +13,7 @@ from uuid import UUID
 
 from wef_backend.features.catalog.application.data_origin import DataOrigin, derive_data_origin
 from wef_backend.features.catalog.application.map_query import ConfidenceIndicator
+from wef_backend.features.catalog.application.offer_display_name import offer_display_name
 
 if TYPE_CHECKING:
     from wef_backend.features.catalog.application.map_query import MapFilters
@@ -350,7 +351,7 @@ class BrowseLocationOffers:
             id=record.id,
             content_type=record.content_type,
             market_type=record.market_type,
-            display_name=f"{record.content_type.value} · {record.market_type.value}",
+            display_name=offer_display_name(record.content_type, record.market_type),
             data_confidence=(
                 OfferDataConfidence.COMPLETE if complete else OfferDataConfidence.PARTIAL
             ),
@@ -554,7 +555,7 @@ class BrowseViewportListings:
             id=record.id,
             content_type=record.content_type,
             market_type=record.market_type,
-            display_name=f"{record.content_type.value} · {record.market_type.value}",
+            display_name=offer_display_name(record.content_type, record.market_type),
             data_confidence=(
                 OfferDataConfidence.COMPLETE if complete else OfferDataConfidence.PARTIAL
             ),

@@ -266,7 +266,7 @@ async def test_viewport_listings_decorate_location_context_and_paginate() -> Non
     assert [item.id for item in page.items] == [records[0].id, records[1].id]
     assert page.matching_count == 3
     first = page.items[0]
-    assert first.display_name == "development · primary"
+    assert first.display_name == "Development post · Primary market"
     assert first.data_confidence == "complete"
     assert first.delivery_label == "Q3 2026"
     assert first.location.display_name == "Synthetic Residence 3"

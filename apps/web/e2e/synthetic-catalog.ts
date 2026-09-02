@@ -1,5 +1,8 @@
 /** Synthetic M1 fixtures for Playwright critical-path mocks (no personal data). */
 
+// Offer display_name values are backend-computed; the fixture strings are
+// arbitrary payloads on purpose so the UI is proven to render them verbatim.
+
 export const LOCATION_ID = "10000000-0000-4000-8000-000000000001";
 export const OFFER_ID = "20000000-0000-4000-8000-000000000001";
 export const OFFER_ID_NO_LINK = "20000000-0000-4000-8000-000000000002";
