@@ -391,11 +391,18 @@ def test_parse_completion_payload_accepts_content_json() -> None:
 def test_usage_value_returns_none_for_missing_usage() -> None:
     assert usage_value({}, "prompt_tokens") is None
     assert usage_value({"usage": {}}, "prompt_tokens") is None
+    assert usage_value("not-a-dict", "prompt_tokens") is None
+    assert usage_value({"usage": {"prompt_tokens": "40"}}, "prompt_tokens") is None
+    assert usage_value({"usage": {"prompt_tokens": 40}}, "prompt_tokens") == 40
 
 
 def test_header_request_id_prefers_response_header() -> None:
     assert header_request_id({"X-Request-Id": "req-from-header"}, {}) == "req-from-header"
     assert header_request_id({}, {"id": "req-from-body"}) == "req-from-body"
+    assert header_request_id({"x-request-id": ""}, {"id": "req-from-body"}) == "req-from-body"
+    assert header_request_id({}, {"id": 123}) is None
+    assert header_request_id({}, {}) is None
+    assert header_request_id({}, "not-a-dict") is None
 
 
 async def test_groq_ai_provider_complete_many_without_batch_api() -> None:

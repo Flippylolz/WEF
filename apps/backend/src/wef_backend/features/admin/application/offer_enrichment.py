@@ -300,6 +300,14 @@ class OfferAiEnrichmentStore(Protocol):
         """Return the next queued or retryable processing item."""
         ...
 
+    async def next_queued_item(self, batch_id: UUID) -> OfferAiEnrichmentItem | None:
+        """Return the next queued item for chunk collection."""
+        ...
+
+    async def next_processing_item(self, batch_id: UUID) -> OfferAiEnrichmentItem | None:
+        """Return the oldest in-flight item left from a partial run."""
+        ...
+
     async def get_item(self, item_id: UUID) -> OfferAiEnrichmentItem | None:
         """Return one item by id."""
         ...
@@ -948,13 +956,14 @@ class ProcessOfferEnrichmentItem:
             self._runtime.daily_limit - used,
         )
         queued: list[OfferAiEnrichmentItem] = []
-        queued_ids: set[UUID] = set()
-        for _ in range(chunk_limit):
-            item = await self._store.next_item(batch_id)
-            if item is None or item.id in queued_ids:
+        retry = await self._store.next_processing_item(batch_id)
+        if retry is not None:
+            queued.append(retry)
+        for _ in range(chunk_limit - len(queued)):
+            item = await self._store.next_queued_item(batch_id)
+            if item is None:
                 break
             await self._store.mark_item_processing(item, now=now)
-            queued_ids.add(item.id)
             queued.append(item)
         if not queued:
             await self._store.set_batch_state(
