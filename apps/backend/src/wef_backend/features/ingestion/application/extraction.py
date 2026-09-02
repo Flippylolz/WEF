@@ -38,7 +38,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v9"
+PARSER_VERSION = "e2-v10"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
@@ -178,7 +178,7 @@ _PROPERTY_TYPE_LABEL_PATTERN = re.compile(
     _FLAGS,
 )
 _SEMI_DETACHED_PATTERN = re.compile(
-    r"\b(?:bli[źz]niak\w*|semi[\s-]?detached|twin\s+house|близнец\w*)\b",
+    r"\b(?:bli[źz]niak\w*|semi[\s-]?detached|twin\s+house|близнец\w*|близнюк\w*)\b",
     _FLAGS,
 )
 _APARTMENT_PATTERN = re.compile(
@@ -188,7 +188,13 @@ _APARTMENT_PATTERN = re.compile(
 )
 _HOUSE_PATTERN = re.compile(
     r"\b(?:dom\s+(?:jednorodzinny|wolnostoj\w*)|jednorodzinny|detached\s+house|"
-    r"standalone\s+house|частн\w+\s+дом|dom\s+particulier|will[ae]|villa)\b",
+    r"standalone\s+house|частн\w+\s+дом|dom\s+particulier|will[ae]|villa|"
+    r"дім\w*|особняк\w*|"
+    r"(?:современн\w*|нов\w*)\s+дом|"
+    r"дом\s+(?:на\s+продаж\w*|\u0441\s+садом|под\s+\w+)|"
+    r"\d+[\s-]*комнатн\w*\s+дом|"
+    r"(?:сімейн\w*|приватн\w*)\s+будинок|"
+    r"будинок\s+(?:на\s+продаж\w*|\u0437\s+садом))\b",
     _FLAGS,
 )
 _LOCATION_PATTERN = re.compile(
@@ -514,7 +520,9 @@ def _parse_property_type_label(value: str) -> PropertyType | None:
         return PropertyType.SEMI_DETACHED
     if any(token in folded for token in ("mieszkan", "apart", "flat", "studio", "кварт", "апарт")):
         return PropertyType.APARTMENT
-    if any(token in folded for token in ("dom", "house", "villa", "willa", "дом")):
+    if any(
+        token in folded for token in ("dom", "house", "villa", "willa", "дом", "дім", "особняк")
+    ):
         return PropertyType.HOUSE
     return None
 
