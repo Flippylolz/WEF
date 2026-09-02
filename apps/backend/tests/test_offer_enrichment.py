@@ -18,6 +18,8 @@ from tests.fakes import (
 from wef_backend.features.admin.application.admin_ops import AdminDeniedError
 from wef_backend.features.admin.application.ai_review import (
     ALLOWED_GROQ_MODEL,
+    OFFER_ENRICHMENT_PROMPT_VERSION,
+    OFFER_ENRICHMENT_SCHEMA_VERSION,
     AiCurationRuntime,
     ProviderOutcome,
     ProviderRequestError,
@@ -28,8 +30,6 @@ from wef_backend.features.admin.application.offer_enrichment import (
     ALLOWED_OFFER_FIELDS,
     DEFAULT_BATCH_LIMIT,
     MAX_BATCH_LIMIT,
-    OFFER_ENRICHMENT_PROMPT_VERSION,
-    OFFER_ENRICHMENT_SCHEMA_VERSION,
     BatchState,
     FieldEventOutcome,
     ItemOutcome,

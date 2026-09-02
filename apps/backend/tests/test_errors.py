@@ -28,6 +28,6 @@ async def test_rate_limit_handler_returns_bounded_problem() -> None:
     request.state.request_id = uuid4()
     response = await rate_limit_handler(request, Exception("throttled"))
     assert response.status_code == 429
-    payload = response.body.decode()
+    payload = bytes(response.body).decode()
     assert "rate_limited" in payload
     assert "Try again later." in payload
