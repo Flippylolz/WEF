@@ -210,19 +210,21 @@ class SQLAlchemyOfferDetailAdapter(OfferDetailQueryPort):
             .order_by(SourceMessageRow.published_at.desc(), OfferSourceRow.created_at.desc())
         )
         rows = (await session.execute(statement)).all()
-        return [
-            {
-                "relationship": row.relationship,
-                "extraction_json": row.extraction_json,
-                "source_message_id": row.id,
-                "external_message_id": row.external_message_id,
-                "published_at": row.published_at,
-                "edited_at": row.edited_at,
-                "verified_link_base": row.verified_link_base,
-                "username": row.username,
-            }
-            for row in rows
-        ]
+        return collapse_source_revisions(
+            [
+                {
+                    "relationship": row.relationship,
+                    "extraction_json": row.extraction_json,
+                    "source_message_id": row.id,
+                    "external_message_id": row.external_message_id,
+                    "published_at": row.published_at,
+                    "edited_at": row.edited_at,
+                    "verified_link_base": row.verified_link_base,
+                    "username": row.username,
+                }
+                for row in rows
+            ]
+        )
 
     async def _load_media(
         self,
