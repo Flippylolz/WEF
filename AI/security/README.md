@@ -14,5 +14,6 @@ This domain owns identity, sessions, authorization, contact protection, reveal a
 - Public responses mask contacts. A separate authenticated endpoint performs authorized, rate-limited, audited reveal.
 - Passwords, hashes, session tokens, decrypted contacts, secrets, and owner bootstrap credentials never appear in source, images, logs, public responses, or generic admin forms.
 - User/admin authentication and contact reveal are enabled on the verified HTTPS origin after E7-T7; plain `:3100` remains a Secure-cookie-incompatible rollback path.
+- The web app layers a per-request nonce `Content-Security-Policy` (no `script-src 'unsafe-inline'`) over the static shared-edge policy in `infra/nginx/tls.conf.in`; browsers enforce all delivered policies, so first-party scripts require the app-issued nonce while the edge directive set stays unchanged.
 
 Security-affecting changes require an accepted decision, threat-appropriate tests, redacted audit behavior, and explicit traceability to product and contract requirements.
