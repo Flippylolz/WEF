@@ -771,8 +771,8 @@ def test_property_type_classifies_slavic_house_phrases() -> None:
     dim = _candidate(
         "🏙 Купівля | Вторинний ринок\nДім на продаж у Варшаві\n💰 Ціна: 2 000 000 zł",  # noqa: RUF001
     )
-    modern = _candidate(
-        "🏙 Покупка | Вторичный рынок\nСовременный дом | 125 м² | 5 комнат\n💰 Цена: 2 000 000 zł",  # noqa: RUF001
+    rooms = _candidate(
+        "🏙 Покупка | Вторичный рынок\n5-комнатный дом | 125 м²\n💰 Цена: 2 000 000 zł",
     )
     sale = _candidate(
         "🏙 Покупка | Вторичный рынок\nДом на продажу | 150 м² | 4 комнаты\n💰 Цена: 1 800 000 zł",  # noqa: RUF001
@@ -781,12 +781,31 @@ def test_property_type_classifies_slavic_house_phrases() -> None:
     assert dim.listing is not None
     assert dim.listing.property_type is not None
     assert dim.listing.property_type.value is PropertyType.HOUSE
-    assert modern.listing is not None
-    assert modern.listing.property_type is not None
-    assert modern.listing.property_type.value is PropertyType.HOUSE
+    assert rooms.listing is not None
+    assert rooms.listing.property_type is not None
+    assert rooms.listing.property_type.value is PropertyType.HOUSE
     assert sale.listing is not None
     assert sale.listing.property_type is not None
     assert sale.listing.property_type.value is PropertyType.HOUSE
+
+
+def test_property_type_new_building_phrase_does_not_conflict_apartment() -> None:
+    """'новый дом' building-year copy must not flip apartments to unknown."""
+    text = (
+        "🏙 Покупка | Вторичный рынок\n"
+        "2-комнатная квартира в новом доме 2024 года\n"
+        "💰 Цена: 900 000 zł"
+    )
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.property_type is not None
+    assert listing.property_type.value is PropertyType.APARTMENT
+    assert not any(
+        warning.code is ExtractionWarningCode.CONFLICTING_VALUES
+        and warning.field_name == "property_type"
+        for warning in result.warnings
+    )
 
 
 def test_property_type_reads_labeled_value_lines() -> None:

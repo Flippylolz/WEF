@@ -38,7 +38,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v10"
+PARSER_VERSION = "e2-v11"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
@@ -190,7 +190,6 @@ _HOUSE_PATTERN = re.compile(
     r"\b(?:dom\s+(?:jednorodzinny|wolnostoj\w*)|jednorodzinny|detached\s+house|"
     r"standalone\s+house|частн\w+\s+дом|dom\s+particulier|will[ae]|villa|"
     r"дім\w*|особняк\w*|"
-    r"(?:современн\w*|нов\w*)\s+дом|"
     r"дом\s+(?:на\s+продаж\w*|\u0441\s+садом|под\s+\w+)|"
     r"\d+[\s-]*комнатн\w*\s+дом|"
     r"(?:сімейн\w*|приватн\w*)\s+будинок|"
