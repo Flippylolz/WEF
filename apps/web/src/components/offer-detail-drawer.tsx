@@ -79,6 +79,8 @@ export function OfferDetailDrawer({
         className="offer-detail-scrim"
         type="button"
         aria-label={t("detailClose")}
+        aria-hidden="true"
+        tabIndex={-1}
         onClick={onClose}
       />
       <aside
