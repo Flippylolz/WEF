@@ -273,7 +273,7 @@ async def test_facets_and_selected_location_offer_contracts() -> None:
     assert offer_response.status_code == status.HTTP_200_OK
     assert payload["matching_count"] == 1
     assert payload["total_count"] == 2
-    assert payload["items"][0]["display_name"] == "development · primary"
+    assert payload["items"][0]["display_name"] == "Development post · Primary market"
     assert payload["items"][0]["data_confidence"] == "complete"
     assert payload["items"][0]["data_origin"] == "parser"
     assert payload["items"][0]["parking_price_min_minor"] == 4_500_000
@@ -511,7 +511,7 @@ async def test_viewport_listings_present_parent_location_and_reject_bad_cursor()
     assert payload["matching_count"] == 1
     assert payload["next_cursor"] is None
     item = payload["items"][0]
-    assert item["display_name"] == "development · primary"
+    assert item["display_name"] == "Development post · Primary market"
     assert item["data_confidence"] == "complete"
     assert item["price_max_minor"] == 125_000_000
     assert item["location"]["display_name"] == "Synthetic Central Residence"

@@ -133,7 +133,7 @@ async def test_get_offer_detail_decorates_summary_fields() -> None:
         UUID("20000000-0000-4000-8000-000000000002"),
     )
     assert detail is not None
-    assert detail.display_name == "unit · secondary"
+    assert detail.display_name == "Unit offer · Secondary market"
     assert detail.data_origin == "parser"
     assert detail.data_confidence.value == "complete"
     assert detail.public_source_text == "Masked public text only."
