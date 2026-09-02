@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from wef_backend.composition import build_contact_cipher
 from wef_backend.features.admin.infrastructure.ai_enrichment_store import build_offer_origin_sync
 from wef_backend.features.ingestion.application.telegram_backfill import (
     LiveBackfillRequest,
@@ -85,6 +86,7 @@ async def run_backfill(
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     store = SQLAlchemyIngestionPersistence(
         session_factory,
+        contact_cipher=build_contact_cipher(settings),
         field_origin_sync=build_offer_origin_sync(session_factory),
     )
     client = TelethonLiveClient(
