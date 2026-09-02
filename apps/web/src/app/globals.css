@@ -447,8 +447,9 @@ input:focus-visible {
 
 .filter-heading {
   display: flex;
-  align-items: stretch;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 0.75rem;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
@@ -460,14 +461,10 @@ input:focus-visible {
   font-size: 1.1rem;
 }
 
-.filter-heading .eyebrow {
-  margin-bottom: 0.35rem;
-}
-
 .filter-actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  margin-left: auto;
   gap: 0.5rem;
 }
 
@@ -477,16 +474,6 @@ input:focus-visible {
 
 .filter-panel > .filter-status {
   padding: 0 1rem 1rem;
-}
-
-.filter-panel .filter-actions {
-  position: sticky;
-  bottom: 0;
-  justify-content: flex-end;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-  padding: 0.75rem 1rem;
-  z-index: 1;
 }
 
 .button-primary,

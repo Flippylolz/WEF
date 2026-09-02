@@ -108,7 +108,7 @@ See also [PIPELINE.md](../ingestion/PIPELINE.md) (parse-issue ledger).
 **Container:** `api` (database access only; no provider calls).
 
 **Purpose:** Re-extract `offers.property_type` from the newest **primary**
-`offer_sources` revision per offer using parser `e2-v8`. Dry-run by default;
+`offer_sources` revision per offer using parser `e2-v9`. Dry-run by default;
 `--apply` persists changed values only.
 
 | Flag | Default | Description |
