@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E22-T2
 epic: E22
 title: "Extend catalog filter and public contracts"
-status: draft
+status: done
 revision: 1
 priority: P1
 size: M
@@ -29,22 +29,26 @@ implementation_gate:
   verified_by: "Codex agent"
   verified_at: "2026-09-02T15:58:32Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Codex agent"
+  verified_at: "2026-09-02T17:27:00Z"
+  evidence:
+    - "E22-T1 done through https://github.com/Flippylolz/WEF/pull/302"
+    - "E4-T4 done on main before E22 implementation"
 branch:
   required: true
   name: null
   task_id: E22-T2
   one_task_only: true
   created_at: null
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/302
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Codex agent"
+  completed_at: "2026-09-02T17:27:00Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/302
+  evidence:
+    - "OpenAPI and generated api.ts updated in PR #302"
+    - "Production facets smoke in PRODUCTION_EVIDENCE.md"
 invalidation:
   invalidated_by: null
   invalidated_at: null
