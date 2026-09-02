@@ -8,6 +8,7 @@ import json
 import sys
 from dataclasses import asdict
 
+from wef_backend.composition import build_contact_cipher
 from wef_backend.database import create_database_resources
 from wef_backend.features.admin.infrastructure.ai_enrichment_store import build_offer_origin_sync
 from wef_backend.features.ingestion.application.raw_replay import RawParserReplayer
@@ -37,6 +38,7 @@ async def run(*, seed_archive: bool = False) -> dict[str, int]:
         replayer = RawParserReplayer(
             store=SQLAlchemyIngestionPersistence(
                 database.session_factory,
+                contact_cipher=build_contact_cipher(settings),
                 field_origin_sync=build_offer_origin_sync(database.session_factory),
             ),
             source=archive,
