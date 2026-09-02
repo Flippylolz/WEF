@@ -302,7 +302,9 @@ GitHub Actions variables/secrets transferred on every deployment:
 - Telegram API ID/hash/session/phone through `WEF_TELEGRAM_API_ID`, `WEF_TELEGRAM_API_HASH`, `WEF_TELEGRAM_SESSION`, and `WEF_TELEGRAM_PHONE`; non-secret channel identity comes from application settings.
 
 Optional Groq catalog-curation settings (`WEF_AI_CURATION_ENABLED`, `WEF_GROQ_API_KEY`,
-`WEF_GROQ_MODEL`, `WEF_GROQ_ZDR_VERIFIED`, `WEF_GROQ_TIMEOUT_SECONDS`) must **not** be
+`WEF_GROQ_MODEL`, `WEF_GROQ_ZDR_VERIFIED`, `WEF_GROQ_TIMEOUT_SECONDS`,
+`WEF_GROQ_USE_BATCH_API`, `WEF_GROQ_BATCH_CHUNK_SIZE`,
+`WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS`, `WEF_GROQ_BATCH_MAX_WAIT_SECONDS`) must **not** be
 added to `validate_release` `REQUIRED_KEYS`. Missing values keep AI review absent
 and must not fail deploy or `/api/v1/health/ready`. When `WEF_GROQ_API_KEY` is present
 in GitHub Actions secrets, `build_release_config` includes those optional keys in the
@@ -321,8 +323,10 @@ Activation (all required; fail closed otherwise):
 2. Store `WEF_GROQ_API_KEY` as a GitHub Actions secret / production secret file, never
    in git.
 3. Keep `WEF_GROQ_MODEL=openai/gpt-oss-20b` (exact allowlist).
-4. Set `WEF_AI_CURATION_ENABLED=true` last.
-5. Attach the **`api` service to `provider-egress`** in production Compose (merged
+4. Keep bulk workloads on Groq Batch API (`WEF_GROQ_USE_BATCH_API=true` default);
+   tune chunk size with `WEF_GROQ_BATCH_CHUNK_SIZE` (default `20`).
+5. Set `WEF_AI_CURATION_ENABLED=true` last.
+6. Attach the **`api` service to `provider-egress`** in production Compose (merged
    #241). Without it, Groq HTTPS/DNS from `api` fails even when secrets are present.
 
 Until those gates are complete, `/admin/places` omits **Review with AI**. Existing

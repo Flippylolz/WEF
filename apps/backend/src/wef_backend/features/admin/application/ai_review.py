@@ -118,6 +118,7 @@ class AiCurationRuntime:
     model: str
     api_key_present: bool
     daily_limit: int = _DAILY_LIMIT
+    batch_chunk_size: int = 20
     max_input_tokens: int = _MAX_INPUT_TOKENS
     max_output_tokens: int = _MAX_OUTPUT_TOKENS
     max_sources: int = _MAX_SOURCES
@@ -234,6 +235,27 @@ class StructuredCompletion:
     request_id: str | None
 
 
+@dataclass(frozen=True, slots=True)
+class BatchCompletionRequest:
+    """One Chat Completions request inside a Groq Batch job."""
+
+    custom_id: str
+    model: str
+    messages: tuple[dict[str, str], ...]
+    schema_name: str
+    schema: dict[str, object]
+    max_output_tokens: int
+
+
+@dataclass(frozen=True, slots=True)
+class BatchCompletionResult:
+    """One parsed result from a Groq Batch output file."""
+
+    custom_id: str
+    completion: StructuredCompletion | None
+    error: ProviderRequestError | None
+
+
 class ChatCompletionsPort(Protocol):
     """Provider-neutral Chat Completions boundary."""
 
@@ -247,6 +269,13 @@ class ChatCompletionsPort(Protocol):
         max_output_tokens: int,
     ) -> StructuredCompletion:
         """Return parsed JSON or raise a bounded provider error."""
+        ...
+
+    async def complete_many(
+        self,
+        requests: tuple[BatchCompletionRequest, ...],
+    ) -> tuple[BatchCompletionResult, ...]:
+        """Return one result per request, preferring Groq Batch when available."""
         ...
 
 

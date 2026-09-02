@@ -31,6 +31,8 @@ from wef_backend.features.admin.application.ai_review import (
     AiApplyStatus,
     AiCurationRuntime,
     ApplyPlaceReview,
+    BatchCompletionRequest,
+    BatchCompletionResult,
     GeneratePlaceReview,
     GetPlaceReview,
     LocationAiSnapshot,
@@ -863,6 +865,39 @@ class FakeChatCompletions:
             latency_ms=5,
             request_id="fake-request",
         )
+
+    async def complete_many(
+        self,
+        requests: tuple[BatchCompletionRequest, ...],
+    ) -> tuple[BatchCompletionResult, ...]:
+        """Return one scripted result per request."""
+        results: list[BatchCompletionResult] = []
+        for request in requests:
+            try:
+                completion = await self.complete(
+                    model=request.model,
+                    messages=request.messages,
+                    schema_name=request.schema_name,
+                    schema=request.schema,
+                    max_output_tokens=request.max_output_tokens,
+                )
+            except ProviderRequestError as error:
+                results.append(
+                    BatchCompletionResult(
+                        custom_id=request.custom_id,
+                        completion=None,
+                        error=error,
+                    ),
+                )
+            else:
+                results.append(
+                    BatchCompletionResult(
+                        custom_id=request.custom_id,
+                        completion=completion,
+                        error=None,
+                    ),
+                )
+        return tuple(results)
 
 
 @dataclass

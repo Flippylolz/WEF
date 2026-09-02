@@ -36,11 +36,14 @@ public. Application interactors own every mutation and provenance write.
 ## Required API boundary
 
 - Call `POST https://api.groq.com/openai/v1/chat/completions` from the backend
-  only. `WEF_GROQ_API_KEY` never reaches HTML, JavaScript, a public endpoint,
-  logs, fixtures, or committed configuration.
+  only for **interactive** single-item work (place review, one-off Generate in
+  admin). Bulk workloads use Groq's Batch API (`POST /v1/files` +
+  `POST /v1/batches` + poll + download JSONL) via `complete_many`. `WEF_GROQ_API_KEY`
+  never reaches HTML, JavaScript, a public endpoint, logs, fixtures, or committed
+  configuration.
 - Set `model="openai/gpt-oss-20b"`, `reasoning_effort="low"`, and an explicit
   bounded output limit initially. Do not use conversation state, streaming,
-  tools, web search, file upload, or Groq's provider batch endpoint.
+  tools, web search, or file upload outside the Batch API input file.
 - Require strict JSON Schema Structured Outputs with `strict: true`. Reject
   refusals, incomplete responses, unknown fields, invalid enum values, and schema
   mismatches as failed reviews. Schema adherence does not make values factually

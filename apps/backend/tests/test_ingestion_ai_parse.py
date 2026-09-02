@@ -276,6 +276,226 @@ async def test_generate_ingestion_ai_parse_creates_pending_run() -> None:
 
 
 @pytest.mark.asyncio
+async def test_generate_batch_creates_pending_runs_for_many_revisions() -> None:
+    """Batch generate submits one provider batch and stores pending runs."""
+    context_a = _context(text="Mokotów A 850 000 zł")
+    context_b = _context(text="Wola B 900 000 zł")
+    store = FakeIngestionAiParseStore(
+        contexts={
+            context_a.revision_id: context_a,
+            context_b.revision_id: context_b,
+        },
+    )
+    provider = FakeChatCompletions(payload=_payload())
+    outcomes = await GenerateIngestionAiParse(
+        store,
+        provider,
+        FakeAdminAuditStore(),
+        FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+        active_ai_runtime(),
+    ).generate_batch(
+        owner_id=uuid4(),
+        source_message_revision_ids=(context_a.revision_id, context_b.revision_id),
+        request_id=uuid4(),
+    )
+    assert len(outcomes) == 2
+    assert all(outcome.status is IngestionAiParseStatus.GENERATED for outcome in outcomes)
+    assert all(outcome.run is not None for outcome in outcomes)
+    assert all(outcome.run.state is ReviewRunState.PENDING for outcome in outcomes)
+
+
+@pytest.mark.asyncio
+async def test_generate_batch_denies_all_when_disabled() -> None:
+    """Batch generate is fail-closed when AI curation is inactive."""
+    context = _context()
+    store = FakeIngestionAiParseStore(contexts={context.revision_id: context})
+    outcomes = await GenerateIngestionAiParse(
+        store,
+        FakeChatCompletions(payload=_payload()),
+        FakeAdminAuditStore(),
+        FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+        _inactive_ai_runtime(),
+    ).generate_batch(
+        owner_id=uuid4(),
+        source_message_revision_ids=(context.revision_id,),
+        request_id=uuid4(),
+    )
+    assert outcomes[0].status is IngestionAiParseStatus.DENIED
+    assert outcomes[0].reason == "disabled"
+
+
+@pytest.mark.asyncio
+async def test_generate_batch_skips_rows_with_existing_offers() -> None:
+    """Batch generate denies revisions that already have primary offers."""
+    context = _context()
+    store = FakeIngestionAiParseStore(contexts={context.revision_id: context})
+    store.offers.add(context.message_id)
+    outcomes = await GenerateIngestionAiParse(
+        store,
+        FakeChatCompletions(payload=_payload()),
+        FakeAdminAuditStore(),
+        FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+        active_ai_runtime(),
+    ).generate_batch(
+        owner_id=uuid4(),
+        source_message_revision_ids=(context.revision_id,),
+        request_id=uuid4(),
+    )
+    assert outcomes[0].status is IngestionAiParseStatus.DENIED
+    assert outcomes[0].reason == "offer_exists"
+
+
+@pytest.mark.asyncio
+async def test_generate_batch_denies_when_daily_limit_reached() -> None:
+    """Batch generate stops issuing provider calls once the daily budget is exhausted."""
+    context = _context()
+    store = FakeIngestionAiParseStore(contexts={context.revision_id: context})
+    for _ in range(20):
+        store.runs[uuid4()] = _pending_run(
+            context=context,
+            owner_id=uuid4(),
+            run_id=uuid4(),
+            fields=(),
+        )
+    outcomes = await GenerateIngestionAiParse(
+        store,
+        FakeChatCompletions(payload=_payload()),
+        FakeAdminAuditStore(),
+        FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+        active_ai_runtime(),
+    ).generate_batch(
+        owner_id=uuid4(),
+        source_message_revision_ids=(context.revision_id,),
+        request_id=uuid4(),
+    )
+    assert outcomes[0].status is IngestionAiParseStatus.DENIED
+    assert outcomes[0].reason == "daily_limit"
+
+
+@pytest.mark.asyncio
+async def test_generate_batch_denies_unknown_revision() -> None:
+    """Batch generate denies revisions missing from the store."""
+    missing_revision_id = uuid4()
+    outcomes = await GenerateIngestionAiParse(
+        FakeIngestionAiParseStore(),
+        FakeChatCompletions(payload=_payload()),
+        FakeAdminAuditStore(),
+        FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+        active_ai_runtime(),
+    ).generate_batch(
+        owner_id=uuid4(),
+        source_message_revision_ids=(missing_revision_id,),
+        request_id=uuid4(),
+    )
+    assert outcomes[0].status is IngestionAiParseStatus.DENIED
+    assert outcomes[0].reason == "revision_not_found"
+
+
+@pytest.mark.asyncio
+async def test_generate_batch_fails_when_provider_returns_schema_error() -> None:
+    """Batch generate persists failed runs when the provider batch item fails."""
+    context = _context()
+    store = FakeIngestionAiParseStore(contexts={context.revision_id: context})
+    outcomes = await GenerateIngestionAiParse(
+        store,
+        FakeChatCompletions(error=ProviderOutcome.SCHEMA),
+        FakeAdminAuditStore(),
+        FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+        active_ai_runtime(),
+    ).generate_batch(
+        owner_id=uuid4(),
+        source_message_revision_ids=(context.revision_id,),
+        request_id=uuid4(),
+    )
+    assert outcomes[0].status is IngestionAiParseStatus.FAILED
+    assert outcomes[0].run is not None
+    assert outcomes[0].run.state is ReviewRunState.FAILED
+
+
+@pytest.mark.asyncio
+async def test_generate_batch_fails_incomplete_listing_proposal() -> None:
+    """Batch generate marks incomplete listing proposals as failed runs."""
+    context = _context()
+    store = FakeIngestionAiParseStore(contexts={context.revision_id: context})
+    incomplete = {
+        "verdict": IngestionAiParseVerdict.LISTING_PROPOSED.value,
+        "fields": [
+            {
+                "field_name": "location",
+                "proposed_value": "Mokotów",
+                "evidence_fragment": "Mokotów",
+                "confidence": "high",
+            },
+        ],
+        "warnings": [],
+    }
+    outcomes = await GenerateIngestionAiParse(
+        store,
+        FakeChatCompletions(payload=incomplete),
+        FakeAdminAuditStore(),
+        FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+        active_ai_runtime(),
+    ).generate_batch(
+        owner_id=uuid4(),
+        source_message_revision_ids=(context.revision_id,),
+        request_id=uuid4(),
+    )
+    assert outcomes[0].status is IngestionAiParseStatus.FAILED
+    assert outcomes[0].reason == "proposal_incomplete"
+    assert outcomes[0].run is not None
+    assert outcomes[0].run.state is ReviewRunState.FAILED
+
+
+@pytest.mark.asyncio
+async def test_generate_batch_denies_when_pending_run_exists() -> None:
+    """Batch generate refuses revisions that already have a pending run."""
+    context = _context()
+    owner_id = uuid4()
+    run_id = uuid4()
+    store = FakeIngestionAiParseStore(contexts={context.revision_id: context})
+    store.runs[run_id] = _pending_run(
+        context=context,
+        owner_id=owner_id,
+        run_id=run_id,
+        fields=parse_ingestion_ai_parse_payload(_payload())[1],
+    )
+    outcomes = await GenerateIngestionAiParse(
+        store,
+        FakeChatCompletions(payload=_payload()),
+        FakeAdminAuditStore(),
+        FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+        active_ai_runtime(),
+    ).generate_batch(
+        owner_id=owner_id,
+        source_message_revision_ids=(context.revision_id,),
+        request_id=uuid4(),
+    )
+    assert outcomes[0].status is IngestionAiParseStatus.DENIED
+    assert outcomes[0].reason == "in_flight"
+
+
+@pytest.mark.asyncio
+async def test_generate_batch_fails_when_provider_payload_is_invalid() -> None:
+    """Batch generate persists failed runs when Groq returns schema-invalid JSON."""
+    context = _context()
+    store = FakeIngestionAiParseStore(contexts={context.revision_id: context})
+    outcomes = await GenerateIngestionAiParse(
+        store,
+        FakeChatCompletions(payload={"verdict": "not-a-valid-verdict"}),
+        FakeAdminAuditStore(),
+        FakeClock(datetime(2026, 9, 1, 12, 0, tzinfo=UTC)),
+        active_ai_runtime(),
+    ).generate_batch(
+        owner_id=uuid4(),
+        source_message_revision_ids=(context.revision_id,),
+        request_id=uuid4(),
+    )
+    assert outcomes[0].status is IngestionAiParseStatus.FAILED
+    assert outcomes[0].run is not None
+    assert outcomes[0].run.state is ReviewRunState.FAILED
+
+
+@pytest.mark.asyncio
 async def test_generate_ingestion_ai_parse_denies_when_disabled() -> None:
     """Generate is fail-closed when AI curation is inactive."""
     context = _context()
