@@ -88,9 +88,7 @@ To keep administrator exceptions owner-only on a personal repository:
 GitHub enforces these controls under [ADR-023](../decisions/adr/ADR-023-enforce-main-branch-protection.md):
 
 - Require changes through pull requests.
-- Require at least one approving review.
-- Dismiss stale approvals when new commits are pushed.
-- Require approval of the most recent reviewable push by someone other than its author.
+- Require zero approving reviews while the owner is the sole maintainer; revisit this setting before granting another maintainer write access.
 - Require all review conversations to be resolved.
 - Require strict status checks against the latest `main`.
 - Block force pushes.
@@ -181,7 +179,7 @@ Policy:
 - Do not group major runtime/framework upgrades with routine updates.
 - Pin GitHub Actions to full commit SHAs; Dependabot updates those pins through reviewed pull requests.
 
-Dependabot provides the update schedule and creates pull requests natively on GitHub Free. A custom scheduled merge controller replaces the unavailable protected-branch/native-auto-merge gate.
+Dependabot provides the update schedule and creates pull requests natively on GitHub Free. The custom scheduled merge controller remains authoritative for Dependabot-specific eligibility even though repository-level native auto-merge is available; native auto-merge must not bypass its owner-label, update-classification, or bot-commit checks.
 
 Create `.github/workflows/dependabot-merge.yml` with:
 
@@ -216,7 +214,7 @@ gh pr merge <number> --squash --delete-branch --match-head-commit <verified-sha>
 
 The actual lint/test workflow remains unprivileged and runs on `pull_request`. The scheduled controller only reads its results and performs the final merge; it does not run dependency code with a write token.
 
-This controller adds Dependabot-specific checks beyond branch protection. GitHub cannot atomically lock label state together with the merge, so the immediate refetch plus expected-head guard still closes the remaining controller-specific race; branch protection separately enforces the pull-request, review, and required-check gates under ADR-023.
+This controller adds Dependabot-specific checks beyond branch protection. GitHub cannot atomically lock label state together with the merge, so the immediate refetch plus expected-head guard still closes the remaining controller-specific race; branch protection separately enforces the pull-request and required-check gates under ADR-023.
 
 ## Ownership and administrator-exception audit
 
@@ -238,4 +236,4 @@ The repository was established in this order:
 6. Add the scheduled label/check/commit-gated Dependabot merge controller.
 7. Build the main-only GHCR/SSH deployment workflow, prove E7-T4 rollback, and enable automatic deployment.
 
-The 2026-09-02 protection configuration is part of the current repository baseline. Native auto-merge remains out of scope, and the custom Dependabot controller must satisfy the same pull-request, approval, and required-check rules. The cancelled workflow candidate remains recorded as historical traceability in [E1-T5](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T5-configure-protected-main-governance.md); ADR-023 records the later unplanned owner-directed configuration.
+The 2026-09-02 protection and native auto-merge configuration is part of the current repository baseline. Auto-merge is opt-in per pull request and never bypasses the pull-request, conversation, strict-check, or linear-history gates. No approving review is required while the owner is the sole maintainer. The custom Dependabot controller remains authoritative for Dependabot-specific eligibility and must satisfy the protected-branch rules. The cancelled workflow candidate remains recorded as historical traceability in [E1-T5](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T5-configure-protected-main-governance.md); ADR-023 records the later unplanned owner-directed configuration.

@@ -35,7 +35,7 @@ This append-only log records blockers that could not be safely resolved autonomo
 
 ### R-012 / B-005: GitHub-enforced branch protection
 
-- Resolution: the public repository became eligible and `main` branch protection was enabled on 2026-09-02 under ADR-023 with pull requests, one approval, stale-review dismissal, approval after the latest push, resolved conversations, strict required CI, linear history, and force-push/deletion blocking.
+- Resolution: the public repository became eligible and `main` branch protection was enabled on 2026-09-02 under ADR-023 with pull requests, resolved conversations, strict required CI, linear history, and force-push/deletion blocking. Approving reviews are not required while the owner is the sole maintainer, and repository-level native auto-merge is enabled.
 - Effect: ordinary updates are platform-gated. The owner-only administrator bypass and merged-PR deployment verification remain audited defense-in-depth controls.
 
 ### R-011 / B-004: Recurring production geocoder revalidation
