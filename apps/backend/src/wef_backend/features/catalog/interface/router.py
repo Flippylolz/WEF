@@ -210,9 +210,11 @@ async def get_filter_facets(request: Request, response: Response) -> FilterFacet
 async def list_location_offers(
     location_id: UUID,
     request: Request,
+    response: Response,
     query: Annotated[LocationOfferQueryParams, Query()],
 ) -> LocationOfferPageResponse:
     """Return matching offers first and optional non-matching history."""
+    response.headers["Cache-Control"] = "public, max-age=30"
     try:
         page = await request.app.state.browse_location_offers(
             location_id=location_id,
@@ -241,9 +243,11 @@ async def list_location_offers(
 )
 async def list_viewport_listings(
     request: Request,
+    response: Response,
     query: Annotated[ViewportListingQueryParams, Query()],
 ) -> ViewportListingPageResponse:
     """Return newest-first filter-matching listings with parent locations."""
+    response.headers["Cache-Control"] = "public, max-age=30"
     try:
         page = await request.app.state.browse_viewport_listings(
             filters=query.to_filters(),
@@ -266,8 +270,13 @@ async def list_viewport_listings(
         },
     },
 )
-async def get_offer_detail(offer_id: UUID, request: Request) -> OfferDetailResponse:
+async def get_offer_detail(
+    offer_id: UUID,
+    request: Request,
+    response: Response,
+) -> OfferDetailResponse:
     """Return dated fields, masked text, media, confidence, and verified source action."""
+    response.headers["Cache-Control"] = "public, max-age=30"
     detail = await request.app.state.get_offer_detail(offer_id)
     if detail is None:
         raise ResourceNotFoundError

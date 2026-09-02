@@ -69,6 +69,7 @@ async def test_register_login_me_happy_path() -> None:
         )
         me = await client.get("/api/v1/auth/me")
 
+    assert me.headers["Cache-Control"] == "no-store, private"
     assert register.status_code == status.HTTP_201_CREATED
     payload = register.json()
     assert payload["username"] == "WarsawUser"

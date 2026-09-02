@@ -60,6 +60,7 @@ async def test_add_list_and_remove_favorite() -> None:
         empty = await client.get("/api/v1/favorites")
     assert added.status_code == status.HTTP_204_NO_CONTENT
     assert listed.status_code == status.HTTP_200_OK
+    assert listed.headers["Cache-Control"] == "no-store, private"
     assert listed.json()["items"][0]["location_id"] == str(location_id)
     assert removed.status_code == status.HTTP_204_NO_CONTENT
     assert empty.json()["items"] == []
