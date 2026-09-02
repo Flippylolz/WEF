@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E23-T1
 epic: E23
 title: "Add canonical location display-name normalization"
-status: ready
+status: done
 revision: 1
 priority: P1
 size: M
@@ -42,10 +42,11 @@ branch:
   created_at: "2026-09-02T20:32:00Z"
   pull_request: https://github.com/Flippylolz/WEF/pull/316
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Codex agent"
+  completed_at: "2026-09-02T19:10:00Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/316
+  evidence:
+    - "../PRODUCTION_EVIDENCE.md"
 invalidation:
   invalidated_by: null
   invalidated_at: null

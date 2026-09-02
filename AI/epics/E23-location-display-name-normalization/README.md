@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E23
 title: "Location display name normalization"
-status: ready
+status: done
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -65,9 +65,11 @@ without parsing raw source text.
 
 - [Spike revision 1](SPIKE.md) is owner-approved.
 - [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is owner-approved.
+- [Production evidence](PRODUCTION_EVIDENCE.md) recorded 2026-09-02 after deploy
+  `adcdb10`.
 - Tasks:
-  - [E23-T1 — Add canonical location display-name normalization](tasks/E23-T1-display-name-normalization.md) (`ready`, in progress)
-  - [E23-T2 — Backfill non-verified location display names](tasks/E23-T2-display-name-backfill.md) (`ready`, in progress)
+  - [E23-T1 — Add canonical location display-name normalization](tasks/E23-T1-display-name-normalization.md) (`done`, PR #316)
+  - [E23-T2 — Backfill non-verified location display names](tasks/E23-T2-display-name-backfill.md) (`done`, PR #317)
 
 ## Dependencies
 
