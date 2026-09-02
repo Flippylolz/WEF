@@ -177,16 +177,41 @@ describe("OfferDetailDrawer", () => {
     expect(
       await screen.findByText("development · primary"),
     ).toBeInTheDocument();
+    expect(screen.getByText("detailPublicationLabel")).toBeInTheDocument();
     expect(screen.getByText("Masked public text only.")).toBeInTheDocument();
     expect(
       screen.getByText("detailAvailabilityDisclaimer"),
     ).toBeInTheDocument();
+    expect(screen.getByText("detailFieldArea")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "detailOpenTelegram" }),
     ).toHaveAttribute("href", "https://t.me/elestate_warszawa/42");
     expect(
       screen.getByRole("link", { name: "detailOpenTelegram" }),
     ).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("falls back to raw parser field names and hides duplicate addresses", async () => {
+    vi.spyOn(catalogApi, "fetchOfferDetail").mockResolvedValue({
+      state: "ready",
+      data: {
+        ...detail,
+        field_confidence: [
+          { field: "area_sqm", confidence: "high" },
+          { field: "mystery_field", confidence: "low" },
+        ],
+        location: {
+          ...detail.location,
+          display_name: "Synthetic address, Warsaw",
+          display_address: "Synthetic address, Warsaw",
+        },
+      },
+    });
+    renderDrawer();
+
+    expect(await screen.findByText("detailFieldArea")).toBeInTheDocument();
+    expect(screen.getByText("mystery_field")).toBeInTheDocument();
+    expect(screen.getAllByText("Synthetic address, Warsaw")).toHaveLength(1);
   });
 
   it("shows the AI-assisted badge when data_origin is ai_assisted", async () => {
