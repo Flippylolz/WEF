@@ -10,7 +10,13 @@ from uuid import UUID, uuid4
 import pytest
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterator, Sequence
+
+    from wef_backend.features.catalog.infrastructure.models import LocationRow
+    from wef_backend.features.ingestion.infrastructure.models import (
+        SourceChannelRow,
+        SourceMessageRow,
+    )
 
 
 from wef_backend import backfill_location_display_name_command
@@ -36,7 +42,7 @@ class _ScalarResult:
     def __init__(self, values: Sequence[UUID]) -> None:
         self._values = list(values)
 
-    def __iter__(self) -> iter[UUID]:
+    def __iter__(self) -> Iterator[UUID]:
         return iter(self._values)
 
 
@@ -195,22 +201,23 @@ async def test_backfill_location_display_names_reports_empty_summary() -> None:
 
 def test_newest_primary_source_rows_keeps_latest_revision_per_location() -> None:
     """Multiple primary revisions for one location collapse to the newest source."""
-    location = _location_row(display_name="Wola | ул. Old Street")
+    location = cast("LocationRow", _location_row(display_name="Wola | ул. Old Street"))
+    channel = _source_channel()
     older = _LocationSourceBackfillRow(
-        location=cast("SimpleNamespace", location),
-        message=cast("SimpleNamespace", _source_message(text=_CYRILLIC_LOCATION_TEXT)),
-        channel=cast("SimpleNamespace", _source_channel()),
+        location=location,
+        message=cast("SourceMessageRow", _source_message(text=_CYRILLIC_LOCATION_TEXT)),
+        channel=cast("SourceChannelRow", channel),
         source_created_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
     newer = _LocationSourceBackfillRow(
-        location=cast("SimpleNamespace", location),
+        location=location,
         message=cast(
-            "SimpleNamespace",
+            "SourceMessageRow",
             _source_message(
                 text="Покупка | Квартира\n📍 Wola | ул. Newer Street\nЦена: 850 000 zł",  # noqa: RUF001
             ),
         ),
-        channel=cast("SimpleNamespace", _source_channel()),
+        channel=cast("SourceChannelRow", channel),
         source_created_at=datetime(2026, 2, 1, tzinfo=UTC),
     )
     selected = _newest_primary_source_rows([older, newer])
