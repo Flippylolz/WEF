@@ -71,10 +71,7 @@ export function MapFilterControls({
       }}
     >
       <div className="filter-heading">
-        <div>
-          <p className="eyebrow">{t("filtersEyebrow")}</p>
-          <h2 id="filter-panel-title">{t("filtersTitle")}</h2>
-        </div>
+        <h2 id="filter-panel-title">{t("filtersTitle")}</h2>
         <div className="filter-actions">
           <button className="button-secondary" type="button" onClick={onClear}>
             {t("clearFilters")}
