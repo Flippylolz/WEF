@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 from wef_backend.features.admin.application.ai_review import (
     ALLOWED_GROQ_MODEL,
@@ -32,11 +36,11 @@ class ScriptedBatchTransport:
         self,
         url: str,
         *,
-        headers: dict[str, str],
-        data: dict[str, str],
-        files: dict[str, tuple[str, bytes, str]],
+        headers: Mapping[str, str],
+        data: Mapping[str, str],
+        files: Mapping[str, tuple[str, bytes, str]],
         timeout_seconds: float,
-    ) -> tuple[int, object, dict[str, str]]:
+    ) -> tuple[int, object, Mapping[str, str]]:
         del headers, data, files, timeout_seconds
         self.calls.append(("POST", url))
         payload = self.responses.pop(0)
@@ -50,10 +54,10 @@ class ScriptedBatchTransport:
         self,
         url: str,
         *,
-        json_body: dict[str, object],
-        headers: dict[str, str],
+        json_body: Mapping[str, object],
+        headers: Mapping[str, str],
         timeout_seconds: float,
-    ) -> tuple[int, object, dict[str, str]]:
+    ) -> tuple[int, object, Mapping[str, str]]:
         del json_body, headers, timeout_seconds
         self.calls.append(("POST", url))
         payload = self.responses.pop(0)
@@ -67,9 +71,9 @@ class ScriptedBatchTransport:
         self,
         url: str,
         *,
-        headers: dict[str, str],
+        headers: Mapping[str, str],
         timeout_seconds: float,
-    ) -> tuple[int, object, dict[str, str]]:
+    ) -> tuple[int, object, Mapping[str, str]]:
         del headers, timeout_seconds
         self.calls.append(("GET", url))
         payload = self.responses.pop(0)
@@ -83,9 +87,9 @@ class ScriptedBatchTransport:
         self,
         url: str,
         *,
-        headers: dict[str, str],
+        headers: Mapping[str, str],
         timeout_seconds: float,
-    ) -> tuple[int, bytes, dict[str, str]]:
+    ) -> tuple[int, bytes, Mapping[str, str]]:
         del headers, timeout_seconds
         self.calls.append(("GET", url))
         payload = self.responses.pop(0)

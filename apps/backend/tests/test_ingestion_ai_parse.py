@@ -300,8 +300,9 @@ async def test_generate_batch_creates_pending_runs_for_many_revisions() -> None:
     )
     assert len(outcomes) == 2
     assert all(outcome.status is IngestionAiParseStatus.GENERATED for outcome in outcomes)
-    assert all(outcome.run is not None for outcome in outcomes)
-    assert all(outcome.run.state is ReviewRunState.PENDING for outcome in outcomes)
+    for outcome in outcomes:
+        assert outcome.run is not None
+        assert outcome.run.state is ReviewRunState.PENDING
 
 
 @pytest.mark.asyncio

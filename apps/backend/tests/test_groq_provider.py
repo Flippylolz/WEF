@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, cast
 
 import httpx
 import pytest
@@ -15,6 +15,7 @@ from wef_backend.features.admin.application.ai_review import (
     ProviderRequestError,
 )
 from wef_backend.features.admin.infrastructure.groq_common import (
+    GROQ_CHAT_COMPLETIONS_URL,
     groq_chat_completion_body,
     header_request_id,
     http_outcome,
@@ -22,7 +23,6 @@ from wef_backend.features.admin.infrastructure.groq_common import (
     usage_value,
 )
 from wef_backend.features.admin.infrastructure.groq_provider import (
-    GROQ_CHAT_COMPLETIONS_URL,
     GroqAiProvider,
     GroqChatCompletionsAdapter,
     HTTPXChatCompletionsTransport,
@@ -369,7 +369,9 @@ def test_groq_chat_completion_body_uses_strict_schema() -> None:
         max_output_tokens=1500,
     )
     assert body["reasoning_effort"] == "low"
-    assert body["response_format"]["json_schema"]["strict"] is True
+    response_format = cast(dict[str, object], body["response_format"])
+    json_schema = cast(dict[str, object], response_format["json_schema"])
+    assert json_schema["strict"] is True
 
 
 def test_http_outcome_maps_status_codes() -> None:
