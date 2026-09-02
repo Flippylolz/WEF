@@ -369,8 +369,8 @@ def test_groq_chat_completion_body_uses_strict_schema() -> None:
         max_output_tokens=1500,
     )
     assert body["reasoning_effort"] == "low"
-    response_format = cast(dict[str, object], body["response_format"])
-    json_schema = cast(dict[str, object], response_format["json_schema"])
+    response_format = cast("dict[str, object]", body["response_format"])
+    json_schema = cast("dict[str, object]", response_format["json_schema"])
     assert json_schema["strict"] is True
 
 
