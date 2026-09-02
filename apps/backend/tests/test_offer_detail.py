@@ -19,6 +19,7 @@ from wef_backend.features.catalog.application.offer_detail import (
 )
 from wef_backend.features.catalog.domain import ContentType, MarketType
 from wef_backend.features.catalog.infrastructure.offer_detail_adapter import (
+    SQLAlchemyOfferDetailAdapter,
     collapse_source_revisions,
 )
 
@@ -231,3 +232,71 @@ def test_collapse_source_revisions_keeps_latest_revision_per_message() -> None:
 def test_collapse_source_revisions_empty_history() -> None:
     """Pass through an empty history unchanged."""
     assert collapse_source_revisions([]) == []
+
+
+async def test_adapter_load_sources_collapses_revisions_per_message() -> None:
+    """The adapter wires the revision collapse into its source loading."""
+
+    class FakeRow:
+        relationship: str
+        extraction_json: dict[str, object]
+        id: UUID
+        external_message_id: int
+        published_at: datetime
+        edited_at: datetime | None
+        verified_link_base: str
+        username: str
+
+    def make_row(
+        message_id: UUID,
+        relationship: str,
+        edited_at: datetime | None,
+    ) -> FakeRow:
+        row = FakeRow()
+        row.relationship = relationship
+        row.extraction_json = {}
+        row.id = message_id
+        row.external_message_id = 7
+        row.published_at = datetime(2026, 9, 1, 12, 41, tzinfo=UTC)
+        row.edited_at = edited_at
+        row.verified_link_base = "https://t.me/elestate_warszawa"
+        row.username = "elestate_warszawa"
+        return row
+
+    class FakeResult:
+        def __init__(self, rows: list[FakeRow]) -> None:
+            self._rows = rows
+
+        def all(self) -> list[FakeRow]:
+            return self._rows
+
+    class FakeSession:
+        def __init__(self, rows: list[FakeRow]) -> None:
+            self._rows = rows
+
+        async def execute(self, statement: object) -> FakeResult:
+            del statement
+            return FakeResult(self._rows)
+
+    message_a = UUID("30000000-0000-4000-8000-000000000001")
+    message_b = UUID("30000000-0000-4000-8000-000000000002")
+    rows = [
+        # Newest-first, as produced by the adapter query.
+        make_row(message_a, "primary", datetime(2026, 9, 1, 14, 12, tzinfo=UTC)),
+        make_row(message_a, "primary", datetime(2026, 9, 1, 14, 12, tzinfo=UTC)),
+        make_row(message_a, "primary", None),
+        make_row(message_b, "repost", None),
+    ]
+
+    adapter = SQLAlchemyOfferDetailAdapter(session_factory=None)  # type: ignore[arg-type]
+    # Private access is intentional: this test pins the collapse wiring.
+    sources = await adapter._load_sources(  # noqa: SLF001
+        FakeSession(rows),  # type: ignore[arg-type]
+        message_a,
+    )
+
+    assert [entry["source_message_id"] for entry in sources] == [
+        message_a,
+        message_b,
+    ]
+    assert sources[0]["edited_at"] == datetime(2026, 9, 1, 14, 12, tzinfo=UTC)
