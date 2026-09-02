@@ -99,6 +99,71 @@ $COMPOSE exec -T api wef-backfill-parse-issues --limit 5000 --batch-size 500
 
 See also [PIPELINE.md](../ingestion/PIPELINE.md) (parse-issue ledger).
 
+---
+
+## Property type backfill (E22)
+
+### `wef-backfill-property-type`
+
+**Container:** `api` (database access only; no provider calls).
+
+**Purpose:** Re-extract `offers.property_type` from the newest **primary**
+`offer_sources` revision per offer using parser `e2-v8`. Dry-run by default;
+`--apply` persists changed values only.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--limit` | none (unbounded) | Max **offers** to process in this run (after dedupe) |
+| `--apply` | off | Persist changed `property_type` values |
+
+**Output (JSON):** aggregate counts only — no raw source text.
+
+| Field | Meaning |
+|-------|---------|
+| `total` | Distinct offers with a primary source revision processed |
+| `apartment` / `house` / `semi_detached` / `unknown` | Extracted classification buckets |
+| `conflicts` | Offers where property-type evidence conflicted → `unknown` |
+| `failures` | Offers where listing extraction failed |
+| `changed` | Offers whose stored value would differ (dry-run) or did differ (apply) |
+| `unchanged` | Offers already matching extracted value |
+| `parser_version` | Classifier version used for replay |
+
+**Idempotent:** safe to rerun; a second dry-run after `--apply` should report
+`changed: 0`.
+
+**Review guardrails before `--apply`:**
+
+- `total` should approximate `SELECT count(*) FROM offers` minus offers without
+  any primary source (typically a small gap).
+- Investigate non-zero `failures` — often non-listing primary sources or missing
+  replayable payload.
+- Investigate `conflicts` — conflicting multilingual category phrases; stored as
+  `unknown` by design.
+- Spot-check a few `changed` offers in admin or offer detail after apply.
+
+**Recommended workflow:**
+
+```bash
+# 1. Dry-run after deploy (migration 20260902_0019 must be at head)
+$COMPOSE exec -T api wef-backfill-property-type | tee /tmp/property-type-backfill-dry-run.json
+
+# 2. Optional bounded trial
+$COMPOSE exec -T api wef-backfill-property-type --limit 500
+
+# 3. Apply when counts look reasonable
+$COMPOSE exec -T api wef-backfill-property-type --apply | tee /tmp/property-type-backfill-apply.json
+
+# 4. Confirm idempotency
+$COMPOSE exec -T api wef-backfill-property-type
+# expect "changed": 0
+
+# 5. Smoke public API/UI
+curl -sS "$WEF_PUBLIC_HTTPS_BASE_URL/api/v1/filter-facets" | jq '.property_types'
+curl -sS "$WEF_PUBLIC_HTTPS_BASE_URL/api/v1/map/locations?bbox=20.9,52.1,21.2,52.4&property_type=apartment" | jq '.features | length'
+```
+
+See [E22 implementation plan](../epics/E22-property-type-filter/IMPLEMENTATION_PLAN.md).
+
 ### `wef-batch-ingestion-ai-parse`
 
 **Container:** **`api` only** (Groq).
@@ -244,6 +309,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) (Telegram worker operations).
 | `wef-import` | Historical dataset import |
 | `wef-importer-dry-run` | Dry-run parser audit |
 | `wef-replay-parser` | Parser replay over raw archive |
+| `wef-backfill-property-type` | E22 property-type dry-run/apply backfill |
 | `wef-migrate` | Alembic migrations |
 | `wef-seed-m1` | M1 synthetic seed |
 | `wef-bootstrap-owner` | One-time owner bootstrap |
@@ -258,3 +324,4 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) (Telegram worker operations).
 - [UNGEOCODED_BACKLOG_AND_AI_RECOVERY.md](../ingestion/UNGEOCODED_BACKLOG_AND_AI_RECOVERY.md) — place review + E21 recovery runbook
 - [DEPLOYMENT.md](DEPLOYMENT.md) — Groq enablement, compose topology, worker ops
 - [E21 epic](../epics/E21-ingestion-ai-fallback/README.md) — parse-issue AI fallback scope
+- [E22 epic](../epics/E22-property-type-filter/README.md) — property type classification and filter
