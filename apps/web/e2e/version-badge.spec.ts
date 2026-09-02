@@ -19,8 +19,10 @@ async function assertBadgeClearsAttribution(
 ) {
   const attribution = page.locator(".maplibregl-ctrl-attrib");
   const badge = page.locator(".version-badge");
-  await expect(attribution).toBeVisible();
-  await expect(badge).toBeVisible();
+  // Software WebGL on CI runners initializes MapLibre slowly; give the
+  // attribution control time to mount before judging visibility.
+  await expect(attribution).toBeVisible({ timeout: 30_000 });
+  await expect(badge).toBeVisible({ timeout: 30_000 });
   const attributionBox = await attribution.boundingBox();
   const badgeBox = await badge.boundingBox();
   expect(attributionBox).not.toBeNull();
