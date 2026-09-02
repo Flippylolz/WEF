@@ -243,9 +243,7 @@ async def run_batch(options: BatchIngestionAiParseOptions) -> BatchIngestionAiPa
         if not candidates:
             return summary
         admin = build_services(runtime_settings).admin
-        revision_ids = tuple(
-            candidate.source_message_revision_id for candidate in candidates
-        )
+        revision_ids = tuple(candidate.source_message_revision_id for candidate in candidates)
         outcomes = await admin.generate_ingestion_ai_parse.generate_batch(
             owner_id=owner,
             source_message_revision_ids=revision_ids,

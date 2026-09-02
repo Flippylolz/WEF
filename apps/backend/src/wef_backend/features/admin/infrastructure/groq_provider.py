@@ -169,7 +169,6 @@ class GroqChatCompletionsAdapter:
             )
         return status, payload, response_headers
 
-
     async def complete_many(
         self,
         requests: tuple[BatchCompletionRequest, ...],

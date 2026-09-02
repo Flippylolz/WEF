@@ -1008,8 +1008,7 @@ class ProcessOfferEnrichmentItem:
                 fields = parse_offer_enrichment_payload(
                     result.completion.payload,
                     allowed_revision_ids={
-                        str(revision.revision_id)
-                        for revision, _masked in entry.masked_sources
+                        str(revision.revision_id) for revision, _masked in entry.masked_sources
                     },
                     missing=set(entry.missing),
                 )
