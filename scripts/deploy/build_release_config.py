@@ -119,11 +119,36 @@ def _optional_groq_curation(values: dict[str, str]) -> None:
     if not re.fullmatch(r"(?:[1-9]|[1-9][0-9]|1[01][0-9]|120)", timeout):
         msg = "Groq timeout must be an integer from 1 to 120"
         raise ValueError(msg)
+    use_batch_api = os.environ.get("WEF_GROQ_USE_BATCH_API", "true").strip().lower()
+    if use_batch_api not in {"true", "false"}:
+        msg = "Groq batch API flag must be true or false"
+        raise ValueError(msg)
+    chunk_size = os.environ.get("WEF_GROQ_BATCH_CHUNK_SIZE", "20").strip()
+    if not chunk_size.isdigit() or not 1 <= int(chunk_size) <= 100:
+        msg = "Groq batch chunk size must be an integer from 1 to 100"
+        raise ValueError(msg)
+    poll_interval = os.environ.get("WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS", "2").strip()
+    try:
+        poll_seconds = float(poll_interval)
+    except ValueError as error:
+        msg = "Groq batch poll interval must be a number"
+        raise ValueError(msg) from error
+    if not 0.5 <= poll_seconds <= 60:
+        msg = "Groq batch poll interval must be from 0.5 to 60 seconds"
+        raise ValueError(msg)
+    max_wait = os.environ.get("WEF_GROQ_BATCH_MAX_WAIT_SECONDS", "3600").strip()
+    if not max_wait.isdigit() or not 30 <= int(max_wait) <= 86400:
+        msg = "Groq batch max wait must be an integer from 30 to 86400"
+        raise ValueError(msg)
     values["WEF_GROQ_API_KEY"] = groq_api_key
     values["WEF_GROQ_MODEL"] = model
     values["WEF_AI_CURATION_ENABLED"] = enabled
     values["WEF_GROQ_ZDR_VERIFIED"] = zdr
     values["WEF_GROQ_TIMEOUT_SECONDS"] = timeout
+    values["WEF_GROQ_USE_BATCH_API"] = use_batch_api
+    values["WEF_GROQ_BATCH_CHUNK_SIZE"] = chunk_size
+    values["WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS"] = poll_interval
+    values["WEF_GROQ_BATCH_MAX_WAIT_SECONDS"] = max_wait
 
 
 def build_values(
