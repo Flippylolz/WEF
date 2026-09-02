@@ -61,7 +61,8 @@ def main() -> None:
     args = parser.parse_args()
     try:
         payload = asyncio.run(run(seed_archive=args.seed_archive))
-    except Exception:  # noqa: BLE001
-        sys.stderr.write("Raw archive parser replay failed\n")
+    except Exception as error:  # noqa: BLE001
+        # Redacted: class name only, no message or traceback content.
+        sys.stderr.write(f"Raw archive parser replay failed: {type(error).__name__}\n")
         raise SystemExit(2) from None
     sys.stdout.write(json.dumps(payload, sort_keys=True) + "\n")
