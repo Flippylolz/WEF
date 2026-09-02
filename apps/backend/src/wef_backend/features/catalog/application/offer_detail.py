@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from decimal import Decimal
     from uuid import UUID
 
-    from wef_backend.features.catalog.domain import ContentType, MarketType
+    from wef_backend.features.catalog.domain import ContentType, MarketType, PropertyType
 
 _HIGH_CONFIDENCE_SCORE = 0.90
 _MEDIUM_CONFIDENCE_SCORE = 0.75
@@ -105,6 +105,7 @@ class OfferDetailRecord:
     id: UUID
     content_type: ContentType
     market_type: MarketType
+    property_type: PropertyType
     published_at: datetime
     currency: str | None
     price_min_minor: int | None
@@ -140,6 +141,7 @@ class OfferDetailDTO:
     id: UUID
     content_type: ContentType
     market_type: MarketType
+    property_type: PropertyType
     display_name: str
     data_confidence: OfferDataConfidence
     published_at: datetime
@@ -210,6 +212,7 @@ class GetOfferDetail:
             id=record.id,
             content_type=record.content_type,
             market_type=record.market_type,
+            property_type=record.property_type,
             display_name=offer_display_name(record.content_type, record.market_type),
             data_confidence=(
                 OfferDataConfidence.COMPLETE if complete else OfferDataConfidence.PARTIAL

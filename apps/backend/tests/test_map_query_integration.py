@@ -25,7 +25,11 @@ from wef_backend.features.catalog.application import (
     SeedM1Catalog,
 )
 from wef_backend.features.catalog.application.m1_fixture import m1_fixture
-from wef_backend.features.catalog.domain import LocationReviewStatus, MarketType
+from wef_backend.features.catalog.domain import (
+    FilterablePropertyType,
+    LocationReviewStatus,
+    MarketType,
+)
 from wef_backend.features.catalog.infrastructure import (
     LocationRow,
     OfferRow,
@@ -49,7 +53,7 @@ pytestmark = pytest.mark.skipif(
 WARSAW = BoundingBox.parse("20.7,52.0,21.4,52.4")
 
 
-async def test_grouped_map_query_semantics_and_performance() -> None:
+async def test_grouped_map_query_semantics_and_performance() -> None:  # noqa: PLR0915
     """Prove inclusive filters, grouping gates, coordinates, and local budget."""
     assert TEST_DATABASE_URL is not None
     settings = Settings(
@@ -92,6 +96,9 @@ async def test_grouped_map_query_semantics_and_performance() -> None:
                 published_from=datetime(2026, 8, 2, tzinfo=UTC),
             ),
         )
+        apartments = await service(
+            MapFilters(bbox=WARSAW, property_types=(FilterablePropertyType.APARTMENT,)),
+        )
 
         assert len(all_results.records) == 4
         center = next(
@@ -120,6 +127,21 @@ async def test_grouped_map_query_semantics_and_performance() -> None:
         }
         assert [item.district for item in combined_groups.records] == ["srodmiescie"]
         assert {item.district for item in dated.records} == {"praga-polnoc"}
+        assert {item.id for item in apartments.records} == {
+            UUID("10000000-0000-4000-8000-000000000001"),
+            UUID("10000000-0000-4000-8000-000000000003"),
+        }
+
+        facets = await QueryFacets(
+            SQLAlchemyCatalogBrowseAdapter(database.session_factory),
+        )()
+        classified_facets = {
+            FilterablePropertyType.APARTMENT,
+            FilterablePropertyType.HOUSE,
+            FilterablePropertyType.SEMI_DETACHED,
+        }
+        assert FilterablePropertyType.APARTMENT in facets.property_types
+        assert all(item in classified_facets for item in facets.property_types)
 
         await _hide_out_of_scope_and_unreviewed_rows(database.session_factory)
         gated = await service(MapFilters(bbox=WARSAW))

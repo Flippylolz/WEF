@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from datetime import datetime
     from uuid import UUID
 
-    from wef_backend.features.catalog.domain import ContentType, MarketType
+    from wef_backend.features.catalog.domain import ContentType, FilterablePropertyType, MarketType
 
 _BBOX_COORDINATE_COUNT = 4
 _MIN_QUERY_LONGITUDE = 20.5
@@ -105,6 +105,7 @@ class MapFilters:
     districts: tuple[str, ...] = ()
     market_types: tuple[MarketType, ...] = ()
     content_types: tuple[ContentType, ...] = ()
+    property_types: tuple[FilterablePropertyType, ...] = ()
     published_from: datetime | None = None
     published_to: datetime | None = None
     quick_filter: str | None = None
@@ -148,6 +149,7 @@ class MapFilters:
             "content_types": sorted(item.value for item in self.content_types),
             "districts": sorted(set(self.districts)),
             "market_types": sorted(item.value for item in self.market_types),
+            "property_types": sorted(item.value for item in self.property_types),
             "price_max": self.price_max,
             "price_min": self.price_min,
             "published_from": (self.published_from.isoformat() if self.published_from else None),

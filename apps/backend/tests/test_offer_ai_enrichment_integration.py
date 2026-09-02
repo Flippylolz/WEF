@@ -148,6 +148,7 @@ async def _seed_offer(database: DatabaseResources, source_text: str) -> tuple[UU
                 location_id=location_id,
                 content_type="unit",
                 market_type="unknown",
+                property_type="unknown",
                 visibility="visible",
                 published_at=_NOW,
                 latest_source_at=_NOW,

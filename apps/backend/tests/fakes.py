@@ -232,6 +232,7 @@ def empty_facet_snapshot() -> FacetSnapshot:
         rooms=(),
         market_types=(),
         content_types=(),
+        property_types=(),
         price_min_minor=None,
         price_max_minor=None,
         area_min_sqm=None,

@@ -58,6 +58,7 @@ def apply_quick_filter(
         districts=filters.districts,
         market_types=filters.market_types,
         content_types=filters.content_types,
+        property_types=filters.property_types,
         published_from=published_from,
         published_to=filters.published_to,
         quick_filter=preset_id,

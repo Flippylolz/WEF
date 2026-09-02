@@ -437,6 +437,7 @@ def _listing(
             provenance=_provenance(0, min(9, len(text))),
         ),
         market_type=None,
+        property_type=None,
         location=location_value,
         district=None,
         development_name=None,

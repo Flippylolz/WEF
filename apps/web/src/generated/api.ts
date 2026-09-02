@@ -626,6 +626,12 @@ export interface components {
             field: string;
         };
         /**
+         * FilterablePropertyType
+         * @description Public filter input subset excluding unknown records.
+         * @enum {string}
+         */
+        FilterablePropertyType: "apartment" | "house" | "semi_detached";
+        /**
          * FilterFacetsResponse
          * @description Canonical visible options and dataset bounds.
          */
@@ -644,6 +650,8 @@ export interface components {
             price_max_minor: number | null;
             /** Price Min Minor */
             price_min_minor: number | null;
+            /** Property Types */
+            property_types: components["schemas"]["FilterablePropertyType"][];
             /** Published From */
             published_from: string | null;
             /** Published To */
@@ -911,6 +919,7 @@ export interface components {
             price_max_minor?: number | null;
             /** Price Min Minor */
             price_min_minor?: number | null;
+            property_type: components["schemas"]["PropertyType"];
             /** Public Source Text */
             public_source_text: string;
             /**
@@ -1013,6 +1022,7 @@ export interface components {
             price_max_minor?: number | null;
             /** Price Min Minor */
             price_min_minor?: number | null;
+            property_type: components["schemas"]["PropertyType"];
             /**
              * Published At
              * Format: date-time
@@ -1078,6 +1088,12 @@ export interface components {
             /** Type */
             type: string;
         };
+        /**
+         * PropertyType
+         * @description Physical property kind for one offer.
+         * @enum {string}
+         */
+        PropertyType: "apartment" | "house" | "semi_detached" | "unknown";
         /**
          * QuickFilterListResponse
          * @description Supported quick filter presets in stable order.
@@ -1237,6 +1253,7 @@ export interface components {
             price_max_minor?: number | null;
             /** Price Min Minor */
             price_min_minor?: number | null;
+            property_type: components["schemas"]["PropertyType"];
             /**
              * Published At
              * Format: date-time
@@ -1811,6 +1828,7 @@ export interface operations {
                 market_type?: components["schemas"]["MarketType"][];
                 price_max?: number | null;
                 price_min?: number | null;
+                property_type?: components["schemas"]["FilterablePropertyType"][];
                 published_from?: string | null;
                 published_to?: string | null;
                 quick_filter?: string | null;
@@ -1856,6 +1874,7 @@ export interface operations {
                 market_type?: components["schemas"]["MarketType"][];
                 price_max?: number | null;
                 price_min?: number | null;
+                property_type?: components["schemas"]["FilterablePropertyType"][];
                 published_from?: string | null;
                 published_to?: string | null;
                 quick_filter?: string | null;
@@ -1909,6 +1928,7 @@ export interface operations {
                 market_type?: components["schemas"]["MarketType"][];
                 price_max?: number | null;
                 price_min?: number | null;
+                property_type?: components["schemas"]["FilterablePropertyType"][];
                 published_from?: string | null;
                 published_to?: string | null;
                 quick_filter?: string | null;

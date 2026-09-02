@@ -387,6 +387,13 @@
             ],
             "title": "Price Min Minor"
           },
+          "property_types": {
+            "items": {
+              "$ref": "#/components/schemas/FilterablePropertyType"
+            },
+            "title": "Property Types",
+            "type": "array"
+          },
           "published_from": {
             "anyOf": [
               {
@@ -424,6 +431,7 @@
           "rooms",
           "market_types",
           "content_types",
+          "property_types",
           "price_min_minor",
           "price_max_minor",
           "area_min_sqm",
@@ -433,6 +441,16 @@
         ],
         "title": "FilterFacetsResponse",
         "type": "object"
+      },
+      "FilterablePropertyType": {
+        "description": "Public filter input subset excluding unknown records.",
+        "enum": [
+          "apartment",
+          "house",
+          "semi_detached"
+        ],
+        "title": "FilterablePropertyType",
+        "type": "string"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1071,6 +1089,9 @@
             ],
             "title": "Price Min Minor"
           },
+          "property_type": {
+            "$ref": "#/components/schemas/PropertyType"
+          },
           "public_source_text": {
             "title": "Public Source Text",
             "type": "string"
@@ -1168,6 +1189,7 @@
           "id",
           "content_type",
           "market_type",
+          "property_type",
           "display_name",
           "data_confidence",
           "published_at",
@@ -1428,6 +1450,9 @@
             ],
             "title": "Price Min Minor"
           },
+          "property_type": {
+            "$ref": "#/components/schemas/PropertyType"
+          },
           "published_at": {
             "format": "date-time",
             "title": "Published At",
@@ -1491,6 +1516,7 @@
           "id",
           "content_type",
           "market_type",
+          "property_type",
           "display_name",
           "data_confidence",
           "published_at",
@@ -1585,6 +1611,17 @@
         ],
         "title": "ProblemResponse",
         "type": "object"
+      },
+      "PropertyType": {
+        "description": "Physical property kind for one offer.",
+        "enum": [
+          "apartment",
+          "house",
+          "semi_detached",
+          "unknown"
+        ],
+        "title": "PropertyType",
+        "type": "string"
       },
       "QuickFilterListResponse": {
         "additionalProperties": false,
@@ -1969,6 +2006,9 @@
             ],
             "title": "Price Min Minor"
           },
+          "property_type": {
+            "$ref": "#/components/schemas/PropertyType"
+          },
           "published_at": {
             "format": "date-time",
             "title": "Published At",
@@ -2032,6 +2072,7 @@
           "id",
           "content_type",
           "market_type",
+          "property_type",
           "display_name",
           "data_confidence",
           "published_at",
@@ -2730,6 +2771,19 @@
           },
           {
             "in": "query",
+            "name": "property_type",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/FilterablePropertyType"
+              },
+              "maxItems": 5,
+              "title": "Property Type",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
             "name": "published_from",
             "required": false,
             "schema": {
@@ -2997,6 +3051,19 @@
               },
               "maxItems": 5,
               "title": "Content Type",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "property_type",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/FilterablePropertyType"
+              },
+              "maxItems": 5,
+              "title": "Property Type",
               "type": "array"
             }
           },
@@ -3279,6 +3346,19 @@
               },
               "maxItems": 5,
               "title": "Content Type",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "property_type",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/FilterablePropertyType"
+              },
+              "maxItems": 5,
+              "title": "Property Type",
               "type": "array"
             }
           },

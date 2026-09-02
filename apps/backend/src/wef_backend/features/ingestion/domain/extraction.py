@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from decimal import Decimal
 
-    from wef_backend.features.catalog.domain import ContentType, MarketType
+    from wef_backend.features.catalog.domain import ContentType, MarketType, PropertyType
 
 _CURRENCY_CODE_LENGTH = 3
 
@@ -249,6 +249,7 @@ class ListingCandidate:
     parser_version: str
     content_type: ExtractedValue[ContentType] | None
     market_type: ExtractedValue[MarketType] | None
+    property_type: ExtractedValue[PropertyType] | None
     location: ExtractedValue[str] | None
     district: ExtractedValue[str] | None
     development_name: ExtractedValue[str] | None

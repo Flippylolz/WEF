@@ -2,6 +2,8 @@ import type { components, operations } from "@/generated/api";
 
 export type ContentType = components["schemas"]["ContentType"];
 export type MarketType = components["schemas"]["MarketType"];
+export type PropertyType = components["schemas"]["PropertyType"];
+export type FilterablePropertyType = components["schemas"]["FilterablePropertyType"];
 export type MapLocationQuery =
   operations["queryMapLocations"]["parameters"]["query"];
 
@@ -24,6 +26,7 @@ export type MapSearchState = {
   districts: string[];
   marketTypes: MarketType[];
   contentTypes: ContentType[];
+  propertyTypes: FilterablePropertyType[];
   publishedFrom: string | null;
   publishedTo: string | null;
   quickFilter: string | null;
@@ -39,6 +42,7 @@ export const DEFAULT_MAP_SEARCH_STATE: MapSearchState = {
   districts: [],
   marketTypes: [],
   contentTypes: DEFAULT_CONTENT_TYPES,
+  propertyTypes: [],
   publishedFrom: null,
   publishedTo: null,
   quickFilter: null,
@@ -46,6 +50,11 @@ export const DEFAULT_MAP_SEARCH_STATE: MapSearchState = {
 
 const MARKET_TYPES = new Set<MarketType>(["primary", "secondary", "unknown"]);
 const CONTENT_TYPES = new Set<ContentType>(["development", "unit"]);
+const PROPERTY_TYPES = new Set<FilterablePropertyType>([
+  "apartment",
+  "house",
+  "semi_detached",
+]);
 
 export function parseMapSearchParams(
   searchParams: Pick<URLSearchParams, "get" | "getAll">,
@@ -87,6 +96,13 @@ export function parseMapSearchParams(
       parsedContentTypes.length === 0
         ? [...DEFAULT_CONTENT_TYPES]
         : parsedContentTypes,
+    propertyTypes: uniqueSorted(
+      searchParams
+        .getAll("property_type")
+        .filter((value): value is FilterablePropertyType =>
+          PROPERTY_TYPES.has(value as FilterablePropertyType),
+        ),
+    ),
     publishedFrom: parseTimestamp(searchParams.get("published_from"), false),
     publishedTo: parseTimestamp(searchParams.get("published_to"), true),
     quickFilter: parseQuickFilter(searchParams.get("quick_filter")),
@@ -109,6 +125,7 @@ export function serializeMapSearchState(state: MapSearchState) {
   appendRepeated(params, "rooms", state.rooms);
   appendRepeated(params, "district", state.districts);
   appendRepeated(params, "market_type", state.marketTypes);
+  appendRepeated(params, "property_type", state.propertyTypes);
   if (!hasBothContentTypes(state.contentTypes)) {
     appendRepeated(params, "content_type", state.contentTypes);
   }
@@ -131,6 +148,9 @@ export function toMapLocationQuery(state: MapSearchState): MapLocationQuery {
     ...(state.marketTypes.length === 0
       ? {}
       : { market_type: state.marketTypes }),
+    ...(state.propertyTypes.length === 0
+      ? {}
+      : { property_type: state.propertyTypes }),
     ...(hasBothContentTypes(state.contentTypes)
       ? {}
       : { content_type: state.contentTypes }),

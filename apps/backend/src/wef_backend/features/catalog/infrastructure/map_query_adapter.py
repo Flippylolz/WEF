@@ -178,6 +178,10 @@ class SQLAlchemyMapQueryAdapter(MapQueryPort):
             conditions.append(
                 OfferRow.content_type.in_(tuple(item.value for item in filters.content_types)),
             )
+        if filters.property_types:
+            conditions.append(
+                OfferRow.property_type.in_(tuple(item.value for item in filters.property_types)),
+            )
         return tuple(conditions)
 
     @staticmethod

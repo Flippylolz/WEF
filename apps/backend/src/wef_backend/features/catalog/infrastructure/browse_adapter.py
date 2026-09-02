@@ -25,9 +25,11 @@ from wef_backend.features.catalog.application import (
 )
 from wef_backend.features.catalog.domain import (
     ContentType,
+    FilterablePropertyType,
     LocationReviewStatus,
     MarketType,
     OfferVisibility,
+    PropertyType,
 )
 from wef_backend.features.catalog.infrastructure.active_ai_origin import active_ai_origin_exists
 from wef_backend.features.catalog.infrastructure.map_query_adapter import (
@@ -35,6 +37,19 @@ from wef_backend.features.catalog.infrastructure.map_query_adapter import (
 )
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
 from wef_backend.features.ingestion.domain.geocoding import canonical_warsaw_district
+
+
+def _ordered_property_type_facets(
+    values: Sequence[object],
+) -> tuple[FilterablePropertyType, ...]:
+    """Return classified property facets in stable product order."""
+    present = {PropertyType(str(value)) for value in values if value is not None}
+    order = (
+        PropertyType.APARTMENT,
+        PropertyType.HOUSE,
+        PropertyType.SEMI_DETACHED,
+    )
+    return tuple(FilterablePropertyType(item.value) for item in order if item in present)
 
 
 def _canonical_district_facets(values: Sequence[object]) -> tuple[str, ...]:
@@ -107,6 +122,12 @@ class SQLAlchemyCatalogBrowseAdapter(
             .distinct()
             .order_by(OfferRow.content_type)
         )
+        property_statement = (
+            select(OfferRow.property_type)
+            .join(LocationRow, LocationRow.id == OfferRow.location_id)
+            .where(*base, OfferRow.property_type != PropertyType.UNKNOWN.value)
+            .distinct()
+        )
         async with self._session_factory() as session:
             bounds = (await session.execute(bounds_statement)).one()
             districts = _canonical_district_facets(
@@ -118,6 +139,9 @@ class SQLAlchemyCatalogBrowseAdapter(
             contents = tuple(
                 ContentType(value) for value in (await session.scalars(content_statement)).all()
             )
+            property_types = _ordered_property_type_facets(
+                (await session.scalars(property_statement)).all(),
+            )
         room_min, room_max = bounds[4], bounds[5]
         rooms = tuple(
             range(room_min, room_max + 1) if room_min is not None and room_max is not None else ()
@@ -127,6 +151,7 @@ class SQLAlchemyCatalogBrowseAdapter(
             rooms=rooms,
             market_types=markets,
             content_types=contents,
+            property_types=property_types,
             price_min_minor=bounds[0],
             price_max_minor=bounds[1],
             area_min_sqm=bounds[2],
@@ -164,6 +189,7 @@ class SQLAlchemyCatalogBrowseAdapter(
                 OfferRow.id,
                 OfferRow.content_type,
                 OfferRow.market_type,
+                OfferRow.property_type,
                 OfferRow.published_at,
                 OfferRow.currency,
                 OfferRow.price_min_minor,
@@ -217,6 +243,7 @@ class SQLAlchemyCatalogBrowseAdapter(
                     id=row.id,
                     content_type=ContentType(row.content_type),
                     market_type=MarketType(row.market_type),
+                    property_type=PropertyType(row.property_type),
                     published_at=row.published_at,
                     currency=row.currency,
                     price_min_minor=row.price_min_minor,
@@ -259,6 +286,7 @@ class SQLAlchemyCatalogBrowseAdapter(
                 OfferRow.id,
                 OfferRow.content_type,
                 OfferRow.market_type,
+                OfferRow.property_type,
                 OfferRow.published_at,
                 OfferRow.currency,
                 OfferRow.price_min_minor,
@@ -307,6 +335,7 @@ class SQLAlchemyCatalogBrowseAdapter(
                     id=row.id,
                     content_type=ContentType(row.content_type),
                     market_type=MarketType(row.market_type),
+                    property_type=PropertyType(row.property_type),
                     published_at=row.published_at,
                     currency=row.currency,
                     price_min_minor=row.price_min_minor,

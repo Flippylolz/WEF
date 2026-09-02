@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING
 
-from wef_backend.features.catalog.domain import ContentType, MarketType
+from wef_backend.features.catalog.domain import ContentType, MarketType, PropertyType
 from wef_backend.features.ingestion.domain import (
     CandidateDecision,
     CandidateReason,
@@ -38,7 +38,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v7"
+PARSER_VERSION = "e2-v8"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
@@ -172,6 +172,25 @@ _MARKET_PATTERN = re.compile(
     rf"(?:rynek|market|рынок|ринок){_VALUE_SUFFIX}",
     _FLAGS,
 )
+_PROPERTY_TYPE_LABEL_PATTERN = re.compile(
+    rf"(?:typ nieruchomo[śs]ci|property type|rodzaj nieruchomo[śs]ci|"
+    rf"тип недвижимости|тип нерухомості){_VALUE_SUFFIX}",
+    _FLAGS,
+)
+_SEMI_DETACHED_PATTERN = re.compile(
+    r"\b(?:bli[źz]niak\w*|semi[\s-]?detached|twin\s+house|близнец\w*)\b",
+    _FLAGS,
+)
+_APARTMENT_PATTERN = re.compile(
+    r"\b(?:mieszkan\w*|apartament\w*|квартир\w*|апартамент\w*|"
+    r"studio\s+apartment|studio\s+flat)\b",
+    _FLAGS,
+)
+_HOUSE_PATTERN = re.compile(
+    r"\b(?:dom\s+(?:jednorodzinny|wolnostoj\w*)|jednorodzinny|detached\s+house|"
+    r"standalone\s+house|частн\w+\s+дом|dom\s+particulier|will[ae]|villa|будинок)\b",
+    _FLAGS,
+)
 _LOCATION_PATTERN = re.compile(
     rf"(?:lokalizacja|location|adres|локализаци[яи]|адрес){_VALUE_SUFFIX}",
     _FLAGS,
@@ -262,6 +281,7 @@ def extract_listing(
     warnings: list[ExtractionWarning] = []
     content_type = _content_value(decision, warnings)
     market_type = _market_type(message.text, PARSER_VERSION, warnings)
+    property_type = _property_type(message.text, PARSER_VERSION, warnings)
     location = _location_field(message.text, PARSER_VERSION, warnings)
     district = _district_field(message.text, PARSER_VERSION, warnings)
     development_name = _string_field(
@@ -319,6 +339,7 @@ def extract_listing(
         parser_version=PARSER_VERSION,
         content_type=content_type,
         market_type=market_type,
+        property_type=property_type,
         location=location,
         district=district,
         development_name=development_name,
@@ -407,6 +428,98 @@ def _market_type(
         warnings,
         _parse_market_type,
     )
+
+
+def _property_type(
+    text: str,
+    parser_version: str,
+    warnings: list[ExtractionWarning],
+) -> ExtractedValue[PropertyType] | None:
+    """Classify property kind from explicit multilingual source phrases."""
+    labeled = _property_type_labeled_field(text, parser_version, warnings)
+    if labeled is not None:
+        return labeled
+
+    categories: dict[PropertyType, SourceSpan] = {}
+    for pattern, ptype in (
+        (_SEMI_DETACHED_PATTERN, PropertyType.SEMI_DETACHED),
+        (_APARTMENT_PATTERN, PropertyType.APARTMENT),
+        (_HOUSE_PATTERN, PropertyType.HOUSE),
+    ):
+        match = pattern.search(text)
+        if match is not None and ptype not in categories:
+            categories[ptype] = SourceSpan(*match.span())
+
+    if len(categories) > 1:
+        warnings.append(
+            ExtractionWarning(
+                code=ExtractionWarningCode.CONFLICTING_VALUES,
+                field_name="property_type",
+                spans=tuple(categories.values()),
+            ),
+        )
+        return None
+    if not categories:
+        return None
+    selected = next(iter(categories))
+    span = categories[selected]
+    return ExtractedValue(
+        value=selected,
+        provenance=_provenance(
+            "extract.property_type",
+            parser_version,
+            Confidence.HIGH,
+            span,
+        ),
+    )
+
+
+def _property_type_labeled_field(
+    text: str,
+    parser_version: str,
+    warnings: list[ExtractionWarning],
+) -> ExtractedValue[PropertyType] | None:
+    """Read one labeled property-type line when present."""
+    parsed: list[tuple[PropertyType, SourceSpan]] = []
+    for match in _PROPERTY_TYPE_LABEL_PATTERN.finditer(text):
+        mapped = _parse_property_type_label(_trimmed_value(text, match))
+        if mapped is not None:
+            parsed.append((mapped, _trimmed_span(text, match)))
+    if not parsed:
+        return None
+    if len({value for value, _ in parsed}) > 1:
+        warnings.append(
+            ExtractionWarning(
+                code=ExtractionWarningCode.CONFLICTING_VALUES,
+                field_name="property_type",
+                spans=tuple(span for _, span in parsed),
+            ),
+        )
+        return None
+    value, span = parsed[0]
+    return ExtractedValue(
+        value=value,
+        provenance=_provenance(
+            "extract.property_type",
+            parser_version,
+            Confidence.HIGH,
+            span,
+        ),
+    )
+
+
+def _parse_property_type_label(value: str) -> PropertyType | None:
+    folded = value.casefold()
+    if any(token in folded for token in ("bli", "semi", "twin", "близ")):
+        return PropertyType.SEMI_DETACHED
+    if any(
+        token in folded
+        for token in ("mieszkan", "apart", "flat", "studio", "кварт", "апарт")
+    ):
+        return PropertyType.APARTMENT
+    if any(token in folded for token in ("dom", "house", "villa", "willa", "дом", "будин")):
+        return PropertyType.HOUSE
+    return None
 
 
 def _location_field(

@@ -17,7 +17,7 @@ from wef_backend.features.catalog.application.offer_detail import (
     DevelopmentSummaryDTO,
     LocationSummaryDTO,
 )
-from wef_backend.features.catalog.domain import ContentType, MarketType
+from wef_backend.features.catalog.domain import ContentType, MarketType, PropertyType
 from wef_backend.features.catalog.infrastructure.offer_detail_adapter import (
     SQLAlchemyOfferDetailAdapter,
     collapse_source_revisions,
@@ -83,6 +83,7 @@ async def test_get_offer_detail_decorates_summary_fields() -> None:
                 id=UUID("20000000-0000-4000-8000-000000000002"),
                 content_type=ContentType.UNIT,
                 market_type=MarketType.SECONDARY,
+                property_type=PropertyType.APARTMENT,
                 published_at=datetime(2026, 7, 18, 9, 30, tzinfo=UTC),
                 currency="PLN",
                 price_min_minor=105_000_000,
@@ -156,6 +157,7 @@ async def test_get_offer_detail_marks_active_ai_origin() -> None:
                 id=UUID("20000000-0000-4000-8000-000000000002"),
                 content_type=ContentType.UNIT,
                 market_type=MarketType.SECONDARY,
+                property_type=PropertyType.APARTMENT,
                 published_at=datetime(2026, 7, 18, 9, 30, tzinfo=UTC),
                 currency="PLN",
                 price_min_minor=105_000_000,

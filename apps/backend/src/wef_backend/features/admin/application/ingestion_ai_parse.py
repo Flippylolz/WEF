@@ -678,6 +678,7 @@ def build_listing_candidate_from_ai(
             field=market_field or by_name["location"],
             value=market_value,
         ),
+        property_type=None,
         location=_extracted(source_text=source_text, field=by_name["location"], value=location),
         district=(
             _extracted(

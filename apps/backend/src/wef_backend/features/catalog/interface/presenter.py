@@ -18,7 +18,12 @@ from wef_backend.features.catalog.application import (
 from wef_backend.features.catalog.application.data_origin import DataOrigin
 from wef_backend.features.catalog.application.offer_detail import OfferDetailDTO
 from wef_backend.features.catalog.application.quick_filters import QuickFilterPreset
-from wef_backend.features.catalog.domain import ContentType, MarketType
+from wef_backend.features.catalog.domain import (
+    ContentType,
+    FilterablePropertyType,
+    MarketType,
+    PropertyType,
+)
 
 
 class PointGeometry(BaseModel):
@@ -90,6 +95,7 @@ class FilterFacetsResponse(BaseModel):
     rooms: tuple[int, ...]
     market_types: tuple[MarketType, ...]
     content_types: tuple[ContentType, ...]
+    property_types: tuple[FilterablePropertyType, ...]
     price_min_minor: int | None
     price_max_minor: int | None
     area_min_sqm: Decimal | None
@@ -123,6 +129,7 @@ class OfferSummaryResponse(BaseModel):
     id: UUID
     content_type: ContentType
     market_type: MarketType
+    property_type: PropertyType
     display_name: str
     data_confidence: OfferDataConfidence
     published_at: datetime
@@ -178,6 +185,7 @@ class ViewportListingItemResponse(BaseModel):
     id: UUID
     content_type: ContentType
     market_type: MarketType
+    property_type: PropertyType
     display_name: str
     data_confidence: OfferDataConfidence
     published_at: datetime
@@ -277,6 +285,7 @@ class OfferDetailResponse(BaseModel):
     id: UUID
     content_type: ContentType
     market_type: MarketType
+    property_type: PropertyType
     display_name: str
     data_confidence: OfferDataConfidence
     published_at: datetime
@@ -355,6 +364,7 @@ def present_facets(snapshot: FacetSnapshot) -> FilterFacetsResponse:
         rooms=snapshot.rooms,
         market_types=snapshot.market_types,
         content_types=snapshot.content_types,
+        property_types=snapshot.property_types,
         price_min_minor=snapshot.price_min_minor,
         price_max_minor=snapshot.price_max_minor,
         area_min_sqm=snapshot.area_min_sqm,
@@ -374,6 +384,7 @@ def present_location_offer_page(
                 id=item.id,
                 content_type=item.content_type,
                 market_type=item.market_type,
+                property_type=item.property_type,
                 display_name=item.display_name,
                 data_confidence=item.data_confidence,
                 published_at=item.published_at,
@@ -413,6 +424,7 @@ def present_viewport_listing_page(
                 id=item.id,
                 content_type=item.content_type,
                 market_type=item.market_type,
+                property_type=item.property_type,
                 display_name=item.display_name,
                 data_confidence=item.data_confidence,
                 published_at=item.published_at,
@@ -469,6 +481,7 @@ def present_offer_detail(detail: OfferDetailDTO) -> OfferDetailResponse:
         id=detail.id,
         content_type=detail.content_type,
         market_type=detail.market_type,
+        property_type=detail.property_type,
         display_name=detail.display_name,
         data_confidence=detail.data_confidence,
         published_at=detail.published_at,

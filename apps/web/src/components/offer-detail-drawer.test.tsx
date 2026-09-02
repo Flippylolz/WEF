@@ -32,6 +32,7 @@ const detail: OfferDetail = {
   id: "20000000-0000-4000-8000-000000000001",
   content_type: "development",
   market_type: "primary",
+  property_type: "unknown",
   display_name: "development · primary",
   data_confidence: "complete",
   data_origin: "parser",

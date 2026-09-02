@@ -94,6 +94,14 @@
       "development": "Development posts",
       "unit": "Individual units"
     },
+    "propertyTypeLabel": "Property type",
+    "propertyType": {
+      "apartment": "Apartment",
+      "house": "House",
+      "semi_detached": "Semi-detached house (bliźniak)",
+      "unknown": "Not classified"
+    },
+    "detailFieldPropertyType": "Property type",
     "publicationLabel": "Publication date",
     "publishedFrom": "Published from",
     "publishedTo": "Published to",

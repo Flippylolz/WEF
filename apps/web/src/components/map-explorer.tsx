@@ -472,6 +472,8 @@ export function MapExplorer() {
         next.marketTypes = [];
       } else if (group === "contentTypes") {
         next.contentTypes = DEFAULT_CONTENT_TYPES;
+      } else if (group === "propertyTypes") {
+        next.propertyTypes = [];
       } else if (group === "publication") {
         next.publishedFrom = null;
         next.publishedTo = null;

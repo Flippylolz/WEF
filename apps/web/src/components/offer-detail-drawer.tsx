@@ -208,6 +208,10 @@ function OfferDetailContent({
           value={t(`marketType.${detail.market_type}`)}
         />
         <DetailRow
+          label={t("propertyTypeLabel")}
+          value={t(`propertyType.${detail.property_type}`)}
+        />
+        <DetailRow
           label={t("apartmentPrice")}
           value={formatPrice(
             detail.price_min_minor ?? null,

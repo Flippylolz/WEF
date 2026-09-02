@@ -24,7 +24,11 @@ from wef_backend.features.catalog.application.quick_filters import (
     apply_quick_filter,
     list_quick_filter_presets,
 )
-from wef_backend.features.catalog.domain import ContentType, MarketType
+from wef_backend.features.catalog.domain import (
+    ContentType,
+    FilterablePropertyType,
+    MarketType,
+)
 from wef_backend.features.catalog.interface.presenter import (
     FilterFacetsResponse,
     LocationMapResponse,
@@ -67,6 +71,7 @@ class MapQueryParams(BaseModel):
     district: list[DistrictValue] = Field(default_factory=list, max_length=20)
     market_type: list[MarketType] = Field(default_factory=list, max_length=5)
     content_type: list[ContentType] = Field(default_factory=list, max_length=5)
+    property_type: list[FilterablePropertyType] = Field(default_factory=list, max_length=5)
     published_from: datetime | None = None
     published_to: datetime | None = None
     quick_filter: QuickFilterValue | None = None
@@ -84,6 +89,7 @@ class MapQueryParams(BaseModel):
                 districts=tuple(self.district),
                 market_types=tuple(self.market_type),
                 content_types=tuple(self.content_type),
+                property_types=tuple(self.property_type),
                 published_from=self.published_from,
                 published_to=self.published_to,
             )

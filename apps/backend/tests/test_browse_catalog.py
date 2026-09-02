@@ -22,7 +22,12 @@ from wef_backend.features.catalog.application import (
     OfferBrowseRecord,
     OfferCursor,
 )
-from wef_backend.features.catalog.domain import ContentType, MarketType
+from wef_backend.features.catalog.domain import (
+    ContentType,
+    FilterablePropertyType,
+    MarketType,
+    PropertyType,
+)
 from wef_backend.features.catalog.infrastructure import SQLAlchemyCatalogBrowseAdapter
 
 if TYPE_CHECKING:
@@ -64,6 +69,7 @@ class FakeFacetSession:
             ),
             FakeScalarResult(["primary", "secondary"]),
             FakeScalarResult(["development", "unit"]),
+            FakeScalarResult(["apartment", "house"]),
         ]
 
     async def __aenter__(self) -> Self:
@@ -107,6 +113,7 @@ def offer_record(index: int, *, complete: bool = True) -> OfferBrowseRecord:
         id=UUID(f"20000000-0000-4000-8000-{index:012d}"),
         content_type=ContentType.UNIT,
         market_type=MarketType.SECONDARY,
+        property_type=PropertyType.APARTMENT,
         published_at=datetime(2026, 8, index, tzinfo=UTC),
         currency="PLN" if complete else None,
         price_min_minor=100_000_000 if complete else None,
@@ -158,6 +165,10 @@ async def test_facet_adapter_normalizes_visible_aggregate_values() -> None:
     assert facets.rooms == (1, 2, 3)
     assert facets.market_types == (MarketType.PRIMARY, MarketType.SECONDARY)
     assert facets.content_types == (ContentType.DEVELOPMENT, ContentType.UNIT)
+    assert facets.property_types == (
+        FilterablePropertyType.APARTMENT,
+        FilterablePropertyType.HOUSE,
+    )
     assert facets.price_min_minor == 69_000_000
 
 
@@ -201,6 +212,7 @@ def listing_record(index: int, *, complete: bool = True) -> ListingBrowseRecord:
         id=UUID(f"20000000-0000-4000-8000-{index:012d}"),
         content_type=ContentType.DEVELOPMENT,
         market_type=MarketType.PRIMARY,
+        property_type=PropertyType.UNKNOWN,
         published_at=datetime(2026, 8, index, tzinfo=UTC),
         currency="PLN" if complete else None,
         price_min_minor=90_000_000 if complete else None,
