@@ -164,6 +164,65 @@ curl -sS "$WEF_PUBLIC_HTTPS_BASE_URL/api/v1/map/locations?bbox=20.9,52.1,21.2,52
 
 See [E22 implementation plan](../epics/E22-property-type-filter/IMPLEMENTATION_PLAN.md).
 
+### `wef-backfill-location-display-name`
+
+**Container:** `api` (database access only; no provider calls).
+
+**Purpose:** Recompute `locations.display_name` and `display_address` for
+**non-operator-verified** locations from the newest primary `offer_sources`
+revision per location using E23-T1 Polish-forward templates. Dry-run by default;
+`--apply` persists changed display fields only. Never changes
+`normalized_address_hash`.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--limit` | none (unbounded) | Max **locations** to process in this run (after dedupe) |
+| `--apply` | off | Persist changed `display_name` / `display_address` values |
+
+**Output (JSON):** aggregate counts only — no raw source text.
+
+| Field | Meaning |
+|-------|---------|
+| `total` | Distinct non-verified locations with replayable primary source evidence |
+| `changed` | Locations whose stored display fields would differ (dry-run) or did differ (apply) |
+| `unchanged` | Locations already matching the normalized template |
+| `skipped_verified` | Locations with operator geocode lineage (`actor_type=operator`) — owner-curated |
+| `failures` | Locations where listing/location extraction failed or row processing errored |
+
+**Idempotent:** safe to rerun; a second dry-run after `--apply` should report
+`changed: 0`.
+
+**Review guardrails before `--apply`:**
+
+- `skipped_verified` should match locations the owner placed or corrected in
+  `/admin/places`.
+- Investigate non-zero `failures` — often missing location lines in archived
+  source text.
+- Spot-check a few `changed` locations on the map and in offer detail.
+- Fragment-only names that remain unusable after apply stay E18 curation cases.
+
+**Recommended workflow:**
+
+```bash
+# 1. Dry-run full cohort (requires E23-T1 deployed)
+$COMPOSE exec -T api wef-backfill-location-display-name | tee /tmp/location-display-backfill-dry-run.json
+
+# 2. Optional bounded trial
+$COMPOSE exec -T api wef-backfill-location-display-name --limit 200
+
+# 3. Apply when counts look reasonable
+$COMPOSE exec -T api wef-backfill-location-display-name --apply | tee /tmp/location-display-backfill-apply.json
+
+# 4. Confirm idempotency
+$COMPOSE exec -T api wef-backfill-location-display-name
+# expect "changed": 0
+
+# 5. Smoke map/list labels
+curl -sS "$WEF_PUBLIC_HTTPS_BASE_URL/api/v1/map/locations?bbox=20.9,52.1,21.2,52.4" | jq '.features[0].properties.display_name'
+```
+
+See [E23 implementation plan](../epics/E23-location-display-name-normalization/IMPLEMENTATION_PLAN.md).
+
 ### `wef-batch-ingestion-ai-parse`
 
 **Container:** **`api` only** (Groq).
@@ -310,6 +369,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) (Telegram worker operations).
 | `wef-importer-dry-run` | Dry-run parser audit |
 | `wef-replay-parser` | Parser replay over raw archive |
 | `wef-backfill-property-type` | E22 property-type dry-run/apply backfill |
+| `wef-backfill-location-display-name` | E23 location display-name dry-run/apply backfill |
 | `wef-migrate` | Alembic migrations |
 | `wef-seed-m1` | M1 synthetic seed |
 | `wef-bootstrap-owner` | One-time owner bootstrap |
@@ -325,3 +385,4 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) (Telegram worker operations).
 - [DEPLOYMENT.md](DEPLOYMENT.md) — Groq enablement, compose topology, worker ops
 - [E21 epic](../epics/E21-ingestion-ai-fallback/README.md) — parse-issue AI fallback scope
 - [E22 epic](../epics/E22-property-type-filter/README.md) — property type classification and filter
+- [E23 epic](../epics/E23-location-display-name-normalization/README.md) — location display name normalization
