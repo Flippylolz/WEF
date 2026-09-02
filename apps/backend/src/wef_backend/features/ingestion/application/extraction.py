@@ -38,7 +38,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v8"
+PARSER_VERSION = "e2-v9"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
@@ -188,7 +188,7 @@ _APARTMENT_PATTERN = re.compile(
 )
 _HOUSE_PATTERN = re.compile(
     r"\b(?:dom\s+(?:jednorodzinny|wolnostoj\w*)|jednorodzinny|detached\s+house|"
-    r"standalone\s+house|частн\w+\s+дом|dom\s+particulier|will[ae]|villa|будинок)\b",
+    r"standalone\s+house|частн\w+\s+дом|dom\s+particulier|will[ae]|villa)\b",
     _FLAGS,
 )
 _LOCATION_PATTERN = re.compile(
@@ -514,7 +514,7 @@ def _parse_property_type_label(value: str) -> PropertyType | None:
         return PropertyType.SEMI_DETACHED
     if any(token in folded for token in ("mieszkan", "apart", "flat", "studio", "кварт", "апарт")):
         return PropertyType.APARTMENT
-    if any(token in folded for token in ("dom", "house", "villa", "willa", "дом", "будин")):
+    if any(token in folded for token in ("dom", "house", "villa", "willa", "дом")):
         return PropertyType.HOUSE
     return None
 
