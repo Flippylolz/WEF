@@ -67,7 +67,7 @@ without parsing raw source text.
 - [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is owner-approved.
 - Tasks:
   - [E23-T1 — Add canonical location display-name normalization](tasks/E23-T1-display-name-normalization.md) (`ready`, in progress)
-  - [E23-T2 — Backfill non-verified location display names](tasks/E23-T2-display-name-backfill.md) (`draft`, depends on E23-T1)
+  - [E23-T2 — Backfill non-verified location display names](tasks/E23-T2-display-name-backfill.md) (`ready`, in progress)
 
 ## Dependencies
 

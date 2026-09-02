@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E23-T2
 epic: E23
 title: "Backfill non-verified location display names"
-status: draft
+status: ready
 revision: 1
 priority: P1
 size: M
@@ -23,22 +23,23 @@ spike_gate:
   verified_by: "Codex agent"
   verified_at: "2026-09-02T17:34:00Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 1
+  verified_by: "Codex agent"
+  verified_at: "2026-09-02T20:39:00Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: "Codex agent"
+  verified_at: "2026-09-02T20:39:00Z"
+  evidence:
+    - "E23-T1 implementation on feat/E23-T1-display-name-normalization / PR #316"
 branch:
   required: true
-  name: null
+  name: feat/E23-T2-display-name-backfill
   task_id: E23-T2
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-02T20:39:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -78,11 +79,11 @@ without changing identity hashes or verified names.
 
 ## Acceptance criteria
 
-- [ ] Dry-run reports changed/unchanged/skipped-verified/failure counts.
-- [ ] Apply is idempotent (`changed: 0` on re-run).
-- [ ] Verified locations are skipped.
-- [ ] `normalized_address_hash` never changes for processed rows.
-- [ ] Operator docs include the recommended production workflow.
+- [x] Dry-run reports changed/unchanged/skipped-verified/failure counts.
+- [x] Apply is idempotent (`changed: 0` on re-run).
+- [x] Verified locations are skipped.
+- [x] `normalized_address_hash` never changes for processed rows.
+- [x] Operator docs include the recommended production workflow.
 
 ## Dependencies and gates
 
