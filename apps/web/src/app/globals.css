@@ -477,7 +477,9 @@ input:focus-visible {
 }
 
 .button-primary,
-.button-secondary {
+.button-secondary,
+.button-danger,
+.button-danger-solid {
   border: 1px solid var(--accent-strong);
   border-radius: 0.55rem;
   padding: 0.55rem 0.85rem;
@@ -495,12 +497,32 @@ input:focus-visible {
   color: var(--accent);
 }
 
+.button-danger {
+  border-color: var(--error);
+  background: transparent;
+  color: var(--error);
+}
+
+.button-danger-solid {
+  border-color: var(--error);
+  background: #da3633;
+  color: #ffffff;
+}
+
 .button-primary:hover {
   background: #2ea043;
 }
 
 .button-secondary:hover {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.button-danger:hover {
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+}
+
+.button-danger-solid:hover {
+  background: var(--error);
 }
 
 .filter-grid {
@@ -1651,4 +1673,21 @@ input:focus-visible {
   .listing-skeleton::after {
     animation: none;
   }
+}
+
+.account-danger {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.account-danger h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.account-danger .account-modal-hint {
+  margin: 0;
 }

@@ -400,7 +400,7 @@ function SignedInPanel({
         {dangerAction === null ? (
           <>
             <button
-              className="button-secondary"
+              className="button-danger"
               type="button"
               disabled={busy}
               onClick={() => setDangerAction("disable")}
@@ -408,7 +408,7 @@ function SignedInPanel({
               {t("disableAction")}
             </button>
             <button
-              className="button-secondary"
+              className="button-danger"
               type="button"
               disabled={busy}
               onClick={() => setDangerAction("delete")}
@@ -419,7 +419,7 @@ function SignedInPanel({
         ) : (
           <>
             <button
-              className="button-primary"
+              className="button-danger-solid"
               type="button"
               disabled={busy}
               onClick={async () => {
