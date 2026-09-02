@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
@@ -23,6 +23,7 @@ from wef_backend.features.ingestion.infrastructure.models import (
 )
 
 if TYPE_CHECKING:
+    from datetime import datetime
     from uuid import UUID
 
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -42,6 +43,37 @@ class PropertyTypeBackfillSummary:
     unchanged: int
     failures: int
     parser_version: str
+
+
+@dataclass(frozen=True, slots=True)
+class _PrimarySourceBackfillRow:
+    """One primary source revision eligible for property-type replay."""
+
+    offer: OfferRow
+    message: SourceMessageRow
+    channel: SourceChannelRow
+    source_created_at: datetime
+
+
+def _newest_primary_source_rows(
+    rows: Sequence[_PrimarySourceBackfillRow],
+) -> list[_PrimarySourceBackfillRow]:
+    """Keep the newest primary source revision for each offer."""
+    ordered = sorted(
+        rows,
+        key=lambda row: (
+            -row.message.published_at.timestamp(),
+            -row.source_created_at.timestamp(),
+        ),
+    )
+    selected: list[_PrimarySourceBackfillRow] = []
+    seen_offer_ids: set[UUID] = set()
+    for row in ordered:
+        if row.offer.id in seen_offer_ids:
+            continue
+        seen_offer_ids.add(row.offer.id)
+        selected.append(row)
+    return sorted(selected, key=lambda row: row.offer.id)
 
 
 async def backfill_property_types(
@@ -64,7 +96,12 @@ async def backfill_property_types(
     }
     async with session_factory() as session:
         statement = (
-            select(OfferRow, SourceMessageRow, SourceChannelRow)
+            select(
+                OfferRow,
+                SourceMessageRow,
+                SourceChannelRow,
+                OfferSourceRow.created_at,
+            )
             .join(OfferSourceRow, OfferSourceRow.offer_id == OfferRow.id)
             .join(
                 SourceMessageRow,
@@ -72,21 +109,31 @@ async def backfill_property_types(
             )
             .join(SourceChannelRow, SourceChannelRow.id == SourceMessageRow.source_channel_id)
             .where(OfferSourceRow.relationship == "primary")
-            .order_by(OfferRow.id)
         )
-        if limit is not None:
-            statement = statement.limit(limit)
-        rows = (await session.execute(statement)).all()
+        fetched = [
+            _PrimarySourceBackfillRow(
+                offer=offer,
+                message=message,
+                channel=channel,
+                source_created_at=source_created_at,
+            )
+            for offer, message, channel, source_created_at in (
+                await session.execute(statement)
+            ).all()
+        ]
+    rows = _newest_primary_source_rows(fetched)
+    if limit is not None:
+        rows = rows[:limit]
 
-    for offer, message, channel in rows:
+    for row in rows:
         counts["total"] += 1
         try:
             await _process_backfill_row(
                 session_factory,
                 counts=counts,
-                offer=offer,
-                message=message,
-                channel=channel,
+                offer=row.offer,
+                message=row.message,
+                channel=row.channel,
                 apply=apply,
             )
         except Exception:  # noqa: BLE001
