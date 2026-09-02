@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+    from wef_backend.features.catalog.infrastructure.models import OfferRow
     from wef_backend.features.ingestion.infrastructure.models import (
         SourceChannelRow,
         SourceMessageRow,
@@ -25,6 +26,8 @@ from wef_backend.backfill_property_type_command import build_parser
 from wef_backend.features.ingestion.infrastructure import property_type_backfill as backfill_module
 from wef_backend.features.ingestion.infrastructure.property_type_backfill import (
     PropertyTypeBackfillSummary,
+    _newest_primary_source_rows,
+    _PrimarySourceBackfillRow,
     _row_to_raw,
     backfill_property_types,
 )
@@ -38,7 +41,7 @@ _CONFLICT_TEXT = (
     "💰 Cena: 1 000 000 zł"
 )
 
-_BackfillRow = tuple[SimpleNamespace, SimpleNamespace, SimpleNamespace]
+_BackfillRow = tuple[SimpleNamespace, SimpleNamespace, SimpleNamespace, datetime]
 
 
 class _EmptyResult:
@@ -131,6 +134,21 @@ def _source_channel() -> SimpleNamespace:
     return SimpleNamespace(external_id="fixture-channel", display_name="Fixture")
 
 
+def _backfill_row(
+    *,
+    offer: SimpleNamespace,
+    text: str,
+    source_created_at: datetime | None = None,
+) -> _BackfillRow:
+    created_at = source_created_at or datetime(2026, 1, 1, tzinfo=UTC)
+    return (
+        offer,
+        _source_message(text=text),
+        _source_channel(),
+        created_at,
+    )
+
+
 def _offer_row(*, property_type: str) -> SimpleNamespace:
     return SimpleNamespace(id=uuid4(), property_type=property_type)
 
@@ -155,6 +173,51 @@ async def test_backfill_property_types_reports_empty_summary() -> None:
         failures=0,
         parser_version=summary.parser_version,
     )
+
+
+def test_newest_primary_source_rows_keeps_latest_revision_per_offer() -> None:
+    """Multiple primary revisions for one offer collapse to the newest source."""
+    offer = cast("OfferRow", _offer_row(property_type="unknown"))
+    channel = _source_channel()
+    older = _PrimarySourceBackfillRow(
+        offer=offer,
+        message=cast(
+            "SourceMessageRow",
+            SimpleNamespace(
+                raw_payload_json={"id": 1},
+                external_message_id=1,
+                published_at=datetime(2026, 1, 1, tzinfo=UTC),
+                edited_at=None,
+                message_type="message",
+                text_original="older revision",
+                raw_checksum="a" * 64,
+            ),
+        ),
+        channel=cast("SourceChannelRow", channel),
+        source_created_at=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+    newer = _PrimarySourceBackfillRow(
+        offer=offer,
+        message=cast(
+            "SourceMessageRow",
+            SimpleNamespace(
+                raw_payload_json={"id": 2},
+                external_message_id=2,
+                published_at=datetime(2026, 2, 1, tzinfo=UTC),
+                edited_at=None,
+                message_type="message",
+                text_original="newer revision",
+                raw_checksum="b" * 64,
+            ),
+        ),
+        channel=cast("SourceChannelRow", channel),
+        source_created_at=datetime(2026, 2, 1, tzinfo=UTC),
+    )
+
+    selected = _newest_primary_source_rows([older, newer])
+
+    assert len(selected) == 1
+    assert selected[0].message.text_original == "newer revision"
 
 
 def test_backfill_cli_parser_accepts_apply_flag() -> None:
@@ -215,10 +278,39 @@ def test_payload_for_message_ignores_non_object_payloads() -> None:
 
 
 @pytest.mark.asyncio
+async def test_backfill_property_types_deduplicates_primary_revisions_per_offer() -> None:
+    """Duplicate primary revisions for one offer are processed once."""
+    offer = _offer_row(property_type="unknown")
+    rows = [
+        _backfill_row(
+            offer=offer,
+            text="🏙 Kupno | Rynek wtórny\nDom jednorodzinny\n💰 Cena: 2 500 000 zł",
+            source_created_at=datetime(2026, 1, 1, tzinfo=UTC),
+        ),
+        _backfill_row(
+            offer=offer,
+            text=_APARTMENT_TEXT,
+            source_created_at=datetime(2026, 2, 1, tzinfo=UTC),
+        ),
+    ]
+    factory = _BackfillSessionFactory(rows)
+
+    summary = await backfill_property_types(
+        cast("async_sessionmaker[AsyncSession]", factory),
+        limit=None,
+        apply=False,
+    )
+
+    assert summary.total == 1
+    assert summary.apartment == 1
+    assert summary.changed == 1
+
+
+@pytest.mark.asyncio
 async def test_backfill_property_types_counts_semi_detached_offers() -> None:
     """Semi-detached extraction increments the dedicated counter."""
     offer = _offer_row(property_type="unknown")
-    rows = [(offer, _source_message(text=_SEMI_DETACHED_TEXT), _source_channel())]
+    rows = [_backfill_row(offer=offer, text=_SEMI_DETACHED_TEXT)]
     factory = _BackfillSessionFactory(rows)
 
     summary = await backfill_property_types(
@@ -250,7 +342,7 @@ async def test_row_to_raw_rejects_non_object_payload(
 async def test_backfill_property_types_dry_run_counts_changed_offers() -> None:
     """Dry-run reports changed values without persisting them."""
     offer = _offer_row(property_type="unknown")
-    rows = [(offer, _source_message(text=_APARTMENT_TEXT), _source_channel())]
+    rows = [_backfill_row(offer=offer, text=_APARTMENT_TEXT)]
     factory = _BackfillSessionFactory(rows)
 
     summary = await backfill_property_types(
@@ -270,7 +362,7 @@ async def test_backfill_property_types_dry_run_counts_changed_offers() -> None:
 async def test_backfill_property_types_apply_persists_changed_values() -> None:
     """Apply mode writes only changed property types."""
     offer = _offer_row(property_type="unknown")
-    rows = [(offer, _source_message(text=_HOUSE_TEXT), _source_channel())]
+    rows = [_backfill_row(offer=offer, text=_HOUSE_TEXT)]
     factory = _BackfillSessionFactory(rows)
 
     summary = await backfill_property_types(
@@ -288,7 +380,7 @@ async def test_backfill_property_types_apply_persists_changed_values() -> None:
 async def test_backfill_property_types_counts_unchanged_offers() -> None:
     """Already-correct values are counted as unchanged."""
     offer = _offer_row(property_type="apartment")
-    rows = [(offer, _source_message(text=_APARTMENT_TEXT), _source_channel())]
+    rows = [_backfill_row(offer=offer, text=_APARTMENT_TEXT)]
     factory = _BackfillSessionFactory(rows)
 
     summary = await backfill_property_types(
@@ -306,7 +398,7 @@ async def test_backfill_property_types_counts_unchanged_offers() -> None:
 async def test_backfill_property_types_counts_conflicts() -> None:
     """Conflicting extraction evidence increments the conflict counter."""
     offer = _offer_row(property_type="unknown")
-    rows = [(offer, _source_message(text=_CONFLICT_TEXT), _source_channel())]
+    rows = [_backfill_row(offer=offer, text=_CONFLICT_TEXT)]
     factory = _BackfillSessionFactory(rows)
 
     summary = await backfill_property_types(
@@ -323,7 +415,7 @@ async def test_backfill_property_types_counts_conflicts() -> None:
 async def test_backfill_property_types_counts_extraction_failures() -> None:
     """Non-listing source text increments the failure counter."""
     offer = _offer_row(property_type="unknown")
-    rows = [(offer, _source_message(text="random channel notice"), _source_channel())]
+    rows = [_backfill_row(offer=offer, text="random channel notice")]
     factory = _BackfillSessionFactory(rows)
 
     summary = await backfill_property_types(
@@ -341,7 +433,7 @@ async def test_backfill_property_types_survives_row_processing_errors(
 ) -> None:
     """Unexpected row failures are counted without aborting the run."""
     offer = _offer_row(property_type="unknown")
-    rows = [(offer, _source_message(text=_APARTMENT_TEXT), _source_channel())]
+    rows = [_backfill_row(offer=offer, text=_APARTMENT_TEXT)]
     factory = _BackfillSessionFactory(rows)
 
     async def _boom(*_args: object, **_kwargs: object) -> None:
