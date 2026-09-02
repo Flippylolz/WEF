@@ -13,5 +13,5 @@ resolved_by: [ADR-017]
 
 - Status: resolved as out of scope by [ADR-017](../adr/ADR-017-no-enforced-branch-protection.md); E1-T5 is cancelled.
 - State at resolution: `Flippylolz/WEF` was private and empty; the authenticated user had admin access, but GitHub returned `403` because private-repository rulesets/protected branches required an eligible paid plan.
-- Later change: the repository became public and branch protection was enabled under [ADR-023](../adr/ADR-023-enforce-main-branch-protection.md). Native auto-merge remains out of scope.
+- Later change: the repository became public; branch protection and repository-level native auto-merge were enabled under [ADR-023](../adr/ADR-023-enforce-main-branch-protection.md).
 - Continue: GitHub Actions CI, GHCR publishing, Dependabot pull-request creation, GitHub Actions secrets/variables, the custom scheduled label/check/bot-commit merge controller, and merged-PR-verified deployment.
