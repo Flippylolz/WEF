@@ -772,7 +772,7 @@ def test_property_type_classifies_slavic_house_phrases() -> None:
         "🏙 Купівля | Вторинний ринок\nДім на продаж у Варшаві\n💰 Ціна: 2 000 000 zł",  # noqa: RUF001
     )
     rooms = _candidate(
-        "🏙 Покупка | Вторичный рынок\n5-комнатный дом | 125 м²\n💰 Цена: 2 000 000 zł",  # noqa: RUF001
+        "🏙 Покупка | Вторичный рынок\n5-комнатный дом | 125 м²\n💰 Цена: 2 000 000 zł",
     )
     sale = _candidate(
         "🏙 Покупка | Вторичный рынок\nДом на продажу | 150 м² | 4 комнаты\n💰 Цена: 1 800 000 zł",  # noqa: RUF001
@@ -792,7 +792,7 @@ def test_property_type_classifies_slavic_house_phrases() -> None:
 def test_property_type_new_building_phrase_does_not_conflict_apartment() -> None:
     """'новый дом' building-year copy must not flip apartments to unknown."""
     text = (
-        "🏙 Покупка | Вторичный рынок\n"  # noqa: RUF001
+        "🏙 Покупка | Вторичный рынок\n"
         "2-комнатная квартира в новом доме 2024 года\n"
         "💰 Цена: 900 000 zł"
     )
