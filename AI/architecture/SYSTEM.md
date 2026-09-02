@@ -205,6 +205,7 @@ The API, historical importer, and Telegram listener share feature/domain/applica
 - Delivers the route shell and frontend assets.
 - Calls the same-origin `/api/v1` endpoints.
 - Renders/localizes backend-computed projections and capabilities; it does not duplicate filter, grouping, visibility, masking, source-link, or authorization rules.
+- The public filter drawer uses a compact header with the “Filters” title and “Clear”/“Apply” actions on one row at standard mobile and desktop widths; it wraps when enlarged text needs more space. This standalone layout fix was requested without an epic on 2026-09-02.
 - Requests vector tiles directly from the configured style provider.
 - Does not receive database credentials, storage paths, Telegram credentials, or private geocoder keys.
 - Treats every `NEXT_PUBLIC_*` value as public by definition.

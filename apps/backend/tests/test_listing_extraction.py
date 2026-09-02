@@ -745,6 +745,27 @@ def test_property_type_conflict_emits_warning_and_unknown() -> None:
     )
 
 
+def test_property_type_ukrainian_budynok_does_not_conflict_with_apartment() -> None:
+    """Ukrainian 'будинок' means building year/context, not a detached house."""
+    text = (
+        "🏙 Купівля | Вторинний ринок | Варшава\n"
+        "📍 вул. Posag 7 Panien | район Ursus\n"
+        "🛋 2-кімнатна квартира в сучасному комплексі\n"
+        "Будинок 2021 року\n"
+        "💰 Ціна: 900 000 zł"
+    )
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.property_type is not None
+    assert listing.property_type.value is PropertyType.APARTMENT
+    assert not any(
+        warning.code is ExtractionWarningCode.CONFLICTING_VALUES
+        and warning.field_name == "property_type"
+        for warning in result.warnings
+    )
+
+
 def test_property_type_reads_labeled_value_lines() -> None:
     """Explicit property-type labels classify before free-text heuristics."""
     text = "🏙 Kupno | Rynek wtórny\nTyp nieruchomości: mieszkanie\n💰 Cena: 900 000 zł"
