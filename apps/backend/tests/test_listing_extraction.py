@@ -792,10 +792,10 @@ def test_property_type_classifies_slavic_house_phrases() -> None:
 def test_property_type_new_building_phrase_does_not_conflict_apartment() -> None:
     """'новый дом' building-year copy must not flip apartments to unknown."""
     text = (
-        "🏙 Покупка | Вторичный рынок\n"
+        "🏙 Покупка | Вторичный рынок\n"  # noqa: RUF001
         "2-комнатная квартира в новом доме 2024 года\n"
         "💰 Цена: 900 000 zł"
-    )  # noqa: RUF001
+    )
     result = _candidate(text)
     listing = result.listing
     assert listing is not None
