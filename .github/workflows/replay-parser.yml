@@ -1,0 +1,93 @@
+name: Replay parser over raw archive
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type REPLAY to confirm a full canonical replay from the raw archive'
+        required: true
+        default: ''
+      seed_archive:
+        description: 'Backfill the archive from retained history before replaying'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: replay-parser
+  cancel-in-progress: false
+
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    environment: production
+    timeout-minutes: 360
+    env:
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      SSH_PORT: ${{ vars.DEPLOY_SSH_PORT }}
+    steps:
+      - name: Require explicit confirmation
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          test -n "$CONFIRM"
+          test "$CONFIRM" = "REPLAY"
+
+      - name: Replay parser over raw archive on the NUC
+        env:
+          SEED_FLAG: ${{ inputs.seed_archive && '--seed-archive' || '' }}
+        run: |
+          # shellcheck disable=SC2029
+          set -euo pipefail
+          [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$SSH_PORT" =~ ^[0-9]{1,5}$ ]]
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+
+          ssh_dir="$RUNNER_TEMP/wef-ssh"
+          install -m 0700 -d "$ssh_dir"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          chmod 0600 "$ssh_dir/key" "$ssh_dir/known_hosts"
+          ssh_options=(
+            -i "$ssh_dir/key"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$ssh_dir/known_hosts"
+            -p "$SSH_PORT"
+          )
+          target="${DEPLOY_USER}@${DEPLOY_HOST}"
+          cleanup() {
+            rm -f "$ssh_dir/key"
+          }
+          trap cleanup EXIT
+
+          compose="docker compose --project-name wef-production \
+            --env-file /home/nuc/wef/secrets/current/production.env \
+            --file /home/nuc/wef/releases/current/compose.production.yaml"
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" \
+            "$compose run --rm --no-deps api wef-replay-parser $SEED_FLAG" \
+            | tee "$RUNNER_TEMP/replay-output.json"
+
+      - name: Append replay counts to the run summary
+        env:
+          SEED_FLAG: ${{ inputs.seed_archive && '--seed-archive' || '' }}
+        run: |
+          {
+            echo "## Parser replay over raw archive"
+            echo ""
+            echo "- seed_archive: ${{ inputs.seed_archive }}"
+            echo ""
+            echo '```json'
+            cat "$RUNNER_TEMP/replay-output.json"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
