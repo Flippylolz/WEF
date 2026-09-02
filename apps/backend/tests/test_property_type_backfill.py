@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Self, cast
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -36,6 +37,8 @@ _CONFLICT_TEXT = (
     "💰 Cena: 1 000 000 zł"
 )
 
+_BackfillRow = tuple[SimpleNamespace, SimpleNamespace, SimpleNamespace]
+
 
 class _EmptyResult:
     def all(self) -> list[object]:
@@ -59,16 +62,16 @@ class _EmptySessionFactory:
 
 
 class _QueryResult:
-    def __init__(self, rows: list[tuple[object, object, object]]) -> None:
-        self._rows = rows
+    def __init__(self, rows: Sequence[_BackfillRow]) -> None:
+        self._rows = list(rows)
 
-    def all(self) -> list[tuple[object, object, object]]:
+    def all(self) -> list[_BackfillRow]:
         return self._rows
 
 
 class _ReadSession:
-    def __init__(self, rows: list[tuple[object, object, object]]) -> None:
-        self._rows = rows
+    def __init__(self, rows: Sequence[_BackfillRow]) -> None:
+        self._rows = list(rows)
 
     async def __aenter__(self) -> Self:
         return self
@@ -81,15 +84,15 @@ class _ReadSession:
 
 
 class _WriteSession:
-    def __init__(self, offers: dict[object, object]) -> None:
+    def __init__(self, offers: dict[UUID, SimpleNamespace]) -> None:
         self._offers = offers
 
-    async def get(self, _: object, offer_id: object) -> object | None:
+    async def get(self, _: object, offer_id: UUID) -> SimpleNamespace | None:
         return self._offers.get(offer_id)
 
 
 class _WriteContext:
-    def __init__(self, offers: dict[object, object]) -> None:
+    def __init__(self, offers: dict[UUID, SimpleNamespace]) -> None:
         self._offers = offers
 
     async def __aenter__(self) -> _WriteSession:
@@ -100,9 +103,9 @@ class _WriteContext:
 
 
 class _BackfillSessionFactory:
-    def __init__(self, rows: list[tuple[object, object, object]]) -> None:
-        self._rows = rows
-        self._offers = {row[0].id: row[0] for row in rows}
+    def __init__(self, rows: Sequence[_BackfillRow]) -> None:
+        self._rows = list(rows)
+        self._offers = {row[0].id: row[0] for row in self._rows}
 
     def __call__(self) -> _ReadSession:
         return _ReadSession(self._rows)
