@@ -229,12 +229,7 @@ class ReviewDecision:
 
 
 _EMOJI = re.compile(
-    "["
-    "\U0001F300-\U0001FAFF"
-    "\U00002700-\U000027BF"
-    "\U0001F600-\U0001F64F"
-    "\U0001F680-\U0001F6FF"
-    "]",
+    "[\U0001f300-\U0001faff\U00002700-\U000027bf\U0001f600-\U0001f64f\U0001f680-\U0001f6ff]",
     flags=re.UNICODE,
 )
 _STREET_LABEL = re.compile(r"^(?:улица|ulica|street)\s*:\s*", re.IGNORECASE)
@@ -356,8 +351,10 @@ def _assemble_display_name(parsed: _ParsedDisplayName) -> list[str]:
         joined = " ".join(parts).casefold()
     if parsed.city and parsed.city.casefold() not in joined:
         parts.append(parsed.city)
-    elif parsed.city is None and "warszawa" not in joined and (
-        parsed.district is not None or parsed.street is not None
+    elif (
+        parsed.city is None
+        and "warszawa" not in joined
+        and (parsed.district is not None or parsed.street is not None)
     ):
         parts.append("Warszawa")
     return parts
@@ -373,9 +370,7 @@ def normalize_location_display_name(source: str | None, *, district: str | None 
     value = _LEADING_DECORATION.sub("", value)
     value = _EMOJI.sub("", value)
     segments = [
-        segment.strip()
-        for segment in _ADDRESS_SEGMENT_SPLIT.split(value)
-        if segment.strip()
+        segment.strip() for segment in _ADDRESS_SEGMENT_SPLIT.split(value) if segment.strip()
     ]
 
     parsed = _parse_display_name_segments(segments, original=original, district=district)
