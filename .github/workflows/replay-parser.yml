@@ -21,7 +21,8 @@ concurrency:
 
 jobs:
   replay:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    environment: production
     timeout-minutes: 360
     env:
       DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
