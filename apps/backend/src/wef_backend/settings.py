@@ -103,6 +103,10 @@ class Settings(BaseSettings):
     groq_model: str = "openai/gpt-oss-20b"
     groq_zdr_verified: bool = False
     groq_timeout_seconds: float = Field(default=30.0, ge=1, le=120)
+    groq_use_batch_api: bool = True
+    groq_batch_chunk_size: int = Field(default=20, ge=1, le=100)
+    groq_batch_poll_interval_seconds: float = Field(default=2.0, ge=0.5, le=60)
+    groq_batch_max_wait_seconds: float = Field(default=3600.0, ge=30, le=86400)
 
 
 def load_settings() -> Settings:

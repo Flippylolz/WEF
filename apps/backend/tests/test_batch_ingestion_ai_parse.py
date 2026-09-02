@@ -40,7 +40,6 @@ def _async_session_factory(session: AsyncMock) -> MagicMock:
 def test_build_parser_defaults() -> None:
     args = build_parser().parse_args([])
     assert args.limit == 10
-    assert args.spacing_seconds == 2.5
     assert args.generate_only is False
     assert args.link_existing_offers is False
 
@@ -140,11 +139,15 @@ async def test_run_batch_generate_only_skips_apply(monkeypatch: pytest.MonkeyPat
         ),
     )
     fake_admin = SimpleNamespace(
-        generate_ingestion_ai_parse=AsyncMock(
-            return_value=IngestionAiParseOutcome(
-                status=IngestionAiParseStatus.GENERATED,
-                reason="",
-                run=run,
+        generate_ingestion_ai_parse=SimpleNamespace(
+            generate_batch=AsyncMock(
+                return_value=(
+                    IngestionAiParseOutcome(
+                        status=IngestionAiParseStatus.GENERATED,
+                        reason="",
+                        run=run,
+                    ),
+                ),
             ),
         ),
         apply_ingestion_ai_parse=AsyncMock(),
@@ -163,7 +166,6 @@ async def test_run_batch_generate_only_skips_apply(monkeypatch: pytest.MonkeyPat
         BatchIngestionAiParseOptions(
             owner_id=owner_id,
             limit=1,
-            spacing_seconds=0,
             generate_only=True,
             link_existing=False,
             min_text_length=120,
@@ -171,6 +173,7 @@ async def test_run_batch_generate_only_skips_apply(monkeypatch: pytest.MonkeyPat
     )
     assert summary.generated == 1
     assert summary.applied == 0
+    assert summary.groq_batch_jobs == 1
     fake_admin.apply_ingestion_ai_parse.assert_not_called()
 
 
@@ -202,11 +205,15 @@ async def test_run_batch_links_generates_and_applies(monkeypatch: pytest.MonkeyP
         ),
     )
     fake_admin = SimpleNamespace(
-        generate_ingestion_ai_parse=AsyncMock(
-            return_value=IngestionAiParseOutcome(
-                status=IngestionAiParseStatus.GENERATED,
-                reason="",
-                run=run,
+        generate_ingestion_ai_parse=SimpleNamespace(
+            generate_batch=AsyncMock(
+                return_value=(
+                    IngestionAiParseOutcome(
+                        status=IngestionAiParseStatus.GENERATED,
+                        reason="",
+                        run=run,
+                    ),
+                ),
             ),
         ),
         apply_ingestion_ai_parse=AsyncMock(
@@ -231,7 +238,6 @@ async def test_run_batch_links_generates_and_applies(monkeypatch: pytest.MonkeyP
         BatchIngestionAiParseOptions(
             owner_id=None,
             limit=1,
-            spacing_seconds=0,
             generate_only=False,
             link_existing=True,
             min_text_length=120,
@@ -241,6 +247,7 @@ async def test_run_batch_links_generates_and_applies(monkeypatch: pytest.MonkeyP
     assert summary == BatchIngestionAiParseSummary(
         linked_existing_offers=2,
         candidates_considered=1,
+        groq_batch_jobs=1,
         generated=1,
         applied=1,
         skipped={},
@@ -278,24 +285,32 @@ async def test_run_batch_records_generate_and_apply_failures(
         ),
     )
 
-    async def _generate(
+    async def _generate_batch(
         *,
         owner_id: UUID,
-        source_message_revision_id: UUID,
+        source_message_revision_ids: tuple[UUID, ...],
         request_id: UUID,
-    ) -> IngestionAiParseOutcome:
+    ) -> tuple[IngestionAiParseOutcome, ...]:
         _ = owner_id, request_id
-        if source_message_revision_id == revision_fail:
-            return IngestionAiParseOutcome(
-                status=IngestionAiParseStatus.DENIED,
-                reason="offer_exists",
-                run=None,
-            )
-        return IngestionAiParseOutcome(
-            status=IngestionAiParseStatus.GENERATED,
-            reason="",
-            run=run,
-        )
+        outcomes: list[IngestionAiParseOutcome] = []
+        for revision_id in source_message_revision_ids:
+            if revision_id == revision_fail:
+                outcomes.append(
+                    IngestionAiParseOutcome(
+                        status=IngestionAiParseStatus.DENIED,
+                        reason="offer_exists",
+                        run=None,
+                    ),
+                )
+            else:
+                outcomes.append(
+                    IngestionAiParseOutcome(
+                        status=IngestionAiParseStatus.GENERATED,
+                        reason="",
+                        run=run,
+                    ),
+                )
+        return tuple(outcomes)
 
     async def _apply(
         *,
@@ -308,7 +323,7 @@ async def test_run_batch_records_generate_and_apply_failures(
         raise AdminDeniedError(message)
 
     fake_admin = SimpleNamespace(
-        generate_ingestion_ai_parse=_generate,
+        generate_ingestion_ai_parse=SimpleNamespace(generate_batch=_generate_batch),
         apply_ingestion_ai_parse=_apply,
     )
     monkeypatch.setattr(
@@ -325,7 +340,6 @@ async def test_run_batch_records_generate_and_apply_failures(
         BatchIngestionAiParseOptions(
             owner_id=owner_id,
             limit=2,
-            spacing_seconds=0,
             generate_only=False,
             link_existing=False,
             min_text_length=120,

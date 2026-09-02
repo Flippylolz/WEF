@@ -24,6 +24,7 @@ from wef_backend.features.admin.application.ai_review import (
     OFFER_ENRICHMENT_PROMPT_VERSION,
     OFFER_ENRICHMENT_SCHEMA_VERSION,
     AiCurationRuntime,
+    BatchCompletionRequest,
     ChatCompletionsPort,
     PlaceAiReviewStore,
     ProviderOutcome,
@@ -877,6 +878,18 @@ class ResumeOfferEnrichmentBatch:
         return updated
 
 
+@dataclass(slots=True)
+class _PreparedEnrichmentItem:
+    """One offer ready for a Groq Batch enrichment request."""
+
+    item: OfferAiEnrichmentItem
+    snapshot: OfferEnrichmentSnapshot
+    revisions: tuple[SourceRevisionEvidence, ...]
+    missing: tuple[str, ...]
+    masked_sources: tuple[tuple[SourceRevisionEvidence, str], ...]
+    messages: tuple[dict[str, str], ...]
+
+
 class ProcessOfferEnrichmentItem:
     """Process one frozen batch item with one provider call outside the write txn."""
 
@@ -905,7 +918,7 @@ class ProcessOfferEnrichmentItem:
         batch_id: UUID,
         request_id: UUID,
     ) -> ItemOutcome | None:
-        """Process the next item, or pause when the daily budget is exhausted."""
+        """Process up to one Groq Batch chunk, or pause when the daily budget is exhausted."""
         batch = await self._store.get_batch(batch_id)
         if batch is None or batch.owner_user_id != owner_id:
             message = "batch not found"
@@ -930,8 +943,17 @@ class ProcessOfferEnrichmentItem:
                 failure_category="daily_limit",
             )
             return None
-        item = await self._store.next_item(batch_id)
-        if item is None:
+        chunk_limit = min(
+            self._runtime.batch_chunk_size,
+            self._runtime.daily_limit - used,
+        )
+        queued: list[OfferAiEnrichmentItem] = []
+        for _ in range(chunk_limit):
+            item = await self._store.next_item(batch_id)
+            if item is None:
+                break
+            queued.append(item)
+        if not queued:
             await self._store.set_batch_state(
                 batch_id,
                 state=BatchState.COMPLETED,
@@ -940,7 +962,94 @@ class ProcessOfferEnrichmentItem:
             return None
         if batch.state is BatchState.QUEUED or batch.started_at is None:
             await self._store.set_batch_state(batch_id, state=BatchState.RUNNING, started_at=now)
-        await self._store.mark_item_processing(item, now=now)
+        prepared: list[_PreparedEnrichmentItem] = []
+        last_outcome: ItemOutcome | None = None
+        for item in queued:
+            await self._store.mark_item_processing(item, now=now)
+            last_outcome = await self._prepare_item(
+                batch=batch,
+                item=item,
+                now=now,
+                prepared=prepared,
+            )
+        if not prepared:
+            return last_outcome
+        called_at = self._clock.now()
+        requests = tuple(
+            BatchCompletionRequest(
+                custom_id=str(entry.item.id),
+                model=ALLOWED_GROQ_MODEL,
+                messages=entry.messages,
+                schema_name="offer_enrichment",
+                schema=offer_enrichment_json_schema(),
+                max_output_tokens=self._runtime.max_output_tokens,
+            )
+            for entry in prepared
+        )
+        batch_results = await self._provider.complete_many(requests)
+        by_custom_id = {result.custom_id: result for result in batch_results}
+        for entry in prepared:
+            result = by_custom_id.get(str(entry.item.id))
+            if result is None or result.error is not None or result.completion is None:
+                await self._store.complete_item(
+                    item=entry.item,
+                    outcome=ItemOutcome.PROVIDER_FAILED,
+                    state=ItemState.FAILED,
+                    now=self._clock.now(),
+                    provider_called_at=called_at,
+                    events=(),
+                    apply_values={},
+                    origins=(),
+                    fingerprint=entry.item.input_fingerprint,
+                )
+                last_outcome = ItemOutcome.PROVIDER_FAILED
+                continue
+            try:
+                fields = parse_offer_enrichment_payload(
+                    result.completion.payload,
+                    allowed_revision_ids={
+                        str(revision.revision_id) for revision, _masked in entry.masked_sources
+                    },
+                    missing=set(entry.missing),
+                )
+            except ProviderRequestError:
+                await self._store.complete_item(
+                    item=entry.item,
+                    outcome=ItemOutcome.PROVIDER_FAILED,
+                    state=ItemState.FAILED,
+                    now=self._clock.now(),
+                    provider_called_at=called_at,
+                    events=(),
+                    apply_values={},
+                    origins=(),
+                    fingerprint=entry.item.input_fingerprint,
+                )
+                last_outcome = ItemOutcome.PROVIDER_FAILED
+                continue
+            last_outcome = await self._apply_fields(
+                batch=batch,
+                item=entry.item,
+                snapshot=entry.snapshot,
+                revisions=entry.revisions,
+                fields=fields,
+                missing=entry.missing,
+                completion=result.completion,
+                called_at=called_at,
+                request_id=request_id,
+                owner_id=owner_id,
+            )
+        return last_outcome
+
+    async def _prepare_item(
+        self,
+        *,
+        batch: OfferAiEnrichmentBatch,
+        item: OfferAiEnrichmentItem,
+        now: datetime,
+        prepared: list[_PreparedEnrichmentItem],
+    ) -> ItemOutcome:
+        """Validate one item and append it to the provider batch when eligible."""
+        del batch
         snapshot = await self._store.get_offer_snapshot(item.offer_id)
         if snapshot is None:
             await self._store.complete_item(
@@ -1009,46 +1118,17 @@ class ProcessOfferEnrichmentItem:
                 fingerprint=item.input_fingerprint,
             )
             return ItemOutcome.INVALID
-        messages = _provider_messages(snapshot, missing, masked_sources)
-        called_at = self._clock.now()
-        try:
-            completion = await self._provider.complete(
-                model=ALLOWED_GROQ_MODEL,
-                messages=messages,
-                schema_name="offer_enrichment",
-                schema=offer_enrichment_json_schema(),
-                max_output_tokens=self._runtime.max_output_tokens,
-            )
-            fields = parse_offer_enrichment_payload(
-                completion.payload,
-                allowed_revision_ids={str(item.revision_id) for item, _masked in masked_sources},
-                missing=set(missing),
-            )
-        except ProviderRequestError:
-            await self._store.complete_item(
+        prepared.append(
+            _PreparedEnrichmentItem(
                 item=item,
-                outcome=ItemOutcome.PROVIDER_FAILED,
-                state=ItemState.FAILED,
-                now=self._clock.now(),
-                provider_called_at=called_at,
-                events=(),
-                apply_values={},
-                origins=(),
-                fingerprint=item.input_fingerprint,
-            )
-            return ItemOutcome.PROVIDER_FAILED
-        return await self._apply_fields(
-            batch=batch,
-            item=item,
-            snapshot=snapshot,
-            revisions=revisions,
-            fields=fields,
-            missing=missing,
-            completion=completion,
-            called_at=called_at,
-            request_id=request_id,
-            owner_id=owner_id,
+                snapshot=snapshot,
+                revisions=revisions,
+                missing=missing,
+                masked_sources=masked_sources,
+                messages=_provider_messages(snapshot, missing, masked_sources),
+            ),
         )
+        return ItemOutcome.NO_EVIDENCE
 
     async def _used_budget(self, owner_id: UUID, now: datetime) -> int:
         if self._reviews is not None:

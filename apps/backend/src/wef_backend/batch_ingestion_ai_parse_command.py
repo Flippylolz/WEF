@@ -40,7 +40,6 @@ class BatchIngestionAiParseOptions:
 
     owner_id: UUID | None
     limit: int
-    spacing_seconds: float
     generate_only: bool
     link_existing: bool
     min_text_length: int
@@ -53,6 +52,7 @@ class BatchIngestionAiParseSummary:
 
     linked_existing_offers: int = 0
     candidates_considered: int = 0
+    groq_batch_jobs: int = 0
     generated: int = 0
     applied: int = 0
     skipped: dict[str, int] = field(default_factory=dict)
@@ -95,8 +95,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Generate and optionally apply Groq ingestion AI parse proposals for "
-            "open parser_miss rows. Respects the owner daily budget and should be "
-            "paced below Groq free-tier RPM (~30/min)."
+            "open parser_miss rows using the Groq Batch API. Respects the owner "
+            "daily budget."
         ),
     )
     parser.add_argument(
@@ -110,12 +110,6 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=10,
         help="Max distinct open parse issues to attempt in this run (default: 10)",
-    )
-    parser.add_argument(
-        "--spacing-seconds",
-        type=float,
-        default=2.5,
-        help="Minimum delay between generate calls (default: 2.5)",
     )
     parser.add_argument(
         "--generate-only",
@@ -226,7 +220,7 @@ def _skip(summary: BatchIngestionAiParseSummary, reason: str) -> None:
 
 
 async def run_batch(options: BatchIngestionAiParseOptions) -> BatchIngestionAiParseSummary:
-    """Run one paced generate/apply batch and return redacted counts."""
+    """Run one Groq Batch generate/apply pass and return redacted counts."""
     runtime_settings = options.settings or load_settings()
     database = create_database_resources(runtime_settings.database_url)
     summary = BatchIngestionAiParseSummary()
@@ -246,15 +240,18 @@ async def run_batch(options: BatchIngestionAiParseOptions) -> BatchIngestionAiPa
             min_text_length=options.min_text_length,
         )
         summary.candidates_considered = len(candidates)
+        if not candidates:
+            return summary
         admin = build_services(runtime_settings).admin
-        for index, candidate in enumerate(candidates):
-            if index and options.spacing_seconds > 0:
-                await asyncio.sleep(options.spacing_seconds)
-            outcome = await admin.generate_ingestion_ai_parse(
-                owner_id=owner,
-                source_message_revision_id=candidate.source_message_revision_id,
-                request_id=uuid4(),
-            )
+        revision_ids = tuple(candidate.source_message_revision_id for candidate in candidates)
+        outcomes = await admin.generate_ingestion_ai_parse.generate_batch(
+            owner_id=owner,
+            source_message_revision_ids=revision_ids,
+            request_id=uuid4(),
+        )
+        if outcomes:
+            summary.groq_batch_jobs = 1
+        for outcome in outcomes:
             if outcome.status is not IngestionAiParseStatus.GENERATED or outcome.run is None:
                 reason = outcome.reason or outcome.status.value
                 _skip(summary, reason)
@@ -289,7 +286,6 @@ def main(argv: list[str] | None = None) -> None:
                 BatchIngestionAiParseOptions(
                     owner_id=args.owner_id,
                     limit=args.limit,
-                    spacing_seconds=args.spacing_seconds,
                     generate_only=args.generate_only,
                     link_existing=args.link_existing_offers,
                     min_text_length=args.min_text_length,

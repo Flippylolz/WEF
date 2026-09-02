@@ -3,18 +3,27 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, cast
 
 import httpx
 import pytest
 
 from wef_backend.features.admin.application.ai_review import (
     ALLOWED_GROQ_MODEL,
+    BatchCompletionRequest,
     ProviderOutcome,
     ProviderRequestError,
 )
-from wef_backend.features.admin.infrastructure.groq_provider import (
+from wef_backend.features.admin.infrastructure.groq_common import (
     GROQ_CHAT_COMPLETIONS_URL,
+    groq_chat_completion_body,
+    header_request_id,
+    http_outcome,
+    parse_completion_payload,
+    usage_value,
+)
+from wef_backend.features.admin.infrastructure.groq_provider import (
+    GroqAiProvider,
     GroqChatCompletionsAdapter,
     HTTPXChatCompletionsTransport,
 )
@@ -349,3 +358,91 @@ async def test_adapter_parse_failures_and_request_id_fallback() -> None:
     )
     assert parsed.request_id == "cmpl-from-body"
     assert parsed.token_input is None
+
+
+def test_groq_chat_completion_body_uses_strict_schema() -> None:
+    body = groq_chat_completion_body(
+        model=ALLOWED_GROQ_MODEL,
+        messages=({"role": "user", "content": "hello"},),
+        schema_name="ingestion_ai_parse",
+        schema={"type": "object"},
+        max_output_tokens=1500,
+    )
+    assert body["reasoning_effort"] == "low"
+    response_format = cast("dict[str, object]", body["response_format"])
+    json_schema = cast("dict[str, object]", response_format["json_schema"])
+    assert json_schema["strict"] is True
+
+
+def test_http_outcome_maps_status_codes() -> None:
+    assert http_outcome(429) is ProviderOutcome.RATE_LIMITED
+    assert http_outcome(403) is ProviderOutcome.QUOTA
+    assert http_outcome(422) is ProviderOutcome.REFUSAL
+    assert http_outcome(503) is ProviderOutcome.NETWORK
+
+
+def test_parse_completion_payload_accepts_content_json() -> None:
+    parsed = parse_completion_payload(
+        {"choices": [{"message": {"content": '{"ok": true}'}}]},
+    )
+    assert parsed == {"ok": True}
+
+
+def test_usage_value_returns_none_for_missing_usage() -> None:
+    assert usage_value({}, "prompt_tokens") is None
+    assert usage_value({"usage": {}}, "prompt_tokens") is None
+
+
+def test_header_request_id_prefers_response_header() -> None:
+    assert header_request_id({"X-Request-Id": "req-from-header"}, {}) == "req-from-header"
+    assert header_request_id({}, {"id": "req-from-body"}) == "req-from-body"
+
+
+async def test_groq_ai_provider_complete_many_without_batch_api() -> None:
+    transport = ScriptedTransport([(200, _completion({"ok": True}), {})])
+    provider = GroqAiProvider("gsk_test_secret_value", transport=transport, use_batch_api=False)
+    request = BatchCompletionRequest(
+        custom_id="a",
+        model=ALLOWED_GROQ_MODEL,
+        messages=({"role": "user", "content": "hello"},),
+        schema_name="ingestion_ai_parse",
+        schema={"type": "object"},
+        max_output_tokens=1500,
+    )
+    results = await provider.complete_many((request,))
+    assert len(results) == 1
+    assert results[0].error is None
+    assert results[0].completion is not None
+    assert results[0].completion.payload == {"ok": True}
+
+
+async def test_chat_adapter_complete_many_falls_back_sequentially() -> None:
+    transport = ScriptedTransport([(200, _completion({"ok": True}), {})])
+    adapter = GroqChatCompletionsAdapter("gsk_test_secret_value", transport=transport)
+    request = BatchCompletionRequest(
+        custom_id="a",
+        model=ALLOWED_GROQ_MODEL,
+        messages=({"role": "user", "content": "hello"},),
+        schema_name="ingestion_ai_parse",
+        schema={"type": "object"},
+        max_output_tokens=1500,
+    )
+    results = await adapter.complete_many((request,))
+    assert results[0].completion is not None
+
+
+async def test_chat_adapter_complete_many_records_provider_errors() -> None:
+    transport = ScriptedTransport([(429, {}, {})])
+    adapter = GroqChatCompletionsAdapter("gsk_test_secret_value", transport=transport)
+    request = BatchCompletionRequest(
+        custom_id="a",
+        model=ALLOWED_GROQ_MODEL,
+        messages=({"role": "user", "content": "hello"},),
+        schema_name="ingestion_ai_parse",
+        schema={"type": "object"},
+        max_output_tokens=1500,
+    )
+    results = await adapter.complete_many((request,))
+    assert results[0].completion is None
+    assert results[0].error is not None
+    assert results[0].error.outcome is ProviderOutcome.RATE_LIMITED

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import time
 from typing import TYPE_CHECKING, Protocol
 
@@ -10,9 +9,22 @@ import httpx
 
 from wef_backend.features.admin.application.ai_review import (
     ALLOWED_GROQ_MODEL,
+    BatchCompletionRequest,
+    BatchCompletionResult,
     ProviderOutcome,
     ProviderRequestError,
     StructuredCompletion,
+)
+from wef_backend.features.admin.infrastructure.groq_batch_provider import (
+    GroqBatchCompletionsAdapter,
+    GroqBatchSettings,
+)
+from wef_backend.features.admin.infrastructure.groq_common import (
+    GROQ_CHAT_COMPLETIONS_URL,
+    groq_chat_completion_body,
+    header_request_id,
+    parse_completion_payload,
+    usage_value,
 )
 
 if TYPE_CHECKING:
@@ -22,7 +34,6 @@ _HTTP_CLIENT_ERROR = 400
 _HTTP_SERVER_ERROR = 500
 _HTTP_TOO_MANY_REQUESTS = 429
 _HTTP_QUOTA_STATUSES = frozenset({401, 402, 403})
-GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
 class ChatCompletionsTransport(Protocol):
@@ -97,22 +108,13 @@ class GroqChatCompletionsAdapter:
         """Call Groq once, retrying only a single transient timeout or 5xx."""
         if model != ALLOWED_GROQ_MODEL:
             raise ProviderRequestError(ProviderOutcome.SCHEMA)
-        body: dict[str, object] = {
-            "model": ALLOWED_GROQ_MODEL,
-            "messages": list(messages),
-            "temperature": 0,
-            "stream": False,
-            "reasoning_effort": "low",
-            "max_completion_tokens": max_output_tokens,
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": schema_name,
-                    "strict": True,
-                    "schema": schema,
-                },
-            },
-        }
+        body = groq_chat_completion_body(
+            model=model,
+            messages=messages,
+            schema_name=schema_name,
+            schema=schema,
+            max_output_tokens=max_output_tokens,
+        )
         headers = {
             "Authorization": f"Bearer {self._api_key}",
             "Content-Type": "application/json",
@@ -128,13 +130,13 @@ class GroqChatCompletionsAdapter:
             raise ProviderRequestError(ProviderOutcome.REFUSAL)
         if status >= _HTTP_SERVER_ERROR:
             raise ProviderRequestError(ProviderOutcome.NETWORK)
-        parsed = _parse_completion_payload(payload)
+        parsed = parse_completion_payload(payload)
         return StructuredCompletion(
             payload=parsed,
-            token_input=_usage_value(payload, "prompt_tokens"),
-            token_output=_usage_value(payload, "completion_tokens"),
+            token_input=usage_value(payload, "prompt_tokens"),
+            token_output=usage_value(payload, "completion_tokens"),
             latency_ms=latency_ms,
-            request_id=_header_request_id(response_headers, payload),
+            request_id=header_request_id(response_headers, payload),
         )
 
     async def _post_with_retry(
@@ -167,52 +169,116 @@ class GroqChatCompletionsAdapter:
             )
         return status, payload, response_headers
 
-
-def _parse_completion_payload(payload: object) -> object:
-    if not isinstance(payload, dict):
-        raise ProviderRequestError(ProviderOutcome.SCHEMA)
-    choices = payload.get("choices")
-    if not isinstance(choices, list) or not choices:
-        raise ProviderRequestError(ProviderOutcome.SCHEMA)
-    first = choices[0]
-    if not isinstance(first, dict):
-        raise ProviderRequestError(ProviderOutcome.SCHEMA)
-    message = first.get("message")
-    if not isinstance(message, dict):
-        raise ProviderRequestError(ProviderOutcome.SCHEMA)
-    if message.get("refusal"):
-        raise ProviderRequestError(ProviderOutcome.REFUSAL)
-    content = message.get("content")
-    parsed = message.get("parsed")
-    if isinstance(parsed, dict):
-        return parsed
-    if isinstance(content, str):
-        try:
-            decoded = json.loads(content)
-        except json.JSONDecodeError as error:
-            raise ProviderRequestError(ProviderOutcome.SCHEMA) from error
-        return decoded
-    raise ProviderRequestError(ProviderOutcome.SCHEMA)
-
-
-def _usage_value(payload: object, key: str) -> int | None:
-    if not isinstance(payload, dict):
-        return None
-    usage = payload.get("usage")
-    if not isinstance(usage, dict):
-        return None
-    value = usage.get(key)
-    if isinstance(value, int):
-        return value
-    return None
+    async def complete_many(
+        self,
+        requests: tuple[BatchCompletionRequest, ...],
+    ) -> tuple[BatchCompletionResult, ...]:
+        """Fall back to sequential chat completions when batch is unavailable."""
+        results: list[BatchCompletionResult] = []
+        for request in requests:
+            try:
+                completion = await self.complete(
+                    model=request.model,
+                    messages=request.messages,
+                    schema_name=request.schema_name,
+                    schema=request.schema,
+                    max_output_tokens=request.max_output_tokens,
+                )
+            except ProviderRequestError as error:
+                results.append(
+                    BatchCompletionResult(
+                        custom_id=request.custom_id,
+                        completion=None,
+                        error=error,
+                    ),
+                )
+            else:
+                results.append(
+                    BatchCompletionResult(
+                        custom_id=request.custom_id,
+                        completion=completion,
+                        error=None,
+                    ),
+                )
+        return tuple(results)
 
 
-def _header_request_id(headers: Mapping[str, str], payload: object) -> str | None:
-    for key, value in headers.items():
-        if key.lower() == "x-request-id" and value:
-            return value[:128]
-    if isinstance(payload, dict):
-        identifier = payload.get("id")
-        if isinstance(identifier, str):
-            return identifier[:128]
-    return None
+class GroqAiProvider:
+    """Groq provider: synchronous chat for interactive work, batch API for bulk."""
+
+    def __init__(
+        self,
+        api_key: str,
+        *,
+        transport: ChatCompletionsTransport | None = None,
+        timeout_seconds: float = 30.0,
+        batch_settings: GroqBatchSettings | None = None,
+        use_batch_api: bool = True,
+    ) -> None:
+        """Store chat and batch adapters behind one port."""
+        self._use_batch_api = use_batch_api
+        self._chat = GroqChatCompletionsAdapter(
+            api_key,
+            transport=transport,
+            timeout_seconds=timeout_seconds,
+        )
+        self._batch = GroqBatchCompletionsAdapter(
+            api_key,
+            timeout_seconds=timeout_seconds,
+            settings=batch_settings,
+        )
+
+    async def complete(
+        self,
+        *,
+        model: str,
+        messages: tuple[dict[str, str], ...],
+        schema_name: str,
+        schema: dict[str, object],
+        max_output_tokens: int,
+    ) -> StructuredCompletion:
+        """Return one synchronous completion for owner-interactive flows."""
+        return await self._chat.complete(
+            model=model,
+            messages=messages,
+            schema_name=schema_name,
+            schema=schema,
+            max_output_tokens=max_output_tokens,
+        )
+
+    async def complete_many(
+        self,
+        requests: tuple[BatchCompletionRequest, ...],
+    ) -> tuple[BatchCompletionResult, ...]:
+        """Use Groq Batch API whenever enabled; otherwise fall back sequentially."""
+        if not requests:
+            return ()
+        if self._use_batch_api:
+            return await self._batch.complete_many(requests)
+        results: list[BatchCompletionResult] = []
+        for request in requests:
+            try:
+                completion = await self._chat.complete(
+                    model=request.model,
+                    messages=request.messages,
+                    schema_name=request.schema_name,
+                    schema=request.schema,
+                    max_output_tokens=request.max_output_tokens,
+                )
+            except ProviderRequestError as error:
+                results.append(
+                    BatchCompletionResult(
+                        custom_id=request.custom_id,
+                        completion=None,
+                        error=error,
+                    ),
+                )
+            else:
+                results.append(
+                    BatchCompletionResult(
+                        custom_id=request.custom_id,
+                        completion=completion,
+                        error=None,
+                    ),
+                )
+        return tuple(results)
