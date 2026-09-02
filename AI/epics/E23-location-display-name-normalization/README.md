@@ -2,11 +2,11 @@
 schema: ai-workflow/epic@1
 id: E23
 title: "Location display name normalization"
-status: planning
+status: ready
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
-implementation_plan: null
+implementation_plan: IMPLEMENTATION_PLAN.md
 ---
 
 # E23: Location display name normalization
@@ -41,7 +41,7 @@ As a buyer browsing the map, I want every pin and result to show a clean,
 consistent place name so that I can trust the catalog and compare locations
 without parsing raw source text.
 
-## Scope (candidate; gated behind spike approval)
+## Scope
 
 - Canonical display-name rules for new locations: map Cyrillic labels
   (`ул.`, `Улица:`, `Район …`) to Polish-forward templates, strip markdown
@@ -59,16 +59,18 @@ without parsing raw source text.
 - No bulk edits through generic admin forms (E18 console remains the
   curation path).
 - Translating street names themselves; only label templates and decoration.
+- Near-suburb badge/filter product work (deferred).
 
-## Owner decision points
+## Planning state
 
-1. Approve the canonical naming template (shape, language policy, degenerate
-   cases).
-2. Near-suburb coverage: keep the 6 out-of-boundary locations, filter them, or
-   badge them as "nearby" (product-scope call, independent of naming).
-3. Confirm verified-location exemption from the backfill.
+- [Spike revision 1](SPIKE.md) is owner-approved.
+- [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is drafted and awaits
+  owner approval before code.
+- Tasks:
+  - [E23-T1 — Add canonical location display-name normalization](tasks/E23-T1-display-name-normalization.md) (`ready`, blocked on plan approval)
+  - [E23-T2 — Backfill non-verified location display names](tasks/E23-T2-display-name-backfill.md) (`draft`, depends on E23-T1)
 
 ## Dependencies
 
 - E17 raw-archive replay (backfill provenance and rename mechanism).
-- E18 owner location console (curation of the 3 fragment names).
+- E18 owner location console (curation of residual fragment names).

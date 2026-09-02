@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E23
 title: "Location display name normalization research"
-status: proposed
+status: approved
 revision: 1
 owner: owner
 research_only: true
@@ -19,11 +19,11 @@ proposed_task_ids:
   - E23-T2
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Flippylolz"
+  decided_at: "2026-09-02T17:34:00Z"
+  approved_revision: 1
+  evidence: "Owner message in Cursor: '1 and 2' selecting E23 after the recommended Option 2 spike direction, with Polish-forward templates, verified-location backfill exemption, and near-suburb keep (E23-T3 deferred)."
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -98,6 +98,16 @@ cites its raw evidence span), the backfill is a one-time bounded migration
 excluding `review_status="verified"` locations, and the 3 fragment-named
 locations route through the E18 console as curation cases.
 
+## Binding owner decisions (revision 1)
+
+1. **Canonical template:** Polish-forward Option 2 — map Cyrillic labels to
+   Polish equivalents, strip bullets/emoji/decoration, prefer
+   `street, district, Warszawa` ordering. Do not transliterate Polish street
+   names that already appear in Latin script.
+2. **Verified locations:** exempt from bulk backfill; E18 curated names remain.
+3. **Near-suburb locations:** keep visible (status quo). Optional badge/filter
+   work is deferred outside E23-T1/T2.
+
 ## Proposed task boundaries
 
 - **E23-T1**: canonical display-name rules in the ingestion path (parser
@@ -106,8 +116,6 @@ locations route through the E18 console as curation cases.
 - **E23-T2**: one-time backfill renaming non-verified existing locations from
   archived raw evidence, with before/after report and hash-stability guard;
   replay runbook entry.
-- **E23-T3 (optional, product decision)**: near-suburb handling — keep, filter,
-  or badge the 6 out-of-boundary locations.
 
 ## Risks and open questions
 
@@ -117,8 +125,7 @@ locations route through the E18 console as curation cases.
 - Normalization must not alter `normalized_address_hash`; a hash-changing bug
   would fork locations.
 - Cyrillic street names themselves (e.g. `ул. Tuwima`) mix a Russian label with
-  a Polish street name; the template maps but the owner may want transliteration
-  policy decided explicitly.
+  a Polish street name; the template maps but street tokens stay as written.
 - Search/analytics that match on `display_name` text would see historical
   discontinuity.
 
@@ -134,9 +141,10 @@ locations route through the E18 console as curation cases.
       naming in `_resolve_location`.
 - [x] Production magnitudes measured (639 / 3 / 6).
 - [x] Options and recommendation documented.
-- [ ] Owner approves the spike revision and the canonical template direction.
+- [x] Owner approves the spike revision and the canonical template direction.
 
 ## Owner decision
 
-Pending. Requires: spike approval, canonical template choice, verified-location
-exemption confirmation, and the near-suburb product call.
+Flippylolz approved spike revision 1 on 2026-09-02 via Cursor message `1 and 2`,
+accepting Option 2 with the binding decisions above. Recorded in YAML
+`approval`.
