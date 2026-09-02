@@ -51,7 +51,10 @@ from wef_backend.features.admin.infrastructure import (
     SQLAlchemyPlaceAiReviewStore,
     SQLAlchemyRevealAuditReader,
 )
-from wef_backend.features.admin.infrastructure.groq_provider import GroqChatCompletionsAdapter
+from wef_backend.features.admin.infrastructure.groq_batch_provider import GroqBatchSettings
+from wef_backend.features.admin.infrastructure.groq_provider import (
+    GroqAiProvider,
+)
 from wef_backend.features.catalog.application import (
     BrowseLocationOffers,
     BrowseViewportListings,
@@ -194,10 +197,16 @@ def build_services(settings: Settings | None = None) -> AppServices:
         zdr_verified=runtime_settings.groq_zdr_verified,
         model=runtime_settings.groq_model,
         api_key_present=bool(groq_key),
+        batch_chunk_size=runtime_settings.groq_batch_chunk_size,
     )
-    groq_provider = GroqChatCompletionsAdapter(
+    groq_provider = GroqAiProvider(
         groq_key or "disabled",
         timeout_seconds=runtime_settings.groq_timeout_seconds,
+        use_batch_api=runtime_settings.groq_use_batch_api,
+        batch_settings=GroqBatchSettings(
+            poll_interval_seconds=runtime_settings.groq_batch_poll_interval_seconds,
+            max_wait_seconds=runtime_settings.groq_batch_max_wait_seconds,
+        ),
     )
     generate_place_review = GeneratePlaceReview(
         place_ai_review_store,

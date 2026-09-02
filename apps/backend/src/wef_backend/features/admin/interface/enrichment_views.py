@@ -190,7 +190,7 @@ class OfferEnrichmentAdminView(CustomView):
                     "<form method='post' action='/admin/offer-enrichment/process'>"
                     f"{csrf_input(request)}"
                     f"<input type='hidden' name='batch_id' value='{batch.id}' />"
-                    "<button type='submit'>Process next item</button></form> "
+                    "<button type='submit'>Process next batch</button></form> "
                 )
             if batch.state in {BatchState.QUEUED, BatchState.RUNNING}:
                 controls += (

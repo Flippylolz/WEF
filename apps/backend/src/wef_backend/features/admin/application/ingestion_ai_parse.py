@@ -22,6 +22,7 @@ from wef_backend.features.admin.application.admin_ops import (
 from wef_backend.features.admin.application.ai_review import (
     ALLOWED_GROQ_MODEL,
     AiCurationRuntime,
+    BatchCompletionRequest,
     ChatCompletionsPort,
     ProviderOutcome,
     ProviderRequestError,
@@ -1067,6 +1068,239 @@ class GenerateIngestionAiParse:
             reason="ok",
             run=run,
         )
+
+    async def generate_batch(  # noqa: PLR0912
+        self,
+        *,
+        owner_id: UUID,
+        source_message_revision_ids: tuple[UUID, ...],
+        request_id: UUID,
+    ) -> tuple[IngestionAiParseOutcome, ...]:
+        """Generate proposals for many revisions with one Groq Batch job when possible."""
+        if not self._runtime.active:
+            await self._record(
+                owner_id,
+                source_message_revision_ids[0] if source_message_revision_ids else UUID(int=0),
+                request_id,
+                AdminOutcome.DENIED,
+            )
+            return tuple(
+                IngestionAiParseOutcome(
+                    status=IngestionAiParseStatus.DENIED,
+                    reason="disabled",
+                    run=None,
+                )
+                for _ in source_message_revision_ids
+            )
+
+        now = self._clock.now()
+        used = await self._store.count_owner_runs_since(owner_id, since=_day_start(now))
+        remaining_budget = max(0, self._runtime.daily_limit - used)
+
+        pending: list[tuple[RevisionParseContext, str, UUID, UUID]] = []
+        outcomes: dict[UUID, IngestionAiParseOutcome] = {}
+
+        for revision_id in source_message_revision_ids:
+            if len(pending) >= remaining_budget:
+                outcomes[revision_id] = IngestionAiParseOutcome(
+                    status=IngestionAiParseStatus.DENIED,
+                    reason="daily_limit",
+                    run=None,
+                )
+                continue
+            context = await self._store.get_revision_context(revision_id)
+            if context is None:
+                await self._record(owner_id, revision_id, request_id, AdminOutcome.DENIED)
+                outcomes[revision_id] = IngestionAiParseOutcome(
+                    status=IngestionAiParseStatus.DENIED,
+                    reason="revision_not_found",
+                    run=None,
+                )
+                continue
+            if await self._store.has_primary_offer(context.message_id):
+                await self._record(owner_id, revision_id, request_id, AdminOutcome.DENIED)
+                outcomes[revision_id] = IngestionAiParseOutcome(
+                    status=IngestionAiParseStatus.DENIED,
+                    reason="offer_exists",
+                    run=None,
+                )
+                continue
+            if await self._store.get_pending_run(revision_id) is not None:
+                await self._record(owner_id, revision_id, request_id, AdminOutcome.DENIED)
+                outcomes[revision_id] = IngestionAiParseOutcome(
+                    status=IngestionAiParseStatus.DENIED,
+                    reason="in_flight",
+                    run=None,
+                )
+                continue
+            try:
+                masked_text = mask_source_text_for_provider(context.text_original)
+            except AdminDeniedError:
+                await self._record(owner_id, revision_id, request_id, AdminOutcome.DENIED)
+                outcomes[revision_id] = IngestionAiParseOutcome(
+                    status=IngestionAiParseStatus.DENIED,
+                    reason="masking_failed",
+                    run=None,
+                )
+                continue
+            pending.append((context, masked_text, uuid4(), revision_id))
+
+        if pending:
+            requests = tuple(
+                BatchCompletionRequest(
+                    custom_id=str(revision_id),
+                    model=ALLOWED_GROQ_MODEL,
+                    messages=_provider_messages(context, masked_text),
+                    schema_name="ingestion_ai_parse",
+                    schema=ingestion_ai_parse_json_schema(),
+                    max_output_tokens=self._runtime.max_output_tokens,
+                )
+                for context, masked_text, _run_id, revision_id in pending
+            )
+            batch_results = await self._provider.complete_many(requests)
+            by_custom_id = {result.custom_id: result for result in batch_results}
+            for context, masked_text, run_id, revision_id in pending:
+                result = by_custom_id.get(str(revision_id))
+                if result is None or result.error is not None:
+                    outcome = (
+                        result.error.outcome
+                        if result is not None and result.error is not None
+                        else ProviderOutcome.SCHEMA
+                    )
+                    failed = _failed_run(
+                        run_id=run_id,
+                        owner_id=owner_id,
+                        context=context,
+                        now=now,
+                        checksum=context.checksum,
+                        masked_text=masked_text,
+                        outcome=outcome,
+                    )
+                    await self._store.insert_run(failed)
+                    await self._record(
+                        owner_id,
+                        revision_id,
+                        request_id,
+                        AdminOutcome.FAILED,
+                    )
+                    outcomes[revision_id] = IngestionAiParseOutcome(
+                        status=IngestionAiParseStatus.FAILED,
+                        reason=outcome.value,
+                        run=failed,
+                    )
+                    continue
+                completion = result.completion
+                assert completion is not None
+                try:
+                    verdict, fields, warnings = parse_ingestion_ai_parse_payload(
+                        completion.payload,
+                    )
+                except ProviderRequestError as error:
+                    failed = _failed_run(
+                        run_id=run_id,
+                        owner_id=owner_id,
+                        context=context,
+                        now=now,
+                        checksum=context.checksum,
+                        masked_text=masked_text,
+                        outcome=error.outcome,
+                    )
+                    await self._store.insert_run(failed)
+                    await self._record(
+                        owner_id,
+                        revision_id,
+                        request_id,
+                        AdminOutcome.FAILED,
+                    )
+                    outcomes[revision_id] = IngestionAiParseOutcome(
+                        status=IngestionAiParseStatus.FAILED,
+                        reason=error.outcome.value,
+                        run=failed,
+                    )
+                    continue
+                listing_proposed = verdict == IngestionAiParseVerdict.LISTING_PROPOSED.value
+                if listing_proposed and _missing_apply_fields(fields):
+                    failed = _failed_run(
+                        run_id=run_id,
+                        owner_id=owner_id,
+                        context=context,
+                        now=now,
+                        checksum=context.checksum,
+                        masked_text=masked_text,
+                        outcome=ProviderOutcome.SCHEMA,
+                        proposed_fields=fields,
+                        verdict=verdict,
+                        warnings=warnings,
+                        token_input=completion.token_input,
+                        token_output=completion.token_output,
+                        provider_latency_ms=completion.latency_ms,
+                        provider_request_id=completion.request_id,
+                    )
+                    await self._store.insert_run(failed)
+                    await self._record(
+                        owner_id,
+                        revision_id,
+                        request_id,
+                        AdminOutcome.FAILED,
+                    )
+                    outcomes[revision_id] = IngestionAiParseOutcome(
+                        status=IngestionAiParseStatus.FAILED,
+                        reason="proposal_incomplete",
+                        run=failed,
+                    )
+                    continue
+                run = IngestionAiParseRun(
+                    id=run_id,
+                    owner_user_id=owner_id,
+                    source_message_id=context.message_id,
+                    source_message_revision_id=context.revision_id,
+                    external_message_id=context.external_message_id,
+                    state=ReviewRunState.PENDING,
+                    model=ALLOWED_GROQ_MODEL,
+                    prompt_version=INGESTION_AI_PARSE_PROMPT_VERSION,
+                    schema_version=INGESTION_AI_PARSE_SCHEMA_VERSION,
+                    input_fingerprint=_fingerprint(context.checksum, masked_text),
+                    source_checksum=context.checksum,
+                    proposed_fields=fields,
+                    verdict=verdict,
+                    warnings=warnings,
+                    token_input=completion.token_input,
+                    token_output=completion.token_output,
+                    provider_latency_ms=completion.latency_ms,
+                    provider_outcome=ProviderOutcome.SUCCEEDED,
+                    provider_request_id=completion.request_id,
+                    created_at=now,
+                    expires_at=now + _PARSE_TTL,
+                    applied_at=None,
+                    offer_id=None,
+                )
+                inserted = await self._store.insert_run(run)
+                if not inserted:
+                    await self._record(
+                        owner_id,
+                        revision_id,
+                        request_id,
+                        AdminOutcome.DENIED,
+                    )
+                    outcomes[revision_id] = IngestionAiParseOutcome(
+                        status=IngestionAiParseStatus.DENIED,
+                        reason="in_flight",
+                        run=None,
+                    )
+                    continue
+                await self._record(
+                    owner_id,
+                    revision_id,
+                    request_id,
+                    AdminOutcome.ALLOWED,
+                )
+                outcomes[revision_id] = IngestionAiParseOutcome(
+                    status=IngestionAiParseStatus.GENERATED,
+                    reason="ok",
+                    run=run,
+                )
+
+        return tuple(outcomes[revision_id] for revision_id in source_message_revision_ids)
 
 
 class ApplyIngestionAiParse:

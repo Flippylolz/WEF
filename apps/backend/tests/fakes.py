@@ -31,6 +31,8 @@ from wef_backend.features.admin.application.ai_review import (
     AiApplyStatus,
     AiCurationRuntime,
     ApplyPlaceReview,
+    BatchCompletionRequest,
+    BatchCompletionResult,
     GeneratePlaceReview,
     GetPlaceReview,
     LocationAiSnapshot,
@@ -864,6 +866,39 @@ class FakeChatCompletions:
             request_id="fake-request",
         )
 
+    async def complete_many(
+        self,
+        requests: tuple[BatchCompletionRequest, ...],
+    ) -> tuple[BatchCompletionResult, ...]:
+        """Return one scripted result per request."""
+        results: list[BatchCompletionResult] = []
+        for request in requests:
+            try:
+                completion = await self.complete(
+                    model=request.model,
+                    messages=request.messages,
+                    schema_name=request.schema_name,
+                    schema=request.schema,
+                    max_output_tokens=request.max_output_tokens,
+                )
+            except ProviderRequestError as error:
+                results.append(
+                    BatchCompletionResult(
+                        custom_id=request.custom_id,
+                        completion=None,
+                        error=error,
+                    ),
+                )
+            else:
+                results.append(
+                    BatchCompletionResult(
+                        custom_id=request.custom_id,
+                        completion=completion,
+                        error=None,
+                    ),
+                )
+        return tuple(results)
+
 
 @dataclass
 class FakePlaceAiReviewStore:
@@ -1069,6 +1104,24 @@ class FakeOfferAiEnrichmentStore:
         ]
         queued.sort(key=lambda item: item.ordinal)
         return queued[0] if queued else None
+
+    async def next_queued_item(self, batch_id: UUID) -> OfferAiEnrichmentItem | None:
+        queued = [
+            item
+            for item in self.items.values()
+            if item.batch_id == batch_id and item.state is ItemState.QUEUED
+        ]
+        queued.sort(key=lambda item: item.ordinal)
+        return queued[0] if queued else None
+
+    async def next_processing_item(self, batch_id: UUID) -> OfferAiEnrichmentItem | None:
+        processing = [
+            item
+            for item in self.items.values()
+            if item.batch_id == batch_id and item.state is ItemState.PROCESSING
+        ]
+        processing.sort(key=lambda item: item.ordinal)
+        return processing[0] if processing else None
 
     async def get_item(self, item_id: UUID) -> OfferAiEnrichmentItem | None:
         return self.items.get(item_id)

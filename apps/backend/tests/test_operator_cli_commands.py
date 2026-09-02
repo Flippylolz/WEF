@@ -245,6 +245,7 @@ def test_batch_ingestion_ai_parse_command_prints_summary(
         return BatchIngestionAiParseSummary(
             linked_existing_offers=2,
             candidates_considered=3,
+            groq_batch_jobs=1,
             generated=2,
             applied=1,
             skipped={"offer_exists": 1},
@@ -254,5 +255,6 @@ def test_batch_ingestion_ai_parse_command_prints_summary(
     batch_ingestion_ai_parse_command.main([])
     payload = json.loads(capsys.readouterr().out)
     assert payload["linked_existing_offers"] == 2
+    assert payload["groq_batch_jobs"] == 1
     assert payload["applied"] == 1
     assert payload["skipped"] == {"offer_exists": 1}

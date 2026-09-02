@@ -109,25 +109,12 @@ def assert_deployment_gate() -> None:
     )
 
 
-def assert_release_configuration() -> None:
-    """Prove complete validation and mode-0600 secret material."""
-    environment = {
-        "POSTGRES_DB": "wef",
-        "POSTGRES_PASSWORD": "safe:/password-0123456789abcdef",
-        "POSTGRES_USER": "wef",
-        "WEF_ADMIN_SESSION_SECRET": "fixture-admin-session-secret-0123456789abcdef",
-        "WEF_ALLOW_SYNTHETIC_SEED": "false",
-        "WEF_CONTACT_ENCRYPTION_KEY": "0123456789abcdef" * 4,
-        "WEF_CONTACT_HMAC_KEY": "fedcba9876543210" * 4,
-        "WEF_GEOAPIFY_API_KEY": "fixture-geoapify-key-0123456789",
-        "WEF_LOG_LEVEL": "INFO",
-        "WEF_TELEGRAM_API_HASH": "0123456789abcdef0123456789abcdef",
-        "WEF_TELEGRAM_API_ID": "12345678",
-    }
-    previous = {key: os.environ.get(key) for key in environment}
-    os.environ.update(environment)
+def _build_fixture_values(extra_environment: dict[str, str]) -> dict[str, str]:
+    """Build one validated release environment from fixture inputs."""
+    previous = {key: os.environ.get(key) for key in extra_environment}
+    os.environ.update(extra_environment)
     try:
-        values = build_values(
+        return build_values(
             ConfigBuildContext(
                 release=ReleaseContext(
                     root=Path("/home/nuc/wef"),
@@ -147,6 +134,41 @@ def assert_release_configuration() -> None:
             else:
                 os.environ[key] = value
 
+
+def _assert_blank_groq_batch_defaults(groq_environment: dict[str, str]) -> None:
+    """Prove unset GitHub batch vars fall back to code defaults."""
+    with_blank_batch = _build_fixture_values(
+        {
+            **groq_environment,
+            "WEF_GROQ_USE_BATCH_API": "false",
+            "WEF_GROQ_BATCH_CHUNK_SIZE": "",
+            "WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS": "",
+            "WEF_GROQ_BATCH_MAX_WAIT_SECONDS": "",
+        },
+    )
+    assert with_blank_batch["WEF_GROQ_USE_BATCH_API"] == "false"
+    assert with_blank_batch["WEF_GROQ_BATCH_CHUNK_SIZE"] == "20"
+    assert with_blank_batch["WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS"] == "2"
+    assert with_blank_batch["WEF_GROQ_BATCH_MAX_WAIT_SECONDS"] == "3600"
+
+
+def assert_release_configuration() -> None:
+    """Prove complete validation and mode-0600 secret material."""
+    environment = {
+        "POSTGRES_DB": "wef",
+        "POSTGRES_PASSWORD": "safe:/password-0123456789abcdef",
+        "POSTGRES_USER": "wef",
+        "WEF_ADMIN_SESSION_SECRET": "fixture-admin-session-secret-0123456789abcdef",
+        "WEF_ALLOW_SYNTHETIC_SEED": "false",
+        "WEF_CONTACT_ENCRYPTION_KEY": "0123456789abcdef" * 4,
+        "WEF_CONTACT_HMAC_KEY": "fedcba9876543210" * 4,
+        "WEF_GEOAPIFY_API_KEY": "fixture-geoapify-key-0123456789",
+        "WEF_LOG_LEVEL": "INFO",
+        "WEF_TELEGRAM_API_HASH": "0123456789abcdef0123456789abcdef",
+        "WEF_TELEGRAM_API_ID": "12345678",
+    }
+    values = _build_fixture_values(environment)
+
     assert "safe%3A%2Fpassword-0123456789abcdef" in values["WEF_DATABASE_URL"]
     assert values["WEF_GEOAPIFY_API_KEY"] == "fixture-geoapify-key-0123456789"
     assert "WEF_GROQ_API_KEY" not in values
@@ -159,31 +181,13 @@ def assert_release_configuration() -> None:
         "WEF_GROQ_ZDR_VERIFIED": "false",
         "WEF_GROQ_TIMEOUT_SECONDS": "30",
     }
-    previous_with_groq = {key: os.environ.get(key) for key in groq_environment}
-    os.environ.update(groq_environment)
-    try:
-        with_groq = build_values(
-            ConfigBuildContext(
-                release=ReleaseContext(
-                    root=Path("/home/nuc/wef"),
-                    release_dir=Path(f"/home/nuc/wef/releases/{RELEASE_SHA}"),
-                    release_sha=RELEASE_SHA,
-                    public_port=3100,
-                ),
-                bind_address="0.0.0.0",
-                backend_image=f"ghcr.io/flippylolz/wef-backend@{BACKEND_DIGEST}",
-                web_image=f"ghcr.io/flippylolz/wef-web@{WEB_DIGEST}",
-            ),
-        )
-    finally:
-        for key, value in previous_with_groq.items():
-            if value is None:
-                os.environ.pop(key, None)
-            else:
-                os.environ[key] = value
+    with_groq = _build_fixture_values(groq_environment)
     assert with_groq["WEF_GROQ_API_KEY"].startswith("gsk_fixture")
     assert with_groq["WEF_AI_CURATION_ENABLED"] == "false"
     assert with_groq["WEF_GROQ_ZDR_VERIFIED"] == "false"
+    assert with_groq["WEF_GROQ_USE_BATCH_API"] == "true"
+    assert with_groq["WEF_GROQ_BATCH_CHUNK_SIZE"] == "20"
+    _assert_blank_groq_batch_defaults(groq_environment)
 
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "production.env"
