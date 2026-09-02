@@ -743,3 +743,33 @@ def test_property_type_conflict_emits_warning_and_unknown() -> None:
         and warning.field_name == "property_type"
         for warning in result.warnings
     )
+
+
+def test_property_type_reads_labeled_value_lines() -> None:
+    """Explicit property-type labels classify before free-text heuristics."""
+    text = (
+        "🏙 Kupno | Rynek wtórny\n"
+        "Typ nieruchomości: mieszkanie\n"
+        "💰 Cena: 900 000 zł"
+    )
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.property_type is not None
+    assert listing.property_type.value is PropertyType.APARTMENT
+
+
+def test_property_type_label_conflict_emits_warning() -> None:
+    """Conflicting labeled property types emit one stable warning."""
+    text = (
+        "🏙 Kupno | Rynek wtórny\n"
+        "Typ nieruchomości: mieszkanie\n"
+        "Property type: house\n"
+        "💰 Cena: 900 000 zł"
+    )
+    result = extract_listing(_message(text))
+    assert any(
+        warning.code is ExtractionWarningCode.CONFLICTING_VALUES
+        and warning.field_name == "property_type"
+        for warning in result.warnings
+    )
