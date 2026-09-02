@@ -100,31 +100,8 @@ def _optional_bootstrap_owner(values: dict[str, str]) -> None:
     values["WEF_BOOTSTRAP_OWNER_PASSWORD"] = bootstrap_password
 
 
-def _optional_groq_curation(values: dict[str, str]) -> None:
-    """Attach optional Groq AI curation settings when a key is present.
-
-    Absence keeps AI off and must not fail deploy. Activation still requires
-    WEF_AI_CURATION_ENABLED=true and WEF_GROQ_ZDR_VERIFIED=true at runtime.
-    """
-    groq_api_key = os.environ.get("WEF_GROQ_API_KEY", "").strip()
-    if not groq_api_key:
-        return
-    if not SAFE_PROVIDER_KEY.fullmatch(groq_api_key):
-        msg = "Groq API key is not safe for a Compose environment file"
-        raise ValueError(msg)
-    model = os.environ.get("WEF_GROQ_MODEL", "openai/gpt-oss-20b").strip()
-    if model != "openai/gpt-oss-20b":
-        msg = "Groq model must be exactly openai/gpt-oss-20b"
-        raise ValueError(msg)
-    enabled = os.environ.get("WEF_AI_CURATION_ENABLED", "false").strip().lower()
-    zdr = os.environ.get("WEF_GROQ_ZDR_VERIFIED", "false").strip().lower()
-    if enabled not in {"true", "false"} or zdr not in {"true", "false"}:
-        msg = "Groq enablement flags must be true or false"
-        raise ValueError(msg)
-    timeout = os.environ.get("WEF_GROQ_TIMEOUT_SECONDS", "30").strip()
-    if not re.fullmatch(r"(?:[1-9]|[1-9][0-9]|1[01][0-9]|120)", timeout):
-        msg = "Groq timeout must be an integer from 1 to 120"
-        raise ValueError(msg)
+def _groq_batch_settings_from_environment() -> dict[str, str]:
+    """Read and validate optional Groq Batch API tuning from CI inputs."""
     use_batch_api = os.environ.get("WEF_GROQ_USE_BATCH_API", "true").strip().lower()
     if use_batch_api not in {"true", "false"}:
         msg = "Groq batch API flag must be true or false"
@@ -156,15 +133,45 @@ def _optional_groq_curation(values: dict[str, str]) -> None:
     ):
         msg = "Groq batch max wait must be an integer from 30 to 86400"
         raise ValueError(msg)
+    return {
+        "WEF_GROQ_USE_BATCH_API": use_batch_api,
+        "WEF_GROQ_BATCH_CHUNK_SIZE": chunk_size,
+        "WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS": poll_interval,
+        "WEF_GROQ_BATCH_MAX_WAIT_SECONDS": max_wait,
+    }
+
+
+def _optional_groq_curation(values: dict[str, str]) -> None:
+    """Attach optional Groq AI curation settings when a key is present.
+
+    Absence keeps AI off and must not fail deploy. Activation still requires
+    WEF_AI_CURATION_ENABLED=true and WEF_GROQ_ZDR_VERIFIED=true at runtime.
+    """
+    groq_api_key = os.environ.get("WEF_GROQ_API_KEY", "").strip()
+    if not groq_api_key:
+        return
+    if not SAFE_PROVIDER_KEY.fullmatch(groq_api_key):
+        msg = "Groq API key is not safe for a Compose environment file"
+        raise ValueError(msg)
+    model = os.environ.get("WEF_GROQ_MODEL", "openai/gpt-oss-20b").strip()
+    if model != "openai/gpt-oss-20b":
+        msg = "Groq model must be exactly openai/gpt-oss-20b"
+        raise ValueError(msg)
+    enabled = os.environ.get("WEF_AI_CURATION_ENABLED", "false").strip().lower()
+    zdr = os.environ.get("WEF_GROQ_ZDR_VERIFIED", "false").strip().lower()
+    if enabled not in {"true", "false"} or zdr not in {"true", "false"}:
+        msg = "Groq enablement flags must be true or false"
+        raise ValueError(msg)
+    timeout = os.environ.get("WEF_GROQ_TIMEOUT_SECONDS", "30").strip()
+    if not re.fullmatch(r"(?:[1-9]|[1-9][0-9]|1[01][0-9]|120)", timeout):
+        msg = "Groq timeout must be an integer from 1 to 120"
+        raise ValueError(msg)
     values["WEF_GROQ_API_KEY"] = groq_api_key
     values["WEF_GROQ_MODEL"] = model
     values["WEF_AI_CURATION_ENABLED"] = enabled
     values["WEF_GROQ_ZDR_VERIFIED"] = zdr
     values["WEF_GROQ_TIMEOUT_SECONDS"] = timeout
-    values["WEF_GROQ_USE_BATCH_API"] = use_batch_api
-    values["WEF_GROQ_BATCH_CHUNK_SIZE"] = chunk_size
-    values["WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS"] = poll_interval
-    values["WEF_GROQ_BATCH_MAX_WAIT_SECONDS"] = max_wait
+    values.update(_groq_batch_settings_from_environment())
 
 
 def build_values(
