@@ -187,6 +187,40 @@ def assert_release_configuration() -> None:
     assert with_groq["WEF_GROQ_USE_BATCH_API"] == "true"
     assert with_groq["WEF_GROQ_BATCH_CHUNK_SIZE"] == "20"
 
+    blank_batch_environment = {
+        **groq_environment,
+        "WEF_GROQ_USE_BATCH_API": "false",
+        "WEF_GROQ_BATCH_CHUNK_SIZE": "",
+        "WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS": "",
+        "WEF_GROQ_BATCH_MAX_WAIT_SECONDS": "",
+    }
+    previous_blank_batch = {key: os.environ.get(key) for key in blank_batch_environment}
+    os.environ.update(blank_batch_environment)
+    try:
+        with_blank_batch = build_values(
+            ConfigBuildContext(
+                release=ReleaseContext(
+                    root=Path("/home/nuc/wef"),
+                    release_dir=Path(f"/home/nuc/wef/releases/{RELEASE_SHA}"),
+                    release_sha=RELEASE_SHA,
+                    public_port=3100,
+                ),
+                bind_address="0.0.0.0",
+                backend_image=f"ghcr.io/flippylolz/wef-backend@{BACKEND_DIGEST}",
+                web_image=f"ghcr.io/flippylolz/wef-web@{WEB_DIGEST}",
+            ),
+        )
+    finally:
+        for key, value in previous_blank_batch.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+    assert with_blank_batch["WEF_GROQ_USE_BATCH_API"] == "false"
+    assert with_blank_batch["WEF_GROQ_BATCH_CHUNK_SIZE"] == "20"
+    assert with_blank_batch["WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS"] == "2"
+    assert with_blank_batch["WEF_GROQ_BATCH_MAX_WAIT_SECONDS"] == "3600"
+
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "production.env"
         write_environment(path, values)

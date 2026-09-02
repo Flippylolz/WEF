@@ -50,6 +50,12 @@ def required_environment(name: str) -> str:
     return value
 
 
+def _optional_env(name: str, default: str) -> str:
+    """Read one optional CI value, treating blank as the default."""
+    value = os.environ.get(name, default).strip()
+    return value or default
+
+
 def _require_contact_keys() -> tuple[str, str]:
     """Require distinct 32-byte hex contact crypto keys."""
     contact_encryption_key = required_environment("WEF_CONTACT_ENCRYPTION_KEY")
@@ -102,18 +108,18 @@ def _optional_bootstrap_owner(values: dict[str, str]) -> None:
 
 def _groq_batch_settings_from_environment() -> dict[str, str]:
     """Read and validate optional Groq Batch API tuning from CI inputs."""
-    use_batch_api = os.environ.get("WEF_GROQ_USE_BATCH_API", "true").strip().lower()
+    use_batch_api = _optional_env("WEF_GROQ_USE_BATCH_API", "true").lower()
     if use_batch_api not in {"true", "false"}:
         msg = "Groq batch API flag must be true or false"
         raise ValueError(msg)
-    chunk_size = os.environ.get("WEF_GROQ_BATCH_CHUNK_SIZE", "20").strip()
+    chunk_size = _optional_env("WEF_GROQ_BATCH_CHUNK_SIZE", "20")
     if (
         not chunk_size.isdigit()
         or not MIN_GROQ_BATCH_CHUNK_SIZE <= int(chunk_size) <= MAX_GROQ_BATCH_CHUNK_SIZE
     ):
         msg = "Groq batch chunk size must be an integer from 1 to 100"
         raise ValueError(msg)
-    poll_interval = os.environ.get("WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS", "2").strip()
+    poll_interval = _optional_env("WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS", "2")
     try:
         poll_seconds = float(poll_interval)
     except ValueError as error:
@@ -126,7 +132,7 @@ def _groq_batch_settings_from_environment() -> dict[str, str]:
     ):
         msg = "Groq batch poll interval must be from 0.5 to 60 seconds"
         raise ValueError(msg)
-    max_wait = os.environ.get("WEF_GROQ_BATCH_MAX_WAIT_SECONDS", "3600").strip()
+    max_wait = _optional_env("WEF_GROQ_BATCH_MAX_WAIT_SECONDS", "3600")
     if (
         not max_wait.isdigit()
         or not MIN_GROQ_BATCH_MAX_WAIT_SECONDS <= int(max_wait) <= MAX_GROQ_BATCH_MAX_WAIT_SECONDS
