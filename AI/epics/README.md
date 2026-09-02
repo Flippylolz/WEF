@@ -207,6 +207,11 @@ YAML `dependencies` contains task IDs only, as required by the workflow. Origina
 
 - E22-T1–T3: `done` through green-CI PR #302 (`f78bfb9`), follow-up dedupe fix PR #304 (`b28c9bc`), and operator runbook PR #306; M5; requirements `P-001`–`P-004`, `P-007`, `P-010`; decisions `ADR-002, ADR-004, ADR-005, ADR-006, ADR-012, ADR-013`; parser `e2-v8`, migration `20260902_0019`, shared filter semantics, URL-backed UI, and production backfill evidence — see [E22 README](E22-property-type-filter/README.md) and [PRODUCTION_EVIDENCE.md](E22-property-type-filter/PRODUCTION_EVIDENCE.md).
 
+### E23
+
+- [E23-T1](E23-location-display-name-normalization/tasks/E23-T1-display-name-normalization.md): P1 promoted/`ready` (blocked on plan approval); dependency `E17-T2`; M5; Polish-forward display-name rules for new locations.
+- [E23-T2](E23-location-display-name-normalization/tasks/E23-T2-display-name-backfill.md): P1 promoted/`draft`; dependency `E23-T1`; M5; non-verified location rename backfill.
+
 Bootstrap and production gates are preserved: E0-T1 depends on E1-T1 so its dedicated branch can exist; E0-T2 depends on E0-T1 and E1-T1; E1-T2 depends on E0-T2; E7-T1 depends on E1-T3/E5-T1 for the anonymous rehearsal, E7-T2 retains resolved D-001 plus E7-T1, and E7-T3 retains E1-T4/E7-T1/E7-T2. Promoted E7-T6 revision 3 retains E3-T5/E7-T2/E7-T4 and no longer depends on D-002 because it transfers materialized results without provider calls; it stages a non-public candidate and leaves activation to proposed E7-T11 behind the ADR-019 gates. Shared TLS proceeds E7-T4 → E7-T8 → E7-T9 → E7-T10, with D-009 gating only E7-T10; E7-T7 retains E6-T4/E6-T5/E6-T6/E6-T7/E7-T4/E7-T10. E8-T5 depends only on E8-T3 and E8-T4—it does not depend on deferred E7-T5.
 
 ## Global definition of done
