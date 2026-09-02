@@ -23,6 +23,8 @@ for (const asset of ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"]) {
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Do not disclose the framework stack on public responses (audit F-8).
+  poweredByHeader: false,
   // TypeScript 7 has no stable JS API yet. Keep `typescript` aliased to
   // @typescript/typescript6 for eslint/openapi-typescript/Next API mode, and
   // provide tsc via @typescript/native (typescript@7). Force API mode so Next

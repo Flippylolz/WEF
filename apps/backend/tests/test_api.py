@@ -269,6 +269,7 @@ async def test_facets_and_selected_location_offer_contracts() -> None:
 
     assert facet_response.status_code == status.HTTP_200_OK
     assert facet_response.json()["districts"] == ["srodmiescie", "wola"]
+    assert offer_response.headers["Cache-Control"] == "public, max-age=30"
     payload = offer_response.json()
     assert offer_response.status_code == status.HTTP_200_OK
     assert payload["matching_count"] == 1
@@ -387,6 +388,7 @@ async def test_offer_detail_hides_absence_and_excludes_sensitive_fields() -> Non
 
     payload = response.json()
     assert response.status_code == status.HTTP_200_OK
+    assert response.headers["Cache-Control"] == "public, max-age=30"
     assert payload["public_source_text"] == "Masked public text only."
     assert payload["data_origin"] == "parser"
     assert payload["verified_source_url"] is None
@@ -402,7 +404,6 @@ async def test_error_responses_include_request_id_header() -> None:
     app.state.browse_location_offers = BrowseLocationOffers(
         FakeCatalogBrowse(facets=empty_facet_snapshot(), location_exists=False),
     )
-
     async with api_client(app) as client:
         response = await client.get(
             "/api/v1/locations/10000000-0000-4000-8000-000000000099/offers",
@@ -507,6 +508,7 @@ async def test_viewport_listings_present_parent_location_and_reject_bad_cursor()
         schema = app.openapi()
 
     assert listing_response.status_code == status.HTTP_200_OK
+    assert listing_response.headers["Cache-Control"] == "public, max-age=30"
     payload = listing_response.json()
     assert payload["matching_count"] == 1
     assert payload["next_cursor"] is None

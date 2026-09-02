@@ -275,8 +275,9 @@ async def logout_account(
         401: {"description": "Authentication is required."},
     },
 )
-async def get_own_account(request: Request) -> AccountResponse:
+async def get_own_account(request: Request, response: Response) -> AccountResponse:
     """Return the minimal account view for the current session."""
+    response.headers["Cache-Control"] = "no-store, private"
     account = await _require_account(request)
     return _present_account(account)
 

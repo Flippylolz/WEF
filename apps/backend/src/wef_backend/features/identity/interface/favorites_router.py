@@ -49,8 +49,12 @@ def _favorites(request: Request) -> FavoriteService:
     summary="List starred locations for the account",
     responses={401: {"description": "Authentication is required."}},
 )
-async def list_favorite_locations(request: Request) -> FavoriteListResponse:
+async def list_favorite_locations(
+    request: Request,
+    response: Response,
+) -> FavoriteListResponse:
     """Return starred locations with public labels."""
+    response.headers["Cache-Control"] = "no-store, private"
     account = await _require_account(request)
     items = await _favorites(request).list_favorites(account.id)
     return FavoriteListResponse(
