@@ -178,9 +178,7 @@ async def resolve_owner_id(
                 )
             ).scalar_one_or_none()
         else:
-            resolved = (
-                await session.execute(_ACTIVE_OWNER_SQL)
-            ).scalar_one_or_none()
+            resolved = (await session.execute(_ACTIVE_OWNER_SQL)).scalar_one_or_none()
     if resolved is None:
         message = "owner account was not found"
         raise RuntimeError(message)
