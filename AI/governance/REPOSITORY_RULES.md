@@ -41,6 +41,16 @@ Rules:
 - Delete merged branches automatically.
 - Never force-push `main`.
 
+## Epic worktree cleanup
+
+After an epic is marked `done` and its pull requests are merged, clean up every
+worktree and local branch created for that epic. Before removal, verify that each
+worktree has no uncommitted changes and that each branch has no unpushed or
+unmerged work; preserve and hand off anything still needed instead of forcing its
+deletion. Remove merged remote branches when automatic deletion did not do so,
+prune stale worktree metadata, and leave the primary checkout on the latest
+`main`.
+
 ## Ordered stacked pull requests
 
 Do not pause approved implementation merely because an upstream pull request awaits review:

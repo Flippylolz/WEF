@@ -11,6 +11,7 @@ This workflow controls all epic work. Approval is revision-specific and attribut
 5. **Write the implementation plan.** Sequence promoted tasks and document modules, tests, risks, migrations, rollout, and rollback.
 6. **Obtain explicit owner implementation approval.** The owner approves the current implementation-plan `revision`.
 7. **Implement task by task.** Satisfy the dependency gate, move one task to `ready`, create its dedicated branch, then move it to `in_progress`.
+8. **Close and clean up the epic.** After every required task and pull request is complete, mark the epic `done`, verify that its worktrees are clean and its branches contain no unpushed or unmerged work, remove those worktrees and merged branches, prune stale worktree metadata, and return the primary checkout to the latest `main`. Preserve and hand off any remaining work instead of force-deleting it.
 
 No production code, generated scaffold, executable experiment, migration, infrastructure change, or disposable proof code may be written before step 6 is complete. Spike work may inspect existing code/data and cite research, but its committed outputs are Markdown and other non-executable documentation only.
 
