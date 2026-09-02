@@ -1,0 +1,103 @@
+name: Backfill location display names
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type BACKFILL to confirm renaming non-verified locations'
+        required: true
+        default: ''
+      apply:
+        description: 'Persist changes (unchecked = dry-run report only)'
+        type: boolean
+        default: false
+      limit:
+        description: 'Optional max locations to process in this run'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backfill-display-names
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-24.04
+    environment: production
+    timeout-minutes: 120
+    env:
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      SSH_PORT: ${{ vars.DEPLOY_SSH_PORT }}
+    steps:
+      - name: Require explicit confirmation
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          test -n "$CONFIRM"
+          test "$CONFIRM" = "BACKFILL"
+
+      - name: Run location display-name backfill on the NUC
+        env:
+          APPLY_FLAG: ${{ inputs.apply && '--apply' || '' }}
+          LIMIT_INPUT: ${{ inputs.limit }}
+        run: |
+          # shellcheck disable=SC2029
+          set -euo pipefail
+          [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$SSH_PORT" =~ ^[0-9]{1,5}$ ]]
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+
+          limit_flag=""
+          if test -n "$LIMIT_INPUT"; then
+            [[ "$LIMIT_INPUT" =~ ^[0-9]+$ ]]
+            limit_flag="--limit $LIMIT_INPUT"
+          fi
+
+          ssh_dir="$RUNNER_TEMP/wef-ssh"
+          install -m 0700 -d "$ssh_dir"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          chmod 0600 "$ssh_dir/key" "$ssh_dir/known_hosts"
+          ssh_options=(
+            -i "$ssh_dir/key"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$ssh_dir/known_hosts"
+            -p "$SSH_PORT"
+          )
+          target="${DEPLOY_USER}@${DEPLOY_HOST}"
+          cleanup() {
+            rm -f "$ssh_dir/key"
+          }
+          trap cleanup EXIT
+
+          compose="docker compose --project-name wef-production \
+            --env-file /home/nuc/wef/secrets/current/production.env \
+            --file /home/nuc/wef/releases/current/compose.production.yaml"
+          # shellcheck disable=SC2029
+          ssh "${ssh_options[@]}" "$target" \
+            "$compose run --rm --no-deps api wef-backfill-location-display-name $APPLY_FLAG $limit_flag" \
+            | tee "$RUNNER_TEMP/backfill-output.json"
+
+      - name: Append backfill counts to the run summary
+        run: |
+          {
+            echo "## Location display-name backfill"
+            echo ""
+            echo "- apply: ${{ inputs.apply }}"
+            echo "- limit: ${{ inputs.limit || 'none' }}"
+            echo ""
+            echo '```json'
+            cat "$RUNNER_TEMP/backfill-output.json"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
