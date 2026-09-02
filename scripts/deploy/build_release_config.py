@@ -130,7 +130,10 @@ def _optional_groq_curation(values: dict[str, str]) -> None:
         msg = "Groq batch API flag must be true or false"
         raise ValueError(msg)
     chunk_size = os.environ.get("WEF_GROQ_BATCH_CHUNK_SIZE", "20").strip()
-    if not chunk_size.isdigit() or not MIN_GROQ_BATCH_CHUNK_SIZE <= int(chunk_size) <= MAX_GROQ_BATCH_CHUNK_SIZE:
+    if (
+        not chunk_size.isdigit()
+        or not MIN_GROQ_BATCH_CHUNK_SIZE <= int(chunk_size) <= MAX_GROQ_BATCH_CHUNK_SIZE
+    ):
         msg = "Groq batch chunk size must be an integer from 1 to 100"
         raise ValueError(msg)
     poll_interval = os.environ.get("WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS", "2").strip()
@@ -139,7 +142,11 @@ def _optional_groq_curation(values: dict[str, str]) -> None:
     except ValueError as error:
         msg = "Groq batch poll interval must be a number"
         raise ValueError(msg) from error
-    if not MIN_GROQ_BATCH_POLL_INTERVAL_SECONDS <= poll_seconds <= MAX_GROQ_BATCH_POLL_INTERVAL_SECONDS:
+    if (
+        not MIN_GROQ_BATCH_POLL_INTERVAL_SECONDS
+        <= poll_seconds
+        <= MAX_GROQ_BATCH_POLL_INTERVAL_SECONDS
+    ):
         msg = "Groq batch poll interval must be from 0.5 to 60 seconds"
         raise ValueError(msg)
     max_wait = os.environ.get("WEF_GROQ_BATCH_MAX_WAIT_SECONDS", "3600").strip()
