@@ -11,6 +11,7 @@ from wef_backend.features.catalog.domain import (
     LocationReviewStatus,
     MarketType,
     OfferVisibility,
+    PropertyType,
 )
 
 if TYPE_CHECKING:
@@ -49,6 +50,7 @@ class SeedOffer:
     location_id: UUID
     content_type: ContentType
     market_type: MarketType
+    property_type: PropertyType
     visibility: OfferVisibility
     published_at: datetime
     currency: str | None

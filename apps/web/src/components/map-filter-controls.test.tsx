@@ -16,6 +16,7 @@ const facets: FilterFacets = {
   rooms: [1, 2, 3],
   market_types: ["primary", "secondary"],
   content_types: ["development", "unit"],
+  property_types: ["apartment", "house", "semi_detached"],
   price_min_minor: 50_000_000,
   price_max_minor: 150_000_000,
   area_min_sqm: "25.0",
@@ -65,6 +66,9 @@ describe("MapFilterControls", () => {
     await user.click(
       screen.getByRole("checkbox", { name: "contentType.development" }),
     );
+    await user.click(
+      screen.getByRole("checkbox", { name: "propertyType.house" }),
+    );
     fireEvent.change(screen.getByLabelText("publishedFrom"), {
       target: { value: "2026-08-01" },
     });
@@ -83,6 +87,7 @@ describe("MapFilterControls", () => {
       districts: ["wola"],
       marketTypes: ["secondary"],
       contentTypes: ["unit"],
+      propertyTypes: ["house"],
       publishedFrom: "2026-08-01T00:00:00.000Z",
       publishedTo: "2026-08-31T23:59:59.999Z",
     });

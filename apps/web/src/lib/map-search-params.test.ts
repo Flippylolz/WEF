@@ -19,6 +19,22 @@ describe("map search parameters", () => {
     });
   });
 
+  it("round-trips property type filters", () => {
+    const source = new URLSearchParams(
+      "property_type=house&property_type=apartment&property_type=house",
+    );
+    const state = parseMapSearchParams(source);
+
+    expect(state.propertyTypes).toEqual(["apartment", "house"]);
+    expect(serializeMapSearchState(state)).toBe(
+      "property_type=apartment&property_type=house",
+    );
+    expect(toMapLocationQuery(state)).toEqual({
+      bbox: DEFAULT_BBOX,
+      property_type: ["apartment", "house"],
+    });
+  });
+
   it("round-trips every M1 filter in one deterministic order", () => {
     const source = new URLSearchParams(
       "rooms=3&district=wola&content_type=unit&price_max=125000000" +

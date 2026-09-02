@@ -17,7 +17,12 @@ from wef_backend.features.catalog.application.offer_display_name import offer_di
 
 if TYPE_CHECKING:
     from wef_backend.features.catalog.application.map_query import MapFilters
-    from wef_backend.features.catalog.domain import ContentType, MarketType
+    from wef_backend.features.catalog.domain import (
+        ContentType,
+        FilterablePropertyType,
+        MarketType,
+        PropertyType,
+    )
 
 _CURSOR_VERSION = 1
 _MAX_CURSOR_LENGTH = 512
@@ -163,6 +168,7 @@ class FacetSnapshot:
     rooms: tuple[int, ...]
     market_types: tuple[MarketType, ...]
     content_types: tuple[ContentType, ...]
+    property_types: tuple[FilterablePropertyType, ...]
     price_min_minor: int | None
     price_max_minor: int | None
     area_min_sqm: Decimal | None
@@ -198,6 +204,7 @@ class OfferBrowseRecord:
     id: UUID
     content_type: ContentType
     market_type: MarketType
+    property_type: PropertyType
     published_at: datetime
     currency: str | None
     price_min_minor: int | None
@@ -256,6 +263,7 @@ class OfferSummaryDTO:
     id: UUID
     content_type: ContentType
     market_type: MarketType
+    property_type: PropertyType
     display_name: str
     data_confidence: OfferDataConfidence
     published_at: datetime
@@ -351,6 +359,7 @@ class BrowseLocationOffers:
             id=record.id,
             content_type=record.content_type,
             market_type=record.market_type,
+            property_type=record.property_type,
             display_name=offer_display_name(record.content_type, record.market_type),
             data_confidence=(
                 OfferDataConfidence.COMPLETE if complete else OfferDataConfidence.PARTIAL
@@ -397,6 +406,7 @@ class ListingBrowseRecord:
     id: UUID
     content_type: ContentType
     market_type: MarketType
+    property_type: PropertyType
     published_at: datetime
     currency: str | None
     price_min_minor: int | None
@@ -460,6 +470,7 @@ class ListingSummaryDTO:
     id: UUID
     content_type: ContentType
     market_type: MarketType
+    property_type: PropertyType
     display_name: str
     data_confidence: OfferDataConfidence
     published_at: datetime
@@ -555,6 +566,7 @@ class BrowseViewportListings:
             id=record.id,
             content_type=record.content_type,
             market_type=record.market_type,
+            property_type=record.property_type,
             display_name=offer_display_name(record.content_type, record.market_type),
             data_confidence=(
                 OfferDataConfidence.COMPLETE if complete else OfferDataConfidence.PARTIAL

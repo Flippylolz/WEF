@@ -43,7 +43,7 @@ from wef_backend.features.catalog.application.offer_detail import (
     LocationSummaryDTO,
     OfferDetailRecord,
 )
-from wef_backend.features.catalog.domain import ContentType, MarketType
+from wef_backend.features.catalog.domain import ContentType, MarketType, PropertyType
 from wef_backend.features.estates.application import EstateRecord, ListEstates
 from wef_backend.features.estates.domain import Availability, GeoPoint
 from wef_backend.features.identity.infrastructure.security import MemoryRateLimiter
@@ -220,6 +220,7 @@ async def test_facets_and_selected_location_offer_contracts() -> None:
         rooms=(1, 2, 3),
         market_types=(MarketType.PRIMARY, MarketType.SECONDARY),
         content_types=(ContentType.DEVELOPMENT, ContentType.UNIT),
+        property_types=(),
         price_min_minor=69_000_000,
         price_max_minor=149_000_000,
         area_min_sqm=Decimal("29.50"),
@@ -232,6 +233,7 @@ async def test_facets_and_selected_location_offer_contracts() -> None:
             id=UUID("20000000-0000-4000-8000-000000000001"),
             content_type=ContentType.DEVELOPMENT,
             market_type=MarketType.PRIMARY,
+            property_type=PropertyType.UNKNOWN,
             published_at=datetime(2026, 8, 1, tzinfo=UTC),
             currency="PLN",
             price_min_minor=80_000_000,
@@ -348,6 +350,7 @@ async def test_offer_detail_hides_absence_and_excludes_sensitive_fields() -> Non
         id=UUID("20000000-0000-4000-8000-000000000002"),
         content_type=ContentType.UNIT,
         market_type=MarketType.SECONDARY,
+        property_type=PropertyType.APARTMENT,
         published_at=datetime(2026, 7, 18, 9, 30, tzinfo=UTC),
         currency="PLN",
         price_min_minor=105_000_000,
@@ -459,6 +462,7 @@ async def test_viewport_listings_present_parent_location_and_reject_bad_cursor()
                 id=UUID("20000000-0000-4000-8000-000000000001"),
                 content_type=ContentType.DEVELOPMENT,
                 market_type=MarketType.PRIMARY,
+                property_type=PropertyType.UNKNOWN,
                 published_at=datetime(2026, 8, 1, tzinfo=UTC),
                 currency="PLN",
                 price_min_minor=80_000_000,

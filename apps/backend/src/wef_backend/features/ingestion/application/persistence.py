@@ -335,6 +335,7 @@ def build_extraction_json(listing: ListingCandidate) -> str:
     extracted: tuple[tuple[str, ExtractedValue[object] | None], ...] = (
         ("content_type", listing.content_type),
         ("market_type", listing.market_type),
+        ("property_type", listing.property_type),
         ("location", listing.location),
         ("district", listing.district),
         ("development_name", listing.development_name),
@@ -413,6 +414,7 @@ def canonical_fingerprint(listing: ListingCandidate) -> str:
         {
             "content_type": value_of(listing.content_type),
             "market_type": value_of(listing.market_type),
+            "property_type": value_of(listing.property_type),
             "location": value_of(listing.location),
             "district": value_of(listing.district),
             "development_name": value_of(listing.development_name),

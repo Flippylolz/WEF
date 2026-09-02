@@ -12,6 +12,7 @@ export type FilterChipGroup =
   | "districts"
   | "marketTypes"
   | "contentTypes"
+  | "propertyTypes"
   | "publication"
   | "quickFilter";
 
@@ -100,6 +101,7 @@ export function countAppliedGroups(state: MapSearchState) {
   if (state.districts.length > 0) count += 1;
   if (state.marketTypes.length > 0) count += 1;
   if (!hasDefaultContentTypes(state.contentTypes)) count += 1;
+  if (state.propertyTypes.length > 0) count += 1;
   if (state.publishedFrom !== null || state.publishedTo !== null) count += 1;
   if (state.quickFilter !== null) count += 1;
   return count;
@@ -179,6 +181,16 @@ function collectChips(
       label: t("contentTypeLabel"),
       value: state.contentTypes
         .map((value) => t(`contentType.${value}`))
+        .join(", "),
+    });
+  }
+
+  if (state.propertyTypes.length > 0) {
+    chips.push({
+      group: "propertyTypes",
+      label: t("propertyTypeLabel"),
+      value: state.propertyTypes
+        .map((value) => t(`propertyType.${value}`))
         .join(", "),
     });
   }

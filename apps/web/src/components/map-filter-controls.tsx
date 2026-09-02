@@ -6,6 +6,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import type { FilterFacets } from "@/lib/catalog-api";
 import type {
   ContentType,
+  FilterablePropertyType,
   MapSearchState,
   MarketType,
 } from "@/lib/map-search-params";
@@ -50,6 +51,14 @@ export function MapFilterControls({
         draft.contentTypes,
       ),
     [draft.contentTypes, facets?.content_types],
+  );
+  const propertyOptions = useMemo(
+    () =>
+      mergeOptions<FilterablePropertyType>(
+        facets?.property_types ?? [],
+        draft.propertyTypes,
+      ),
+    [draft.propertyTypes, facets?.property_types],
   );
 
   return (
@@ -214,6 +223,25 @@ export function MapFilterControls({
                       next.length === 0 ? current.contentTypes : next,
                   };
                 })
+              }
+            />
+          ))}
+        </CheckboxGroup>
+
+        <CheckboxGroup legend={t("propertyTypeLabel")}>
+          {propertyOptions.map((propertyType) => (
+            <Checkbox
+              key={propertyType}
+              checked={draft.propertyTypes.includes(propertyType)}
+              label={t(`propertyType.${propertyType}`)}
+              onChange={() =>
+                setDraft((current) => ({
+                  ...current,
+                  propertyTypes: toggleValue(
+                    current.propertyTypes,
+                    propertyType,
+                  ),
+                }))
               }
             />
           ))}

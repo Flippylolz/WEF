@@ -45,6 +45,7 @@ REPORT_VERSION = "e2-report-v2"
 _EXTRACTED_SCALAR_FIELDS = (
     "content_type",
     "market_type",
+    "property_type",
     "location",
     "district",
     "development_name",

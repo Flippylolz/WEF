@@ -164,7 +164,7 @@ async def test_clean_upgrade_and_seed_replay_converge() -> None:  # noqa: PLR091
         assert tuple(addon_prices) == (3_000_000, 3_000_000, None, None, True)
         assert forbidden_columns == 0
         assert gist_index == 1
-        assert check_constraints == 17
+        assert check_constraints == 18
         assert proof_table is True
         services = build_services(settings)
         assert await services.is_ready() is True

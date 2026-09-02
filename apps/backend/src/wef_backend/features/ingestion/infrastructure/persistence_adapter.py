@@ -74,6 +74,7 @@ _SIGNED_64 = (1 << 63) - 1
 _PRIMARY_RELATIONSHIP = "primary"
 _FIELD_COLUMNS = {
     "market_type": "market_type",
+    "property_type": "property_type",
     "currency": "currency",
     "apartment_price_min": "price_min_minor",
     "apartment_price_max": "price_max_minor",
@@ -98,6 +99,7 @@ def _allowlisted_parser_values(values: dict[str, object]) -> dict[str, object]:
     area_max = values.get("area_max_sqm")
     return {
         "market_type": values.get("market_type"),
+        "property_type": values.get("property_type"),
         "currency": values.get("currency"),
         "apartment_price_min": values.get("price_min_minor"),
         "apartment_price_max": values.get("price_max_minor"),
@@ -709,6 +711,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             "location_id": location_id,
             "content_type": (listing.content_type.value if listing.content_type else "unit"),
             "market_type": (listing.market_type.value if listing.market_type else "unknown"),
+            "property_type": (listing.property_type.value if listing.property_type else "unknown"),
             "visibility": "needs_review",
             "published_at": raw.published_at,
             "latest_source_at": raw.edited_at or raw.published_at,

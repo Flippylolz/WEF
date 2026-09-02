@@ -13,6 +13,7 @@ from wef_backend.features.catalog.domain import (
     CoordinatePrecision,
     MarketType,
     OfferVisibility,
+    PropertyType,
 )
 
 
@@ -84,6 +85,7 @@ def m1_fixture() -> tuple[tuple[SeedLocation, ...], tuple[SeedOffer, ...]]:
             location_id=center_id,
             content_type=ContentType.DEVELOPMENT,
             market_type=MarketType.PRIMARY,
+            property_type=PropertyType.UNKNOWN,
             visibility=OfferVisibility.VISIBLE,
             published_at=datetime(2026, 8, 1, 10, 0, tzinfo=UTC),
             currency="PLN",
@@ -107,6 +109,7 @@ def m1_fixture() -> tuple[tuple[SeedLocation, ...], tuple[SeedOffer, ...]]:
             location_id=center_id,
             content_type=ContentType.UNIT,
             market_type=MarketType.SECONDARY,
+            property_type=PropertyType.APARTMENT,
             visibility=OfferVisibility.VISIBLE,
             published_at=datetime(2026, 7, 18, 9, 30, tzinfo=UTC),
             currency="PLN",
@@ -130,6 +133,7 @@ def m1_fixture() -> tuple[tuple[SeedLocation, ...], tuple[SeedOffer, ...]]:
             location_id=wola_id,
             content_type=ContentType.DEVELOPMENT,
             market_type=MarketType.PRIMARY,
+            property_type=PropertyType.SEMI_DETACHED,
             visibility=OfferVisibility.VISIBLE,
             published_at=datetime(2026, 7, 25, 12, 15, tzinfo=UTC),
             currency="PLN",
@@ -152,6 +156,7 @@ def m1_fixture() -> tuple[tuple[SeedLocation, ...], tuple[SeedOffer, ...]]:
             location_id=mokotow_id,
             content_type=ContentType.UNIT,
             market_type=MarketType.SECONDARY,
+            property_type=PropertyType.APARTMENT,
             visibility=OfferVisibility.VISIBLE,
             published_at=datetime(2026, 6, 30, 16, 45, tzinfo=UTC),
             currency="PLN",
@@ -175,6 +180,7 @@ def m1_fixture() -> tuple[tuple[SeedLocation, ...], tuple[SeedOffer, ...]]:
             location_id=praga_id,
             content_type=ContentType.DEVELOPMENT,
             market_type=MarketType.UNKNOWN,
+            property_type=PropertyType.HOUSE,
             visibility=OfferVisibility.VISIBLE,
             published_at=datetime(2026, 8, 5, 8, 0, tzinfo=UTC),
             currency=None,

@@ -22,6 +22,7 @@ from wef_backend.features.catalog.domain import (
     LocationReviewStatus,
     MarketType,
     OfferVisibility,
+    PropertyType,
 )
 from wef_backend.features.catalog.infrastructure.active_ai_origin import active_ai_origin_exists
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
@@ -117,6 +118,7 @@ class SQLAlchemyOfferDetailAdapter(OfferDetailQueryPort):
             id=offer.id,
             content_type=ContentType(offer.content_type),
             market_type=MarketType(offer.market_type),
+            property_type=PropertyType(offer.property_type),
             published_at=offer.published_at,
             currency=offer.currency,
             price_min_minor=offer.price_min_minor,

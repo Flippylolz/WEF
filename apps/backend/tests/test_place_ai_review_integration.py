@@ -125,6 +125,7 @@ async def _seed_place(
                 location_id=location.id,
                 content_type="unit",
                 market_type="primary",
+                property_type="unknown",
                 visibility="visible",
                 published_at=_NOW,
                 latest_source_at=_NOW,

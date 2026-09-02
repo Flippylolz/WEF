@@ -84,6 +84,7 @@ export function ListingCard({
             ) : null}
             <span>{t(`marketType.${listing.market_type}`)}</span>
             <span>{t(`contentType.${listing.content_type}`)}</span>
+            <span>{t(`propertyType.${listing.property_type}`)}</span>
           </span>
           {lowConfidence ? (
             <span className="confidence-note">{t("lowConfidence")}</span>

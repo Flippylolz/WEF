@@ -95,6 +95,7 @@ async def test_contact_store_round_trip_and_audit() -> None:
                     location_id=location_id,
                     content_type="unit",
                     market_type="primary",
+                    property_type="unknown",
                     visibility="visible",
                     published_at=datetime.now(UTC),
                     latest_source_at=datetime.now(UTC),

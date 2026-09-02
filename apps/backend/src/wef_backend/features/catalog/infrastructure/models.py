@@ -96,6 +96,10 @@ class OfferRow(CatalogBase):
             name="ck_offers_market_type",
         ),
         CheckConstraint(
+            "property_type IN ('apartment', 'house', 'semi_detached', 'unknown')",
+            name="ck_offers_property_type",
+        ),
+        CheckConstraint(
             "visibility IN ('visible', 'needs_review', 'hidden')",
             name="ck_offers_visibility",
         ),
@@ -178,6 +182,7 @@ class OfferRow(CatalogBase):
     )
     content_type: Mapped[str] = mapped_column(String(16))
     market_type: Mapped[str] = mapped_column(String(16))
+    property_type: Mapped[str] = mapped_column(String(16))
     visibility: Mapped[str] = mapped_column(String(16))
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     latest_source_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

@@ -18,6 +18,23 @@ class MarketType(StrEnum):
     UNKNOWN = "unknown"
 
 
+class PropertyType(StrEnum):
+    """Physical property kind for one offer."""
+
+    APARTMENT = "apartment"
+    HOUSE = "house"
+    SEMI_DETACHED = "semi_detached"
+    UNKNOWN = "unknown"
+
+
+class FilterablePropertyType(StrEnum):
+    """Public filter input subset excluding unknown records."""
+
+    APARTMENT = "apartment"
+    HOUSE = "house"
+    SEMI_DETACHED = "semi_detached"
+
+
 class OfferVisibility(StrEnum):
     """Publication review state, not real-world availability."""
 

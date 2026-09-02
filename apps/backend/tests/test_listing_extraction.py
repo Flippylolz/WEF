@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from wef_backend.features.catalog.domain import ContentType, MarketType
+from wef_backend.features.catalog.domain import ContentType, MarketType, PropertyType
 from wef_backend.features.ingestion.application import (
     CANDIDATE_THRESHOLD,
     PARSER_VERSION,
@@ -702,3 +702,70 @@ def test_kupivlia_header_and_tsina_price_promote_ukrainian_elestate_format() -> 
     )
     assert listing.rooms is not None
     assert listing.rooms.value == IntegerRange(2, 2)
+
+
+def test_property_type_classifies_apartment_house_and_semi_detached() -> None:
+    """Explicit multilingual property phrases classify deterministically."""
+    apartment = _candidate(
+        "🏙 Покупка | Вторичный рынок\n🛋 квартира 2-к\n💰 Цена: 900 000 zł",
+    )
+    house = _candidate(
+        "🏙 Kupno | Rynek wtórny\nDom jednorodzinny w Wilanowie\n💰 Cena: 2 500 000 zł",
+    )
+    semi = _candidate(
+        "🏙 Kupno | Rynek wtórny\nBliźniak w zielonej okolicy\n💰 Cena: 1 800 000 zł",
+    )
+
+    assert apartment.listing is not None
+    assert apartment.listing.property_type is not None
+    assert apartment.listing.property_type.value is PropertyType.APARTMENT
+    assert house.listing is not None
+    assert house.listing.property_type is not None
+    assert house.listing.property_type.value is PropertyType.HOUSE
+    assert semi.listing is not None
+    assert semi.listing.property_type is not None
+    assert semi.listing.property_type.value is PropertyType.SEMI_DETACHED
+
+
+def test_property_type_conflict_emits_warning_and_unknown() -> None:
+    """Conflicting category evidence fails to unknown with a stable warning."""
+    text = (
+        "🏙 Kupno | Rynek wtórny\n"
+        "Mieszkanie w bloku i dom jednorodzinny na jednej działce\n"
+        "💰 Cena: 1 000 000 zł"
+    )
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.property_type is None
+    assert any(
+        warning.code is ExtractionWarningCode.CONFLICTING_VALUES
+        and warning.field_name == "property_type"
+        for warning in result.warnings
+    )
+
+
+def test_property_type_reads_labeled_value_lines() -> None:
+    """Explicit property-type labels classify before free-text heuristics."""
+    text = "🏙 Kupno | Rynek wtórny\nTyp nieruchomości: mieszkanie\n💰 Cena: 900 000 zł"
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.property_type is not None
+    assert listing.property_type.value is PropertyType.APARTMENT
+
+
+def test_property_type_label_conflict_emits_warning() -> None:
+    """Conflicting labeled property types emit one stable warning."""
+    text = (
+        "🏙 Kupno | Rynek wtórny\n"
+        "Typ nieruchomości: mieszkanie\n"
+        "Property type: house\n"
+        "💰 Cena: 900 000 zł"
+    )
+    result = extract_listing(_message(text))
+    assert any(
+        warning.code is ExtractionWarningCode.CONFLICTING_VALUES
+        and warning.field_name == "property_type"
+        for warning in result.warnings
+    )
