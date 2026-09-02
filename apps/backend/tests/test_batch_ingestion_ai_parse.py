@@ -72,7 +72,8 @@ async def test_resolve_owner_id_loads_bootstrap_owner() -> None:
 
 
 @pytest.mark.asyncio
-async def test_resolve_owner_id_falls_back_to_sole_owner() -> None:
+async def test_resolve_owner_id_falls_back_to_active_owner() -> None:
+    """When multiple owners exist, prefer the one with ingestion AI parse history."""
     owner_id = uuid4()
     session = AsyncMock()
     lookup = MagicMock()
@@ -84,6 +85,8 @@ async def test_resolve_owner_id_falls_back_to_sole_owner() -> None:
         owner_id=None,
     )
     assert resolved == owner_id
+    session.execute.assert_awaited_once()
+    assert session.execute.await_args.args[0] is not None
 
 
 @pytest.mark.asyncio
