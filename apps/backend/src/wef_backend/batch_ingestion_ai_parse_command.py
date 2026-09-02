@@ -19,6 +19,7 @@ from wef_backend.features.admin.application.ingestion_ai_parse import (
     IngestionAiApplyStatus,
     IngestionAiParseStatus,
 )
+from wef_backend.features.identity.domain.model import normalize_username
 from wef_backend.settings import Settings, load_settings
 
 if TYPE_CHECKING:
@@ -135,13 +136,36 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+_BOOTSTRAP_OWNER_SQL = text(
+    """
+    SELECT id
+    FROM users
+    WHERE username_normalized = :username
+      AND role = 'owner'
+    LIMIT 1
+    """,
+)
+
+_ACTIVE_OWNER_SQL = text(
+    """
+    SELECT u.id
+    FROM users AS u
+    LEFT JOIN ingestion_ai_parse_runs AS r ON r.owner_user_id = u.id
+    WHERE u.role = 'owner'
+    GROUP BY u.id, u.created_at
+    ORDER BY COUNT(r.id) DESC, u.created_at ASC
+    LIMIT 1
+    """,
+)
+
+
 async def resolve_owner_id(
     session_factory: async_sessionmaker[AsyncSession],
     settings: Settings,
     *,
     owner_id: UUID | None,
 ) -> UUID:
-    """Resolve the owner id from CLI input, bootstrap username, or sole owner row."""
+    """Resolve the owner id from CLI input, bootstrap username, or active owner row."""
     if owner_id is not None:
         return owner_id
     username = settings.bootstrap_owner_username
@@ -149,32 +173,12 @@ async def resolve_owner_id(
         if username:
             resolved = (
                 await session.execute(
-                    text(
-                        """
-                        SELECT id
-                        FROM users
-                        WHERE username = :username
-                          AND role = 'owner'
-                        LIMIT 1
-                        """,
-                    ),
-                    {"username": username},
+                    _BOOTSTRAP_OWNER_SQL,
+                    {"username": normalize_username(username)},
                 )
             ).scalar_one_or_none()
         else:
-            resolved = (
-                await session.execute(
-                    text(
-                        """
-                        SELECT id
-                        FROM users
-                        WHERE role = 'owner'
-                        ORDER BY created_at
-                        LIMIT 1
-                        """,
-                    ),
-                )
-            ).scalar_one_or_none()
+            resolved = (await session.execute(_ACTIVE_OWNER_SQL)).scalar_one_or_none()
     if resolved is None:
         message = "owner account was not found"
         raise RuntimeError(message)

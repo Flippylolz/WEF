@@ -92,7 +92,7 @@ interactors as the admin UI, and prints redacted success/skip counts.
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--owner-id` | auto | Owner UUID; if omitted, uses `WEF_BOOTSTRAP_OWNER_USERNAME` when set, otherwise the sole `users.role = 'owner'` row |
+| `--owner-id` | auto | Owner UUID; if omitted, uses `WEF_BOOTSTRAP_OWNER_USERNAME` when set (matched against `users.username_normalized`), otherwise the owner with the most `ingestion_ai_parse_runs` history (ties: oldest `created_at`) |
 | `--limit` | `10` | Max **distinct** candidates (deduped by source-text hash) |
 | `--spacing-seconds` | `2.5` | Minimum delay between **generate** calls (Groq RPM) |
 | `--generate-only` | off | Generate pending runs without apply |
