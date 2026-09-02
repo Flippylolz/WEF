@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E23
 title: "Location display name normalization delivery"
-status: draft
+status: approved
 revision: 1
 owner: owner
 spike_revision: 1
@@ -13,11 +13,11 @@ task_sequence:
     revision: 1
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Flippylolz"
+  decided_at: "2026-09-02T20:32:00Z"
+  approved_revision: 1
+  evidence: "Owner message in Cursor: 'continue' after E23 implementation plan draft review."
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -122,8 +122,8 @@ rules change. Return to this plan for sequence/module/test/rollout changes.
 - [x] Sequence entries are promoted tasks with acceptance criteria.
 - [x] Dependencies are acyclic and enforceable.
 - [x] Modules, tests, rollout, and rollback are explicit.
-- [ ] Owner approves this plan revision before implementation code starts.
+- [x] Owner approves this plan revision before implementation code starts.
 
 ## Owner decision
 
-Pending explicit approval of plan revision 1.
+Flippylolz approved plan revision 1 on 2026-09-02 via Cursor message `continue`.

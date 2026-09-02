@@ -181,7 +181,11 @@ def test_fingerprint_and_location_keys_are_deterministic() -> None:
     assert normalized_location_key("UL. PRZYKŁADOWA 5") == normalized_location_key(
         "ul. przykładowa 5",
     )
-    assert normalize_location_text("  ul.   Przykładowa  ") == "ul. Przykładowa"
+    assert normalize_location_text("  ul.   Przykładowa  ") == "ul. Przykładowa, Warszawa"
+    assert (
+        normalize_location_text("ул. Dziekońskiego | Warszawa, Mokotów")
+        == "ul. Dziekońskiego, Mokotów, Warszawa"
+    )
     assert normalized_location_key(None) == normalized_location_key("")
 
 

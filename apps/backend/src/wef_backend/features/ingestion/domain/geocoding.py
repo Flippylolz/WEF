@@ -228,6 +228,158 @@ class ReviewDecision:
     out_of_scope: bool
 
 
+_EMOJI = re.compile(
+    "[\U0001f300-\U0001faff\U00002700-\U000027bf\U0001f600-\U0001f64f\U0001f680-\U0001f6ff]",
+    flags=re.UNICODE,
+)
+_STREET_LABEL = re.compile(r"^(?:улица|ulica|street)\s*:\s*", re.IGNORECASE)
+_NOISE_SEGMENT = re.compile(
+    r"(?:"
+    r"\d+\s*(?:минут|minutes|min\.?|м\b|metr\w*)|"
+    r"трамвай\w*|остановк\w*|"
+    r"пешком|do\s+metra|to\s+metro|"
+    r"^[\s•·\-\u2013—*]+$"
+    r")",
+    re.IGNORECASE,
+)
+_OTHER_CITY = re.compile(r"^[A-Za-zÀ-ž][\w\-']*(?:\s+[A-Za-zÀ-ž][\w\-']*)?$")
+
+
+def _is_noise_segment(segment: str) -> bool:
+    """Return whether one segment is decoration or distance prose only."""
+    cleaned = _LEADING_DECORATION.sub("", segment.strip())
+    cleaned = _EMOJI.sub("", cleaned).strip()
+    if not cleaned:
+        return True
+    if _NOISE_SEGMENT.search(cleaned) and not _STREET_TOKEN.search(cleaned):
+        return warsaw_district_in(cleaned) is None and _extract_other_city(cleaned) is None
+    return False
+
+
+def _format_street_segment(value: str) -> str:
+    """Map Cyrillic street labels to Polish-forward `ul.` while preserving tokens."""
+    cleaned = unicodedata.normalize("NFKC", value).strip()
+    cleaned = _LEADING_DECORATION.sub("", cleaned)
+    cleaned = _EMOJI.sub("", cleaned)
+    had_label = bool(_STREET_LABEL.search(value))
+    cleaned = _STREET_LABEL.sub("", cleaned)
+    had_prefix = had_label or bool(
+        _STREET_PREFIX.match(cleaned) or _INLINE_STREET_PREFIX.search(cleaned),
+    )
+    cleaned = _INLINE_STREET_PREFIX.sub("ul. ", cleaned)
+    if _STREET_PREFIX.match(cleaned):
+        cleaned = _STREET_PREFIX.sub("ul. ", cleaned)
+    cleaned = _INLINE_PARENTHETICAL.sub("", cleaned)
+    cleaned = _WHITESPACE.sub(" ", cleaned).strip(" ,")
+    if had_prefix and not cleaned.casefold().startswith("ul."):
+        cleaned = f"ul. {cleaned}"
+    return cleaned
+
+
+def _extract_other_city(segment: str) -> str | None:
+    """Return a non-Warsaw city token when one segment names it explicitly."""
+    cleaned = _LEADING_DECORATION.sub("", segment.strip())
+    cleaned = _AREA_WORD_PREFIX.sub("", cleaned)
+    cleaned = _AREA_SUFFIX_PARENTHETICAL.sub("", cleaned)
+    cleaned = _WHITESPACE.sub(" ", cleaned).strip(" ,")
+    if not cleaned or _STREET_TOKEN.search(cleaned):
+        return None
+    if warsaw_district_in(cleaned) is not None:
+        return None
+    if _CITY_NAMES.search(cleaned):
+        return "Warszawa"
+    if _OTHER_CITY.fullmatch(cleaned):
+        return cleaned
+    return None
+
+
+@dataclass(frozen=True, slots=True)
+class _ParsedDisplayName:
+    """Structured tokens extracted from one source location line."""
+
+    street: str | None
+    district: str | None
+    city: str | None
+
+
+def _parse_display_name_segments(
+    segments: list[str],
+    *,
+    original: str,
+    district: str | None,
+) -> _ParsedDisplayName:
+    """Classify comma/pipe segments into street, district, and city tokens."""
+    street: str | None = None
+    resolved_district = canonical_warsaw_district(district) or warsaw_district_in(original)
+    city: str | None = None
+
+    for segment in segments:
+        if _is_noise_segment(segment):
+            continue
+        if _STREET_TOKEN.search(segment):
+            candidate = _format_street_segment(segment)
+            if candidate:
+                street = candidate
+            continue
+        segment_district = warsaw_district_in(segment)
+        if segment_district is not None:
+            resolved_district = segment_district
+            continue
+        segment_city = _extract_other_city(segment)
+        if segment_city is not None:
+            city = segment_city
+            continue
+        formatted = _format_street_segment(segment)
+        if formatted and _STREET_LABEL.search(segment):
+            street = formatted
+
+    return _ParsedDisplayName(
+        street=street,
+        district=resolved_district,
+        city=city,
+    )
+
+
+def _assemble_display_name(parsed: _ParsedDisplayName) -> list[str]:
+    """Order extracted tokens as street, district, city with Warsaw defaults."""
+    parts: list[str] = []
+    if parsed.street:
+        parts.append(parsed.street)
+    joined = " ".join(parts).casefold()
+    if parsed.district and parsed.district.casefold() not in joined:
+        parts.append(parsed.district)
+        joined = " ".join(parts).casefold()
+    if parsed.city and parsed.city.casefold() not in joined:
+        parts.append(parsed.city)
+    elif (
+        parsed.city is None
+        and "warszawa" not in joined
+        and (parsed.district is not None or parsed.street is not None)
+    ):
+        parts.append("Warszawa")
+    return parts
+
+
+def normalize_location_display_name(source: str | None, *, district: str | None = None) -> str:
+    """Return a Polish-forward display name without changing location identity keys."""
+    if not source or not source.strip():
+        return "Unknown location"
+    original = source.strip()
+
+    value = unicodedata.normalize("NFKC", original)
+    value = _LEADING_DECORATION.sub("", value)
+    value = _EMOJI.sub("", value)
+    segments = [
+        segment.strip() for segment in _ADDRESS_SEGMENT_SPLIT.split(value) if segment.strip()
+    ]
+
+    parsed = _parse_display_name_segments(segments, original=original, district=district)
+    parts = _assemble_display_name(parsed)
+    if parts:
+        return ", ".join(parts)
+    return " ".join(original.split())
+
+
 def normalize_geocode_query(source: str, district: str | None = None) -> NormalizedGeocodeQuery:
     """Normalize supported Warsaw forms without replacing the display value."""
     original = source

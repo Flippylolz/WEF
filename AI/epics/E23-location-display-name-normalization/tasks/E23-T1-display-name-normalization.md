@@ -23,11 +23,11 @@ spike_gate:
   verified_by: "Codex agent"
   verified_at: "2026-09-02T17:34:00Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 1
+  verified_by: "Codex agent"
+  verified_at: "2026-09-02T20:32:00Z"
 dependency_gate:
   status: satisfied
   verified_by: "Codex agent"
@@ -36,11 +36,11 @@ dependency_gate:
     - "E17-T2 done through https://github.com/Flippylolz/WEF/pull/208"
 branch:
   required: true
-  name: null
+  name: feat/E23-T1-display-name-normalization
   task_id: E23-T1
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-02T20:32:00Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/316
 completion:
   completed_by: null
   completed_at: null
@@ -80,14 +80,14 @@ verification state.
 
 ## Acceptance criteria
 
-- [ ] Cyrillic-template fixtures normalize to Polish-forward display names.
-- [ ] Bullet/distance fragment fixtures do not become the whole display name when
+- [x] Cyrillic-template fixtures normalize to Polish-forward display names.
+- [x] Bullet/distance fragment fixtures do not become the whole display name when
       a usable street/district token remains.
-- [ ] `normalized_address_hash` is unchanged for identical parsed locations.
-- [ ] Existing hash hits still return the stored row without renaming.
-- [ ] Lint/tests for the touched ingestion path pass.
+- [x] `normalized_address_hash` is unchanged for identical parsed locations.
+- [x] Existing hash hits still return the stored row without renaming.
+- [x] Lint/tests for the touched ingestion path pass.
 
 ## Dependencies and gates
 
 - Depends on completed E17-T2 raw-archive/replay lineage.
-- Blocked on owner approval of [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
+- Blocked on owner approval of [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) — satisfied at revision 1.
