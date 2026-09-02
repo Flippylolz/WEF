@@ -21,6 +21,6 @@ The [decision registry](../decisions/README.md) is authoritative for status and 
 - [ADR-012](../decisions/adr/ADR-012-backend-centric-modular-monolith.md): use a backend-centric package-by-feature modular monolith with interactors, presenters, narrow ports/adapters, and enforced dependency direction.
 - [ADR-013](../decisions/adr/ADR-013-committed-openapi-offline-docs.md): commit deterministic OpenAPI, generate frontend contracts, and keep production API documentation routes disabled.
 - [ADR-016](../decisions/adr/ADR-016-pseudonymous-accounts-owner-console.md): use pseudonymous username/password accounts and an owner-only administration console.
-- [ADR-017](../decisions/adr/ADR-017-no-enforced-branch-protection.md): keep branch/PR/CI governance procedural without claiming platform-enforced `main` protection.
+- [ADR-023](../decisions/adr/ADR-023-enforce-main-branch-protection.md): enforce the branch/PR/review/CI governance baseline on `main`, with only the audited owner administrator exception.
 
 Dependency versions, licenses, advisories, proof measurements, and evaluated substitutions are recorded in the E0 proof report and committed lockfiles. This pointer does not supersede those artifacts or authorize later product tasks.

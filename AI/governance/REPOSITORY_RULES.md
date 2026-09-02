@@ -8,7 +8,7 @@
 - The repository is initialized and `main` is the active default branch.
 - Raw exports, media, databases, generated import reports containing source data, Telegram sessions, and secrets must never be committed.
 
-ADR-017 records the original private-plan limitation and keeps platform-enforced protection out of scope. Although the repository is now public, the GitHub API reported no `main` branch protection and no repository rulesets on 2026-08-26. The rules below remain procedural unless explicitly described as workflow-enforced.
+[ADR-023](../decisions/adr/ADR-023-enforce-main-branch-protection.md) supersedes the original private-plan limitation in ADR-017. GitHub branch protection was enabled on public repository branch `main` on 2026-09-02; the rules below are platform-enforced except for the explicitly retained repository-administrator bypass.
 
 ## Branch policy
 
@@ -83,9 +83,9 @@ To keep administrator exceptions owner-only on a personal repository:
 - Give collaborators only the minimum read/triage/write/maintain role they need.
 - Do not grant collaborators or GitHub Apps administrator/write authority unless a later decision names and justifies it.
 
-## Procedural `main` policy and CI check names
+## Enforced `main` policy and CI check names
 
-GitHub does not enforce these controls under [ADR-017](../decisions/adr/ADR-017-no-enforced-branch-protection.md). Contributors and owner automation follow them procedurally:
+GitHub enforces these controls under [ADR-023](../decisions/adr/ADR-023-enforce-main-branch-protection.md):
 
 - Require changes through pull requests.
 - Require at least one approving review.
@@ -150,7 +150,7 @@ on:
       - main
 ```
 
-Because branch protection is out of scope, the deployment job's associated-PR check is a permanent compensating control for this scope: an ordinary direct push to `main` is built/tested but does not auto-deploy. An owner-authorized hotfix uses the separately audited manual path.
+The deployment job's associated-PR check remains defense in depth for branch protection and fails closed after an administrator bypass or other direct push. An owner-authorized hotfix uses the separately audited manual path.
 
 The deploy job additionally:
 
@@ -216,7 +216,7 @@ gh pr merge <number> --squash --delete-branch --match-head-commit <verified-sha>
 
 The actual lint/test workflow remains unprivileged and runs on `pull_request`. The scheduled controller only reads its results and performs the final merge; it does not run dependency code with a write token.
 
-This is a compensating control, not equivalent to protected branches: GitHub cannot atomically lock the base branch or label state together with the merge. The immediate refetch plus expected-head guard makes the window small; [ADR-017](../decisions/adr/ADR-017-no-enforced-branch-protection.md) accepts the remaining risk.
+This controller adds Dependabot-specific checks beyond branch protection. GitHub cannot atomically lock label state together with the merge, so the immediate refetch plus expected-head guard still closes the remaining controller-specific race; branch protection separately enforces the pull-request, review, and required-check gates under ADR-023.
 
 ## Ownership and administrator-exception audit
 
@@ -238,11 +238,4 @@ The repository was established in this order:
 6. Add the scheduled label/check/commit-gated Dependabot merge controller.
 7. Build the main-only GHCR/SSH deployment workflow, prove E7-T4 rollback, and enable automatic deployment.
 
-Permanently out of current scope under [ADR-017](../decisions/adr/ADR-017-no-enforced-branch-protection.md):
-
-1. Upgrading solely for private-repository branch protection.
-2. Native protection-dependent auto-merge.
-3. A protected-main ruleset and owner bypass list.
-4. Claims/tests that direct pushes, force pushes, deletion, or failing-check merges are platform-blocked.
-
-`main` protection is an accepted unenforced policy. The custom Dependabot controller and production auto-deploy provide their own explicit gates and do not claim to protect `main` from manual merges/pushes. The cancelled workflow candidate remains recorded as [E1-T5](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T5-configure-protected-main-governance.md).
+The 2026-09-02 protection configuration is part of the current repository baseline. Native auto-merge remains out of scope, and the custom Dependabot controller must satisfy the same pull-request, approval, and required-check rules. The cancelled workflow candidate remains recorded as historical traceability in [E1-T5](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T5-configure-protected-main-governance.md); ADR-023 records the later unplanned owner-directed configuration.

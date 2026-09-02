@@ -18,7 +18,7 @@ Milestones are verified outcome checkpoints, not dates, schedules, or permission
 - M4 is blocked in operational acceptance: D-002 is resolved and the worker is deployed,
   but D-003/B-003 plus selected E15 retain the source-gap, truthful-health, and outage-recovery gates.
 - M5 follows the post-launch E14 approval sequence; its disaster-recovery exit remains blocked until the owner supersedes or re-accepts ADR-015 and handles E7-T5 under valid approvals.
-- E1-T5 is cancelled under ADR-017; E7-T5 backups remain deferred under ADR-015 and are not an M3 launch gate.
+- E1-T5 remains cancelled as historical traceability for the private-repository constraint; ADR-023 records the later owner-directed branch protection. E7-T5 backups remain deferred under ADR-015 and are not an M3 launch gate.
 - Proposed tasks are non-actionable. A milestone assignment never bypasses spike approval, promotion, implementation-plan approval, completed dependencies, or one-task-per-branch rules.
 
 ## Status interpretation
