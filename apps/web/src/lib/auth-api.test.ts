@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   changePassword,
+  deleteOwnAccount,
+  disableOwnAccount,
   fetchCurrentAccount,
   loginAccount,
   logoutAccount,
@@ -202,5 +204,54 @@ describe("auth-api", () => {
       state: "ready",
       data: null,
     });
+  });
+
+  it("disables and deletes the account on success and HTTP errors", async () => {
+    const fetcher = vi.fn(async (request: Request) => {
+      expect(request.credentials).toBe("include");
+      expect(request.headers.get("Content-Type")).toBe("application/json");
+      if (request.url.endsWith("/api/v1/auth/account/disable")) {
+        return new Response(null, { status: 204 });
+      }
+      if (request.url.endsWith("/api/v1/auth/account/delete")) {
+        return new Response(null, { status: 204 });
+      }
+      throw new Error(`unexpected ${request.url}`);
+    });
+
+    await expect(disableOwnAccount({ fetcher })).resolves.toEqual({
+      state: "ready",
+      data: null,
+    });
+    await expect(deleteOwnAccount({ fetcher })).resolves.toEqual({
+      state: "ready",
+      data: null,
+    });
+
+    const failed = vi.fn(async () => jsonResponse(400, { detail: "blocked" }));
+    expect(await disableOwnAccount({ fetcher: failed })).toEqual({
+      state: "error",
+      message: "blocked",
+    });
+    expect(await deleteOwnAccount({ fetcher: failed })).toEqual({
+      state: "error",
+      message: "blocked",
+    });
+
+    const unreadable = vi.fn(async () => jsonResponse(400, { detail: 12 }));
+    expect(await disableOwnAccount({ fetcher: unreadable })).toEqual({
+      state: "error",
+    });
+    expect(await deleteOwnAccount({ fetcher: unreadable })).toEqual({
+      state: "error",
+    });
+
+    const controller = new AbortController();
+    const signaled = vi.fn(async (request: Request) => {
+      expect(request.signal).toBe(controller.signal);
+      return new Response(null, { status: 204 });
+    });
+    await disableOwnAccount({ fetcher: signaled, signal: controller.signal });
+    await deleteOwnAccount({ fetcher: signaled, signal: controller.signal });
   });
 });

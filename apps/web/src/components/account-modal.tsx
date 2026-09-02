@@ -9,6 +9,8 @@ import { z } from "zod";
 import type { Account } from "@/lib/auth-api";
 import {
   changePassword,
+  deleteOwnAccount,
+  disableOwnAccount,
   loginAccount,
   logoutAccount,
   registerAccount,
@@ -312,6 +314,9 @@ function SignedInPanel({
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [dangerAction, setDangerAction] = useState<"disable" | "delete" | null>(
+    null,
+  );
 
   if (showPasswordForm) {
     return (
@@ -383,6 +388,76 @@ function SignedInPanel({
       >
         {t("logoutAction")}
       </button>
+      <section aria-label={t("dangerZoneTitle")} className="account-danger">
+        <h3>{t("dangerZoneTitle")}</h3>
+        <p className="account-modal-hint">
+          {dangerAction === "disable"
+            ? t("disableConfirmHint")
+            : dangerAction === "delete"
+              ? t("deleteConfirmHint")
+              : t("dangerZoneHint")}
+        </p>
+        {dangerAction === null ? (
+          <>
+            <button
+              className="button-secondary"
+              type="button"
+              disabled={busy}
+              onClick={() => setDangerAction("disable")}
+            >
+              {t("disableAction")}
+            </button>
+            <button
+              className="button-secondary"
+              type="button"
+              disabled={busy}
+              onClick={() => setDangerAction("delete")}
+            >
+              {t("deleteAction")}
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className="button-primary"
+              type="button"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                setActionError(null);
+                const result =
+                  dangerAction === "disable"
+                    ? await disableOwnAccount()
+                    : await deleteOwnAccount();
+                setBusy(false);
+                if (result.state === "error") {
+                  setActionError(result.message ?? t("dangerFailed"));
+                  return;
+                }
+                onNotice?.(
+                  dangerAction === "disable"
+                    ? t("disabledNotice")
+                    : t("deletedNotice"),
+                );
+                onLoggedOut();
+                onClose();
+              }}
+            >
+              {dangerAction === "disable"
+                ? t("disableConfirmAction")
+                : t("deleteConfirmAction")}
+            </button>
+            <button
+              className="button-secondary"
+              type="button"
+              disabled={busy}
+              onClick={() => setDangerAction(null)}
+            >
+              {t("cancelAction")}
+            </button>
+          </>
+        )}
+      </section>
     </div>
   );
 }
