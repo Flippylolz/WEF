@@ -18,6 +18,8 @@ from tests.fakes import (
 from wef_backend.features.admin.application.admin_ops import AdminDeniedError
 from wef_backend.features.admin.application.ai_review import (
     ALLOWED_GROQ_MODEL,
+    OFFER_ENRICHMENT_PROMPT_VERSION,
+    OFFER_ENRICHMENT_SCHEMA_VERSION,
     AiCurationRuntime,
     ProviderOutcome,
     ProviderRequestError,
@@ -31,7 +33,9 @@ from wef_backend.features.admin.application.offer_enrichment import (
     BatchState,
     FieldEventOutcome,
     ItemOutcome,
+    ItemState,
     OfferAiEnrichmentBatch,
+    OfferAiEnrichmentItem,
     OfferEnrichmentSnapshot,
     OfferFieldOrigin,
     OriginKind,
@@ -44,6 +48,7 @@ from wef_backend.features.admin.application.offer_enrichment import (
     SyncOfferAiOrigins,
     canonicalize_offer_field,
     is_missing,
+    offer_input_fingerprint,
     parse_offer_enrichment_payload,
     resolve_evidence_offsets,
     value_fingerprint,
@@ -611,6 +616,356 @@ async def test_process_dequeues_each_item_once_with_large_chunk() -> None:
     updated = store.batches[batch.id]
     assert updated.processed_count == 1
     assert updated.applied_count == 1
+
+
+async def test_process_completes_batch_when_no_items_left() -> None:
+    """An empty dequeue completes the batch instead of calling the provider."""
+    owner_id = uuid4()
+    snapshot = _snapshot()
+    revision = _revision()
+    store = FakeOfferAiEnrichmentStore(
+        snapshots={snapshot.id: snapshot},
+        sources={snapshot.id: (revision,)},
+    )
+    batch = await _start(store, owner_id=owner_id)
+    provider = FakeChatCompletions(payload=_payload(revision.revision_id))
+    first = await _process(store, provider, owner_id=owner_id, batch_id=batch.id)
+    assert first is ItemOutcome.APPLIED
+    assert store.batches[batch.id].state is BatchState.RUNNING
+    assert store.batches[batch.id].started_at == _NOW
+
+    again = await _process(store, provider, owner_id=owner_id, batch_id=batch.id)
+
+    assert again is None
+    assert store.batches[batch.id].state is BatchState.COMPLETED
+    assert len(provider.calls) == 1
+
+
+async def test_process_pauses_when_daily_budget_is_exhausted() -> None:
+    """Stop cleanly when the owner has no provider budget left today."""
+    owner_id = uuid4()
+    snapshot = _snapshot()
+    revision = _revision()
+    store = FakeOfferAiEnrichmentStore(
+        snapshots={snapshot.id: snapshot},
+        sources={snapshot.id: (revision,)},
+    )
+    prior_batch_id = uuid4()
+    store.batches[prior_batch_id] = OfferAiEnrichmentBatch(
+        id=prior_batch_id,
+        owner_user_id=owner_id,
+        scope_json={"limit": 20},
+        candidate_count=20,
+        model=ALLOWED_GROQ_MODEL,
+        prompt_version=OFFER_ENRICHMENT_PROMPT_VERSION,
+        schema_version=OFFER_ENRICHMENT_SCHEMA_VERSION,
+        state=BatchState.COMPLETED,
+        checkpoint_ordinal=20,
+        processed_count=20,
+        applied_count=0,
+        skipped_count=0,
+        failed_count=0,
+        failure_category=None,
+        created_at=_NOW,
+        started_at=_NOW,
+        finished_at=_NOW,
+    )
+    for ordinal in range(20):
+        item_id = uuid4()
+        store.items[item_id] = OfferAiEnrichmentItem(
+            id=item_id,
+            batch_id=prior_batch_id,
+            offer_id=uuid4(),
+            ordinal=ordinal,
+            input_fingerprint=f"fingerprint-{ordinal}",
+            state=ItemState.FAILED,
+            outcome=ItemOutcome.PROVIDER_FAILED,
+            attempt_count=1,
+            provider_called_at=_NOW,
+            created_at=_NOW,
+            processed_at=_NOW,
+        )
+    batch = await _start(store, owner_id=owner_id)
+
+    outcome = await _process(
+        store,
+        FakeChatCompletions(payload=_payload(revision.revision_id)),
+        owner_id=owner_id,
+        batch_id=batch.id,
+    )
+
+    assert outcome is None
+    paused = store.batches[batch.id]
+    assert paused.state is BatchState.PAUSED
+    assert paused.failure_category == "daily_limit"
+
+
+async def test_process_dequeues_until_queue_is_exhausted() -> None:
+    """Stop dequeuing once the batch has no remaining items."""
+    owner_id = uuid4()
+    snapshot_a = _snapshot()
+    snapshot_b = _snapshot()
+    revision_a = _revision()
+    revision_b = _revision()
+    store = FakeOfferAiEnrichmentStore(
+        snapshots={snapshot_a.id: snapshot_a, snapshot_b.id: snapshot_b},
+        sources={snapshot_a.id: (revision_a,), snapshot_b.id: (revision_b,)},
+    )
+    batch_id = uuid4()
+    items = (
+        OfferAiEnrichmentItem(
+            id=uuid4(),
+            batch_id=batch_id,
+            offer_id=snapshot_a.id,
+            ordinal=0,
+            input_fingerprint=offer_input_fingerprint(
+                snapshot_a,
+                (revision_a.revision_id,),
+                (revision_a.checksum,),
+            ),
+            state=ItemState.QUEUED,
+            outcome=None,
+            attempt_count=0,
+            provider_called_at=None,
+            created_at=_NOW,
+            processed_at=None,
+        ),
+        OfferAiEnrichmentItem(
+            id=uuid4(),
+            batch_id=batch_id,
+            offer_id=snapshot_b.id,
+            ordinal=1,
+            input_fingerprint=offer_input_fingerprint(
+                snapshot_b,
+                (revision_b.revision_id,),
+                (revision_b.checksum,),
+            ),
+            state=ItemState.QUEUED,
+            outcome=None,
+            attempt_count=0,
+            provider_called_at=None,
+            created_at=_NOW,
+            processed_at=None,
+        ),
+    )
+    store.batches[batch_id] = OfferAiEnrichmentBatch(
+        id=batch_id,
+        owner_user_id=owner_id,
+        scope_json={"limit": 2},
+        candidate_count=2,
+        model=ALLOWED_GROQ_MODEL,
+        prompt_version=OFFER_ENRICHMENT_PROMPT_VERSION,
+        schema_version=OFFER_ENRICHMENT_SCHEMA_VERSION,
+        state=BatchState.QUEUED,
+        checkpoint_ordinal=0,
+        processed_count=0,
+        applied_count=0,
+        skipped_count=0,
+        failed_count=0,
+        failure_category=None,
+        created_at=_NOW,
+        started_at=None,
+        finished_at=None,
+    )
+    for item in items:
+        store.items[item.id] = item
+    provider = FakeChatCompletions(error=ProviderOutcome.TIMEOUT)
+
+    outcome = await _process(
+        store,
+        provider,
+        owner_id=owner_id,
+        batch_id=batch_id,
+        runtime=replace(_runtime(), batch_chunk_size=20),
+    )
+
+    assert outcome is ItemOutcome.PROVIDER_FAILED
+    assert len(provider.calls) == 2
+    updated = store.batches[batch_id]
+    assert updated.processed_count == 2
+    assert updated.failed_count == 2
+    assert updated.started_at == _NOW
+
+
+async def test_process_resumes_processing_item_before_dequeue() -> None:
+    """Retry one in-flight item, then collect newly queued siblings."""
+    owner_id = uuid4()
+    snapshot_a = _snapshot()
+    snapshot_b = _snapshot()
+    revision_a = _revision()
+    revision_b = _revision()
+    store = FakeOfferAiEnrichmentStore(
+        snapshots={snapshot_a.id: snapshot_a, snapshot_b.id: snapshot_b},
+        sources={snapshot_a.id: (revision_a,), snapshot_b.id: (revision_b,)},
+    )
+    batch_id = uuid4()
+    stuck_item = OfferAiEnrichmentItem(
+        id=uuid4(),
+        batch_id=batch_id,
+        offer_id=snapshot_a.id,
+        ordinal=0,
+        input_fingerprint=offer_input_fingerprint(
+            snapshot_a,
+            (revision_a.revision_id,),
+            (revision_a.checksum,),
+        ),
+        state=ItemState.PROCESSING,
+        outcome=None,
+        attempt_count=1,
+        provider_called_at=None,
+        created_at=_NOW,
+        processed_at=None,
+    )
+    queued_item = OfferAiEnrichmentItem(
+        id=uuid4(),
+        batch_id=batch_id,
+        offer_id=snapshot_b.id,
+        ordinal=1,
+        input_fingerprint=offer_input_fingerprint(
+            snapshot_b,
+            (revision_b.revision_id,),
+            (revision_b.checksum,),
+        ),
+        state=ItemState.QUEUED,
+        outcome=None,
+        attempt_count=0,
+        provider_called_at=None,
+        created_at=_NOW,
+        processed_at=None,
+    )
+    store.batches[batch_id] = OfferAiEnrichmentBatch(
+        id=batch_id,
+        owner_user_id=owner_id,
+        scope_json={"limit": 2},
+        candidate_count=2,
+        model=ALLOWED_GROQ_MODEL,
+        prompt_version=OFFER_ENRICHMENT_PROMPT_VERSION,
+        schema_version=OFFER_ENRICHMENT_SCHEMA_VERSION,
+        state=BatchState.RUNNING,
+        checkpoint_ordinal=0,
+        processed_count=0,
+        applied_count=0,
+        skipped_count=0,
+        failed_count=0,
+        failure_category=None,
+        created_at=_NOW,
+        started_at=_NOW,
+        finished_at=None,
+    )
+    store.items[stuck_item.id] = stuck_item
+    store.items[queued_item.id] = queued_item
+    provider = FakeChatCompletions(error=ProviderOutcome.TIMEOUT)
+
+    outcome = await _process(
+        store,
+        provider,
+        owner_id=owner_id,
+        batch_id=batch_id,
+        runtime=replace(_runtime(), batch_chunk_size=20),
+    )
+
+    assert outcome is ItemOutcome.PROVIDER_FAILED
+    assert len(provider.calls) == 2
+    assert store.batches[batch_id].processed_count == 2
+
+
+async def test_process_resumes_processing_item_without_dequeue_when_chunk_full() -> None:
+    """When the retry fills the chunk, skip the queued-item dequeue loop."""
+    owner_id = uuid4()
+    snapshot = _snapshot()
+    revision = _revision()
+    store = FakeOfferAiEnrichmentStore(
+        snapshots={snapshot.id: snapshot},
+        sources={snapshot.id: (revision,)},
+    )
+    batch_id = uuid4()
+    stuck_item = OfferAiEnrichmentItem(
+        id=uuid4(),
+        batch_id=batch_id,
+        offer_id=snapshot.id,
+        ordinal=0,
+        input_fingerprint=offer_input_fingerprint(
+            snapshot,
+            (revision.revision_id,),
+            (revision.checksum,),
+        ),
+        state=ItemState.PROCESSING,
+        outcome=None,
+        attempt_count=1,
+        provider_called_at=None,
+        created_at=_NOW,
+        processed_at=None,
+    )
+    store.batches[batch_id] = OfferAiEnrichmentBatch(
+        id=batch_id,
+        owner_user_id=owner_id,
+        scope_json={"limit": 1},
+        candidate_count=1,
+        model=ALLOWED_GROQ_MODEL,
+        prompt_version=OFFER_ENRICHMENT_PROMPT_VERSION,
+        schema_version=OFFER_ENRICHMENT_SCHEMA_VERSION,
+        state=BatchState.RUNNING,
+        checkpoint_ordinal=0,
+        processed_count=0,
+        applied_count=0,
+        skipped_count=0,
+        failed_count=0,
+        failure_category=None,
+        created_at=_NOW,
+        started_at=_NOW,
+        finished_at=None,
+    )
+    store.items[stuck_item.id] = stuck_item
+    provider = FakeChatCompletions(payload=_payload(revision.revision_id))
+
+    outcome = await _process(
+        store,
+        provider,
+        owner_id=owner_id,
+        batch_id=batch_id,
+        runtime=replace(_runtime(), batch_chunk_size=1),
+    )
+
+    assert outcome is ItemOutcome.APPLIED
+    assert len(provider.calls) == 1
+    assert store.batches[batch_id].processed_count == 1
+
+
+async def test_process_completes_running_batch_with_no_items() -> None:
+    """Finish immediately when the batch has no queued or processing items."""
+    owner_id = uuid4()
+    batch_id = uuid4()
+    store = FakeOfferAiEnrichmentStore()
+    store.batches[batch_id] = OfferAiEnrichmentBatch(
+        id=batch_id,
+        owner_user_id=owner_id,
+        scope_json={"limit": 0},
+        candidate_count=0,
+        model=ALLOWED_GROQ_MODEL,
+        prompt_version=OFFER_ENRICHMENT_PROMPT_VERSION,
+        schema_version=OFFER_ENRICHMENT_SCHEMA_VERSION,
+        state=BatchState.RUNNING,
+        checkpoint_ordinal=0,
+        processed_count=0,
+        applied_count=0,
+        skipped_count=0,
+        failed_count=0,
+        failure_category=None,
+        created_at=_NOW,
+        started_at=_NOW,
+        finished_at=None,
+    )
+
+    outcome = await _process(
+        store,
+        FakeChatCompletions(payload={}),
+        owner_id=owner_id,
+        batch_id=batch_id,
+    )
+
+    assert outcome is None
+    assert store.batches[batch_id].state is BatchState.COMPLETED
+    assert store.batches[batch_id].finished_at == _NOW
 
 
 async def test_process_stale_disabled_and_empty_payload() -> None:

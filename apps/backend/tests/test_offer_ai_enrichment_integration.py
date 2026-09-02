@@ -252,6 +252,9 @@ async def test_batch_apply_resume_revert_and_source_edit() -> None:  # noqa: PLR
         assert outcome is ItemOutcome.APPLIED
         resume = await process(owner_id=owner_id, batch_id=batch.id, request_id=uuid4())
         assert resume is None
+        assert await store.next_item(batch.id) is None
+        assert await store.next_queued_item(batch.id) is None
+        assert await store.next_processing_item(batch.id) is None
         finished = await store.get_batch(batch.id)
         assert finished is not None
         assert finished.state is BatchState.COMPLETED

@@ -336,6 +336,42 @@ class SQLAlchemyOfferAiEnrichmentStore:
                 return None
             return _item_from_row(row)
 
+    async def next_queued_item(self, batch_id: UUID) -> OfferAiEnrichmentItem | None:
+        """Return the next queued item for chunk collection."""
+        async with self._session_factory() as session:
+            stmt = (
+                select(OfferAiEnrichmentItemRow)
+                .where(
+                    OfferAiEnrichmentItemRow.batch_id == batch_id,
+                    OfferAiEnrichmentItemRow.state == ItemState.QUEUED.value,
+                )
+                .order_by(OfferAiEnrichmentItemRow.ordinal.asc())
+                .limit(1)
+                .with_for_update(skip_locked=True)
+            )
+            row = await session.scalar(stmt)
+            if row is None:
+                return None
+            return _item_from_row(row)
+
+    async def next_processing_item(self, batch_id: UUID) -> OfferAiEnrichmentItem | None:
+        """Return the oldest in-flight item left from a partial run."""
+        async with self._session_factory() as session:
+            stmt = (
+                select(OfferAiEnrichmentItemRow)
+                .where(
+                    OfferAiEnrichmentItemRow.batch_id == batch_id,
+                    OfferAiEnrichmentItemRow.state == ItemState.PROCESSING.value,
+                )
+                .order_by(OfferAiEnrichmentItemRow.ordinal.asc())
+                .limit(1)
+                .with_for_update(skip_locked=True)
+            )
+            row = await session.scalar(stmt)
+            if row is None:
+                return None
+            return _item_from_row(row)
+
     async def get_item(self, item_id: UUID) -> OfferAiEnrichmentItem | None:
         """Return one item by id."""
         async with self._session_factory() as session:

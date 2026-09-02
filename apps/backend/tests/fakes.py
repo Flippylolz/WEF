@@ -1105,6 +1105,24 @@ class FakeOfferAiEnrichmentStore:
         queued.sort(key=lambda item: item.ordinal)
         return queued[0] if queued else None
 
+    async def next_queued_item(self, batch_id: UUID) -> OfferAiEnrichmentItem | None:
+        queued = [
+            item
+            for item in self.items.values()
+            if item.batch_id == batch_id and item.state is ItemState.QUEUED
+        ]
+        queued.sort(key=lambda item: item.ordinal)
+        return queued[0] if queued else None
+
+    async def next_processing_item(self, batch_id: UUID) -> OfferAiEnrichmentItem | None:
+        processing = [
+            item
+            for item in self.items.values()
+            if item.batch_id == batch_id and item.state is ItemState.PROCESSING
+        ]
+        processing.sort(key=lambda item: item.ordinal)
+        return processing[0] if processing else None
+
     async def get_item(self, item_id: UUID) -> OfferAiEnrichmentItem | None:
         return self.items.get(item_id)
 
