@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E22-T1
 epic: E22
 title: "Add canonical property classification and safe backfill"
-status: ready
+status: done
 revision: 1
 priority: P1
 size: L
@@ -40,12 +40,14 @@ branch:
   task_id: E22-T1
   one_task_only: true
   created_at: null
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/302
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: "Codex agent"
+  completed_at: "2026-09-02T17:27:00Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/302
+  evidence:
+    - "Follow-up dedupe fix https://github.com/Flippylolz/WEF/pull/304"
+    - "Production backfill and idempotency in PRODUCTION_EVIDENCE.md"
 invalidation:
   invalidated_by: null
   invalidated_at: null
