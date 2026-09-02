@@ -23,6 +23,12 @@ TELEGRAM_API_ID_PATTERN = re.compile(r"^[1-9][0-9]{4,15}$")
 TELEGRAM_API_HASH_PATTERN = re.compile(r"^[A-Fa-f0-9]{32}$")
 MIN_BOOTSTRAP_USERNAME_LENGTH = 3
 MIN_BOOTSTRAP_PASSWORD_LENGTH = 10
+MIN_GROQ_BATCH_CHUNK_SIZE = 1
+MAX_GROQ_BATCH_CHUNK_SIZE = 100
+MIN_GROQ_BATCH_POLL_INTERVAL_SECONDS = 0.5
+MAX_GROQ_BATCH_POLL_INTERVAL_SECONDS = 60.0
+MIN_GROQ_BATCH_MAX_WAIT_SECONDS = 30
+MAX_GROQ_BATCH_MAX_WAIT_SECONDS = 86400
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,7 +130,7 @@ def _optional_groq_curation(values: dict[str, str]) -> None:
         msg = "Groq batch API flag must be true or false"
         raise ValueError(msg)
     chunk_size = os.environ.get("WEF_GROQ_BATCH_CHUNK_SIZE", "20").strip()
-    if not chunk_size.isdigit() or not 1 <= int(chunk_size) <= 100:
+    if not chunk_size.isdigit() or not MIN_GROQ_BATCH_CHUNK_SIZE <= int(chunk_size) <= MAX_GROQ_BATCH_CHUNK_SIZE:
         msg = "Groq batch chunk size must be an integer from 1 to 100"
         raise ValueError(msg)
     poll_interval = os.environ.get("WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS", "2").strip()
@@ -133,11 +139,14 @@ def _optional_groq_curation(values: dict[str, str]) -> None:
     except ValueError as error:
         msg = "Groq batch poll interval must be a number"
         raise ValueError(msg) from error
-    if not 0.5 <= poll_seconds <= 60:
+    if not MIN_GROQ_BATCH_POLL_INTERVAL_SECONDS <= poll_seconds <= MAX_GROQ_BATCH_POLL_INTERVAL_SECONDS:
         msg = "Groq batch poll interval must be from 0.5 to 60 seconds"
         raise ValueError(msg)
     max_wait = os.environ.get("WEF_GROQ_BATCH_MAX_WAIT_SECONDS", "3600").strip()
-    if not max_wait.isdigit() or not 30 <= int(max_wait) <= 86400:
+    if (
+        not max_wait.isdigit()
+        or not MIN_GROQ_BATCH_MAX_WAIT_SECONDS <= int(max_wait) <= MAX_GROQ_BATCH_MAX_WAIT_SECONDS
+    ):
         msg = "Groq batch max wait must be an integer from 30 to 86400"
         raise ValueError(msg)
     values["WEF_GROQ_API_KEY"] = groq_api_key
