@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E22
 title: "Property type classification and filter"
-status: ready
+status: done
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -93,8 +93,23 @@ am considering.
 
 - [Spike revision 1](SPIKE.md) is owner-approved.
 - [Implementation plan revision 2](IMPLEMENTATION_PLAN.md) is owner-approved.
-- E22-T1 is `ready`; E22-T2 and E22-T3 remain `draft` behind their task
-  dependencies:
+- E22-T1–T3 are `done` through green-CI PR #302 (`f78bfb9`), follow-up dedupe fix
+  PR #304 (`b28c9bc`), and operator runbook PR #306.
+
+## Completion state (2026-09-02)
+
+- **E22-T1** — classification, migration `20260902_0019`, parser `e2-v8`, and
+  `wef-backfill-property-type` operator CLI.
+- **E22-T2** — `MapFilters.property_types`, shared SQL predicate, facets, OpenAPI,
+  and generated frontend types.
+- **E22-T3** — URL-backed filter controls, chips, listing/offer labels, and tests.
+- Production deploy run [33659894308](https://github.com/Flippylolz/WEF/actions/runs/33659894308);
+  backfill applied on `wef_hist_candidate` with idempotent re-run (`changed: 0`).
+- Evidence: [PRODUCTION_EVIDENCE.md](PRODUCTION_EVIDENCE.md); operator workflow in
+  [OPERATOR_COMMANDS.md](../../operations/OPERATOR_COMMANDS.md#property-type-backfill-e22).
+
+## Task index
+
   - [E22-T1 — Add canonical property classification and safe
     backfill](tasks/E22-T1-property-classification-and-backfill.md)
   - [E22-T2 — Extend catalog filter and public contracts](tasks/E22-T2-catalog-property-type-contracts.md)

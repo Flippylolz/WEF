@@ -33,6 +33,17 @@ $COMPOSE exec -T telegram-worker <command> [flags]
 Local development uses the same command names inside the `api` or `telegram-worker`
 Compose services (`make up`).
 
+### GitHub Actions alternative: parser replay
+
+`wef-replay-parser` can also be run without NUC shell access via the
+**Replay parser over raw archive** workflow (`replay-parser.yml`, manual
+dispatch): type `REPLAY` in the `confirm` input and optionally enable
+`seed_archive`. It runs
+`docker compose ... run --rm --no-deps api wef-replay-parser` on the NUC with
+the deploy SSH identity and prints the replay counts JSON in the run summary.
+Use it for contact backfill after the contact-cipher fix (#301) and for
+canonical renames after E23 normalization lands.
+
 ## Groq rate and application budgets
 
 Two different limits apply to AI operator work:
