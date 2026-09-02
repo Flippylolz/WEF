@@ -17,6 +17,24 @@ import {
   isSafeExternalUrl,
 } from "@/lib/offer-presentation";
 
+// Parser extraction field names (e2-v7) mapped to i18n keys. Fields outside
+// this map fall back to their raw name so unseen parser fields stay visible.
+const detailFieldLabelKeys: Record<string, string> = {
+  apartment_price: "detailFieldApartmentPrice",
+  content_type: "detailFieldContentType",
+  market_type: "detailFieldMarket",
+  location: "detailFieldLocation",
+  district: "detailFieldDistrict",
+  development_name: "detailFieldDevelopment",
+  parking: "detailFieldParking",
+  storage: "detailFieldStorage",
+  area_sqm: "detailFieldArea",
+  rooms: "detailFieldRooms",
+  floor: "detailFieldFloor",
+  delivery: "detailFieldDelivery",
+  contacts: "detailFieldContacts",
+};
+
 export type OfferDetailDrawerProps = {
   open: boolean;
   offerId: string | null;
@@ -164,6 +182,7 @@ function OfferDetailContent({
   return (
     <div className="offer-detail-body">
       <section aria-label={t("detailPublicationLabel")}>
+        <h3>{t("detailPublicationLabel")}</h3>
         <p className="offer-detail-published">
           <time dateTime={detail.published_at}>
             {formatPublishedDate(detail.published_at)}
@@ -231,8 +250,12 @@ function OfferDetailContent({
         <h3>{t("detailLocationLabel")}</h3>
         <p>
           <strong>{detail.location.display_name}</strong>
-          <br />
-          {detail.location.display_address}
+          {detail.location.display_address !== detail.location.display_name ? (
+            <>
+              <br />
+              {detail.location.display_address}
+            </>
+          ) : null}
         </p>
         {detail.location.confidence === "low" ? (
           <p className="confidence-note">{t("lowConfidence")}</p>
@@ -250,12 +273,15 @@ function OfferDetailContent({
         <section aria-label={t("detailConfidenceLabel")}>
           <h3>{t("detailConfidenceLabel")}</h3>
           <ul className="offer-detail-confidence">
-            {detail.field_confidence.map((entry) => (
-              <li key={entry.field}>
-                <span>{entry.field}</span>
-                <span>{t(`detailConfidence.${entry.confidence}`)}</span>
-              </li>
-            ))}
+            {detail.field_confidence.map((entry) => {
+              const labelKey = detailFieldLabelKeys[entry.field];
+              return (
+                <li key={entry.field}>
+                  <span>{labelKey ? t(labelKey) : entry.field}</span>
+                  <span>{t(`detailConfidence.${entry.confidence}`)}</span>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : null}
