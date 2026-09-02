@@ -27,15 +27,9 @@ from wef_backend.features.ingestion.infrastructure.property_type_backfill import
     backfill_property_types,
 )
 
-_APARTMENT_TEXT = (
-    "🏙 Kupno | Rynek wtórny\nMieszkanie 2-pokojowe\n💰 Cena: 900 000 zł"
-)
-_HOUSE_TEXT = (
-    "🏙 Kupno | Rynek wtórny\nDom jednorodzinny w Wilanowie\n💰 Cena: 2 500 000 zł"
-)
-_SEMI_DETACHED_TEXT = (
-    "🏙 Kupno | Rynek wtórny\nBliźniak w zielonej okolicy\n💰 Cena: 1 800 000 zł"
-)
+_APARTMENT_TEXT = "🏙 Kupno | Rynek wtórny\nMieszkanie 2-pokojowe\n💰 Cena: 900 000 zł"
+_HOUSE_TEXT = "🏙 Kupno | Rynek wtórny\nDom jednorodzinny w Wilanowie\n💰 Cena: 2 500 000 zł"
+_SEMI_DETACHED_TEXT = "🏙 Kupno | Rynek wtórny\nBliźniak w zielonej okolicy\n💰 Cena: 1 800 000 zł"
 _CONFLICT_TEXT = (
     "🏙 Kupno | Rynek wtórny\n"
     "Mieszkanie w bloku i dom jednorodzinny na jednej działce\n"
@@ -432,6 +426,7 @@ def test_backfill_property_type_command_prints_summary(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """CLI stdout emits one JSON summary payload."""
+
     async def _fake_run(*, limit: int | None, apply: bool) -> dict[str, int | str]:
         assert limit == 25
         assert apply is True
@@ -459,6 +454,7 @@ def test_backfill_property_type_command_exits_on_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """CLI failures exit with code 2."""
+
     async def _boom(*, limit: int | None, apply: bool) -> dict[str, int | str]:
         _ = (limit, apply)
         message = "boom"

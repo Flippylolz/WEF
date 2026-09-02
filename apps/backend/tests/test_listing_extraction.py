@@ -747,11 +747,7 @@ def test_property_type_conflict_emits_warning_and_unknown() -> None:
 
 def test_property_type_reads_labeled_value_lines() -> None:
     """Explicit property-type labels classify before free-text heuristics."""
-    text = (
-        "🏙 Kupno | Rynek wtórny\n"
-        "Typ nieruchomości: mieszkanie\n"
-        "💰 Cena: 900 000 zł"
-    )
+    text = "🏙 Kupno | Rynek wtórny\nTyp nieruchomości: mieszkanie\n💰 Cena: 900 000 zł"
     result = _candidate(text)
     listing = result.listing
     assert listing is not None
