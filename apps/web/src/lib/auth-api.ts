@@ -170,3 +170,49 @@ export async function revokeAllSessions(
     return { state: "error" };
   }
 }
+
+export async function disableOwnAccount(
+  options: RequestOptions = {},
+): Promise<AuthResult<null>> {
+  try {
+    const { error, response } = await client(options.fetcher).POST(
+      "/api/v1/auth/account/disable",
+      {
+        headers: { "Content-Type": "application/json" },
+        body: {} as never,
+        bodySerializer: () => "{}",
+        cache: "no-store",
+        ...(options.signal ? { signal: options.signal } : {}),
+      },
+    );
+    if (!response.ok || error !== undefined) {
+      return { state: "error", message: problemMessage(error) };
+    }
+    return { state: "ready", data: null };
+  } catch {
+    return { state: "error" };
+  }
+}
+
+export async function deleteOwnAccount(
+  options: RequestOptions = {},
+): Promise<AuthResult<null>> {
+  try {
+    const { error, response } = await client(options.fetcher).POST(
+      "/api/v1/auth/account/delete",
+      {
+        headers: { "Content-Type": "application/json" },
+        body: {} as never,
+        bodySerializer: () => "{}",
+        cache: "no-store",
+        ...(options.signal ? { signal: options.signal } : {}),
+      },
+    );
+    if (!response.ok || error !== undefined) {
+      return { state: "error", message: problemMessage(error) };
+    }
+    return { state: "ready", data: null };
+  } catch {
+    return { state: "error" };
+  }
+}

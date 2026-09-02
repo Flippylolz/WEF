@@ -15,6 +15,8 @@ const registerAccount = vi.fn();
 const changePassword = vi.fn();
 const revokeAllSessions = vi.fn();
 const logoutAccount = vi.fn();
+const disableOwnAccount = vi.fn();
+const deleteOwnAccount = vi.fn();
 
 vi.mock("@/lib/auth-api", () => ({
   fetchCurrentAccount: vi.fn(),
@@ -23,6 +25,8 @@ vi.mock("@/lib/auth-api", () => ({
   logoutAccount: (...args: unknown[]) => logoutAccount(...args),
   changePassword: (...args: unknown[]) => changePassword(...args),
   revokeAllSessions: (...args: unknown[]) => revokeAllSessions(...args),
+  disableOwnAccount: (...args: unknown[]) => disableOwnAccount(...args),
+  deleteOwnAccount: (...args: unknown[]) => deleteOwnAccount(...args),
 }));
 
 vi.mock("next-intl", () => ({
@@ -440,5 +444,121 @@ describe("AccountModal", () => {
       screen.getByRole("button", { name: "changePasswordAction" }),
     );
     expect(await screen.findByText("changePasswordFailed")).toBeInTheDocument();
+  });
+});
+
+describe("AccountModal danger zone", () => {
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  it("disables the account after explicit confirmation", async () => {
+    const user = userEvent.setup();
+    const onLoggedOut = vi.fn();
+    const onNotice = vi.fn();
+    const onClose = vi.fn();
+    disableOwnAccount.mockResolvedValue({ state: "ready", data: null });
+
+    const view = render(
+      <AccountModal
+        open
+        account={account}
+        initialMode="account"
+        onClose={onClose}
+        onAuthenticated={() => undefined}
+        onLoggedOut={onLoggedOut}
+        onNotice={onNotice}
+      />,
+    );
+    const dialog = view.container.querySelector("dialog")!;
+    await user.click(
+      within(dialog).getByRole("button", { name: "disableAction" }),
+    );
+    expect(
+      within(dialog).getByRole("button", { name: "disableConfirmAction" }),
+    ).toBeInTheDocument();
+    await user.click(
+      within(dialog).getByRole("button", { name: "disableConfirmAction" }),
+    );
+
+    await waitFor(() => {
+      expect(disableOwnAccount).toHaveBeenCalledTimes(1);
+      expect(deleteOwnAccount).not.toHaveBeenCalled();
+      expect(onNotice).toHaveBeenCalledWith("disabledNotice");
+      expect(onLoggedOut).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  it("deletes the account after explicit confirmation", async () => {
+    const user = userEvent.setup();
+    const onLoggedOut = vi.fn();
+    deleteOwnAccount.mockResolvedValue({ state: "ready", data: null });
+
+    const view = render(
+      <AccountModal
+        open
+        account={account}
+        initialMode="account"
+        onClose={() => undefined}
+        onAuthenticated={() => undefined}
+        onLoggedOut={onLoggedOut}
+      />,
+    );
+    const dialog = view.container.querySelector("dialog")!;
+    await user.click(
+      within(dialog).getByRole("button", { name: "deleteAction" }),
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "deleteConfirmAction" }),
+    );
+
+    await waitFor(() => {
+      expect(deleteOwnAccount).toHaveBeenCalledTimes(1);
+      expect(disableOwnAccount).not.toHaveBeenCalled();
+      expect(onLoggedOut).toHaveBeenCalled();
+    });
+  });
+
+  it("reports failures and stays in the confirm step", async () => {
+    const user = userEvent.setup();
+    deleteOwnAccount.mockResolvedValue({
+      state: "error",
+      message: "problem detail",
+    });
+
+    const view = render(
+      <AccountModal
+        open
+        account={account}
+        initialMode="account"
+        onClose={() => undefined}
+        onAuthenticated={() => undefined}
+        onLoggedOut={() => undefined}
+      />,
+    );
+    const dialog = view.container.querySelector("dialog")!;
+    await user.click(
+      within(dialog).getByRole("button", { name: "deleteAction" }),
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "deleteConfirmAction" }),
+    );
+
+    await waitFor(() => {
+      expect(within(dialog).getByRole("alert")).toHaveTextContent(
+        "problem detail",
+      );
+    });
+    expect(
+      within(dialog).getByRole("button", { name: "deleteConfirmAction" }),
+    ).toBeInTheDocument();
+    await user.click(
+      within(dialog).getByRole("button", { name: "cancelAction" }),
+    );
+    expect(
+      within(dialog).getByRole("button", { name: "deleteAction" }),
+    ).toBeInTheDocument();
   });
 });
