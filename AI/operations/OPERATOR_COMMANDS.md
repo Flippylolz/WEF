@@ -44,9 +44,12 @@ Two different limits apply to AI operator work:
 | **WEF place review + enrichment** | per UTC calendar day | **20** shared provider calls / owner | `/admin/places` review, `/admin/offer-enrichment` |
 
 Bulk Groq workloads (`wef-batch-ingestion-ai-parse`, offer-enrichment **Process**)
-submit one **Groq Batch API** job per chunk (default chunk size **20** via
-`WEF_GROQ_BATCH_CHUNK_SIZE`) instead of pacing one HTTPS request per offer. Set
-`WEF_GROQ_USE_BATCH_API=false` only to force synchronous completions for debugging.
+use the **Groq Batch API** when `WEF_GROQ_USE_BATCH_API=true` (default): one batch
+job per chunk (default chunk size **20** via `WEF_GROQ_BATCH_CHUNK_SIZE`). The Batch
+API requires a Groq **Developer** plan; on the free tier set
+`WEF_GROQ_USE_BATCH_API=false` so bulk work falls back to sequential synchronous
+chat (subject to ~30 RPM). Production Compose must pass `WEF_GROQ_USE_BATCH_API`
+into the `api` service environment for the flag to take effect.
 The WEF **daily** cap is independent: once 20 ingestion parse generates have run
 for the owner on the current UTC day, further generate calls return `daily_limit`
 until UTC midnight.

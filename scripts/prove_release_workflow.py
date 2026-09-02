@@ -184,6 +184,8 @@ def assert_release_configuration() -> None:
     assert with_groq["WEF_GROQ_API_KEY"].startswith("gsk_fixture")
     assert with_groq["WEF_AI_CURATION_ENABLED"] == "false"
     assert with_groq["WEF_GROQ_ZDR_VERIFIED"] == "false"
+    assert with_groq["WEF_GROQ_USE_BATCH_API"] == "true"
+    assert with_groq["WEF_GROQ_BATCH_CHUNK_SIZE"] == "20"
 
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "production.env"

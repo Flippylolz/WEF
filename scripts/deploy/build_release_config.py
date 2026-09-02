@@ -23,6 +23,12 @@ TELEGRAM_API_ID_PATTERN = re.compile(r"^[1-9][0-9]{4,15}$")
 TELEGRAM_API_HASH_PATTERN = re.compile(r"^[A-Fa-f0-9]{32}$")
 MIN_BOOTSTRAP_USERNAME_LENGTH = 3
 MIN_BOOTSTRAP_PASSWORD_LENGTH = 10
+MIN_GROQ_BATCH_CHUNK_SIZE = 1
+MAX_GROQ_BATCH_CHUNK_SIZE = 100
+MIN_GROQ_BATCH_POLL_INTERVAL_SECONDS = 0.5
+MAX_GROQ_BATCH_POLL_INTERVAL_SECONDS = 60.0
+MIN_GROQ_BATCH_MAX_WAIT_SECONDS = 30
+MAX_GROQ_BATCH_MAX_WAIT_SECONDS = 86400
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,6 +100,47 @@ def _optional_bootstrap_owner(values: dict[str, str]) -> None:
     values["WEF_BOOTSTRAP_OWNER_PASSWORD"] = bootstrap_password
 
 
+def _groq_batch_settings_from_environment() -> dict[str, str]:
+    """Read and validate optional Groq Batch API tuning from CI inputs."""
+    use_batch_api = os.environ.get("WEF_GROQ_USE_BATCH_API", "true").strip().lower()
+    if use_batch_api not in {"true", "false"}:
+        msg = "Groq batch API flag must be true or false"
+        raise ValueError(msg)
+    chunk_size = os.environ.get("WEF_GROQ_BATCH_CHUNK_SIZE", "20").strip()
+    if (
+        not chunk_size.isdigit()
+        or not MIN_GROQ_BATCH_CHUNK_SIZE <= int(chunk_size) <= MAX_GROQ_BATCH_CHUNK_SIZE
+    ):
+        msg = "Groq batch chunk size must be an integer from 1 to 100"
+        raise ValueError(msg)
+    poll_interval = os.environ.get("WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS", "2").strip()
+    try:
+        poll_seconds = float(poll_interval)
+    except ValueError as error:
+        msg = "Groq batch poll interval must be a number"
+        raise ValueError(msg) from error
+    if (
+        not MIN_GROQ_BATCH_POLL_INTERVAL_SECONDS
+        <= poll_seconds
+        <= MAX_GROQ_BATCH_POLL_INTERVAL_SECONDS
+    ):
+        msg = "Groq batch poll interval must be from 0.5 to 60 seconds"
+        raise ValueError(msg)
+    max_wait = os.environ.get("WEF_GROQ_BATCH_MAX_WAIT_SECONDS", "3600").strip()
+    if (
+        not max_wait.isdigit()
+        or not MIN_GROQ_BATCH_MAX_WAIT_SECONDS <= int(max_wait) <= MAX_GROQ_BATCH_MAX_WAIT_SECONDS
+    ):
+        msg = "Groq batch max wait must be an integer from 30 to 86400"
+        raise ValueError(msg)
+    return {
+        "WEF_GROQ_USE_BATCH_API": use_batch_api,
+        "WEF_GROQ_BATCH_CHUNK_SIZE": chunk_size,
+        "WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS": poll_interval,
+        "WEF_GROQ_BATCH_MAX_WAIT_SECONDS": max_wait,
+    }
+
+
 def _optional_groq_curation(values: dict[str, str]) -> None:
     """Attach optional Groq AI curation settings when a key is present.
 
@@ -124,6 +171,7 @@ def _optional_groq_curation(values: dict[str, str]) -> None:
     values["WEF_AI_CURATION_ENABLED"] = enabled
     values["WEF_GROQ_ZDR_VERIFIED"] = zdr
     values["WEF_GROQ_TIMEOUT_SECONDS"] = timeout
+    values.update(_groq_batch_settings_from_environment())
 
 
 def build_values(
