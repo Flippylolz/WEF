@@ -636,7 +636,10 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
         )
         if existing is not None:
             return existing
-        location_text = normalize_location_text(parsed)
+        location_text = normalize_location_text(
+            parsed,
+            district=listing.district.value if listing.district else None,
+        )
         location_id = uuid4()
         session.add(
             LocationRow(

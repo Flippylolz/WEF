@@ -20,6 +20,7 @@ from wef_backend.features.ingestion.domain.extraction import (
     ListingCandidate,
     MoneyRange,
 )
+from wef_backend.features.ingestion.domain.geocoding import normalize_location_display_name
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Sequence
@@ -442,9 +443,13 @@ def normalized_location_key(location: str | None) -> str:
     return hashlib.sha256(candidate.encode()).hexdigest()
 
 
-def normalize_location_text(location: str | None) -> str:
-    """Return the whitespace-collapsed location text without case folding."""
-    return " ".join((location or "Unknown location").split())
+def normalize_location_text(
+    location: str | None,
+    *,
+    district: str | None = None,
+) -> str:
+    """Return the canonical display name for one parsed location line."""
+    return normalize_location_display_name(location, district=district)
 
 
 def redacted_error_summary(error: BaseException) -> str:

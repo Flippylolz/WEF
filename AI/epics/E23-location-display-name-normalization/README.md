@@ -64,10 +64,9 @@ without parsing raw source text.
 ## Planning state
 
 - [Spike revision 1](SPIKE.md) is owner-approved.
-- [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is drafted and awaits
-  owner approval before code.
+- [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is owner-approved.
 - Tasks:
-  - [E23-T1 — Add canonical location display-name normalization](tasks/E23-T1-display-name-normalization.md) (`ready`, blocked on plan approval)
+  - [E23-T1 — Add canonical location display-name normalization](tasks/E23-T1-display-name-normalization.md) (`ready`, in progress)
   - [E23-T2 — Backfill non-verified location display names](tasks/E23-T2-display-name-backfill.md) (`draft`, depends on E23-T1)
 
 ## Dependencies
