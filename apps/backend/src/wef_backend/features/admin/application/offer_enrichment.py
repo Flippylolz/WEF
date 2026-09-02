@@ -948,10 +948,13 @@ class ProcessOfferEnrichmentItem:
             self._runtime.daily_limit - used,
         )
         queued: list[OfferAiEnrichmentItem] = []
+        queued_ids: set[UUID] = set()
         for _ in range(chunk_limit):
             item = await self._store.next_item(batch_id)
-            if item is None:
+            if item is None or item.id in queued_ids:
                 break
+            await self._store.mark_item_processing(item, now=now)
+            queued_ids.add(item.id)
             queued.append(item)
         if not queued:
             await self._store.set_batch_state(
@@ -965,7 +968,6 @@ class ProcessOfferEnrichmentItem:
         prepared: list[_PreparedEnrichmentItem] = []
         last_outcome: ItemOutcome | None = None
         for item in queued:
-            await self._store.mark_item_processing(item, now=now)
             last_outcome = await self._prepare_item(
                 batch=batch,
                 item=item,

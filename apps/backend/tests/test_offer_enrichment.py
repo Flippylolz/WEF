@@ -582,6 +582,37 @@ async def test_start_pause_resume_and_process_edges() -> None:
     assert failed is ItemOutcome.PROVIDER_FAILED
 
 
+async def test_process_dequeues_each_item_once_with_large_chunk() -> None:
+    """A single queued item must not fill the whole chunk with duplicate work."""
+    owner_id = uuid4()
+    snapshot = _snapshot()
+    revision = _revision()
+    store = FakeOfferAiEnrichmentStore(
+        snapshots={snapshot.id: snapshot},
+        sources={snapshot.id: (revision,)},
+    )
+    batch = await _start(
+        store,
+        owner_id=owner_id,
+        runtime=replace(_runtime(), batch_chunk_size=20),
+    )
+    provider = FakeChatCompletions(payload=_payload(revision.revision_id))
+
+    outcome = await _process(
+        store,
+        provider,
+        owner_id=owner_id,
+        batch_id=batch.id,
+        runtime=replace(_runtime(), batch_chunk_size=20),
+    )
+
+    assert outcome is ItemOutcome.APPLIED
+    assert len(provider.calls) == 1
+    updated = store.batches[batch.id]
+    assert updated.processed_count == 1
+    assert updated.applied_count == 1
+
+
 async def test_process_stale_disabled_and_empty_payload() -> None:
     """Stale snapshots, disabled runtime, and empty fields fail closed."""
     owner_id = uuid4()
