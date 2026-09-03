@@ -29,6 +29,7 @@ from wef_backend.features.admin.application.ai_review import (
 from wef_backend.features.admin.application.offer_enrichment import (
     ALLOWED_OFFER_FIELDS,
     DEFAULT_BATCH_LIMIT,
+    DEFAULT_OFFER_AUTO_APPLY_FIELDS,
     MAX_BATCH_LIMIT,
     BatchState,
     FieldEventOutcome,
@@ -481,8 +482,12 @@ def test_canonicalize_remaining_allowlisted_values() -> None:
     assert canonicalize_offer_field("parking_included_in_price", included) is True
     assert canonicalize_offer_field("rooms_min", "2") == 2
     assert canonicalize_offer_field("delivery_label", "  Q4 2026  ") == "Q4 2026"
+    assert canonicalize_offer_field("market_type", "sale") == "secondary"
+    assert canonicalize_offer_field("market_type", "Pierwotny") == "primary"
     with pytest.raises(AdminDeniedError, match="market_type"):
         canonicalize_offer_field("market_type", "warehouse")
+    with pytest.raises(AdminDeniedError, match="market_type"):
+        canonicalize_offer_field("market_type", "apartment")
     with pytest.raises(AdminDeniedError, match="currency"):
         canonicalize_offer_field("currency", "XXX")
     with pytest.raises(AdminDeniedError, match="non-negative"):
@@ -508,6 +513,13 @@ def test_canonicalize_remaining_allowlisted_values() -> None:
         )
     with pytest.raises(ProviderRequestError):
         parse_offer_enrichment_payload({"fields": [1]}, allowed_revision_ids=set(), missing=set())
+
+
+def test_default_auto_apply_fields_include_market_type() -> None:
+    """Production auto-apply allowlist must include market_type or AI proposals stay inert."""
+    assert "market_type" in DEFAULT_OFFER_AUTO_APPLY_FIELDS
+    assert "area_min_sqm" in DEFAULT_OFFER_AUTO_APPLY_FIELDS
+    assert set(ALLOWED_OFFER_FIELDS) >= DEFAULT_OFFER_AUTO_APPLY_FIELDS
 
 
 async def test_start_pause_resume_and_process_edges() -> None:

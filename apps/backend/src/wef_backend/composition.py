@@ -43,6 +43,9 @@ from wef_backend.features.admin.application.ingestion_ai_parse import (
     GenerateIngestionAiParse,
     GetIngestionAiParse,
 )
+from wef_backend.features.admin.application.offer_enrichment import (
+    DEFAULT_OFFER_AUTO_APPLY_FIELDS,
+)
 from wef_backend.features.admin.infrastructure import (
     SQLAlchemyAdminAuditStore,
     SQLAlchemyIngestionAiParseStore,
@@ -203,6 +206,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
         model=runtime_settings.groq_model,
         api_key_present=bool(groq_key),
         batch_chunk_size=runtime_settings.groq_batch_chunk_size,
+        auto_apply_fields=DEFAULT_OFFER_AUTO_APPLY_FIELDS,
     )
     groq_provider = GroqAiProvider(
         groq_key or "disabled",
