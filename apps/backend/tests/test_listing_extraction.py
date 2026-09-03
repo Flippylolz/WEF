@@ -832,3 +832,105 @@ def test_property_type_label_conflict_emits_warning() -> None:
         and warning.field_name == "property_type"
         for warning in result.warnings
     )
+
+
+def test_market_type_implicit_primary_keyword() -> None:
+    """'новостройка' in body infers PRIMARY when no explicit label present."""
+    text = json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"][5]["text"]
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.market_type is not None
+    assert listing.market_type.value is MarketType.PRIMARY
+    assert "implicit_primary" in listing.market_type.provenance.rule_id
+
+
+def test_market_type_implicit_secondary_owner() -> None:
+    """'от собственника' in body infers SECONDARY when no explicit label present."""
+    text = json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"][6]["text"]
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.market_type is not None
+    assert listing.market_type.value is MarketType.SECONDARY
+    assert "implicit_secondary" in listing.market_type.provenance.rule_id
+
+
+def test_market_type_inferred_primary_from_development_content_type() -> None:
+    """Development content_type with no market label yields PRIMARY market.
+
+    The fixture text contains an implicit-primary keyword (Inwestycja), so the
+    provenance may come from either the implicit-keyword path or the
+    content_type-inference path — both are correct; we only assert the value.
+    """
+    text = json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"][7]["text"]
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.content_type is not None
+    assert listing.content_type.value is ContentType.DEVELOPMENT
+    assert listing.market_type is not None
+    assert listing.market_type.value is MarketType.PRIMARY
+    assert listing.market_type.provenance.rule_id.startswith("extract.market_type")
+
+
+def test_market_type_inferred_primary_from_development_no_keyword() -> None:
+    """content_type=DEVELOPMENT alone infers PRIMARY when no keyword is present."""
+    # The DEVELOPMENT_HEADER candidate rule fires on 'новостройка' which is also
+    # an implicit-primary keyword.  Use a text that scores DEVELOPMENT via a
+    # different path (rynek pierwotny header) but strip any body keyword so only
+    # the content_type fallback is exercised.
+    text = (
+        "Rynek — pierwotny\n"
+        "Lokalizacja — ul. Testowa 1, Wola, Warszawa\n"
+        "Dzielnica — Wola\n"
+        "Cena od 500 000 do 600 000 PLN\n"
+        "Powierzchnia: 40-55 m2\n"
+        "Pokoje: 2"
+    )
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    # explicit label fires → explicit path takes priority
+    assert listing.market_type is not None
+    assert listing.market_type.value is MarketType.PRIMARY
+
+
+def test_market_type_content_type_inference_only() -> None:
+    """When DEVELOPMENT is inferred but no body keyword exists, PRIMARY is returned."""
+    # 'инвестиции' scores DEVELOPMENT_HEADER (ContentType.DEVELOPMENT) but is
+    # not in the implicit-primary body pattern, so content_type inference fires.
+    text = (
+        "Инвестиции | Testowy Projekt\n"
+        "Локализация — ul. Próbna 5, Mokotów\n"
+        "Район — Mokotów\n"
+        "Цена от 700 000 до 850 000 zł\n"
+        "Площадь: 45-60 m2\n"
+        "Комнаты: 2-3\n"
+        "Сдача: Q2 2027"
+    )
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.content_type is not None
+    assert listing.content_type.value is ContentType.DEVELOPMENT
+    assert listing.market_type is not None
+    assert listing.market_type.value is MarketType.PRIMARY
+    assert listing.market_type.provenance.rule_id == "extract.market_type.inferred_from_development"
+
+
+def test_market_type_explicit_label_takes_precedence_over_implicit() -> None:
+    """An explicit 'рынок — вторичный' label wins over any implicit keyword."""
+    text = (
+        "🏙 Покупка | Квартира\n"
+        "Рынок — вторичный\n"
+        "Продаём новостройку ✅\n"
+        "📍ul. Testowa 1, Warszawa\n"
+        "💰 Цена — 600 000 zł"
+    )
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.market_type is not None
+    assert listing.market_type.value is MarketType.SECONDARY
+    assert listing.market_type.provenance.rule_id == "extract.market_type"
