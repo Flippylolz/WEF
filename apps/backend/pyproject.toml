@@ -42,6 +42,7 @@ wef-telegram-worker-status = "wef_backend.telegram_worker_status_command:main"
 wef-backfill-parse-issues = "wef_backend.backfill_parse_issues_command:main"
 wef-backfill-property-type = "wef_backend.backfill_property_type_command:main"
 wef-backfill-market-type = "wef_backend.backfill_market_type_command:main"
+wef-backfill-area = "wef_backend.backfill_area_command:main"
 wef-backfill-location-display-name = "wef_backend.backfill_location_display_name_command:main"
 wef-batch-ingestion-ai-parse = "wef_backend.batch_ingestion_ai_parse_command:main"
 
