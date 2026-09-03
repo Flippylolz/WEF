@@ -176,26 +176,26 @@ _MARKET_PATTERN = re.compile(
 _PRIMARY_IMPLICIT_PATTERN = re.compile(
     r"\b(?:"
     r"новостройк[аи]|новобудов[аи]|нов[аи]?\s+будов[аи]?"  # RU/UA new-build nouns
-    r"|від\s+забудовник[аи]"                                 # UA "from developer"
-    r"|від\s+завод[аи]?"                                     # UA "from factory" (rare)
-    r"|deweloper\w*|inwestycj[ae]|budow[a-z]*\s+nowych"      # PL developer terms
-    r"|от\s+застройщик[аи]|застройщик\w*"                    # RU "from developer"
-    r"|первичн\w+"                                           # RU "primary" standalone
-    r"|pierwot\w+"                                           # PL "primary" standalone
-    r"|nowe\s+budownictwo|nowe\s+mieszkan\w+"                # PL new construction
+    r"|від\s+забудовник[аи]"  # UA "from developer"
+    r"|від\s+завод[аи]?"  # UA "from factory" (rare)
+    r"|deweloper\w*|inwestycj[ae]|budow[a-z]*\s+nowych"  # PL developer terms
+    r"|от\s+застройщик[аи]|застройщик\w*"  # RU "from developer"
+    r"|первичн\w+"  # RU "primary" standalone
+    r"|pierwot\w+"  # PL "primary" standalone
+    r"|nowe\s+budownictwo|nowe\s+mieszkan\w+"  # PL new construction
     r")\b",
     _FLAGS,
 )
 # Implicit SECONDARY signals: resale / pre-owned keywords without an explicit label.
 _SECONDARY_IMPLICIT_PATTERN = re.compile(
     r"\b(?:"
-    r"вторичн\w+|вторинн\w+"                                 # RU/UA "secondary"
-    r"|від\s+власник[аи]|от\s+собственник[аи]"               # UA/RU "from owner"
-    r"|od\s+w[łl]a[śs]ciciela"                              # PL "from owner"
-    r"|rynek\s+wtórny|wtórn\w+"                              # PL secondary market
-    r"|resale|после\s+ремонт[аи]|після\s+ремонт[уа]"         # resale indicators
-    r"|kapitaln\w+\s+remont|капитальн\w+\s+ремонт"           # major renovation (resale)
-    r"|вже\s+(?:заселен|обжит)|уже\s+(?:заселен|обжит)"     # UA/RU "already occupied"
+    r"вторичн\w+|вторинн\w+"  # RU/UA "secondary"
+    r"|від\s+власник[аи]|от\s+собственник[аи]"  # UA/RU "from owner"
+    r"|od\s+w[łl]a[śs]ciciela"  # PL "from owner"
+    r"|rynek\s+wtórny|wtórn\w+"  # PL secondary market
+    r"|resale|после\s+ремонт[аи]|після\s+ремонт[уа]"  # resale indicators  # noqa: RUF001
+    r"|kapitaln\w+\s+remont|капитальн\w+\s+ремонт"  # major renovation (resale)
+    r"|вже\s+(?:заселен|обжит)|уже\s+(?:заселен|обжит)"  # UA/RU "already occupied"
     r")\b",
     _FLAGS,
 )
