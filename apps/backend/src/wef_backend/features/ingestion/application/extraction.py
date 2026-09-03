@@ -38,7 +38,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v11"
+PARSER_VERSION = "e2-v12"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
@@ -172,6 +172,33 @@ _MARKET_PATTERN = re.compile(
     rf"(?:rynek|market|рынок|ринок){_VALUE_SUFFIX}",
     _FLAGS,
 )
+# Implicit PRIMARY signals: developer/new-build keywords without an explicit label.
+_PRIMARY_IMPLICIT_PATTERN = re.compile(
+    r"\b(?:"
+    r"новостройк[аи]|новобудов[аи]|нов[аи]?\s+будов[аи]?"  # RU/UA new-build nouns
+    r"|від\s+забудовник[аи]"                                 # UA "from developer"
+    r"|від\s+завод[аи]?"                                     # UA "from factory" (rare)
+    r"|deweloper\w*|inwestycj[ae]|budow[a-z]*\s+nowych"      # PL developer terms
+    r"|от\s+застройщик[аи]|застройщик\w*"                    # RU "from developer"
+    r"|первичн\w+"                                           # RU "primary" standalone
+    r"|pierwot\w+"                                           # PL "primary" standalone
+    r"|nowe\s+budownictwo|nowe\s+mieszkan\w+"                # PL new construction
+    r")\b",
+    _FLAGS,
+)
+# Implicit SECONDARY signals: resale / pre-owned keywords without an explicit label.
+_SECONDARY_IMPLICIT_PATTERN = re.compile(
+    r"\b(?:"
+    r"вторичн\w+|вторинн\w+"                                 # RU/UA "secondary"
+    r"|від\s+власник[аи]|от\s+собственник[аи]"               # UA/RU "from owner"
+    r"|od\s+w[łl]a[śs]ciciela"                              # PL "from owner"
+    r"|rynek\s+wtórny|wtórn\w+"                              # PL secondary market
+    r"|resale|после\s+ремонт[аи]|після\s+ремонт[уа]"         # resale indicators
+    r"|kapitaln\w+\s+remont|капитальн\w+\s+ремонт"           # major renovation (resale)
+    r"|вже\s+(?:заселен|обжит)|уже\s+(?:заселен|обжит)"     # UA/RU "already occupied"
+    r")\b",
+    _FLAGS,
+)
 _PROPERTY_TYPE_LABEL_PATTERN = re.compile(
     rf"(?:typ nieruchomo[śs]ci|property type|rodzaj nieruchomo[śs]ci|"
     rf"тип недвижимости|тип нерухомості){_VALUE_SUFFIX}",
@@ -285,7 +312,7 @@ def extract_listing(
 
     warnings: list[ExtractionWarning] = []
     content_type = _content_value(decision, warnings)
-    market_type = _market_type(message.text, PARSER_VERSION, warnings)
+    market_type = _market_type(message.text, PARSER_VERSION, warnings, content_type)
     property_type = _property_type(message.text, PARSER_VERSION, warnings)
     location = _location_field(message.text, PARSER_VERSION, warnings)
     district = _district_field(message.text, PARSER_VERSION, warnings)
@@ -424,8 +451,10 @@ def _market_type(
     text: str,
     parser_version: str,
     warnings: list[ExtractionWarning],
+    content_type: ExtractedValue[ContentType] | None = None,
 ) -> ExtractedValue[MarketType] | None:
-    return _mapped_string_field(
+    # 1. Explicit label ("rynek: pierwotny", "рынок — вторичный", …) — highest priority.
+    explicit = _mapped_string_field(
         text,
         _MARKET_PATTERN,
         "market_type",
@@ -433,6 +462,55 @@ def _market_type(
         warnings,
         _parse_market_type,
     )
+    if explicit is not None and explicit.value is not MarketType.UNKNOWN:
+        return explicit
+
+    # 2. Implicit PRIMARY keywords in the body text.
+    primary_match = _PRIMARY_IMPLICIT_PATTERN.search(text)
+    if primary_match is not None:
+        span = SourceSpan(primary_match.start(), primary_match.end())
+        return ExtractedValue(
+            value=MarketType.PRIMARY,
+            provenance=_provenance(
+                "extract.market_type.implicit_primary",
+                parser_version,
+                Confidence.MEDIUM,
+                span,
+            ),
+        )
+
+    # 3. Implicit SECONDARY keywords in the body text.
+    secondary_match = _SECONDARY_IMPLICIT_PATTERN.search(text)
+    if secondary_match is not None:
+        span = SourceSpan(secondary_match.start(), secondary_match.end())
+        return ExtractedValue(
+            value=MarketType.SECONDARY,
+            provenance=_provenance(
+                "extract.market_type.implicit_secondary",
+                parser_version,
+                Confidence.MEDIUM,
+                span,
+            ),
+        )
+
+    # 4. content_type = DEVELOPMENT strongly implies PRIMARY market.
+    # Provenance re-uses the content_type evidence span.
+    if (
+        content_type is not None
+        and content_type.value is ContentType.DEVELOPMENT
+        and content_type.provenance.spans
+    ):
+        return ExtractedValue(
+            value=MarketType.PRIMARY,
+            provenance=_provenance(
+                "extract.market_type.inferred_from_development",
+                parser_version,
+                Confidence.MEDIUM,
+                content_type.provenance.spans[0],
+            ),
+        )
+
+    return explicit  # None or UNKNOWN from explicit match
 
 
 def _property_type(

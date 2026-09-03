@@ -39,6 +39,30 @@
       "content_type": null,
       "market_type": null,
       "currency": null
+    },
+    {
+      "case_id": "unit_implicit_primary_keyword",
+      "candidate": true,
+      "content_type": "development",
+      "market_type": "primary",
+      "currency": "PLN",
+      "text": "🏙 2-комнатная квартира | #Mokotów\n\n📍ul. Puławska 50, Mokotów, Miasto Testowe\n📐 48 m² | 3/8 этаж | #2_комнаты\n\nНовостройка, квартира ещё не была заселена.\n\n💰 Цена — 750 000 zł"
+    },
+    {
+      "case_id": "unit_implicit_secondary_owner",
+      "candidate": true,
+      "content_type": "unit",
+      "market_type": "secondary",
+      "currency": "PLN",
+      "text": "🏙 3-комнатная квартира | #Wola\n\n📍ul. Kasprzaka 12, Wola, Miasto Testowe\n📐 65 m² | 5/10 этаж | #3_комнаты\n\nПродаётся от собственника, без посредников.\n\n💰 Цена — 980 000 zł"
+    },
+    {
+      "case_id": "development_inferred_primary_no_label",
+      "candidate": true,
+      "content_type": "development",
+      "market_type": "primary",
+      "currency": null,
+      "text": "Inwestycja | Riverside Gardens\n\nLokalizacja — ul. Wybrzeże Gdańskie 5, Żoliborz\nDzielnica — Żoliborz\nCena od 650 000 do 810 000 PLN\nPowierzchnia: 40-62 m2\nPokoje: 2-3\nPiętro: 1-5\nOddanie: Q4 2028"
     }
   ]
 }
