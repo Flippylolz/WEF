@@ -112,7 +112,9 @@ def _groq_batch_settings_from_environment() -> dict[str, str]:
     if use_batch_api not in {"true", "false"}:
         msg = "Groq batch API flag must be true or false"
         raise ValueError(msg)
-    chunk_size = _optional_env("WEF_GROQ_BATCH_CHUNK_SIZE", "20")
+    # Sync chat (batch API off) is RPM-sensitive; default to tiny chunks.
+    chunk_default = "2" if use_batch_api == "false" else "20"
+    chunk_size = _optional_env("WEF_GROQ_BATCH_CHUNK_SIZE", chunk_default)
     if (
         not chunk_size.isdigit()
         or not MIN_GROQ_BATCH_CHUNK_SIZE <= int(chunk_size) <= MAX_GROQ_BATCH_CHUNK_SIZE

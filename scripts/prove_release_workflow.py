@@ -147,7 +147,7 @@ def _assert_blank_groq_batch_defaults(groq_environment: dict[str, str]) -> None:
         },
     )
     assert with_blank_batch["WEF_GROQ_USE_BATCH_API"] == "false"
-    assert with_blank_batch["WEF_GROQ_BATCH_CHUNK_SIZE"] == "20"
+    assert with_blank_batch["WEF_GROQ_BATCH_CHUNK_SIZE"] == "2"
     assert with_blank_batch["WEF_GROQ_BATCH_POLL_INTERVAL_SECONDS"] == "2"
     assert with_blank_batch["WEF_GROQ_BATCH_MAX_WAIT_SECONDS"] == "3600"
 

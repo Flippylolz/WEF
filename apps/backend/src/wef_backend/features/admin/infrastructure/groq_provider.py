@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 from typing import TYPE_CHECKING, Protocol
 
@@ -28,12 +29,52 @@ from wef_backend.features.admin.infrastructure.groq_common import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Awaitable, Callable, Mapping
 
 _HTTP_CLIENT_ERROR = 400
 _HTTP_SERVER_ERROR = 500
 _HTTP_TOO_MANY_REQUESTS = 429
 _HTTP_QUOTA_STATUSES = frozenset({401, 402, 403})
+_SYNC_RATE_LIMIT_RETRIES = 3
+_SYNC_RATE_LIMIT_BASE_SLEEP_SECONDS = 2.0
+
+
+async def _complete_many_sequentially(
+    complete: Callable[..., Awaitable[StructuredCompletion]],
+    requests: tuple[BatchCompletionRequest, ...],
+) -> tuple[BatchCompletionResult, ...]:
+    """Run chat completions one-by-one, backing off on free-tier 429s."""
+    results: list[BatchCompletionResult] = []
+    for request in requests:
+        completion: StructuredCompletion | None = None
+        error: ProviderRequestError | None = None
+        for attempt in range(_SYNC_RATE_LIMIT_RETRIES + 1):
+            try:
+                completion = await complete(
+                    model=request.model,
+                    messages=request.messages,
+                    schema_name=request.schema_name,
+                    schema=request.schema,
+                    max_output_tokens=request.max_output_tokens,
+                )
+                error = None
+                break
+            except ProviderRequestError as request_error:
+                error = request_error
+                if (
+                    request_error.outcome is not ProviderOutcome.RATE_LIMITED
+                    or attempt >= _SYNC_RATE_LIMIT_RETRIES
+                ):
+                    break
+                await asyncio.sleep(_SYNC_RATE_LIMIT_BASE_SLEEP_SECONDS * (attempt + 1))
+        results.append(
+            BatchCompletionResult(
+                custom_id=request.custom_id,
+                completion=completion,
+                error=error,
+            ),
+        )
+    return tuple(results)
 
 
 class ChatCompletionsTransport(Protocol):
@@ -174,33 +215,7 @@ class GroqChatCompletionsAdapter:
         requests: tuple[BatchCompletionRequest, ...],
     ) -> tuple[BatchCompletionResult, ...]:
         """Fall back to sequential chat completions when batch is unavailable."""
-        results: list[BatchCompletionResult] = []
-        for request in requests:
-            try:
-                completion = await self.complete(
-                    model=request.model,
-                    messages=request.messages,
-                    schema_name=request.schema_name,
-                    schema=request.schema,
-                    max_output_tokens=request.max_output_tokens,
-                )
-            except ProviderRequestError as error:
-                results.append(
-                    BatchCompletionResult(
-                        custom_id=request.custom_id,
-                        completion=None,
-                        error=error,
-                    ),
-                )
-            else:
-                results.append(
-                    BatchCompletionResult(
-                        custom_id=request.custom_id,
-                        completion=completion,
-                        error=None,
-                    ),
-                )
-        return tuple(results)
+        return await _complete_many_sequentially(self.complete, requests)
 
 
 class GroqAiProvider:
@@ -255,30 +270,4 @@ class GroqAiProvider:
             return ()
         if self._use_batch_api:
             return await self._batch.complete_many(requests)
-        results: list[BatchCompletionResult] = []
-        for request in requests:
-            try:
-                completion = await self._chat.complete(
-                    model=request.model,
-                    messages=request.messages,
-                    schema_name=request.schema_name,
-                    schema=request.schema,
-                    max_output_tokens=request.max_output_tokens,
-                )
-            except ProviderRequestError as error:
-                results.append(
-                    BatchCompletionResult(
-                        custom_id=request.custom_id,
-                        completion=None,
-                        error=error,
-                    ),
-                )
-            else:
-                results.append(
-                    BatchCompletionResult(
-                        custom_id=request.custom_id,
-                        completion=completion,
-                        error=None,
-                    ),
-                )
-        return tuple(results)
+        return await self._chat.complete_many(requests)
