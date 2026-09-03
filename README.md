@@ -1,6 +1,6 @@
 # Warsaw Estate Platform
 
-[![Repository coverage](.github/badges/coverage.svg)](.github/workflows/ci.yml)
+[![Repository coverage](https://flippylolz.github.io/WEF/coverage.svg)](.github/workflows/ci.yml)
 
 Warsaw Estate Platform (WEF) turns a Telegram real-estate export into a filterable map of Warsaw developments and offers.
 

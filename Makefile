@@ -108,7 +108,7 @@ coverage: coverage-backend coverage-frontend ## Refresh the combined coverage ba
 	python3 scripts/render_coverage_badge.py \
 		--backend tmp/coverage/backend/coverage.json \
 		--frontend tmp/coverage/frontend/report/coverage-summary.json \
-		--output .github/badges/coverage.svg \
+		--output tmp/coverage-badge/coverage.svg \
 		--fail-under 90
 
 contract-generate: ## Generate committed API contracts.
