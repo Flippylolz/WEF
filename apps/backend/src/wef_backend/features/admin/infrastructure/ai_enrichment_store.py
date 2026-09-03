@@ -786,7 +786,7 @@ def _offer_values(apply_values: dict[str, object]) -> dict[str, object]:
         if name in {"area_min_sqm", "area_max_sqm"}:
             values[column] = Decimal(str(value))
         elif name in _PRICE_MAJOR_FIELDS:
-            values[column] = int(value) * 100
+            values[column] = int(str(value)) * 100
         else:
             values[column] = value
     return values
