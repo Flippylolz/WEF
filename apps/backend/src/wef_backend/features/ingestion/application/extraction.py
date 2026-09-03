@@ -38,7 +38,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v12"
+PARSER_VERSION = "e2-v13"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
@@ -180,7 +180,7 @@ _PRIMARY_IMPLICIT_PATTERN = re.compile(
     r"|від\s+завод[аи]?"  # UA "from factory" (rare)
     r"|deweloper\w*|inwestycj[ae]|budow[a-z]*\s+nowych"  # PL developer terms
     r"|от\s+застройщик[аи]|застройщик\w*"  # RU "from developer"
-    r"|первичн\w+"  # RU "primary" standalone
+    r"|первичн\w+|первинн\w+"  # RU/UA "primary" standalone
     r"|pierwot\w+"  # PL "primary" standalone
     r"|nowe\s+budownictwo|nowe\s+mieszkan\w+"  # PL new construction
     r")\b",
@@ -193,8 +193,9 @@ _SECONDARY_IMPLICIT_PATTERN = re.compile(
     r"|від\s+власник[аи]|от\s+собственник[аи]"  # UA/RU "from owner"
     r"|od\s+w[łl]a[śs]ciciela"  # PL "from owner"
     r"|rynek\s+wtórny|wtórn\w+"  # PL secondary market
-    r"|resale|после\s+ремонт[аи]|після\s+ремонт[уа]"  # resale indicators  # noqa: RUF001
+    r"|resale|после\s+(?:\w+\s+){0,2}ремонт\w*|після\s+(?:\w+\s+){0,2}ремонт\w*"
     r"|kapitaln\w+\s+remont|капитальн\w+\s+ремонт"  # major renovation (resale)
+    r"|генеральн\w+\s+ремонт|комплексн\w+\s+ремонт"
     r"|вже\s+(?:заселен|обжит)|уже\s+(?:заселен|обжит)"  # UA/RU "already occupied"
     r")\b",
     _FLAGS,
@@ -254,7 +255,11 @@ _STORAGE_PATTERN = re.compile(
     rf"(?:storage|комора|кладов(?:ая|ка)|kom[oó]rka lokatorska){_VALUE_SUFFIX}",
     _FLAGS,
 )
-_AREA_PATTERN = re.compile(rf"(?:powierzchnia|area|площадь){_VALUE_SUFFIX}", _FLAGS)
+_AREA_PATTERN = re.compile(rf"(?:powierzchnia|area|площа(?:дь)?){_VALUE_SUFFIX}", _FLAGS)
+_AREA_EMOJI_PATTERN = re.compile(
+    rf"\U0001F4D0\ufe0f?\s*(?P<value>{_NUMBER})\s*(?:m[²2]|м[²2]|кв\.?\s*м)",
+    _FLAGS,
+)
 _ROOMS_PATTERN = re.compile(
     rf"(?:pokoje?|rooms?|комнат[аы]?|кімнат(?:на|ні)?){_VALUE_SUFFIX}",
     _FLAGS,
@@ -344,14 +349,7 @@ def extract_listing(
         PARSER_VERSION,
         warnings,
     )
-    area = _range_field(
-        message.text,
-        _AREA_PATTERN,
-        "area_sqm",
-        PARSER_VERSION,
-        warnings,
-        _decimal_range,
-    )
+    area = _area_field(message.text, PARSER_VERSION, warnings)
     rooms = _rooms_field(
         message.text,
         PARSER_VERSION,
@@ -728,9 +726,9 @@ def _pin_line_value(text: str, match: re.Match[str]) -> tuple[str, SourceSpan]:
 
 def _parse_market_type(value: str) -> MarketType:
     folded = value.casefold()
-    if any(token in folded for token in ("pierwot", "primary", "первич")):
+    if any(token in folded for token in ("pierwot", "primary", "первич", "первин")):
         return MarketType.PRIMARY
-    if any(token in folded for token in ("wtór", "wtor", "secondary", "вторич")):
+    if any(token in folded for token in ("wtór", "wtor", "secondary", "вторич", "вторин")):
         return MarketType.SECONDARY
     return MarketType.UNKNOWN
 
@@ -843,6 +841,32 @@ def _addon_fields(
     return (
         _money_field(text, pattern, f"{field_name}_price", parser_version, warnings),
         None,
+    )
+
+
+def _area_field(
+    text: str,
+    parser_version: str,
+    warnings: list[ExtractionWarning],
+) -> ExtractedValue[DecimalRange] | None:
+    """Prefer labeled area lines; fall back to the 📐 measurement template."""
+    labeled = _range_field(
+        text,
+        _AREA_PATTERN,
+        "area_sqm",
+        parser_version,
+        warnings,
+        _decimal_range,
+    )
+    if labeled is not None:
+        return labeled
+    return _range_field(
+        text,
+        _AREA_EMOJI_PATTERN,
+        "area_sqm",
+        parser_version,
+        warnings,
+        _decimal_range,
     )
 
 

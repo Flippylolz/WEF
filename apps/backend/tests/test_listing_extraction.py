@@ -934,3 +934,53 @@ def test_market_type_explicit_label_takes_precedence_over_implicit() -> None:
     assert listing.market_type is not None
     assert listing.market_type.value is MarketType.SECONDARY
     assert listing.market_type.provenance.rule_id == "extract.market_type"
+
+
+def test_market_type_ukrainian_primary_rynok_header() -> None:
+    """Ukrainian 'Первинний ринок' infers PRIMARY without a labeled rynek: value."""
+    text = (
+        "🏙 Купівля | Первинний ринок\n"
+        "📍 ul. Testowa 1, Mokotów\n"
+        "📐 41,51 m² | 1/9 етаж | #1_кімнати\n"
+        "💰 Ціна — 890 000 zł"
+    )
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.market_type is not None
+    assert listing.market_type.value is MarketType.PRIMARY
+    assert listing.area_sqm is not None
+    assert listing.area_sqm.value == DecimalRange(Decimal("41.51"), Decimal("41.51"))
+
+
+def test_market_type_renovation_with_adjective_is_secondary() -> None:
+    """'после генерального ремонта' is a resale signal even with an adjective."""
+    text = (
+        "🏙 2-комнатная квартира после генерального ремонта | #Mokotów\n"
+        "📍ul. Testowa 8, Mokotów\n"
+        "📐 30 m² | 0/3 этаж | #2_комнаты\n"
+        "💰 Цена — 649 777 zł"
+    )
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.market_type is not None
+    assert listing.market_type.value is MarketType.SECONDARY
+    assert listing.area_sqm is not None
+    assert listing.area_sqm.value == DecimalRange(Decimal(30), Decimal(30))
+
+
+def test_area_from_ukrainian_ploshcha_label() -> None:
+    """Ukrainian 'Площа:' labels extract area without the Russian 'площадь' form."""
+    text = (
+        "Купівля | Квартира\n"
+        "Локалізація: ul. Testowa 3, Wola\n"
+        "Площа: 41,51 м²\n"
+        "Кімнати: 1\n"
+        "Ціна: 890 000 zł"
+    )
+    result = _candidate(text)
+    listing = result.listing
+    assert listing is not None
+    assert listing.area_sqm is not None
+    assert listing.area_sqm.value == DecimalRange(Decimal("41.51"), Decimal("41.51"))
