@@ -49,6 +49,7 @@ from wef_backend.features.admin.application.offer_enrichment import (
     StartOfferEnrichmentBatch,
     SyncOfferAiOrigins,
     canonicalize_offer_field,
+    catalog_value_for_field,
     is_missing,
     offer_input_fingerprint,
     parse_offer_enrichment_payload,
@@ -540,6 +541,15 @@ def test_offer_values_convert_major_prices_to_minor_units() -> None:
     assert values["parking_price_min_minor"] == 6_000_000
     assert values["parking_price_max_minor"] == 6_000_000
     assert values["area_min_sqm"] == Decimal("47.00")
+
+
+def test_catalog_value_for_field_converts_prices_to_minor_for_origins() -> None:
+    """Origins and applied_value must match catalog minor units for revert/sync."""
+    assert catalog_value_for_field("parking_price_min", 60_000) == 6_000_000
+    assert catalog_value_for_field("market_type", "secondary") == "secondary"
+    assert catalog_value_for_field("area_min_sqm", "47.00") == "47.00"
+    fingerprint = value_fingerprint(catalog_value_for_field("parking_price_min", 60_000))
+    assert fingerprint == value_fingerprint(6_000_000)
 
 
 async def test_start_pause_resume_and_process_edges() -> None:

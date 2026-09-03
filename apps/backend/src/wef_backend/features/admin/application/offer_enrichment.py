@@ -495,6 +495,31 @@ def missing_fields(snapshot: OfferEnrichmentSnapshot) -> tuple[str, ...]:
     return tuple(name for name in ALLOWED_OFFER_FIELDS if is_missing(snapshot, name))
 
 
+_PRICE_MAJOR_FIELDS = frozenset(
+    {
+        "apartment_price_min",
+        "apartment_price_max",
+        "parking_price_min",
+        "parking_price_max",
+        "storage_price_min",
+        "storage_price_max",
+    },
+)
+
+
+def catalog_value_for_field(field_name: str, value: object) -> object:
+    """Map a canonical AI proposal onto the value stored on the offer row.
+
+    Price proposals are major currency units; catalog columns store minor units.
+    """
+    if field_name in _PRICE_MAJOR_FIELDS:
+        if not isinstance(value, int) or isinstance(value, bool):
+            message = "expected an integer"
+            raise AdminDeniedError(message)
+        return value * 100
+    return value
+
+
 def canonicalize_offer_field(field_name: str, value: object) -> object:
     """Validate and canonicalize one proposed offer field."""
     if field_name not in ALLOWED_OFFER_FIELDS:
@@ -513,14 +538,7 @@ def canonicalize_offer_field(field_name: str, value: object) -> object:
             message = "invalid currency"
             raise AdminDeniedError(message)
         return text
-    if field_name in {
-        "apartment_price_min",
-        "apartment_price_max",
-        "parking_price_min",
-        "parking_price_max",
-        "storage_price_min",
-        "storage_price_max",
-    }:
+    if field_name in _PRICE_MAJOR_FIELDS:
         amount = _as_int(value)
         if amount < 0:
             message = "price must be non-negative"
@@ -1294,13 +1312,14 @@ class ProcessOfferEnrichmentItem:
                 item_outcome = ItemOutcome.BELOW_THRESHOLD
                 continue
             apply_values[name] = canonical
+            stored = catalog_value_for_field(name, canonical)
             origins.append(
                 OfferFieldOrigin(
                     offer_id=snapshot.id,
                     field_name=name,
                     origin=OriginKind.AI,
-                    value_fingerprint=value_fingerprint(canonical),
-                    canonical_value=canonical,
+                    value_fingerprint=value_fingerprint(stored),
+                    canonical_value=stored,
                     source_revision_id=revision.revision_id,
                     parser_version=snapshot.parser_version,
                     field_event_id=event_id,
@@ -1328,7 +1347,7 @@ class ProcessOfferEnrichmentItem:
                     latency_ms=latency_ms,
                     start=start,
                     end=end,
-                    applied=canonical,
+                    applied=stored,
                 ),
             )
             item_outcome = ItemOutcome.APPLIED
