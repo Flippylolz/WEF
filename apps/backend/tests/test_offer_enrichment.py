@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import UTC, datetime
+from decimal import Decimal
 from uuid import UUID, uuid4
 
 import pytest
@@ -53,6 +54,9 @@ from wef_backend.features.admin.application.offer_enrichment import (
     parse_offer_enrichment_payload,
     resolve_evidence_offsets,
     value_fingerprint,
+)
+from wef_backend.features.admin.infrastructure.ai_enrichment_store import (
+    _offer_values,
 )
 from wef_backend.features.ingestion.application.persistence import MASK_FILLER
 
@@ -520,6 +524,22 @@ def test_default_auto_apply_fields_include_market_type() -> None:
     assert "market_type" in DEFAULT_OFFER_AUTO_APPLY_FIELDS
     assert "area_min_sqm" in DEFAULT_OFFER_AUTO_APPLY_FIELDS
     assert set(ALLOWED_OFFER_FIELDS) >= DEFAULT_OFFER_AUTO_APPLY_FIELDS
+
+
+def test_offer_values_convert_major_prices_to_minor_units() -> None:
+    """AI proposes major currency amounts; catalog columns store minor units."""
+    values = _offer_values(
+        {
+            "market_type": "secondary",
+            "parking_price_min": 60_000,
+            "parking_price_max": 60_000,
+            "area_min_sqm": "47.00",
+        },
+    )
+    assert values["market_type"] == "secondary"
+    assert values["parking_price_min_minor"] == 6_000_000
+    assert values["parking_price_max_minor"] == 6_000_000
+    assert values["area_min_sqm"] == Decimal("47.00")
 
 
 async def test_start_pause_resume_and_process_edges() -> None:

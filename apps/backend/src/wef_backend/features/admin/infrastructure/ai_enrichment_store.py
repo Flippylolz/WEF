@@ -64,6 +64,16 @@ _COLUMN_BY_FIELD = {
     "floor_label": "floor_label",
     "delivery_label": "delivery_label",
 }
+_PRICE_MAJOR_FIELDS = frozenset(
+    {
+        "apartment_price_min",
+        "apartment_price_max",
+        "parking_price_min",
+        "parking_price_max",
+        "storage_price_min",
+        "storage_price_max",
+    },
+)
 _OPEN_BATCH_STATES = (
     BatchState.QUEUED.value,
     BatchState.RUNNING.value,
@@ -765,11 +775,18 @@ def _snapshot(row: OfferRow) -> OfferEnrichmentSnapshot:
 
 
 def _offer_values(apply_values: dict[str, object]) -> dict[str, object]:
+    """Map allowlisted AI field names onto offer columns.
+
+    Price proposals are major currency units (as quoted in source text); the
+    catalog stores integer minor units, so convert on write.
+    """
     values: dict[str, object] = {}
     for name, value in apply_values.items():
         column = _COLUMN_BY_FIELD[name]
         if name in {"area_min_sqm", "area_max_sqm"}:
             values[column] = Decimal(str(value))
+        elif name in _PRICE_MAJOR_FIELDS:
+            values[column] = int(value) * 100
         else:
             values[column] = value
     return values

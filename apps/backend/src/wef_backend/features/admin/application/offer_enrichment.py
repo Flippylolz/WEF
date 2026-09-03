@@ -110,7 +110,8 @@ _SYSTEM_PROMPT = (
     "For market_type, proposed_value must be exactly primary or secondary — never "
     "sale, apartment, residential, or other labels. Omit market_type when the "
     "source does not clearly indicate primary (developer/new-build) vs secondary "
-    "(resale/owner)."
+    "(resale/owner). Price proposed_value amounts must be major currency units "
+    "(as written in the source, e.g. 60000 for 60 000 zł), not minor units."
 )
 
 
