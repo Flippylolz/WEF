@@ -12,15 +12,15 @@ from wef_backend.features.ingestion.application.extraction import (
     PARSER_VERSION,
     extract_listing,
 )
-from wef_backend.features.ingestion.infrastructure.property_type_backfill import (
-    _PrimarySourceBackfillRow,
-    _newest_primary_source_rows,
-    _row_to_raw,
-)
 from wef_backend.features.ingestion.infrastructure.models import (
     OfferSourceRow,
     SourceChannelRow,
     SourceMessageRow,
+)
+from wef_backend.features.ingestion.infrastructure.property_type_backfill import (
+    _newest_primary_source_rows,
+    _PrimarySourceBackfillRow,
+    _row_to_raw,
 )
 
 if TYPE_CHECKING:
@@ -125,7 +125,7 @@ async def backfill_market_types(
     )
 
 
-async def _process_backfill_row(
+async def _process_backfill_row(  # noqa: PLR0913
     session_factory: async_sessionmaker[AsyncSession],
     *,
     counts: dict[str, int],
@@ -146,9 +146,7 @@ async def _process_backfill_row(
         counts["failures"] += 1
         return
 
-    extracted = (
-        listing.market_type.value.value if listing.market_type is not None else "unknown"
-    )
+    extracted = listing.market_type.value.value if listing.market_type is not None else "unknown"
 
     if extracted == "primary":
         counts["primary"] += 1
