@@ -201,6 +201,9 @@ async def test_rolled_back_evaluation_can_retry_and_source_edit_supersedes_old_w
     try:
         raw = _message("For sale apartment\nParking: 45 000 PLN")
         extraction = extract_listing(raw)
+        extraction = replace(
+            extraction, decision=replace(extraction.decision, parser_version="e2-v13")
+        )
         service = PersistHistoricalIngestion(
             store=SQLAlchemyIngestionPersistence(database.session_factory)
         )

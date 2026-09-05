@@ -38,7 +38,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v14"
+PARSER_VERSION = "e2-v15"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
@@ -250,8 +250,16 @@ _APARTMENT_PRICE_PATTERN = re.compile(
     rf"{_VALUE_SUFFIX}",
     _FLAGS,
 )
+# The newly calibrated garage form is a complete labeled scalar quote. Do not
+# interpret rental prose, availability, or a garage mention as a purchase price.
+_GARAGE_PRICE_LABEL = (
+    rf"(?m:^[ \t]*(?:[•*][ \t]*)?гараж"
+    rf"(?=[ \t]*[:|\u2013\u2014-][ \t]*{_NUMBER}"
+    rf"[ \t]*(?:PLN|zł|EUR|€|USD|GBP)[ \t]*$))"
+)
 _PARKING_PATTERN = re.compile(
-    rf"(?:parking(?: price)?|паркинг|паркінг|miejsce postojowe){_VALUE_SUFFIX}",
+    rf"(?:parking(?: price)?|паркинг|паркінг|miejsce postojowe|{_GARAGE_PRICE_LABEL})"
+    rf"{_VALUE_SUFFIX}",
     _FLAGS,
 )
 _STORAGE_PATTERN = re.compile(

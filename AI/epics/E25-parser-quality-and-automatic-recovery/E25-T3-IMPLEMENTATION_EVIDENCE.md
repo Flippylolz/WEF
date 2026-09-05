@@ -222,3 +222,44 @@ Activation-record validation: `make lint` and isolated-image `make test` passed
 (1,071 backend tests, 169 frontend tests, 90.25% backend coverage).
 `git diff --check` passed. This change is documentation only; production runtime
 acceptance is still pending the new release and cannot be inferred from these tests.
+
+## Garage-price correction PR
+
+The owner requested a fixes PR after inspecting the first rejected observations.
+The parking amount was literally supported by a garage label with a bullet and
+em dash. The source did not establish secondary market, and the false inclusion
+proposal did not satisfy the existing true-only inclusion rule. Transport success
+therefore did not imply an acceptable complete proposal.
+
+Follow-up branch `bugfix/E25-garage-price-recovery` advances the deterministic parser
+to `e2-v15`. It recognizes the reviewed Russian singular garage label with an
+optional bullet and a colon/dash separator followed by an explicit scalar amount
+and supported currency. The new garage form requires a complete price line;
+availability, rental prose, monthly amounts, negative values, alternatives and
+mixed sums do not become garage purchase prices. Conflicting explicit quotes
+remain warnings. Deterministic extraction retains exact value provenance and
+removes these successfully parsed gaps from recovery eligibility, avoiding a
+provider request for this supported form.
+
+The independent recovery validator now recognizes the corresponding parking
+label/bullet/separator grammar for both amount and currency evidence. It retains
+unique-fragment, contact, full scalar value, positive amount, currency, conflict
+and protected-field checks. The garage amount cannot establish apartment price,
+market type or parking inclusion. The unsupported secondary-market inference and
+false inclusion proposal remain rejected; no threshold or field allowlist is
+relaxed to make the canary pass.
+
+Regression fixtures are invented and do not copy production listing text. This PR
+changes no schema, provider quota, application flag, API or dependency. Parser
+versioning makes old recovery identities stale. Historical canonical application
+still belongs to T4, whose accepted parser release must be refreshed after this
+correction is reviewed and whose T3 acceptance dependency remains incomplete.
+Existing observed proposals are not retrospectively applied by this fix. The
+requested deliverable is a PR; production merge and deployment are separate.
+
+Validation: the focused garage/classifier/calibration suites passed 202 tests.
+`make lint`, `make format-check`, `make typecheck`, `make contract-check` and
+`git diff --check` passed. Isolated-image `make test` passed 1,121 backend and
+169 frontend tests, with 90.19% backend coverage. Version-sensitive rollback and
+report privacy tests were corrected without changing their intended guarantees.
+Equal numeric amounts in conflicting currency quotes are now independently rejected.

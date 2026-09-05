@@ -285,7 +285,9 @@ def test_atomic_report_writer_is_deterministic_and_contains_no_source_samples(
     assert "sample_dry_run" not in rendered
     assert str(source) not in rendered
     assert "contact" in rendered
-    assert EXPECTATION.channel_id not in audit_rendered
+    # A short numeric ID can coincidentally occur inside an allowed SHA-256 digest.
+    unhashed_audit = {k: v for k, v in audit_document.items() if k != "normalized_report_sha256"}
+    assert EXPECTATION.channel_id not in json.dumps(unhashed_audit)
     assert str(source) not in audit_rendered
     assert "Kupno | Mieszkanie" not in audit_rendered
     assert "+48 600 700 800" not in audit_rendered
