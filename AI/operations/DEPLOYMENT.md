@@ -655,3 +655,27 @@ cursors, delete siblings, clear the entire pending queue, or roll back to a work
 that ignores pause and restarts the known loop. Migration downgrade fails closed
 when recovery evidence is populated; keep the additive schema and roll forward.
 This procedure does not establish an off-host backup or complete T2–T4.
+
+## E24-T2 progress and retry rollout
+
+Apply additive revision `20260905_0021` after E24-T1's `20260905_0020`, then deploy
+the matching worker. Keep the bounded T1 canary and pause controls authoritative.
+Do not initialize polling from the highest stored source ID: existing evidence
+bootstraps applied progress only. Polling begins at zero and the old-ID sweep
+retains its own continuation. Compare operator `applied_high_water_id`,
+`polled_through_id`, and `history_limited` with the corresponding runtime fields;
+the legacy local checkpoint means polling coverage, not latest finished run.
+
+Observe pending and quarantined work alongside polling progress. The forward
+cursor may advance over a durably deferred item, but pending canonical work keeps
+coverage limited. Next-attempt and source retry-after times survive restarts;
+normal contention needs no operator reset. The restricted exception table retains
+one original-event reference and safe reason for data exhaustion. Only a relevant
+retry-policy revision reopens that budget automatically.
+
+On rollback, pause the affected worker and retain the progress, retry counters,
+due times, exception records, and T1 receipts. The migration refuses downgrade
+when recovery evidence exists. Never reset these tables or restore the prior
+run-completion cursor reader. Resume with a corrected compatible worker. These
+are implementation/rollout instructions; production recovery has not yet been
+measured for this change.

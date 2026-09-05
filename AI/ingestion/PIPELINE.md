@@ -417,14 +417,15 @@ evidence remain under E15-T3 and M4/B-003.
 
 1. Resolve the configured channel entity and verify ID/title against production configuration.
 2. On every process start, observe the remote head and poll forward from the durable
-   live checkpoint (or the persisted channel maximum on the first live run).
+   polling boundary (zero until a range has been durably classified).
 3. Process oldest to newest through the common pipeline.
 4. Subscribe to new/edit/delete events for the single verified channel.
 5. Handle edit and delete events.
 6. Persist a checkpoint only after the database transaction succeeds.
 7. Reconcile immediately and every 60 seconds: replay 20 recent message IDs, process
-   ordered batches of at most 100, and cap each cycle at 500 messages. A process restart
-   after disconnect performs the startup cycle again.
+   ordered batches of at most 100, and cap each cycle at 500 source IDs, reserving
+   up to 100 for older known-ID observations. A process restart after disconnect
+   resumes durable polling, sweep continuation, and source backoff.
 8. A supervised `recurring_geocode` loop resolves pending `ungeocoded` and retryable
    `needs_review`/`out_of_scope` locations every 60 seconds (configurable), up to 10
    per cycle, through the same Geoapify cache and durable budget machinery as
@@ -521,3 +522,29 @@ Archive completion does not prove derivative completion. T2 owns the durable
 cursor/retry changes; T3 owns independent media retry; T4 owns broader progress
 health. These follow-ups are not complete merely because original-row recovery
 is implemented.
+
+## E24-T2 polling progress and fair retries
+
+`telegram_channel_progress` separates canonical `applied_high_water_id` from
+`polled_through_id`. Canonical transactions advance the former with `GREATEST`;
+only durably classified polling batches advance the latter. Passive events and
+late run completion cannot certify unseen history. Legacy source maxima populate
+only applied progress, with polling starting at zero and coverage limited.
+Operator status and runtime schema 1 expose both meanings through additive fields.
+
+A cycle handles at most 500 source IDs, reserving up to 400 for forward polling
+and 100 for explicit observations of older retained IDs. The sweep has a fixed
+upper bound, persisted continuation, and a five-minute token lease. A resumed
+worker rejects a stale observer's completion. Explicit empty Telegram messages
+confirm deletion; omitted results and unavailable access remain unknown. These
+metadata observations do not download media. Pending archive records and source
+limitations keep canonical coverage visibly incomplete even at the remote head.
+
+Raw retry eligibility is durable. Transport/provider/lock deferrals increment a
+separate counter; five data failures quarantine the original with one exception
+record. Delays start at five seconds, grow exponentially with positive jitter,
+cap at 300 seconds, and respect any longer provider delay. Receipt-backed
+acknowledgements bypass the data cap and delay. Relevant retry-policy changes
+permit bounded re-evaluation, while unrelated releases leave the budget intact.
+Legacy classification processes at most 25 rows per selection and preserves the
+historical attempts count. Old lock exhaustion does not consume the data budget.

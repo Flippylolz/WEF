@@ -62,15 +62,21 @@ class SQLAlchemyArchiveRecovery:
             )
             .exists()
         )
+        failures = case(
+            (raw.retry_policy_version != "", raw.data_failure_count),
+            (raw.last_error == "RunLockHeldError", 0),
+            (raw.outcome == "failed", raw.attempts),
+            else_=0,
+        )
         async with self._factory() as session:
             row = (
                 await session.execute(
                     select(
                         func.count().filter(
-                            pending & ((raw.attempts < _MAX_DATA_ATTEMPTS) | receipt_exists)
+                            pending & ((failures < _MAX_DATA_ATTEMPTS) | receipt_exists)
                         ),
                         func.count().filter(
-                            pending & (raw.attempts >= _MAX_DATA_ATTEMPTS) & ~receipt_exists
+                            pending & (failures >= _MAX_DATA_ATTEMPTS) & ~receipt_exists
                         ),
                         func.min(case((pending, raw.received_at))),
                         func.count().filter(pending & sibling_exists),

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E24-T2
 epic: E24
 title: "Make source cursors monotonic and retries fair"
-status: draft
+status: in_progress
 revision: 2
 priority: P1
 size: L
@@ -29,16 +29,17 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-05T10:33:19Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: Codex
+  verified_at: "2026-09-05T11:12:46Z"
+  evidence:
+    - "E24-T1: bugfix/E24-T1-original-archive; https://github.com/Flippylolz/WEF/pull/331; head 4548766; immediate ancestor of this branch"
 branch:
   required: true
-  name: null
+  name: bugfix/E24-T2-cursors-and-retries
   task_id: E24-T2
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-05T11:12:46Z"
   pull_request: null
 completion:
   completed_by: null
@@ -122,8 +123,7 @@ This task was moved from its proposed location and refined to revision 2.
 revision and is approved under AD-049. Its implementation gate is satisfied;
 branch and dependency gates still govern the start of work.
 
-T2 depends on T1. Before implementation, record either T1 completion evidence or
-a valid ordered stack with its open PR, branch, and current head. A stacked T2
+T2 depends on T1 and is implemented on the recorded ordered stack above PR #331. A stacked T2
 may be implemented but cannot merge or complete before T1 is `done`.
 
 ## Rollout and automatic operation
@@ -148,5 +148,67 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Promotion and approved spike revision 2 verification are recorded.
 - [x] Scope, acceptance, tests, and recovery constraints match the approved spike.
 - [x] Owner approved implementation plan revision 1 with this task at revision 2 under AD-049.
-- [ ] Dependency gate permits implementation and a dedicated task branch is recorded.
+- [x] Dependency gate permits implementation through the T1 stack and a dedicated task branch is recorded.
 - [ ] Acceptance evidence, required checks, PR, and definition of done are complete.
+
+## Implementation evidence — 2026-09-05
+
+Implemented on the ordered T1 stack. Revision `20260905_0021` adds durable channel
+progress, due times, separate data/deferral counters, and the unique exception
+ledger. Canonical and polling transactions use independent monotonic boundaries.
+Known-ID sweeps retain a fixed range and a token lease; unknown history remains
+limited. Transport/lock retries preserve the data budget and policy revisions
+provide bounded automatic quarantine re-evaluation.
+
+Real PostGIS proofs cover an older transaction following a higher committed
+cursor, passive high-ID isolation, more than five deferrals followed by success,
+poison fairness and one exception, restart eligibility, legacy classification,
+source outage, lower-ID edit/deletion observations, and stale sweep completion.
+The Telethon adapter test distinguishes explicit empty messages from omissions.
+
+Validation:
+
+- `make lint`: passed, including 17 architecture contracts and frontend lint.
+- `make format-check`, `make typecheck`, `make contract-check`: passed.
+- `make test COMPOSE='docker compose --project-name wef-e24 --file infra/compose.yaml'`:
+  825 backend tests passed, 90.36% coverage; 169 frontend tests passed with coverage floors met.
+- `python3 scripts/check_markdown_links.py` and `git diff --check`: passed.
+
+Task remains `in_progress`: parent completion, required CI/review, authorized
+release, and production observation remain outstanding. No production cursor,
+archive record, or queue was modified during implementation. T3/T4 remain outside
+this approved implementation sequence.
+
+Changed-file manifest (relative to the immediate T1 parent):
+
+- `AI/epics/E24-automatic-ingestion-recovery/tasks/E24-T2-monotonic-cursors-and-fair-retries.md`
+- `AI/ingestion/PIPELINE.md`
+- `AI/operations/DEPLOYMENT.md`
+- `apps/backend/migrations/versions/20260905_0021_ingestion_progress.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/archive_retry.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/raw_archive.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/telegram_events.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/telegram_live.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/telegram_progress.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/telegram_reconciliation.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/telegram_worker_liveness.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/telegram_worker_status.py`
+- `apps/backend/src/wef_backend/features/ingestion/domain/telegram_worker_ops.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/archive_recovery.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/archive_retry_store.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/fake_telegram_client.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/models.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/persistence_adapter.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/raw_event_archive.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/telegram_progress_store.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/telegram_worker_status_store.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/telethon_client.py`
+- `apps/backend/src/wef_backend/migration.py`
+- `apps/backend/src/wef_backend/telegram_worker_command.py`
+- `apps/backend/tests/test_archive_recovery_integration.py`
+- `apps/backend/tests/test_ingestion_progress_integration.py`
+- `apps/backend/tests/test_persistence_integration.py`
+- `apps/backend/tests/test_telegram_live_backfill.py`
+- `apps/backend/tests/test_telegram_live_events.py`
+- `apps/backend/tests/test_telegram_reconciliation.py`
+- `apps/backend/tests/test_telegram_worker_ops.py`

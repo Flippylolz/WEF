@@ -177,7 +177,7 @@ async def recovery_db() -> AsyncIterator[RecoveryDB]:
         async with engine.begin() as connection:
             await connection.execute(
                 text(
-                    "TRUNCATE source_channels, telegram_raw_events, "
+                    "TRUNCATE offers, source_channels, telegram_raw_events, "
                     "telegram_archive_recovery CASCADE"
                 )
             )
@@ -191,7 +191,7 @@ async def recovery_db() -> AsyncIterator[RecoveryDB]:
         async with engine.begin() as connection:
             await connection.execute(
                 text(
-                    "TRUNCATE source_channels, telegram_raw_events, "
+                    "TRUNCATE offers, source_channels, telegram_raw_events, "
                     "telegram_archive_recovery CASCADE"
                 )
             )
@@ -258,7 +258,7 @@ async def test_restart_after_commit_before_acknowledgement(
         with pytest.raises(asyncio.CancelledError):
             await db.drainer().drain_once()
     else:
-        assert (await db.drainer().drain_once()).failed == 1
+        assert (await db.drainer().drain_once()).deferred == 1
     assert await db.counts() == (1, 1, 1)
     monkeypatch.setattr(db.archive, "mark_attempt", mark)
 
@@ -288,10 +288,13 @@ async def test_failure_before_receipt_rolls_back_canonical_effect(
 
     monkeypatch.setattr(persistence_adapter, "write_resolution", fail_receipt)
     failed = await db.drainer().drain_once()
-    assert failed.failed == 1
+    assert failed.deferred == 1
     assert failed.last_committed_at is None
     assert await db.counts() == (0, 0, 0)
     monkeypatch.setattr(persistence_adapter, "write_resolution", original)
+    assert (await db.drainer().drain_once()).selected == 0
+    async with db.factory() as session, session.begin():
+        await session.execute(update(TelegramRawEventRow).values(next_attempt_at=NOW))
     assert (await db.drainer().drain_once()).newly_terminal == 1
     assert await db.counts() == (1, 1, 1)
 
