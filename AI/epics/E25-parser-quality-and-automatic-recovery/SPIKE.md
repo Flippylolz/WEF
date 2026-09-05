@@ -3,7 +3,7 @@ schema: ai-workflow/spike@1
 epic: E25
 title: "Parser quality and automatic recovery"
 status: approved
-revision: 1
+revision: 2
 owner: owner
 research_only: true
 code_allowed: false
@@ -16,18 +16,29 @@ proposed_task_ids: [E25-T1, E25-T2, E25-T3, E25-T4]
 approval:
   required_role: owner
   status: approved
-  decided_by: "Flippylolz"
-  decided_at: "2026-09-05T10:15:52Z"
-  approved_revision: 1
-  evidence: "AD-047; owner message in Codex task 01a0710e-e877-7ab2-ad03-c6008aaf16e9 on 2026-09-05: yes I approve, directly answering the request to approve E25 spike revision 1 and prepare the implementation plan."
+  decided_by: Flippylolz
+  decided_at: "2026-09-05T11:17:46Z"
+  approved_revision: 2
+  evidence: "Owner replied continue I approve directly to the explicit request to approve E25 spike revision 2 and implementation plan revision 2 in Codex task 01a0710e-e877-7ab2-ad03-c6008aaf16e9."
 invalidation:
   invalidated_by: null
   invalidated_at: null
   reason: null
   return_to: null
+
 ---
 
 # Spike: Parser quality and automatic recovery
+
+## Revision 2 decision
+
+Revision 1 approval is retained in AD-047 and Git history. New official provider
+evidence invalidates its Batch/ZDR premise for T3. Approve the narrowly scoped
+[provider amendment](PROVIDER_PRIVACY_REVISION.md): keep Groq GPT-OSS 20B and Zero
+Data Retention, process automatic cohorts as durable single-item Chat Completions
+requests, and block provider Batch/Files submission for this ZDR configuration.
+T1/T2 behavior and the T4 dependencies are unchanged. All non-done gates require
+revalidation under the workflow; completed validation remains evidence.
 
 ## Question
 
@@ -91,8 +102,15 @@ Material changes to source semantics, geospatial confidence/precision claims, au
 - [x] Affected modules/domain documents and decisions identified.
 - [x] Proposed task scope, acceptance, dependencies, and exception handling recorded.
 - [x] Outputs are documentation only; no production or disposable proof artifacts created.
-- [x] Owner approved revision 1 on 2026-09-05; see AD-047 and the approval metadata.
+- [x] Historical revision 1 approval is retained in AD-047.
+- [ ] Owner approves revision 2 and its provider transport amendment.
 
-## Owner decision
+## Historical owner decision for revision 1
 
-The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation-plan approval remains pending.
+The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation plan revision 1 was subsequently approved under AD-048. Revision 2 is pending explicit approval.
+
+## Revision 2 approval
+
+The owner explicitly approved both spike revision 2 and implementation plan
+revision 2 on 2026-09-05. The provider amendment is now the binding transport
+baseline. Merge and production activation are not authorized by this approval.

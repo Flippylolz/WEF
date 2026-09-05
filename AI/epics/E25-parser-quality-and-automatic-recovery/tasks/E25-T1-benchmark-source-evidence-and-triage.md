@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T1
 epic: E25
 title: "Benchmark source evidence and classify repairable gaps"
-status: in_progress
+status: draft
 revision: 1
 priority: P1
 size: M
@@ -19,13 +19,13 @@ promotion:
 spike_gate:
   status: satisfied
   file: ../SPIKE.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
   verified_at: "2026-09-05T10:15:52Z"
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
   verified_at: "2026-09-05T10:22:44Z"
 dependency_gate:
@@ -50,6 +50,7 @@ invalidation:
   invalidated_at: null
   reason: null
   return_to: null
+
 ---
 
 # E25-T1: Benchmark source evidence and classify repairable gaps
@@ -118,3 +119,9 @@ Local implementation and validation are recorded in [E25-T1 evidence](../E25-T1-
 Automatic approval review rejected pushing the E25 planning documents and opening a GitHub PR because it considered exporting that payload to GitHub insufficiently authorized. Both planning and T1 branches remain local pending explicit authorization to push them to `Flippylolz/WEF` and open PRs. T2/T3 cannot satisfy their stacked dependency gate until T1 has an open ancestor PR. T4 also retains E24-T1.
 
 Task status remains `in_progress`: local acceptance checks do not replace the required PR, CI, review, merge and completion evidence. No completion actor/time is recorded.
+
+## Provider revision gate
+
+Spike and implementation plan revision 2 await owner approval following the
+[Batch/ZDR incompatibility](../PROVIDER_PRIVACY_REVISION.md). Prior test evidence
+is retained; no non-done task gate is restored implicitly.

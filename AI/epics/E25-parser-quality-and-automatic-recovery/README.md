@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E25
 title: "Parser quality and automatic recovery"
-status: in_progress
+status: planning
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -34,21 +34,21 @@ Each file defines one independently reviewable change, tests, acceptance evidenc
 
 The owner requested as little manual work as possible, with manual work only in extreme cases. Routine processing must use durable, bounded automatic recovery. Measure eligible work completed and human interventions. Do not trade correctness or source evidence for a superficially empty queue.
 
-## Approval state
+## Approval and implementation state
 
-- Owner approved [spike revision 1](SPIKE.md) on 2026-09-05; AD-047 records the session decision.
-- All four tasks are promoted at revision 1; T1 is implemented and validated locally; T2–T4 await dependency gates.
-- [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is approved on 2026-09-05; AD-048 records the decision.
-- E25-T1 has no task dependency. E25-T4 remains blocked on E24-T1 as well as E25-T2/T3; no prerequisite completion is assumed.
-- Implementation is authorized within plan revision 1; production/provider prerequisites and merge authorization remain separate.
+Revision 1 approvals are retained in AD-047/AD-048. Spike and implementation plan
+revision 2 are owner-approved, including the [provider privacy amendment](PROVIDER_PRIVACY_REVISION.md).
+Approval gates are restored to revision 2; dependency and task branch gates remain enforceable.
 
-## Current implementation evidence
+- Planning PR [327](https://github.com/Flippylolz/WEF/pull/327): all five required CI checks passed.
+- T1 PR [328](https://github.com/Flippylolz/WEF/pull/328): published, 827 backend and 169 frontend tests passed locally.
+- T2 PR [330](https://github.com/Flippylolz/WEF/pull/330): published, 852 backend and 169 frontend tests passed locally; 75-case benchmark has zero field failures.
+- T3 readiness was recorded locally, then stopped before implementation when provider evidence contradicted the plan.
+- T4 cannot start without E24-T1, T2 and T3 dependency evidence. No E24-T1 implementation PR was open at the 2026-09-05 review.
 
-[E25-T1 evidence](E25-T1-IMPLEMENTATION_EVIDENCE.md) records the 75-case benchmark,
-evaluation lifecycle, bounded classification backfill, eligibility selector,
-validation results and changed-file inventory. Publication is awaiting explicit
-permission after an automatic-review rejection. No PR, merge, production repair
-or AI activation has occurred.
+No merge, historical canonical application or provider activation has occurred.
+The provider revision does not change T1/T2 extraction behavior or invalidate their
+measured test results. Stacked PRs need required CI after retargeting to main.
 
 ## Scope and completion
 

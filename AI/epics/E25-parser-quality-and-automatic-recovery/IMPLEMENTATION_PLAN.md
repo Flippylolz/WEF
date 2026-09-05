@@ -3,49 +3,59 @@ schema: ai-workflow/implementation-plan@1
 epic: E25
 title: "Parser quality and automatic recovery"
 status: approved
-revision: 1
+revision: 2
 owner: owner
-spike_revision: 1
+spike_revision: 2
 task_sequence:
   - id: E25-T1
     revision: 1
   - id: E25-T2
     revision: 1
   - id: E25-T3
-    revision: 1
+    revision: 2
   - id: E25-T4
     revision: 1
 approval:
   required_role: owner
   status: approved
-  decided_by: "Flippylolz"
-  decided_at: "2026-09-05T10:22:44Z"
-  approved_revision: 1
-  evidence: "AD-048; owner message continue in Codex task 01a0710e-e877-7ab2-ad03-c6008aaf16e9 directly answering the request to approve E25 implementation plan revision 1."
+  decided_by: Flippylolz
+  decided_at: "2026-09-05T11:17:46Z"
+  approved_revision: 2
+  evidence: "Owner replied continue I approve directly to the explicit request to approve E25 spike revision 2 and implementation plan revision 2 in Codex task 01a0710e-e877-7ab2-ad03-c6008aaf16e9."
 invalidation:
   invalidated_by: null
   invalidated_at: null
   reason: null
   return_to: null
+
 ---
 
 # Implementation plan: Parser quality and automatic recovery
 
-## Approved baseline and decision requested
+## Revision 2 decision requested
+
+Revision 1 was approved under AD-048. Revision 2 awaits explicit approval together
+with spike revision 2; neither artifact restores task gates before that decision.
+The [provider amendment](PROVIDER_PRIVACY_REVISION.md) records current official
+evidence, rejected alternatives, exact transport/state changes and validation.
+T1 and T2 remain behaviorally unchanged and retain their published test evidence.
+No implementation code has been written for T3.
+
+## Historical approved baseline
 
 The owner approved [spike revision 1](SPIKE.md) on 2026-09-05 in response to the explicit spike-approval question; [AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) records the decision. The owner approved implementation plan revision 1 by replying “continue” directly to its approval request; AD-048 records the scope. Task dependency and branch gates remain enforceable.
 
 Research baseline: main `a2cdb16`, fetched 2026-09-05. The [audit](../../audits/2026-09-05-system-audit.md#p1--confirmed-source-evidenced-parser-misses) confirms the Ostrzycka label/storage gaps, the misleading parse-issue taxonomy, and stale historical parser versions. Its production counts are dated observations, not a new measurement or a field-accuracy benchmark.
 
-The approved outcome is evidence-backed extraction and routine automatic recovery. Backend application services retain mutation authority; no new production dependency, provider/model, paid usage, deployment topology, geocoder behavior, or public visibility policy is introduced. Automatic recovery means validated data processing after a reviewed parser release, not autonomous modification of parser code.
+The intended outcome is evidence-backed extraction and routine automatic recovery. Backend application services retain mutation authority; no new production dependency, provider/model, paid usage, deployment topology, geocoder behavior, or public visibility policy is introduced. Automatic recovery means validated data processing after a reviewed parser release, not autonomous modification of parser code.
 
 ## Ordered task sequence
 
-Each task keeps revision 1 and its original acceptance criteria. Each implementation uses its own branch/PR. The planning branch contains documentation only. Execute T1 → T2 → T3 → T4; this serial order simplifies review without adding a T2 dependency to T3.
+T1, T2 and T4 retain revision 1. T3 advances to revision 2 for the transport change; its original acceptance criteria are retained. Each implementation uses its own branch/PR. The planning branch contains documentation only. Execute T1 → T2 → T3 → T4; this serial order simplifies review without adding a T2 dependency to T3.
 
 | Task | Dependencies and gate | Independently reviewable result |
 | --- | --- | --- |
-| [E25-T1](tasks/E25-T1-benchmark-source-evidence-and-triage.md) | None; implementation approval still pending | Safe benchmark, source-evidence classification, issue lifecycle and recovery eligibility |
+| [E25-T1](tasks/E25-T1-benchmark-source-evidence-and-triage.md) | None; revision 2 gate revalidation pending | Safe benchmark, source-evidence classification, issue lifecycle and recovery eligibility |
 | [E25-T2](tasks/E25-T2-repair-deterministic-extraction.md) | E25-T1 done or valid ancestor PR | Deterministic money/storage/rooms fixes with benchmark and persistence evidence |
 | [E25-T3](tasks/E25-T3-automate-validated-ai-exceptions.md) | E25-T1 done or valid ancestor PR | Durable scheduled AI proposals, evidence validation and guarded automatic application |
 | [E25-T4](tasks/E25-T4-converge-parser-versions-automatically.md) | E24-T1, E25-T2, E25-T3 done or valid ancestor PRs | Version-aware historical convergence, protected provenance and restart-safe replay |
@@ -84,7 +94,7 @@ Affected modules: admin `application/ingestion_ai_parse.py` and offer-enrichment
 
 Existing ADR-022 requires owner batch initiation. T3 must record a narrowly scoped ADR amendment for standing scheduled authorization and next-window retry of eligible parser exceptions before enabling that behavior. The implementation approval requested here includes that amendment within the approved E25 automatic-recovery scope. Place review remains owner-confirmed. Provider/model, privacy, missing-only writes and budget ceilings stay fixed; changing them returns to spike review.
 
-Use the existing Groq `openai/gpt-oss-20b` port and required bulk Batch API. Store durable work identity `(source_revision, parser_version, policy_version, prompt_schema_version)` and its current missing-field set. Persist claim/lease, attempt count, next eligible time, batch/job/item IDs, quota reservations, minimized failure reason and apply outcome. Reconcile existing provider jobs after restart instead of resubmitting them. If a remote submission may have succeeded but its identity cannot be recovered, retain an uncertain-submission exception; do not duplicate a potentially billed job.
+Use the existing Groq `openai/gpt-oss-20b` single-item Chat Completions port with verified Zero Data Retention. A local durable cohort replaces provider Batch/Files transport; update ADR-022 as specified in the provider amendment. Store durable work identity `(source_revision, parser_version, policy_version, prompt_schema_version)` and its current missing-field set. Persist claim/lease, attempt count, next eligible time, local cohort/item/attempt IDs and returned provider request IDs, quota reservations, minimized failure reason and apply outcome. After restart, resume locally queued work and reconcile locally saved proposal/apply outcomes. A submitted synchronous request has no remote job to poll: an expired submitting claim without a saved result becomes an uncertain-submission exception and is never automatically resent. Existing remote Batch jobs, if any, require the already-authorized reconciliation path and cannot be silently migrated or resubmitted.
 
 Only T1-eligible current revisions enter this queue. Already resolved/source-absent/irrelevant/invalid cases do not cause repeat calls. For existing offers, automatic fills use the existing ADR-022 offer-field allowlist (market type, currency, apartment/parking/storage money and inclusion, area, rooms, floor and delivery); property type remains deterministic in this revision. Require a unique non-contact source span, semantically valid value/units, current source and offer snapshot, and a still-missing field. Confidence and a matching text fragment alone cannot establish semantics.
 
@@ -110,7 +120,7 @@ Tests: parser-only changes on unchanged sources, source edit races, stale/reclai
 
 ## Resource limits and failure handling
 
-These are proposed application limits, not claims about current external provider limits. Recheck provider/project eligibility at activation; a lower configured or provider limit always wins.
+These are revision 2 application limits for approval, not claims about current external provider limits. Recheck provider/project eligibility at activation; a lower configured or provider limit always wins.
 
 | Resource | Revision 1 limit and behavior |
 | --- | --- |
@@ -119,18 +129,18 @@ These are proposed application limits, not claims about current external provide
 | Replay canary | First 25 eligible records per accepted parser/policy release in read-only comparison; expand only after automated value/provenance/state invariants pass; insufficient backlog uses all available records and reports count |
 | AI canary | First 10 eligible unique revisions in generate/validate observation mode; apply only after field-family benchmark and current-revision/protection checks pass |
 | Provider quota | At most 20 item-generation reservations per UTC day shared with existing owner interactive/batch work; scheduler consumes that same owner allocation, never a fresh service-account allocation; zero paid-spend authorization |
-| Provider request | Existing preflight maximum 5,500 input plus 1,500 output/reasoning tokens; whole masked descriptions only; one submitted AI batch in flight, at most 10 items and no more than available reserved quota |
-| Transport | 30-second HTTP timeout per submission/poll/download; persist job ID and poll eligibility; no network wait while holding canonical database locks |
-| Retry | Local transient failures: persisted exponential delay from 60 seconds up to 1 hour; release claims between attempts. Provider timeout/5xx: at most one safe retry, quota-reserved; after a second failure retain an actionable exception |
+| Provider request | Existing preflight maximum 5,500 input plus 1,500 output/reasoning tokens; whole masked descriptions only; one generation request in flight across manual/scheduled entry points; local cohorts at most 10 items; durably pace each request at least 60 seconds after the previous submission; reserve quota before every attempt |
+| Transport | 30-second HTTP timeout per single-item submission; persist attempt ID and submit/result state; no network wait while holding canonical database locks |
+| Retry | Local transient failures: persisted exponential delay from 60 seconds up to 1 hour; release claims between attempts. Provider 5xx or proven pre-submission timeout: at most one safe retry, quota-reserved; unknown post-submission timeout becomes uncertain and is not resent; after a second known-safe failure retain an actionable exception |
 | Rate/quota limits | Persist eligibility no earlier than the later of Retry-After and the next UTC budget window; no automatic retry in the same window; reservation survives restart |
 | Terminal failures | Invalid/fabricated evidence, refusals, protected conflicts, unsupported inference and non-recoverable access errors remain unapplied; no repeat generation for unchanged work identity |
-| Leases | 120 seconds for local work, refreshed before expiry; remote job state persists beyond a local lease; reclaim checks job/apply state before doing work |
+| Leases | 120 seconds for local work, refreshed before expiry; persisted submit/result state survives a local lease; reclaim checks uncertain attempts and proposal/apply state before doing work |
 
-The daily item quota includes requests that fail or have uncertain outcomes. Durable atomic reservation must cover every existing AI entry point so concurrent manual and scheduled work cannot exceed the shared ceiling. Existing batches use the same reservation ledger; polling is paced and is not counted as a new item generation. A failed resource preflight defers work without provider submission.
+The daily item quota includes requests that fail or have uncertain outcomes. Durable atomic reservation must cover every existing AI entry point so concurrent manual and scheduled work cannot exceed the shared ceiling. Existing owner cohorts use the same reservation ledger and single-item transport under ZDR. Durable shared pacing prevents concurrent manual/scheduled quota bursts. A failed resource preflight defers work without provider submission.
 
 ## Data, contracts and migration order
 
-Use additive Alembic migrations. T1 owns issue classification/lifecycle and unique issue identity; T3 owns durable recovery jobs, provider reservations and batch correlation; T4 owns parser-release/evaluation progress and field-origin history. Reuse existing lineage and proposal tables where they meet these contracts instead of duplicating sources of truth. No source export or source text is copied into the new metadata tables.
+Use additive Alembic migrations. T1 owns issue classification/lifecycle and unique issue identity; T3 owns durable recovery jobs, provider reservations and local cohort/attempt correlation; T4 owns parser-release/evaluation progress and field-origin history. Reuse existing lineage and proposal tables where they meet these contracts instead of duplicating sources of truth. No source export or source text is copied into the new metadata tables.
 
 Keep existing readers compatible: legacy outcome strings remain available while new fields are nullable/defaulted until backfilled. Database uniqueness enforces deduplication; source/offer snapshot guards prevent stale application. Deploy additive schema before new writers. Run backfills in bounded restartable batches; no table-wide rewrite or deletion of source/issue history. T4 must retain old value plus old/new ownership for every automatically changed field to support guarded rollback.
 
@@ -146,7 +156,7 @@ AI scheduling remains disabled unless the current project has verified Zero Data
 
 Before every task push run `make lint` and `make test`. Run `make format-check`, `make typecheck` and `make contract-check` for affected scope; T1/T3 admin contract changes must exercise contract generation. Run repository Markdown links and required safety/architecture checks. Record exact commands/results and actual version/commit in each PR.
 
-Use real disposable PostGIS for migrations, concurrency, checkpoint and provenance tests. Provider tests use deterministic fakes for timeout, 429, malformed JSON, fabricated spans, semantic contradictions, stale snapshots, duplicate jobs, restart and idempotent application. Verify database/public projection money units and filters in T2/T4. Shared cross-browser/WebGL infrastructure remains E14-T5's scope; supply E25 regressions without duplicating that epic.
+Use real disposable PostGIS for migrations, concurrency, checkpoint and provenance tests. Provider tests use deterministic fakes for timeout, 429, malformed JSON, fabricated spans, semantic contradictions, stale snapshots, duplicate attempts, unknown submission outcomes, restart and idempotent application. Verify database/public projection money units and filters in T2/T4. Shared cross-browser/WebGL infrastructure remains E14-T5's scope; supply E25 regressions without duplicating that epic.
 
 Before automatic historical expansion, record read-only aggregate diffs, canary selection counts, protected-state invariants, and version distributions. For the eligible cohort, require a second unchanged-source/version run with zero canonical changes. Reconcile a mutually exclusive per-record outcome denominator: considered = source-absent + updated + unchanged + excluded + deferred + protected-conflict + failed; individual field reasons are reported separately to avoid double counting.
 
@@ -156,7 +166,7 @@ T3 acceptance includes a representative 24-hour window, extended across a second
 
 Roll out T1 observation/classification → T2 tested extraction → T3 generate/validate canary → T4 read-only historical canary → bounded application. Parser/policy acceptance is a reviewed release artifact backed by benchmark results. Automatic canary checks stop expansion on unsupported writes, protected-state changes, duplicate identities or broken lineage; ordinary retries and completed batches need no owner dispatch.
 
-Configuration belongs to existing backend/worker composition and release settings. Keep separate pause controls for classification/replay scheduling, AI submission and AI auto-application. Pause prevents new claims and canonical writes while preserving jobs/checkpoints for reconciliation. Resume only from durable state. Polling an already submitted provider job may finish and save its result while application is paused.
+Configuration belongs to existing backend/worker composition and release settings. Keep separate pause controls for classification/replay scheduling, AI submission and AI auto-application. Pause prevents new claims and canonical writes while preserving jobs/checkpoints for reconciliation. Resume only from durable state. An in-flight single-item response may finish and save its validated proposal while application is paused. No new generation starts during submission pause.
 
 Stop new scheduling on regression. Roll back the runtime to its prior immutable release, keeping additive tables and audit history. Reverse an affected field only if both its current value and origin still equal the recorded automatic write; later owner/AI/source changes are preserved and reported as conflicts. Never restore whole tables, rewind source checkpoints, delete offer identities or downgrade newer parser evaluations automatically. Interrupted rollback is idempotent and itself audited.
 
@@ -166,7 +176,7 @@ No merge is authorized by this plan approval unless the owner separately request
 
 - T1: an unlabeled or synthetic-only corpus can overstate accuracy. Separate exact regression confidence from production prevalence and record unresolved strata.
 - T2: expanded labels can turn alternatives into incorrect ranges. Require role/currency/unit evidence and negative benchmark cases before accepting the parser release.
-- T3: batching/retries can duplicate provider spend or apply stale evidence. Reserve quota durably, reconcile remote jobs and guard every apply transaction; uncertain submissions remain exceptional.
+- T3: batching/retries can duplicate provider spend or apply stale evidence. Reserve quota durably, retain uncertain synchronous attempts without resubmission and guard every apply transaction; uncertain submissions remain exceptional.
 - T4: unchanged-source replay can overwrite curated fields or retain stale provenance. Use protected origins and atomic field/extraction/progress writes with restart and race tests.
 - T4: E24-T1 is unimplemented on this baseline. Retain the dependency and revise the plan if its final interface materially changes the replay design.
 
@@ -174,11 +184,18 @@ A new provider/model, paid allocation, broader automatic field/visibility author
 
 ## Approval checklist
 
-- [x] Spike revision 1 has owner approval and its recommendation remains current.
-- [x] All four sequence entries are promoted revision-1 tasks with preserved acceptance/traceability.
+- [x] Prior spike revision 1 approval is retained; revision 2 resolves the provider premise.
+- [x] All four sequence entries are promoted tasks with preserved acceptance/traceability; T3 advances to revision 2.
 - [x] Dependencies are acyclic and enforceable; E24-T1 remains explicitly blocked.
 - [x] Modules, contracts, data ownership, tests, limits, rollout and rollback are defined.
 - [x] No new provider/dependency/spend decision is implicitly approved; existing activation prerequisites remain enforced.
 - [x] No application code, tests, migrations or disposable proof code has been written.
-- [x] This plan is approved revision 1 with attributable approval metadata.
-- [x] Owner approved this exact implementation-plan revision on 2026-09-05.
+- [x] Revision 1 approval is retained in AD-048 and Git history.
+- [ ] Owner explicitly approves spike revision 2 and this implementation plan revision 2.
+- [ ] Restore non-done task gates against approved revision 2 before resuming work.
+
+## Revision 2 approval
+
+The owner explicitly approved both spike revision 2 and implementation plan
+revision 2 on 2026-09-05. The provider amendment is now the binding transport
+baseline. Merge and production activation are not authorized by this approval.

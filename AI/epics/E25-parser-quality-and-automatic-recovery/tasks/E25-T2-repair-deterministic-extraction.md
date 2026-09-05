@@ -19,13 +19,13 @@ promotion:
 spike_gate:
   status: satisfied
   file: ../SPIKE.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
   verified_at: "2026-09-05T10:15:52Z"
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
   verified_at: "2026-09-05T10:22:44Z"
 dependency_gate:
@@ -50,6 +50,7 @@ invalidation:
   invalidated_at: null
   reason: null
   return_to: null
+
 ---
 
 # E25-T2: Repair deterministic field extraction and money semantics
@@ -109,3 +110,13 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
 
 The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
+
+## Provider revision gate
+
+Spike and implementation plan revision 2 await owner approval following the
+[Batch/ZDR incompatibility](../PROVIDER_PRIVACY_REVISION.md). Prior test evidence
+is retained; no non-done task gate is restored implicitly.
+
+The independently implemented T2 branch is `bugfix/E25-T2-deterministic-extraction`,
+commit `20e9acd`, PR [330](https://github.com/Flippylolz/WEF/pull/330). Its completed
+local validation remains evidence; the provider revision changes no T2 behavior.
