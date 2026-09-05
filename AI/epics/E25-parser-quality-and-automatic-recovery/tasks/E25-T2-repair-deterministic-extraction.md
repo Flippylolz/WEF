@@ -31,19 +31,19 @@ implementation_gate:
 dependency_gate:
   status: satisfied
   verified_by: Codex
-  verified_at: "2026-09-05T10:55:21Z"
+  verified_at: "2026-09-05T15:15:56.149149+00:00"
   evidence:
     - task_id: E25-T1
-      branch: feat/E25-T1-evidence-classification
+      branch: main
       pull_request: https://github.com/Flippylolz/WEF/pull/328
-      head_commit: 44eff1a
+      head_commit: ea47448fae6a7d63d252940445091819a5ba1096
 branch:
   required: true
   name: bugfix/E25-T2-deterministic-extraction
   task_id: E25-T2
   one_task_only: true
   created_at: "2026-09-05T10:57:00Z"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/330
 completion:
   completed_by: Codex
   completed_at: "2026-09-05T15:13:49.244346+00:00"
@@ -111,8 +111,8 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Spike revision 1 approval and task promotion are recorded; the authoritative file is under `tasks/`.
 - [x] Implementation plan revision 1 is explicitly approved and the implementation gate is satisfied.
 - [x] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
-- [ ] This task passes through `ready` and starts on its own dedicated branch/PR.
-- [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
+- [x] Passed through `ready` in `508e3b5` and used dedicated branch/PR #330.
+- [x] Acceptance criteria, required checks, healthy release and bounded production verification pass; completion evidence is recorded.
 
 The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
 

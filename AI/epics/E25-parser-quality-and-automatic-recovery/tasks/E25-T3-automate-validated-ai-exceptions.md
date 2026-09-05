@@ -31,12 +31,12 @@ implementation_gate:
 dependency_gate:
   status: satisfied
   verified_by: Codex
-  verified_at: "2026-09-05T11:17:46Z"
+  verified_at: "2026-09-05T15:15:56.149149+00:00"
   evidence:
     - task_id: E25-T1
-      branch: feat/E25-T1-evidence-classification
+      branch: main
       pull_request: https://github.com/Flippylolz/WEF/pull/328
-      head_commit: 44eff1a
+      head_commit: ea47448fae6a7d63d252940445091819a5ba1096
 branch:
   required: true
   name: feat/E25-T3-durable-ai-recovery
