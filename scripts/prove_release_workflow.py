@@ -54,7 +54,7 @@ def assert_workflow_boundaries() -> None:
     assert "release_sha: ${{ needs.resolve.outputs.release_sha }}" in source
     assert_shared_verification(source)
     assert "name: Release outcome" in source
-    assert "needs: [resolve, verify, publish, deploy]" in source
+    assert "needs: [resolve, verify, build-backend, build-web, publish, deploy]" in source
     assert "retention-days: 90" in source
     assert "RELEASE_NEEDS: ${{ toJSON(needs) }}" in source
     assert "WEF_RELEASE_OBSERVATION=$observation_file" in source

@@ -153,6 +153,7 @@ jobs:
     outputs:
       image: ${{ steps.runtime.outputs.image }}
       digest: ${{ steps.runtime.outputs.digest }}
+      cache_metrics: ${{ steps.runtime.outputs.cache_metrics }}
     steps:
       - name: Check out immutable release
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -183,6 +184,7 @@ jobs:
     outputs:
       image: ${{ steps.runtime.outputs.image }}
       digest: ${{ steps.runtime.outputs.digest }}
+      cache_metrics: ${{ steps.runtime.outputs.cache_metrics }}
     steps:
       - name: Check out immutable release
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -646,7 +648,7 @@ jobs:
   report:
     name: Release outcome
     if: always()
-    needs: [resolve, verify, publish, deploy]
+    needs: [resolve, verify, build-backend, build-web, publish, deploy]
     runs-on: ubuntu-24.04
     permissions:
       contents: read

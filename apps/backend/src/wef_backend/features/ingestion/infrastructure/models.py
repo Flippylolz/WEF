@@ -783,6 +783,10 @@ class TelegramRawEventRow(IngestionBase):
     outcome: Mapped[str | None] = mapped_column(String(24))
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     last_error: Mapped[str | None] = mapped_column(String(64))
+    data_failure_count: Mapped[int] = mapped_column(Integer, default=0)
+    deferral_count: Mapped[int] = mapped_column(Integer, default=0)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    retry_policy_version: Mapped[str] = mapped_column(String(64), default="")
 
 
 class TelegramSourceTombstoneRow(IngestionBase):
@@ -853,6 +857,48 @@ class TelegramArchiveRecoveryRow(IngestionBase):
     baseline_count: Mapped[int] = mapped_column(BigInteger)
     pause_reason: Mapped[str | None] = mapped_column(String(64))
     next_batch_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class TelegramArchiveExceptionRow(IngestionBase):
+    """One actionable exception and re-evaluation history per original event."""
+
+    __tablename__ = "telegram_archive_exceptions"
+    event_id: Mapped[UUID] = mapped_column(
+        ForeignKey("telegram_raw_events.id", ondelete="CASCADE"), primary_key=True
+    )
+    reason: Mapped[str] = mapped_column(String(64))
+    policy_version: Mapped[str] = mapped_column(String(64))
+    state: Mapped[str] = mapped_column(String(16))
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class TelegramChannelProgressRow(IngestionBase):
+    """Separate applied high-water, traversed forward range and bounded old-ID sweep."""
+
+    __tablename__ = "telegram_channel_progress"
+    __table_args__ = (
+        CheckConstraint(
+            "applied_high_water_id >= 0 AND polled_through_id >= 0 "
+            "AND sweep_after_id >= 0 AND sweep_upper_id >= 0",
+            name="ck_telegram_progress_nonnegative",
+        ),
+    )
+    source_channel_id: Mapped[UUID] = mapped_column(
+        ForeignKey("source_channels.id", ondelete="CASCADE"), primary_key=True
+    )
+    applied_high_water_id: Mapped[int] = mapped_column(BigInteger, default=0)
+    polled_through_id: Mapped[int] = mapped_column(BigInteger, default=0)
+    sweep_after_id: Mapped[int] = mapped_column(BigInteger, default=0)
+    sweep_upper_id: Mapped[int] = mapped_column(BigInteger, default=0)
+    sweep_unknown_count: Mapped[int] = mapped_column(Integer, default=0)
+    sweep_token: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))
+    sweep_lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    history_limited: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_polled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_sweep_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    source_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class ParseEvaluationRow(IngestionBase):

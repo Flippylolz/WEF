@@ -106,7 +106,7 @@ Do not drop ledger tables to reset quota or resend uncertain attempts.
 - `infra/compose.production.yaml`
 - `scripts/deploy/build_release_config.py`
 - `scripts/prove_release_workflow.py`
-- `apps/backend/migrations/versions/20260905_0021_durable_ai_recovery.py`
+- `apps/backend/migrations/versions/20260905_0023_durable_ai_recovery.py`
 - `apps/backend/src/wef_backend/automatic_recovery_worker.py`
 - `apps/backend/src/wef_backend/features/admin/application/automatic_recovery.py`
 - `apps/backend/src/wef_backend/features/admin/application/provider_budget.py`

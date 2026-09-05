@@ -17,8 +17,9 @@ from wef_backend.features.ingestion.domain.model import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncIterator, Sequence
 
+    from wef_backend.features.ingestion.application.telegram_progress import SourceObservation
     from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
 
 
@@ -49,6 +50,12 @@ class LiveTelegramMessage:
 
 class TelegramLiveClientPort(Protocol):
     """Inward-owned live Telegram client used by backfill (and later events)."""
+
+    async def observe_messages(
+        self, *, username: str, ids: Sequence[int]
+    ) -> Sequence[SourceObservation]:
+        """Observe at most 100 known IDs without downloading media; omission is unknown."""
+        ...
 
     async def connect(self) -> None:
         """Establish a session connection."""

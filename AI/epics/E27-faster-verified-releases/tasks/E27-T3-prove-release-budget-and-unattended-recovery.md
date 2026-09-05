@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E27-T3
 epic: E27
 title: "Prove the release budget and unattended recovery"
-status: draft
+status: in_progress
 revision: 1
 priority: P1
 size: M
@@ -29,17 +29,21 @@ implementation_gate:
   verified_by: codex
   verified_at: "2026-09-05T10:22:10Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: codex
+  verified_at: "2026-09-05T12:05:44+00:00"
+  evidence:
+    - task_id: E27-T2
+      branch: chore/E27-T2-parallel-release
+      pull_request: https://github.com/Flippylolz/WEF/pull/329
+      head_commit: 8e3548ea0533d9d3f762ca760f74c90d70b78dde
 branch:
   required: true
-  name: null
+  name: chore/E27-T3-release-budget
   task_id: E27-T3
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-05T11:06:27Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/332
 completion:
   completed_by: null
   completed_at: null
@@ -82,7 +86,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 Required task dependencies: E27-T2. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This promoted task remains `draft` until its dependency gate clears. The [implementation plan](../IMPLEMENTATION_PLAN.md) specifies modules, contracts, tests, budgets, and rollout.
+This task is `in_progress`; its originally stacked T2 dependency is now done. The [implementation plan](../IMPLEMENTATION_PLAN.md) specifies modules, contracts, tests, budgets, and rollout.
 
 ## Rollout and automatic operation
 
@@ -106,4 +110,32 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
 - [x] Required decisions resolved; dependencies remain enforceable in the planned sequence.
 - [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
-- [ ] Dedicated branch and PR will cover this task only after implementation gates clear.
+- [x] Dedicated branch covers this task under the validated stacked gate; PR evidence follows.
+
+Start evidence: passed through `ready` after verifying open ancestor PR #329 at
+`2362894f12328bfc1145da397ab7f026cf1ff474`, then entered `in_progress` on its
+dedicated branch. Operational performance acceptance remains open.
+
+Implementation evidence: [acceptance record](../ACCEPTANCE.md) documents the
+read-only collector, cache telemetry, passing local checks and remaining real
+release cohort. None of the unchecked operational acceptance criteria is waived.
+
+Dependency revalidation: T2 merged and its automatic release 33964655697 passed.
+PR #332 is rebased onto current main and delivers the measurement tooling. The first optimized
+observation is 348.379957 seconds, with `insufficient_observations` (1 of 20
+required distinct sources). Production cache counters, cold/warm coverage,
+consecutive-merge evidence and cohort acceptance remain open; no completion is
+claimed from this rollout.
+
+## Instrumentation rollout versus task completion
+
+Ship the validated measurement code in PR #332 so ordinary releases can produce
+cache counters. Keep this task `in_progress` and its completion fields unset
+until the real cohort and all operational criteria pass. The approved plan says
+"Insufficient data keeps performance acceptance open"; it does not require
+withholding the instrumentation needed to collect that data. The earlier draft
+hold was an implementation sequencing choice, not an additional owner gate.
+This rollout changes no target, minimum sample, required check or acceptance
+criterion. Continue collecting ordinary releases; do not generate a synthetic
+production cohort. Record final acceptance through a separately scoped evidence
+follow-up after the observations exist, without reusing the merged code branch.

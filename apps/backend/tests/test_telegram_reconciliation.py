@@ -46,6 +46,11 @@ class _CheckpointStore:
     checkpoint: int | None
     max_id: int
 
+    async def advance_live_checkpoint(self, *, channel_external_id: str, external_id: int) -> int:
+        _ = channel_external_id
+        self.checkpoint = max(self.checkpoint or 0, external_id)
+        return self.checkpoint
+
     async def max_external_message_id(self, *, channel_external_id: str) -> int:
         assert channel_external_id == default_live_channel_identity().channel_id
         return self.max_id
@@ -236,12 +241,12 @@ async def test_reconciler_invokes_prepare_cycle_before_overlap_replay() -> None:
 
 
 @pytest.mark.asyncio
-async def test_checkpoint_falls_back_to_persisted_max_on_first_live_run() -> None:
+async def test_checkpoint_starts_unverified_history_at_zero() -> None:
     checkpoint = await read_durable_telegram_checkpoint(
         _CheckpointStore(checkpoint=None, max_id=42),
         channel_external_id=default_live_channel_identity().channel_id,
     )
-    assert checkpoint == 42
+    assert checkpoint == 0
 
 
 @pytest.mark.asyncio

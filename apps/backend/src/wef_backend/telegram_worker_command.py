@@ -24,7 +24,6 @@ from wef_backend.features.ingestion.application.telegram_events import (
 from wef_backend.features.ingestion.application.telegram_live import verify_channel_entity
 from wef_backend.features.ingestion.application.telegram_reconciliation import (
     TelegramCheckpointReconciler,
-    TelegramCheckpointStore,
     TelegramReconciliationRequest,
     maintain_checkpoint_reconciliation,
     read_durable_telegram_checkpoint,
@@ -118,14 +117,14 @@ async def _maintain_raw_archive_drain(
         await asyncio.sleep(_DRAIN_INTERVAL_SECONDS)
 
 
-async def _run_connected_worker(  # noqa: PLR0913
+async def _run_connected_worker(  # noqa: PLR0913, PLR0915 - composition of worker stages
     *,
     settings: Settings,
     identity: TelegramChannelIdentity,
     client: TelethonLiveClient,
     store: SQLAlchemyIngestionPersistence,
     archive: SQLAlchemyRawEventArchive,
-    checkpoint_store: TelegramCheckpointStore,
+    checkpoint_store: SQLAlchemyTelegramWorkerStatusStore,
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     """Subscribe and supervise every critical stage after authorization."""
@@ -162,6 +161,8 @@ async def _run_connected_worker(  # noqa: PLR0913
         client=client,
         processor=processor,
         processing_lock=processing_lock,
+        archive=archive,
+        sweep_store=checkpoint_store,
         prepare_cycle=media_grouper.reset,
     )
     geocode_worker = RecurringGeocodeWorker(
@@ -188,14 +189,19 @@ async def _run_connected_worker(  # noqa: PLR0913
                         checkpoint_store,
                         channel_external_id=identity.channel_id,
                     )
-                    result = await processor(
+                    await processor(
                         identity=identity,
                         events=(event,),
                         resume_after_external_id=checkpoint,
                         release_sha=settings.release_sha,
                         manage_connection=False,
                     )
-                state.local_checkpoint_external_id = result.checkpoint_external_message_id
+                progress = await checkpoint_store.channel_progress(
+                    channel_external_id=identity.channel_id
+                )
+                state.local_checkpoint_external_id = progress.polled_through_id
+                state.applied_high_water_id = progress.applied_high_water_id
+                state.history_limited = progress.history_limited
                 state.last_event_committed_at = datetime.now(UTC)
                 state.last_error_category = None
                 logger.info(

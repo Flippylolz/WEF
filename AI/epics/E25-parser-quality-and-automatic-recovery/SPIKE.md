@@ -102,12 +102,12 @@ Material changes to source semantics, geospatial confidence/precision claims, au
 - [x] Affected modules/domain documents and decisions identified.
 - [x] Proposed task scope, acceptance, dependencies, and exception handling recorded.
 - [x] Outputs are documentation only; no production or disposable proof artifacts created.
-- [x] Historical revision 1 approval is retained in AD-050.
+- [x] Historical revision 1 approval is retained in AD-051.
 - [x] Owner approved revision 2 and its provider transport amendment.
 
 ## Historical owner decision for revision 1
 
-The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-050](../../workflow/AUTONOMOUS_DECISIONS.md#ad-050-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation plan revision 1 was subsequently approved under AD-051. Revision 2 is explicitly approved on 2026-09-05.
+The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-051](../../workflow/AUTONOMOUS_DECISIONS.md#ad-051-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation plan revision 1 was subsequently approved under AD-052. Revision 2 is explicitly approved on 2026-09-05.
 
 ## Revision 2 approval
 
