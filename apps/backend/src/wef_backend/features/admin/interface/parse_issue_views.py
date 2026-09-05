@@ -140,7 +140,7 @@ def _review_document(
         summary = (
             "<dl>"
             f"<dt>Message</dt><dd>{event.external_message_id}</dd>"
-            f"<dt>Issue</dt><dd>{escape(event.issue_outcome.value)}</dd>"
+            f"<dt>Issue</dt><dd>{escape(event.classification)} ({escape(event.lifecycle_state)})</dd>"
             f"<dt>Score</dt><dd>{event.score}/{event.threshold}</dd>"
             f"<dt>Boundary</dt><dd>{escape(event.boundary_band)}</dd>"
             f"<dt>Parser</dt><dd>{escape(event.parser_version)}</dd>"
@@ -177,7 +177,7 @@ class IngestionIssuesAdminView(CustomView):
         rows = "".join(
             "<tr>"
             f"<td>{event.external_message_id}</td>"
-            f"<td>{escape(event.issue_outcome.value)}</td>"
+            f"<td>{escape(event.classification)} ({escape(event.lifecycle_state)})</td>"
             f"<td>{event.score}/{event.threshold}</td>"
             f"<td>{escape(event.boundary_band)}</td>"
             f"<td>{escape(event.signal_combination)}</td>"
@@ -186,7 +186,7 @@ class IngestionIssuesAdminView(CustomView):
             + (
                 "<td><a href='"
                 f"{_review_url(revision_id=event.source_message_revision_id)}'>Review</a></td>"
-                if event.offer_id is None and admin.ai_curation_enabled
+                if event.offer_id is None and event.recovery_eligible and admin.ai_curation_enabled
                 else "<td></td>"
             )
             + "</tr>"
@@ -313,6 +313,10 @@ class IngestionIssuesAdminView(CustomView):
                 "signals": list(event.signals_json),
                 "warnings": list(event.warnings_json),
                 "issue_outcome": event.issue_outcome.value,
+                "classification": event.classification,
+                "lifecycle_state": event.lifecycle_state,
+                "recovery_eligible": event.recovery_eligible,
+                "policy_version": event.policy_version,
                 "message_outcome": event.message_outcome,
                 "offer_id": str(event.offer_id) if event.offer_id is not None else None,
                 "text_excerpt_redacted": event.text_excerpt_redacted,
@@ -345,6 +349,10 @@ class IngestionIssuesAdminView(CustomView):
                 "signals_json",
                 "warnings_json",
                 "issue_outcome",
+                "classification",
+                "lifecycle_state",
+                "recovery_eligible",
+                "policy_version",
                 "message_outcome",
                 "offer_id",
                 "text_excerpt_redacted",
@@ -365,6 +373,10 @@ class IngestionIssuesAdminView(CustomView):
                     json.dumps(list(event.signals_json), ensure_ascii=False),
                     json.dumps(list(event.warnings_json), ensure_ascii=False),
                     event.issue_outcome.value,
+                    event.classification,
+                    event.lifecycle_state,
+                    event.recovery_eligible,
+                    event.policy_version or "",
                     event.message_outcome,
                     str(event.offer_id) if event.offer_id is not None else "",
                     event.text_excerpt_redacted,

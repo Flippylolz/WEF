@@ -68,7 +68,7 @@ async def test_ingestion_issues_export_is_redacted() -> None:
         home = await client.get("/admin/ingestion-issues")
         assert home.status_code == 200
         assert "29435" in home.text
-        assert "parser_miss" in home.text
+        assert "unclassified (open)" in home.text
         csv_response = await client.get("/admin/ingestion-issues/export.csv")
         assert csv_response.status_code == 200
         body = csv_response.text

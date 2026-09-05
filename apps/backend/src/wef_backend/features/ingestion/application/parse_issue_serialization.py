@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
+from wef_backend.features.ingestion.application.parse_quality import classify_parse
 from wef_backend.features.ingestion.application.persistence import (
     MessageOutcome,
     build_source_text_excerpt,
@@ -111,9 +112,9 @@ def build_parse_issue_insert(  # noqa: PLR0913
     offer_id: UUID | None,
 ) -> ParseIssueInsert | None:
     """Return one ledger insert or None when the parse succeeded cleanly."""
-    if message_outcome is MessageOutcome.UNCHANGED:
-        return None
     issue_outcome = issue_outcome_for(extraction)
+    if issue_outcome is None and classify_parse(raw.text, extraction).recovery_eligible:
+        issue_outcome = ParseIssueOutcome.PARSER_INCOMPLETE
     if issue_outcome is None:
         return None
     decision = extraction.decision

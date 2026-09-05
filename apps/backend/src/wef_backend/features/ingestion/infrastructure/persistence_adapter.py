@@ -61,6 +61,9 @@ from wef_backend.features.ingestion.infrastructure.models import (
     SourceMessageRevisionRow,
     SourceMessageRow,
 )
+from wef_backend.features.ingestion.infrastructure.parse_evaluation_store import (
+    record_parse_evaluation,
+)
 from wef_backend.features.ingestion.infrastructure.parse_issue_store import insert_parse_issue
 
 if TYPE_CHECKING:
@@ -607,6 +610,16 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
     ) -> None:
         """Append one parse issue row after source message rows are flushed."""
         if persistable.extraction is None:
+            return
+        await session.flush()
+        observed = await record_parse_evaluation(
+            session,
+            message_id=source_message_id,
+            revision_id=source_message_revision_id,
+            text=raw.text,
+            extraction=persistable.extraction,
+        )
+        if not observed:
             return
         issue = build_parse_issue_insert(
             extraction=persistable.extraction,

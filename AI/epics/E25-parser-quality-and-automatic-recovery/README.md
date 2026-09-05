@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E25
 title: "Parser quality and automatic recovery"
-status: ready
+status: in_progress
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -37,10 +37,18 @@ The owner requested as little manual work as possible, with manual work only in 
 ## Approval state
 
 - Owner approved [spike revision 1](SPIKE.md) on 2026-09-05; AD-047 records the session decision.
-- All four tasks are promoted at revision 1; T1 is ready and T2–T4 await dependency gates.
+- All four tasks are promoted at revision 1; T1 is implemented and validated locally; T2–T4 await dependency gates.
 - [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is approved on 2026-09-05; AD-048 records the decision.
 - E25-T1 has no task dependency. E25-T4 remains blocked on E24-T1 as well as E25-T2/T3; no prerequisite completion is assumed.
 - Implementation is authorized within plan revision 1; production/provider prerequisites and merge authorization remain separate.
+
+## Current implementation evidence
+
+[E25-T1 evidence](E25-T1-IMPLEMENTATION_EVIDENCE.md) records the 75-case benchmark,
+evaluation lifecycle, bounded classification backfill, eligibility selector,
+validation results and changed-file inventory. Publication is awaiting explicit
+permission after an automatic-review rejection. No PR, merge, production repair
+or AI activation has occurred.
 
 ## Scope and completion
 

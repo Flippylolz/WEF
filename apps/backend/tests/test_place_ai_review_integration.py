@@ -72,6 +72,7 @@ async def _prepare() -> DatabaseResources:
             "DELETE FROM offer_ai_enrichment_batches",
             "DELETE FROM location_geocode_selections",
             "DELETE FROM admin_audit_events",
+            "DELETE FROM source_message_parse_issues",
             "DELETE FROM offer_sources",
             "DELETE FROM offers",
             "DELETE FROM developments",
