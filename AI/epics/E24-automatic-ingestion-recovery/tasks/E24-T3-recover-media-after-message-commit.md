@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E24-T3
 epic: E24
 title: "Recover media independently after message commit"
-status: proposed
-revision: 1
-actionable: false
+status: ready
+revision: 2
 priority: P1
 size: L
 milestone: M5
@@ -13,12 +12,45 @@ dependencies: [E24-T1]
 requirement_ids: [P-006, P-007]
 decision_ids: [ADR-003, ADR-005, ADR-006, ADR-007, ADR-012, ADR-015]
 deferred_decision_ids: []
-source: "owner-requested-system-audit:2026-09-05"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E24-T3-recover-media-after-message-commit.md
+  promoted_by: Codex
+  promoted_at: "2026-09-05T16:26:26.608472Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 2
+  verified_by: Codex
+  verified_at: "2026-09-05T16:26:26.608472Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 3
+  verified_by: Codex
+  verified_at: "2026-09-05T16:28:48.314160Z"
+dependency_gate:
+  status: satisfied
+  verified_by: Codex
+  verified_at: "2026-09-05T16:26:26.608472Z"
+  evidence:
+    - "E24-T1 done through PR #331 and passing production acceptance; ../PRODUCTION_EVIDENCE.md"
+branch:
+  required: true
+  name: null
+  task_id: E24-T3
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E24-T3: Recover media independently after message commit
@@ -51,7 +83,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 Required task dependencies: E24-T1. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This candidate remains non-actionable under the [workflow](../../../workflow/README.md). It must move rather than copy to `tasks/`, retain its ID, and receive complete promotion and gate metadata.
+Promoted under approved spike revision 2. Implementation-plan revision 3 is explicitly owner-approved; see its T3 section for the durable identity, association, retry, test and rollout contract.
 
 ## Rollout and automatic operation
 
@@ -71,8 +103,13 @@ Do not add production dependencies without owner approval, commit raw source/cre
 
 ## Promotion checklist
 
-- [ ] Current epic spike revision explicitly approved.
-- [ ] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
-- [ ] All referenced dependencies and required decisions resolved for the planned sequence.
-- [ ] File moved, not copied, into `tasks/` with attributable promotion metadata.
+- [x] Current epic spike revision explicitly approved.
+- [x] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
+- [x] All referenced dependencies and required decisions resolved for the planned sequence.
+- [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
 - [ ] Dedicated branch and PR will cover this task only after implementation gates clear.
+
+
+## Revision 2 planning contract
+
+[Implementation-plan revision 3](../IMPLEMENTATION_PLAN.md#t3-independent-media-recovery-revision-3-approval-scope) defines the concrete recovery ledger, canonical-commit intention, historical association reconstruction, independent acquisition, derivative retry, migration and bounded rollout. All five acceptance criteria above retain their required outcomes. T1/T2 are completed historical dependencies; T4 remains proposed. Owner approval now covers revision 3 implementation and its bounded green-CI rollout.

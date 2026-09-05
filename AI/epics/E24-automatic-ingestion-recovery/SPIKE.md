@@ -75,7 +75,7 @@ planning. T3 and T4 remain separate candidates.
 
 - [E24-T1: Terminate original archive work and repair starvation](tasks/E24-T1-terminate-original-archive-work.md) — P1/L; dependencies: none; promoted after approval.
 - [E24-T2: Make source cursors monotonic and retries fair](tasks/E24-T2-monotonic-cursors-and-fair-retries.md) — P1/L; dependencies: E24-T1; promoted after approval.
-- [E24-T3: Recover media independently after message commit](proposed-tasks/E24-T3-recover-media-after-message-commit.md) — P1/L; dependencies: E24-T1.
+- [E24-T3: Recover media independently after message commit](tasks/E24-T3-recover-media-after-message-commit.md) — P1/L; dependencies: E24-T1.
 - [E24-T4: Verify ingestion progress and automate recovery escalation](proposed-tasks/E24-T4-verify-progress-and-automate-recovery.md) — P1/M; dependencies: E24-T1, E24-T2, E24-T3.
 
 ## Source inspection and recommended corrective contracts
