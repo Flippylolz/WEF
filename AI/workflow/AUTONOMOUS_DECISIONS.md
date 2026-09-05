@@ -427,3 +427,11 @@ This append-only log records choices made while the owner delegated overnight MV
 - Scope boundary: implement the exact plan's archive receipt, source ordering, bounded recovery, cursor, retry, and verification contracts. T3/T4 remain proposed. No new dependency or provider spend, merge, production mutation, or deployment is authorized by this reply.
 - Rationale: the owner explicitly approved the concrete revision just presented. Task dependency, review, validation, and release gates remain enforceable without another implementation confirmation.
 - Reversal: invalidate affected artifacts if evidence requires a material departure from the approved plan; preserve receipts, source evidence, and durable progress.
+
+## AD-050: Approve the E24 merge and recovery rollout sequence
+
+- Time: 2026-09-05.
+- Owner decision: `continue`, in Codex task `01a0710e-adaa-76f2-8bcd-07784c03e9b2`, directly responding to: "May I merge #325 → #331 → #334, then run the planned rollout and canary verification?"
+- Selected approach: refresh and verify each PR, squash-merge in dependency order after current-head required CI and repository gates pass, and run the approved recovery deployment and production canary/observation procedure. Pause the old archive worker before the T1 release and preserve all durable source/recovery evidence.
+- Scope boundary: this explicitly authorizes the named merge side effects and their planned production rollout after automatic approval review requested a task-specific decision. It does not waive CI, dependency completion, receipt consistency, canary, or rollout gates, and does not authorize T3/T4 implementation or destructive evidence resets.
+- Reversal: pause recovery on failed acceptance evidence and retain the additive schema and ledgers for a corrected forward release.
