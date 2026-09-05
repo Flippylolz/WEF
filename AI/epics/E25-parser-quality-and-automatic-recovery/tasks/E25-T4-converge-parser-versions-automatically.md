@@ -17,13 +17,13 @@ promotion:
   promoted_by: Codex
   promoted_at: "2026-09-05T10:15:52Z"
 spike_gate:
-  status: satisfied
+  status: invalidated
   file: ../SPIKE.md
   approved_revision: 1
   verified_by: Codex
   verified_at: "2026-09-05T10:15:52Z"
 implementation_gate:
-  status: satisfied
+  status: invalidated
   file: ../IMPLEMENTATION_PLAN.md
   approved_revision: 1
   verified_by: Codex
@@ -46,10 +46,11 @@ completion:
   pull_request: null
   evidence: []
 invalidation:
-  invalidated_by: null
-  invalidated_at: null
-  reason: null
-  return_to: null
+  invalidated_by: Codex
+  invalidated_at: "2026-09-05T11:12:47Z"
+  reason: "Groq Batch application-state retention conflicts with the required Zero Data Retention boundary; review queued synchronous transport."
+  return_to: spike
+
 ---
 
 # E25-T4: Converge parser versions and field provenance automatically
@@ -109,3 +110,9 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
 
 The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
+
+## Provider revision gate
+
+Spike and implementation plan revision 2 await owner approval following the
+[Batch/ZDR incompatibility](../PROVIDER_PRIVACY_REVISION.md). Prior test evidence
+is retained; no non-done task gate is restored implicitly.
