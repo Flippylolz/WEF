@@ -425,7 +425,7 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
     identity = default_live_channel_identity()
     persisted: list[str] = []
     processed: list[int] = []
-    pipelines: list[LiveMediaPipeline] = []
+    pipelines: list[LiveMediaPipeline | None] = []
 
     class _Client:
         def __init__(self, *_args: object, **_kwargs: object) -> None:
@@ -491,7 +491,9 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
             return None
 
     class _Processor:
-        def __init__(self, *, media_pipeline: LiveMediaPipeline, **_kwargs: object) -> None:
+        def __init__(
+            self, *, media_pipeline: LiveMediaPipeline | None = None, **_kwargs: object
+        ) -> None:
             pipelines.append(media_pipeline)
 
         async def __call__(self, **_kwargs: object) -> SimpleNamespace:
@@ -516,6 +518,11 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
         lambda _factory: _CheckpointStore(),
     )
     monkeypatch.setattr(telegram_worker_command, "LiveTelegramEventProcessor", _Processor)
+    monkeypatch.setattr(
+        telegram_worker_command,
+        "build_media_recovery",
+        lambda *_args, **_kwargs: SimpleNamespace(run=lambda stop: stop.wait()),
+    )
     monkeypatch.setattr(
         telegram_worker_command,
         "persist_telegram_session",
@@ -545,9 +552,7 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
     assert persisted == ["generated-session"]
     assert processed == [1]
 
-    assert len(pipelines) == 2
-    assert pipelines[0].grouper is not pipelines[1].grouper
-    assert pipelines[0].processor is pipelines[1].processor
+    assert pipelines == [None, None]  # Canonical text paths never run inline media.
 
 
 @pytest.mark.asyncio

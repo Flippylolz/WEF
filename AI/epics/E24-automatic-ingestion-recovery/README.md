@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E24
 title: "Automatic ingestion recovery"
-status: ready
+status: in_progress
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -28,7 +28,7 @@ See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for 
 
 ## Next task and remaining candidate
 
-- [E24-T3: Recover media independently after message commit](tasks/E24-T3-recover-media-after-message-commit.md) — P1/L, revision 2, `ready`; implementation-plan revision 3 approved; dependencies: E24-T1.
+- [E24-T3: Recover media independently after message commit](tasks/E24-T3-recover-media-after-message-commit.md) — P1/L, revision 2, `in_progress`; implementation-plan revision 3 approved; dependencies: E24-T1.
 - [E24-T4: Verify ingestion progress and automate recovery escalation](proposed-tasks/E24-T4-verify-progress-and-automate-recovery.md) — P1/M; dependencies: E24-T1, E24-T2, E24-T3.
 
 Each file defines one independently reviewable change, tests, acceptance evidence,
@@ -44,7 +44,7 @@ The owner requested as little manual work as possible, with manual work only in 
 
 - Spike revision 2 is approved under AD-048. Completed plan revision 2 remains historical; revision 3 is approved for T3.
 - T1 is done after PR #331 and its passing 15-minute production window. T2 is done after PR #334, corrections #340/#341, and a passing 900-second production window. See [production evidence](PRODUCTION_EVIDENCE.md).
-- T3 is promoted as ready with its implementation gate satisfied; T4 remains proposed.
+- T3 is in progress with its implementation gate satisfied; T4 remains proposed.
 - Approval authorizes implementation and PR preparation; merge and production release remain separate.
 
 ## Scope and completion

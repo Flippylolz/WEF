@@ -33,12 +33,19 @@ from wef_backend.features.ingestion.infrastructure.models import (
     MediaDerivativeAttemptRow,
     MediaDerivativeRow,
     MediaDispositionAttemptRow,
+    MediaRecoveryWorkRow,
     OfferMediaRow,
+    OfferSourceRow,
+    SourceMessageRow,
     StoredMediaObjectRow,
 )
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+
+class MediaRecoveryOwnershipLostError(RuntimeError):
+    """The source or execution ownership changed before public association commit."""
 
 
 class MediaPersistenceError(RuntimeError):
@@ -80,6 +87,7 @@ class SQLAlchemyMediaRepository(MediaPersistencePort):
         )
         try:
             async with self._session_factory() as session, session.begin():
+                await self.validate_recovery(session, item)
                 existing = await session.scalar(
                     select(MediaDispositionAttemptRow.id).where(
                         MediaDispositionAttemptRow.source_message_id == item.source_message_id,
@@ -94,6 +102,14 @@ class SQLAlchemyMediaRepository(MediaPersistencePort):
                     ),
                 )
                 if existing is not None:
+                    if item.recovery_work_id is None:
+                        return True
+                    asset = await self._upsert_asset(session, item, observation)
+                    if asset is not None:
+                        await self._associate_offer(session, item, asset.id)
+                        await self._record_derivatives(
+                            session, asset.id, observation, derivatives, derivative_failure
+                        )
                     return True
                 asset = await self._upsert_asset(session, item, observation)
                 session.add(
@@ -129,6 +145,53 @@ class SQLAlchemyMediaRepository(MediaPersistencePort):
             return False  # noqa: TRY300
         except SQLAlchemyError as error:
             raise MediaPersistenceError(orphaned) from error
+
+    @staticmethod
+    async def validate_recovery(session: AsyncSession, item: MediaWorkItem) -> None:
+        """Fence late publication inside the same transaction as asset/link writes."""
+        if item.recovery_work_id is None:
+            return
+        source = await session.scalar(
+            select(SourceMessageRow)
+            .where(SourceMessageRow.id == item.source_message_id)
+            .with_for_update()
+        )
+        work = await session.scalar(
+            select(MediaRecoveryWorkRow)
+            .where(
+                MediaRecoveryWorkRow.id == item.recovery_work_id,
+                MediaRecoveryWorkRow.lease_token == item.recovery_token,
+                MediaRecoveryWorkRow.state == "leased",
+                MediaRecoveryWorkRow.lease_until > func.now(),
+            )
+            .with_for_update()
+        )
+        if (
+            source is None
+            or work is None
+            or source.deleted_at is not None
+            or source.current_revision_id != item.source_message_revision_id
+        ):
+            raise MediaRecoveryOwnershipLostError
+        if item.offer_id is not None:
+            owner = await session.scalar(
+                select(SourceMessageRow)
+                .join(
+                    OfferSourceRow,
+                    OfferSourceRow.source_message_id == SourceMessageRow.id,
+                )
+                .where(
+                    OfferSourceRow.offer_id == item.offer_id,
+                    OfferSourceRow.relationship == "primary",
+                )
+                .with_for_update(of=SourceMessageRow)
+            )
+            if (
+                owner is None
+                or owner.deleted_at is not None
+                or owner.current_revision_id != item.association_revision_id
+            ):
+                raise MediaRecoveryOwnershipLostError
 
     async def _upsert_asset(
         self,

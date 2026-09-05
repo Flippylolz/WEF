@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E24-T3
 epic: E24
 title: "Recover media independently after message commit"
-status: ready
+status: in_progress
 revision: 2
 priority: P1
 size: L
@@ -36,10 +36,10 @@ dependency_gate:
     - "E24-T1 done through PR #331 and passing production acceptance; ../PRODUCTION_EVIDENCE.md"
 branch:
   required: true
-  name: null
+  name: bugfix/E24-T3-durable-media-recovery
   task_id: E24-T3
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-05T16:32:14.186324+00:00"
   pull_request: null
 completion:
   completed_by: null
@@ -113,3 +113,59 @@ Do not add production dependencies without owner approval, commit raw source/cre
 ## Revision 2 planning contract
 
 [Implementation-plan revision 3](../IMPLEMENTATION_PLAN.md#t3-independent-media-recovery-revision-3-approval-scope) defines the concrete recovery ledger, canonical-commit intention, historical association reconstruction, independent acquisition, derivative retry, migration and bounded rollout. All five acceptance criteria above retain their required outcomes. T1/T2 are completed historical dependencies; T4 remains proposed. Owner approval now covers revision 3 implementation and its bounded green-CI rollout.
+
+Implementation starts on planning PR #343 at 6422f06; the approved planning parent is the only open ancestor. T1 dependency remains done.
+
+## Implementation record
+
+Planning PR #343 merged as `797266fe2ccb1d89ce1e69defb5f36e4d5fcbcf2` after all
+required checks. Implementation remains on its dedicated T3 branch. Migration
+`20260905_0024` introduces transactional intentions, work and discovery controls.
+The worker now separates canonical text processing from source acquisition and
+fences media publication against source/association revisions and live leases.
+
+Regression coverage includes real transaction crash/restart, unchanged replay,
+competing/expired claims, repeated deferrals, poison fairness, policy re-evaluation,
+provider pauses, cross-page text/burst/reply/album association, partial/failed
+variants, exact restricted-original reuse, stale publication, canary gating,
+metadata-first acquisition and cancellation cleanup. A live/historical album key
+alias is decoded without altering its stored payload or checksum.
+
+Task remains in progress until the implementation PR, production canary and
+15-minute observation pass. No production recovery/schema change was made during
+local implementation. T4 and source-conflict override remain excluded.
+
+Local validation before the final main rebase: lint, format, types, contracts and
+links passed; 1,087 backend tests passed (90.18% coverage), and 169 frontend tests
+passed. Exact-source resource proofs passed: five probes under 0.5 CPU plus a busy
+process took 1.520–2.500 seconds; 500 one-MiB downloads and 500 heartbeat writes on
+64 MiB tmpfs peaked at 1,052,672 bytes with no retained media files.
+
+Changed-file manifest:
+
+- `AI/epics/E24-automatic-ingestion-recovery/README.md`
+- `AI/epics/E24-automatic-ingestion-recovery/tasks/E24-T3-recover-media-after-message-commit.md`
+- `AI/epics/README.md`
+- `AI/ingestion/PIPELINE.md`
+- `AI/operations/DEPLOYMENT.md`
+- `apps/backend/migrations/versions/20260905_0024_media_recovery.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/media_grouping.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/media_recovery.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/media_storage.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/telegram_live.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/media_recovery_discovery.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/media_recovery_execution.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/media_recovery_store.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/media_repository.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/models.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/persistence_adapter.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/telegram_record.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/telethon_client.py`
+- `apps/backend/src/wef_backend/media_recovery_command.py`
+- `apps/backend/src/wef_backend/migration.py`
+- `apps/backend/src/wef_backend/telegram_media_wiring.py`
+- `apps/backend/src/wef_backend/telegram_worker_command.py`
+- `apps/backend/src/wef_backend/telegram_worker_status_command.py`
+- `apps/backend/tests/test_media_recovery_integration.py`
+- `apps/backend/tests/test_media_recovery_runner.py`
+- `apps/backend/tests/test_telegram_env_session.py`

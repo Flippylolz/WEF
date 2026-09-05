@@ -53,6 +53,7 @@ class LiveTelegramMessage:
     published_at: datetime
     edited_at: datetime | None
     media_group_id: str | None = None
+    reply_to_message_id: int | None = None
     media: tuple[MediaDescriptor, ...] = ()
     media_lease: MediaLease | None = field(default=None, compare=False, repr=False)
 
@@ -121,6 +122,8 @@ def live_message_payload(message: LiveTelegramMessage) -> dict[str, object]:
     }
     if message.edited_at is not None:
         payload["edited_unixtime"] = str(int(message.edited_at.timestamp()))
+    if message.reply_to_message_id is not None:
+        payload["reply_to_message_id"] = message.reply_to_message_id
     if message.media_group_id is not None:
         payload["media_group_id"] = message.media_group_id
     if message.media:
@@ -161,7 +164,7 @@ def live_message_to_raw(
     return RawMessage(
         source=identity,
         external_message_id=message.external_message_id,
-        reply_to_message_id=None,
+        reply_to_message_id=message.reply_to_message_id,
         published_at=message.published_at.astimezone(UTC),
         edited_at=None if message.edited_at is None else message.edited_at.astimezone(UTC),
         message_type="message",

@@ -633,3 +633,35 @@ This maintenance is distinct from T4 historical deterministic replay. Parser-ver
 convergence remains gated on the E24-T1/T2/T3 ancestor/completion contract. See the
 [operator guide](../operations/OPERATOR_COMMANDS.md#e25-automatic-parser-exception-recovery)
 for activation, pause, aggregate reporting and rollback.
+
+## Independent Telegram media recovery (E24-T3)
+
+Canonical transactions write a media-discovery intention together with each
+source revision, including unchanged replay when the intention is absent. Text
+commit and original archive completion no longer wait for worker media acquisition.
+The worker captures stable provider media metadata first, then a separate bounded
+runner discovers intended assets and recovers derivatives. One-shot import
+storage remains compatible; its canonical intentions allow subsequent repair.
+
+Discovery reads at most 100 source messages per cycle with a durable channel
+watermark and compact chronological grouping continuation. Text-only and service
+boundaries participate. Explicit reply/album owners come from retained primary
+source associations. New revisions reuse recorded pre-message grouping context;
+queue order never supplies adjacency evidence. Unsupported/unassociated media
+retains an explained disposition. Missing historical paths or ambiguous remote
+source identity cannot justify a new public association.
+
+The media ledger identifies a source revision, ordinal, descriptor, grouping
+version and transform version. Claims use a renewable 120-second lease and a
+unique token; publication validates ownership, current source revision and
+association revision inside the asset transaction. Successful original evidence
+is distinct from missing/failed derivatives. Exact restricted originals can be
+reused after temporary files disappear; completed variants are not transformed
+again. Source descriptor identity is retained when reading a new leased path.
+
+One item runs at a time, at most ten claims per cycle, followed by a five-second
+idle interval. Transport/contention/storage deferrals retain their own counter
+and provider minimum delay; five data failures quarantine one identity. Relevant
+policy versions permit one re-evaluation; unrelated releases do not reset the
+budget. A systemic media failure pauses only media work. The archive, canonical
+source, polling progress and successful public assets are preserved.

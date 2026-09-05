@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, cast
 
 from wef_backend.features.ingestion.domain import (
@@ -18,7 +18,6 @@ from wef_backend.features.ingestion.domain import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
-    from datetime import datetime
 
     from wef_backend.features.ingestion.domain import RawMessage
 
@@ -54,6 +53,35 @@ class StatefulMediaGrouper:
     def reset(self) -> None:
         """Clear incremental state before a bounded reconciliation replay."""
         self._state = _GroupingState()
+
+    def continuation(self) -> dict[str, object]:
+        """Persist only burst chronology; explicit anchors are resolved from source evidence."""
+        return {
+            "active_listing_id": self._state.active_listing_id,
+            "active_at": self._state.active_at.isoformat() if self._state.active_at else None,
+            "last_seen_at": self._state.last_seen_at.isoformat()
+            if self._state.last_seen_at
+            else None,
+        }
+
+    def restore_continuation(self, value: dict[str, object]) -> None:
+        """Restore a trusted durable grouping boundary without retaining source media."""
+        self.reset()
+        active = value.get("active_listing_id")
+        self._state.active_listing_id = active if isinstance(active, int) else None
+        for name in ("active_at", "last_seen_at"):
+            stored = value.get(name)
+            setattr(
+                self._state,
+                name,
+                datetime.fromisoformat(stored) if isinstance(stored, str) else None,
+            )
+
+    def seed_anchor(self, listing_id: int, *, group_id: str | None = None) -> None:
+        """Seed an explicitly source-evidenced reply/album owner, not an adjacency guess."""
+        self._state.candidates[listing_id] = listing_id
+        if group_id is not None:
+            self._state.explicit_groups[group_id] = listing_id
 
     def ingest(self, item: GroupingInput) -> tuple[MediaDisposition, ...]:
         """Associate one chronological message and advance internal state."""

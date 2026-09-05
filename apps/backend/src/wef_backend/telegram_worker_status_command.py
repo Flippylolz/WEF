@@ -112,6 +112,12 @@ async def run_status() -> dict[str, object]:
     # of its process startup so the same probe fits the existing CPU/timeout budget.
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # noqa: PLC0415
 
+    from wef_backend.features.ingestion.domain.telegram_channel import (  # noqa: PLC0415
+        default_live_channel_identity,
+    )
+    from wef_backend.features.ingestion.infrastructure.media_recovery_store import (  # noqa: PLC0415
+        SQLAlchemyMediaRecoveryStore,
+    )
     from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store import (  # noqa: PLC0415
         SQLAlchemyTelegramWorkerStatusStore,
     )
@@ -137,6 +143,9 @@ async def run_status() -> dict[str, object]:
             ),
         )
         payload = _serialize_status(status)
+        payload["media_recovery"] = await SQLAlchemyMediaRecoveryStore(
+            session_factory, default_live_channel_identity().channel_id
+        ).status()
         payload["runtime_health"] = _serialize_runtime_health(
             settings.telegram_runtime_health_path,
         )

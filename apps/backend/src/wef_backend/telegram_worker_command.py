@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import sys
 from contextlib import suppress
-from dataclasses import replace
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -16,7 +15,6 @@ from wef_backend.automatic_recovery_worker import maintain_automatic_recovery
 from wef_backend.composition import build_contact_cipher
 from wef_backend.features.admin.infrastructure.ai_enrichment_store import build_offer_origin_sync
 from wef_backend.features.ingestion.application.archive_processing import ArchivedEventProcessor
-from wef_backend.features.ingestion.application.media_grouping import StatefulMediaGrouper
 from wef_backend.features.ingestion.application.raw_archive import RawEventDrainer
 from wef_backend.features.ingestion.application.telegram_events import (
     LiveEventQueue,
@@ -66,7 +64,7 @@ from wef_backend.recurring_geocode_worker import (
 from wef_backend.settings import Settings, load_settings
 from wef_backend.telegram_credentials import secret_text, secrets_from_settings
 from wef_backend.telegram_media_wiring import (
-    build_live_media_pipeline,
+    build_media_recovery,
     live_media_download_limits,
 )
 
@@ -129,16 +127,11 @@ async def _run_connected_worker(  # noqa: PLR0913, PLR0915 - composition of work
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     """Subscribe and supervise every critical stage after authorization."""
-    media_grouper = StatefulMediaGrouper()
-    media_pipeline = build_live_media_pipeline(
+    media_recovery = build_media_recovery(
         session_factory,
-        source_root=settings.telegram_media_temp_path,
-        originals_root=settings.restricted_originals_path,
-        derivatives_root=settings.public_derivatives_path,
-        media_max_bytes=settings.media_max_bytes,
-        media_max_pixels=settings.media_max_pixels,
-        concurrency=settings.telegram_media_download_concurrency,
-        grouper=media_grouper,
+        settings=settings,
+        source=client,
+        channel_external_id=identity.channel_id,
     )
     state = WorkerRuntimeState(release_sha=settings.release_sha)
     stop = asyncio.Event()
@@ -148,7 +141,6 @@ async def _run_connected_worker(  # noqa: PLR0913, PLR0915 - composition of work
         store=store,
         client=client,
         archive=archive,
-        media_pipeline=media_pipeline,
     )
     processing_lock = asyncio.Lock()
     drainer = RawEventDrainer(
@@ -157,7 +149,6 @@ async def _run_connected_worker(  # noqa: PLR0913, PLR0915 - composition of work
         identity=identity,
         recovery=SQLAlchemyArchiveRecovery(session_factory),
     )
-    polling_media = replace(media_pipeline, grouper=StatefulMediaGrouper())
     reconciler = TelegramCheckpointReconciler(
         store=checkpoint_store,
         client=client,
@@ -165,12 +156,10 @@ async def _run_connected_worker(  # noqa: PLR0913, PLR0915 - composition of work
             store=store,
             client=client,
             archive=archive,
-            media_pipeline=polling_media,
         ),
         processing_lock=processing_lock,
         archive=archive,
         sweep_store=checkpoint_store,
-        prepare_cycle=polling_media.grouper.reset,
     )
     geocode_worker = RecurringGeocodeWorker(
         settings=settings,
@@ -235,6 +224,7 @@ async def _run_connected_worker(  # noqa: PLR0913, PLR0915 - composition of work
         await supervise_worker_tasks(
             {
                 "transport": transport(),
+                "media_recovery": media_recovery.run(stop),
                 "consumer": consume(),
                 "raw_archive_drain": _maintain_raw_archive_drain(
                     drainer, state, stop, settings.release_sha, processing_lock
@@ -293,6 +283,7 @@ async def run_telegram_worker() -> None:
     password = secret_text(settings.telegram_2fa_password)
     client = TelethonLiveClient(
         secrets,
+        independent_media=True,
         media_temp_root=settings.telegram_media_temp_path,
         media_limits=live_media_download_limits(
             max_bytes=settings.media_max_bytes,
