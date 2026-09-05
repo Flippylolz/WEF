@@ -51,7 +51,7 @@ branch:
   task_id: E25-T4
   one_task_only: true
   created_at: "2026-09-05T12:49:08Z"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/337
 completion:
   completed_by: null
   completed_at: null
@@ -118,7 +118,7 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Spike revision 1 approval and task promotion are recorded; the authoritative file is under `tasks/`.
 - [x] Implementation plan revision 2 is explicitly approved and the implementation gate is satisfied.
 - [x] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
-- [ ] This task passes through `ready` and starts on its own dedicated branch/PR.
+- [x] This task passes through `ready` and starts on its own dedicated branch/PR.
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
 
 The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 2](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.

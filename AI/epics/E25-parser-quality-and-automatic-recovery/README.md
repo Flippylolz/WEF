@@ -44,7 +44,7 @@ Approval gates are restored to revision 2; dependency and task branch gates rema
 - T1 PR [328](https://github.com/Flippylolz/WEF/pull/328): published, 827 backend and 169 frontend tests passed locally.
 - T2 PR [330](https://github.com/Flippylolz/WEF/pull/330): published, 852 backend and 169 frontend tests passed locally; 75-case benchmark has zero field failures.
 - T3 draft PR [335](https://github.com/Flippylolz/WEF/pull/335) implements durable reservations, scheduled recovery and calibrated source validation under approved revision 2. [Implementation evidence](E25-T3-IMPLEMENTATION_EVIDENCE.md) records validation and remaining rollout gates.
-- T4 is implemented locally on `feat/E25-T4-historical-parser-replay` after verified readiness commit `a84ea07`; [validation evidence](E25-T4-IMPLEMENTATION_EVIDENCE.md) records the remaining publication and rollout gates.
+- T4 draft PR [337](https://github.com/Flippylolz/WEF/pull/337) is published on `feat/E25-T4-historical-parser-replay` after verified readiness commit `a84ea07`; [validation evidence](E25-T4-IMPLEMENTATION_EVIDENCE.md) records the remaining review and rollout gates.
 - The review stack is E24-T1 [331](https://github.com/Flippylolz/WEF/pull/331) → E25 planning [327](https://github.com/Flippylolz/WEF/pull/327) → T1 [328](https://github.com/Flippylolz/WEF/pull/328) → T2 [330](https://github.com/Flippylolz/WEF/pull/330) → T3 [335](https://github.com/Flippylolz/WEF/pull/335) → T4. All T4 dependencies are actual ancestors.
 
 No merge, historical canonical application or provider activation has occurred.

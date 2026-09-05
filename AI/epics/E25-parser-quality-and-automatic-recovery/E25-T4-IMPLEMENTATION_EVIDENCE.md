@@ -2,6 +2,8 @@
 
 ## State and scope
 
+Draft PR [337](https://github.com/Flippylolz/WEF/pull/337); implementation commit `61caba5`.
+
 T4 implementation began only after readiness commit `a84ea07`. Every dependency is
 an ancestor in the published stack: E24-T1 #331 → E25 planning #327 → T1 #328 →
 T2 #330 → T3 #335 → T4. Upstream PRs remain open; no PR was merged into main by
