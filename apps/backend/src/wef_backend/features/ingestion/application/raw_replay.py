@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Protocol
-from uuid import uuid4
 
 from wef_backend.features.ingestion.application.extraction import PARSER_VERSION, extract_listing
 from wef_backend.features.ingestion.application.persistence import (
@@ -18,21 +16,15 @@ from wef_backend.features.ingestion.application.persistence import (
     normalized_location_key,
     redacted_error_summary,
 )
-from wef_backend.features.ingestion.application.raw_archive import record_to_live_event
-from wef_backend.features.ingestion.application.telegram_events import (
-    LiveTelegramEventKind,
-    RawEventRecord,
-)
 from wef_backend.features.ingestion.application.telegram_live import (
-    live_message_to_raw,
     source_identity_from_channel,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
+    from wef_backend.features.ingestion.application.archive_processing import ArchivedPayloadDecoder
     from wef_backend.features.ingestion.application.persistence import IngestionPersistencePort
-    from wef_backend.features.ingestion.application.telegram_events import LiveTelegramEvent
     from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
 
 _BATCH_SIZE = 100
@@ -80,19 +72,6 @@ def _work_key(item: ReplayWorkItem) -> str:
     return f"{item.channel_external_id}:{item.external_message_id}"
 
 
-def _event_from_payload(item: ReplayWorkItem) -> LiveTelegramEvent:
-    record = RawEventRecord(
-        id=uuid4(),
-        event_kind="new",
-        channel_external_id=item.channel_external_id,
-        external_message_id=item.external_message_id,
-        payload=item.payload,
-        received_at=datetime.now(UTC),
-        attempts=0,
-    )
-    return record_to_live_event(record)
-
-
 @dataclass(frozen=True, slots=True)
 class RawParserReplayer:
     """Idempotently replay archived messages through the current parser.
@@ -106,6 +85,7 @@ class RawParserReplayer:
     store: IngestionPersistencePort
     source: RawReplayPort
     identity: TelegramChannelIdentity
+    decoder: ArchivedPayloadDecoder
 
     async def __call__(self, *, release_sha: str | None = None) -> ReplaySummary:
         """Replay all stale archived messages and return redacted counts."""
@@ -143,14 +123,10 @@ class RawParserReplayer:
                     progressed = False
                     for item in items:
                         try:
-                            event = _event_from_payload(item)
+                            raw = self.decoder(item.payload, channel)
                         except (TypeError, ValueError):
                             excluded.add(_work_key(item))
                             continue
-                        if event.kind is LiveTelegramEventKind.DELETE or event.message is None:
-                            excluded.add(_work_key(item))
-                            continue
-                        raw = live_message_to_raw(event.message, identity=channel)
                         extraction = extract_listing(raw)
                         if extraction.listing is None:
                             # The current parser no longer derives an offer from
