@@ -33,7 +33,7 @@ dependency_gate:
   verified_by: Codex
   verified_at: "2026-09-05T11:12:46Z"
   evidence:
-    - "E24-T1: bugfix/E24-T1-original-archive; https://github.com/Flippylolz/WEF/pull/331; head 4548766; immediate ancestor of this branch"
+    - "E24-T1: bugfix/E24-T1-original-archive; https://github.com/Flippylolz/WEF/pull/331; head d4fdb9c; immediate ancestor of this branch"
 branch:
   required: true
   name: bugfix/E24-T2-cursors-and-retries
