@@ -43,7 +43,7 @@ The owner requested as little manual work as possible, with manual work only in 
 ## Approval state
 
 - Spike revision 2 is approved under AD-048; implementation plan revision 1 is approved under AD-049.
-- T1 is in progress on its dedicated branch above planning PR #325. T2 has satisfied spike/implementation gates and awaits T1 completion or a valid stack.
+- T1 is done after PR #331 and its passing 15-minute production window. T2 is in progress with its dependency gate satisfied. See [production evidence](PRODUCTION_EVIDENCE.md).
 - T3/T4 remain proposed outside this first implementation phase.
 - Approval authorizes implementation and PR preparation; merge and production release remain separate.
 

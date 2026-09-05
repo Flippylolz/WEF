@@ -79,6 +79,9 @@ class TelegramWorkerStatus:
     max_persisted_external_id: int
     reconciliation: CheckpointReconciliation
     notes: tuple[str, ...]
+    applied_high_water_id: int = 0
+    polled_through_id: int = 0
+    history_limited: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,6 +100,8 @@ class WorkerRuntimeHealth:
     local_checkpoint_external_id: int | None = None
     last_error_category: str | None = None
     release_sha: str | None = None
+    applied_high_water_id: int | None = None
+    history_limited: bool = True
 
     def is_live(
         self,

@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from wef_backend.features.ingestion.application.telegram_progress import SourceObservation
+
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Sequence
 
@@ -22,6 +24,19 @@ class FakeTelegramLiveClient:
     messages: Sequence[LiveTelegramMessage] = ()
     connected: bool = False
     resolve_calls: list[str] = field(default_factory=list)
+
+    async def observe_messages(
+        self, *, username: str, ids: Sequence[int]
+    ) -> Sequence[SourceObservation]:
+        """Confirm only retained fake messages; absent IDs remain unknown."""
+        await self.resolve_channel(username)
+        by_id = {message.external_message_id: message for message in self.messages}
+        return tuple(
+            SourceObservation(external_id, "present", by_id[external_id])
+            if external_id in by_id
+            else SourceObservation(external_id, "unknown")
+            for external_id in ids
+        )
 
     async def connect(self) -> None:
         """Mark the fake client connected."""
