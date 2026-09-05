@@ -52,6 +52,11 @@ def assert_workflow_boundaries() -> None:
     assert "WEF_CONTACT_HMAC_KEY: ${{ secrets.WEF_CONTACT_HMAC_KEY }}" in source
     assert "WEF_RELEASE_SHA=${{ needs.resolve.outputs.release_sha }}" in source
     assert "env -u TEST_DATABASE_URL make test" in source
+    assert "name: Release outcome" in source
+    assert "needs: [resolve, verify, publish, deploy]" in source
+    assert "retention-days: 90" in source
+    assert "RELEASE_NEEDS: ${{ toJSON(needs) }}" in source
+    assert "WEF_RELEASE_OBSERVATION=$observation_file" in source
     deploy_script = (REPOSITORY_ROOT / "scripts/deploy/deploy.sh").read_text(encoding="utf-8")
     assert "run --rm geocoder-check" in deploy_script
     assert "WEF_DEPLOY_TEST_MODE" in deploy_script

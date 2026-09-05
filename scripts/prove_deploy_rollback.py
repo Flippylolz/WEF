@@ -257,6 +257,7 @@ def main() -> int:
             "PATH": f"{fake_bin}:{os.environ['PATH']}",
             "WEF_DEPLOY_SKIP_PULL": "1",
             "WEF_DEPLOY_TEST_MODE": "1",
+            "WEF_RELEASE_OBSERVATION": str(root / "state/release-observation.json"),
             "WEF_FAKE_DOCKER_LOG": str(Path(directory) / "docker.log"),
             "WEF_MEMINFO_FILE": str(meminfo),
             "WEF_MIN_AVAILABLE_MEMORY_KB": "1",
@@ -280,6 +281,10 @@ def main() -> int:
             environment,
             check=True,
         )
+        observation = json.loads((root / "state/release-observation.json").read_text())
+        assert observation["release_sha"] == HEALTHY_SHA
+        assert observation["healthy_at"] <= observation["activated_at"]
+        assert "config_file" not in observation
         assert "Activated WEF release" in healthy.stdout
         assert read_state(root / "state/current.json")["release_sha"] == HEALTHY_SHA
         assert (root / "releases/current").resolve() == healthy_dir.resolve()
@@ -299,6 +304,10 @@ def main() -> int:
             environment,
             check=False,
         )
+        observation = json.loads((root / "state/release-observation.json").read_text())
+        assert observation["restored_sha"] == HEALTHY_SHA
+        assert observation["rollback_started_at"] <= observation["restored_at"]
+        assert "activated_at" not in observation
         assert unhealthy.returncode == 1
         assert "Previous WEF application release restored" in unhealthy.stderr
         assert read_state(root / "state/current.json")["release_sha"] == HEALTHY_SHA
@@ -335,6 +344,9 @@ def main() -> int:
             {**environment, "WEF_FAKE_MIGRATION_FAIL": "1"},
             check=False,
         )
+        observation = json.loads((root / "state/release-observation.json").read_text())
+        assert "healthy_at" not in observation
+        assert "restored_at" not in observation
         assert migration_failure.returncode == 1
         assert "existing application release was not replaced" in migration_failure.stderr
         assert read_state(root / "state/current.json")["release_sha"] == HEALTHY_SHA

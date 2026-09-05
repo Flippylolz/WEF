@@ -47,6 +47,8 @@ jobs:
       force_rollback_rehearsal: ${{ steps.release.outputs.force_rollback_rehearsal }}
       seed_rehearsal: ${{ steps.release.outputs.seed_rehearsal }}
       should_deploy: ${{ steps.gate.outputs.should_deploy }}
+      gate_reason: ${{ steps.gate.outputs.gate_reason }}
+      merged_at: ${{ steps.gate.outputs.merged_at }}
     steps:
       - name: Check out requested source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -112,13 +114,13 @@ jobs:
           RELEASE_SHA: ${{ steps.release.outputs.release_sha }}
         run: |
           set -euo pipefail
-          should_deploy=$(python3 -m scripts.deploy.evaluate_deploy_gate \
+          python3 -m scripts.deploy.evaluate_deploy_gate \
             "$EVENT_NAME" \
             "$GITHUB_REF" \
             "$RELEASE_SHA" \
             "$AUTO_DEPLOY_ENABLED" \
-            associated-prs.json)
-          echo "should_deploy=$should_deploy" >> "$GITHUB_OUTPUT"
+            associated-prs.json --outputs >> "$GITHUB_OUTPUT"
+
 
   verify:
     name: Verify release candidate
@@ -320,6 +322,8 @@ jobs:
     if: needs.resolve.outputs.should_deploy == 'true'
     runs-on: ubuntu-24.04
     environment: production
+    outputs:
+      observation: ${{ steps.deploy.outputs.observation }}
     permissions:
       contents: read
       packages: read
@@ -375,6 +379,7 @@ jobs:
             "${{ needs.publish.outputs.web_image }}@${{ needs.publish.outputs.web_digest }}"
 
       - name: Transfer, activate, and verify release
+        id: deploy
         env:
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
@@ -420,7 +425,18 @@ jobs:
           inventory_before="/home/nuc/wef/state/inventory-${GITHUB_RUN_ID}-before.json"
           inventory_after="/home/nuc/wef/state/inventory-${GITHUB_RUN_ID}-after.json"
 
+          observation_file="/home/nuc/wef/state/release-report-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
           cleanup() {
+            # Export only the allowlisted observation, even if activation failed.
+            # A missing report must not change the original deployment exit status.
+            # shellcheck disable=SC2029
+            if ssh "${ssh_options[@]}" "$target" \
+              "python3 '$release_dir/scripts/deploy/release_observation.py' export '$observation_file' '$RELEASE_SHA'" \
+              > "$RUNNER_TEMP/deploy-observation.json" 2>/dev/null; then
+              printf 'observation=%s\n' "$(cat "$RUNNER_TEMP/deploy-observation.json")" >> "$GITHUB_OUTPUT"
+              # shellcheck disable=SC2029
+              ssh "${ssh_options[@]}" "$target" "rm -f -- '$observation_file'" >/dev/null 2>&1 || true
+            fi
             rm -f "$RUNNER_TEMP/production.env" "$ssh_dir/key"
             # shellcheck disable=SC2029
             ssh "${ssh_options[@]}" "$target" \
@@ -504,6 +520,7 @@ jobs:
             "WEF_ROOT=/home/nuc/wef"
             "WEF_RELEASE_DIR=$release_dir"
             "WEF_CONFIG_FILE=$config_file"
+            "WEF_RELEASE_OBSERVATION=$observation_file"
           )
           if [[ "$SEED_REHEARSAL" == 'true' ]]; then
             deploy_command+=("WEF_SEED_REHEARSAL=1")
@@ -571,3 +588,27 @@ jobs:
           docker compose --env-file "$config_file" --file compose.production.yaml \
             run --rm --no-deps api wef-bootstrap-owner
           REMOTE
+
+  report:
+    name: Release outcome
+    if: always()
+    needs: [resolve, verify, publish, deploy]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Check out reporting source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Record release outcome
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_NEEDS: ${{ toJSON(needs) }}
+        run: python3 -m scripts.deploy.release_report "$RUNNER_TEMP/release-outcome.json"
+      - name: Upload sanitized release outcome
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-outcome-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-outcome.json
+          if-no-files-found: error
+          retention-days: 90
