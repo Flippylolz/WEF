@@ -370,3 +370,70 @@ async def test_ingestion_ai_parse_store_get_revision_context_missing() -> None:
     database = await _prepare()
     store = SQLAlchemyIngestionAiParseStore(database.session_factory)
     assert await store.get_revision_context(uuid4()) is None
+
+
+async def test_automatic_creation_is_atomic_and_rechecks_current_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A validated auto-created offer and proposal outcome commit together."""
+    source = "Продажа: квартира\nLocation: Warszawa, Testowa 1\nPrice: 780000 PLN"
+    monkeypatch.setattr("tests.test_ingestion_ai_parse_integration._SOURCE_TEXT", source)
+    database = await _prepare()
+    try:
+        owner = await _seed_owner(database)
+        _, revision = await _seed_parse_miss(database)
+        payload = _payload()
+        payload["fields"] = [
+            {
+                "field_name": "location",
+                "proposed_value": "Warszawa, Testowa 1",
+                "evidence_fragment": "Warszawa, Testowa 1",
+                "confidence": "high",
+            },
+            {
+                "field_name": "apartment_price_min",
+                "proposed_value": "780000",
+                "evidence_fragment": "780000 PLN",
+                "confidence": "high",
+            },
+            {
+                "field_name": "currency",
+                "proposed_value": "PLN",
+                "evidence_fragment": "PLN",
+                "confidence": "high",
+            },
+        ]
+        store = SQLAlchemyIngestionAiParseStore(database.session_factory)
+        persistence = SQLAlchemyIngestionPersistence(database.session_factory)
+        audits = SQLAlchemyAdminAuditStore(database.session_factory)
+        generate = GenerateIngestionAiParse(
+            store, FakeChatCompletions(payload=payload), audits, FakeClock(_NOW), _runtime()
+        )
+        outcome = await generate(
+            owner_id=owner, source_message_revision_id=revision, request_id=uuid4()
+        )
+        assert outcome.run is not None
+        apply = ApplyIngestionAiParse(
+            store,
+            persistence,
+            SQLAlchemyParseIssueStore(database.session_factory),
+            audits,
+            FakeClock(_NOW),
+            _runtime(),
+        )
+        result = await apply(
+            owner_id=owner, run_id=outcome.run.id, request_id=uuid4(), automatic=True
+        )
+        assert result.status is IngestionAiApplyStatus.APPLIED
+        again = await apply(
+            owner_id=owner, run_id=outcome.run.id, request_id=uuid4(), automatic=True
+        )
+        assert again.offer_id == result.offer_id
+        async with database.session_factory() as session:
+            offer = await session.get(OfferRow, result.offer_id)
+            assert offer is not None
+            assert offer.property_type == "apartment"
+            assert offer.price_min_minor == 78000000
+            assert await session.scalar(text("SELECT count(*) FROM offers")) == 1
+    finally:
+        await database.engine.dispose()

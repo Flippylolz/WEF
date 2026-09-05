@@ -14,9 +14,10 @@ accuracy. T2 owns extraction repair. T3 owns scheduled validated AI exceptions.
 T4 owns canonical historical convergence and remains gated on E24-T1.
 
 This task remains in progress until its PR, CI/review, authorized merge and final
-completion evidence exist. Automatic approval review rejected publication of the
-planning branch as an insufficiently authorized external export. No branch has
-been pushed and no PR, production mutation or provider activation occurred.
+completion evidence exist. Publication was initially rejected by automatic approval review. The owner then
+explicitly authorized publication: planning PR 327 and T1 PR 328 are now open.
+No production mutation or provider activation occurred. The provider revision
+requires approval-gate revalidation without changing these validation results.
 
 ## Validation
 

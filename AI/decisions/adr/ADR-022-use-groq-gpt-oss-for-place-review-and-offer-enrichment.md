@@ -36,11 +36,10 @@ public. Application interactors own every mutation and provenance write.
 ## Required API boundary
 
 - Call `POST https://api.groq.com/openai/v1/chat/completions` from the backend
-  only for **interactive** single-item work (place review, one-off Generate in
-  admin). Bulk workloads use Groq's Batch API (`POST /v1/files` +
-  `POST /v1/batches` + poll + download JSONL) via `complete_many`. `WEF_GROQ_API_KEY`
-  never reaches HTML, JavaScript, a public endpoint, logs, fixtures, or committed
-  configuration.
+  for interactive and queued cohort work under Zero Data Retention. E25 revision 2
+  supersedes the previous bulk Batch API requirement: Batch/Files retain application
+  state and are disabled under ZDR. The composed provider never uploads files.
+  `WEF_GROQ_API_KEY` remains server-only.
 - Set `model="openai/gpt-oss-20b"`, `reasoning_effort="low"`, and an explicit
   bounded output limit initially. Do not use conversation state, streaming,
   tools, web search, or file upload outside the Batch API input file.
@@ -214,3 +213,29 @@ evaluation fixtures, and a privacy acceptance step. E19 spike revision 4 and
 implementation-plan revision 1 are owner-approved under AD-042/AD-043. This ADR
 still does not authorize paid usage or production enablement; those remain gated
 on a supplied Groq secret and verified Zero Data Retention.
+
+## E25 standing recovery authorization (2026-09-05)
+
+The owner approved E25 spike and implementation plan revision 2 in the Codex task
+01a0710e-e877-7ab2-ad03-c6008aaf16e9. This authorizes scheduled recovery of
+source-evidenced current-revision gaps after the recorded activation prerequisites.
+Place review remains owner-confirmed. No provider/model, paid-spend, visibility or
+protected-value authority is broadened. The
+[provider amendment](../../epics/E25-parser-quality-and-automatic-recovery/PROVIDER_PRIVACY_REVISION.md)
+records the verified Batch/ZDR conflict and exact replacement.
+
+Interactive, owner cohort and scheduled generation share durable owner reservations,
+a 20-item UTC-day ceiling, one active request and at least 60 seconds between starts.
+Legacy usage is included at adoption; drain old AI processes before installing the
+new writer so an old unreserved request cannot race the initial snapshot. Timeouts
+with unknown submission outcomes are never automatically resent. A received 429
+resumes at the later of Retry-After and next UTC day; one known-safe server retry
+consumes another reservation. Polling and in-memory retry loops are not used.
+
+The first ten fully validated unique observations do not apply fields. Accepted
+scalar families are listed in `recovery_validation.py` and backed by positive and
+negative cases. Inclusion, delivery, alternative-price and unsupported templates
+remain observation-only. A separate apply pause controls scheduled writes. A narrow
+complete listing with deterministic property evidence can use the existing creation
+path; source revision, primary-link and proposal state are guarded in the same
+transaction as the offer and proposal outcome. All existing protection rules apply.

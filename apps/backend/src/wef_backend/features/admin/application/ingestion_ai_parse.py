@@ -6,7 +6,7 @@ from __future__ import annotations
 # ruff: noqa: C901, PLR0911, PLR0913, PLR0915, PLR0917, S101
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
@@ -32,8 +32,13 @@ from wef_backend.features.admin.application.ai_review import (
 from wef_backend.features.admin.application.offer_enrichment import (
     resolve_evidence_offsets,
 )
+from wef_backend.features.admin.application.provider_context import provider_operation
+from wef_backend.features.admin.application.recovery_validation import listing_creation_supported
 from wef_backend.features.catalog.domain import ContentType, MarketType
-from wef_backend.features.ingestion.application.extraction import extract_contact_spans
+from wef_backend.features.ingestion.application.extraction import (
+    extract_contact_spans,
+    extract_source_property_type,
+)
 from wef_backend.features.ingestion.domain.extraction import (
     Confidence,
     ContactSpan,
@@ -230,6 +235,7 @@ class OwnerAiListingPersistencePort(Protocol):
         *,
         source_message_revision_id: UUID,
         listing: ListingCandidate,
+        run_id: UUID | None = None,
     ) -> UUID:
         """Create or update one offer from an approved AI listing proposal."""
         ...
@@ -871,6 +877,7 @@ class GenerateIngestionAiParse:
             ),
         )
 
+    @provider_operation
     async def __call__(
         self,
         *,
@@ -930,7 +937,11 @@ class GenerateIngestionAiParse:
                 run=None,
             )
         now = self._clock.now()
-        used = await self._store.count_owner_runs_since(owner_id, since=_day_start(now))
+        used = (
+            0
+            if getattr(self._provider, "durable_budget", False)
+            else await self._store.count_owner_runs_since(owner_id, since=_day_start(now))
+        )
         if used >= self._runtime.daily_limit:
             await self._record(
                 owner_id,
@@ -1070,6 +1081,7 @@ class GenerateIngestionAiParse:
             run=run,
         )
 
+    @provider_operation
     async def generate_batch(  # noqa: PLR0912
         self,
         *,
@@ -1095,7 +1107,11 @@ class GenerateIngestionAiParse:
             )
 
         now = self._clock.now()
-        used = await self._store.count_owner_runs_since(owner_id, since=_day_start(now))
+        used = (
+            0
+            if getattr(self._provider, "durable_budget", False)
+            else await self._store.count_owner_runs_since(owner_id, since=_day_start(now))
+        )
         remaining_budget = max(0, self._runtime.daily_limit - used)
 
         pending: list[tuple[RevisionParseContext, str, UUID, UUID]] = []
@@ -1352,12 +1368,13 @@ class ApplyIngestionAiParse:
             ),
         )
 
-    async def __call__(
+    async def __call__(  # noqa: PLR0912 - current-source and automatic-evidence gates
         self,
         *,
         owner_id: UUID,
         run_id: UUID,
         request_id: UUID,
+        automatic: bool = False,
     ) -> IngestionAiApplyOutcome:
         """Execute the owner apply use case."""
         run = await self._store.get_run(run_id)
@@ -1408,9 +1425,18 @@ class ApplyIngestionAiParse:
             await self._store.mark_failed(run_id)
             await self._record(owner_id, revision_id, request_id, AdminOutcome.DENIED)
             raise
+        if automatic:
+            property_type = extract_source_property_type(context.text_original)
+            if property_type is None or not listing_creation_supported(
+                context.text_original, run.proposed_fields
+            ):
+                message = "automatic listing evidence is not calibrated"
+                raise AdminDeniedError(message)
+            listing = replace(listing, property_type=property_type)
         offer_id = await self._persistence.persist_owner_ai_listing(
             source_message_revision_id=revision_id,
             listing=listing,
+            run_id=run.id,
         )
         status = await self._store.mark_applied(run_id, offer_id=offer_id, applied_at=now)
         updated = await self._store.get_run(run_id)

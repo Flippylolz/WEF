@@ -3,8 +3,8 @@ schema: ai-workflow/task@1
 id: E25-T3
 epic: E25
 title: "Automate validated AI exceptions under durable budgets"
-status: draft
-revision: 1
+status: in_progress
+revision: 2
 priority: P1
 size: L
 milestone: M5
@@ -19,27 +19,31 @@ promotion:
 spike_gate:
   status: satisfied
   file: ../SPIKE.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
-  verified_at: "2026-09-05T10:15:52Z"
+  verified_at: "2026-09-05T11:18:50Z"
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
-  verified_at: "2026-09-05T10:22:44Z"
+  verified_at: "2026-09-05T11:18:50Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: Codex
+  verified_at: "2026-09-05T15:15:56.149149+00:00"
+  evidence:
+    - task_id: E25-T1
+      branch: main
+      pull_request: https://github.com/Flippylolz/WEF/pull/328
+      head_commit: ea47448fae6a7d63d252940445091819a5ba1096
 branch:
   required: true
-  name: null
+  name: feat/E25-T3-durable-ai-recovery
   task_id: E25-T3
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-05T11:11:18Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/335
 completion:
   completed_by: null
   completed_at: null
@@ -50,6 +54,7 @@ invalidation:
   invalidated_at: null
   reason: null
   return_to: null
+
 ---
 
 # E25-T3: Automate validated AI exceptions under durable budgets
@@ -82,7 +87,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 Required task dependencies: E25-T1. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This promoted task remains `draft` under the [workflow](../../../workflow/README.md). [Implementation plan revision 1](../IMPLEMENTATION_PLAN.md) is approved; the task must satisfy its dependency and branch gates before implementation.
+This task is `in_progress` after readiness commit `6b1a5b8` under the [workflow](../../../workflow/README.md). [Implementation plan revision 2](../IMPLEMENTATION_PLAN.md) is approved; the task must satisfy its dependency and branch gates before implementation.
 
 ## Rollout and automatic operation
 
@@ -103,9 +108,36 @@ Do not add production dependencies without owner approval, commit raw source/cre
 ## Readiness and completion
 
 - [x] Spike revision 1 approval and task promotion are recorded; the authoritative file is under `tasks/`.
-- [x] Implementation plan revision 1 is explicitly approved and the implementation gate is satisfied.
-- [ ] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
-- [ ] This task passes through `ready` and starts on its own dedicated branch/PR.
+- [x] Implementation plan revision 2 is explicitly approved and the implementation gate is satisfied.
+- [x] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
+- [x] This task passes through `ready` and starts on its own dedicated branch/PR.
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
 
-The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
+The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 2](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
+
+## Provider revision gate
+
+Spike and implementation plan revision 2 are explicitly owner-approved following the
+[Batch/ZDR incompatibility](../PROVIDER_PRIVACY_REVISION.md). Prior test evidence
+is retained; approval gates are restored explicitly to revision 2.
+
+Revision 2 changes the transport to durable single-item inference under ZDR,
+including owner cohort entry points sharing its quota. Acceptance criteria and
+field authority are retained; the exact state/retry amendment is linked above.
+
+Revision 2 restored to ready after explicit owner approval. Original readiness
+commit a9f24f1 and invalidation commit 1448cea remain in history.
+
+## Local implementation evidence
+
+See [T3 implementation evidence](../E25-T3-IMPLEMENTATION_EVIDENCE.md) for passing
+local checks, changed files and outstanding live acceptance/dependency gates.
+
+## Authorized release gate
+
+T1 is done on merged `ea47448`; T2 is also done on merged `d9f5e30` with healthy
+production releases and bounded acceptance evidence. AD-053 explicitly authorizes
+this staged release. Current local validation passed 1,060 backend and 169 frontend
+tests, with 90.24% backend coverage. Scheduling, activation verification and apply
+remain off until current free allocation is confirmed and live canary evidence passes.
+The representative 24-hour acceptance window remains required for T3 completion.

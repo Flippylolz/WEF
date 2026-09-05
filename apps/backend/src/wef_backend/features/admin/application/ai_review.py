@@ -16,6 +16,7 @@ from wef_backend.features.admin.application.admin_ops import (
     AdminDeniedError,
     AdminOutcome,
 )
+from wef_backend.features.admin.application.provider_context import provider_operation
 from wef_backend.features.ingestion.application.extraction import (
     extract_contact_spans,
     source_text_contains_unmasked_contacts,
@@ -337,10 +338,20 @@ class PlaceAiReviewStore(Protocol):
 class ProviderRequestError(RuntimeError):
     """Bounded provider failure without response bodies."""
 
-    def __init__(self, outcome: ProviderOutcome) -> None:
+    def __init__(
+        self,
+        outcome: ProviderOutcome,
+        *,
+        retry_at: datetime | None = None,
+        safe_retry: bool = False,
+        uncertain: bool = False,
+    ) -> None:
         """Store the bounded outcome category only."""
         super().__init__(outcome.value)
         self.outcome = outcome
+        self.retry_at = retry_at
+        self.safe_retry = safe_retry
+        self.uncertain = uncertain
 
 
 def estimate_tokens(text: str) -> int:
@@ -766,6 +777,7 @@ class GeneratePlaceReview:
             ),
         )
 
+    @provider_operation
     async def __call__(  # noqa: PLR0911
         self,
         *,
@@ -807,7 +819,11 @@ class GeneratePlaceReview:
                 omitted_count=pending.omitted_source_count,
             )
         now = self._clock.now()
-        used = await self._store.count_owner_runs_since(owner_id, since=_day_start(now))
+        used = (
+            0
+            if getattr(self._provider, "durable_budget", False)
+            else await self._store.count_owner_runs_since(owner_id, since=_day_start(now))
+        )
         if used >= self._runtime.daily_limit:
             await self._record(owner_id, location_id, request_id, AdminOutcome.DENIED)
             return PlaceReviewOutcome(

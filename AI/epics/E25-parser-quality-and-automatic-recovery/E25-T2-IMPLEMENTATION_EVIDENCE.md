@@ -46,3 +46,26 @@ merge satisfy the definition of done.
 - [T2 workflow record](tasks/E25-T2-repair-deterministic-extraction.md)
 - [Epic progress](README.md)
 - This evidence document.
+
+## Production acceptance and completion
+
+PR #330 merged as `d9f5e30` after all required current-head checks passed.
+[Release 33973752178](https://github.com/Flippylolz/WEF/actions/runs/33973752178)
+succeeded; API and worker were healthy on the exact SHA. Local release validation
+passed 891 backend and 169 frontend tests with 90.52% backend coverage. The
+75-case source-evidenced benchmark remained at zero field failures.
+
+A read-only transaction compared e2-v14 with retained extraction for 100 current
+linked sources: 92 changed, 8 unchanged; 55 had warnings. Changed field counts
+(overlapping) were apartment price 25, area 60, market type 81, property type 48,
+rooms 6, floor 4, district 16 and location 16. These are extraction differences,
+not verified safe-write counts; T4 excludes location/district and guards warnings,
+source identity and field ownership before any historical canonical application.
+
+The metadata-only canary processed 100 sources in 10 batches, inserted 92 issue
+rows and skipped 8 clean cases. Combined with ongoing live ingestion, transitions
+retained 100 superseded evaluations and one resolved prior conflict. Duplicate
+identities and invalid recovery eligibility were zero. No historical canonical
+apply command or provider request was run by this acceptance probe.
+
+All T2 acceptance criteria and the completed T1 dependency are satisfied.

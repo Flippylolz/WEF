@@ -1446,6 +1446,7 @@ class FakeOwnerAiListingPersistence:
         *,
         source_message_revision_id: UUID,
         listing: ListingCandidate,
+        run_id: UUID | None = None,  # noqa: ARG002 - protocol correlation used by SQL adapter
     ) -> UUID:
         offer_id = uuid4()
         self.offers[source_message_revision_id] = listing

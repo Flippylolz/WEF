@@ -127,3 +127,13 @@ fixture and prints counts/rates, never source text. Run
 `uv run pytest tests/test_parse_quality.py tests/test_telegram_fixture_safety.py`
 for benchmark structure, no-new-regression, recovery-negative and fixture privacy
 checks. Database tests verify issue/evaluation identity and retained lifecycle.
+
+## E25 automatic recovery validation
+
+Finite calibration covers supported scalar money, currency, area, rooms, market
+and floor statements with at least ten positive and ten negative cases per enabled
+field, plus complete-listing creation cases. This does not estimate production model
+accuracy. Exact source offsets alone are insufficient: semantic role, currency, unit,
+current snapshot and protected ownership are independent application gates. Unknown
+formats remain observation-only. Report the live eligible denominator, unresolved
+reasons, actual spend availability and human interventions before claiming acceptance.

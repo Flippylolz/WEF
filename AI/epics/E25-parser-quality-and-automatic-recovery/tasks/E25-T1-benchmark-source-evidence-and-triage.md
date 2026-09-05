@@ -19,19 +19,19 @@ promotion:
 spike_gate:
   status: satisfied
   file: ../SPIKE.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
-  verified_at: "2026-09-05T10:15:52Z"
+  verified_at: "2026-09-05T11:18:50Z"
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
-  verified_at: "2026-09-05T10:22:44Z"
+  verified_at: "2026-09-05T11:18:50Z"
 dependency_gate:
   status: satisfied
   verified_by: Codex
-  verified_at: "2026-09-05T10:15:52Z"
+  verified_at: "2026-09-05T11:18:50Z"
   evidence: []
 branch:
   required: true
@@ -51,6 +51,7 @@ invalidation:
   invalidated_at: null
   reason: null
   return_to: null
+
 ---
 
 # E25-T1: Benchmark source evidence and classify repairable gaps
@@ -119,6 +120,12 @@ Local implementation and validation are recorded in [E25-T1 evidence](../E25-T1-
 Automatic approval review rejected pushing the E25 planning documents and opening a GitHub PR because it considered exporting that payload to GitHub insufficiently authorized. Both planning and T1 branches remain local pending explicit authorization to push them to `Flippylolz/WEF` and open PRs. T2/T3 cannot satisfy their stacked dependency gate until T1 has an open ancestor PR. T4 also retains E24-T1.
 
 The completion record now includes merged PR #328, successful release 33973117645, and bounded production classification acceptance. Earlier publication-denial notes are historical.
+
+## Provider revision gate
+
+Spike and implementation plan revision 2 are explicitly owner-approved following the
+[Batch/ZDR incompatibility](../PROVIDER_PRIVACY_REVISION.md). Prior test evidence
+is retained; approval gates are restored explicitly to revision 2.
 
 ## Authorized release sequence
 

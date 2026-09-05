@@ -19,15 +19,15 @@ promotion:
 spike_gate:
   status: satisfied
   file: ../SPIKE.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
-  verified_at: "2026-09-05T10:15:52Z"
+  verified_at: "2026-09-05T11:18:50Z"
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
-  verified_at: "2026-09-05T10:22:44Z"
+  verified_at: "2026-09-05T11:18:50Z"
 dependency_gate:
   status: blocked
   verified_by: null
@@ -50,6 +50,7 @@ invalidation:
   invalidated_at: null
   reason: null
   return_to: null
+
 ---
 
 # E25-T4: Converge parser versions and field provenance automatically
@@ -109,3 +110,9 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
 
 The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
+
+## Provider revision gate
+
+Spike and implementation plan revision 2 are explicitly owner-approved following the
+[Batch/ZDR incompatibility](../PROVIDER_PRIVACY_REVISION.md). Prior test evidence
+is retained; approval gates are restored explicitly to revision 2.

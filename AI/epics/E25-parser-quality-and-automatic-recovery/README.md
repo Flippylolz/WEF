@@ -34,24 +34,20 @@ Each file defines one independently reviewable change, tests, acceptance evidenc
 
 The owner requested as little manual work as possible, with manual work only in extreme cases. Routine processing must use durable, bounded automatic recovery. Measure eligible work completed and human interventions. Do not trade correctness or source evidence for a superficially empty queue.
 
-## Approval state
+## Approval and implementation state
 
-- Owner approved [spike revision 1](SPIKE.md) on 2026-09-05; AD-051 records the session decision.
-- All four tasks are promoted at revision 1; T1 is implemented and validated locally; T2 is implemented on a stack above T1; T3–T4 retain their dependency gates.
-- [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is approved on 2026-09-05; AD-052 records the decision.
-- E25-T1 has no task dependency. E25-T4 remains blocked on E24-T1 as well as E25-T2/T3; no prerequisite completion is assumed.
-- Implementation is authorized within plan revision 1; production/provider prerequisites and merge authorization remain separate.
+Revision 1 approvals are retained in AD-051/AD-052. Spike and implementation plan
+revision 2 are owner-approved, including the [provider privacy amendment](PROVIDER_PRIVACY_REVISION.md).
+Approval gates are restored to revision 2; dependency and task branch gates remain enforceable.
 
-## Current implementation evidence
+- Planning PR #338 merged as `9d095f1`; AD-053 records explicit merge and staged rollout authorization.
+- T1 PR #328 is done on `ea47448`: healthy release and bounded classification acceptance.
+- T2 PR #330 is done on `d9f5e30`: healthy e2-v14 release, zero benchmark field failures, and a read-only production comparison.
+- T3 PR #335 is prepared against main; submission/application remain disabled pending activation prerequisites and live acceptance.
+- T4 PR #337 has validated implementation, including 1,080 backend and 169 frontend tests; its T3 completion gate remains enforceable.
 
-[E25-T1 evidence](E25-T1-IMPLEMENTATION_EVIDENCE.md) records the 75-case benchmark,
-evaluation lifecycle, bounded classification backfill, eligibility selector,
-validation results and changed-file inventory. Following explicit owner publication
-approval, planning PR [327](https://github.com/Flippylolz/WEF/pull/327) and T1 PR
-[328](https://github.com/Flippylolz/WEF/pull/328) are open.
-[T2 evidence](E25-T2-IMPLEMENTATION_EVIDENCE.md) records deterministic extraction
-repairs and regression validation. No merge, production repair or AI activation
-has occurred.
+No E25 automatic historical canonical application or scheduled provider activation
+has occurred. Read-only extraction differences are not safe-repair counts.
 
 ## Scope and completion
 

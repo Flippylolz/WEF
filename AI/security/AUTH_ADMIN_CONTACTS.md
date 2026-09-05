@@ -321,3 +321,14 @@ Registration, login, admin, and contact reveal remain disabled until:
 - Reveal rate limits/audit behavior are confirmed.
 
 [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) provides the verified live Nginx HTTPS origin after E7-T8/E7-T9 topology and automation; [E7-T7](../epics/E7-production-delivery/tasks/E7-T7-enable-production-registration-and-contact-reveal.md) enabled production registration, sessions, owner `/admin`, and contact reveal on that origin (PRs #123/#124/#125).
+
+## E25 scheduled AI recovery
+
+Standing owner authorization is limited by ADR-022's E25 revision 2 amendment.
+Activation additionally requires verified ZDR, permission for masked descriptions
+and free allocation. The composed provider uses single-item inference exclusively;
+Batch/Files retention is not authorized. Shared durable reservation metadata contains
+no source text or raw prompts/responses. Exact evidence and semantic validation
+precede missing-only writes; snapshot/source checks and protected origins remain
+authoritative under concurrency. Requests with uncertain outcomes are never resent
+automatically. No deployment/provider enablement occurred during implementation.

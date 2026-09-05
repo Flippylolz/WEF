@@ -8,6 +8,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import quote
+from uuid import UUID
 
 from scripts.deploy.validate_release import (
     ReleaseContext,
@@ -179,6 +180,19 @@ def _optional_groq_curation(values: dict[str, str]) -> None:
     values["WEF_AI_CURATION_ENABLED"] = enabled
     values["WEF_GROQ_ZDR_VERIFIED"] = zdr
     values["WEF_GROQ_TIMEOUT_SECONDS"] = timeout
+    for flag in (
+        "WEF_AI_RECOVERY_ENABLED",
+        "WEF_AI_RECOVERY_ACTIVATION_VERIFIED",
+        "WEF_AI_RECOVERY_AUTO_APPLY",
+    ):
+        value = _optional_env(flag, "false").lower()
+        if value not in {"true", "false"}:
+            message = "AI recovery flags must be true or false"
+            raise ValueError(message)
+        values[flag] = value
+    owner = os.environ.get("WEF_AI_RECOVERY_OWNER_ID", "").strip()
+    if owner:
+        values["WEF_AI_RECOVERY_OWNER_ID"] = str(UUID(owner))
     values.update(_groq_batch_settings_from_environment())
 
 

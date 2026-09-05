@@ -434,6 +434,11 @@ class LiveEventQueue:
         default_factory=asyncio.Queue,
     )
 
+    @property
+    def has_ready_work(self) -> bool:
+        """Let bounded maintenance yield before live ingestion work."""
+        return not self._queue.empty()
+
     async def put(self, event: LiveTelegramEvent) -> None:
         """Enqueue one event for serialized processing."""
         await self._queue.put(event)

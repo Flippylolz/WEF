@@ -614,3 +614,22 @@ readiness to that revision. Deploy schema before writers. Runtime rollback keeps
 these additive tables and their history; explicitly downgrading the migration
 removes only evaluation metadata and must not be confused with a data rollback.
 The legacy issue outcomes remain readable by the old application.
+
+## E25 revision 2 parser exception maintenance
+
+Current source-evidence evaluations feed a unique revision/parser/policy/schema
+recovery queue. Clean, irrelevant, source-absent, stale and deleted records cannot
+become routine provider work. Manual and scheduled calls share durable reservations
+and pacing; no ZDR path uses provider Batch/Files.
+
+Automatic fills require calibrated literal role/unit/currency semantics, unique
+non-contact evidence, a current offer/source snapshot and still-missing values.
+Protected origins and inconsistent bounds remain unchanged. The observation canary
+counts only fully validated cases; unsupported proposals do not qualify it. Complete
+listing creation also requires deterministic property evidence and literal location
+evidence, with atomic source-link and proposal completion.
+
+This maintenance is distinct from T4 historical deterministic replay. Parser-version
+convergence remains gated on the E24-T1/T2/T3 ancestor/completion contract. See the
+[operator guide](../operations/OPERATOR_COMMANDS.md#e25-automatic-parser-exception-recovery)
+for activation, pause, aggregate reporting and rollback.
