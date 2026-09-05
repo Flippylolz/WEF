@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E25
 title: "Parser quality and automatic recovery"
-status: selected
+status: planning
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -21,12 +21,12 @@ Audit P1 reproduces the Ostrzycka missing price and included-storage fields with
 
 See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for tests, production observations, source references, uncertainty, and the cross-epic sequence.
 
-## Proposed tasks
+## Promoted tasks
 
-- [E25-T1: Benchmark source evidence and classify repairable gaps](proposed-tasks/E25-T1-benchmark-source-evidence-and-triage.md) — P1/M; dependencies: none.
-- [E25-T2: Repair deterministic field extraction and money semantics](proposed-tasks/E25-T2-repair-deterministic-extraction.md) — P1/M; dependencies: E25-T1.
-- [E25-T3: Automate validated AI exceptions under durable budgets](proposed-tasks/E25-T3-automate-validated-ai-exceptions.md) — P1/L; dependencies: E25-T1.
-- [E25-T4: Converge parser versions and field provenance automatically](proposed-tasks/E25-T4-converge-parser-versions-automatically.md) — P1/L; dependencies: E24-T1, E25-T2, E25-T3.
+- [E25-T1: Benchmark source evidence and classify repairable gaps](tasks/E25-T1-benchmark-source-evidence-and-triage.md) — P1/M; dependencies: none.
+- [E25-T2: Repair deterministic field extraction and money semantics](tasks/E25-T2-repair-deterministic-extraction.md) — P1/M; dependencies: E25-T1.
+- [E25-T3: Automate validated AI exceptions under durable budgets](tasks/E25-T3-automate-validated-ai-exceptions.md) — P1/L; dependencies: E25-T1.
+- [E25-T4: Converge parser versions and field provenance automatically](tasks/E25-T4-converge-parser-versions-automatically.md) — P1/L; dependencies: E24-T1, E25-T2, E25-T3.
 
 Each file defines one independently reviewable change, tests, acceptance evidence, rollout, rollback, and exceptional manual handling. Dependencies are task IDs and remain enforceable at promotion.
 
@@ -36,11 +36,11 @@ The owner requested as little manual work as possible, with manual work only in 
 
 ## Approval state
 
-- Epic selected for documentation/research.
-- [Spike](SPIKE.md) revision 1 is researched and awaiting owner approval.
-- All 4 candidates remain `proposed`, `actionable: false`.
-- [Implementation plan](IMPLEMENTATION_PLAN.md) is an empty draft shell until spike approval and task promotion.
-- The audit request authorizes research and planning documents; it is not recorded as approval of future production changes.
+- Owner approved [spike revision 1](SPIKE.md) on 2026-09-05; AD-047 records the session decision.
+- All four tasks are promoted to `tasks/` at revision 1 and remain `draft`.
+- [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is complete and awaiting separate owner approval.
+- E25-T1 has no task dependency. E25-T4 remains blocked on E24-T1 as well as E25-T2/T3; no prerequisite completion is assumed.
+- No implementation, production replay, provider activation, or merge is authorized by spike approval.
 
 ## Scope and completion
 

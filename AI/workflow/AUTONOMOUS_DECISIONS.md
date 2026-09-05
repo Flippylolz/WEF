@@ -397,3 +397,12 @@ This append-only log records choices made while the owner delegated overnight MV
 - Execution notes: another agent's E8 commits landed on `main` during review, so #244/#247/#254 were refreshed onto the new `main` (conflicting registry paragraphs reconciled to keep both the E8 watch-state updates and the E20 entries) before their final green-CI merges. Production verification after deploy run 33429448184: `/api/v1/health/live` and `/api/v1/health/ready` return 200 and `/admin/login` serves `data-bs-theme="dark"` with the shared stylesheet.
 - Rationale: the owner supplied the merge direction after reviewing each PR's green required checks, matching the AD-040/AD-043 pattern of session directives authorizing green-CI merge sequences.
 - Reversal: revert the squash commits on `main` and redeploy the prior release if the owner withdraws the decision or production evidence shows a regression.
+
+## AD-047: Approve E25 spike revision 1 and prepare the implementation plan
+
+- Time: 2026-09-05; recorded at 2026-09-05T10:15:52Z.
+- Owner decision: `yes I approve`, in Codex task `01a0710e-e877-7ab2-ad03-c6008aaf16e9`, directly answering: “Do you approve E25 spike revision 1 so I can promote its four tasks and prepare the implementation plan?”
+- Selected approach: record approval of E25 spike revision 1, move E25-T1 through E25-T4 into `tasks/`, and prepare implementation plan revision 1 for separate review.
+- Scope boundary: task refinement/promotion and planning only. This approval does not authorize application code, tests, migrations, production replay, AI activation or spend, deployment, or merging. E24-T1 remains an enforceable dependency of E25-T4.
+- Rationale: the owner approved the exact spike revision in response to the explicit approval question; implementation approval is a distinct gate under the repository workflow.
+- Reversal: invalidate affected spike/plan/task gates if the owner withdraws approval or material new evidence changes the approved recommendation.

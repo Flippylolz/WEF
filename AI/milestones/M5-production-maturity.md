@@ -46,7 +46,7 @@ from loss of the production host.
 The [system audit](../audits/2026-09-05-system-audit.md) records passing suites plus production defects and defines the following selected research workspaces:
 
 - [E24: Automatic ingestion recovery](../epics/E24-automatic-ingestion-recovery/README.md) — four proposed tasks; terminate stuck archive work, maintain monotonic cursors, recover media, and verify progress.
-- [E25: Parser quality and automatic recovery](../epics/E25-parser-quality-and-automatic-recovery/README.md) — four proposed tasks; benchmark source evidence, repair deterministic gaps, automate validated AI exceptions, and converge parser versions.
+- [E25: Parser quality and automatic recovery](../epics/E25-parser-quality-and-automatic-recovery/README.md) — spike revision 1 approved; four promoted draft tasks and implementation plan revision 1 awaiting approval; benchmark source evidence, repair deterministic gaps, automate validated AI exceptions, and converge parser versions.
 - [E26: Automatic location validation and repair](../epics/E26-automatic-location-validation/README.md) — three proposed tasks; validate address agreement, repair stale points, and present honest precision.
 - [E27: Faster verified releases](../epics/E27-faster-verified-releases/README.md) — three proposed tasks; measure outcomes, remove duplicate serialized work safely, and prove the latency/recovery budget.
 

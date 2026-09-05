@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E25-T3
 epic: E25
 title: "Automate validated AI exceptions under durable budgets"
-status: proposed
+status: draft
 revision: 1
-actionable: false
 priority: P1
 size: L
 milestone: M5
@@ -13,12 +12,44 @@ dependencies: [E25-T1]
 requirement_ids: [P-002, P-003, P-006, P-007]
 decision_ids: [ADR-003, ADR-006, ADR-012]
 deferred_decision_ids: []
-source: "owner-requested-system-audit:2026-09-05"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E25-T3-automate-validated-ai-exceptions.md
+  promoted_by: Codex
+  promoted_at: "2026-09-05T10:15:52Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 1
+  verified_by: Codex
+  verified_at: "2026-09-05T10:15:52Z"
+implementation_gate:
+  status: blocked
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: null
+  verified_by: null
+  verified_at: null
+dependency_gate:
+  status: blocked
+  verified_by: null
+  verified_at: null
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E25-T3
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E25-T3: Automate validated AI exceptions under durable budgets
@@ -51,7 +82,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 Required task dependencies: E25-T1. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This candidate remains non-actionable under the [workflow](../../../workflow/README.md). It must move rather than copy to `tasks/`, retain its ID, and receive complete promotion and gate metadata.
+This promoted task remains `draft` under the [workflow](../../../workflow/README.md). The owner must approve [implementation plan revision 1](../IMPLEMENTATION_PLAN.md), then the task must satisfy its dependency and branch gates before implementation.
 
 ## Rollout and automatic operation
 
@@ -69,10 +100,12 @@ The provider configuration and existing AI contract need explicit current-versio
 
 Do not add production dependencies without owner approval, commit raw source/credentials, or mix unrelated refactoring into this task. General E14 infrastructure remains authoritative outside this task's specific regression/behavior scope.
 
-## Promotion checklist
+## Readiness and completion
 
-- [ ] Current epic spike revision explicitly approved.
-- [ ] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
-- [ ] All referenced dependencies and required decisions resolved for the planned sequence.
-- [ ] File moved, not copied, into `tasks/` with attributable promotion metadata.
-- [ ] Dedicated branch and PR will cover this task only after implementation gates clear.
+- [x] Spike revision 1 approval and task promotion are recorded; the authoritative file is under `tasks/`.
+- [ ] Implementation plan revision 1 is explicitly approved and the implementation gate is satisfied.
+- [ ] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
+- [ ] This task passes through `ready` and starts on its own dedicated branch/PR.
+- [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
+
+The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.

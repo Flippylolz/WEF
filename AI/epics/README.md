@@ -40,7 +40,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E22 — Property type classification and filter](E22-property-type-filter/README.md) — `done`; E22-T1–T3 done through green-CI PR #302 with follow-up #304 (backfill dedupe) and production backfill on `wef_hist_candidate` (deploy run 33659894308); milestone M5.
 - [E23 — Location display name normalization](E23-location-display-name-normalization/README.md) — `done`; E23-T1/T2 shipped through PRs #316/#317; production backfill applied 2026-09-02 (`adcdb10`); milestone M5.
 - [E24 — Automatic ingestion recovery](E24-automatic-ingestion-recovery/README.md) — `selected`; audit-backed spike revision 1 awaiting owner approval; 4 proposed, non-actionable tasks; milestone M5.
-- [E25 — Parser quality and automatic recovery](E25-parser-quality-and-automatic-recovery/README.md) — `selected`; audit-backed spike revision 1 awaiting owner approval; 4 proposed, non-actionable tasks; milestone M5.
+- [E25 — Parser quality and automatic recovery](E25-parser-quality-and-automatic-recovery/README.md) — `planning`; spike revision 1 approved; 4 promoted draft tasks; implementation plan revision 1 awaiting owner approval; milestone M5.
 - [E26 — Automatic location validation and repair](E26-automatic-location-validation/README.md) — `selected`; audit-backed spike revision 1 awaiting owner approval; 3 proposed, non-actionable tasks; milestone M5.
 - [E27 — Faster verified releases](E27-faster-verified-releases/README.md) — `selected`; audit-backed spike revision 1 awaiting owner approval; 3 proposed, non-actionable tasks; milestone M5.
 
