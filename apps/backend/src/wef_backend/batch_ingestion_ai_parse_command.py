@@ -71,20 +71,17 @@ _LINK_EXISTING_OFFERS_SQL = text(
 
 _CANDIDATES_SQL = text(
     """
-    SELECT DISTINCT ON (md5(left(smr.text_original, 200)))
-      sm.external_message_id,
-      smpi.source_message_revision_id
-    FROM source_message_parse_issues AS smpi
-    JOIN source_messages AS sm ON sm.id = smpi.source_message_id
-    JOIN source_message_revisions AS smr ON smr.id = smpi.source_message_revision_id
-    WHERE smpi.offer_id IS NULL
-      AND smpi.issue_outcome = 'parser_miss'
+    SELECT DISTINCT sm.external_message_id, pe.source_message_revision_id
+    FROM parse_evaluations AS pe
+    JOIN source_messages AS sm ON sm.id = pe.source_message_id
+    JOIN source_message_revisions AS smr ON smr.id = pe.source_message_revision_id
+    WHERE pe.source_message_revision_id = sm.current_revision_id
+      AND sm.deleted_at IS NULL
+      AND pe.state = 'open' AND pe.recovery_eligible
+      AND NOT EXISTS (SELECT 1 FROM offer_sources AS os
+                      WHERE os.source_message_id = sm.id AND os.relationship = 'primary')
       AND length(smr.text_original) >= :min_text_length
-      AND smr.text_original NOT ILIKE '%Serock%'
-      AND smr.text_original NOT ILIKE '%Dosin%'
-      AND smr.text_original NOT ILIKE '%застройщика%'
-      AND smr.text_original NOT ILIKE '%0% комиссии%'
-    ORDER BY md5(left(smr.text_original, 200)), sm.external_message_id DESC
+    ORDER BY sm.external_message_id DESC, pe.source_message_revision_id
     LIMIT :limit
     """,
 )

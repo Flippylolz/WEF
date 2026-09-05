@@ -290,11 +290,11 @@ async def test_migration_and_replay_reconciliation() -> None:
             await session.execute(
                 text(
                     "SELECT issue_outcome, message_outcome, external_message_id "
-                    "FROM source_message_parse_issues LIMIT 1"
+                    "FROM source_message_parse_issues WHERE external_message_id = 2 LIMIT 1"
                 ),
             )
         ).one()
-    assert parse_issue_count == 1
+    assert parse_issue_count == 3  # Includes two newly detected silent property-type gaps.
     assert parse_issue.issue_outcome == "parser_miss"
     assert parse_issue.message_outcome == "skipped_non_candidate"
     assert parse_issue.external_message_id == 2

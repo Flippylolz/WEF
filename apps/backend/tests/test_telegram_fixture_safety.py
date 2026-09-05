@@ -12,6 +12,8 @@ import pytest
 FIXTURE_ROOT = Path(__file__).parent / "fixtures/telegram_export"
 TRUNCATED_FIXTURE = "synthetic-truncated.json"
 ALLOWED_FIXTURE_FILES = {
+    "parser-quality-v1.json",
+    "parser-quality-v1-baseline.json",
     "sanitized-complete.golden.json",
     "sanitized-complete.json",
     "sanitized-extraction-cases.json",

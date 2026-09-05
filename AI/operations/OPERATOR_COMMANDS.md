@@ -80,22 +80,50 @@ Prerequisites for any Groq-backed command: `WEF_AI_CURATION_ENABLED=true`,
 
 **Container:** `api` or `telegram-worker` (database access only; no provider calls).
 
-**Purpose:** Populate `source_message_parse_issues` for historical Telegram messages
-that predate the E21-T1 ledger. Re-runs the current deterministic parser on retained
-messages that have **no** primary `offer_sources` row and **no** existing ledger row.
+**Purpose (E25-T1):** Evaluate current retained source revisions, including linked
+offers, under the running parser and `source-evidence-v1` classification policy.
+The command writes classification and issue-lifecycle metadata only. It does not
+change canonical offers, call providers, or activate historical parser recovery.
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--limit` | none (unbounded) | Max messages to process in this run |
-| `--batch-size` | `500` | Rows committed per batch |
+| `--limit` | `100` | Max current revisions considered in this invocation |
+| `--batch-size` | `10` | Transaction size, capped at 10 even when a larger value is supplied |
 
-**Output (JSON):** counts from `backfill_parse_issues` (scanned, inserted, skipped).
+**Output (JSON):** `processed`, `inserted` (legacy issue rows), `skipped_clean`
+(no new legacy issue insert, including duplicate/stale evaluations), and `batches`.
+These counts describe this invocation, not field accuracy or unique missed offers.
 
-**Idempotent:** safe to rerun after partial batches.
+Selection uses source-message UUID keyset order and excludes already evaluated
+source/parser/policy identities. Evaluations persist for clean, irrelevant and
+source-absent records too, so those records cannot starve later pages. After a
+restart, committed observations are skipped and incomplete work remains eligible.
+Deleted messages are excluded. No old ledger rows or source payloads are deleted.
 
 ```bash
-$COMPOSE exec -T api wef-backfill-parse-issues --limit 5000 --batch-size 500
+$COMPOSE exec -T api wef-backfill-parse-issues --limit 100 --batch-size 10
 ```
+
+Compare the old ledger count with current classified eligibility before production
+queue rollout; these denominators intentionally differ. This aggregate query
+contains no source text:
+
+```sql
+SELECT pe.classification, count(*) AS current_source_revisions,
+       count(*) FILTER (WHERE pe.recovery_eligible) AS recovery_eligible
+FROM parse_evaluations pe
+JOIN source_messages sm ON sm.id = pe.source_message_id
+WHERE pe.source_message_revision_id = sm.current_revision_id
+  AND pe.state = 'open' AND sm.deleted_at IS NULL
+GROUP BY pe.classification ORDER BY pe.classification;
+
+SELECT count(*) AS legacy_parser_miss_rows
+FROM source_message_parse_issues WHERE issue_outcome = 'parser_miss';
+```
+
+Unclassified legacy rows remain inspectable but cannot automatically qualify for
+expensive recovery. Admin JSON/CSV exports retain `issue_outcome` and add
+`classification`, `lifecycle_state`, `recovery_eligible` and `policy_version`.
 
 See also [PIPELINE.md](../ingestion/PIPELINE.md) (parse-issue ledger).
 
@@ -228,7 +256,7 @@ See [E23 implementation plan](../epics/E23-location-display-name-normalization/I
 **Container:** **`api` only** (Groq).
 
 **Purpose:** Operator batch alternative to `/admin/ingestion-issues` **Generate** /
-**Apply**. Selects distinct open `parser_miss` rows, calls the same application
+**Apply**. Selects distinct current source revisions with an open, recovery-eligible evaluation and no primary offer, calls the same application
 interactors as the admin UI, and prints redacted success/skip counts.
 
 | Flag | Default | Description |

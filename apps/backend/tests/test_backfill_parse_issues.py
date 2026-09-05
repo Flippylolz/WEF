@@ -77,11 +77,17 @@ async def test_backfill_parse_issues_respects_limit_and_batches(
 ) -> None:
     calls: list[int] = []
 
-    async def _fake_process_batch(_session: object, *, batch_size: int) -> tuple[int, int, int]:
+    async def _fake_process_batch(
+        _session: object,
+        *,
+        batch_size: int,
+        after_id: object = None,
+    ) -> tuple[int, int, int, object]:
+        _ = after_id
         calls.append(batch_size)
         if len(calls) == 1:
-            return 4, 1, 5
-        return 0, 0, 0
+            return 4, 1, 5, uuid4()
+        return 0, 0, 0, None
 
     monkeypatch.setattr(backfill_module, "_process_batch", _fake_process_batch)
 
@@ -191,6 +197,7 @@ async def test_backfill_parse_issues_inserts_missing_rows() -> None:
     )
     async with database.session_factory() as session, session.begin():
         await session.execute(text("DELETE FROM source_message_parse_issues"))
+        await session.execute(text("DELETE FROM parse_evaluations"))
     summary = await backfill_parse_issues(database.session_factory, batch_size=10)
     assert summary.processed == 1
     assert summary.inserted == 1

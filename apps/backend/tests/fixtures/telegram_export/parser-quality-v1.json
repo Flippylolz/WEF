@@ -1,0 +1,5865 @@
+{
+  "version": "parser-quality-v1",
+  "description": "Invented exact-value regression benchmark, not a production accuracy sample. Audit equivalents preserve only reported semantics.",
+  "cases": [
+    {
+      "language": "pl",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 600000 PLN\nPowierzchnia: 40 m²\nPokoje: 2\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "600000",
+            "upper": "600000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "40",
+            "40"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 67
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 77
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 78,
+              "end": 91
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "pl-labeled-01"
+    },
+    {
+      "language": "pl",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 610000 PLN\nPowierzchnia: 41 m²\nPokoje: 2\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "610000",
+            "upper": "610000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "41",
+            "41"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 67
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 77
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 78,
+              "end": 91
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "pl-labeled-02"
+    },
+    {
+      "language": "pl",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 620000 PLN\nPowierzchnia: 42 m²\nPokoje: 2\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "620000",
+            "upper": "620000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "42",
+            "42"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 67
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 77
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 78,
+              "end": 91
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "pl-labeled-03"
+    },
+    {
+      "language": "pl",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 630000 PLN\nPowierzchnia: 43 m²\nPokoje: 2\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "630000",
+            "upper": "630000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "43",
+            "43"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 67
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 77
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 78,
+              "end": 91
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "pl-labeled-04"
+    },
+    {
+      "language": "pl",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 640000 PLN\nPowierzchnia: 44 m²\nPokoje: 2\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "640000",
+            "upper": "640000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "44",
+            "44"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 67
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 77
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 78,
+              "end": 91
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "pl-labeled-05"
+    },
+    {
+      "language": "pl",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 650000 PLN\nPowierzchnia: 45 m²\nPokoje: 3\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "650000",
+            "upper": "650000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "45",
+            "45"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 67
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 77
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 78,
+              "end": 91
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "pl-labeled-06"
+    },
+    {
+      "language": "pl",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 660000 PLN\nPowierzchnia: 46 m²\nPokoje: 3\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "660000",
+            "upper": "660000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "46",
+            "46"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 67
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 77
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 78,
+              "end": 91
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "pl-labeled-07"
+    },
+    {
+      "language": "pl",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 670000 PLN\nPowierzchnia: 47 m²\nPokoje: 3\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "670000",
+            "upper": "670000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "47",
+            "47"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 67
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 77
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 78,
+              "end": 91
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "pl-labeled-08"
+    },
+    {
+      "language": "pl",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 680000 PLN\nPowierzchnia: 48 m²\nPokoje: 3\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "680000",
+            "upper": "680000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "48",
+            "48"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 67
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 77
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 78,
+              "end": 91
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "pl-labeled-09"
+    },
+    {
+      "language": "pl",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 690000 PLN\nPowierzchnia: 49 m²\nPokoje: 3\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "690000",
+            "upper": "690000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "49",
+            "49"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 67
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 77
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 78,
+              "end": 91
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "pl-labeled-10"
+    },
+    {
+      "language": "ru",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Продажа: квартира\nЦена квартиры: 600000 PLN\nПлощадь: 40 m²\nКомнаты: 2\nРынок: вторичный",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "600000",
+            "upper": "600000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "40",
+            "40"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 58
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 59,
+              "end": 69
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 70,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "ru-labeled-01"
+    },
+    {
+      "language": "ru",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Продажа: квартира\nЦена квартиры: 610000 PLN\nПлощадь: 41 m²\nКомнаты: 2\nРынок: вторичный",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "610000",
+            "upper": "610000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "41",
+            "41"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 58
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 59,
+              "end": 69
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 70,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "ru-labeled-02"
+    },
+    {
+      "language": "ru",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Продажа: квартира\nЦена квартиры: 620000 PLN\nПлощадь: 42 m²\nКомнаты: 2\nРынок: вторичный",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "620000",
+            "upper": "620000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "42",
+            "42"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 58
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 59,
+              "end": 69
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 70,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "ru-labeled-03"
+    },
+    {
+      "language": "ru",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Продажа: квартира\nЦена квартиры: 630000 PLN\nПлощадь: 43 m²\nКомнаты: 2\nРынок: вторичный",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "630000",
+            "upper": "630000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "43",
+            "43"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 58
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 59,
+              "end": 69
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 70,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "ru-labeled-04"
+    },
+    {
+      "language": "ru",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Продажа: квартира\nЦена квартиры: 640000 PLN\nПлощадь: 44 m²\nКомнаты: 2\nРынок: вторичный",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "640000",
+            "upper": "640000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "44",
+            "44"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 58
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 59,
+              "end": 69
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 70,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "ru-labeled-05"
+    },
+    {
+      "language": "ru",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Продажа: квартира\nЦена квартиры: 650000 PLN\nПлощадь: 45 m²\nКомнаты: 3\nРынок: вторичный",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "650000",
+            "upper": "650000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "45",
+            "45"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 58
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 59,
+              "end": 69
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 70,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "ru-labeled-06"
+    },
+    {
+      "language": "ru",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Продажа: квартира\nЦена квартиры: 660000 PLN\nПлощадь: 46 m²\nКомнаты: 3\nРынок: вторичный",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "660000",
+            "upper": "660000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "46",
+            "46"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 58
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 59,
+              "end": 69
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 70,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "ru-labeled-07"
+    },
+    {
+      "language": "ru",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Продажа: квартира\nЦена квартиры: 670000 PLN\nПлощадь: 47 m²\nКомнаты: 3\nРынок: вторичный",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "670000",
+            "upper": "670000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "47",
+            "47"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 58
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 59,
+              "end": 69
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 70,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "ru-labeled-08"
+    },
+    {
+      "language": "ru",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Продажа: квартира\nЦена квартиры: 680000 PLN\nПлощадь: 48 m²\nКомнаты: 3\nРынок: вторичный",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "680000",
+            "upper": "680000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "48",
+            "48"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 58
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 59,
+              "end": 69
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 70,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "ru-labeled-09"
+    },
+    {
+      "language": "ru",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Продажа: квартира\nЦена квартиры: 690000 PLN\nПлощадь: 49 m²\nКомнаты: 3\nРынок: вторичный",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "690000",
+            "upper": "690000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "49",
+            "49"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 58
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 59,
+              "end": 69
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 70,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "ru-labeled-10"
+    },
+    {
+      "language": "uk",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Купівля: квартира\nЦіна квартири: 600000 PLN\nПлоща: 40 m²\nКімнати: 2\nРинок: вторинний",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "600000",
+            "upper": "600000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "40",
+            "40"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 56
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 57,
+              "end": 67
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 84
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "uk-labeled-01"
+    },
+    {
+      "language": "uk",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Купівля: квартира\nЦіна квартири: 610000 PLN\nПлоща: 41 m²\nКімнати: 2\nРинок: вторинний",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "610000",
+            "upper": "610000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "41",
+            "41"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 56
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 57,
+              "end": 67
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 84
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "uk-labeled-02"
+    },
+    {
+      "language": "uk",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Купівля: квартира\nЦіна квартири: 620000 PLN\nПлоща: 42 m²\nКімнати: 2\nРинок: вторинний",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "620000",
+            "upper": "620000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "42",
+            "42"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 56
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 57,
+              "end": 67
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 84
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "uk-labeled-03"
+    },
+    {
+      "language": "uk",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Купівля: квартира\nЦіна квартири: 630000 PLN\nПлоща: 43 m²\nКімнати: 2\nРинок: вторинний",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "630000",
+            "upper": "630000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "43",
+            "43"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 56
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 57,
+              "end": 67
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 84
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "uk-labeled-04"
+    },
+    {
+      "language": "uk",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Купівля: квартира\nЦіна квартири: 640000 PLN\nПлоща: 44 m²\nКімнати: 2\nРинок: вторинний",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "640000",
+            "upper": "640000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "44",
+            "44"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 56
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 57,
+              "end": 67
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 84
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "uk-labeled-05"
+    },
+    {
+      "language": "uk",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Купівля: квартира\nЦіна квартири: 650000 PLN\nПлоща: 45 m²\nКімнати: 3\nРинок: вторинний",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "650000",
+            "upper": "650000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "45",
+            "45"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 56
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 57,
+              "end": 67
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 84
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "uk-labeled-06"
+    },
+    {
+      "language": "uk",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Купівля: квартира\nЦіна квартири: 660000 PLN\nПлоща: 46 m²\nКімнати: 3\nРинок: вторинний",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "660000",
+            "upper": "660000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "46",
+            "46"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 56
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 57,
+              "end": 67
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 84
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "uk-labeled-07"
+    },
+    {
+      "language": "uk",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Купівля: квартира\nЦіна квартири: 670000 PLN\nПлоща: 47 m²\nКімнати: 3\nРинок: вторинний",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "670000",
+            "upper": "670000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "47",
+            "47"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 56
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 57,
+              "end": 67
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 84
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "uk-labeled-08"
+    },
+    {
+      "language": "uk",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Купівля: квартира\nЦіна квартири: 680000 PLN\nПлоща: 48 m²\nКімнати: 3\nРинок: вторинний",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "680000",
+            "upper": "680000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "48",
+            "48"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 56
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 57,
+              "end": 67
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 84
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "uk-labeled-09"
+    },
+    {
+      "language": "uk",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "Купівля: квартира\nЦіна квартири: 690000 PLN\nПлоща: 49 m²\nКімнати: 3\nРинок: вторинний",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "690000",
+            "upper": "690000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "49",
+            "49"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 56
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 57,
+              "end": 67
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 68,
+              "end": 84
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "uk-labeled-10"
+    },
+    {
+      "language": "en",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "For sale: apartment\nApartment price: 600000 PLN\nArea: 40 m²\nRooms: 2\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "600000",
+            "upper": "600000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "40",
+            "40"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 59
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 60,
+              "end": 68
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 69,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "en-labeled-01"
+    },
+    {
+      "language": "en",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "For sale: apartment\nApartment price: 610000 PLN\nArea: 41 m²\nRooms: 2\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "610000",
+            "upper": "610000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "41",
+            "41"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 59
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 60,
+              "end": 68
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 69,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "en-labeled-02"
+    },
+    {
+      "language": "en",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "For sale: apartment\nApartment price: 620000 PLN\nArea: 42 m²\nRooms: 2\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "620000",
+            "upper": "620000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "42",
+            "42"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 59
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 60,
+              "end": 68
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 69,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "en-labeled-03"
+    },
+    {
+      "language": "en",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "For sale: apartment\nApartment price: 630000 PLN\nArea: 43 m²\nRooms: 2\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "630000",
+            "upper": "630000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "43",
+            "43"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 59
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 60,
+              "end": 68
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 69,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "en-labeled-04"
+    },
+    {
+      "language": "en",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "For sale: apartment\nApartment price: 640000 PLN\nArea: 44 m²\nRooms: 2\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "640000",
+            "upper": "640000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "44",
+            "44"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 59
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 60,
+              "end": 68
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 69,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "en-labeled-05"
+    },
+    {
+      "language": "en",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "For sale: apartment\nApartment price: 650000 PLN\nArea: 45 m²\nRooms: 3\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "650000",
+            "upper": "650000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "45",
+            "45"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 59
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 60,
+              "end": 68
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 69,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "en-labeled-06"
+    },
+    {
+      "language": "en",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "For sale: apartment\nApartment price: 660000 PLN\nArea: 46 m²\nRooms: 3\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "660000",
+            "upper": "660000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "46",
+            "46"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 59
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 60,
+              "end": 68
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 69,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "en-labeled-07"
+    },
+    {
+      "language": "en",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "For sale: apartment\nApartment price: 670000 PLN\nArea: 47 m²\nRooms: 3\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "670000",
+            "upper": "670000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "47",
+            "47"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 59
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 60,
+              "end": 68
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 69,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "en-labeled-08"
+    },
+    {
+      "language": "en",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "For sale: apartment\nApartment price: 680000 PLN\nArea: 48 m²\nRooms: 3\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "680000",
+            "upper": "680000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "48",
+            "48"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 59
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 60,
+              "end": 68
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 69,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "en-labeled-09"
+    },
+    {
+      "language": "en",
+      "stratum": "labeled",
+      "provenance": "invented",
+      "text": "For sale: apartment\nApartment price: 690000 PLN\nArea: 49 m²\nRooms: 3\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "690000",
+            "upper": "690000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": [
+            "49",
+            "49"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 48,
+              "end": 59
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "3",
+            "3"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 60,
+              "end": 68
+            }
+          ]
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 69,
+              "end": 86
+            }
+          ]
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 0,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "en-labeled-10"
+    },
+    {
+      "language": "pl",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Zdjęcie",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "pl-negative-01"
+    },
+    {
+      "language": "pl",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Album zdjęć",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "pl-negative-02"
+    },
+    {
+      "language": "pl",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Dziękujemy za wiadomość",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "pl-negative-03"
+    },
+    {
+      "language": "pl",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Usługi: remont i malowanie",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "pl-negative-04"
+    },
+    {
+      "language": "pl",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Dołączono do kanału",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "pl-negative-05"
+    },
+    {
+      "language": "ru",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Фотография",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "ru-negative-01"
+    },
+    {
+      "language": "ru",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Альбом фотографий",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "ru-negative-02"
+    },
+    {
+      "language": "ru",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Спасибо за сообщение",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "ru-negative-03"
+    },
+    {
+      "language": "ru",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Ремонт квартир: услуги",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "ru-negative-04"
+    },
+    {
+      "language": "ru",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Вступил в канал",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "ru-negative-05"
+    },
+    {
+      "language": "en",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Photo album",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "en-negative-01"
+    },
+    {
+      "language": "en",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Service message",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "en-negative-02"
+    },
+    {
+      "language": "en",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Joined the channel",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "en-negative-03"
+    },
+    {
+      "language": "en",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Advertising services",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "en-negative-04"
+    },
+    {
+      "language": "en",
+      "stratum": "non-offer",
+      "provenance": "invented",
+      "text": "Thank you for the update",
+      "candidate": false,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        }
+      },
+      "case_id": "en-negative-05"
+    },
+    {
+      "language": "ru",
+      "stratum": "audit-regression",
+      "provenance": "audit-derived invented equivalent; no original listing text/contact/location",
+      "text": "Продажа: квартира\nЦена апартамента: 780 000 PLN / 182 000 EUR\nПлощадь: 37.50 m²\nКладовая: входит в цену\nКомнаты: 2\n#2_комнатная",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "780000",
+            "upper": "780000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 61
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": true,
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 80,
+              "end": 103
+            }
+          ]
+        },
+        "area_sqm": {
+          "value": [
+            "37.5",
+            "37.5"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 62,
+              "end": 79
+            }
+          ]
+        },
+        "rooms": {
+          "value": [
+            "2",
+            "2"
+          ],
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 104,
+              "end": 114
+            }
+          ]
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 9,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "audit-ostrzycka-equivalent"
+    },
+    {
+      "language": "ru",
+      "stratum": "audit-regression",
+      "provenance": "audit-derived invented equivalent; no original listing text/contact/location",
+      "text": "Продажа: квартира\nЦена квартиры: 1 399 000 PLN\nПаркинг: 39 000 PLN",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "1399000",
+            "upper": "1399000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 18,
+              "end": 46
+            }
+          ]
+        },
+        "parking_price": {
+          "value": {
+            "lower": "39000",
+            "upper": "39000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 47,
+              "end": 66
+            }
+          ]
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 9,
+              "end": 17
+            }
+          ]
+        }
+      },
+      "case_id": "audit-jugoslowianska-equivalent"
+    },
+    {
+      "language": "pl",
+      "stratum": "semantic",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 600 000 - 700 000 PLN",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "600000",
+            "upper": "700000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 58
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 9,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "range"
+    },
+    {
+      "language": "pl",
+      "stratum": "semantic",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 600 000 PLN (15 000 PLN/m²)",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "600000",
+            "upper": "600000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 64
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 9,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "per-area"
+    },
+    {
+      "language": "pl",
+      "stratum": "semantic",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena mieszkania: 600 000 PLN / 140 000 EUR",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "600000",
+            "upper": "600000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 62
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 9,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "dual-currency"
+    },
+    {
+      "language": "pl",
+      "stratum": "semantic",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nKomórka lokatorska: w cenie",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": true,
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 47
+            }
+          ]
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 9,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "included-storage"
+    },
+    {
+      "language": "pl",
+      "stratum": "semantic",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nParking: 45 000 PLN",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": {
+            "lower": "45000",
+            "upper": "45000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 39
+            }
+          ]
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 9,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "parking-addon"
+    },
+    {
+      "language": "pl",
+      "stratum": "semantic",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nParking: w cenie",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": true,
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 20,
+              "end": 36
+            }
+          ]
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 9,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "included-parking"
+    },
+    {
+      "language": "pl",
+      "stratum": "semantic",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nCena: nie podano",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 9,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "explicit-absent"
+    },
+    {
+      "language": "pl",
+      "stratum": "semantic",
+      "provenance": "invented",
+      "text": "Sprzedam mieszkanie\nPokoje: 2\nPokoje: 4",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "unresolved",
+          "spans": []
+        },
+        "market_type": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "property_type": {
+          "value": "apartment",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 9,
+              "end": 19
+            }
+          ]
+        }
+      },
+      "case_id": "conflict"
+    },
+    {
+      "case_id": "pl-property-00",
+      "language": "pl",
+      "stratum": "property-market",
+      "provenance": "invented",
+      "text": "Kupno: dom jednorodzinny\nCena: 1000000 PLN\nRynek: pierwotny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "1000000",
+            "upper": "1000000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 25,
+              "end": 42
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": "primary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 43,
+              "end": 59
+            }
+          ]
+        },
+        "property_type": {
+          "value": "house",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 7,
+              "end": 24
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "pl-property-01",
+      "language": "pl",
+      "stratum": "property-market",
+      "provenance": "invented",
+      "text": "Kupno: bliźniak\nCena: 1050000 PLN\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "1050000",
+            "upper": "1050000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 16,
+              "end": 33
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 34,
+              "end": 47
+            }
+          ]
+        },
+        "property_type": {
+          "value": "semi_detached",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 7,
+              "end": 15
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "pl-property-02",
+      "language": "pl",
+      "stratum": "property-market",
+      "provenance": "invented",
+      "text": "Kupno: dom jednorodzinny\nCena: 1100000 PLN\nRynek: pierwotny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "1100000",
+            "upper": "1100000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 25,
+              "end": 42
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": "primary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 43,
+              "end": 59
+            }
+          ]
+        },
+        "property_type": {
+          "value": "house",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 7,
+              "end": 24
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "pl-property-03",
+      "language": "pl",
+      "stratum": "property-market",
+      "provenance": "invented",
+      "text": "Kupno: bliźniak\nCena: 1150000 PLN\nRynek: wtórny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "1150000",
+            "upper": "1150000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 16,
+              "end": 33
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 34,
+              "end": 47
+            }
+          ]
+        },
+        "property_type": {
+          "value": "semi_detached",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 7,
+              "end": 15
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "pl-property-04",
+      "language": "pl",
+      "stratum": "property-market",
+      "provenance": "invented",
+      "text": "Kupno: dom jednorodzinny\nCena: 1200000 PLN\nRynek: pierwotny",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "1200000",
+            "upper": "1200000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 25,
+              "end": 42
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": "primary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 43,
+              "end": 59
+            }
+          ]
+        },
+        "property_type": {
+          "value": "house",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 7,
+              "end": 24
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "en-property-05",
+      "language": "en",
+      "stratum": "property-market",
+      "provenance": "invented",
+      "text": "For sale: semi-detached\nPrice: 1250000 PLN\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "1250000",
+            "upper": "1250000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 24,
+              "end": 42
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 43,
+              "end": 60
+            }
+          ]
+        },
+        "property_type": {
+          "value": "semi_detached",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 10,
+              "end": 23
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "en-property-06",
+      "language": "en",
+      "stratum": "property-market",
+      "provenance": "invented",
+      "text": "For sale: detached house\nPrice: 1300000 PLN\nMarket: primary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "1300000",
+            "upper": "1300000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 25,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": "primary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 59
+            }
+          ]
+        },
+        "property_type": {
+          "value": "house",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 10,
+              "end": 24
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "en-property-07",
+      "language": "en",
+      "stratum": "property-market",
+      "provenance": "invented",
+      "text": "For sale: semi-detached\nPrice: 1350000 PLN\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "1350000",
+            "upper": "1350000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 24,
+              "end": 42
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 43,
+              "end": 60
+            }
+          ]
+        },
+        "property_type": {
+          "value": "semi_detached",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 10,
+              "end": 23
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "en-property-08",
+      "language": "en",
+      "stratum": "property-market",
+      "provenance": "invented",
+      "text": "For sale: detached house\nPrice: 1400000 PLN\nMarket: primary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "1400000",
+            "upper": "1400000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 25,
+              "end": 43
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": "primary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 44,
+              "end": 59
+            }
+          ]
+        },
+        "property_type": {
+          "value": "house",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 10,
+              "end": 24
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "en-property-09",
+      "language": "en",
+      "stratum": "property-market",
+      "provenance": "invented",
+      "text": "For sale: semi-detached\nPrice: 1450000 PLN\nMarket: secondary",
+      "candidate": true,
+      "expected": {
+        "apartment_price": {
+          "value": {
+            "lower": "1450000",
+            "upper": "1450000",
+            "currency": "PLN"
+          },
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 24,
+              "end": 42
+            }
+          ]
+        },
+        "parking_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "parking_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "storage_included_in_price": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "area_sqm": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "rooms": {
+          "value": null,
+          "presence": "absent",
+          "spans": []
+        },
+        "market_type": {
+          "value": "secondary",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 43,
+              "end": 60
+            }
+          ]
+        },
+        "property_type": {
+          "value": "semi_detached",
+          "presence": "evidenced",
+          "spans": [
+            {
+              "start": 10,
+              "end": 23
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

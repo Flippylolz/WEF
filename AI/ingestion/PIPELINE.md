@@ -567,3 +567,50 @@ interval. Callback acquisition waits asynchronously for capacity; polling remain
 the durable completeness boundary across a worker restart. Unsupported/oversized
 media retains its existing policy. Independent recovery after media processing
 failure remains E24-T3 and is not provided by staging cleanup.
+
+
+## E25-T1: Evidence-based parse evaluations
+
+`source-evidence-v1` adds a classification independent of legacy `parser_miss` and
+`parser_incomplete` outcomes. The detector recognizes supported labels and unit
+terms separately from extraction, so a missing price or property type can be
+noticed even when no warning exists. Exact source offsets are stored; source text
+is not copied into evaluation metadata.
+
+Outcomes are `complete`, `expected_non_offer`, `source_absent`, `extraction_miss`,
+`incomplete`, `conflicting`, `provider_failure`, and `unclassified`. Provider
+failure remains the separate existing AI run outcome until T3 connects scheduled
+recovery; deterministic evaluation does not invent a provider failure. A missing
+supported label is `unclassified` at field level, not proof of source absence.
+Explicit absence expressions are source-absent. `complete` means no unresolved
+recognized extraction gap; it does not assert every possible field was supplied.
+
+Only evidenced listing gaps qualify for recovery. Conflicting warnings, media,
+service content, unknown contexts and source-absent values do not. The manual
+batch selector uses current revision identity, live deletion state and absence
+of a primary offer; it no longer deduplicates by an arbitrary 200-character text
+prefix or assumes all legacy parser misses are listings. This eligibility change
+does not schedule or enable provider calls.
+
+`parse_evaluations` is unique by source revision/parser/policy. The source row is
+locked and its current revision rechecked before insertion. An unchanged source
+is evaluated on a new version; repeated identities are a no-op. A newer evaluation
+resolves prior classified field gaps only when all those fields are now complete;
+otherwise it supersedes the previous observation. Source edits supersede old work.
+`parse_evaluation_transitions` retains the prior observation and causing evaluation.
+An older numbered parser generation is recorded as superseded without reactivating
+recovery or closing newer evaluations. Unknown legacy parser families are not
+numerically ordered against current families; T4 owns accepted-release scheduling.
+
+Original legacy issue rows remain available. Legacy rows without an evaluation
+of their revision/parser remain explicitly unclassified. Current classifications
+are not silently retroactively attributed to an old extractor. Metadata backfill
+is bounded and restartable, including clean and already-linked messages. T4 still
+owns canonical historical convergence; successful classification alone does not
+mean canonical values were repaired.
+
+Migration `20260905_0022` adds evaluation and transition tables and advances runtime
+readiness to that revision. Deploy schema before writers. Runtime rollback keeps
+these additive tables and their history; explicitly downgrading the migration
+removes only evaluation metadata and must not be confused with a data rollback.
+The legacy issue outcomes remain readable by the old application.

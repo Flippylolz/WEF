@@ -78,3 +78,52 @@ Before importing the complete dataset:
 - Optional Groq place-review settings are absent by default and are not part of
   this gate or `/health/ready`; missing `WEF_GROQ_API_KEY` must not block import
   or deploy.
+
+## E25-T1 source-evidence regression baseline (2026-09-05)
+
+The versioned `parser-quality-v1` benchmark contains 75 invented/source-equivalent
+cases: 60 labeled listing positives and 15 negative media/service/non-offer cases,
+across Polish, Russian, Ukrainian and English. Ten property/market cases cover
+houses, semi-detached houses and primary/secondary markets. Both audit examples
+preserve their reported monetary semantics without copying original listing text,
+contacts, source identifiers or locations. One contradictory rooms label is
+explicitly unresolved and excluded from exact-value scoring.
+
+This is a regression corpus, not a representative production sample. No production
+sampling, reclassification, provider activation or historical repair was performed
+for T1. The audit's dated null/ledger counts remain workload observations, not
+accuracy measurements. Future source-template/time/visibility/version sampling
+must keep restricted payloads outside Git and publish only aggregate evidence.
+
+At unchanged parser `e2-v13`, candidate precision is 56/56 (100%) and recall is
+56/60 (93.33%). All 15 negative cases are excluded from expensive recovery.
+
+| Field | Exact / source-evidenced | False positives / source-absent | Unresolved |
+| --- | --- | --- | --- |
+| `apartment_price` | 43 / 55 | 0 / 20 | 0 |
+| `parking_price` | 1 / 2 | 0 / 73 | 0 |
+| `storage_price` | 0 / 0 | 0 / 75 | 0 |
+| `parking_included_in_price` | 0 / 1 | 0 / 74 | 0 |
+| `storage_included_in_price` | 0 / 2 | 0 / 73 | 0 |
+| `area_sqm` | 41 / 41 | 0 / 34 | 0 |
+| `rooms` | 31 / 41 | 0 / 33 | 1 |
+| `market_type` | 50 / 50 | 0 / 25 | 0 |
+| `property_type` | 46 / 60 | 0 / 15 | 0 |
+
+The JSON baseline also reports source-absent rates using all 75 cases as each
+field's denominator. An absent field is manually labeled from the invented source;
+the production classifier separately uses `unclassified` when it cannot establish
+absence. Empty denominators produce null accuracy, not a perfect score.
+
+Known extraction failures are pinned by case and field. T2 must improve the audit
+regressions without adding a failure to previously correct labeled fields. A case
+with five incorrect fields is not five missed listings. Candidate confusion counts
+and field-level counts are reported separately; no overlapping totals are summed
+into a repairable-listing claim.
+
+Reproduce the aggregate report from `apps/backend` with
+`uv run python -m tests.parser_benchmark`; the evaluator reads only the reviewed
+fixture and prints counts/rates, never source text. Run
+`uv run pytest tests/test_parse_quality.py tests/test_telegram_fixture_safety.py`
+for benchmark structure, no-new-regression, recovery-negative and fixture privacy
+checks. Database tests verify issue/evaluation identity and retained lifecycle.

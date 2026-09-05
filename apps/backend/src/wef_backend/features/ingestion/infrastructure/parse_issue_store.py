@@ -11,7 +11,10 @@ from wef_backend.features.ingestion.domain.parse_issue import (
     ParseIssueOutcome,
     SourceMessageParseIssue,
 )
-from wef_backend.features.ingestion.infrastructure.models import SourceMessageParseIssueRow
+from wef_backend.features.ingestion.infrastructure.models import (
+    ParseEvaluationRow,
+    SourceMessageParseIssueRow,
+)
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -66,7 +69,24 @@ class SQLAlchemyParseIssueStore:
                     .limit(limit),
                 )
             ).all()
-            return tuple(_to_domain(row) for row in rows)
+            evaluations = (
+                await session.scalars(
+                    select(ParseEvaluationRow)
+                    .where(
+                        ParseEvaluationRow.source_message_revision_id.in_(
+                            [row.source_message_revision_id for row in rows]
+                        ),
+                    )
+                    .order_by(ParseEvaluationRow.created_at, ParseEvaluationRow.id)
+                )
+            ).all()
+            latest = {
+                (item.source_message_revision_id, item.parser_version): item for item in evaluations
+            }
+            return tuple(
+                _to_domain(row, latest.get((row.source_message_revision_id, row.parser_version)))
+                for row in rows
+            )
 
     async def link_offer_for_message(
         self,
@@ -88,8 +108,16 @@ class SQLAlchemyParseIssueStore:
             return int(getattr(updated, "rowcount", 0) or 0)
 
 
-def _to_domain(row: SourceMessageParseIssueRow) -> SourceMessageParseIssue:
+def _to_domain(
+    row: SourceMessageParseIssueRow, evaluation: ParseEvaluationRow | None = None
+) -> SourceMessageParseIssue:
     return SourceMessageParseIssue(
+        classification=evaluation.classification if evaluation else "unclassified",
+        lifecycle_state=evaluation.state if evaluation else "open",
+        recovery_eligible=bool(
+            evaluation and evaluation.recovery_eligible and evaluation.state == "open"
+        ),
+        policy_version=evaluation.policy_version if evaluation else None,
         id=row.id,
         source_channel_id=row.source_channel_id,
         source_message_id=row.source_message_id,

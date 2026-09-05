@@ -41,3 +41,7 @@ class SourceMessageParseIssue:
     text_excerpt_redacted: str
     offer_id: UUID | None
     created_at: datetime
+    classification: str = "unclassified"
+    lifecycle_state: str = "open"
+    recovery_eligible: bool = False
+    policy_version: str | None = None

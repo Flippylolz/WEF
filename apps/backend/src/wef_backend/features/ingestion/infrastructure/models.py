@@ -899,3 +899,57 @@ class TelegramChannelProgressRow(IngestionBase):
     last_polled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_sweep_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     source_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ParseEvaluationRow(IngestionBase):
+    """One deduplicated source/parser/policy observation without source text."""
+
+    __tablename__ = "parse_evaluations"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_message_revision_id",
+            "parser_version",
+            "policy_version",
+            name="uq_parse_evaluation_identity",
+        ),
+        CheckConstraint(
+            "state IN ('open', 'resolved', 'superseded')", name="ck_parse_evaluation_state"
+        ),
+        Index("ix_parse_evaluations_message", "source_message_id", "created_at"),
+    )
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    source_message_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("source_messages.id", ondelete="CASCADE")
+    )
+    source_message_revision_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("source_message_revisions.id", ondelete="CASCADE")
+    )
+    parser_version: Mapped[str] = mapped_column(String(40))
+    policy_version: Mapped[str] = mapped_column(String(40))
+    classification: Mapped[str] = mapped_column(String(32))
+    recovery_eligible: Mapped[bool] = mapped_column(Boolean)
+    fields_json: Mapped[object] = mapped_column(JSONB)
+    state: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.current_timestamp()
+    )
+
+
+class ParseEvaluationTransitionRow(IngestionBase):
+    """Append-only lifecycle transition retaining the evaluation that caused it."""
+
+    __tablename__ = "parse_evaluation_transitions"
+    __table_args__ = (
+        UniqueConstraint("evaluation_id", "caused_by_id", name="uq_parse_evaluation_transition"),
+    )
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    evaluation_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("parse_evaluations.id", ondelete="CASCADE")
+    )
+    caused_by_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("parse_evaluations.id", ondelete="CASCADE")
+    )
+    state: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.current_timestamp()
+    )

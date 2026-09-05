@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T1
 epic: E25
 title: "Benchmark source evidence and classify repairable gaps"
-status: ready
+status: in_progress
 revision: 1
 priority: P1
 size: M
@@ -35,11 +35,11 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: feat/E25-T1-evidence-classification
   task_id: E25-T1
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-05T10:28:00Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/328
 completion:
   completed_by: null
   completed_at: null
@@ -66,11 +66,11 @@ Relevant seams are listed in the [epic spike](../SPIKE.md#research-method-and-ev
 
 ## Acceptance criteria
 
-- [ ] A versioned benchmark covers both owner-reported listings, dual-currency prices, price-per-area/add-ons, included storage, room tags, multilingual market/property types, and negative media/service/non-offer messages.
-- [ ] Report per-field exact-value accuracy and false positives against source-evidenced labels, plus candidate precision/recall and source-absent rates; do not equate all nulls or ledger rows with parser defects.
-- [ ] Expected non-offers do not enter the expensive recovery queue; a source-evidenced missing field can be detected even when extraction emitted no warning.
-- [ ] Repeated or unchanged source/version encounters deduplicate issue state; a newer successful parse resolves prior repairable issues automatically without erasing their history.
-- [ ] Publish only aggregate results and safe fixtures, with documented provenance and no raw exports, contacts, media, or source payloads in Git.
+- [x] A versioned benchmark covers both owner-reported listings, dual-currency prices, price-per-area/add-ons, included storage, room tags, multilingual market/property types, and negative media/service/non-offer messages.
+- [x] Report per-field exact-value accuracy and false positives against source-evidenced labels, plus candidate precision/recall and source-absent rates; do not equate all nulls or ledger rows with parser defects.
+- [x] Expected non-offers do not enter the expensive recovery queue; a source-evidenced missing field can be detected even when extraction emitted no warning.
+- [x] Repeated or unchanged source/version encounters deduplicate issue state; a newer successful parse resolves prior repairable issues automatically without erasing their history.
+- [x] Publish only aggregate results and safe fixtures, with documented provenance and no raw exports, contacts, media, or source payloads in Git.
 
 ## Tests and verification
 
@@ -82,7 +82,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 No task dependency. Spike revision 1 is approved and promotion is recorded. Implementation-plan revision 1 is approved; the dedicated branch gate remains required.
 
-This promoted task is `ready` under the [workflow](../../../workflow/README.md). [Implementation plan revision 1](../IMPLEMENTATION_PLAN.md) is approved; the task must satisfy its dependency and branch gates before implementation.
+This promoted task passed through `ready` in cc793bc and is now `in_progress` under the [workflow](../../../workflow/README.md). [Implementation plan revision 1](../IMPLEMENTATION_PLAN.md) is approved; the task must satisfy its dependency and branch gates before implementation.
 
 ## Rollout and automatic operation
 
@@ -104,8 +104,26 @@ Do not add production dependencies without owner approval, commit raw source/cre
 
 - [x] Spike revision 1 approval and task promotion are recorded; the authoritative file is under `tasks/`.
 - [x] Implementation plan revision 1 is explicitly approved and the implementation gate is satisfied.
-- [ ] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
-- [ ] This task passes through `ready` and starts on its own dedicated branch/PR.
+- [x] This task has no dependencies; its dependency gate is satisfied.
+- [x] Passed through `ready` in cc793bc and started on `feat/E25-T1-evidence-classification`.
+- [x] Dedicated PR #328 is published; AD-053 records explicit merge and staged rollout authorization.
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
 
 The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
+
+## Implementation evidence and publication gate
+
+Local implementation and validation are recorded in [E25-T1 evidence](../E25-T1-IMPLEMENTATION_EVIDENCE.md). The source-evidence benchmark intentionally records remaining extraction failures for T2; this task does not repair canonical history or activate a provider.
+
+Automatic approval review rejected pushing the E25 planning documents and opening a GitHub PR because it considered exporting that payload to GitHub insufficiently authorized. Both planning and T1 branches remain local pending explicit authorization to push them to `Flippylolz/WEF` and open PRs. T2/T3 cannot satisfy their stacked dependency gate until T1 has an open ancestor PR. T4 also retains E24-T1.
+
+Task status remains `in_progress`: local acceptance checks do not replace the required PR, CI, review, merge and completion evidence. No completion actor/time is recorded.
+
+## Authorized release sequence
+
+Publication succeeded as PR #328; prior publication-denial text above is historical.
+AD-053 records the owner’s explicit E25 merge and staged production rollout approval.
+All task acceptance criteria pass on the versioned fixtures and real PostGIS suite.
+Current-main refresh passed 850 backend and 169 frontend tests; required CI passed
+on `c6815b7`, including a successful retry after a PyPI connection reset. Latest-head
+CI and release health remain required before the completion record is finalized.

@@ -151,6 +151,10 @@ async def test_seed_from_history_backfills_flattened_archive_rows() -> None:
         assert await _primary_parser_version(engine, external_id) == PARSER_VERSION
     finally:
         async with engine.begin() as connection:
+            await connection.execute(
+                text("DELETE FROM source_message_parse_issues WHERE external_message_id = :eid"),
+                {"eid": external_id},
+            )
             await connection.execute(text("DELETE FROM telegram_raw_events"))
             await connection.execute(
                 text(
@@ -186,7 +190,9 @@ async def test_seed_from_history_backfills_flattened_archive_rows() -> None:
             await connection.execute(
                 text(
                     "DELETE FROM ingest_runs WHERE source_channel_id IN "
-                    "(SELECT id FROM source_channels WHERE external_id = :cid)",
+                    "(SELECT id FROM source_channels WHERE external_id = :cid) "
+                    "AND id NOT IN (SELECT ingest_run_id FROM source_message_parse_issues "
+                    "WHERE ingest_run_id IS NOT NULL)",
                 ),
                 {"cid": identity.channel_id},
             )
@@ -268,6 +274,10 @@ async def test_replay_rewrites_stale_offers_and_is_idempotent() -> None:
     finally:
         async with engine.begin() as connection:
             await connection.execute(
+                text("DELETE FROM source_message_parse_issues WHERE external_message_id = :eid"),
+                {"eid": external_id},
+            )
+            await connection.execute(
                 text(
                     "DELETE FROM offer_sources WHERE source_message_id IN "
                     "(SELECT id FROM source_messages WHERE external_message_id = :eid)",
@@ -301,7 +311,9 @@ async def test_replay_rewrites_stale_offers_and_is_idempotent() -> None:
             await connection.execute(
                 text(
                     "DELETE FROM ingest_runs WHERE source_channel_id IN "
-                    "(SELECT id FROM source_channels WHERE external_id = :cid)",
+                    "(SELECT id FROM source_channels WHERE external_id = :cid) "
+                    "AND id NOT IN (SELECT ingest_run_id FROM source_message_parse_issues "
+                    "WHERE ingest_run_id IS NOT NULL)",
                 ),
                 {"cid": identity.channel_id},
             )

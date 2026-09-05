@@ -19,22 +19,22 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser for bounded parse-issue backfill."""
     parser = argparse.ArgumentParser(
         description=(
-            "Backfill source_message_parse_issues for retained non-offer messages "
-            "that predate the parse-issue ledger. Idempotent: skips messages that "
-            "already have offers or ledger rows."
+            "Classify retained current source revisions, including linked offers. "
+            "Record evidence and issue lifecycle without canonical or provider writes. "
+            "Completed source/parser/policy evaluations are skipped."
         ),
     )
     parser.add_argument(
         "--limit",
         type=int,
-        default=None,
+        default=100,
         help="Optional max messages to process in this run",
     )
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=500,
-        help="Commit batch size (default: 500)",
+        default=10,
+        help="Commit batch size (default/max: 10)",
     )
     return parser
 

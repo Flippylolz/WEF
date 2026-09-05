@@ -71,7 +71,7 @@ def test_build_parse_issue_insert_records_parser_miss() -> None:
     assert issue_outcome_for(extraction) is ParseIssueOutcome.PARSER_MISS
 
 
-def test_build_parse_issue_insert_skips_unchanged_replay() -> None:
+def test_build_parse_issue_insert_allows_version_evaluation_on_unchanged_replay() -> None:
     raw = _raw(message_id=12, text="random service message", checksum="d" * 64)
     extraction = extract_listing(raw)
     assert (
@@ -85,5 +85,5 @@ def test_build_parse_issue_insert_skips_unchanged_replay() -> None:
             ingest_run_id=uuid4(),
             offer_id=None,
         )
-        is None
+        is not None
     )
