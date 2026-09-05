@@ -113,3 +113,25 @@ current-head checks and review gates pass. The earlier publication-denial accoun
 is historical. Current-main local validation passed 850 backend and 169 frontend
 tests, with 90.47% backend coverage. Source metadata classification will be checked
 in bounded batches after the healthy release; no provider activation is part of T1.
+
+## Production acceptance and completion
+
+PR #328 squash-merged as `ea47448` after every required current-head check passed.
+[Release 33973117645](https://github.com/Flippylolz/WEF/actions/runs/33973117645)
+succeeded; exact production release `ea47448` serves schema `20260905_0022`.
+API and Telegram worker health both passed. Final local suite: 866 backend and
+169 frontend tests; 90.49% backend coverage.
+
+The authorized canary classified 100 sources in 10 transactions, inserted 93
+legacy issue rows and skipped 7 clean cases. Live ingestion continued concurrently.
+The subsequent combined evaluation population was 249: 215 expected non-offers,
+15 conflicting, 11 complete and 8 unclassified; all were correctly ineligible for
+AI recovery. Duplicate identities, ineligible-class queue entries and open/current
+revision mismatches were each zero. This is a bounded operational observation, not
+a representative accuracy estimate or a claim that all history was classified.
+
+Production retained 3,334 offers, 5,568 contact points and 3 favorites. Concurrent
+ingestion advanced 207 old parser records and source links; those changes are not
+attributed to the classification-only canary. Source and issue history were retained.
+T1 acceptance and completion are satisfied. T2 owns deterministic repair; T3/T4
+retain their separate application and live acceptance gates.
