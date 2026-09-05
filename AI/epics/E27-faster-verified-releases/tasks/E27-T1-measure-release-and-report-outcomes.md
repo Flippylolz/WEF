@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E27-T1
 epic: E27
 title: "Measure merge-to-production time and report release outcomes"
-status: ready
+status: in_progress
 revision: 1
 priority: P1
 size: M
@@ -35,11 +35,11 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: chore/E27-T1-release-outcomes
   task_id: E27-T1
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-05T10:25:00Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/326
 completion:
   completed_by: null
   completed_at: null
@@ -82,7 +82,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 No task dependency. Spike revision 1 is approved and this task is promoted. Implementation plan revision 1 is approved.
 
-This promoted task is `ready` under the [workflow](../../../workflow/README.md) until its dependency gate clears. The [implementation plan](../IMPLEMENTATION_PLAN.md) specifies the modules, contracts, tests, budgets, and rollout for this task.
+This task passed through `ready` and is now `in_progress` under the [workflow](../../../workflow/README.md) until its dependency gate clears. The [implementation plan](../IMPLEMENTATION_PLAN.md) specifies the modules, contracts, tests, budgets, and rollout for this task.
 
 ## Rollout and automatic operation
 
@@ -106,4 +106,15 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
 - [x] Required decisions resolved; dependencies remain enforceable in the planned sequence.
 - [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
-- [ ] Dedicated branch and PR will cover this task only after implementation gates clear.
+- [x] Dedicated branch and PR #326 cover this task under its approved gates.
+
+## Implementation evidence (production reporting pending)
+
+- [Historical baseline](../BASELINE.md): 30 ordinary merged-PR pushes, including
+  24 successful deploy jobs and six cancellations; no historical first-health or
+  cache observations fabricated.
+- Versioned release outcome, gate reasons, optional atomic host observations,
+  always-run summary, and 90-day sanitized artifact retention implemented.
+- Failure/privacy/timing unit tests and healthy/failed/forced-rollback/migration
+  proofs cover the reporting boundary. Production reporting awaits the normal
+  deployment of an owner-authorized merge; task completion remains open.

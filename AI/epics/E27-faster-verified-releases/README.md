@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E27
 title: "Faster verified releases"
-status: ready
+status: in_progress
 milestones: [M5]
 owner: owner
 spike: SPIKE.md

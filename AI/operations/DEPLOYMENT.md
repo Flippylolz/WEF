@@ -484,3 +484,37 @@ The initial gate is complete; every later release must preserve it.
 - Export/media paths are not present in image layers or Git history.
 - OpenStreetMap attribution, anonymous contact masking, and authenticated reveal auditing are verified.
 - Telegram worker failures remain isolated from public readiness; live acceptance and reconciliation evidence stay tracked separately under M4 until complete.
+
+## Release outcome evidence (E27-T1)
+
+The release workflow writes `wef-release-outcome/v1` JSON and an Actions summary
+in the always-run **Release outcome** job. The artifact is named
+`release-outcome-<run_id>-<run_attempt>` and retained for 90 days. It is reporting
+only, never deployable artifact evidence. The existing release artifact retains
+its 14-day lifetime.
+
+`verified_only` means verification succeeded but the deployment gate rejected the
+run; its reason distinguishes missing merged PR association and disabled automatic
+deployment. `deployed` requires host smoke and activation timestamps for the exact
+SHA. `already_current` is a duplicate observation, not a fresh release.
+`failed_restored` identifies the failed candidate and restored healthy SHA.
+`failed`, `verification_failed`, `queued`, `superseded`, and
+`deployment_unconfirmed` remain distinct. Also inspect `deployment_job_result`:
+a post-activation inventory/bootstrap failure can fail the job after the release
+became healthy.
+
+Host observations are run-attempt-specific mode-0600 files, exported through an
+allowlist and removed after successful collection. Optional observation failure
+cannot interrupt deployment or rollback. Missing/cancelled/unavailable evidence
+is null with a reason, never fabricated success. A hard workflow cancellation can
+prevent the report job; use the Actions run conclusion as cancellation evidence
+and do not rerun activation merely to obtain a report.
+
+Timings include per-job/per-step intervals, initial event-to-first-job delay,
+unattributed job time, and gaps between job intervals. Overlapping intervals are
+counted once. Gaps include dependencies and runner waits; the API does not always
+identify those separately. Cache state remains explicitly unknown until measured.
+Merge-to-healthy uses the matching merged PR timestamp and host-observed smoke
+success, an upper bound on first healthy service. Failed, superseded and duplicate
+releases have no fresh-release latency. Existing health/configuration/rollback
+and associated-PR gates are unchanged by reporting.

@@ -29,3 +29,17 @@ The owner's next message was:
 
 This approves implementation plan revision 1 and task implementation in its
 recorded order, one branch/PR per task. Merge authorization remains separate.
+
+## 2026-09-05 — Ordered merge authorization
+
+The assistant asked:
+
+> May I merge #324, #326, and #329 in dependency order? Repository instructions require explicit merge permission; your earlier approvals covered implementation.
+
+The owner's next message was:
+
+> continue
+
+This authorizes the named PRs to merge in order after required checks and
+dependency gates pass, including their resulting normal automatic deployments.
+PR #332 remains a draft; real-release performance acceptance is not waived.
