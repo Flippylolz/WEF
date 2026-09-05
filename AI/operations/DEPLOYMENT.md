@@ -579,3 +579,40 @@ Rollback restores the prior workflow through a reviewed change, retaining
 observations and immutable releases. Do not cancel a running migration or rewind
 production data. Existing off-host backup deferral still limits destructive data
 recovery. No production fault injection is included in E27 acceptance.
+
+## E24-T1 original-archive recovery
+
+The additive `20260905_0020` migration creates original-event receipts, source
+tombstones, and channel recovery state. Before an authorized release, stop the
+old archive worker so it cannot resume the lossy replay loop. Deploy migrations
+and the corrected worker together. The operator interface, executed within the
+backend runtime with its existing restricted configuration, is:
+
+- `python -m wef_backend.archive_recovery_command` — read-only aggregate preflight.
+- `python -m wef_backend.archive_recovery_command pause` — persist the archive pause.
+- `python -m wef_backend.archive_recovery_command resume` — resume/verify its canary.
+- `python -m wef_backend.archive_recovery_command apply` — apply at most one due 25-record batch.
+
+The worker automatically starts a durable canary of up to 100 original rows and
+expands only after receipt verification. Every batch reserves a five-second
+interval; restarts and operator apply share that limit. Canary failure persists a
+safe pause reason for investigation. Later arrivals still run after an empty
+startup. No per-record approval is part of routine operation.
+
+Preflight separates eligible/exhausted records, oldest pending age, candidate
+terminal siblings, ready receipt projections, and canonical evaluations. Sibling
+counts alone do not authorize acknowledgement. Detailed transition evidence stays
+in PostgreSQL; do not commit payloads, contacts, UUID/checksum exports, or generated
+source reports. Acknowledgement-only recovery makes no provider calls.
+
+After release authorization, record a fixed 15-minute original cohort and its
+completed/remaining counts separately from new arrivals and failures. Reconcile
+receipts, unchanged source checksums, and stable terminal attempt counts. The
+historical 27,656 eligible records are an audit baseline, not a current count or a
+count of missing offers. Production acceptance remains pending until observed.
+
+On evidence mismatch, pause and investigate the retained receipts. Never reset
+cursors, delete siblings, clear the entire pending queue, or roll back to a worker
+that ignores pause and restarts the known loop. Migration downgrade fails closed
+when recovery evidence is populated; keep the additive schema and roll forward.
+This procedure does not establish an off-host backup or complete T2–T4.

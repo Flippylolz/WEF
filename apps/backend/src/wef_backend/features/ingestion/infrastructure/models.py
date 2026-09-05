@@ -783,3 +783,73 @@ class TelegramRawEventRow(IngestionBase):
     outcome: Mapped[str | None] = mapped_column(String(24))
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     last_error: Mapped[str | None] = mapped_column(String(64))
+
+
+class TelegramSourceTombstoneRow(IngestionBase):
+    """Negative source evidence survives a deletion before message creation."""
+
+    __tablename__ = "telegram_source_tombstones"
+    __table_args__ = (UniqueConstraint("source_channel_id", "external_message_id"),)
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    source_channel_id: Mapped[UUID] = mapped_column(
+        ForeignKey("source_channels.id", ondelete="CASCADE"),
+    )
+    external_message_id: Mapped[int] = mapped_column(BigInteger)
+    deleted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class TelegramArchiveResolutionRow(IngestionBase):
+    """One immutable receipt committed with the original event's canonical effect."""
+
+    __tablename__ = "telegram_archive_resolutions"
+    __table_args__ = (
+        CheckConstraint(
+            "disposition IN ('applied', 'already_canonical', 'non_candidate', "
+            "'superseded', 'deleted')",
+            name="ck_archive_resolution_disposition",
+        ),
+        CheckConstraint(
+            "(disposition = 'deleted' AND tombstone_id IS NOT NULL) OR "
+            "(disposition = 'non_candidate') OR "
+            "(disposition IN ('applied', 'already_canonical', 'superseded') "
+            "AND source_revision_id IS NOT NULL)",
+            name="ck_archive_resolution_evidence",
+        ),
+    )
+
+    event_id: Mapped[UUID] = mapped_column(
+        ForeignKey("telegram_raw_events.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    disposition: Mapped[str] = mapped_column(String(24))
+    source_checksum: Mapped[str] = mapped_column(String(64))
+    source_revision_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("source_message_revisions.id", ondelete="CASCADE"),
+    )
+    tombstone_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("telegram_source_tombstones.id", ondelete="CASCADE"),
+    )
+    policy_version: Mapped[str] = mapped_column(String(64))
+    committed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    previous_outcome: Mapped[str | None] = mapped_column(String(24))
+    previous_attempts: Mapped[int] = mapped_column(Integer)
+
+
+class TelegramArchiveRecoveryRow(IngestionBase):
+    """Restart-safe bounded canary and operator pause for a channel's archive."""
+
+    __tablename__ = "telegram_archive_recovery"
+    __table_args__ = (
+        CheckConstraint(
+            "phase IN ('canary', 'running', 'paused')", name="ck_archive_recovery_phase"
+        ),
+    )
+
+    channel_external_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    phase: Mapped[str] = mapped_column(String(16))
+    policy_version: Mapped[str] = mapped_column(String(64))
+    canary_ids: Mapped[list[str]] = mapped_column(JSONB)
+    baseline_count: Mapped[int] = mapped_column(BigInteger)
+    pause_reason: Mapped[str | None] = mapped_column(String(64))
+    next_batch_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

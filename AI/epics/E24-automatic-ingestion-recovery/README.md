@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E24
 title: "Automatic ingestion recovery"
-status: ready
+status: in_progress
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -23,7 +23,7 @@ See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for 
 
 ## First implementation phase
 
-- [E24-T1: Terminate original archive work and repair starvation](tasks/E24-T1-terminate-original-archive-work.md) — P1/L, revision 2, `ready`; dependencies: none.
+- [E24-T1: Terminate original archive work and repair starvation](tasks/E24-T1-terminate-original-archive-work.md) — P1/L, revision 2, `in_progress`; dependencies: none.
 - [E24-T2: Make source cursors monotonic and retries fair](tasks/E24-T2-monotonic-cursors-and-fair-retries.md) — P1/L, revision 2, `draft`; dependencies: E24-T1.
 
 ## Proposed follow-up tasks
@@ -43,7 +43,7 @@ The owner requested as little manual work as possible, with manual work only in 
 ## Approval state
 
 - Spike revision 2 is approved under AD-048; implementation plan revision 1 is approved under AD-049.
-- T1 is ready to start on its dedicated branch. T2 has satisfied spike/implementation gates and awaits T1 completion or a valid stack.
+- T1 is in progress on its dedicated branch above planning PR #325. T2 has satisfied spike/implementation gates and awaits T1 completion or a valid stack.
 - T3/T4 remain proposed outside this first implementation phase.
 - Approval authorizes implementation and PR preparation; merge and production release remain separate.
 
