@@ -110,6 +110,7 @@ class PersistableMessage:
 
     raw: RawMessage
     extraction: ExtractionResult | None
+    archive_event_id: UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -282,6 +283,7 @@ class IngestionPersistencePort(Protocol):
         *,
         channel_id: UUID,
         external_message_ids: Sequence[int],
+        archive_event_ids: dict[int, UUID] | None = None,
     ) -> Sequence[SourceDeletionOutcome]:
         """Mark source messages deleted and hide linked offers without erasing lineage."""
         ...

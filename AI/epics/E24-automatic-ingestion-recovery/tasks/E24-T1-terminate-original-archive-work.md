@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E24-T1
 epic: E24
 title: "Terminate original archive work and repair starvation"
-status: ready
+status: in_progress
 revision: 2
 priority: P1
 size: L
@@ -35,10 +35,10 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: bugfix/E24-T1-original-archive
   task_id: E24-T1
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-05T10:39:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -141,3 +141,54 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Owner approved implementation plan revision 1 with this task at revision 2 under AD-049.
 - [ ] Dependency gate permits implementation and a dedicated task branch is recorded.
 - [ ] Acceptance evidence, required checks, PR, and definition of done are complete.
+
+## Implementation parent
+
+Planning parent: [PR #325](https://github.com/Flippylolz/WEF/pull/325), branch
+`doc/E24-ingestion-recovery-refinement`, head
+`44ab444`; approved plan permits this documentation parent while it awaits merge.
+T1 passed through `ready` before its dedicated branch was created.
+
+## Implementation evidence (2026-09-05)
+
+The implementation is reviewable on its dedicated branch, stacked on planning
+[PR #325](https://github.com/Flippylolz/WEF/pull/325). It is not marked done: merge
+and the authorized 15-minute production observation remain pending.
+
+Validation passed: `make install`, `make lint`, `make format-check`,
+`make typecheck`, `make contract-check`, `python3 scripts/check_markdown_links.py`,
+and `git diff --check`. `make test COMPOSE='docker compose --project-name wef-e24
+--file infra/compose.yaml'` passed in the isolated E24 project: 813 backend tests,
+90.26% backend coverage, and 169 frontend tests with required coverage floors met.
+The focused recovery suite exercises actual offers, historical mixed payloads,
+terminal siblings, cancellation/commit boundaries, source ordering, deletion
+before creation, bounded canary, and operator pause/resume.
+
+Changed files for this task (including this evidence):
+
+- `AI/epics/E24-automatic-ingestion-recovery/README.md`
+- `AI/epics/E24-automatic-ingestion-recovery/tasks/E24-T1-terminate-original-archive-work.md`
+- `AI/ingestion/PIPELINE.md`
+- `AI/operations/DEPLOYMENT.md`
+- `apps/backend/migrations/versions/20260905_0020_archive_recovery.py`
+- `apps/backend/src/wef_backend/archive_recovery_command.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/archive_processing.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/persistence.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/raw_archive.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/raw_replay.py`
+- `apps/backend/src/wef_backend/features/ingestion/application/telegram_events.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/archive_decoder.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/archive_evidence.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/archive_recovery.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/models.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/persistence_adapter.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/raw_event_archive.py`
+- `apps/backend/src/wef_backend/migration.py`
+- `apps/backend/src/wef_backend/raw_replay_command.py`
+- `apps/backend/src/wef_backend/telegram_worker_command.py`
+- `apps/backend/tests/test_archive_recovery_integration.py`
+- `apps/backend/tests/test_persistence_application.py`
+- `apps/backend/tests/test_persistence_integration.py`
+- `apps/backend/tests/test_raw_replay_integration.py`
+- `apps/backend/tests/test_telegram_live_backfill.py`
+- `apps/backend/tests/test_telegram_live_events.py`

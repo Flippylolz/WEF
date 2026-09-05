@@ -5,7 +5,7 @@ from alembic.config import Config
 
 from wef_backend.settings import Settings, load_settings
 
-EXPECTED_DATABASE_REVISION = "20260902_0019"
+EXPECTED_DATABASE_REVISION = "20260905_0020"
 
 __all__ = [
     "EXPECTED_DATABASE_REVISION",

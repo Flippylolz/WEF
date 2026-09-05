@@ -29,6 +29,7 @@ from wef_backend.features.ingestion.application.telegram_live import (
 )
 from wef_backend.features.ingestion.domain.model import canonical_json_checksum
 from wef_backend.features.ingestion.domain.telegram_channel import default_live_channel_identity
+from wef_backend.features.ingestion.infrastructure.archive_decoder import decode_archived_payload
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
@@ -141,7 +142,9 @@ async def test_seed_from_history_backfills_flattened_archive_rows() -> None:
         async with engine.begin() as connection:
             await connection.execute(text("UPDATE offers SET parser_version = 'e2-v1'"))
 
-        replayer = RawParserReplayer(store=store, source=archive, identity=identity)
+        replayer = RawParserReplayer(
+            decoder=decode_archived_payload, store=store, source=archive, identity=identity
+        )
         summary = await replayer(release_sha="seed-sha")
         assert summary.reprocessed >= 1
         await _assert_ours_repaired(archive, external_id)
@@ -251,7 +254,9 @@ async def test_replay_rewrites_stale_offers_and_is_idempotent() -> None:
             await connection.execute(text("UPDATE offers SET parser_version = 'e2-v1'"))
         assert await _primary_parser_version(engine, external_id) == "e2-v1"
 
-        replayer = RawParserReplayer(store=store, source=archive, identity=identity)
+        replayer = RawParserReplayer(
+            decoder=decode_archived_payload, store=store, source=archive, identity=identity
+        )
         summary = await replayer(release_sha="test-sha")
         assert summary.reprocessed == 1
         assert summary.stale_after_replay == 0
