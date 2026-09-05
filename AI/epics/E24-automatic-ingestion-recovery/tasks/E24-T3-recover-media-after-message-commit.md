@@ -40,7 +40,7 @@ branch:
   task_id: E24-T3
   one_task_only: true
   created_at: "2026-09-05T16:32:14.186324+00:00"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/346
 completion:
   completed_by: null
   completed_at: null
@@ -107,7 +107,7 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
 - [x] All referenced dependencies and required decisions resolved for the planned sequence.
 - [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
-- [ ] Dedicated branch and PR will cover this task only after implementation gates clear.
+- [x] Dedicated implementation branch and PR #346 cover T3 after the approved gates cleared.
 
 
 ## Revision 2 planning contract
@@ -169,3 +169,29 @@ Changed-file manifest:
 - `apps/backend/tests/test_media_recovery_integration.py`
 - `apps/backend/tests/test_media_recovery_runner.py`
 - `apps/backend/tests/test_telegram_env_session.py`
+
+## Production rollout record
+
+[PR #346](https://github.com/Flippylolz/WEF/pull/346) passed every required check
+and merged as `abc4a5673f8a67dbf47a4567485b0048a58e928b`.
+[Release 33981634057](https://github.com/Flippylolz/WEF/actions/runs/33981634057)
+succeeded with additive migration `20260905_0024`. Final implementation validation
+passed 1,097 backend tests and 169 frontend tests, plus lint, format, types,
+contracts and Markdown links. The last regression ensures a canonical non-listing
+attachment receives an explained disposition without stopping discovery.
+
+The durable 100-asset canary reached `canary_ready` at 2026-09-05T17:48:12Z,
+with zero generated-variant work and zero duplicate public associations. These
+were already-complete assets, so this proves safe reuse, not actual derivative
+repair. The approved bounded drain was resumed through the private media-only
+control; no source, retry-budget or cursor override was used. Production evidence
+is recorded in [PRODUCTION_EVIDENCE.md](../PRODUCTION_EVIDENCE.md).
+
+Task remains `in_progress` until actual eligible derivative-repair evidence
+satisfies the production gate. Synthetic crash/restart and partial-variant tests
+pass, but they do not substitute for that production claim. T4 remains proposed.
+
+A 919-second production window passed runtime/receipt/resource checks with
+852 completed media assets and zero newly generated variants. Forward polling
+reached 29,713 and the older-ID sweep advanced. The bounded drain remains running;
+actual production repair evidence remains the outstanding acceptance gate.
