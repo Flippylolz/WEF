@@ -120,3 +120,17 @@ Refresh-specific files: replay migration renamed to `20260905_0024_parser_replay
 `AI/operations/OPERATOR_COMMANDS.md`, this evidence file, epic `README.md`,
 `IMPLEMENTATION_PLAN.md`, and the T4 task dependency record. Upstream changes
 remain owned by their corresponding parent PRs.
+
+## Staged rollout preparation
+
+Planning #338 and T1/T2 #328/#330 merged with successful production releases.
+T1/T2 completion evidence is preserved in their task records. The latest replay
+implementation tree passed 1,080 backend and 169 frontend tests, with 90.40%
+backend coverage. The earlier local run collecting only 844 tests is invalid for
+T4: a shared Docker image tag selected another worktree's image. The successful
+rerun used dedicated `wef-e25-backend:test` / `wef-e25-web:test` tags through a
+temporary Compose override and collected both replay test modules. GitHub CI
+uses its own isolated exact-SHA build. No repository test configuration changed.
+
+T3's real-provider canary and representative acceptance window remain outstanding.
+T4 stays unmerged with scheduling/application off until that completion gate passes.
