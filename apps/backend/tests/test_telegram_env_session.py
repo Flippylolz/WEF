@@ -39,6 +39,8 @@ from wef_backend.telegram_credentials import secret_text, secrets_from_settings
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Awaitable, Callable
 
+    from wef_backend.features.ingestion.application.live_media import LiveMediaPipeline
+
 
 def test_unwrap_secret_strips_and_treats_blank_as_missing() -> None:
     assert unwrap_secret(None) is None
@@ -423,6 +425,7 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
     identity = default_live_channel_identity()
     persisted: list[str] = []
     processed: list[int] = []
+    pipelines: list[LiveMediaPipeline] = []
 
     class _Client:
         def __init__(self, *_args: object, **_kwargs: object) -> None:
@@ -488,8 +491,8 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
             return None
 
     class _Processor:
-        def __init__(self, **_kwargs: object) -> None:
-            return None
+        def __init__(self, *, media_pipeline: LiveMediaPipeline, **_kwargs: object) -> None:
+            pipelines.append(media_pipeline)
 
         async def __call__(self, **_kwargs: object) -> SimpleNamespace:
             processed.append(1)
@@ -541,6 +544,10 @@ async def test_run_telegram_worker_persists_session_and_drains_queue(  # noqa: C
     assert captured.value.category == "UnexpectedTaskExit"
     assert persisted == ["generated-session"]
     assert processed == [1]
+
+    assert len(pipelines) == 2
+    assert pipelines[0].grouper is not pipelines[1].grouper
+    assert pipelines[0].processor is pipelines[1].processor
 
 
 @pytest.mark.asyncio

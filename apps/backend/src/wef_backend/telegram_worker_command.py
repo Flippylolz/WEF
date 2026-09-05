@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import sys
 from contextlib import suppress
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -155,14 +156,20 @@ async def _run_connected_worker(  # noqa: PLR0913, PLR0915 - composition of work
         identity=identity,
         recovery=SQLAlchemyArchiveRecovery(session_factory),
     )
+    polling_media = replace(media_pipeline, grouper=StatefulMediaGrouper())
     reconciler = TelegramCheckpointReconciler(
         store=checkpoint_store,
         client=client,
-        processor=processor,
+        processor=LiveTelegramEventProcessor(
+            store=store,
+            client=client,
+            archive=archive,
+            media_pipeline=polling_media,
+        ),
         processing_lock=processing_lock,
         archive=archive,
         sweep_store=checkpoint_store,
-        prepare_cycle=media_grouper.reset,
+        prepare_cycle=polling_media.grouper.reset,
     )
     geocode_worker = RecurringGeocodeWorker(
         settings=settings,

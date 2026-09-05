@@ -50,7 +50,7 @@ suppression or behavior refactoring was included.
 
 ## Migration and operations
 
-Migration `20260905_0020` adds `parse_evaluations` and
+Migration `20260905_0022` adds `parse_evaluations` and
 `parse_evaluation_transitions`; deploy it before the new runtime readiness revision.
 Metadata backfill defaults to 100 records and at most 10 records per transaction,
 uses keyset pagination and skips durable completed evaluation identities.
@@ -104,3 +104,11 @@ This inventory covers the T1 branch relative to planning commit `cc793bc`.
 - [apps/backend/tests/test_place_ai_review_integration.py](../../../apps/backend/tests/test_place_ai_review_integration.py)
 - [apps/backend/tests/test_raw_replay_integration.py](../../../apps/backend/tests/test_raw_replay_integration.py)
 - [apps/backend/tests/test_telegram_fixture_safety.py](../../../apps/backend/tests/test_telegram_fixture_safety.py)
+
+## Authorized rollout update
+
+PR #328 is published and explicitly authorized to merge under AD-053 after
+current-head checks and review gates pass. The earlier publication-denial account
+is historical. Current-main local validation passed 850 backend and 169 frontend
+tests, with 90.47% backend coverage. Source metadata classification will be checked
+in bounded batches after the healthy release; no provider activation is part of T1.
