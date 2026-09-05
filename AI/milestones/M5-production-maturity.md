@@ -41,6 +41,17 @@ from loss of the production host.
   production deploy on 2026-08-31 (deploy run 33429448184; `/admin` serving
   the dark Primer-aligned console, health live/ready 200).
 
+## September 2026 audit follow-up
+
+The [system audit](../audits/2026-09-05-system-audit.md) records passing suites plus production defects and defines the following selected research workspaces:
+
+- [E24: Automatic ingestion recovery](../epics/E24-automatic-ingestion-recovery/README.md) — four proposed tasks; terminate stuck archive work, maintain monotonic cursors, recover media, and verify progress.
+- [E25: Parser quality and automatic recovery](../epics/E25-parser-quality-and-automatic-recovery/README.md) — four proposed tasks; benchmark source evidence, repair deterministic gaps, automate validated AI exceptions, and converge parser versions.
+- [E26: Automatic location validation and repair](../epics/E26-automatic-location-validation/README.md) — three proposed tasks; validate address agreement, repair stale points, and present honest precision.
+- [E27: Faster verified releases](../epics/E27-faster-verified-releases/README.md) — three proposed tasks; measure outcomes, remove duplicate serialized work safely, and prove the latency/recovery budget.
+
+E14 continues to own shared quality gates, browser infrastructure, general refactoring, observability, and capacity. The new candidates do not duplicate completed work or change existing approval records. Their spikes await owner approval and implementation plans remain empty draft shells. The owner's operating requirement is automatic routine recovery with manual work only for exceptional unresolved cases.
+
 ## Exit evidence
 
 - [ ] Quality, contract, architecture, and governance checks are truthful and fail closed.
