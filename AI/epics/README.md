@@ -39,7 +39,7 @@ Priority, size, roadmap order, milestone assignment, and epic selection never gr
 - [E21 — Ingestion AI fallback on parse miss](E21-ingestion-ai-fallback/README.md) — `done`; E21-T1–T3 and Groq apply hardening done through PRs #259/#263/#267/#268–#271 with production recovery on `wef_hist_candidate` (2026-09-01); operator runbook in [UNGEOCODED_BACKLOG_AND_AI_RECOVERY.md](../ingestion/UNGEOCODED_BACKLOG_AND_AI_RECOVERY.md); milestone M5.
 - [E22 — Property type classification and filter](E22-property-type-filter/README.md) — `done`; E22-T1–T3 done through green-CI PR #302 with follow-up #304 (backfill dedupe) and production backfill on `wef_hist_candidate` (deploy run 33659894308); milestone M5.
 - [E23 — Location display name normalization](E23-location-display-name-normalization/README.md) — `done`; E23-T1/T2 shipped through PRs #316/#317; production backfill applied 2026-09-02 (`adcdb10`); milestone M5.
-- [E24 — Automatic ingestion recovery](E24-automatic-ingestion-recovery/README.md) — `selected`; audit-backed spike revision 1 awaiting owner approval; 4 proposed, non-actionable tasks; milestone M5.
+- [E24 — Automatic ingestion recovery](E24-automatic-ingestion-recovery/README.md) — `ready`; spike revision 2 and implementation plan revision 1 approved under AD-047/AD-048 for T1/T2 revision 2 in that order; T3/T4 remain proposed; milestone M5.
 - [E25 — Parser quality and automatic recovery](E25-parser-quality-and-automatic-recovery/README.md) — `selected`; audit-backed spike revision 1 awaiting owner approval; 4 proposed, non-actionable tasks; milestone M5.
 - [E26 — Automatic location validation and repair](E26-automatic-location-validation/README.md) — `selected`; audit-backed spike revision 1 awaiting owner approval; 3 proposed, non-actionable tasks; milestone M5.
 - [E27 — Faster verified releases](E27-faster-verified-releases/README.md) — `selected`; audit-backed spike revision 1 awaiting owner approval; 3 proposed, non-actionable tasks; milestone M5.
@@ -48,7 +48,7 @@ The original E0–E7 MVP stack and M3 add-ons E9–E12 are complete on `main`. E
 
 ## Global lifecycle
 
-The [5 September 2026 system audit](../audits/2026-09-05-system-audit.md) adds E24–E27 for automatic ingestion recovery, parser improvement, map accuracy, and release latency. It maps test confidence and code maintainability to existing E14 tasks rather than duplicating them. All fourteen new candidates remain non-actionable; their spikes await owner approval. Routine operation must minimize manual work, with escalation reserved for exceptional unresolved cases.
+The [5 September 2026 system audit](../audits/2026-09-05-system-audit.md) adds E24–E27 for automatic ingestion recovery, parser improvement, map accuracy, and release latency. It maps test confidence and code maintainability to existing E14 tasks rather than duplicating them. E24 spike revision 2 and implementation plan revision 1 are approved; promoted T1/T2 proceed in that order under AD-047/AD-048. The other twelve audit candidates remain proposed. E25–E27 spikes still await owner approval. Routine operation must minimize manual work, with escalation reserved for exceptional unresolved cases.
 
 Follow the [approval-gated workflow](../workflow/README.md), [spike template](../workflow/templates/SPIKE.md), [proposed-task template](../workflow/templates/PROPOSED_TASK.md), [implementation-plan template](../workflow/templates/IMPLEMENTATION_PLAN.md), and [definition of done](../workflow/DEFINITION_OF_DONE.md):
 

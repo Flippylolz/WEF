@@ -397,3 +397,22 @@ This append-only log records choices made while the owner delegated overnight MV
 - Execution notes: another agent's E8 commits landed on `main` during review, so #244/#247/#254 were refreshed onto the new `main` (conflicting registry paragraphs reconciled to keep both the E8 watch-state updates and the E20 entries) before their final green-CI merges. Production verification after deploy run 33429448184: `/api/v1/health/live` and `/api/v1/health/ready` return 200 and `/admin/login` serves `data-bs-theme="dark"` with the shared stylesheet.
 - Rationale: the owner supplied the merge direction after reviewing each PR's green required checks, matching the AD-040/AD-043 pattern of session directives authorizing green-CI merge sequences.
 - Reversal: revert the squash commits on `main` and redeploy the prior release if the owner withdraws the decision or production evidence shows a regression.
+
+## AD-047: Approve E24 spike revision 2 and prepare the first implementation plan
+
+- Time: 2026-09-05.
+- Owner decision: `continue`, in Codex task `01a0710e-adaa-76f2-8bcd-07784c03e9b2`, directly responding to the explicit question: "Approve spike revision 2 so I can promote the tasks and prepare the implementation plan?"
+- Selected approach: record approval of E24 spike revision 2, promote E24-T1 and E24-T2 with the approved source-level contracts, and prepare implementation plan revision 1 for that ordered first phase. E24-T3 and E24-T4 remain proposed for a subsequent plan revision.
+- Scope boundary: this decision authorizes task refinement, promotion, and implementation planning. Implementation-plan approval is still pending. No application code, tests, migrations, production reconciliation, merge, or deployment is authorized by this approval alone.
+- Rationale: the owner selected T1 first, then cursor/retry reliability, and directed continuation through the exact approval gate just presented. This follows the session-approval interpretation already recorded in AD-044; it does not treat earlier generic audit authorization as permission to implement.
+- Evidence: the owner-authored reply remains in the named Codex task immediately after the linked revision 2 spike and approval question; this log records that reply rather than inventing an owner quote approving a future plan.
+- Reversal: invalidate the spike and affected planning artifacts if the owner withdraws approval or new evidence crosses a spike invalidation trigger.
+
+## AD-048: Approve E24 implementation plan revision 1
+
+- Time: 2026-09-05.
+- Owner decision: `continue I approve`, directly responding to the request to approve E24 implementation plan revision 1 in Codex task `01a0710e-adaa-76f2-8bcd-07784c03e9b2`.
+- Selected approach: implement E24-T1 revision 2, then E24-T2 revision 2, on dedicated task branches/PRs, stacked while the parent awaits review. Record the approved planning artifacts through a separate documentation PR.
+- Scope boundary: implement the exact plan's archive receipt, source ordering, bounded recovery, cursor, retry, and verification contracts. T3/T4 remain proposed. No new dependency or provider spend, merge, production mutation, or deployment is authorized by this reply.
+- Rationale: the owner explicitly approved the concrete revision just presented. Task dependency, review, validation, and release gates remain enforceable without another implementation confirmation.
+- Reversal: invalidate affected artifacts if evidence requires a material departure from the approved plan; preserve receipts, source evidence, and durable progress.
