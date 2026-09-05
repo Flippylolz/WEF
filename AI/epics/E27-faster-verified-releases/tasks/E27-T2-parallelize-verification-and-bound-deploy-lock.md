@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E27-T2
 epic: E27
 title: "Parallelize verified work and bound the deployment lock"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: L
@@ -45,10 +45,13 @@ branch:
   created_at: "2026-09-05T10:54:53Z"
   pull_request: https://github.com/Flippylolz/WEF/pull/329
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: codex
+  completed_at: "2026-09-05T12:05:44+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/329
+  evidence:
+    - ../CHECK_PARITY.md
+    - ../ACCEPTANCE.md
+    - https://github.com/Flippylolz/WEF/actions/runs/33964655697
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -70,11 +73,11 @@ Relevant seams are listed in the [epic spike](../SPIKE.md#research-method-and-ev
 
 ## Acceptance criteria
 
-- [ ] A check-parity matrix proves all existing required lint/type/test/contract/script/topology/security/image validations remain represented for the exact release SHA; missing/cancelled/failing evidence cannot deploy.
-- [ ] Backend/frontend checks and backend/web image builds can run independently; locked dependencies and one deliberate disposable PostGIS test setup replace redundant installs/databases where appropriate.
-- [ ] Production configuration transfer, migration, activation, health verification, and rollback share a serialization boundary; an older queued candidate cannot overwrite a newer healthy release.
-- [ ] An eligible merged PR automatically deploys after checks. Repeated requests for an already verified/deployed SHA reuse or no-op only with digest/source/gate evidence, and never execute concurrent activation.
-- [ ] PR/fork runs receive no production secrets or write-scoped release execution; immutable SHA/digest identity, associated-PR enforcement, shared-host isolation, and rollback proofs remain intact.
+- [x] A check-parity matrix proves all existing required lint/type/test/contract/script/topology/security/image validations remain represented for the exact release SHA; missing/cancelled/failing evidence cannot deploy.
+- [x] Backend/frontend checks and backend/web image builds can run independently; locked dependencies and one deliberate disposable PostGIS test setup replace redundant installs/databases where appropriate.
+- [x] Production configuration transfer, migration, activation, health verification, and rollback share a serialization boundary; an older queued candidate cannot overwrite a newer healthy release.
+- [x] An eligible merged PR automatically deploys after checks. Repeated requests for an already verified/deployed SHA reuse or no-op only with digest/source/gate evidence, and never execute concurrent activation.
+- [x] PR/fork runs receive no production secrets or write-scoped release execution; immutable SHA/digest identity, associated-PR enforcement, shared-host isolation, and rollback proofs remain intact.
 
 ## Tests and verification
 
@@ -86,7 +89,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 Required task dependencies: E27-T1. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This task is `in_progress`; its initially stacked dependency is now satisfied. The [implementation plan](../IMPLEMENTATION_PLAN.md) specifies the modules, contracts, tests, budgets, and rollout for this task.
+This task is `done`; its initially stacked dependency is satisfied. The [implementation plan](../IMPLEMENTATION_PLAN.md) specifies the modules, contracts, tests, budgets, and rollout for this task.
 
 ## Rollout and automatic operation
 
@@ -134,3 +137,20 @@ Merge dependency revalidation: T1 is done after PR #326 and its successful
 normal release run 33963661845. T2 was rebased onto the resulting main commit;
 local lint, 803 backend tests, 169 frontend tests, production/rollback/shared-edge
 proofs passed again. Required PR checks must pass on this final head before merge.
+
+Completion: PR #329 merged as `8e3548ea0533d9d3f762ca760f74c90d70b78dde`
+after all nine visible CI checks passed on the latest-main head. Automatic release
+33964655697 passed all verification, exact-digest runtime, artifact validation,
+health, activation and shared-host checks. Its report confirms `deployed`, healthy
+source `8e3548ea0533d9d3f762ca760f74c90d70b78dde`, host health at
+2026-09-05T12:02:09.379957Z, and activation at 12:02:09.477130Z. Public HTTPS
+independently showed version `8e3548e` and readiness `ready`. The local/public
+release-header distinction did not affect deployment: the public edge exposes
+the HTML version marker, while the internal smoke checks the release header.
+
+Five independent preparation jobs began within two seconds. No operator dispatch,
+SSH, configuration edit or extra approval was needed. Local held-lock, stale-SHA,
+same-SHA, missing/expired/foreign evidence, interrupted-mutation and rollback
+proofs cover the guarded failure paths without production fault injection.
+Merge-to-observed-health was 348.379957 seconds; T3 owns the still-incomplete
+20-release latency/cache/consecutive-merge acceptance.

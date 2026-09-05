@@ -7,6 +7,8 @@ on:
         required: true
         type: string
     outputs:
+      backend_cache_hit:
+        value: ${{ jobs.backend.outputs.cache_hit }}
       migration_revision:
         value: ${{ jobs.backend.outputs.migration_revision }}
 
@@ -18,6 +20,7 @@ jobs:
     name: Backend
     runs-on: ubuntu-24.04
     outputs:
+      cache_hit: ${{ steps.uv.outputs.cache-hit }}
       migration_revision: ${{ steps.metadata.outputs.migration_revision }}
     services:
       postgis:
@@ -39,7 +42,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.source_sha }}
-      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      - id: uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: 0.10.11
           enable-cache: true
@@ -216,7 +220,7 @@ jobs:
           uv --directory apps/backend run ruff format --check ../../scripts
           uv --directory apps/backend run ruff check ../../scripts
           uv --directory apps/backend run mypy --strict ../../scripts
-          python3 -m unittest scripts.test_release_order scripts.test_release_report scripts.test_render_coverage_badge scripts.test_shared_edge_render scripts.test_shared_edge_release scripts.test_shared_edge_preflight scripts.test_shared_edge_inventory scripts.test_shared_edge_smoke scripts.test_shared_edge_cutover scripts.test_transfer_foundation scripts.test_transfer_bundle scripts.test_candidate_config scripts.test_transfer_remote scripts.test_transfer_candidate scripts.test_transfer_restore scripts.test_transfer_postgres_restore scripts.test_activate_historical_candidate scripts.test_operator_diagnostics scripts.test_compare_server_inventory scripts.test_production_runtime_directories scripts.test_dependabot_config scripts.test_dependabot_merge_controller scripts.test_deploy_shared_edge_reconnect scripts.test_check_telegram_passive_events
+          python3 -m unittest scripts.test_release_cohort scripts.test_release_order scripts.test_release_report scripts.test_render_coverage_badge scripts.test_shared_edge_render scripts.test_shared_edge_release scripts.test_shared_edge_preflight scripts.test_shared_edge_inventory scripts.test_shared_edge_smoke scripts.test_shared_edge_cutover scripts.test_transfer_foundation scripts.test_transfer_bundle scripts.test_candidate_config scripts.test_transfer_remote scripts.test_transfer_candidate scripts.test_transfer_restore scripts.test_transfer_postgres_restore scripts.test_activate_historical_candidate scripts.test_operator_diagnostics scripts.test_compare_server_inventory scripts.test_production_runtime_directories scripts.test_dependabot_config scripts.test_dependabot_merge_controller scripts.test_deploy_shared_edge_reconnect scripts.test_check_telegram_passive_events
       - name: Relative Markdown links
         run: python3 scripts/check_markdown_links.py
       - name: Local Compose model
