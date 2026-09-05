@@ -40,16 +40,14 @@ Revision 1 approvals are retained in AD-051/AD-052. Spike and implementation pla
 revision 2 are owner-approved, including the [provider privacy amendment](PROVIDER_PRIVACY_REVISION.md).
 Approval gates are restored to revision 2; dependency and task branch gates remain enforceable.
 
-- Planning PR [338](https://github.com/Flippylolz/WEF/pull/338) replaces closed, unmerged #327 and targets current main.
-- T1 PR [328](https://github.com/Flippylolz/WEF/pull/328): published, 827 backend and 169 frontend tests passed locally.
-- T2 PR [330](https://github.com/Flippylolz/WEF/pull/330): published, 852 backend and 169 frontend tests passed locally; 75-case benchmark has zero field failures.
-- T3 draft PR [335](https://github.com/Flippylolz/WEF/pull/335) implements durable reservations, scheduled recovery and calibrated source validation under approved revision 2. [Implementation evidence](E25-T3-IMPLEMENTATION_EVIDENCE.md) records validation and remaining rollout gates.
-- T4 draft PR [337](https://github.com/Flippylolz/WEF/pull/337) is published on `feat/E25-T4-historical-parser-replay` after verified readiness commit `a84ea07`; [validation evidence](E25-T4-IMPLEMENTATION_EVIDENCE.md) records the remaining review and rollout gates.
-- The review stack is main (including E24-T1/T2) → E25 planning [338](https://github.com/Flippylolz/WEF/pull/338) → T1 [328](https://github.com/Flippylolz/WEF/pull/328) → T2 [330](https://github.com/Flippylolz/WEF/pull/330) → T3 [335](https://github.com/Flippylolz/WEF/pull/335) → T4. All T4 dependencies are actual ancestors.
+- Planning PR #338 merged as `9d095f1`; AD-053 records explicit merge and staged rollout authorization.
+- T1 PR #328 is done on `ea47448`: healthy release and bounded classification acceptance.
+- T2 PR #330 is done on `d9f5e30`: healthy e2-v14 release, zero benchmark field failures, and a read-only production comparison.
+- T3 PR #335 is prepared against main; submission/application remain disabled pending activation prerequisites and live acceptance.
+- T4 PR #337 has validated implementation, including 1,080 backend and 169 frontend tests; its T3 completion gate remains enforceable.
 
-No merge, historical canonical application or provider activation has occurred.
-The provider revision does not change T1/T2 extraction behavior or invalidate their
-measured test results. Stacked PRs need required CI after retargeting to main.
+No E25 automatic historical canonical application or scheduled provider activation
+has occurred. Read-only extraction differences are not safe-repair counts.
 
 ## Scope and completion
 

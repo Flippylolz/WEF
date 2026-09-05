@@ -323,11 +323,11 @@ Activation (all required; fail closed otherwise):
 2. Store `WEF_GROQ_API_KEY` as a GitHub Actions secret / production secret file, never
    in git.
 3. Keep `WEF_GROQ_MODEL=openai/gpt-oss-20b` (exact allowlist).
-4. Bulk workloads use Groq Batch API when `WEF_GROQ_USE_BATCH_API=true` (code
-   default). Batch API requires a Groq **Developer** plan; on the free tier set
-   GitHub variable `WEF_GROQ_USE_BATCH_API=false` so deploy writes
-   `WEF_GROQ_USE_BATCH_API=false` into `production.env` and Compose passes it to
-   `api`. Tune chunk size with `WEF_GROQ_BATCH_CHUNK_SIZE` (default `20`).
+4. E25 revision 2 uses durable single-item Chat Completions for all composed
+   owner and scheduled work under ZDR. The legacy `WEF_GROQ_USE_BATCH_API` flag
+   does not select provider Batch/Files. Manual and scheduled operations share
+   20 generation items per owner/UTC day, one in-flight item and 60-second pacing.
+   Drain old writers before cutover; retained daily usage initializes the ledger.
 5. Set `WEF_AI_CURATION_ENABLED=true` last.
 6. Attach the **`api` service to `provider-egress`** in production Compose (merged
    #241). Without it, Groq HTTPS/DNS from `api` fails even when secrets are present.
