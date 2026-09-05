@@ -32,7 +32,7 @@ invalidation:
 
 ## Revision 2 decision
 
-Revision 1 approval is retained in AD-047 and Git history. New official provider
+Revision 1 approval is retained in AD-050 and Git history. New official provider
 evidence invalidates its Batch/ZDR premise for T3. Approve the narrowly scoped
 [provider amendment](PROVIDER_PRIVACY_REVISION.md): keep Groq GPT-OSS 20B and Zero
 Data Retention, process automatic cohorts as durable single-item Chat Completions
@@ -102,12 +102,12 @@ Material changes to source semantics, geospatial confidence/precision claims, au
 - [x] Affected modules/domain documents and decisions identified.
 - [x] Proposed task scope, acceptance, dependencies, and exception handling recorded.
 - [x] Outputs are documentation only; no production or disposable proof artifacts created.
-- [x] Historical revision 1 approval is retained in AD-047.
+- [x] Historical revision 1 approval is retained in AD-050.
 - [x] Owner approved revision 2 and its provider transport amendment.
 
 ## Historical owner decision for revision 1
 
-The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation plan revision 1 was subsequently approved under AD-048. Revision 2 is explicitly approved on 2026-09-05.
+The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-050](../../workflow/AUTONOMOUS_DECISIONS.md#ad-050-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation plan revision 1 was subsequently approved under AD-051. Revision 2 is explicitly approved on 2026-09-05.
 
 ## Revision 2 approval
 

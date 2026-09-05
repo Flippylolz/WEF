@@ -15,6 +15,7 @@ from wef_backend.features.ingestion.application.raw_replay import RawParserRepla
 from wef_backend.features.ingestion.domain.telegram_channel import (
     default_live_channel_identity,
 )
+from wef_backend.features.ingestion.infrastructure.archive_decoder import decode_archived_payload
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
@@ -36,6 +37,7 @@ async def run(*, seed_archive: bool = False) -> dict[str, int]:
         else:
             payload_seed = {}
         replayer = RawParserReplayer(
+            decoder=decode_archived_payload,
             store=SQLAlchemyIngestionPersistence(
                 database.session_factory,
                 contact_cipher=build_contact_cipher(settings),

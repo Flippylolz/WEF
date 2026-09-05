@@ -13,7 +13,6 @@ from wef_backend.features.ingestion.application.persistence import (
     DeletionOutcomeKind,
     MessageOutcome,
     PersistableMessage,
-    PersistenceBatchError,
     RunCheckpoint,
     RunCounts,
     RunMode,
@@ -70,7 +69,12 @@ class RawEventArchivePort(Protocol):
         """Land one verbatim event idempotently and return its stable row id."""
         ...
 
-    async def unprocessed_batch(self, limit: int) -> Sequence[RawEventRecord]:
+    async def unprocessed_batch(
+        self,
+        limit: int,
+        *,
+        channel_external_id: str | None = None,
+    ) -> Sequence[RawEventRecord]:
         """Return the oldest events still awaiting a terminal outcome."""
         ...
 
@@ -81,7 +85,7 @@ class RawEventArchivePort(Protocol):
         outcome: RawArchiveOutcome,
         error_category: str | None = None,
         completed_at: datetime | None = None,
-    ) -> None:
+    ) -> bool:
         """Record one processing attempt with bounded retry on failure."""
         ...
 
@@ -97,6 +101,7 @@ class RawEventRecord:
     payload: Mapping[str, object]
     received_at: datetime
     attempts: int
+    checksum: str = ""
 
 
 async def land_live_event(
@@ -319,6 +324,9 @@ class LiveTelegramEventProcessor:
                         outcomes = await self.store.mark_source_deleted(
                             channel_id=channel_id,
                             external_message_ids=event.deleted_ids,
+                            archive_event_ids={
+                                external_id: row_id for row_id, external_id in landed
+                            },
                         )
                         if self.archive is not None:
                             await self._mark_delete_outcomes(landed, outcomes)
@@ -332,7 +340,7 @@ class LiveTelegramEventProcessor:
                         continue
                     if event.message is None:
                         message = "new/edit events require a message payload"
-                        raise RuntimeError(message)
+                        raise RuntimeError(message)  # noqa: TRY301 - invalid event boundary
                     raw = live_message_to_raw(event.message, identity=channel)
                     message_id = event.message.external_message_id
                     advance = message_id > checkpoint.last_source_index
@@ -342,6 +350,7 @@ class LiveTelegramEventProcessor:
                         message=PersistableMessage(
                             raw=raw,
                             extraction=extract_listing(raw),
+                            archive_event_id=landed[0][0] if landed else None,
                         ),
                         checkpoint=checkpoint,
                         counts=counts,
@@ -363,10 +372,14 @@ class LiveTelegramEventProcessor:
                     ):
                         await self.media_pipeline.process_message(channel=channel, raw=raw)
                     messages_persisted += 1
-            except PersistenceBatchError as error:
+            except BaseException as error:
                 await self.store.finish_run(
                     run_id=run_id,
-                    status=RunStatus.FAILED,
+                    status=(
+                        RunStatus.CANCELLED
+                        if isinstance(error, asyncio.CancelledError)
+                        else RunStatus.FAILED
+                    ),
                     counts=counts,
                     checkpoint=checkpoint,
                     error_summary=redacted_error_summary(error),

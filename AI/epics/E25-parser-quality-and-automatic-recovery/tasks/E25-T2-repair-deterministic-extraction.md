@@ -29,16 +29,20 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-05T11:18:50Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: Codex
+  verified_at: "2026-09-05T10:55:21Z"
+  evidence:
+    - task_id: E25-T1
+      branch: feat/E25-T1-evidence-classification
+      pull_request: https://github.com/Flippylolz/WEF/pull/328
+      head_commit: 44eff1a
 branch:
   required: true
-  name: null
+  name: bugfix/E25-T2-deterministic-extraction
   task_id: E25-T2
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-05T10:57:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -67,11 +71,11 @@ Relevant seams are listed in the [epic spike](../SPIKE.md#research-method-and-ev
 
 ## Acceptance criteria
 
-- [ ] A sanitized equivalent of the Ostrzycka source yields PLN 780,000 (78,000,000 minor units), area 37.50 m², and source-evidenced included storage; no exchange rate is inferred from its EUR alternative.
-- [ ] The Jugosłowiańska regression preserves PLN 1,399,000 apartment price and PLN 39,000 parking price as separate values.
-- [ ] Dual-currency alternatives, actual same-currency ranges, per-square-metre values, and included add-ons cannot be confused; contradictory amounts/units produce explicit non-applied evidence.
-- [ ] The room-tag/room-label combination has the source-supported result and no spurious warning; real contradictions still warn.
-- [ ] The T1 benchmark has no new false positives or regressions in previously correct fields, and the parser version/provenance changes consistently.
+- [x] A sanitized equivalent of the Ostrzycka source yields PLN 780,000 (78,000,000 minor units), area 37.50 m², and source-evidenced included storage; no exchange rate is inferred from its EUR alternative.
+- [x] The Jugosłowiańska regression preserves PLN 1,399,000 apartment price and PLN 39,000 parking price as separate values.
+- [x] Dual-currency alternatives, actual same-currency ranges, per-square-metre values, and included add-ons cannot be confused; contradictory amounts/units produce explicit non-applied evidence.
+- [x] The room-tag/room-label combination has the source-supported result and no spurious warning; real contradictions still warn.
+- [x] The T1 benchmark has no new false positives or regressions in previously correct fields, and the parser version/provenance changes consistently.
 
 ## Tests and verification
 
@@ -83,7 +87,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 Required task dependencies: E25-T1. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This promoted task remains `draft` under the [workflow](../../../workflow/README.md). [Implementation plan revision 1](../IMPLEMENTATION_PLAN.md) is approved; the task must satisfy its dependency and branch gates before implementation.
+This task passed through `ready` in commit `508e3b5` and is `in_progress` under the [workflow](../../../workflow/README.md). [Implementation plan revision 1](../IMPLEMENTATION_PLAN.md) is approved; the task must satisfy its dependency and branch gates before implementation.
 
 ## Rollout and automatic operation
 
@@ -105,7 +109,7 @@ Do not add production dependencies without owner approval, commit raw source/cre
 
 - [x] Spike revision 1 approval and task promotion are recorded; the authoritative file is under `tasks/`.
 - [x] Implementation plan revision 1 is explicitly approved and the implementation gate is satisfied.
-- [ ] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
+- [x] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
 - [ ] This task passes through `ready` and starts on its own dedicated branch/PR.
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
 
@@ -120,3 +124,7 @@ is retained; approval gates are restored explicitly to revision 2.
 The independently implemented T2 branch is `bugfix/E25-T2-deterministic-extraction`,
 commit `20e9acd`, PR [330](https://github.com/Flippylolz/WEF/pull/330). Its completed
 local validation remains evidence; the provider revision changes no T2 behavior.
+
+## Local implementation evidence
+
+See [T2 validation and changed files](../E25-T2-IMPLEMENTATION_EVIDENCE.md).

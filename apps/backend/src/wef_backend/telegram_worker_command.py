@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from wef_backend.automatic_recovery_worker import maintain_automatic_recovery
 from wef_backend.composition import build_contact_cipher
 from wef_backend.features.admin.infrastructure.ai_enrichment_store import build_offer_origin_sync
+from wef_backend.features.ingestion.application.archive_processing import ArchivedEventProcessor
 from wef_backend.features.ingestion.application.media_grouping import StatefulMediaGrouper
 from wef_backend.features.ingestion.application.raw_archive import RawEventDrainer
 from wef_backend.features.ingestion.application.telegram_events import (
@@ -45,6 +46,8 @@ from wef_backend.features.ingestion.domain.telegram_secrets import (
     TelegramSecretError,
     persist_telegram_session,
 )
+from wef_backend.features.ingestion.infrastructure.archive_decoder import decode_archived_payload
+from wef_backend.features.ingestion.infrastructure.archive_recovery import SQLAlchemyArchiveRecovery
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
@@ -93,18 +96,25 @@ async def _maintain_raw_archive_drain(
 ) -> None:
     """Repeat bounded archive drains until the worker stops."""
     while not stop.is_set():
-        with suppress(asyncio.CancelledError):
-            drained = await drainer.drain_once(
-                release_sha=release_sha,
-                processing_lock=processing_lock,
+        drained = await drainer.drain_once(
+            release_sha=release_sha,
+            processing_lock=processing_lock,
+        )
+        if drained.newly_terminal and drained.last_committed_at is not None:
+            state.last_event_committed_at = (
+                max(state.last_event_committed_at, drained.last_committed_at)
+                if state.last_event_committed_at is not None
+                else drained.last_committed_at
             )
-            if drained:
-                state.last_event_committed_at = datetime.now(UTC)
-                logger.info(
-                    "telegram_raw_archive_drained",
-                    stage="raw_archive",
-                    events=drained,
-                )
+        if drained.selected:
+            logger.info(
+                "telegram_raw_archive_drained",
+                stage="raw_archive",
+                attempted=drained.attempted,
+                newly_terminal=drained.newly_terminal,
+                failed=drained.failed,
+                unchanged_terminal=drained.unchanged_terminal,
+            )
         await asyncio.sleep(_DRAIN_INTERVAL_SECONDS)
 
 
@@ -143,9 +153,9 @@ async def _run_connected_worker(  # noqa: PLR0913
     processing_lock = asyncio.Lock()
     drainer = RawEventDrainer(
         archive=archive,
-        processor=processor,
+        processor=ArchivedEventProcessor(store, decode_archived_payload),
         identity=identity,
-        checkpoint_store=checkpoint_store,
+        recovery=SQLAlchemyArchiveRecovery(session_factory),
     )
     reconciler = TelegramCheckpointReconciler(
         store=checkpoint_store,

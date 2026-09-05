@@ -36,8 +36,16 @@ documentation under `AI/workflow/` when they are relevant to a change.
   can read credentials from the system keychain.
 - Do not merge while any required CI check is pending, failing, cancelled, or
   missing. Merge only after every required check has completed successfully.
-- Do not merge a pull request unless the user explicitly requests the merge and
-  the repository's review requirements are satisfied.
+- Every pull request has standing owner authorization to merge once all required
+  CI checks pass on its current head and the repository's merge requirements are
+  satisfied. Do not ask for a separate per-PR merge request or confirmation.
+- GitHub native auto-merge is available and enabled. An eligible PR may be queued
+  while CI runs using `gh pr merge` with `--auto --squash --delete-branch` and
+  `--match-head-commit <head-sha>`; GitHub merges only after its required checks
+  and other merge gates pass.
+- Before merging, verify the current head, required checks, resolved review
+  conversations, mergeability, and any task dependencies. Squash-merge with
+  `--match-head-commit <verified-sha>` and never use `--admin` for an ordinary merge.
 
 ## Multi-agent coordination
 

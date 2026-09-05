@@ -30,7 +30,8 @@ def assert_workflow_boundaries() -> None:
     source = WORKFLOW.read_text(encoding="utf-8")
     uses_lines = [line for line in source.splitlines() if line.lstrip().startswith("uses:")]
     assert uses_lines
-    assert len(PINNED_ACTION.findall(source)) == len(uses_lines)
+    remote_uses = [line for line in uses_lines if "uses: ./" not in line]
+    assert len(PINNED_ACTION.findall(source)) == len(remote_uses)
     assert "pull_request_target:" not in source
     assert "branches:\n      - main" in source
     assert "workflow_dispatch:" in source
@@ -50,8 +51,13 @@ def assert_workflow_boundaries() -> None:
     assert "WEF_ADMIN_SESSION_SECRET: ${{ secrets.WEF_ADMIN_SESSION_SECRET }}" in source
     assert "WEF_CONTACT_ENCRYPTION_KEY: ${{ secrets.WEF_CONTACT_ENCRYPTION_KEY }}" in source
     assert "WEF_CONTACT_HMAC_KEY: ${{ secrets.WEF_CONTACT_HMAC_KEY }}" in source
-    assert "WEF_RELEASE_SHA=${{ needs.resolve.outputs.release_sha }}" in source
-    assert "env -u TEST_DATABASE_URL make test" in source
+    assert "release_sha: ${{ needs.resolve.outputs.release_sha }}" in source
+    assert_shared_verification(source)
+    assert "name: Release outcome" in source
+    assert "needs: [resolve, verify, publish, deploy]" in source
+    assert "retention-days: 90" in source
+    assert "RELEASE_NEEDS: ${{ toJSON(needs) }}" in source
+    assert "WEF_RELEASE_OBSERVATION=$observation_file" in source
     deploy_script = (REPOSITORY_ROOT / "scripts/deploy/deploy.sh").read_text(encoding="utf-8")
     assert "run --rm geocoder-check" in deploy_script
     assert "WEF_DEPLOY_TEST_MODE" in deploy_script
@@ -69,6 +75,75 @@ def assert_workflow_boundaries() -> None:
     assert all(
         "secrets." not in line for line in source.splitlines() if line.lstrip().startswith("if:")
     )
+
+
+def assert_shared_verification(source: str) -> None:
+    """Preserve check parity, immutable builds, and the full production lock boundary."""
+    shared = (REPOSITORY_ROOT / ".github/workflows/verify.yml").read_text()
+    ci = (REPOSITORY_ROOT / ".github/workflows/ci.yml").read_text()
+    image = (REPOSITORY_ROOT / ".github/actions/runtime-image/action.yml").read_text()
+    assert "workflow_call:" in shared
+    assert "uses: ./.github/workflows/verify.yml" in ci
+    assert "uses: ./.github/workflows/verify.yml" in source
+    assert "  push:" not in ci
+    assert "check: [Backend, Frontend and contract, Repository safety, Coverage badge]" in ci
+    assert "name: Runtime images" in ci
+    assert "secrets:" not in ci
+    assert "packages: write" not in ci
+    assert "secrets:" not in shared
+    assert "packages: write" not in shared
+    assert "ref: ${{ inputs.source_sha }}" in shared
+    assert "env -u TEST_DATABASE_URL make test" not in source
+    for command in (
+        "ruff format --check",
+        "ruff check",
+        "mypy",
+        "lint-imports",
+        "prove_architecture_violation.py",
+        "--cov-fail-under=90",
+        "--cov-branch",
+        "wef-export-openapi",
+        "pip-audit",
+        "test:coverage",
+        "format:check",
+        "typecheck",
+        "contract:check",
+        "contract:lint",
+        "contract:docs",
+        "prove_contract_drift.py",
+        "breaking --fail-on ERR",
+        "openapi-breaking-probe.json",
+        "test:e2e",
+        "pnpm audit --prod --audit-level high",
+        "make compose-config",
+        "make production-proof",
+        "check_markdown_links.py",
+        "git ls-files",
+        "render_coverage_badge.py",
+        "scripts.test_release_report",
+        "scripts.test_release_order",
+    ):
+        assert command in shared, command
+    assert "make production-runtime-proof" in source
+    assert "load: true" in image
+    assert "docker push" in image
+    assert "Config.User" in image
+    assert "! command -v pytest" in image
+    assert "test ! -e /app/contracts" in image
+    assert "scope=${{ inputs.component }}-production" in image
+    assert (
+        "    concurrency:\n      group: wef-production\n      cancel-in-progress: false" in source
+    )
+    assert "group: wef-release-${{ inputs.release_sha || github.sha }}" in source
+    assert "needs: [resolve, build-backend, build-web]" in source
+    assert "needs.runtime.result == 'success'" in source
+    assert "needs.build-backend.result == 'success'" in source
+    assert "needs.build-web.result == 'success'" in source
+    assert "reuse_release validate" in source
+    assert "release_order decide" in source
+    assert "WEF_EXPECTED_CURRENT_SHA=$expected_current" in source
+    assert source.index("release_order decide") < source.index('"install -m 0750 -d')
+    assert source.index("docker logout ghcr.io") < source.index('rm -f "$ssh_dir/key"')
 
 
 def assert_deployment_gate() -> None:

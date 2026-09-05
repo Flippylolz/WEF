@@ -38,7 +38,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v13"
+PARSER_VERSION = "e2-v14"
 CANDIDATE_THRESHOLD = 5
 _MAX_RANGE_VALUES = 2
 _MAX_ROOM_COUNT = 20
@@ -52,7 +52,7 @@ _NUMBER = (
     r"(?<!\w)(?:\d{1,3}(?:[ \u00a0]\d{3})+(?:[,.]\d+)?|\d+(?:[,.]\d+)?)"
     r"(?=$|[\s\u00a0.,;:|()\[\]{}»«\"'\u2013\u2014-]|" + _CURRENCY_WORD + r")"
 )
-_VALUE_SUFFIX = r"\s*(?:[:|]\s*|[\u2013\u2014-]\s+)(?P<value>[^\r\n]+)"
+_VALUE_SUFFIX = r"[ \t]*(?:[:|][ \t]*|[\u2013\u2014-][ \t]+)(?P<value>\S[^\r\n]*)"
 _NUMBER_PATTERN = re.compile(_NUMBER)
 _ROOM_SLUG = r"(?:комнат(?:ная|ные|[аы])|кімнат(?:на|ні))"
 _ROOM_TAG_PATTERN = re.compile(
@@ -83,7 +83,8 @@ _PER_AREA_CONTEXT_PATTERN = re.compile(
     _FLAGS,
 )
 _INCLUDED_PATTERN = re.compile(
-    r"\b(?:included|w cenie|wliczon[eya]?|включен[аоы]?|входит в стоимость)\b",
+    r"\b(?:included|w cenie|wliczon[eya]?|включен[аоы]?|"
+    r"входит в (?:стоимость|цену)|входить \u0443 вартість)\b",
     _FLAGS,
 )
 _GOOGLE_MAPS_PATTERN = re.compile(
@@ -120,7 +121,8 @@ _CANDIDATE_RULES = (
         ContentType.UNIT,
         re.compile(
             r"(?:^|\n)\s*(?:[\U0001F3D9\U0001F3E0\U0001F3E1]\ufe0f?\s*)?"
-            r"(?:покупка|продажа|купівля|kupno|for sale)\s*[|:\u2013\u2014-]",
+            r"(?:(?:покупка|продажа|купівля|kupno|for sale)\s*[|:\u2013\u2014-]"
+            r"|sprzedam\s+(?:mieszkanie|apartament|dom)\b)",
             _FLAGS,
         ),
     ),
@@ -211,7 +213,7 @@ _SEMI_DETACHED_PATTERN = re.compile(
 )
 _APARTMENT_PATTERN = re.compile(
     r"\b(?:mieszkan\w*|apartament\w*|квартир\w*|апартамент\w*|"
-    r"studio\s+apartment|studio\s+flat)\b",
+    r"apartment|flat|studio\s+apartment|studio\s+flat)\b",
     _FLAGS,
 )
 _HOUSE_PATTERN = re.compile(
@@ -242,17 +244,18 @@ _DEVELOPMENT_PATTERN = re.compile(
     _FLAGS,
 )
 _APARTMENT_PRICE_PATTERN = re.compile(
-    rf"(?:cena(?: mieszkania)?|apartment price|price|цена(?: квартиры)?|стоимость(?: квартиры)?|"
-    rf"ціна|вартість)"
+    rf"(?:cena(?: mieszkania)?|apartment price|price|"
+    rf"цена(?: квартиры| апартамента)?|стоимость(?: квартиры)?|"
+    rf"ціна(?: квартири)?|вартість(?: квартири)?)"
     rf"{_VALUE_SUFFIX}",
     _FLAGS,
 )
 _PARKING_PATTERN = re.compile(
-    rf"(?:parking|паркинг|паркінг|miejsce postojowe){_VALUE_SUFFIX}",
+    rf"(?:parking(?: price)?|паркинг|паркінг|miejsce postojowe){_VALUE_SUFFIX}",
     _FLAGS,
 )
 _STORAGE_PATTERN = re.compile(
-    rf"(?:storage|комора|кладов(?:ая|ка)|kom[oó]rka lokatorska){_VALUE_SUFFIX}",
+    rf"(?:storage(?: price)?|комора|кладов(?:ая|ка)|kom[oó]rka lokatorska){_VALUE_SUFFIX}",
     _FLAGS,
 )
 _AREA_PATTERN = re.compile(rf"(?:powierzchnia|area|площа(?:дь)?){_VALUE_SUFFIX}", _FLAGS)
@@ -261,7 +264,7 @@ _AREA_EMOJI_PATTERN = re.compile(
     _FLAGS,
 )
 _ROOMS_PATTERN = re.compile(
-    rf"(?:pokoje?|rooms?|комнат[аы]?|кімнат(?:на|ні)?){_VALUE_SUFFIX}",
+    rf"(?:pokoje?|rooms?|комнат[аы]?|кімнат(?:на|ні|и|\u0430)?){_VALUE_SUFFIX}",
     _FLAGS,
 )
 _FLOOR_PATTERN = re.compile(rf"(?:pi[eę]tro|floor|этаж){_VALUE_SUFFIX}", _FLAGS)
@@ -789,15 +792,23 @@ def _money_field(
 ) -> ExtractedValue[MoneyRange] | None:
     matches = tuple(pattern.finditer(text))
     parsed: list[tuple[MoneyRange, re.Match[str]]] = []
+    invalid = False
     for match in matches:
+        prefix = re.split(r"[\n;+|]", text[: match.start()])[-1]
+        if field_name == "apartment_price" and re.search(
+            r"(?:parking|storage|паркинг|паркінг|кладов\w*|kom[oó]rka)\s*$",
+            prefix,
+            _FLAGS,
+        ):
+            continue
         value = _trimmed_value(text, match)
-        amount = _money_amount_range(value)
-        if amount is None:
+        money = _parsed_money(value)
+        if money is None:
             if _NUMBER_PATTERN.search(value):
                 warnings.append(_invalid_range_warning(field_name, text, match))
+                invalid = True
             continue
-        currency = _money_currency(value)
-        if currency is None:
+        if money.currency is None:
             warnings.append(
                 ExtractionWarning(
                     code=ExtractionWarningCode.UNKNOWN_CURRENCY,
@@ -805,7 +816,9 @@ def _money_field(
                     spans=(_trimmed_span(text, match),),
                 )
             )
-        parsed.append((MoneyRange(amount=amount, currency=currency), match))
+        parsed.append((money, match))
+    if invalid:
+        return None
     return _unique_parsed_value(text, parsed, field_name, parser_version, warnings)
 
 
@@ -817,11 +830,23 @@ def _addon_fields(
     warnings: list[ExtractionWarning],
 ) -> tuple[ExtractedValue[MoneyRange] | None, ExtractedValue[bool] | None]:
     matches = tuple(pattern.finditer(text))
+    if any(
+        re.search(
+            r"(?:not\s+included|nie\s+wliczon\w*|не\s+включен\w*|не\s+входит)",
+            _trimmed_value(text, match),
+            _FLAGS,
+        )
+        for match in matches
+    ):
+        warnings.append(_conflict_warning(f"{field_name}_price", text, matches))
+        return None, None
     included_matches = tuple(
         match for match in matches if _INCLUDED_PATTERN.search(_trimmed_value(text, match))
     )
     if included_matches:
-        if len(matches) > len(included_matches):
+        if len(matches) > len(included_matches) or any(
+            _NUMBER_PATTERN.search(_trimmed_value(text, match)) for match in included_matches
+        ):
             warnings.append(_conflict_warning(f"{field_name}_price", text, matches))
             return None, None
         match = included_matches[0]
@@ -926,7 +951,7 @@ def _rooms_field(
         value = _trimmed_value(text, match)
         if _is_room_tag_list(value):
             continue
-        room_range = _room_range(value)
+        room_range = _room_range(_ROOM_TAG_PATTERN.sub("", value).strip(" \t,;|"))
         if room_range is None:
             warnings.append(_invalid_range_warning("rooms", text, match))
             continue
@@ -1034,35 +1059,68 @@ def _decimal_range(value: str) -> DecimalRange | None:
 
 
 def _primary_money_fragment(value: str) -> str:
-    """Keep the first priced fragment when add-ons are appended with plus separators."""
+    """Separate explicitly named appended add-ons, never an unexplained sum."""
     parts = re.split(r"\s+\+\s+", value, maxsplit=1)
-    return parts[0] if parts else value
+    if len(parts) == 2 and re.match(  # noqa: PLR2004 - optional appended part
+        r"(?:parking|паркинг|паркінг|storage|комора|кладов\w*|kom[oó]rka)\b",
+        parts[1],
+        _FLAGS,
+    ):
+        return parts[0]
+    return value
 
 
-def _money_amount_range(value: str) -> DecimalRange | None:
+def _parsed_money(value: str) -> MoneyRange | None:
+    """Keep quote currency, actual ranges and per-area context distinct."""
     value = _primary_money_fragment(value)
-    context_spans = tuple(match.span() for match in _PER_AREA_CONTEXT_PATTERN.finditer(value))
-    amount_matches = tuple(
+    contexts = tuple(_PER_AREA_CONTEXT_PATTERN.finditer(value))
+    numbers = tuple(
         match
         for match in _NUMBER_PATTERN.finditer(value)
-        if not any(start <= match.start() and match.end() <= end for start, end in context_spans)
+        if not any(context.start() <= match.start() < context.end() for context in contexts)
     )
-    if not 0 < len(amount_matches) <= _MAX_RANGE_VALUES or any(
-        start < amount_matches[-1].end() for start, _ in context_spans
-    ):
+    if not numbers or any(context.start() < numbers[-1].end() for context in contexts):
         return None
-    amount_text = " ".join(match.group() for match in amount_matches)
-    if len(amount_matches) == _MAX_RANGE_VALUES:
-        separator = value[amount_matches[0].end() : amount_matches[1].start()]
-        amount_text = f"{amount_matches[0].group()}{separator}{amount_matches[1].group()}"
-    return _decimal_range(amount_text)
+    primary = value[: contexts[0].start()] if contexts else value
+    primary = primary.strip().rstrip("(").strip()
+    # Explicit alternatives are independently denominated scalar quotes. PLN is
+    # selected only when supplied; the second quote is never an exchange rate.
+    alternatives = re.split(
+        r"\s*(?:/|=|\bor\b|\blub\b|\bили\b|\b\u0430\u0431\u043e\b|\()\s*", primary, flags=_FLAGS
+    )
+    if len(alternatives) > 1:
+        quotes = tuple(_single_currency_money(part.strip().rstrip(")")) for part in alternatives)
+        if len(quotes) != 2 or any(quote is None for quote in quotes):  # noqa: PLR2004
+            return None
+        valid = tuple(quote for quote in quotes if quote is not None)
+        if any(
+            quote.currency is None or quote.amount.lower != quote.amount.upper for quote in valid
+        ):
+            return None
+        if len({quote.currency for quote in valid}) != len(valid):
+            return None
+        return next((quote for quote in valid if quote.currency == "PLN"), None)
+    return _single_currency_money(primary)
 
 
-def _money_currency(value: str) -> str | None:
-    value = _primary_money_fragment(value)
-    context = _PER_AREA_CONTEXT_PATTERN.search(value)
-    primary_value = value[: context.start()] if context is not None else value
-    return _currency(primary_value)
+def _single_currency_money(value: str) -> MoneyRange | None:
+    currencies = {_currency(match.group()) for match in _CURRENCY_PATTERN.finditer(value)}
+    if len(currencies) > 1:
+        return None
+    numbers = tuple(_NUMBER_PATTERN.finditer(value))
+    if not 0 < len(numbers) <= _MAX_RANGE_VALUES:
+        return None
+    if re.search(r"[-\u2212]", value[: numbers[0].start()]):
+        return None
+    # Strip currency markers between endpoints only after verifying agreement.
+    amount_text = numbers[0].group()
+    if len(numbers) == _MAX_RANGE_VALUES:
+        separator = _CURRENCY_PATTERN.sub("", value[numbers[0].end() : numbers[1].start()])
+        amount_text += separator + numbers[1].group()
+    amount = _decimal_range(amount_text)
+    if amount is None:
+        return None
+    return MoneyRange(amount, next(iter(currencies), None))
 
 
 def _room_range(value: str) -> IntegerRange | None:

@@ -326,6 +326,7 @@ class FakeStore:
         *,
         channel_id: UUID,  # noqa: ARG002
         external_message_ids: Sequence[int],
+        archive_event_ids: dict[int, UUID] | None = None,  # noqa: ARG002 - protocol parity
     ) -> Sequence[SourceDeletionOutcome]:
         """Record delete calls without durable storage."""
         self.calls.append(f"delete:{len(external_message_ids)}")

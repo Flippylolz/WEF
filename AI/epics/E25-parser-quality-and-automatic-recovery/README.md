@@ -36,7 +36,7 @@ The owner requested as little manual work as possible, with manual work only in 
 
 ## Approval and implementation state
 
-Revision 1 approvals are retained in AD-047/AD-048. Spike and implementation plan
+Revision 1 approvals are retained in AD-050/AD-051. Spike and implementation plan
 revision 2 are owner-approved, including the [provider privacy amendment](PROVIDER_PRIVACY_REVISION.md).
 Approval gates are restored to revision 2; dependency and task branch gates remain enforceable.
 

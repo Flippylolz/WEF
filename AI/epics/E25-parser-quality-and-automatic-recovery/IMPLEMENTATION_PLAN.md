@@ -34,7 +34,7 @@ invalidation:
 
 ## Approved revision 2 decision
 
-Revision 1 was approved under AD-048. Revision 2 has explicit owner approval together
+Revision 1 was approved under AD-051. Revision 2 has explicit owner approval together
 with spike revision 2; task dependency and branch gates remain separate.
 The [provider amendment](PROVIDER_PRIVACY_REVISION.md) records current official
 evidence, rejected alternatives, exact transport/state changes and validation.
@@ -43,7 +43,7 @@ No implementation code has been written for T3.
 
 ## Historical approved baseline
 
-The owner approved [spike revision 1](SPIKE.md) on 2026-09-05 in response to the explicit spike-approval question; [AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) records the decision. The owner approved implementation plan revision 1 by replying “continue” directly to its approval request; AD-048 records the scope. Task dependency and branch gates remain enforceable.
+The owner approved [spike revision 1](SPIKE.md) on 2026-09-05 in response to the explicit spike-approval question; [AD-050](../../workflow/AUTONOMOUS_DECISIONS.md#ad-050-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) records the decision. The owner approved implementation plan revision 1 by replying “continue” directly to its approval request; AD-051 records the scope. Task dependency and branch gates remain enforceable.
 
 Research baseline: main `a2cdb16`, fetched 2026-09-05. The [audit](../../audits/2026-09-05-system-audit.md#p1--confirmed-source-evidenced-parser-misses) confirms the Ostrzycka label/storage gaps, the misleading parse-issue taxonomy, and stale historical parser versions. Its production counts are dated observations, not a new measurement or a field-accuracy benchmark.
 
@@ -60,7 +60,7 @@ T1, T2 and T4 retain revision 1. T3 advances to revision 2 for the transport cha
 | [E25-T3](tasks/E25-T3-automate-validated-ai-exceptions.md) | E25-T1 done or valid ancestor PR | Durable scheduled AI proposals, evidence validation and guarded automatic application |
 | [E25-T4](tasks/E25-T4-converge-parser-versions-automatically.md) | E24-T1, E25-T2, E25-T3 done or valid ancestor PRs | Version-aware historical convergence, protected provenance and restart-safe replay |
 
-[E24-T1](../E24-automatic-ingestion-recovery/proposed-tasks/E24-T1-terminate-original-archive-work.md) is still proposed on this baseline. E25 approval does not authorize E24 implementation or bypass its gate. T1–T3 may proceed after this plan is approved. T4 cannot begin until all dependencies have completion evidence or satisfy the repository's strict ancestor-PR stacking rules; all dependencies must be done before T4 completion/merge. If E24 changes the replay interface materially, revise this plan before T4 implementation.
+[E24-T1](../E24-automatic-ingestion-recovery/tasks/E24-T1-terminate-original-archive-work.md) is still proposed on this baseline. E25 approval does not authorize E24 implementation or bypass its gate. T1–T3 may proceed after this plan is approved. T4 cannot begin until all dependencies have completion evidence or satisfy the repository's strict ancestor-PR stacking rules; all dependencies must be done before T4 completion/merge. If E24 changes the replay interface materially, revise this plan before T4 implementation.
 
 ### T1: Establish an evidence baseline and truthful recovery eligibility
 
@@ -190,7 +190,7 @@ A new provider/model, paid allocation, broader automatic field/visibility author
 - [x] Modules, contracts, data ownership, tests, limits, rollout and rollback are defined.
 - [x] No new provider/dependency/spend decision is implicitly approved; existing activation prerequisites remain enforced.
 - [x] No application code, tests, migrations or disposable proof code has been written.
-- [x] Revision 1 approval is retained in AD-048 and Git history.
+- [x] Revision 1 approval is retained in AD-051 and Git history.
 - [x] Owner explicitly approved spike revision 2 and this implementation plan revision 2.
 - [x] Restore non-done task approval gates against approved revision 2 before resuming work.
 

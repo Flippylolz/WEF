@@ -2,6 +2,7 @@
 
 # ruff: noqa: RUF001 - multilingual source-equivalent fixtures
 
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
@@ -12,12 +13,14 @@ from tests.test_listing_extraction import _message
 from tests.test_persistence_integration import TEST_DATABASE_URL, _prepare, _purge
 from wef_backend.database import create_database_resources
 from wef_backend.features.admin.infrastructure.recovery_queue import SQLAlchemyRecoveryQueue
-from wef_backend.features.ingestion.application.extraction import extract_listing
+from wef_backend.features.ingestion.application.extraction import PARSER_VERSION, extract_listing
 from wef_backend.features.ingestion.application.persistence import (
     PersistableMessage,
     PersistHistoricalIngestion,
     RunMetadata,
 )
+from wef_backend.features.ingestion.domain.extraction import ExtractionResult
+from wef_backend.features.ingestion.domain.model import RawMessage
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
@@ -39,8 +42,8 @@ async def test_queue_deduplicates_claims_and_rechecks_eligibility() -> None:
         raw = _message("Продажа: квартира\nЦена апартамента: 780 000 PLN\nПлощадь: 37.50 m²")
         await PersistHistoricalIngestion(SQLAlchemyIngestionPersistence(db.session_factory))(
             channel=raw.source,
-            messages=[PersistableMessage(raw, extract_listing(raw))],
-            metadata=RunMetadata(parser_version="e2-v13"),
+            messages=[PersistableMessage(raw, _missing_price(raw))],
+            metadata=RunMetadata(parser_version=PARSER_VERSION),
         )
         assert await queue.enqueue(owner, now) == 1
         assert await queue.enqueue(owner, now) == 0
@@ -86,8 +89,8 @@ async def test_local_failure_backoff_and_provider_uncertainty_are_durable() -> N
         raw = _message("Продажа: квартира\nЦена апартамента: 780 000 PLN\nПлощадь: 37.50 m²")
         await PersistHistoricalIngestion(SQLAlchemyIngestionPersistence(db.session_factory))(
             channel=raw.source,
-            messages=[PersistableMessage(raw, extract_listing(raw))],
-            metadata=RunMetadata(parser_version="e2-v13"),
+            messages=[PersistableMessage(raw, _missing_price(raw))],
+            metadata=RunMetadata(parser_version=PARSER_VERSION),
         )
         await queue.enqueue(owner, now)
         for minutes in (0, 1, 3):
@@ -126,3 +129,10 @@ async def test_local_failure_backoff_and_provider_uncertainty_are_durable() -> N
     finally:
         await _purge()
         await db.engine.dispose()
+
+
+def _missing_price(raw: RawMessage) -> ExtractionResult:
+    """Inject a missed field so queue tests do not depend on a fixed parser defect."""
+    result = extract_listing(raw)
+    assert result.listing is not None
+    return replace(result, listing=replace(result.listing, apartment_price=None))
