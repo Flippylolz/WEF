@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T1
 epic: E25
 title: "Benchmark source evidence and classify repairable gaps"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -41,10 +41,11 @@ branch:
   created_at: "2026-09-05T10:28:00Z"
   pull_request: https://github.com/Flippylolz/WEF/pull/328
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-05T15:01:37.460480+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/328
+  evidence:
+    - ../E25-T1-IMPLEMENTATION_EVIDENCE.md
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -108,7 +109,7 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] This task has no dependencies; its dependency gate is satisfied.
 - [x] Passed through `ready` in cc793bc and started on `feat/E25-T1-evidence-classification`.
 - [x] Dedicated PR #328 is published; AD-053 records explicit merge and staged rollout authorization.
-- [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
+- [x] Acceptance criteria, required checks, healthy release and bounded production classification pass; completion evidence is recorded.
 
 The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
 
@@ -118,7 +119,7 @@ Local implementation and validation are recorded in [E25-T1 evidence](../E25-T1-
 
 Automatic approval review rejected pushing the E25 planning documents and opening a GitHub PR because it considered exporting that payload to GitHub insufficiently authorized. Both planning and T1 branches remain local pending explicit authorization to push them to `Flippylolz/WEF` and open PRs. T2/T3 cannot satisfy their stacked dependency gate until T1 has an open ancestor PR. T4 also retains E24-T1.
 
-Task status remains `in_progress`: local acceptance checks do not replace the required PR, CI, review, merge and completion evidence. No completion actor/time is recorded.
+The completion record now includes merged PR #328, successful release 33973117645, and bounded production classification acceptance. Earlier publication-denial notes are historical.
 
 ## Provider revision gate
 
