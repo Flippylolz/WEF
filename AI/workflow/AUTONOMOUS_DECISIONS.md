@@ -397,3 +397,14 @@ This append-only log records choices made while the owner delegated overnight MV
 - Execution notes: another agent's E8 commits landed on `main` during review, so #244/#247/#254 were refreshed onto the new `main` (conflicting registry paragraphs reconciled to keep both the E8 watch-state updates and the E20 entries) before their final green-CI merges. Production verification after deploy run 33429448184: `/api/v1/health/live` and `/api/v1/health/ready` return 200 and `/admin/login` serves `data-bs-theme="dark"` with the shared stylesheet.
 - Rationale: the owner supplied the merge direction after reviewing each PR's green required checks, matching the AD-040/AD-043 pattern of session directives authorizing green-CI merge sequences.
 - Reversal: revert the squash commits on `main` and redeploy the prior release if the owner withdraws the decision or production evidence shows a regression.
+
+## AD-047: Authorize every PR to merge after green CI
+
+- Time: 2026-09-05.
+- Owner decision: `Can you update the rules that every PR can be merged if the CI is green and mergi it`, in Codex task `01a07153-50e8-7041-aedc-f88e689be411`.
+- Owner clarification: `also mention that auto merge feature is available`.
+- Selected approach: grant standing merge authorization for every PR after all required CI checks complete successfully on its current head and repository merge requirements are satisfied. Remove the separate per-PR owner-request restriction in `AGENTS.md` and align governance and delivery documentation. This replaces the merge-request restriction recorded in AD-007 and the need for epic-specific merge authorization.
+- Scope boundary: verify the head, strict required checks, resolved conversations, mergeability, and task dependencies before squash-merging with an expected-head guard. Existing implementation approvals, acceptance criteria, explicit owner holds, and deployment requirements still apply. The scheduled Dependabot controller keeps its additional unattended-merge eligibility rules.
+- Platform evidence: the active `Protect main` ruleset requires the five documented CI checks, strict base freshness, resolved review threads, and zero approving reviews, as verified through the GitHub API on 2026-09-05. Native auto-merge is already enabled (`allow_auto_merge: true`); document its availability and the opt-in CLI command. The rules change therefore needs no GitHub settings mutation.
+- Rationale: the owner requested repository-wide green-CI merge permission and explicitly authorized merging this policy change.
+- Reversal: the owner may withdraw the standing authorization and restore a per-PR merge-request rule through a follow-up documentation PR.
