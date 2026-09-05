@@ -209,3 +209,8 @@ original payload/receipt contract remains authoritative. Reallocation of the
 independent migrations gives archive recovery 0020, evaluations 0021, durable AI
 0022 and historical parser replay 0023. This resolves allocation/ancestry details;
 it changes no task dependency, acceptance, activation or protection authority.
+
+After E24-T1/T2 merged, the stack was refreshed against main `5fd175f`. Planning
+PR #338 replaces closed #327. The current sequence is archive 0020, progress
+0021, evaluations 0022, durable AI 0023 and parser replay 0024. This supersedes
+the earlier migration allocation above and preserves revision 2 approval.

@@ -639,7 +639,7 @@ visibility and encrypted contacts survive. Source extraction, parser origin,
 duplicate-suggestion fingerprint, evaluation lifecycle and durable progress commit
 with each guarded write. Partial repairs retain old evidence for protected groups.
 
-Migration 0023 extends origin metadata for parser-owned content/property fields;
+Migration 0024 extends origin metadata for parser-owned content/property fields;
 it grants no additional AI field authority. Runtime rollback retains metadata.
 Explicit per-job reversal checks current value/origin/source, restores only still
 owned groups, pauses that release and records reverted/conflicting fields. Repeated

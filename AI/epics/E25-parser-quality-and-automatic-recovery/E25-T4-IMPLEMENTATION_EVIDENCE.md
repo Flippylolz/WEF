@@ -6,8 +6,8 @@ Draft PR [337](https://github.com/Flippylolz/WEF/pull/337); implementation commi
 
 T4 implementation began only after readiness commit `a84ea07`. Every dependency is
 an ancestor in the published stack: E24-T1 #331 → E25 planning #327 → T1 #328 →
-T2 #330 → T3 #335 → T4. Upstream PRs remain open; no PR was merged into main by
-this work. Existing E25 approvals remain revision 2. Migration allocation was
+T2 #330 → T3 #335 → T4. This was the original readiness stack; the refresh below records the current
+baseline. No PR was merged into main by this work. Existing E25 approvals remain revision 2. Migration allocation was
 reconciled as archive 0020, evaluation 0021, durable AI 0022, parser replay 0023.
 
 The task remains in progress pending PR review, required checks, dependency
@@ -61,7 +61,7 @@ Provider preservation tests use fakes; no live request is sent.
 
 The first test fixture omitted Telegram's required Unix timestamp and was corrected
 to the real decoder contract. Transaction testing then identified the old origin
-field-name constraint; migration 0023 extends it for parser-owned content/property
+field-name constraint; migration 0024 extends it for parser-owned content/property
 fields only. The AI preservation fixture explicitly enables its intended test
 fields instead of inheriting a floor-only test allowlist.
 
@@ -95,7 +95,7 @@ Pause, aggregate diagnostics and the bounded rollback service are documented in
 - `infra/compose.production.yaml`
 - `scripts/deploy/build_release_config.py`
 - `scripts/prove_release_workflow.py`
-- `apps/backend/migrations/versions/20260905_0023_parser_replay.py`
+- `apps/backend/migrations/versions/20260905_0024_parser_replay.py`
 - `apps/backend/src/wef_backend/features/ingestion/application/parser_replay.py`
 - `apps/backend/src/wef_backend/features/ingestion/infrastructure/parser_replay.py`
 - `apps/backend/src/wef_backend/features/ingestion/infrastructure/parser_replay_rollback.py`
@@ -103,3 +103,12 @@ Pause, aggregate diagnostics and the bounded rollback service are documented in
 - `apps/backend/tests/test_parser_replay.py`
 - `apps/backend/tests/test_parser_replay_integration.py`
 - `AI/epics/E25-parser-quality-and-automatic-recovery/E25-T4-IMPLEMENTATION_EVIDENCE.md`
+
+## Current-main integration refresh
+
+E24-T1/T2 are merged into main (`64da1bd` / `5fd175f`). Replacement planning
+PR #338 restores the closed, unmerged #327 against main. E25 remains an ordered
+ancestor stack #338 → #328 → #330 → #335 → #337. Migrations now run archive
+0020 → progress 0021 → evaluations 0022 → durable AI 0023 → parser replay 0024.
+The full refreshed suite and release proof must pass before publication. Existing
+canary, application flags, owner guards, rollback and acceptance gates remain.

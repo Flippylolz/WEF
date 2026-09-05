@@ -34,17 +34,17 @@ dependency_gate:
   verified_at: "2026-09-05T12:49:08Z"
   evidence:
     - task_id: E24-T1
-      branch: bugfix/E24-T1-original-archive
+      branch: main
       pull_request: https://github.com/Flippylolz/WEF/pull/331
-      head_commit: 4548766
+      head_commit: 64da1bd
     - task_id: E25-T2
       branch: bugfix/E25-T2-deterministic-extraction
       pull_request: https://github.com/Flippylolz/WEF/pull/330
-      head_commit: c16d065
+      head_commit: e4cf9c2
     - task_id: E25-T3
       branch: feat/E25-T3-durable-ai-recovery
       pull_request: https://github.com/Flippylolz/WEF/pull/335
-      head_commit: 204a78f
+      head_commit: 33d5bbe
 branch:
   required: true
   name: feat/E25-T4-historical-parser-replay
