@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, cast
 
-from telethon import TelegramClient, events
+from telethon import TelegramClient, events, functions, types, utils
 from telethon.errors import FloodWaitError, SessionPasswordNeededError
 from telethon.sessions import StringSession
 
@@ -19,6 +20,8 @@ from wef_backend.features.ingestion.application.telegram_live import (
     LiveTelegramMessage,
     TelegramChannelEntity,
 )
+from wef_backend.features.ingestion.application.telegram_progress import SourceObservation
+from wef_backend.features.ingestion.domain.model import MediaDescriptor, MediaKind
 from wef_backend.features.ingestion.domain.telegram_secrets import (
     TelegramLoginCodeError,
     TelegramSecretError,
@@ -29,14 +32,26 @@ from wef_backend.features.ingestion.infrastructure.telethon_live_media import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Awaitable, Callable
+    from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
     from pathlib import Path
 
     from wef_backend.features.ingestion.domain.telegram_secrets import TelegramWorkerSecrets
 
 
+_MAX_OBSERVATION_IDS = 100
+
+
+class TelegramSourceDeferredError(OSError):
+    """Provider minimum backoff retained by the durable polling coordinator."""
+
+    def __init__(self, seconds: int) -> None:
+        """Retain only the provider backoff duration."""
+        self.retry_after_seconds = max(0, seconds)
+        super().__init__("Telegram source deferred")
+
+
 class TelethonLiveClient:
-    """Async Telethon adapter with flood-wait sleep and redacted failures."""
+    """Async Telethon adapter with explicit backoff and redacted failures."""
 
     def __init__(
         self,
@@ -116,8 +131,7 @@ class TelethonLiveClient:
         try:
             entity = await self._client.get_entity(username)
         except FloodWaitError as error:
-            await self._wait_flood(error.seconds)
-            entity = await self._client.get_entity(username)
+            raise TelegramSourceDeferredError(error.seconds) from error
         channel_id = str(getattr(entity, "id", "") or "")
         title = str(getattr(entity, "title", "") or "")
         resolved_username = str(getattr(entity, "username", "") or username)
@@ -131,15 +145,62 @@ class TelethonLiveClient:
         )
 
     async def latest_message_id(self, username: str) -> int:
-        """Observe the newest remote message id without retaining its payload."""
-        async for message in self.iter_messages(
-            username=username,
-            min_id=0,
-            reverse=False,
-            limit=1,
-        ):
-            return message.external_message_id
+        """Observe the remote head without downloading its media."""
+        try:
+            async for message in self._client.iter_messages(
+                username, min_id=0, reverse=False, limit=1
+            ):
+                return int(message.id)
+        except FloodWaitError as error:
+            raise TelegramSourceDeferredError(error.seconds) from error
         return 0
+
+    async def observe_messages(
+        self, *, username: str, ids: Sequence[int]
+    ) -> Sequence[SourceObservation]:
+        """Read explicit known IDs; a complete channel response must prove any deletion."""
+        if len(ids) > _MAX_OBSERVATION_IDS:
+            msg = "source observation batch exceeds 100 IDs"
+            raise ValueError(msg)
+        try:
+            peer = await self._client.get_input_entity(username)
+            response = await self._client(
+                functions.channels.GetMessagesRequest(
+                    channel=utils.get_input_channel(peer),
+                    id=[types.InputMessageID(value) for value in ids],
+                )
+            )
+        except FloodWaitError as error:
+            raise TelegramSourceDeferredError(error.seconds) from error
+        by_id = {message.id: message for message in response.messages}
+        observations = []
+        for external_id in ids:
+            message = by_id.get(external_id)
+            if isinstance(message, types.MessageEmpty):
+                observations.append(SourceObservation(external_id, "deleted"))
+            elif isinstance(message, types.Message):
+                live = _to_live_message(message)
+                media = []
+                if message.photo is not None:
+                    media.append(
+                        MediaDescriptor(
+                            MediaKind.PHOTO, f"telegram/{external_id}/photo-{message.photo.id}"
+                        )
+                    )
+                elif message.document is not None:
+                    media.append(
+                        MediaDescriptor(
+                            MediaKind.FILE,
+                            f"telegram/{external_id}/file-{message.document.id}",
+                            mime_type=message.document.mime_type,
+                        )
+                    )
+                observations.append(
+                    SourceObservation(external_id, "present", replace(live, media=tuple(media)))
+                )
+            else:
+                observations.append(SourceObservation(external_id, "unknown"))
+        return tuple(observations)
 
     def subscribe_channel(self, username: str, queue: LiveEventQueue) -> None:
         """Register new/edit/delete handlers for one channel onto the serial queue."""
@@ -225,14 +286,7 @@ class TelethonLiveClient:
             ):
                 yield await self.enrich_message(message)
         except FloodWaitError as error:
-            await self._wait_flood(error.seconds)
-            async for message in self._client.iter_messages(
-                username,
-                min_id=min_id,
-                reverse=reverse,
-                limit=limit,
-            ):
-                yield await self.enrich_message(message)
+            raise TelegramSourceDeferredError(error.seconds) from error
 
     async def _wait_flood(self, seconds: int) -> None:
         sleeper = self._sleep or asyncio.sleep

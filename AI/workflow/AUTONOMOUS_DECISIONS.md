@@ -428,7 +428,15 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: the owner explicitly approved the concrete revision just presented. Task dependency, review, validation, and release gates remain enforceable without another implementation confirmation.
 - Reversal: invalidate affected artifacts if evidence requires a material departure from the approved plan; preserve receipts, source evidence, and durable progress.
 
-## AD-050: Approve E25 spike revision 1 and prepare the implementation plan
+## AD-050: Approve the E24 merge and recovery rollout sequence
+
+- Time: 2026-09-05.
+- Owner decision: `continue`, in Codex task `01a0710e-adaa-76f2-8bcd-07784c03e9b2`, directly responding to: "May I merge #325 → #331 → #334, then run the planned rollout and canary verification?"
+- Selected approach: refresh and verify each PR, squash-merge in dependency order after current-head required CI and repository gates pass, and run the approved recovery deployment and production canary/observation procedure. Pause the old archive worker before the T1 release and preserve all durable source/recovery evidence.
+- Scope boundary: this explicitly authorizes the named merge side effects and their planned production rollout after automatic approval review requested a task-specific decision. It does not waive CI, dependency completion, receipt consistency, canary, or rollout gates, and does not authorize T3/T4 implementation or destructive evidence resets.
+- Reversal: pause recovery on failed acceptance evidence and retain the additive schema and ledgers for a corrected forward release.
+
+## AD-051: Approve E25 spike revision 1 and prepare the implementation plan
 
 - Time: 2026-09-05; recorded at 2026-09-05T10:15:52Z.
 - Owner decision: `yes I approve`, in Codex task `01a0710e-e877-7ab2-ad03-c6008aaf16e9`, directly answering: “Do you approve E25 spike revision 1 so I can promote its four tasks and prepare the implementation plan?”
@@ -437,7 +445,7 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: the owner approved the exact spike revision in response to the explicit approval question; implementation approval is a distinct gate under the repository workflow.
 - Reversal: invalidate affected spike/plan/task gates if the owner withdraws approval or material new evidence changes the approved recommendation.
 
-## AD-051: Approve E25 implementation plan revision 1
+## AD-052: Approve E25 implementation plan revision 1
 
 - Time: 2026-09-05T10:22:44Z.
 - Owner decision: `continue`, in Codex task `01a0710e-e877-7ab2-ad03-c6008aaf16e9`, directly answering “Do you approve E25 implementation plan revision 1?” after the complete plan and commit e649ab0 were presented.

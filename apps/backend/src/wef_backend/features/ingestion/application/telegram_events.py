@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
     from uuid import UUID
 
+    from wef_backend.features.ingestion.application.archive_retry import ArchiveFailure
     from wef_backend.features.ingestion.application.live_media import LiveMediaPipeline
     from wef_backend.features.ingestion.application.persistence import IngestionPersistencePort
     from wef_backend.features.ingestion.application.telegram_live import (
@@ -76,6 +77,14 @@ class RawEventArchivePort(Protocol):
         channel_external_id: str | None = None,
     ) -> Sequence[RawEventRecord]:
         """Return the oldest events still awaiting a terminal outcome."""
+        ...
+
+    async def can_attempt(self, event_id: UUID) -> bool:
+        """Respect terminal state, quarantine and persisted next eligibility."""
+        ...
+
+    async def record_failure(self, event_id: UUID, failure: ArchiveFailure) -> bool:
+        """Record typed data failure or transient deferral durably."""
         ...
 
     async def mark_attempt(
@@ -150,6 +159,7 @@ class LiveTelegramEvent:
     message: LiveTelegramMessage | None = None
     deleted_ids: tuple[int, ...] = ()
     received_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    metadata_only: bool = False
 
     def __post_init__(self) -> None:
         """Reject inconsistent new/edit/delete event shapes."""
@@ -367,6 +377,7 @@ class LiveTelegramEventProcessor:
                         )
                     if (
                         self.media_pipeline is not None
+                        and not event.metadata_only
                         and raw.media
                         and persist_outcome.outcome is not MessageOutcome.UNCHANGED
                     ):

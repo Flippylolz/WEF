@@ -36,9 +36,9 @@ The owner requested as little manual work as possible, with manual work only in 
 
 ## Approval state
 
-- Owner approved [spike revision 1](SPIKE.md) on 2026-09-05; AD-050 records the session decision.
+- Owner approved [spike revision 1](SPIKE.md) on 2026-09-05; AD-051 records the session decision.
 - All four tasks are promoted at revision 1; T1 is ready and T2–T4 await dependency gates.
-- [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is approved on 2026-09-05; AD-051 records the decision.
+- [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is approved on 2026-09-05; AD-052 records the decision.
 - E25-T1 has no task dependency. E25-T4 remains blocked on E24-T1 as well as E25-T2/T3; no prerequisite completion is assumed.
 - Implementation is authorized within plan revision 1; production/provider prerequisites and merge authorization remain separate.
 
