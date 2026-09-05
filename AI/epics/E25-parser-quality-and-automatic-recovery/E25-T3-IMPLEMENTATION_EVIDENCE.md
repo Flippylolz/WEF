@@ -171,3 +171,54 @@ to avoid shared-worktree tag collisions, passed 1,071 backend and 169 frontend
 tests with 90.26% backend coverage. The focused classifier suite passed 26 tests,
 including absent amounts, unrelated digits, real monetary evidence and existing
 inclusion behavior. No schema migration or production dependency was added.
+
+## Explicit observation activation authorization
+
+The owner replied `continue` directly to this question in Codex task
+`01a0710e-e877-7ab2-ad03-c6008aaf16e9`:
+
+> Do you approve sending masked listing text—including property addresses—and
+> source/offer IDs, timestamps, and parser metadata to Groq's Chat Completions API
+> (`openai/gpt-oss-20b`) for observation, with automatic application off?
+
+This explicitly authorizes the previously blocked external transfer to
+`https://api.groq.com/openai/v1/chat/completions`. Contact masking and residual
+contact rejection remain mandatory. The confirmed free-plan/ZDR account and
+`flipstar` budget owner remain unchanged. No paid allocation, provider Batch API,
+synthetic requests to fill the canary, or automatic canonical application is
+included in this observation activation.
+
+PR #344 merged as `be220fc` after green current-head CI 33978497236. Its first
+production release 33978647461 succeeded. At 16:50 UTC on 2026-09-05, both API and
+worker were healthy with active ingestion and completed reconciliation. A fresh
+read-only sample of three previously eligible revisions under the corrected
+policy retained one parking-price candidate with an unprotected canonical gap;
+two availability-only false positives became ineligible. Offers remained 3,334,
+contacts 5,568 and favorites 3. Concurrent ingestion advanced source associations.
+The bounded metadata canary processed 100 sources in ten batches (92 issue rows,
+eight clean). Three previously eligible revisions were separately reclassified
+through the existing versioned evaluation store. No canonical values were written
+and provider attempts, reservations and recovery work remained zero.
+
+After explicit transfer approval, the release-owned recovery enable variable was
+set to true; activation-verified is true, owner is configured, and auto-apply is
+false. Runtime activation is not inferred from those configuration values.
+Manual dispatch 33979354751 reused trusted verification but skipped deployment.
+A full rerun was cancelled after inspection confirmed that same-SHA deployment
+requires identical configuration. This documentation release supplies a new
+reviewable release identity for the approved configuration change; no runtime,
+workflow, schema, dependency or parser code changes are included.
+
+After this release deploys, verify both API and worker actually load enabled=true,
+auto-apply=false, the approved owner/model/ZDR settings and schema 0023. Observe
+only genuinely eligible work through the shared 20-item daily ceiling and pacing
+limits. Record provider outcomes and token use without source text or contacts.
+The ten-valid-observation canary and representative 24-hour window remain required
+before T3 completion. T4 stays deferred; its historical application is not enabled
+by this release. Pause scheduling through release-owned configuration if acceptance
+fails, retaining all evaluation, proposal and reservation history.
+
+Activation-record validation: `make lint` and isolated-image `make test` passed
+(1,071 backend tests, 169 frontend tests, 90.25% backend coverage).
+`git diff --check` passed. This change is documentation only; production runtime
+acceptance is still pending the new release and cannot be inferred from these tests.
