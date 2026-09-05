@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import unittest
 from typing import Any
 from unittest.mock import patch
@@ -211,6 +212,58 @@ class CohortTests(unittest.TestCase):
             collect_cache({"buildx.build.ref": "--untrusted-flag"})["state"], "unknown"
         )
         self.assertEqual(cache_evidence({})["state"], "unknown")
+
+    def test_action_build_reference_selects_builder_and_exact_record(self) -> None:
+        record = {
+            "Ref": "build123",
+            "Status": "completed",
+            "NumTotalSteps": 14,
+            "NumCachedSteps": 8,
+        }
+        with (
+            patch("scripts.deploy.release_cache.shutil.which", return_value="/usr/bin/docker"),
+            patch(
+                "scripts.deploy.release_cache.subprocess.run",
+                return_value=subprocess.CompletedProcess(
+                    [], 0, stdout=json.dumps(record), stderr=""
+                ),
+            ) as run,
+        ):
+            self.assertEqual(
+                collect_cache({"buildx.build.ref": "builder-a/node-a/build123"}),
+                {"state": "warm", "cached_steps": 8, "total_steps": 14},
+            )
+            self.assertEqual(
+                run.call_args.args[0],
+                [
+                    "/usr/bin/docker",
+                    "buildx",
+                    "--builder",
+                    "builder-a",
+                    "history",
+                    "inspect",
+                    "--format",
+                    "json",
+                    "build123",
+                ],
+            )
+            run.return_value.stdout = json.dumps({**record, "Ref": "different"})
+            self.assertEqual(
+                collect_cache({"buildx.build.ref": "builder-a/node-a/build123"})["state"], "unknown"
+            )
+
+    def test_invalid_action_reference_never_invokes_docker(self) -> None:
+        with patch("scripts.deploy.release_cache.subprocess.run") as run:
+            for ref in (
+                "build123",
+                "builder/id",
+                "builder/node/id/extra",
+                "--builder/node/id",
+                "builder/../id",
+                "builder/node/^1",
+            ):
+                self.assertEqual(collect_cache({"buildx.build.ref": ref})["state"], "unknown")
+            run.assert_not_called()
 
     def test_reused_verification_requires_successful_artifact_validation(self) -> None:
         needs = fixture()

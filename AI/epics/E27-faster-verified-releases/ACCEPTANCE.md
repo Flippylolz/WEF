@@ -144,3 +144,28 @@ sequencing decision. T3 remains `in_progress`, with all unproven acceptance
 criteria and completion fields unchanged. No latency target or sample threshold
 is waived. A future scoped evidence follow-up records acceptance once actual
 ordinary releases provide it; this instrumentation PR does not close the epic.
+
+## Image-counter reference correction
+
+Instrumentation PR #332 merged as `ed10ca7befdbaef370eaf603793dbb8ca7f4d916`.
+Automatic run [33965647303](https://github.com/Flippylolz/WEF/actions/runs/33965647303)
+passed and reached observed health in 277.722518 seconds (4m38s). Public HTTPS
+confirmed version `ed10ca7` and readiness. Dependency cache evidence was warm,
+but both image counters remained unknown; no unknown value is relabeled warm.
+
+The pinned build-push action emits `builder/node/build-id` in its metadata.
+Buildx history inspection sends its REF directly to BuildKit and requires the
+builder to be selected separately. Passing the full action reference yielded no
+record. The corrective follow-up on `bugfix/E27-T3-buildx-reference` validates
+all three components, passes `--builder <builder>` and only `<build-id>` to
+inspection, and requires the returned `Ref` to match before accepting counters.
+Malformed references never invoke Docker; failed or mismatched lookups remain
+unknown. The node component is validated; Buildx searches nodes of the selected
+builder for that exact immutable build id.
+
+A real local record reproduced the old command's exit 1 and the corrected
+command returned 8 cached steps of 14. Regression tests cover the action-format
+reference, selected builder, exact returned identity and malformed references.
+Script Ruff and strict mypy passed. This is a narrow correction to the existing
+approved T3 measurement scope, on a new branch; it does not change deployment
+behavior or close performance acceptance.
