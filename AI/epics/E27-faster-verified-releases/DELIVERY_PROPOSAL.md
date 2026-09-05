@@ -1,52 +1,9 @@
----
-schema: ai-workflow/implementation-plan@1
-epic: E27
-title: "Faster verified releases"
-status: approved
-revision: 1
-owner: owner
-spike_revision: 1
-task_sequence:
-  - id: E27-T1
-    revision: 1
-  - id: E27-T2
-    revision: 1
-  - id: E27-T3
-    revision: 1
-approval:
-  required_role: owner
-  status: approved
-  decided_by: owner
-  decided_at: "2026-09-05T10:22:10Z"
-  approved_revision: 1
-  evidence: OWNER_DECISIONS.md
-invalidation:
-  invalidated_by: null
-  invalidated_at: null
-  reason: null
-  return_to: null
----
+# E27 delivery proposal
 
-# E27 implementation plan — revision 1
-
-## Approved spike baseline and scope
-
-[Spike revision 1](SPIKE.md) was approved by the owner on 2026-09-05; see
-[the decision transcript](OWNER_DECISIONS.md). Its recommendation remains current:
-measure outcomes, consolidate exact-SHA verification, parallelize independent
-preparation, and serialize all production mutation without weakening health,
-rollback, configuration, or associated-PR controls. The owner approved this plan on 2026-09-05. No executable changes preceded approval.
-
-The promoted revision-1 tasks are:
-
-- [E27-T1](tasks/E27-T1-measure-release-and-report-outcomes.md) — no dependency.
-- [E27-T2](tasks/E27-T2-parallelize-verification-and-bound-deploy-lock.md) — depends on E27-T1.
-- [E27-T3](tasks/E27-T3-prove-release-budget-and-unattended-recovery.md) — depends on E27-T2.
-
-Each task is independently reviewable. A dependent task may start only after its
-parent is done or recorded as an open ancestor PR with branch, URL and exact head
-under ADR-018. A child cannot merge or complete until its parent is done. This
-plan does not authorize merging; the owner must request that action separately.
+Research supplement prepared on 2026-09-05 against `main` commit
+`a2cdb16`. The owner selected E27 to reduce duplicate verification and queue
+delays. This document makes the proposed change reviewable; it does not record
+spike or implementation approval. The promoted task definitions are linked in [the task list](README.md#tasks).
 
 ## Findings from the current implementation
 
@@ -69,7 +26,7 @@ plan does not authorize merging; the owner must request that action separately.
 The [audit](../../audits/2026-09-05-system-audit.md) supplies observed timings.
 These source findings do not establish a measured speedup.
 
-## Ordered task sequence
+## Proposed task sequence
 
 **E27-T1 — reporting first.** Add a sanitized, versioned release outcome document
 and a matching Actions summary without changing execution order. Record source
@@ -174,82 +131,8 @@ then shared verification and image preparation, then the narrower lock after
 ordering proofs pass. A safety regression restores the previous workflow via a
 reviewed change; do not cancel a running migration or rewind production data.
 
-## Cross-task contracts and data
+## Planning handoff
 
-T1 owns `scripts/deploy/evaluate_deploy_gate.py`, release-report helpers under
-`scripts/deploy/`, reporting hooks in `.github/workflows/deploy-production.yml`,
-and associated tests. Introduce a `wef-release-outcome/v1` JSON artifact with
-UTC timestamps, nonnegative seconds or null with an unavailable reason, exact
-SHA/run-attempt identity, explicit gate reason, verification result, deployment
-result, image digests, and rollback identity. Human summaries derive from that
-same document. Keep reports sanitized and retained for 90 days; keep deployable
-release artifacts at the existing 14-day retention. Report artifacts cannot be
-used as executable release evidence. Avoid new notification destinations.
-
-T2 owns the shared workflows, CI/release callers, any Makefile extraction,
-release-manifest assembly, duplicate/stale gate helpers, and deployment lock
-integration. Coverage-badge publishing and required-check consumers must be
-updated consistently. Workflow/check identity is part of artifact reuse
-validation. Preserve repository-owned source and exact SHA checkout boundaries.
-T3 owns aggregate measurement/reporting helpers, sanitized cohort evidence,
-release/rollback proofs, and operational acceptance documentation.
-
-No application API or database schema migration is planned. Additive release
-metadata must remain readable alongside existing release state; missing legacy
-fields are unknown, never implicit verification. Existing health-gated state
-activation stays atomic. Deploy ordering must use verified ancestry and current
-healthy state, with a fail-closed reconciliation path for interrupted activation.
-No raw API exports, secrets, host inventories, contacts, or configuration enter
-committed evidence or public artifacts. GitHub Actions continues to own complete
-production configuration. Untrusted PR code never receives production secrets or
-release write permissions. No production dependencies are introduced.
-
-## Resource budgets and evidence
-
-Use the existing hosted runner class and provider services. Run at most one
-production mutation at a time. Three verification lanes and two image preparation
-lanes may run concurrently; coverage aggregation, runtime proof, artifact
-assembly and activation follow their required inputs. Preserve cache scopes and
-locked tool versions. Measure runner minutes as well as elapsed latency; a
-material cost increase or new runner infrastructure requires renewed review.
-Read-only metadata/transfer retries are bounded as above. Do not add unlimited
-polling or rerun full workflows simply to recover a missing summary.
-
-T1 establishes a baseline using available historical ordinary release runs,
-reporting missing health/cache timestamps explicitly. Twenty observations are
-requested when available; unavailable historical fields cannot block delivery
-of accurate reporting. T3's performance acceptance requires at least twenty
-actual post-change ordinary observations with sufficient timing evidence;
-otherwise T3 remains open. Neither small-sample results nor synthetic latency
-stand in for production performance. Publish budget misses transparently.
-
-Local synthetic failure/rollback tests are part of T2/T3. Production fault
-injection, manual release dispatch, destructive repair, and credential changes
-require separate authorization. Observe standard automatic releases after
-owner-authorized merges. Existing deferred off-host backups remain deferred;
-workflow rollback cannot restore data destroyed by a migration.
-
-## Invalidation triggers
-
-Return to spike review for altered release trust boundaries, deployment topology,
-configuration ownership, production dependencies/providers, paid infrastructure,
-or weakened checks. Return to plan review for material task/dependency, contract,
-retry/budget, migration, rollout or rollback changes. Concurrent changes to
-required checks must be reconciled in the parity inventory before consolidation.
-No speed target authorizes a safety exception.
-
-## Approval checklist
-
-- [x] Current spike revision is owner-approved with decision evidence.
-- [x] Every sequence entry is a promoted revision-1 task.
-- [x] Dependencies are acyclic and enforceable through task gates.
-- [x] Modules, contracts, verification, budgets, data, risks and rollout are explicit.
-- [x] No unresolved deferred decision is required for this scope.
-- [x] No production or disposable proof code has been written.
-- [x] Revision 1 is owner-approved; the decision transcript is recorded.
-
-## Owner decision
-
-Approval of this exact plan revision will allow task implementation in the
-recorded order, with one branch/PR per task and all task gates satisfied first.
-Record that decision in the approval metadata and owner decision transcript.
+The owner approved spike revision 1 on 2026-09-05. The candidates have been
+promoted and this research proposal is now superseded for implementation detail
+by [implementation plan revision 1](IMPLEMENTATION_PLAN.md), which the owner approved on 2026-09-05. See [the decision transcript](OWNER_DECISIONS.md).

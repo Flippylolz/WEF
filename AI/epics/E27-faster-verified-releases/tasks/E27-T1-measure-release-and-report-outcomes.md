@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E27-T1
 epic: E27
 title: "Measure merge-to-production time and report release outcomes"
-status: proposed
+status: ready
 revision: 1
-actionable: false
 priority: P1
 size: M
 milestone: M5
@@ -13,12 +12,44 @@ dependencies: []
 requirement_ids: []
 decision_ids: [ADR-008, ADR-009, ADR-010, ADR-013, ADR-014, ADR-017, ADR-023]
 deferred_decision_ids: []
-source: "owner-requested-system-audit:2026-09-05"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E27-T1-measure-release-and-report-outcomes.md
+  promoted_by: codex
+  promoted_at: "2026-09-05T10:18:07Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 1
+  verified_by: codex
+  verified_at: "2026-09-05T10:18:07Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 1
+  verified_by: codex
+  verified_at: "2026-09-05T10:22:10Z"
+dependency_gate:
+  status: satisfied
+  verified_by: codex
+  verified_at: "2026-09-05T10:18:07Z"
+  evidence: []
+branch:
+  required: true
+  name: null
+  task_id: E27-T1
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E27-T1: Measure merge-to-production time and report release outcomes
@@ -49,9 +80,9 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 ## Dependencies and gates
 
-No task dependency. Current epic spike approval, task promotion, and implementation-plan approval are still required before implementation.
+No task dependency. Spike revision 1 is approved and this task is promoted. Implementation plan revision 1 is approved.
 
-This candidate remains non-actionable under the [workflow](../../../workflow/README.md). It must move rather than copy to `tasks/`, retain its ID, and receive complete promotion and gate metadata.
+This promoted task is `ready` under the [workflow](../../../workflow/README.md) until its dependency gate clears. The [implementation plan](../IMPLEMENTATION_PLAN.md) specifies the modules, contracts, tests, budgets, and rollout for this task.
 
 ## Rollout and automatic operation
 
@@ -71,8 +102,8 @@ Do not add production dependencies without owner approval, commit raw source/cre
 
 ## Promotion checklist
 
-- [ ] Current epic spike revision explicitly approved.
-- [ ] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
-- [ ] All referenced dependencies and required decisions resolved for the planned sequence.
-- [ ] File moved, not copied, into `tasks/` with attributable promotion metadata.
+- [x] Current epic spike revision explicitly approved.
+- [x] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
+- [x] Required decisions resolved; dependencies remain enforceable in the planned sequence.
+- [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
 - [ ] Dedicated branch and PR will cover this task only after implementation gates clear.

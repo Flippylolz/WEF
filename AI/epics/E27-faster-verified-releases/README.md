@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E27
 title: "Faster verified releases"
-status: selected
+status: ready
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -21,11 +21,11 @@ Audit R1 measures three merged-PR releases at 9m31s, 10m36s, and 14m48s. Verific
 
 See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for tests, production observations, source references, uncertainty, and the cross-epic sequence.
 
-## Proposed tasks
+## Tasks
 
-- [E27-T1: Measure merge-to-production time and report release outcomes](proposed-tasks/E27-T1-measure-release-and-report-outcomes.md) — P1/M; dependencies: none.
-- [E27-T2: Parallelize verified work and bound the deployment lock](proposed-tasks/E27-T2-parallelize-verification-and-bound-deploy-lock.md) — P1/L; dependencies: E27-T1.
-- [E27-T3: Prove the release budget and unattended recovery](proposed-tasks/E27-T3-prove-release-budget-and-unattended-recovery.md) — P1/M; dependencies: E27-T2.
+- [E27-T1: Measure merge-to-production time and report release outcomes](tasks/E27-T1-measure-release-and-report-outcomes.md) — P1/M; dependencies: none.
+- [E27-T2: Parallelize verified work and bound the deployment lock](tasks/E27-T2-parallelize-verification-and-bound-deploy-lock.md) — P1/L; dependencies: E27-T1.
+- [E27-T3: Prove the release budget and unattended recovery](tasks/E27-T3-prove-release-budget-and-unattended-recovery.md) — P1/M; dependencies: E27-T2.
 
 Each file defines one independently reviewable change, tests, acceptance evidence, rollout, rollback, and exceptional manual handling. Dependencies are task IDs and remain enforceable at promotion.
 
@@ -35,11 +35,14 @@ The owner requested as little manual work as possible, with manual work only in 
 
 ## Approval state
 
-- Epic selected for documentation/research.
-- [Spike](SPIKE.md) revision 1 is researched and awaiting owner approval.
-- All 3 candidates remain `proposed`, `actionable: false`.
-- [Implementation plan](IMPLEMENTATION_PLAN.md) is an empty draft shell until spike approval and task promotion.
-- The audit request authorizes research and planning documents; it is not recorded as approval of future production changes.
+The [delivery proposal](DELIVERY_PROPOSAL.md) records the current workflow findings,
+concrete task sequence, verification parity, lock boundary, and measurement design
+for owner review following the selection of E27 on 2026-09-05.
+
+- Spike revision 1 approved by the owner on 2026-09-05; [decision transcript](OWNER_DECISIONS.md).
+- All three tasks promoted as revision-1 definitions with satisfied spike and implementation gates; T1 is ready and T2/T3 await dependencies.
+- [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) was approved by the owner on 2026-09-05.
+- Task implementation is authorized; merge approval remains separate.
 
 ## Scope and completion
 
