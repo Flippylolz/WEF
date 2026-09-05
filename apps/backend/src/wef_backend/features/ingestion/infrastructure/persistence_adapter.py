@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import delete, func, select, text, update
+from sqlalchemy.dialects.postgresql import insert
 
 from wef_backend.features.catalog.domain import OfferVisibility
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
@@ -64,6 +65,7 @@ from wef_backend.features.ingestion.infrastructure.archive_evidence import (
 from wef_backend.features.ingestion.infrastructure.models import (
     DevelopmentRow,
     IngestRunRow,
+    MediaRecoveryIntentionRow,
     OfferSourceRow,
     SourceChannelRow,
     SourceMessageRevisionRow,
@@ -608,6 +610,8 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                     )
                     or 0
                 )
+            if existing is not None and disposition == "already_canonical":
+                await self._enqueue_media(session, existing.current_revision_id)
             return _MessageResult(
                 outcome=MessageOutcome.UNCHANGED,
                 offer_created=False,
@@ -709,6 +713,8 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             anchor_revision_id = revision_id
             message_id_for_offer = existing.id
 
+        await session.flush()
+        await self._enqueue_media(session, anchor_revision_id)
         listing = persistable.extraction.listing if persistable.extraction else None
         offer_created = False
         offer_id = None
@@ -750,6 +756,15 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             source_changed=source_changed,
             parser_version=parser_version,
             parser_values=parser_values,
+        )
+
+    @staticmethod
+    async def _enqueue_media(session: AsyncSession, revision_id: UUID) -> None:
+        """Commit discovery intention atomically with canonical source state."""
+        await session.execute(
+            insert(MediaRecoveryIntentionRow)
+            .values(source_revision_id=revision_id)
+            .on_conflict_do_nothing()
         )
 
     async def _persist_parse_issue_if_needed(  # noqa: PLR0913

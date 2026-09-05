@@ -184,7 +184,10 @@ def _reply_id(payload: Mapping[str, object]) -> int | None:
 
 
 def _media_group_id(payload: Mapping[str, object]) -> str | None:
-    value = payload.get("grouped_id")
+    value = payload.get("grouped_id", payload.get("media_group_id"))
+    alias = payload.get("media_group_id")
+    if value is not None and alias is not None and str(value) != str(alias):
+        raise _RecordProblemError(MalformedReason.INVALID_MEDIA_GROUP_ID)
     if value is None:
         return None
     if isinstance(value, bool) or not isinstance(value, int | str):

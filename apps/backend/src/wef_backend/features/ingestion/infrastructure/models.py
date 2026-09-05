@@ -953,3 +953,84 @@ class ParseEvaluationTransitionRow(IngestionBase):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.current_timestamp()
     )
+
+
+class MediaRecoveryIntentionRow(IngestionBase):
+    """Canonical-transaction outbox, independent of media execution."""
+
+    __tablename__ = "media_recovery_intentions"
+    source_revision_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("source_message_revisions.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    discovered: Mapped[bool] = mapped_column(Boolean, server_default=sa_text("false"))
+    context_json: Mapped[object | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class MediaRecoveryWorkRow(IngestionBase):
+    """One intended descriptor, with restart-safe eligibility and fenced ownership."""
+
+    __tablename__ = "media_recovery_work"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_revision_id",
+            "ordinal",
+            "descriptor_identity",
+            "grouping_version",
+            "transform_version",
+            name="uq_media_recovery_identity",
+        ),
+        CheckConstraint(
+            "ordinal >= 0 AND data_failures >= 0 AND deferrals >= 0",
+            name="ck_media_recovery_counters",
+        ),
+        CheckConstraint(
+            "state IN ('pending','leased','retry_wait','completed','unsupported',"
+            "'superseded','quarantined')",
+            name="ck_media_recovery_state",
+        ),
+        Index("ix_media_recovery_due", "state", "next_attempt_at", "id"),
+    )
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    source_revision_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("source_message_revisions.id", ondelete="CASCADE")
+    )
+    ordinal: Mapped[int] = mapped_column(Integer)
+    descriptor_identity: Mapped[str] = mapped_column(String(64))
+    grouping_version: Mapped[str] = mapped_column(String(40))
+    transform_version: Mapped[str] = mapped_column(String(40))
+    policy_version: Mapped[str] = mapped_column(String(80))
+    descriptor_json: Mapped[object] = mapped_column(JSONB)
+    offer_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))
+    association_revision_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("source_message_revisions.id")
+    )
+    association_rule: Mapped[str | None] = mapped_column(String(40))
+    association_confidence: Mapped[float | None] = mapped_column(Numeric(4, 3))
+    state: Mapped[str] = mapped_column(String(24))
+    next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    lease_token: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))
+    lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    data_failures: Mapped[int] = mapped_column(Integer, server_default="0")
+    deferrals: Mapped[int] = mapped_column(Integer, server_default="0")
+    reason: Mapped[str | None] = mapped_column(String(80))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class MediaRecoveryChannelRow(IngestionBase):
+    """Durable discovery continuation and media-only rollout/deferral control."""
+
+    __tablename__ = "media_recovery_channels"
+    source_channel_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("source_channels.id", ondelete="CASCADE"), primary_key=True
+    )
+    scan_after_id: Mapped[int] = mapped_column(BigInteger, server_default="0")
+    scan_upper_id: Mapped[int | None] = mapped_column(BigInteger)
+    grouping_json: Mapped[object] = mapped_column(JSONB, server_default=sa_text("'{}'::jsonb"))
+    phase: Mapped[str] = mapped_column(String(16), server_default="canary")
+    canary_completed: Mapped[int] = mapped_column(Integer, server_default="0")
+    source_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reason: Mapped[str | None] = mapped_column(String(80))

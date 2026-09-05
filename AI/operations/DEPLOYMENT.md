@@ -696,3 +696,28 @@ The worker's file-only liveness CLI must remain independent of database/ORM
 imports. Full operator status loads those dependencies only when requested; the
 healthcheck timeout and freshness criteria are unchanged. A fresh-process test
 blocks ORM imports while verifying both healthy and stale heartbeat exit codes.
+
+### E24-T3 media recovery rollout and controls
+
+Migration `20260905_0024` adds media intentions, work and channel controls. It
+changes no source payload, archive receipt or existing public asset. The Telegram
+worker uses independent media acquisition under the existing byte/pixel/time
+limits, shared 56 MiB staging budget and 8 MiB free headroom. Its frequent liveness
+probe remains file-only; the full private worker status includes `media_recovery`
+counts, discovery boundaries, oldest eligibility and canary state.
+
+Use `python -m wef_backend.media_recovery_command status` inside the worker for
+aggregate-only media diagnostics. `pause` persists a media-only stop; `resume`
+returns to canary until 100 successful intended assets, then enables bounded drain.
+No per-record command is needed. Claims stop at `canary_ready` until rollout
+acceptance resumes them. Unsupported or unproven source media does not count as
+successful recovery. Never reset retry counters or change source evidence to make
+a canary pass.
+
+Before activation record derivative/receipt counts and temporary-space headroom.
+After the 100-asset canary, verify recovered variants and no duplicate public
+associations, then observe at least 15 minutes of continuing text/polling work,
+healthy worker, zero restarts and bounded staging. Insufficient eligible repair
+work leaves that acceptance gate open. Publish only safe aggregates and release
+identifiers. On systemic failure pause media and retain additive schema, original
+objects and successful derivatives; do not downgrade or delete public assets.
