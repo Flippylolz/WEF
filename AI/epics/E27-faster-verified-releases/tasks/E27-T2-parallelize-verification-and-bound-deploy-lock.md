@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E27-T2
 epic: E27
 title: "Parallelize verified work and bound the deployment lock"
-status: draft
+status: in_progress
 revision: 1
 priority: P1
 size: L
@@ -29,17 +29,21 @@ implementation_gate:
   verified_by: codex
   verified_at: "2026-09-05T10:22:10Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: codex
+  verified_at: "2026-09-05T11:47:14+00:00"
+  evidence:
+    - task_id: E27-T1
+      branch: chore/E27-T1-release-outcomes
+      pull_request: https://github.com/Flippylolz/WEF/pull/326
+      head_commit: 1700f0491ad8d40c0c2fd8e822b7341f472dba91
 branch:
   required: true
-  name: null
+  name: chore/E27-T2-parallel-release
   task_id: E27-T2
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-05T10:54:53Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/329
 completion:
   completed_by: null
   completed_at: null
@@ -82,7 +86,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 Required task dependencies: E27-T1. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This promoted task remains `draft` under the [workflow](../../../workflow/README.md) until its dependency gate clears. The [implementation plan](../IMPLEMENTATION_PLAN.md) specifies the modules, contracts, tests, budgets, and rollout for this task.
+This task is `in_progress`; its initially stacked dependency is now satisfied. The [implementation plan](../IMPLEMENTATION_PLAN.md) specifies the modules, contracts, tests, budgets, and rollout for this task.
 
 ## Rollout and automatic operation
 
@@ -106,4 +110,27 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
 - [x] Required decisions resolved; dependencies remain enforceable in the planned sequence.
 - [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
-- [ ] Dedicated branch and PR will cover this task only after implementation gates clear.
+- [x] Dedicated branch covers this task after implementation and stacked dependency gates cleared.
+
+Start evidence: passed through `ready` after verifying open ancestor PR #326 at
+`f81fb7c10bd1800a059240c464d955e89622b840`; then entered `in_progress` on its
+dedicated branch. Completion awaits the dependency and production evidence.
+
+## Implementation evidence (pending PR and production acceptance)
+
+[Check parity](../CHECK_PARITY.md) records the complete CI/release check union and
+permission boundaries. Shared exact-SHA verification, parallel inspected image
+builds, validated artifact reuse, full-job production concurrency, source-ancestry
+ordering, host-locked state guards and duplicate health/configuration proofs are
+implemented. Run-attempt observations remain truthful when verification is reused.
+
+Local validation passed: 803 backend tests, 169 frontend tests, release report and
+ordering tests, CI-equivalent script format/lint/strict types, workflow/composite
+shell checks, production/rollback/shared-edge proofs, runtime image builds and
+production runtime/persistence proof. Production acceptance remains pending the
+normal release after an owner-authorized merge. T1 remains the open ancestor PR.
+
+Merge dependency revalidation: T1 is done after PR #326 and its successful
+normal release run 33963661845. T2 was rebased onto the resulting main commit;
+local lint, 803 backend tests, 169 frontend tests, production/rollback/shared-edge
+proofs passed again. Required PR checks must pass on this final head before merge.

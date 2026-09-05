@@ -148,7 +148,10 @@ Review should verify:
 
 ## CI and deployment event rules
 
-CI runs for pull requests targeting `main`.
+CI runs for pull requests, including ordered stacks targeting an ancestor branch.
+PR CI and the main release invoke the same exact-SHA verification workflow.
+The release performs main-push verification; a second main-push CI run is omitted.
+Coverage publishing follows a successful main-push release.
 
 CI fails when backend coverage or frontend coverage is below 90%. The suites run in separate jobs and Makefile targets. The Backend job uses pytest `--cov-fail-under=90`. The Frontend job uses Vitest `coverage.thresholds` of 90% for lines and branches. The Coverage badge job applies the same per-suite floor and does not use a combined threshold.
 
@@ -172,9 +175,14 @@ The deployment job's associated-PR check remains defense in depth for branch pro
 
 The deploy job additionally:
 
-- Depends on the release CI/build jobs.
+- Depends on complete shared verification, both inspected image builds, and the
+  runtime proof for their exact digests, or validated equivalent evidence from a
+  successful trusted exact-SHA main-push release.
 - Reconstructs complete production configuration from GitHub Actions variables/secrets, transfers it to mode-0600 temporary files, validates it, and atomically activates it on every deploy; it does not depend on paid environment-review protection.
-- Uses one concurrency group with `cancel-in-progress: false`.
+- Uses the `wef-production` concurrency group with `cancel-in-progress: false`
+  for the entire deployment job. Different SHAs may verify/build concurrently;
+  per-SHA workflow concurrency prevents duplicate preparation. Source ancestry
+  and a host-locked current-state guard prevent stale activation.
 - Builds/pulls images identified by commit SHA/digest.
 - Receives no production secret in pull-request workflows.
 - Verifies through the GitHub API that the pushed SHA is associated with a merged pull request targeting `main`; an unassociated direct push builds/tests but does not deploy automatically.

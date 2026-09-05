@@ -130,7 +130,10 @@ def build_report(
     except (ValueError, TypeError):
         raw = {}
     observation = clean_observation(raw if isinstance(raw, dict) else {}, sha)
-    verified = needs.get("verify", {}).get("result") == "success"
+    verified = needs.get("verify", {}).get("result") == "success" or (
+        needs.get("publish", {}).get("result") == "success"
+        and needs.get("publish", {}).get("outputs", {}).get("reused_verified") == "true"
+    )
     eligible = resolve.get("should_deploy") == "true"
     deploy = needs.get("deploy", {}).get("result", "")
     result = deployment_result(
