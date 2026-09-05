@@ -398,7 +398,18 @@ This append-only log records choices made while the owner delegated overnight MV
 - Rationale: the owner supplied the merge direction after reviewing each PR's green required checks, matching the AD-040/AD-043 pattern of session directives authorizing green-CI merge sequences.
 - Reversal: revert the squash commits on `main` and redeploy the prior release if the owner withdraws the decision or production evidence shows a regression.
 
-## AD-047: Approve E24 spike revision 2 and prepare the first implementation plan
+## AD-047: Authorize every PR to merge after green CI
+
+- Time: 2026-09-05.
+- Owner decision: `Can you update the rules that every PR can be merged if the CI is green and mergi it`, in Codex task `01a07153-50e8-7041-aedc-f88e689be411`.
+- Owner clarification: `also mention that auto merge feature is available`.
+- Selected approach: grant standing merge authorization for every PR after all required CI checks complete successfully on its current head and repository merge requirements are satisfied. Remove the separate per-PR owner-request restriction in `AGENTS.md` and align governance and delivery documentation. This replaces the merge-request restriction recorded in AD-007 and the need for epic-specific merge authorization.
+- Scope boundary: verify the head, strict required checks, resolved conversations, mergeability, and task dependencies before squash-merging with an expected-head guard. Existing implementation approvals, acceptance criteria, explicit owner holds, and deployment requirements still apply. The scheduled Dependabot controller keeps its additional unattended-merge eligibility rules.
+- Platform evidence: the active `Protect main` ruleset requires the five documented CI checks, strict base freshness, resolved review threads, and zero approving reviews, as verified through the GitHub API on 2026-09-05. Native auto-merge is already enabled (`allow_auto_merge: true`); document its availability and the opt-in CLI command. The rules change therefore needs no GitHub settings mutation.
+- Rationale: the owner requested repository-wide green-CI merge permission and explicitly authorized merging this policy change.
+- Reversal: the owner may withdraw the standing authorization and restore a per-PR merge-request rule through a follow-up documentation PR.
+
+## AD-048: Approve E24 spike revision 2 and prepare the first implementation plan
 
 - Time: 2026-09-05.
 - Owner decision: `continue`, in Codex task `01a0710e-adaa-76f2-8bcd-07784c03e9b2`, directly responding to the explicit question: "Approve spike revision 2 so I can promote the tasks and prepare the implementation plan?"
@@ -408,7 +419,7 @@ This append-only log records choices made while the owner delegated overnight MV
 - Evidence: the owner-authored reply remains in the named Codex task immediately after the linked revision 2 spike and approval question; this log records that reply rather than inventing an owner quote approving a future plan.
 - Reversal: invalidate the spike and affected planning artifacts if the owner withdraws approval or new evidence crosses a spike invalidation trigger.
 
-## AD-048: Approve E24 implementation plan revision 1
+## AD-049: Approve E24 implementation plan revision 1
 
 - Time: 2026-09-05.
 - Owner decision: `continue I approve`, directly responding to the request to approve E24 implementation plan revision 1 in Codex task `01a0710e-adaa-76f2-8bcd-07784c03e9b2`.

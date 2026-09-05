@@ -109,10 +109,10 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 ## Dependencies and gates
 
 Spike revision 2 is approved under
-[AD-047](../../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e24-spike-revision-2-and-prepare-the-first-implementation-plan).
+[AD-048](../../../workflow/AUTONOMOUS_DECISIONS.md#ad-048-approve-e24-spike-revision-2-and-prepare-the-first-implementation-plan).
 This task was moved from its proposed location and refined to revision 2.
 [Implementation plan revision 1](../IMPLEMENTATION_PLAN.md) records this exact
-revision and is approved under AD-048. Its implementation gate is satisfied;
+revision and is approved under AD-049. Its implementation gate is satisfied;
 branch and dependency gates still govern the start of work.
 
 T1 has no task dependencies.
@@ -138,6 +138,6 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] The authoritative file is under `tasks/`; its proposed predecessor was moved.
 - [x] Promotion and approved spike revision 2 verification are recorded.
 - [x] Scope, acceptance, tests, and recovery constraints match the approved spike.
-- [x] Owner approved implementation plan revision 1 with this task at revision 2 under AD-048.
+- [x] Owner approved implementation plan revision 1 with this task at revision 2 under AD-049.
 - [ ] Dependency gate permits implementation and a dedicated task branch is recorded.
 - [ ] Acceptance evidence, required checks, PR, and definition of done are complete.

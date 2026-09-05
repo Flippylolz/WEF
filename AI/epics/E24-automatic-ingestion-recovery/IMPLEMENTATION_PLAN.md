@@ -17,7 +17,7 @@ approval:
   decided_by: Flippylolz
   decided_at: "2026-09-05T10:33:19Z"
   approved_revision: 1
-  evidence: "Codex task 01a0710e-adaa-76f2-8bcd-07784c03e9b2: owner message 'continue I approve' directly responding to implementation plan revision 1 approval request; AD-048"
+  evidence: "Codex task 01a0710e-adaa-76f2-8bcd-07784c03e9b2: owner message 'continue I approve' directly responding to implementation plan revision 1 approval request; AD-049"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -30,7 +30,7 @@ invalidation:
 ## Approved baseline and scope
 
 [Spike revision 2](SPIKE.md) was approved by the owner under
-[AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e24-spike-revision-2-and-prepare-the-first-implementation-plan).
+[AD-048](../../workflow/AUTONOMOUS_DECISIONS.md#ad-048-approve-e24-spike-revision-2-and-prepare-the-first-implementation-plan).
 This first plan implements the requested order: stop archive starvation in T1,
 then make cursors and retries reliable in T2. It locks both promoted task
 definitions at revision 2. No implementation has begun.
@@ -388,13 +388,13 @@ decision is required for this two-task sequence.
 - [x] Modules, persisted contracts, transaction boundaries, tests, limits, migrations, risks, rollout, and rollback are specified.
 - [x] Provider/dependency, privacy, production-release, and follow-up scope boundaries are explicit.
 - [x] No production code, tests, migrations, or disposable proof artifacts have been written.
-- [x] Owner approved implementation plan revision 1 on 2026-09-05 under AD-048; exact approval metadata is recorded.
+- [x] Owner approved implementation plan revision 1 on 2026-09-05 under AD-049; exact approval metadata is recorded.
 
 ## Owner decision
 
 The owner replied `continue I approve` directly to the request to approve this
 plan revision 1 in Codex task `01a0710e-adaa-76f2-8bcd-07784c03e9b2`.
-[AD-048](../../workflow/AUTONOMOUS_DECISIONS.md#ad-048-approve-e24-implementation-plan-revision-1)
+[AD-049](../../workflow/AUTONOMOUS_DECISIONS.md#ad-049-approve-e24-implementation-plan-revision-1)
 records implementation authorization for T1 revision 2 followed by T2 revision 2.
 Merge and production release authorization remain separate.
 
@@ -420,4 +420,4 @@ The scoped documentation changes are:
 - [Epic registry](../README.md): current E24 gates and audit-candidate counts.
 - [M5 milestone](../../milestones/M5-production-maturity.md): current E24 planning status.
 - [Audit file index](../../audits/2026-09-05-files.md): links follow the two promoted task files.
-- [Autonomous decision log](../../workflow/AUTONOMOUS_DECISIONS.md): AD-047 records the owner-authored spike approval reply and its scope.
+- [Autonomous decision log](../../workflow/AUTONOMOUS_DECISIONS.md): AD-048 records the owner-authored spike approval reply and its scope.

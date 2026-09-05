@@ -18,7 +18,7 @@ approval:
   decided_by: Flippylolz
   decided_at: "2026-09-05T10:19:12Z"
   approved_revision: 2
-  evidence: "Codex task 01a0710e-adaa-76f2-8bcd-07784c03e9b2: owner message 'continue' directly responding to the request to approve E24 spike revision 2; recorded in AI/workflow/AUTONOMOUS_DECISIONS.md#AD-047"
+  evidence: "Codex task 01a0710e-adaa-76f2-8bcd-07784c03e9b2: owner message 'continue' directly responding to the request to approve E24 spike revision 2; recorded in AI/workflow/AUTONOMOUS_DECISIONS.md#AD-048"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -247,5 +247,5 @@ Material changes to source semantics, geospatial confidence/precision claims, au
 The owner replied `continue` directly to the request to approve spike revision 2
 in Codex task `01a0710e-adaa-76f2-8bcd-07784c03e9b2`. This approves the presented
 revision and permits task refinement/promotion and implementation planning.
-[AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e24-spike-revision-2-and-prepare-the-first-implementation-plan)
+[AD-048](../../workflow/AUTONOMOUS_DECISIONS.md#ad-048-approve-e24-spike-revision-2-and-prepare-the-first-implementation-plan)
 records the decision and scope. Implementation-plan approval remains separate.

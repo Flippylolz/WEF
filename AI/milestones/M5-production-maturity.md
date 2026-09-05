@@ -45,12 +45,12 @@ from loss of the production host.
 
 The [system audit](../audits/2026-09-05-system-audit.md) records passing suites plus production defects and defines the following selected research workspaces:
 
-- [E24: Automatic ingestion recovery](../epics/E24-automatic-ingestion-recovery/README.md) — spike revision 2 approved; T1/T2 promoted with implementation-plan revision 1 approved under AD-048 to terminate stuck archive work, then maintain monotonic cursors and fair retries; media recovery and broader progress verification remain proposed as T3/T4.
+- [E24: Automatic ingestion recovery](../epics/E24-automatic-ingestion-recovery/README.md) — spike revision 2 approved; T1/T2 promoted with implementation-plan revision 1 approved under AD-049 to terminate stuck archive work, then maintain monotonic cursors and fair retries; media recovery and broader progress verification remain proposed as T3/T4.
 - [E25: Parser quality and automatic recovery](../epics/E25-parser-quality-and-automatic-recovery/README.md) — four proposed tasks; benchmark source evidence, repair deterministic gaps, automate validated AI exceptions, and converge parser versions.
 - [E26: Automatic location validation and repair](../epics/E26-automatic-location-validation/README.md) — three proposed tasks; validate address agreement, repair stale points, and present honest precision.
-- [E27: Faster verified releases](../epics/E27-faster-verified-releases/README.md) — three proposed tasks; measure outcomes, remove duplicate serialized work safely, and prove the latency/recovery budget.
+- [E27: Faster verified releases](../epics/E27-faster-verified-releases/README.md) — spike and plan revision 1 approved; three promoted tasks in dependency order; measure outcomes, remove duplicate serialized work safely, and prove the latency/recovery budget.
 
-E14 continues to own shared quality gates, browser infrastructure, general refactoring, observability, and capacity. The new candidates do not duplicate completed work or change existing approval records. Their spikes await owner approval and implementation plans remain empty draft shells. The owner's operating requirement is automatic routine recovery with manual work only for exceptional unresolved cases.
+E14 continues to own shared quality gates, browser infrastructure, general refactoring, observability, and capacity. The new candidates do not duplicate completed work or change existing approval records. E24–E26 spikes await owner approval and their implementation plans remain draft shells. E27 spike and implementation plan revision 1 are approved. The owner's operating requirement is automatic routine recovery with manual work only for exceptional unresolved cases.
 
 ## Exit evidence
 

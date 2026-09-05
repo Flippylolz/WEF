@@ -42,7 +42,7 @@ The owner requested as little manual work as possible, with manual work only in 
 
 ## Approval state
 
-- Spike revision 2 is approved under AD-047; implementation plan revision 1 is approved under AD-048.
+- Spike revision 2 is approved under AD-048; implementation plan revision 1 is approved under AD-049.
 - T1 is ready to start on its dedicated branch. T2 has satisfied spike/implementation gates and awaits T1 completion or a valid stack.
 - T3/T4 remain proposed outside this first implementation phase.
 - Approval authorizes implementation and PR preparation; merge and production release remain separate.
