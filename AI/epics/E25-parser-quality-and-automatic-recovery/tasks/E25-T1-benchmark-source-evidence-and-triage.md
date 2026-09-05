@@ -39,7 +39,7 @@ branch:
   task_id: E25-T1
   one_task_only: true
   created_at: "2026-09-05T10:28:00Z"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/328
 completion:
   completed_by: null
   completed_at: null
@@ -107,7 +107,7 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Implementation plan revision 1 is explicitly approved and the implementation gate is satisfied.
 - [x] This task has no dependencies; its dependency gate is satisfied.
 - [x] Passed through `ready` in cc793bc and started on `feat/E25-T1-evidence-classification`.
-- [ ] Open the dedicated PR after publication authorization; no merge authorization is recorded.
+- [x] Dedicated PR #328 is published; AD-053 records explicit merge and staged rollout authorization.
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
 
 The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
@@ -125,3 +125,12 @@ Task status remains `in_progress`: local acceptance checks do not replace the re
 Spike and implementation plan revision 2 are explicitly owner-approved following the
 [Batch/ZDR incompatibility](../PROVIDER_PRIVACY_REVISION.md). Prior test evidence
 is retained; approval gates are restored explicitly to revision 2.
+
+## Authorized release sequence
+
+Publication succeeded as PR #328; prior publication-denial text above is historical.
+AD-053 records the owner’s explicit E25 merge and staged production rollout approval.
+All task acceptance criteria pass on the versioned fixtures and real PostGIS suite.
+Current-main refresh passed 850 backend and 169 frontend tests; required CI passed
+on `c6815b7`, including a successful retry after a PyPI connection reset. Latest-head
+CI and release health remain required before the completion record is finalized.

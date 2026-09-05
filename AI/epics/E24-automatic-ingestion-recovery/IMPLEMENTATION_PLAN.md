@@ -3,21 +3,21 @@ schema: ai-workflow/implementation-plan@1
 epic: E24
 title: "Automatic ingestion recovery"
 status: approved
-revision: 1
+revision: 2
 owner: owner
 spike_revision: 2
 task_sequence:
   - id: E24-T1
     revision: 2
   - id: E24-T2
-    revision: 2
+    revision: 3
 approval:
   required_role: owner
   status: approved
   decided_by: Flippylolz
-  decided_at: "2026-09-05T10:33:19Z"
-  approved_revision: 1
-  evidence: "Codex task 01a0710e-adaa-76f2-8bcd-07784c03e9b2: owner message 'continue I approve' directly responding to implementation plan revision 1 approval request; AD-049"
+  decided_at: "2026-09-05T14:18:47Z"
+  approved_revision: 2
+  evidence: "Codex task 01a0710e-adaa-76f2-8bcd-07784c03e9b2: owner message continue directly approving rollout correction revision 1 and publication of aggregate evidence; original plan approval retained in Git history"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -31,9 +31,10 @@ invalidation:
 
 [Spike revision 2](SPIKE.md) was approved by the owner under
 [AD-048](../../workflow/AUTONOMOUS_DECISIONS.md#ad-048-approve-e24-spike-revision-2-and-prepare-the-first-implementation-plan).
-This first plan implements the requested order: stop archive starvation in T1,
+This plan implements the requested order: stop archive starvation in T1,
 then make cursors and retries reliable in T2. It locks both promoted task
-definitions at revision 2. No implementation has begun.
+definitions at T1 revision 2 and T2 revision 3. Revision 2 includes the explicitly
+approved staging correction after the initial T2 activation failed.
 
 Retain PostgreSQL, the backend-authoritative ingestion architecture, source
 evidence, protected offer fields, contact encryption, and existing provider
@@ -47,7 +48,7 @@ is necessary to verify this repair; it does not complete T4.
 | Order | Task and revision | Dependency | Independently reviewable result |
 | --- | --- | --- | --- |
 | 1 | [E24-T1 revision 2](tasks/E24-T1-terminate-original-archive-work.md) | None | Original archive work terminates using retained source evidence; safe bounded reconciliation resumes the queue. |
-| 2 | [E24-T2 revision 2](tasks/E24-T2-monotonic-cursors-and-fair-retries.md) | E24-T1 | Durable channel progress, fair retry scheduling, and bounded old-message reconciliation survive concurrency and restarts. |
+| 2 | [E24-T2 revision 3](tasks/E24-T2-monotonic-cursors-and-fair-retries.md) | E24-T1 | Durable channel progress, fair retry scheduling, and bounded old-message reconciliation survive concurrency and restarts. |
 
 Land planning metadata through its own documentation PR. Use
 `bugfix/E24-T1-original-archive` and `bugfix/E24-T2-cursors-and-retries` as separate
@@ -421,3 +422,14 @@ The scoped documentation changes are:
 - [M5 milestone](../../milestones/M5-production-maturity.md): current E24 planning status.
 - [Audit file index](../../audits/2026-09-05-files.md): links follow the two promoted task files.
 - [Autonomous decision log](../../workflow/AUTONOMOUS_DECISIONS.md): AD-048 records the owner-authored spike approval reply and its scope.
+
+## Approved rollout correction
+
+Approval was recorded at 14:18:47Z after the owner's preceding `continue`; this
+recording timestamp does not claim to be the message's exact send time.
+
+The owner approved [rollout correction revision 1](ROLLOUT_CORRECTION_PLAN.md)
+after T2 activation exposed temporary staging exhaustion. This explicit addendum
+authorizes bounded staging ownership and streaming, its tests and corrective
+rollout, and publication of aggregate incident evidence. T2 remains in progress
+until the corrective production observation passes. T3/T4 are not promoted.

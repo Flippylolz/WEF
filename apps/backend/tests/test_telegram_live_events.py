@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
@@ -715,3 +715,54 @@ async def test_drainer_marks_failed_without_blocking_the_batch() -> None:
     assert failures[0][0] == poisoned.id
     assert failures[0][1] == "ValueError"
     assert any(outcome == "processed" for _, outcome, _ in archive.marked)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", [False, True])
+async def test_event_consumer_releases_owned_media_after_pipeline(*, failure: bool) -> None:
+    identity = default_live_channel_identity()
+    client = FakeTelegramLiveClient(
+        entity=TelegramChannelEntity(
+            username=identity.username,
+            channel_id=identity.channel_id,
+            title=identity.channel_title,
+        )
+    )
+    lease = Mock()
+    pipeline = AsyncMock()
+
+    async def process(**kwargs: object) -> int:
+        _ = kwargs
+        lease.release.assert_not_called()
+        if failure:
+            error = "synthetic storage failure"
+            raise OSError(error)
+        return 1
+
+    pipeline.process_message.side_effect = process
+    processor = LiveTelegramEventProcessor(
+        store=_FakeStore(), client=client, media_pipeline=pipeline
+    )
+    message = LiveTelegramMessage(
+        external_message_id=20,
+        text="Cena: 4500 PLN, 2 pokoje, Mokotów",
+        published_at=datetime(2024, 6, 1, tzinfo=UTC),
+        edited_at=None,
+        media=(MediaDescriptor(kind=MediaKind.PHOTO, path="20/0.jpg"),),
+        media_lease=lease,
+    )
+    operation = processor(
+        identity=identity,
+        events=(
+            LiveTelegramEvent(
+                kind=LiveTelegramEventKind.NEW,
+                message=message,
+            ),
+        ),
+    )
+    if failure:
+        with pytest.raises(OSError, match="synthetic storage failure"):
+            await operation
+    else:
+        await operation
+    lease.release.assert_called_once()

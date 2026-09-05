@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E27
 title: "Faster verified releases"
-status: in_progress
+status: deferred
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -40,7 +40,7 @@ concrete task sequence, verification parity, lock boundary, and measurement desi
 for owner review following the selection of E27 on 2026-09-05.
 
 - Spike revision 1 approved by the owner on 2026-09-05; [decision transcript](OWNER_DECISIONS.md).
-- All three tasks promoted as revision-1 definitions with satisfied spike and implementation gates; T1 and T2 are done after successful automatic releases; T3 remains in progress.
+- All three tasks promoted as revision-1 definitions with satisfied spike and implementation gates; T1 and T2 are done after successful automatic releases; T3 measurement code is delivered; final acceptance is deferred at the owner’s request.
 - [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) was approved by the owner on 2026-09-05.
 - Ordered merges #324/#326/#329 were owner-authorized and completed. Current repository policy also provides standing authorization for eligible merges; acceptance gates remain required.
 
@@ -59,3 +59,12 @@ E14 retains shared test infrastructure, general refactoring, capacity, and platf
   [T3 acceptance evidence](ACCEPTANCE.md).
 
 Planning, T1 and T2 are merged. [T3 PR #332](https://github.com/Flippylolz/WEF/pull/332) delivers the evidence tooling so production can supply cache measurements; T3 remains open for the real-release acceptance cohort. The epic is not complete from one release.
+
+## Current disposition
+
+On 2026-09-05 the owner requested merging the evidence and closing this work for
+now. [Evidence closeout](EVIDENCE_CLOSEOUT.md) freezes six ordinary observed
+releases and the local cold/warm proofs. E27 is `deferred`, with T1/T2 done and
+T3 performance acceptance deferred. This does not mark the 20-release target
+satisfied. Resume only on owner reopening, then collect the missing cohort,
+production contention/cache diversity and incident/intervention evidence.

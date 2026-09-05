@@ -22,6 +22,7 @@ from wef_backend.features.ingestion.application.telegram_live import (
 from wef_backend.features.ingestion.domain import GroupingInput, SourceAnchor
 from wef_backend.features.ingestion.domain.model import MediaDescriptor, MediaKind
 from wef_backend.features.ingestion.domain.telegram_channel import default_live_channel_identity
+from wef_backend.features.ingestion.infrastructure.media_staging import MediaStaging, StagedMedia
 from wef_backend.features.ingestion.infrastructure.telethon_live_media import (
     LiveMediaDownloadLimits,
     download_live_message_media,
@@ -35,18 +36,21 @@ if TYPE_CHECKING:
 @pytest.mark.asyncio
 async def test_download_live_message_media_writes_photo_descriptor(tmp_path: Path) -> None:
     message_id = 42
-    target = tmp_path / str(message_id) / "0.jpg"
-    target.parent.mkdir(parents=True)
-    target.write_bytes(b"\xff\xd8\xff" + b"\x00" * 100)
     client = AsyncMock()
-    client.download_media = AsyncMock(return_value=str(target))
+
+    async def download(message: object, *, file: StagedMedia) -> StagedMedia:
+        _ = message
+        file.write(b"\xff\xd8\xff" + b"\x00" * 100)
+        return file
+
+    client.download_media = AsyncMock(side_effect=download)
     message = SimpleNamespace(id=message_id, media=MessageMediaPhoto(photo=SimpleNamespace()))
 
     descriptors = await download_live_message_media(
         client,
         message,
-        temp_root=tmp_path,
         limits=LiveMediaDownloadLimits(max_bytes=1024, timeout_seconds=5.0),
+        lease=MediaStaging(tmp_path).acquire(int(message.id), 1024),
     )
     assert len(descriptors) == 1
     assert descriptors[0].kind is MediaKind.PHOTO
@@ -133,8 +137,8 @@ async def test_download_live_message_media_rejects_invalid_message_id(tmp_path: 
     descriptors = await download_live_message_media(
         client,
         message,
-        temp_root=tmp_path,
         limits=LiveMediaDownloadLimits(max_bytes=1024, timeout_seconds=5.0),
+        lease=MediaStaging(tmp_path).acquire(12, 1024),
     )
     assert descriptors == ()
     client.download_media.assert_not_called()
@@ -146,8 +150,8 @@ async def test_download_live_message_media_skips_messages_without_media(tmp_path
     descriptors = await download_live_message_media(
         client,
         SimpleNamespace(id=12, media=None),
-        temp_root=tmp_path,
         limits=LiveMediaDownloadLimits(max_bytes=1024, timeout_seconds=5.0),
+        lease=MediaStaging(tmp_path).acquire(12, 1024),
     )
     assert descriptors == ()
     client.download_media.assert_not_called()
