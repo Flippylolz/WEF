@@ -57,6 +57,11 @@ async def test_unchanged_version_is_noop_and_new_success_resolves_with_history()
         extraction = extract_listing(raw)
         assert extraction.listing
         assert extraction.listing.area_sqm
+        extraction = replace(
+            extraction,
+            listing=replace(extraction.listing, apartment_price=None, parser_version="e2-v13"),
+            decision=replace(extraction.decision, parser_version="e2-v13"),
+        )
         service = PersistHistoricalIngestion(
             store=SQLAlchemyIngestionPersistence(database.session_factory)
         )
@@ -74,6 +79,7 @@ async def test_unchanged_version_is_noop_and_new_success_resolves_with_history()
             )
             message = (await session.scalars(select(SourceMessageRow))).one()
             message_id, revision_id = message.id, message.current_revision_id
+        assert extraction.listing is not None
         listing = replace(
             extraction.listing,
             apartment_price=ExtractedValue(
@@ -159,7 +165,7 @@ async def test_backfill_finishes_clean_rows_and_resumes_without_repeating() -> N
         samples = [
             "For sale: apartment\nPrice: 700 000 PLN",
             "Photo album",
-            "Sprzedam mieszkanie\nParking: 45 000 PLN",
+            "For sale apartment\nParking: 45 000 PLN",
         ]
         for index, body in enumerate(samples):
             raw = replace(_message(body), external_message_id=500 + index)
@@ -193,7 +199,7 @@ async def test_rolled_back_evaluation_can_retry_and_source_edit_supersedes_old_w
     await _prepare()
     database = create_database_resources(_settings().database_url)
     try:
-        raw = _message("Sprzedam mieszkanie\nParking: 45 000 PLN")
+        raw = _message("For sale apartment\nParking: 45 000 PLN")
         extraction = extract_listing(raw)
         service = PersistHistoricalIngestion(
             store=SQLAlchemyIngestionPersistence(database.session_factory)
@@ -207,7 +213,7 @@ async def test_rolled_back_evaluation_can_retry_and_source_edit_supersedes_old_w
             message = (await session.scalars(select(SourceMessageRow))).one()
             old_revision, message_id = message.current_revision_id, message.id
             changed = replace(
-                extraction, decision=replace(extraction.decision, parser_version="e2-v14")
+                extraction, decision=replace(extraction.decision, parser_version="e2-v15")
             )
             assert await record_parse_evaluation(
                 session,
