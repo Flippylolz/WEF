@@ -435,3 +435,28 @@ This append-only log records choices made while the owner delegated overnight MV
 - Selected approach: refresh and verify each PR, squash-merge in dependency order after current-head required CI and repository gates pass, and run the approved recovery deployment and production canary/observation procedure. Pause the old archive worker before the T1 release and preserve all durable source/recovery evidence.
 - Scope boundary: this explicitly authorizes the named merge side effects and their planned production rollout after automatic approval review requested a task-specific decision. It does not waive CI, dependency completion, receipt consistency, canary, or rollout gates, and does not authorize T3/T4 implementation or destructive evidence resets.
 - Reversal: pause recovery on failed acceptance evidence and retain the additive schema and ledgers for a corrected forward release.
+
+## AD-051: Approve E25 spike revision 1 and prepare the implementation plan
+
+- Time: 2026-09-05; recorded at 2026-09-05T10:15:52Z.
+- Owner decision: `yes I approve`, in Codex task `01a0710e-e877-7ab2-ad03-c6008aaf16e9`, directly answering: “Do you approve E25 spike revision 1 so I can promote its four tasks and prepare the implementation plan?”
+- Selected approach: record approval of E25 spike revision 1, move E25-T1 through E25-T4 into `tasks/`, and prepare implementation plan revision 1 for separate review.
+- Scope boundary: task refinement/promotion and planning only. This approval does not authorize application code, tests, migrations, production replay, AI activation or spend, deployment, or merging. E24-T1 remains an enforceable dependency of E25-T4.
+- Rationale: the owner approved the exact spike revision in response to the explicit approval question; implementation approval is a distinct gate under the repository workflow.
+- Reversal: invalidate affected spike/plan/task gates if the owner withdraws approval or material new evidence changes the approved recommendation.
+
+## AD-052: Approve E25 implementation plan revision 1
+
+- Time: 2026-09-05T10:22:44Z.
+- Owner decision: `continue`, in Codex task `01a0710e-e877-7ab2-ad03-c6008aaf16e9`, directly answering “Do you approve E25 implementation plan revision 1?” after the complete plan and commit e649ab0 were presented.
+- Selected approach: record approval of implementation plan revision 1, make E25-T1 ready, then implement E25 tasks on dedicated branches/PRs in plan order with required validation. Dependent tasks may use valid ordered ancestor PRs under ADR-018.
+- Scope boundary: the exact approved plan, including its narrow scheduled-AI authorization amendment, resource/privacy limits and E24-T1 dependency. This is not merge authorization, production activation, paid spend authorization or approval of E24 work.
+- Reversal: invalidate affected gates if material evidence changes the approved plan; preserve unrelated source/owner/AI data and work.
+
+## AD-053: Approve the E25 merge and staged production rollout
+
+- Time: 2026-09-05.
+- Owner decision: `continue`, in Codex task `01a0710e-e877-7ab2-ad03-c6008aaf16e9`, directly responding to: “May I merge #338 → #328 → #330 → #335 → #337 in dependency order and run the documented staged production rollout?”
+- Selected approach: refresh each PR against its merged parent, verify current-head CI and review requirements, squash-merge in dependency order, and run the documented staged production acceptance and guarded history replay.
+- Scope boundary: the approved E25 implementation and rollout, including its source, canary, quota, privacy and protection gates. This does not authorize paid allocation, unverified provider activation, bypassing CI or incomplete dependency acceptance, or destructive resets.
+- Reversal: pause scheduling/application on failed acceptance; retain source, reservation, proposal and field-lineage records for guarded recovery.
