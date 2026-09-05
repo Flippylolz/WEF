@@ -137,3 +137,18 @@ accuracy. Exact source offsets alone are insufficient: semantic role, currency, 
 current snapshot and protected ownership are independent application gates. Unknown
 formats remain observation-only. Report the live eligible denominator, unresolved
 reasons, actual spend availability and human interventions before claiming acceptance.
+
+### Historical parser convergence
+
+A newer parser evaluation is not itself proof that a canonical field changed.
+E25-T4 separates selected work, canary observations, guarded canonical writes and
+protected exceptions. Its population report balances `considered = source_absent +
+updated + unchanged + excluded + deferred + protected_conflict + failed`; queued,
+claimed and read-only observed records count as deferred. A partially repaired
+record with protected fields counts once as protected-conflict; field-event values
+show which safe fields changed. Denominators count source-revision/release identities.
+
+The accepted `e2-v14` / `source-evidence-v1` release remains tied to the reviewed
+75-case benchmark. An unaccepted version or downgrade cannot silently begin replay.
+Fixture canaries and local test coverage do not establish production prevalence or
+satisfy the still-outstanding representative live acceptance window.

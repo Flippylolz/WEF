@@ -463,3 +463,50 @@ Runtime rollback first disables scheduling/application and retains additive meta
 Do not erase reservations to regain quota or reset uncertain work for automatic retry.
 Existing field-origin guarded rollback remains authoritative for enrichment fills.
 T4 historical parser convergence has separate dependency and rollout gates.
+
+## Historical parser replay (E25-T4)
+
+Deploy migration 0023 before the worker. Release-owned `WEF_PARSER_REPLAY_ENABLED`
+and `WEF_PARSER_REPLAY_AUTO_APPLY` default to false and work independently of Groq
+configuration. Enable scheduling for read-only observation; the separate application
+flag permits guarded application only after automatic canary promotion. Accepted
+parser/policy identity is a reviewed code artifact beside the regression benchmark.
+Do not relabel an unvalidated parser version as accepted to drain the queue.
+
+The existing live worker checks once per 60 seconds. It selects at most 100 records
+in transactions of at most 10, claims one record globally at a time, yields to
+unhealthy/busy live ingestion and stops its processing loop after five seconds.
+Claims last 120 seconds. Local failures release claims with 60/120-second backoff;
+a third failure is terminal. Source edits create independent work identities.
+No geocoding, media or inference provider is called by parser replay.
+
+Read-only aggregate diagnostics:
+
+```sql
+SELECT version, phase, reason FROM parser_replay_releases ORDER BY created_at;
+SELECT release_version, state, reason, count(*)
+FROM parser_replay_work GROUP BY release_version, state, reason;
+SELECT w.release_version, count(*) AS field_events,
+       count(*) FILTER (WHERE e.before_value IS DISTINCT FROM e.after_value) AS changed_fields,
+       count(*) FILTER (WHERE e.reverted_at IS NOT NULL) AS reverted_fields
+FROM parser_replay_field_events e JOIN parser_replay_work w ON w.id=e.work_id
+GROUP BY w.release_version;
+```
+
+`parser_replay_progress` logs balanced populations only when they change. Deferred
+includes queued, claimed and observed records; protected-conflict includes partial
+safe repairs. Check field-event aggregates separately. A second completed pass for
+the same source/release must create zero canonical writes and zero new lineage.
+Keep the deployment acceptance denominator, source exclusions, conflicts and actual
+production version distribution separate from synthetic test counts.
+
+Pause scheduling/application with the two release flags while preserving metadata.
+For exceptional reversal, the bounded `rollback_parser_work(session_factory,
+work_uuid, utc_now)` service in `ingestion/infrastructure/parser_replay_rollback.py`
+reverses one reviewed job. It pauses that release and uses value/origin/source guards;
+it reports reverted and protected-conflict field counts and records the outcome.
+It is never called by the automatic worker. Repeat interrupted reversal safely;
+do not replace it with bulk updates or dropping tables. Restarting a previous
+runtime must retain the release ledger so version downgrade protection can operate.
+
+No production replay or provider activation was performed while implementing T4.

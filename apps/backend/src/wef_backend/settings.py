@@ -100,6 +100,8 @@ class Settings(BaseSettings):
     admin_session_secret: SecretStr | None = None
     release_sha: str | None = None
     ai_curation_enabled: bool = False
+    parser_replay_enabled: bool = False
+    parser_replay_auto_apply: bool = False
     ai_recovery_enabled: bool = False
     ai_recovery_activation_verified: bool = False
     ai_recovery_auto_apply: bool = False

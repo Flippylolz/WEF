@@ -332,3 +332,12 @@ no source text or raw prompts/responses. Exact evidence and semantic validation
 precede missing-only writes; snapshot/source checks and protected origins remain
 authoritative under concurrency. Requests with uncertain outcomes are never resent
 automatically. No deployment/provider enablement occurred during implementation.
+
+### Parser-only historical recovery
+
+E25-T4 reuses retained original source evidence inside the backend; it makes no
+provider requests. Its new durable tables contain IDs, typed scalar before/after
+values, parser versions, source offsets and outcome reasons, with no contact text
+or copied source bodies. The replay allowlist excludes contact, visibility, location,
+media and relationship writes. Existing encrypted contact rows remain byte-for-byte
+unchanged. Parser origins for content/property fields do not expand AI authority.

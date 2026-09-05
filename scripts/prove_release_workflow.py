@@ -247,6 +247,11 @@ def assert_release_configuration() -> None:
     assert "safe%3A%2Fpassword-0123456789abcdef" in values["WEF_DATABASE_URL"]
     assert values["WEF_GEOAPIFY_API_KEY"] == "fixture-geoapify-key-0123456789"
     assert "WEF_GROQ_API_KEY" not in values
+    assert values["WEF_PARSER_REPLAY_ENABLED"] == "false"
+    assert values["WEF_PARSER_REPLAY_AUTO_APPLY"] == "false"
+    replay_values = _build_fixture_values({**environment, "WEF_PARSER_REPLAY_ENABLED": "true"})
+    assert replay_values["WEF_PARSER_REPLAY_ENABLED"] == "true"
+    assert "WEF_GROQ_API_KEY" not in replay_values
 
     groq_environment = {
         **environment,

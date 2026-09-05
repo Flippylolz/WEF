@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T4
 epic: E25
 title: "Converge parser versions and field provenance automatically"
-status: ready
+status: in_progress
 revision: 1
 priority: P1
 size: L
@@ -95,7 +95,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 Required task dependencies: E24-T1, E25-T2, E25-T3. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This task is `ready` on its dedicated branch under the [workflow](../../../workflow/README.md). [Implementation plan revision 2](../IMPLEMENTATION_PLAN.md) is approved; the task must satisfy its dependency and branch gates before implementation.
+This task is `in_progress` after readiness commit `a84ea07` on its dedicated branch under the [workflow](../../../workflow/README.md). [Implementation plan revision 2](../IMPLEMENTATION_PLAN.md) is approved; the task must satisfy its dependency and branch gates before implementation.
 
 ## Rollout and automatic operation
 
@@ -137,3 +137,11 @@ No upstream PR was merged into main. Evaluation and AI migrations were sequenced
 as 0021 and 0022 after E24 archive migration 0020; T4 owns the next migration.
 The E24 original-event contract retains source revisions/receipts and does not
 require a material change to the approved T4 replay design.
+
+## Local implementation evidence
+
+[T4 evidence](../E25-T4-IMPLEMENTATION_EVIDENCE.md) records implementation, validation,
+changed files and remaining rollout gates. Local criteria are verified with
+synthetic sources and real PostgreSQL boundaries; production convergence is not
+claimed. Task completion and merge remain blocked by upstream completion/review and
+required release acceptance evidence, not by missing implementation approval.
