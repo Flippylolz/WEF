@@ -13,7 +13,7 @@ geocode internally).
 | Service | Geoapify | Groq | Typical commands |
 |---------|----------|------|------------------|
 | **`api`** | no (by design) | yes (`WEF_GROQ_*`) | AI parse batch, place review generate (via UI), `wef-promote-public-catalog` |
-| **`telegram-worker`** | yes (`WEF_GEOAPIFY_API_KEY`) | no | `wef-accept-pending-geocode-pins`, backfill, worker status |
+| **`telegram-worker`** | yes (`WEF_GEOAPIFY_API_KEY`) | yes, when explicitly activated | `wef-accept-pending-geocode-pins`, backfill, worker status |
 | **Operator one-shot** (`migrate`, `seed`, `import`, …) | varies | varies | Migrations, historical import, dry-run |
 
 Production shell pattern (adjust paths if your host layout differs):
@@ -46,27 +46,19 @@ canonical renames after E23 normalization lands.
 
 ## Groq rate and application budgets
 
-Two different limits apply to AI operator work:
+Manual place review, owner enrichment, ingestion parse and scheduled recovery share
+one durable allocation of **20 generation items per owner per UTC day**. The
+ledger permits one in-flight item and at least 60 seconds between starts. Initial
+cutover includes pre-ledger usage for that owner/day; drain old writers first.
+Provider-side limits remain independent and must be checked in the account.
 
-| Limit | Window | Value | Applies to |
-|-------|--------|-------|------------|
-| **Groq provider RPM** | per minute | ~30 requests/min (free tier; verify in console) | Synchronous **interactive** Groq calls only (`/admin/places` review, single Generate in UI) |
-| **WEF ingestion AI parse** | per UTC calendar day | **20** `ingestion_ai_parse_runs` / owner | `wef-batch-ingestion-ai-parse` generate steps only |
-| **WEF place review + enrichment** | per UTC calendar day | **20** shared provider calls / owner | `/admin/places` review, `/admin/offer-enrichment` |
-
-Bulk Groq workloads (`wef-batch-ingestion-ai-parse`, offer-enrichment **Process**)
-use the **Groq Batch API** when `WEF_GROQ_USE_BATCH_API=true` (default): one batch
-job per chunk (default chunk size **20** via `WEF_GROQ_BATCH_CHUNK_SIZE`). The Batch
-API requires a Groq **Developer** plan; on the free tier set
-`WEF_GROQ_USE_BATCH_API=false` so bulk work falls back to sequential synchronous
-chat (subject to ~30 RPM). Production Compose must pass `WEF_GROQ_USE_BATCH_API`
-into the `api` service environment for the flag to take effect.
-The WEF **daily** cap is independent: once 20 ingestion parse generates have run
-for the owner on the current UTC day, further generate calls return `daily_limit`
-until UTC midnight.
-
-Place review and offer enrichment share a separate daily counter; ingestion AI parse
-has its own counter (`ingestion_ai_parse_runs` only).
+Under E25 revision 2, all composed Groq work uses single-item Chat Completions
+with `openai/gpt-oss-20b`; no ZDR path calls Batch/Files. Legacy batch settings do
+not select another transport. Cohorts are durable application work, and their
+items reserve the same allocation before each request. Inputs are bounded to
+5,500 estimated tokens and outputs to 1,500 tokens, with a 30-second attempt
+timeout. Uncertain attempts count and are not automatically resent. Quota/429
+deferrals retain their next eligible time across restarts.
 
 Prerequisites for any Groq-backed command: `WEF_AI_CURATION_ENABLED=true`,
 `WEF_GROQ_ZDR_VERIFIED=true`, `WEF_GROQ_API_KEY` set, exact model allowlist, and
@@ -417,7 +409,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) (Telegram worker operations).
 
 ## E25 automatic parser exception recovery
 
-Migration `20260905_0021` adds provider reservations and recovery checkpoints. It
+Migration `20260905_0023` adds provider reservations and recovery checkpoints. It
 performs no provider requests or canonical backfill. Stop old AI writers before
 activation; the first reservation includes that day's pre-ledger owner usage.
 
