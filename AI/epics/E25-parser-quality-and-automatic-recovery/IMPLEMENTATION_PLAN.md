@@ -32,10 +32,10 @@ invalidation:
 
 # Implementation plan: Parser quality and automatic recovery
 
-## Revision 2 decision requested
+## Approved revision 2 decision
 
-Revision 1 was approved under AD-048. Revision 2 awaits explicit approval together
-with spike revision 2; neither artifact restores task gates before that decision.
+Revision 1 was approved under AD-048. Revision 2 has explicit owner approval together
+with spike revision 2; task dependency and branch gates remain separate.
 The [provider amendment](PROVIDER_PRIVACY_REVISION.md) records current official
 evidence, rejected alternatives, exact transport/state changes and validation.
 T1 and T2 remain behaviorally unchanged and retain their published test evidence.
@@ -55,7 +55,7 @@ T1, T2 and T4 retain revision 1. T3 advances to revision 2 for the transport cha
 
 | Task | Dependencies and gate | Independently reviewable result |
 | --- | --- | --- |
-| [E25-T1](tasks/E25-T1-benchmark-source-evidence-and-triage.md) | None; revision 2 gate revalidation pending | Safe benchmark, source-evidence classification, issue lifecycle and recovery eligibility |
+| [E25-T1](tasks/E25-T1-benchmark-source-evidence-and-triage.md) | None; revision 2 approval gate satisfied | Safe benchmark, source-evidence classification, issue lifecycle and recovery eligibility |
 | [E25-T2](tasks/E25-T2-repair-deterministic-extraction.md) | E25-T1 done or valid ancestor PR | Deterministic money/storage/rooms fixes with benchmark and persistence evidence |
 | [E25-T3](tasks/E25-T3-automate-validated-ai-exceptions.md) | E25-T1 done or valid ancestor PR | Durable scheduled AI proposals, evidence validation and guarded automatic application |
 | [E25-T4](tasks/E25-T4-converge-parser-versions-automatically.md) | E24-T1, E25-T2, E25-T3 done or valid ancestor PRs | Version-aware historical convergence, protected provenance and restart-safe replay |
@@ -191,8 +191,8 @@ A new provider/model, paid allocation, broader automatic field/visibility author
 - [x] No new provider/dependency/spend decision is implicitly approved; existing activation prerequisites remain enforced.
 - [x] No application code, tests, migrations or disposable proof code has been written.
 - [x] Revision 1 approval is retained in AD-048 and Git history.
-- [ ] Owner explicitly approves spike revision 2 and this implementation plan revision 2.
-- [ ] Restore non-done task gates against approved revision 2 before resuming work.
+- [x] Owner explicitly approved spike revision 2 and this implementation plan revision 2.
+- [x] Restore non-done task approval gates against approved revision 2 before resuming work.
 
 ## Revision 2 approval
 

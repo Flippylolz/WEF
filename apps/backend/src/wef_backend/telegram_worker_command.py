@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 import structlog
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from wef_backend.automatic_recovery_worker import maintain_automatic_recovery
 from wef_backend.composition import build_contact_cipher
 from wef_backend.features.admin.infrastructure.ai_enrichment_store import build_offer_origin_sync
 from wef_backend.features.ingestion.application.media_grouping import StatefulMediaGrouper
@@ -234,6 +235,17 @@ async def _run_connected_worker(  # noqa: PLR0913
                     state=state,
                     stop=stop,
                     interval=settings.telegram_reconciliation_interval_seconds,
+                ),
+                "parser_recovery": maintain_automatic_recovery(
+                    settings,
+                    session_factory,
+                    stop,
+                    lambda: (
+                        state.consumer_running
+                        and state.transport_connected
+                        and not processing_lock.locked()
+                        and not queue.has_ready_work
+                    ),
                 ),
                 "recurring_geocode": maintain_recurring_geocode(
                     geocode_worker,

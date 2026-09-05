@@ -21,13 +21,13 @@ spike_gate:
   file: ../SPIKE.md
   approved_revision: 2
   verified_by: Codex
-  verified_at: "2026-09-05T10:15:52Z"
+  verified_at: "2026-09-05T11:18:50Z"
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
   approved_revision: 2
   verified_by: Codex
-  verified_at: "2026-09-05T10:22:44Z"
+  verified_at: "2026-09-05T11:18:50Z"
 dependency_gate:
   status: blocked
   verified_by: null
@@ -113,6 +113,6 @@ The documentation branch is not this task's implementation branch. Follow the ta
 
 ## Provider revision gate
 
-Spike and implementation plan revision 2 await owner approval following the
+Spike and implementation plan revision 2 are explicitly owner-approved following the
 [Batch/ZDR incompatibility](../PROVIDER_PRIVACY_REVISION.md). Prior test evidence
-is retained; no non-done task gate is restored implicitly.
+is retained; approval gates are restored explicitly to revision 2.

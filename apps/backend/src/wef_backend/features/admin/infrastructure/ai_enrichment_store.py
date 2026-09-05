@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
@@ -22,6 +23,7 @@ from wef_backend.features.admin.application.offer_enrichment import (
     OriginKind,
     OriginState,
     SyncOfferAiOrigins,
+    catalog_value_for_field,
     current_field_value,
     is_missing,
     offer_input_fingerprint,
@@ -404,7 +406,7 @@ class SQLAlchemyOfferAiEnrichmentStore:
             )
             await session.commit()
 
-    async def complete_item(  # noqa: PLR0913
+    async def complete_item(  # noqa: PLR0913, C901, PLR0912
         self,
         *,
         item: OfferAiEnrichmentItem,
@@ -423,6 +425,12 @@ class SQLAlchemyOfferAiEnrichmentStore:
             row = await session.get(OfferAiEnrichmentItemRow, item.id, with_for_update=True)
             if offer is None or row is None:
                 return ItemOutcome.STALE
+            if row.state in {
+                ItemState.SUCCEEDED.value,
+                ItemState.SKIPPED.value,
+                ItemState.FAILED.value,
+            }:
+                return ItemOutcome(row.outcome) if row.outcome else ItemOutcome.STALE
             snapshot = _snapshot(offer)
             source_stmt = (
                 select(SourceMessageRevisionRow)
@@ -451,9 +459,56 @@ class SQLAlchemyOfferAiEnrichmentStore:
                 tuple(source.raw_checksum for source in source_rows),
             )
             del fingerprint
+            protected = frozenset(
+                await session.scalars(
+                    select(OfferFieldOriginRow.field_name).where(
+                        OfferFieldOriginRow.offer_id == item.offer_id,
+                        OfferFieldOriginRow.state == OriginState.ACTIVE.value,
+                        OfferFieldOriginRow.origin == OriginKind.AI.value,
+                    )
+                )
+            )
+            protected_conflict = bool(protected.intersection(apply_values))
             apply_values = {
-                name: value for name, value in apply_values.items() if is_missing(snapshot, name)
+                name: value
+                for name, value in apply_values.items()
+                if is_missing(snapshot, name) and name not in protected
             }
+            for low, high in (
+                ("apartment_price_min", "apartment_price_max"),
+                ("parking_price_min", "parking_price_max"),
+                ("storage_price_min", "storage_price_max"),
+                ("area_min_sqm", "area_max_sqm"),
+                ("rooms_min", "rooms_max"),
+            ):
+                lower = (
+                    catalog_value_for_field(low, apply_values[low])
+                    if low in apply_values
+                    else current_field_value(snapshot, low)
+                )
+                upper = (
+                    catalog_value_for_field(high, apply_values[high])
+                    if high in apply_values
+                    else current_field_value(snapshot, high)
+                )
+                if (
+                    lower is not None
+                    and upper is not None
+                    and Decimal(str(lower)) > Decimal(str(upper))
+                ):
+                    protected_conflict = True
+            if protected_conflict:
+                apply_values = {}
+                outcome, state = ItemOutcome.CONFLICT, ItemState.SKIPPED
+                events = tuple(
+                    replace(
+                        event,
+                        outcome=FieldEventOutcome.SKIPPED,
+                        reason="protected_conflict",
+                        applied_value=None,
+                    )
+                    for event in events
+                )
             origins = tuple(origin for origin in origins if origin.field_name in apply_values)
             if apply_values and current != item.input_fingerprint:
                 outcome = ItemOutcome.STALE

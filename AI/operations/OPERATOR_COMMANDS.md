@@ -414,3 +414,52 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) (Telegram worker operations).
 - [E21 epic](../epics/E21-ingestion-ai-fallback/README.md) — parse-issue AI fallback scope
 - [E22 epic](../epics/E22-property-type-filter/README.md) — property type classification and filter
 - [E23 epic](../epics/E23-location-display-name-normalization/README.md) — location display name normalization
+
+## E25 automatic parser exception recovery
+
+Migration `20260905_0021` adds provider reservations and recovery checkpoints. It
+performs no provider requests or canonical backfill. Stop old AI writers before
+activation; the first reservation includes that day's pre-ledger owner usage.
+
+Release-owned settings default off: `WEF_AI_RECOVERY_ENABLED`,
+`WEF_AI_RECOVERY_ACTIVATION_VERIFIED`, `WEF_AI_RECOVERY_AUTO_APPLY`, and
+`WEF_AI_RECOVERY_OWNER_ID` (an active existing owner UUID). Activation verification
+means recorded ZDR, permission for masked descriptions, credentials, exact model
+and free-allocation evidence. Set enabled plus verified for generation/validation
+observation; leave auto-apply false until calibration and canary evidence is accepted.
+The existing `WEF_AI_CURATION_ENABLED` and `WEF_GROQ_ZDR_VERIFIED` must also be true.
+These settings are delivered through the existing release workflow; no new service
+or scheduler is needed. No provider configuration was activated by E25 development.
+
+The worker yields to live ingestion, selects at most 100 eligible identities in
+ten-record transactions and performs at most one scheduled generation per minute.
+Classification maintenance evaluates ten sources per tick. Claims last 120 seconds.
+Quota and rate-limit deferrals resume automatically; three local systemic failures
+produce one terminal reason. An uncertain submission consumes quota and is never
+resent automatically. Pausing submissions retains work and proposals; pausing apply
+retains observations and prevents scheduled canonical writes. Existing owner cohorts
+use the same allocation and single-item transport.
+
+Inspect aggregate state in the restricted database session (no source text needed):
+
+```sql
+SELECT state, reason, count(*) FROM ai_recovery_work GROUP BY state, reason;
+SELECT state, reason, count(*), sum(token_input), sum(token_output)
+FROM ai_provider_attempts
+WHERE created_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+GROUP BY state, reason;
+SELECT budget_day, sum(used) FROM ai_provider_accounts GROUP BY budget_day;
+```
+
+Keep work counts mutually exclusive; compare queued, deferred, observed, applied,
+terminal and superseded totals against considered unique identities. Report the
+observation-only and unsupported families separately. Provider spend is unavailable
+unless independently verified from the authorized account; token counts are not a
+billing statement. Record human interventions from actual operator/audit actions
+during the representative 24-hour acceptance window. That live evidence remains
+outstanding; fake-provider tests do not establish it.
+
+Runtime rollback first disables scheduling/application and retains additive metadata.
+Do not erase reservations to regain quota or reset uncertain work for automatic retry.
+Existing field-origin guarded rollback remains authoritative for enrichment fills.
+T4 historical parser convergence has separate dependency and rollout gates.

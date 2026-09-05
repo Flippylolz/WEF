@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E25
 title: "Parser quality and automatic recovery"
-status: planning
+status: in_progress
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -43,8 +43,8 @@ Approval gates are restored to revision 2; dependency and task branch gates rema
 - Planning PR [327](https://github.com/Flippylolz/WEF/pull/327): all five required CI checks passed.
 - T1 PR [328](https://github.com/Flippylolz/WEF/pull/328): published, 827 backend and 169 frontend tests passed locally.
 - T2 PR [330](https://github.com/Flippylolz/WEF/pull/330): published, 852 backend and 169 frontend tests passed locally; 75-case benchmark has zero field failures.
-- T3 readiness was recorded locally, then stopped before implementation when provider evidence contradicted the plan.
-- T4 cannot start without E24-T1, T2 and T3 dependency evidence. No E24-T1 implementation PR was open at the 2026-09-05 review.
+- T3 implements durable reservations, scheduled recovery and calibrated source validation under approved revision 2. [Implementation evidence](E25-T3-IMPLEMENTATION_EVIDENCE.md) records validation and remaining rollout gates.
+- T4 cannot start without E24-T1, T2 and T3 dependency evidence. E24-T1 PR [331](https://github.com/Flippylolz/WEF/pull/331) is now open, but is not an ancestor of this E25 stack.
 
 No merge, historical canonical application or provider activation has occurred.
 The provider revision does not change T1/T2 extraction behavior or invalidate their

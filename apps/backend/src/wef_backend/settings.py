@@ -6,6 +6,7 @@ import os
 from decimal import Decimal
 from pathlib import Path
 from typing import Literal
+from uuid import UUID  # noqa: TC003 - Pydantic resolves annotations at runtime
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -99,6 +100,10 @@ class Settings(BaseSettings):
     admin_session_secret: SecretStr | None = None
     release_sha: str | None = None
     ai_curation_enabled: bool = False
+    ai_recovery_enabled: bool = False
+    ai_recovery_activation_verified: bool = False
+    ai_recovery_auto_apply: bool = False
+    ai_recovery_owner_id: UUID | Literal[""] | None = None
     groq_api_key: SecretStr | None = None
     groq_model: str = "openai/gpt-oss-20b"
     groq_zdr_verified: bool = False

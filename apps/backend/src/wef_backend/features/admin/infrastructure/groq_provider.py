@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
 import time
+from datetime import UTC, datetime, timedelta
+from email.utils import parsedate_to_datetime
 from typing import TYPE_CHECKING, Protocol
 
 import httpx
@@ -35,45 +36,26 @@ _HTTP_CLIENT_ERROR = 400
 _HTTP_SERVER_ERROR = 500
 _HTTP_TOO_MANY_REQUESTS = 429
 _HTTP_QUOTA_STATUSES = frozenset({401, 402, 403})
-_SYNC_RATE_LIMIT_RETRIES = 3
-_SYNC_RATE_LIMIT_BASE_SLEEP_SECONDS = 2.0
 
 
 async def _complete_many_sequentially(
     complete: Callable[..., Awaitable[StructuredCompletion]],
     requests: tuple[BatchCompletionRequest, ...],
 ) -> tuple[BatchCompletionResult, ...]:
-    """Run chat completions one-by-one, backing off on free-tier 429s."""
-    results: list[BatchCompletionResult] = []
+    """No hidden transport retry; production wraps each item in durable quota."""
+    results = []
     for request in requests:
-        completion: StructuredCompletion | None = None
-        error: ProviderRequestError | None = None
-        for attempt in range(_SYNC_RATE_LIMIT_RETRIES + 1):
-            try:
-                completion = await complete(
-                    model=request.model,
-                    messages=request.messages,
-                    schema_name=request.schema_name,
-                    schema=request.schema,
-                    max_output_tokens=request.max_output_tokens,
-                )
-                error = None
-                break
-            except ProviderRequestError as request_error:
-                error = request_error
-                if (
-                    request_error.outcome is not ProviderOutcome.RATE_LIMITED
-                    or attempt >= _SYNC_RATE_LIMIT_RETRIES
-                ):
-                    break
-                await asyncio.sleep(_SYNC_RATE_LIMIT_BASE_SLEEP_SECONDS * (attempt + 1))
-        results.append(
-            BatchCompletionResult(
-                custom_id=request.custom_id,
-                completion=completion,
-                error=error,
-            ),
-        )
+        try:
+            completion = await complete(
+                model=request.model,
+                messages=request.messages,
+                schema_name=request.schema_name,
+                schema=request.schema,
+                max_output_tokens=request.max_output_tokens,
+            )
+            results.append(BatchCompletionResult(request.custom_id, completion, None))
+        except ProviderRequestError as error:
+            results.append(BatchCompletionResult(request.custom_id, None, error))
     return tuple(results)
 
 
@@ -164,13 +146,15 @@ class GroqChatCompletionsAdapter:
         status, payload, response_headers = await self._post_with_retry(body, headers)
         latency_ms = int((time.perf_counter() - started) * 1000)
         if status == _HTTP_TOO_MANY_REQUESTS:
-            raise ProviderRequestError(ProviderOutcome.RATE_LIMITED)
+            raise ProviderRequestError(
+                ProviderOutcome.RATE_LIMITED, retry_at=_retry_after(response_headers)
+            )
         if status in _HTTP_QUOTA_STATUSES:
             raise ProviderRequestError(ProviderOutcome.QUOTA)
         if _HTTP_CLIENT_ERROR <= status < _HTTP_SERVER_ERROR:
             raise ProviderRequestError(ProviderOutcome.REFUSAL)
         if status >= _HTTP_SERVER_ERROR:
-            raise ProviderRequestError(ProviderOutcome.NETWORK)
+            raise ProviderRequestError(ProviderOutcome.NETWORK, safe_retry=True)
         parsed = parse_completion_payload(payload)
         return StructuredCompletion(
             payload=parsed,
@@ -185,30 +169,13 @@ class GroqChatCompletionsAdapter:
         body: dict[str, object],
         headers: dict[str, str],
     ) -> tuple[int, object, Mapping[str, str]]:
-        try:
-            status, payload, response_headers = await self._transport.post_json(
-                GROQ_CHAT_COMPLETIONS_URL,
-                json_body=body,
-                headers=headers,
-                timeout_seconds=self._timeout_seconds,
-            )
-        except ProviderRequestError as error:
-            if error.outcome is not ProviderOutcome.TIMEOUT:
-                raise
-            status, payload, response_headers = await self._transport.post_json(
-                GROQ_CHAT_COMPLETIONS_URL,
-                json_body=body,
-                headers=headers,
-                timeout_seconds=self._timeout_seconds,
-            )
-        if status >= _HTTP_SERVER_ERROR:
-            status, payload, response_headers = await self._transport.post_json(
-                GROQ_CHAT_COMPLETIONS_URL,
-                json_body=body,
-                headers=headers,
-                timeout_seconds=self._timeout_seconds,
-            )
-        return status, payload, response_headers
+        # Retry decisions belong to the durable reservation boundary.
+        return await self._transport.post_json(
+            GROQ_CHAT_COMPLETIONS_URL,
+            json_body=body,
+            headers=headers,
+            timeout_seconds=self._timeout_seconds,
+        )
 
     async def complete_many(
         self,
@@ -271,3 +238,16 @@ class GroqAiProvider:
         if self._use_batch_api:
             return await self._batch.complete_many(requests)
         return await self._chat.complete_many(requests)
+
+
+def _retry_after(headers: Mapping[str, str]) -> datetime | None:
+    value = headers.get("retry-after") or headers.get("Retry-After")
+    if value is None:
+        return None
+    try:
+        return datetime.now(UTC) + timedelta(seconds=max(0, int(value)))
+    except (ValueError, OverflowError):
+        try:
+            return parsedate_to_datetime(value).astimezone(UTC)
+        except (ValueError, TypeError, OverflowError):
+            return None

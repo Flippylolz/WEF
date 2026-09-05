@@ -202,6 +202,7 @@ class _FakeStore:
         *,
         source_message_revision_id: UUID,
         listing: ListingCandidate,
+        run_id: UUID | None = None,  # noqa: ARG002 - protocol correlation used by SQL adapter
     ) -> UUID:
         """Stub owner AI listing persistence for protocol conformance."""
         _ = (source_message_revision_id, listing)

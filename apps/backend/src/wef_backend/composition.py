@@ -46,6 +46,8 @@ from wef_backend.features.admin.application.ingestion_ai_parse import (
 from wef_backend.features.admin.application.offer_enrichment import (
     DEFAULT_OFFER_AUTO_APPLY_FIELDS,
 )
+from wef_backend.features.admin.application.provider_budget import BudgetedProvider
+from wef_backend.features.admin.application.recovery_validation import CALIBRATED_FIELDS
 from wef_backend.features.admin.infrastructure import (
     SQLAlchemyAdminAuditStore,
     SQLAlchemyIngestionAiParseStore,
@@ -54,10 +56,10 @@ from wef_backend.features.admin.infrastructure import (
     SQLAlchemyPlaceAiReviewStore,
     SQLAlchemyRevealAuditReader,
 )
-from wef_backend.features.admin.infrastructure.groq_batch_provider import GroqBatchSettings
 from wef_backend.features.admin.infrastructure.groq_provider import (
-    GroqAiProvider,
+    GroqChatCompletionsAdapter,
 )
+from wef_backend.features.admin.infrastructure.provider_budget_store import SQLAlchemyProviderBudget
 from wef_backend.features.catalog.application import (
     BrowseLocationOffers,
     BrowseViewportListings,
@@ -188,7 +190,9 @@ def build_services(settings: Settings | None = None) -> AppServices:
     offer_ai_enrichment_store = SQLAlchemyOfferAiEnrichmentStore(database.session_factory)
     parse_issue_store = SQLAlchemyParseIssueStore(database.session_factory)
     ingestion_ai_parse_store = SQLAlchemyIngestionAiParseStore(database.session_factory)
-    ingestion_persistence = SQLAlchemyIngestionPersistence(database.session_factory)
+    ingestion_persistence = SQLAlchemyIngestionPersistence(
+        database.session_factory, contact_cipher=contact_cipher
+    )
     reveal_audit_reader = SQLAlchemyRevealAuditReader(database.session_factory)
     admin_secret = (
         runtime_settings.admin_session_secret.get_secret_value()
@@ -205,17 +209,15 @@ def build_services(settings: Settings | None = None) -> AppServices:
         zdr_verified=runtime_settings.groq_zdr_verified,
         model=runtime_settings.groq_model,
         api_key_present=bool(groq_key),
-        batch_chunk_size=runtime_settings.groq_batch_chunk_size,
-        auto_apply_fields=DEFAULT_OFFER_AUTO_APPLY_FIELDS,
+        batch_chunk_size=1,
+        auto_apply_fields=(DEFAULT_OFFER_AUTO_APPLY_FIELDS & CALIBRATED_FIELDS),
     )
-    groq_provider = GroqAiProvider(
-        groq_key or "disabled",
-        timeout_seconds=runtime_settings.groq_timeout_seconds,
-        use_batch_api=runtime_settings.groq_use_batch_api,
-        batch_settings=GroqBatchSettings(
-            poll_interval_seconds=runtime_settings.groq_batch_poll_interval_seconds,
-            max_wait_seconds=runtime_settings.groq_batch_max_wait_seconds,
+    groq_provider = BudgetedProvider(
+        GroqChatCompletionsAdapter(
+            groq_key or "disabled", timeout_seconds=min(30.0, runtime_settings.groq_timeout_seconds)
         ),
+        SQLAlchemyProviderBudget(database.session_factory),
+        clock,
     )
     generate_place_review = GeneratePlaceReview(
         place_ai_review_store,

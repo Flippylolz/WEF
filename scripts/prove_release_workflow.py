@@ -188,6 +188,27 @@ def assert_release_configuration() -> None:
     assert with_groq["WEF_GROQ_USE_BATCH_API"] == "true"
     assert with_groq["WEF_GROQ_BATCH_CHUNK_SIZE"] == "20"
     _assert_blank_groq_batch_defaults(groq_environment)
+    recovery_flags = (
+        "WEF_AI_RECOVERY_ENABLED",
+        "WEF_AI_RECOVERY_ACTIVATION_VERIFIED",
+        "WEF_AI_RECOVERY_AUTO_APPLY",
+    )
+    assert all(with_groq[name] == "false" for name in recovery_flags)
+    enabled = _build_fixture_values({
+        **groq_environment,
+        **dict.fromkeys(recovery_flags, "true"),
+        "WEF_AI_RECOVERY_OWNER_ID": "12345678-1234-1234-1234-123456789abc",
+    })
+    assert all(enabled[name] == "true" for name in recovery_flags)
+    assert enabled["WEF_AI_RECOVERY_OWNER_ID"] == "12345678-1234-1234-1234-123456789abc"
+    for name, value in (("WEF_AI_RECOVERY_ENABLED", "maybe"),
+                        ("WEF_AI_RECOVERY_OWNER_ID", "not-a-uuid")):
+        try:
+            _build_fixture_values({**groq_environment, name: value})
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"Invalid recovery configuration accepted: {name}")
 
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "production.env"

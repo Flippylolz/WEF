@@ -7,6 +7,7 @@ import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from uuid import UUID
 from urllib.parse import quote
 
 from scripts.deploy.validate_release import (
@@ -137,7 +138,9 @@ def _groq_batch_settings_from_environment() -> dict[str, str]:
     max_wait = _optional_env("WEF_GROQ_BATCH_MAX_WAIT_SECONDS", "3600")
     if (
         not max_wait.isdigit()
-        or not MIN_GROQ_BATCH_MAX_WAIT_SECONDS <= int(max_wait) <= MAX_GROQ_BATCH_MAX_WAIT_SECONDS
+        or not MIN_GROQ_BATCH_MAX_WAIT_SECONDS
+        <= int(max_wait)
+        <= MAX_GROQ_BATCH_MAX_WAIT_SECONDS
     ):
         msg = "Groq batch max wait must be an integer from 30 to 86400"
         raise ValueError(msg)
@@ -179,6 +182,19 @@ def _optional_groq_curation(values: dict[str, str]) -> None:
     values["WEF_AI_CURATION_ENABLED"] = enabled
     values["WEF_GROQ_ZDR_VERIFIED"] = zdr
     values["WEF_GROQ_TIMEOUT_SECONDS"] = timeout
+    for flag in (
+        "WEF_AI_RECOVERY_ENABLED",
+        "WEF_AI_RECOVERY_ACTIVATION_VERIFIED",
+        "WEF_AI_RECOVERY_AUTO_APPLY",
+    ):
+        value = _optional_env(flag, "false").lower()
+        if value not in {"true", "false"}:
+            message = "AI recovery flags must be true or false"
+            raise ValueError(message)
+        values[flag] = value
+    owner = os.environ.get("WEF_AI_RECOVERY_OWNER_ID", "").strip()
+    if owner:
+        values["WEF_AI_RECOVERY_OWNER_ID"] = str(UUID(owner))
     values.update(_groq_batch_settings_from_environment())
 
 

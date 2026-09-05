@@ -1,6 +1,6 @@
 # E25 revision 2: preserve Zero Data Retention during automatic recovery
 
-## Decision for approval
+## Approved decision
 
 Approve spike revision 2 and implementation plan revision 2 to use durable local
 cohorts of single-item Groq Chat Completions requests for scheduled recovery and
@@ -87,8 +87,7 @@ isolated from the ZDR path; do not claim that retaining its code grants permissi
 to activate it. Place review remains separately owner-confirmed.
 
 Update ADR-022's Required API boundary and scheduled-authorization wording during
-T3, plus security, pipeline and operator docs. The accepted ADR is unchanged until
-this revision is approved. No new production dependency is needed.
+T3, plus security, pipeline and operator docs. ADR-022 is amended by the T3 implementation under this approval. No new production dependency is needed.
 
 ## Required additional validation
 

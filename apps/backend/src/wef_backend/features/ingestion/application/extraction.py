@@ -1223,3 +1223,10 @@ def _invalid_range_warning(
         field_name=field_name,
         spans=(_trimmed_span(text, match),),
     )
+
+
+def extract_source_property_type(text: str) -> ExtractedValue[PropertyType] | None:
+    """Expose deterministic property evidence for guarded AI listing creation."""
+    warnings: list[ExtractionWarning] = []
+    result = _property_type(text, PARSER_VERSION, warnings)
+    return None if warnings else result

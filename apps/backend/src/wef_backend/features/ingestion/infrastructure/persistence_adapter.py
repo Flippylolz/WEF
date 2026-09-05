@@ -950,6 +950,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
         *,
         source_message_revision_id: UUID,
         listing: ListingCandidate,
+        run_id: UUID | None = None,
     ) -> UUID:
         """Create or update one offer from an owner-approved AI listing proposal."""
         async with self._session_factory() as session:
@@ -957,10 +958,49 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             if revision is None:
                 message = "source message revision not found"
                 raise PersistenceBatchError(message)
-            source_message = await session.get(SourceMessageRow, revision.source_message_id)
+            source_message = await session.get(
+                SourceMessageRow, revision.source_message_id, with_for_update=True
+            )
             if source_message is None:
                 message = "source message not found"
                 raise PersistenceBatchError(message)
+            if (
+                source_message.current_revision_id != revision.id
+                or source_message.deleted_at is not None
+            ):
+                message = "source revision is no longer current"
+                raise PersistenceBatchError(message)
+            existing_offer = await session.scalar(
+                select(OfferSourceRow.offer_id).where(
+                    OfferSourceRow.source_message_id == source_message.id,
+                    OfferSourceRow.relationship == "primary",
+                )
+            )
+            if existing_offer is not None:
+                message = "source already has a primary offer"
+                raise PersistenceBatchError(message)
+            if run_id is not None:
+                run = (
+                    (
+                        await session.execute(
+                            text(
+                                "SELECT state,source_message_revision_id "
+                                "FROM ingestion_ai_parse_runs "
+                                "WHERE id=:id FOR UPDATE"
+                            ),
+                            {"id": run_id},
+                        )
+                    )
+                    .mappings()
+                    .one_or_none()
+                )
+                if (
+                    run is None
+                    or run["state"] != "pending"
+                    or run["source_message_revision_id"] != revision.id
+                ):
+                    message = "parse proposal is no longer pending"
+                    raise PersistenceBatchError(message)
             channel = await session.get(SourceChannelRow, source_message.source_channel_id)
             if channel is None:
                 message = "source channel not found"
@@ -977,6 +1017,15 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                 message_id=source_message.id,
                 revision_id=revision.id,
             )
+            if run_id is not None:
+                await session.flush()
+                await session.execute(
+                    text(
+                        "UPDATE ingestion_ai_parse_runs SET state='applied',offer_id=:offer,"
+                        "applied_at=:now WHERE id=:id"
+                    ),
+                    {"offer": result.offer_id, "now": datetime.now(UTC), "id": run_id},
+                )
             await session.commit()
             return result.offer_id
 

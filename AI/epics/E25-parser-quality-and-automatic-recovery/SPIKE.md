@@ -103,11 +103,11 @@ Material changes to source semantics, geospatial confidence/precision claims, au
 - [x] Proposed task scope, acceptance, dependencies, and exception handling recorded.
 - [x] Outputs are documentation only; no production or disposable proof artifacts created.
 - [x] Historical revision 1 approval is retained in AD-047.
-- [ ] Owner approves revision 2 and its provider transport amendment.
+- [x] Owner approved revision 2 and its provider transport amendment.
 
 ## Historical owner decision for revision 1
 
-The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation plan revision 1 was subsequently approved under AD-048. Revision 2 is pending explicit approval.
+The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation plan revision 1 was subsequently approved under AD-048. Revision 2 is explicitly approved on 2026-09-05.
 
 ## Revision 2 approval
 

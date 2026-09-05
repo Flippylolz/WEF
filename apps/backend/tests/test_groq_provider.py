@@ -127,46 +127,20 @@ async def test_adapter_sends_exact_model_and_strict_schema() -> None:
     assert result.token_input == 40
 
 
-async def test_adapter_retries_timeout_and_5xx_once_only() -> None:
-    """One retry is used for timeout or 5xx; 4xx never retries."""
-    timeout_then_ok = ScriptedTransport(
-        [
-            ProviderRequestError(ProviderOutcome.TIMEOUT),
-            (200, _completion('{"ok": true}'), {}),
-        ],
-    )
-    parsed = await _adapter(timeout_then_ok).complete(
-        model=ALLOWED_GROQ_MODEL,
-        messages=({"role": "user", "content": "x"},),
-        schema_name="place_review",
-        schema={},
-        max_output_tokens=10,
-    )
-    assert parsed.payload == {"ok": True}
-    assert len(timeout_then_ok.calls) == 2
-
-    server_error = ScriptedTransport([(500, {}, {}), (200, _completion({"a": 1}), {})])
-    recovered = await _adapter(server_error).complete(
-        model=ALLOWED_GROQ_MODEL,
-        messages=({"role": "user", "content": "x"},),
-        schema_name="place_review",
-        schema={},
-        max_output_tokens=10,
-    )
-    assert recovered.payload == {"a": 1}
-
-    client_error = ScriptedTransport([(400, {"error": "secret-body"}, {})])
-    with pytest.raises(ProviderRequestError) as refused:
-        await _adapter(client_error).complete(
+@pytest.mark.parametrize(
+    "failure", [ProviderRequestError(ProviderOutcome.TIMEOUT), (500, {}, {}), (400, {}, {})]
+)
+async def test_adapter_performs_exactly_one_transport_attempt(failure: object) -> None:
+    transport = ScriptedTransport([failure, (200, _completion({"ok": True}), {})])
+    with pytest.raises(ProviderRequestError):
+        await _adapter(transport).complete(
             model=ALLOWED_GROQ_MODEL,
             messages=({"role": "user", "content": "x"},),
             schema_name="place_review",
             schema={},
             max_output_tokens=10,
         )
-    assert refused.value.outcome is ProviderOutcome.REFUSAL
-    assert "secret-body" not in str(refused.value)
-    assert len(client_error.calls) == 1
+    assert len(transport.calls) == 1
 
 
 async def test_adapter_maps_quota_rate_limit_and_refusal() -> None:
@@ -438,17 +412,10 @@ async def test_chat_adapter_complete_many_falls_back_sequentially() -> None:
     assert results[0].completion is not None
 
 
-async def test_chat_adapter_complete_many_records_provider_errors(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    async def _fake_sleep(_seconds: float) -> None:
-        return None
-
-    monkeypatch.setattr(
-        "wef_backend.features.admin.infrastructure.groq_provider.asyncio.sleep",
-        _fake_sleep,
+async def test_chat_adapter_complete_many_does_not_retry_rate_limits() -> None:
+    transport = ScriptedTransport(
+        [(429, {}, {"Retry-After": "120"}), (200, _completion({"ok": True}), {})]
     )
-    transport = ScriptedTransport([(429, {}, {}), (429, {}, {}), (429, {}, {}), (429, {}, {})])
     adapter = GroqChatCompletionsAdapter("gsk_test_secret_value", transport=transport)
     request = BatchCompletionRequest(
         custom_id="a",
@@ -459,43 +426,7 @@ async def test_chat_adapter_complete_many_records_provider_errors(
         max_output_tokens=1500,
     )
     results = await adapter.complete_many((request,))
-    assert results[0].completion is None
     assert results[0].error is not None
     assert results[0].error.outcome is ProviderOutcome.RATE_LIMITED
-    # Initial attempt plus three backoff retries.
-    assert len(transport.calls) == 4
-
-
-async def test_chat_adapter_complete_many_retries_rate_limit_then_succeeds(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    sleeps: list[float] = []
-
-    async def _fake_sleep(seconds: float) -> None:
-        sleeps.append(seconds)
-
-    monkeypatch.setattr(
-        "wef_backend.features.admin.infrastructure.groq_provider.asyncio.sleep",
-        _fake_sleep,
-    )
-    transport = ScriptedTransport(
-        [
-            (429, {}, {}),
-            (200, _completion({"ok": True}), {}),
-        ],
-    )
-    adapter = GroqChatCompletionsAdapter("gsk_test_secret_value", transport=transport)
-    request = BatchCompletionRequest(
-        custom_id="a",
-        model=ALLOWED_GROQ_MODEL,
-        messages=({"role": "user", "content": "hello"},),
-        schema_name="ingestion_ai_parse",
-        schema={"type": "object"},
-        max_output_tokens=1500,
-    )
-    results = await adapter.complete_many((request,))
-    assert results[0].error is None
-    assert results[0].completion is not None
-    assert results[0].completion.payload == {"ok": True}
-    assert sleeps == [2.0]
-    assert len(transport.calls) == 2
+    assert results[0].error.retry_at is not None
+    assert len(transport.calls) == 1

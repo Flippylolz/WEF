@@ -33,6 +33,11 @@ from wef_backend.features.admin.application.ai_review import (
     mask_source_text_for_provider,
     offer_enrichment_json_schema,
 )
+from wef_backend.features.admin.application.provider_context import provider_operation
+from wef_backend.features.admin.application.recovery_validation import (
+    evidence_supports_field,
+    money_currency_matches,
+)
 from wef_backend.features.ingestion.application.extraction import extract_contact_spans
 
 if TYPE_CHECKING:
@@ -773,6 +778,7 @@ class StartOfferEnrichmentBatch:
         request_id: UUID,
         offer_ids: tuple[UUID, ...] | None = None,
         limit: int = DEFAULT_BATCH_LIMIT,
+        batch_id: UUID | None = None,
     ) -> OfferAiEnrichmentBatch:
         """Create an immutable batch or deny when the owner/runtime cannot proceed."""
         if not self._runtime.active:
@@ -804,7 +810,7 @@ class StartOfferEnrichmentBatch:
             message = "no eligible offers"
             raise AdminDeniedError(message)
         now = self._clock.now()
-        batch_id = uuid4()
+        batch_id = batch_id or uuid4()
         items: list[OfferAiEnrichmentItem] = []
         for ordinal, offer_id in enumerate(selected):
             snapshot = await self._store.get_offer_snapshot(offer_id)
@@ -983,12 +989,14 @@ class ProcessOfferEnrichmentItem:
         self._runtime = runtime
         self._reviews = reviews
 
+    @provider_operation
     async def __call__(
         self,
         *,
         owner_id: UUID,
         batch_id: UUID,
         request_id: UUID,
+        auto_apply: bool = True,
     ) -> ItemOutcome | None:
         """Process up to one Groq Batch chunk, or pause when the daily budget is exhausted."""
         batch = await self._store.get_batch(batch_id)
@@ -1065,6 +1073,13 @@ class ProcessOfferEnrichmentItem:
         by_custom_id = {result.custom_id: result for result in batch_results}
         for entry in prepared:
             result = by_custom_id.get(str(entry.item.id))
+            if (
+                result is not None
+                and result.error is not None
+                and result.error.retry_at is not None
+            ):
+                # Keep the durable processing item for the next eligible worker tick.
+                continue
             if result is None or result.error is not None or result.completion is None:
                 await self._store.complete_item(
                     item=entry.item,
@@ -1112,6 +1127,7 @@ class ProcessOfferEnrichmentItem:
                 called_at=called_at,
                 request_id=request_id,
                 owner_id=owner_id,
+                auto_apply=auto_apply,
             )
         return last_outcome
 
@@ -1206,6 +1222,8 @@ class ProcessOfferEnrichmentItem:
         return ItemOutcome.NO_EVIDENCE
 
     async def _used_budget(self, owner_id: UUID, now: datetime) -> int:
+        if getattr(self._provider, "durable_budget", False):
+            return 0
         if self._reviews is not None:
             return await self._reviews.count_owner_runs_since(owner_id, since=_day_start(now))
         return await self._store.count_owner_provider_calls_since(owner_id, since=_day_start(now))
@@ -1223,6 +1241,7 @@ class ProcessOfferEnrichmentItem:
         called_at: datetime,
         request_id: UUID,
         owner_id: UUID,
+        auto_apply: bool = True,
     ) -> ItemOutcome:
         now = self._clock.now()
         by_id = {str(revision.revision_id): revision for revision in revisions}
@@ -1285,7 +1304,31 @@ class ProcessOfferEnrichmentItem:
                 item_outcome = ItemOutcome.INVALID
                 continue
             confidence = str(field["confidence"])
-            gated = name in self._runtime.auto_apply_fields and confidence == "high"
+            semantic = evidence_supports_field(
+                revision.text_original, str(field["evidence_fragment"]), name, canonical
+            )
+            if "_price_" in name:
+                target_currency = snapshot.currency
+                for currency_field in fields:
+                    if currency_field["field_name"] == "currency" and target_currency is None:
+                        proposed_currency = str(currency_field["proposed_value"])
+                        currency_revision = by_id[str(currency_field["source_revision_id"])]
+                        if evidence_supports_field(
+                            currency_revision.text_original,
+                            str(currency_field["evidence_fragment"]),
+                            "currency",
+                            proposed_currency,
+                        ):
+                            target_currency = proposed_currency
+                semantic = semantic and money_currency_matches(
+                    revision.text_original, str(field["evidence_fragment"]), name, target_currency
+                )
+            gated = (
+                auto_apply
+                and name in self._runtime.auto_apply_fields
+                and confidence == "high"
+                and semantic
+            )
             if not gated:
                 events.append(
                     _field_event(
@@ -1296,7 +1339,7 @@ class ProcessOfferEnrichmentItem:
                         name=name,
                         proposed=canonical,
                         outcome=FieldEventOutcome.PROPOSED,
-                        reason="below_threshold",
+                        reason="below_threshold" if semantic else "unsupported_semantics",
                         revision=revision,
                         now=now,
                         owner_id=owner_id,
