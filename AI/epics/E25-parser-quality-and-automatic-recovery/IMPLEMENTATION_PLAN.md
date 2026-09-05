@@ -33,7 +33,7 @@ invalidation:
 
 ## Approved baseline and decision requested
 
-The owner approved [spike revision 1](SPIKE.md) on 2026-09-05 in response to the explicit spike-approval question; [AD-050](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) records the decision. The owner approved implementation plan revision 1 by replying “continue” directly to its approval request; AD-051 records the scope. Task dependency and branch gates remain enforceable.
+The owner approved [spike revision 1](SPIKE.md) on 2026-09-05 in response to the explicit spike-approval question; [AD-050](../../workflow/AUTONOMOUS_DECISIONS.md#ad-050-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) records the decision. The owner approved implementation plan revision 1 by replying “continue” directly to its approval request; AD-051 records the scope. Task dependency and branch gates remain enforceable.
 
 Research baseline: main `a2cdb16`, fetched 2026-09-05. The [audit](../../audits/2026-09-05-system-audit.md#p1--confirmed-source-evidenced-parser-misses) confirms the Ostrzycka label/storage gaps, the misleading parse-issue taxonomy, and stale historical parser versions. Its production counts are dated observations, not a new measurement or a field-accuracy benchmark.
 
