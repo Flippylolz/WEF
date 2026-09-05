@@ -10,7 +10,7 @@ This workflow controls all epic work. Approval is revision-specific and attribut
 4. **Refine and promote proposed tasks.** Move approved candidates from `proposed-tasks/` to `tasks/` inside the same epic, preserving their stable IDs and recording promotion metadata.
 5. **Write the implementation plan.** Sequence promoted tasks and document modules, tests, risks, migrations, rollout, and rollback.
 6. **Obtain explicit owner implementation approval.** The owner approves the current implementation-plan `revision`.
-7. **Implement task by task.** Satisfy the dependency gate, move one task to `ready`, create its dedicated branch, then move it to `in_progress`.
+7. **Implement task by task.** Satisfy the dependency gate, move one task to `ready`, create its dedicated branch, then move it to `in_progress`. Merge its pull request after all required CI checks pass and the repository's merge requirements are satisfied; standing owner authorization covers every PR without a separate merge request.
 8. **Close and clean up the epic.** After every required task and pull request is complete, mark the epic `done`, verify that its worktrees are clean and its branches contain no unpushed or unmerged work, remove those worktrees and merged branches, prune stale worktree metadata, and return the primary checkout to the latest `main`. Preserve and hand off any remaining work instead of force-deleting it.
 
 No production code, generated scaffold, executable experiment, migration, infrastructure change, or disposable proof code may be written before step 6 is complete. Spike work may inspect existing code/data and cite research, but its committed outputs are Markdown and other non-executable documentation only.
@@ -197,7 +197,7 @@ Gate `status` is exactly `blocked`, `stacked`, `satisfied`, or `invalidated`. `s
 - The branch name contains the task ID, for example `feature/E4-T1-map-geojson`, `fix/E3-T3-geocode-bounds`, or `spike/E0-T2-architecture-proof`.
 - A branch/PR contains one task only; do not batch unrelated tasks or reuse a branch for a later task.
 - Branch from the latest `main` when no dependency is open. For an ordered stack, branch from the immediate upstream task and target that branch so the pull request diff contains only the current task.
-- Satisfy procedural review/CI governance, then merge/retarget from the base of the stack upward. Squash merge and delete each merged branch.
+- Satisfy the [repository merge requirements](../governance/REPOSITORY_RULES.md#pull-request-rules), then merge/retarget from the base of the stack upward without asking for another per-PR owner merge request. Squash merge and delete each merged branch.
 - Documentation-only spike/planning revisions may use a documentation branch, but that branch must contain no production or disposable proof code.
 
 ## Implementation-plan schema and gate

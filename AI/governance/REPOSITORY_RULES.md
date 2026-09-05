@@ -8,7 +8,7 @@
 - The repository is initialized and `main` is the active default branch.
 - Raw exports, media, databases, generated import reports containing source data, Telegram sessions, and secrets must never be committed.
 
-[ADR-023](../decisions/adr/ADR-023-enforce-main-branch-protection.md) supersedes the original private-plan limitation in ADR-017. GitHub branch protection was enabled on public repository branch `main` on 2026-09-02; the rules below are platform-enforced except for the explicitly retained repository-administrator bypass.
+[ADR-023](../decisions/adr/ADR-023-enforce-main-branch-protection.md) supersedes the original private-plan limitation in ADR-017. GitHub branch protection was enabled on public repository branch `main` on 2026-09-02. The active [Protect main ruleset](https://github.com/Flippylolz/WEF/rules/22217876), verified through the GitHub API on 2026-09-05, now enforces the pull-request, conversation, strict-check, linear-history, force-push, and deletion gates, with an owner bypass. Squash merging remains repository policy even though GitHub currently allows all three merge methods.
 
 ## Branch policy
 
@@ -63,7 +63,7 @@ Do not pause approved implementation merely because an upstream pull request awa
 6. When a parent merges, retarget/rebase its direct child to the parent's new base and rerun required checks.
 7. Merge from the bottom/base of the stack upward. A child cannot be completed or merged while any dependency is not `done`.
 
-Reviews and CI remain required before merge. Stacking changes wait time, not acceptance or completion standards.
+Required CI and the repository's merge requirements apply to every PR in the stack. No separate per-PR owner merge request is needed under the standing authorization below. Stacking does not change acceptance or completion standards.
 
 ## `hotfix/` exception
 
@@ -85,7 +85,7 @@ To keep administrator exceptions owner-only on a personal repository:
 
 ## Enforced `main` policy and CI check names
 
-GitHub enforces these controls under [ADR-023](../decisions/adr/ADR-023-enforce-main-branch-protection.md):
+GitHub's active `Protect main` ruleset enforces these controls under [ADR-023](../decisions/adr/ADR-023-enforce-main-branch-protection.md):
 
 - Require changes through pull requests.
 - Require zero approving reviews while the owner is the sole maintainer; revisit this setting before granting another maintainer write access.
@@ -94,8 +94,8 @@ GitHub enforces these controls under [ADR-023](../decisions/adr/ADR-023-enforce-
 - Block force pushes.
 - Block branch deletion.
 - Require linear history.
-- Allow squash merge; disable merge commits and rebase merges unless a later decision changes history policy.
-- Owner emergency exceptions require an audit trail and post-merge CI.
+
+Procedural rules additionally require squash merges and an audit trail plus post-merge CI for owner emergency exceptions. GitHub currently allows squash, merge, and rebase methods; agents must select squash.
 
 Expected CI check names must remain stable for scripts/manual review. Add them only after each workflow has run at least once:
 
@@ -108,6 +108,26 @@ Expected CI check names must remain stable for scripts/manual review. Add them o
 Checks may be introduced incrementally while the applications are scaffolded, but no implemented component may merge without its lint/type/test/build checks.
 
 ## Pull-request rules
+
+The owner grants standing merge authorization for every pull request, including feature, fix, documentation, tooling, and dependency PRs. Once all required CI checks have completed successfully on the current head and the merge requirements below are satisfied, an agent may merge without another owner request or confirmation. This supersedes the former per-PR explicit-merge-request rule; [AD-047](../workflow/AUTONOMOUS_DECISIONS.md#ad-047-authorize-every-pr-to-merge-after-green-ci) records the owner instruction.
+
+Before merging:
+
+- Confirm the PR is open, non-draft, conflict-free, and has no explicit owner hold.
+- Verify every required check listed above exists on the current head and has completed with `success`. Pending, failing, cancelled, missing, skipped, or neutral required checks do not count as green CI.
+- Ensure the head includes the latest target branch, all review conversations are resolved, and any platform-required reviews are satisfied. Zero approving reviews are currently required.
+- Merge stacked PRs in dependency order after the task dependency gate is satisfied.
+- Refetch the PR head and checks immediately before squash-merging with `gh pr merge <number> --squash --delete-branch --match-head-commit <verified-sha>`. If the head or base changes, revalidate before merging. Do not use `--admin` for an ordinary merge.
+
+Standing merge authorization does not approve new implementation scope or replace spike, implementation-plan, acceptance, or deployment requirements. The scheduled Dependabot controller retains its additional eligibility rules below; those rules govern that unattended controller, while agent-managed dependency PRs may use the same standing merge authorization as other PRs.
+
+GitHub native auto-merge is available and enabled for this repository (`allow_auto_merge: true`, verified through the GitHub API on 2026-09-05). For a PR that satisfies the scope, dependency, and owner-hold requirements, agents may opt in while CI is running:
+
+```text
+gh pr merge <number> --auto --squash --delete-branch --match-head-commit <head-sha>
+```
+
+This queues the PR; GitHub performs the merge only after its required checks and other merge gates pass. Enabling auto-merge needs no additional per-PR owner confirmation. The scheduled Dependabot path must still satisfy its controller-specific eligibility rules before enrollment.
 
 Each pull request must:
 
@@ -128,7 +148,10 @@ Review should verify:
 
 ## CI and deployment event rules
 
-CI runs for pull requests targeting `main`.
+CI runs for pull requests, including ordered stacks targeting an ancestor branch.
+PR CI and the main release invoke the same exact-SHA verification workflow.
+The release performs main-push verification; a second main-push CI run is omitted.
+Coverage publishing follows a successful main-push release.
 
 CI fails when backend coverage or frontend coverage is below 90%. The suites run in separate jobs and Makefile targets. The Backend job uses pytest `--cov-fail-under=90`. The Frontend job uses Vitest `coverage.thresholds` of 90% for lines and branches. The Coverage badge job applies the same per-suite floor and does not use a combined threshold.
 
@@ -152,9 +175,14 @@ The deployment job's associated-PR check remains defense in depth for branch pro
 
 The deploy job additionally:
 
-- Depends on the release CI/build jobs.
+- Depends on complete shared verification, both inspected image builds, and the
+  runtime proof for their exact digests, or validated equivalent evidence from a
+  successful trusted exact-SHA main-push release.
 - Reconstructs complete production configuration from GitHub Actions variables/secrets, transfers it to mode-0600 temporary files, validates it, and atomically activates it on every deploy; it does not depend on paid environment-review protection.
-- Uses one concurrency group with `cancel-in-progress: false`.
+- Uses the `wef-production` concurrency group with `cancel-in-progress: false`
+  for the entire deployment job. Different SHAs may verify/build concurrently;
+  per-SHA workflow concurrency prevents duplicate preparation. Source ancestry
+  and a host-locked current-state guard prevent stale activation.
 - Builds/pulls images identified by commit SHA/digest.
 - Receives no production secret in pull-request workflows.
 - Verifies through the GitHub API that the pushed SHA is associated with a merged pull request targeting `main`; an unassociated direct push builds/tests but does not deploy automatically.
@@ -179,7 +207,7 @@ Policy:
 - Do not group major runtime/framework upgrades with routine updates.
 - Pin GitHub Actions to full commit SHAs; Dependabot updates those pins through reviewed pull requests.
 
-Dependabot provides the update schedule and creates pull requests natively on GitHub Free. The custom scheduled merge controller remains authoritative for Dependabot-specific eligibility even though repository-level native auto-merge is available; native auto-merge must not bypass its owner-label, update-classification, or bot-commit checks.
+Dependabot provides the update schedule and creates pull requests natively on GitHub Free. The custom scheduled merge controller remains authoritative for its unattended Dependabot merges even though repository-level native auto-merge is available; controller-managed auto-merge must not bypass its owner-label, update-classification, or bot-commit checks. Agent-managed dependency PRs follow the standing authorization and merge requirements above.
 
 Create `.github/workflows/dependabot-merge.yml` with:
 
@@ -236,4 +264,4 @@ The repository was established in this order:
 6. Add the scheduled label/check/commit-gated Dependabot merge controller.
 7. Build the main-only GHCR/SSH deployment workflow, prove E7-T4 rollback, and enable automatic deployment.
 
-The 2026-09-02 protection and native auto-merge configuration is part of the current repository baseline. Auto-merge is opt-in per pull request and never bypasses the pull-request, conversation, strict-check, or linear-history gates. No approving review is required while the owner is the sole maintainer. The custom Dependabot controller remains authoritative for Dependabot-specific eligibility and must satisfy the protected-branch rules. The cancelled workflow candidate remains recorded as historical traceability in [E1-T5](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T5-configure-protected-main-governance.md); ADR-023 records the later unplanned owner-directed configuration.
+Protection and native auto-merge are part of the current repository baseline. Auto-merge is opt-in per pull request and never bypasses the pull-request, conversation, strict-check, or linear-history gates. No approving review is required while the owner is the sole maintainer. The custom Dependabot controller remains authoritative for its unattended-merge eligibility and must satisfy the protected-branch rules. The cancelled workflow candidate remains recorded as historical traceability in [E1-T5](../epics/E1-repository-developer-foundation/proposed-tasks/E1-T5-configure-protected-main-governance.md); ADR-023 records the later unplanned owner-directed configuration.

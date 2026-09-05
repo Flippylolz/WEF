@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E27
 title: "Faster verified releases"
-status: awaiting_approval
+status: approved
 revision: 1
 owner: owner
 research_only: true
@@ -14,11 +14,11 @@ domain_docs:
 proposed_task_ids: [E27-T1, E27-T2, E27-T3]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: owner
+  decided_at: "2026-09-05T10:18:07Z"
+  approved_revision: 1
+  evidence: OWNER_DECISIONS.md
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -69,9 +69,9 @@ The task files define proposed acceptance and rollout boundaries, not approval t
 
 ## Proposed task boundaries
 
-- [E27-T1: Measure merge-to-production time and report release outcomes](proposed-tasks/E27-T1-measure-release-and-report-outcomes.md) — P1/M; dependencies: none.
-- [E27-T2: Parallelize verified work and bound the deployment lock](proposed-tasks/E27-T2-parallelize-verification-and-bound-deploy-lock.md) — P1/L; dependencies: E27-T1.
-- [E27-T3: Prove the release budget and unattended recovery](proposed-tasks/E27-T3-prove-release-budget-and-unattended-recovery.md) — P1/M; dependencies: E27-T2.
+- [E27-T1: Measure merge-to-production time and report release outcomes](tasks/E27-T1-measure-release-and-report-outcomes.md) — P1/M; dependencies: none.
+- [E27-T2: Parallelize verified work and bound the deployment lock](tasks/E27-T2-parallelize-verification-and-bound-deploy-lock.md) — P1/L; dependencies: E27-T1.
+- [E27-T3: Prove the release budget and unattended recovery](tasks/E27-T3-prove-release-budget-and-unattended-recovery.md) — P1/M; dependencies: E27-T2.
 
 ## Risks and open questions
 
@@ -90,8 +90,8 @@ Material changes to source semantics, geospatial confidence/precision claims, au
 - [x] Affected modules/domain documents and decisions identified.
 - [x] Proposed task scope, acceptance, dependencies, and exception handling recorded.
 - [x] Outputs are documentation only; no production or disposable proof artifacts created.
-- [x] Revision 1 is awaiting approval; decision metadata remains pending.
+- [x] Revision 1 is owner-approved; decision metadata links the session reply.
 
 ## Owner decision
 
-Record an attributable owner decision for this exact revision using the YAML approval object and durable evidence. Approval permits task refinement/promotion and implementation planning, not production code by itself.
+The owner approved revision 1 with `continue` in direct response to the revision-specific approval question. See [the decision transcript](OWNER_DECISIONS.md). Approval permits task refinement/promotion and implementation planning, not production code by itself.

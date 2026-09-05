@@ -55,6 +55,7 @@ def main() -> int:
     parser.add_argument("migration_revision")
     parser.add_argument("backend_digest")
     parser.add_argument("web_digest")
+    parser.add_argument("--verification-fingerprint")
     arguments = parser.parse_args()
 
     try:
@@ -67,6 +68,10 @@ def main() -> int:
         )
     except ValueError as error:
         parser.error(str(error))
+    if arguments.verification_fingerprint is not None:
+        if not re.fullmatch(r"[0-9a-f]{64}", arguments.verification_fingerprint):
+            parser.error("verification fingerprint must be SHA-256")
+        manifest["verification_fingerprint"] = arguments.verification_fingerprint
     arguments.output.write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",

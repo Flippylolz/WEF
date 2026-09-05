@@ -487,6 +487,41 @@ Commands must write audit records. Direct ad hoc production SQL is an emergency 
 - Unknown schema/channel mismatch: stop before canonical writes.
 - Cancellation: finish or roll back the current transaction, persist checkpoint/report, and exit non-zero/cancelled.
 
+## Original archive recovery (E24-T1)
+
+Archive replay consumes the original row UUID and stored payload/checksum; it no
+longer reconstructs and re-lands a smaller live sibling. The historical decoder
+preserves mixed text, entities, replies, and media descriptors. Legacy flattened
+seeds require exact retained revision/checksum proof. New seeds retain verbatim
+JSON. Channel/ID/evidence disagreement fails before canonical mutation.
+
+A unique `telegram_archive_resolutions` receipt commits with the canonical
+transaction. It records applied, already-canonical, non-candidate, superseded, or
+deleted state and the source revision/tombstone proof. After commit, a conditional
+acknowledgement marks the original archive row terminal. Restart after commit but
+before acknowledgement projects the receipt without another offer/revision
+mutation. A terminal row cannot accumulate attempts or reopen on a delayed error.
+Cancellation propagates and pending work remains resumable.
+
+Live/archive upserts and parser replay honor deletion evidence and source version
+ordering. An archived delete can prevent creation even before a canonical source
+exists. Older replay cannot replace newer content; unproved same-time differences
+are conflicts. Known lossy projections may restore richer retained source evidence
+only when exact lineage proves the repair and no newer source version intervened.
+
+Automatic recovery uses a durable 100-original canary, 25-record batches spaced at
+least five seconds apart, and a durable pause state. Canonical receipts verify the
+canary before expansion. Read-only preflight and operator apply use the same ledger
+and selection as the worker. Archive runs use reprocess mode and cannot publish a
+synthetic live checkpoint. Attempted work and newly terminal work are separate;
+failed/repeated work does not refresh successful progress.
+
+Media descriptors remain evidence, not authorization to open archived paths.
+Archive completion does not prove derivative completion. T2 owns the durable
+cursor/retry changes; T3 owns independent media retry; T4 owns broader progress
+health. These follow-ups are not complete merely because original-row recovery
+is implemented.
+
 ## E25-T1: Evidence-based parse evaluations
 
 `source-evidence-v1` adds a classification independent of legacy `parser_miss` and
@@ -527,7 +562,7 @@ is bounded and restartable, including clean and already-linked messages. T4 stil
 owns canonical historical convergence; successful classification alone does not
 mean canonical values were repaired.
 
-Migration `20260905_0020` adds evaluation and transition tables and advances runtime
+Migration `20260905_0021` adds evaluation and transition tables and advances runtime
 readiness to that revision. Deploy schema before writers. Runtime rollback keeps
 these additive tables and their history; explicitly downgrading the migration
 removes only evaluation metadata and must not be confused with a data rollback.
