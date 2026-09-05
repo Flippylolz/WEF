@@ -190,7 +190,7 @@ A new provider/model, paid allocation, broader automatic field/visibility author
 - [x] Modules, contracts, data ownership, tests, limits, rollout and rollback are defined.
 - [x] No new provider/dependency/spend decision is implicitly approved; existing activation prerequisites remain enforced.
 - [x] No application code, tests, migrations or disposable proof code has been written.
-- [x] Revision 1 approval is retained in AD-051 and Git history.
+- [x] Revision 1 approval is retained in AD-052 and Git history.
 - [x] Owner explicitly approved spike revision 2 and this implementation plan revision 2.
 - [x] Restore non-done task approval gates against approved revision 2 before resuming work.
 

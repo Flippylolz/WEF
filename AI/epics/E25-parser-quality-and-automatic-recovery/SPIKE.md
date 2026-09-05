@@ -32,7 +32,7 @@ invalidation:
 
 ## Revision 2 decision
 
-Revision 1 approval is retained in AD-050 and Git history. New official provider
+Revision 1 approval is retained in AD-051 and Git history. New official provider
 evidence invalidates its Batch/ZDR premise for T3. Approve the narrowly scoped
 [provider amendment](PROVIDER_PRIVACY_REVISION.md): keep Groq GPT-OSS 20B and Zero
 Data Retention, process automatic cohorts as durable single-item Chat Completions

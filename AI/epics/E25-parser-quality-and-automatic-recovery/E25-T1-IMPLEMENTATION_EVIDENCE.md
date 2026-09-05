@@ -51,7 +51,7 @@ suppression or behavior refactoring was included.
 
 ## Migration and operations
 
-Migration `20260905_0020` adds `parse_evaluations` and
+Migration `20260905_0022` adds `parse_evaluations` and
 `parse_evaluation_transitions`; deploy it before the new runtime readiness revision.
 Metadata backfill defaults to 100 records and at most 10 records per transaction,
 uses keyset pagination and skips durable completed evaluation identities.
