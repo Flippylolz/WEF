@@ -417,7 +417,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) (Telegram worker operations).
 
 ## E25 automatic parser exception recovery
 
-Migration `20260905_0021` adds provider reservations and recovery checkpoints. It
+Migration `20260905_0023` adds provider reservations and recovery checkpoints. It
 performs no provider requests or canonical backfill. Stop old AI writers before
 activation; the first reservation includes that day's pre-ledger owner usage.
 
@@ -466,7 +466,7 @@ T4 historical parser convergence has separate dependency and rollout gates.
 
 ## Historical parser replay (E25-T4)
 
-Deploy migration 0023 before the worker. Release-owned `WEF_PARSER_REPLAY_ENABLED`
+Deploy migration 0024 before the worker. Release-owned `WEF_PARSER_REPLAY_ENABLED`
 and `WEF_PARSER_REPLAY_AUTO_APPLY` default to false and work independently of Groq
 configuration. Enable scheduling for read-only observation; the separate application
 flag permits guarded application only after automatic canary promotion. Accepted

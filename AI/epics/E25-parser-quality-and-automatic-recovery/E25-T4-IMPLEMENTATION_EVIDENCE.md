@@ -110,5 +110,13 @@ E24-T1/T2 are merged into main (`64da1bd` / `5fd175f`). Replacement planning
 PR #338 restores the closed, unmerged #327 against main. E25 remains an ordered
 ancestor stack #338 → #328 → #330 → #335 → #337. Migrations now run archive
 0020 → progress 0021 → evaluations 0022 → durable AI 0023 → parser replay 0024.
-The full refreshed suite and release proof must pass before publication. Existing
+The refreshed suite passed: 1,064 backend and 169 frontend tests, with 90.38%
+backend coverage. Lint, format, type, contract, Markdown links and production
+proof also passed. Existing
 canary, application flags, owner guards, rollback and acceptance gates remain.
+
+Refresh-specific files: replay migration renamed to `20260905_0024_parser_replay.py`,
+`wef_backend/migration.py`, `AI/ingestion/PIPELINE.md`,
+`AI/operations/OPERATOR_COMMANDS.md`, this evidence file, epic `README.md`,
+`IMPLEMENTATION_PLAN.md`, and the T4 task dependency record. Upstream changes
+remain owned by their corresponding parent PRs.
