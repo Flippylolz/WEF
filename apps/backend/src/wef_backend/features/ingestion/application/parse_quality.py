@@ -12,7 +12,7 @@ from wef_backend.features.ingestion.domain.extraction import SourceSpan
 if TYPE_CHECKING:
     from wef_backend.features.ingestion.domain.extraction import ExtractionResult
 
-POLICY_VERSION = "source-evidence-v1"
+POLICY_VERSION = "source-evidence-v2"
 
 
 class ParseClassification(StrEnum):
@@ -76,6 +76,12 @@ _ABSENT = re.compile(
     r"(?i)^\s*(?:n/?a|brak|nie podano|unknown|not (?:specified|provided)|"
     r"не указана?|не вказано|on request|do uzgodnienia|по запросу|[?—-])\s*[.!]?\s*$"
 )
+_AMOUNT = r"\d+(?:[ \u00a0.,]\d+)*(?:\s*(?:k|tys\.?|тыс\.?))?"
+_CURRENCY = r"(?:PLN|EUR|USD|UAH|zł|грн|руб|[$€₴])"  # noqa: RUF001 - currency names
+_MONEY_EVIDENCE = re.compile(
+    rf"(?i)(?<!\w)(?:{_AMOUNT}\s*{_CURRENCY}(?!\w)|{_CURRENCY}\s*{_AMOUNT}(?!\w))"
+)
+_BARE_AMOUNT = re.compile(rf"(?i)^\s*{_AMOUNT}\s*[.!]?\s*$")
 _NEGATIVE = re.compile(
     r"(?i)\b(?:service message|joined the channel|left the channel|photo album|"
     r"usługi|ремонт квартир|послуги|advertising services)\b"
@@ -113,6 +119,13 @@ def _field_evidence(text: str, extraction: ExtractionResult) -> tuple[FieldEvide
             spans = value.provenance.spans
         elif matches and all(_ABSENT.fullmatch(match["value"]) for match in matches):
             classification = ParseClassification.SOURCE_ABSENT
+        elif name in {"apartment_price", "parking_price", "storage_price"} and not any(
+            _MONEY_EVIDENCE.search(match["value"]) or _BARE_AMOUNT.fullmatch(match["value"])
+            for match in matches
+        ):
+            # A price label can describe availability without supplying a price.
+            # Preserve uncertainty instead of spending a provider request on it.
+            classification = ParseClassification.UNCLASSIFIED
         elif spans:
             classification = ParseClassification.EXTRACTION_MISS
         else:

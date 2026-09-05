@@ -140,4 +140,10 @@ production releases and bounded acceptance evidence. AD-053 explicitly authorize
 this staged release. Current local validation passed 1,060 backend and 169 frontend
 tests, with 90.24% backend coverage. Scheduling, activation verification and apply
 remain off until current free allocation is confirmed and live canary evidence passes.
+
+The owner subsequently confirmed the free plan and ZDR and selected `flipstar`
+for recovery. Preflight found a price-label false positive before any provider
+request. Follow-up branch `bugfix/E25-T3-price-evidence` corrects eligibility under
+`source-evidence-v2`; see the implementation evidence's minimal-use preflight.
+The provider canary and representative acceptance remain outstanding.
 The representative 24-hour acceptance window remains required for T3 completion.

@@ -130,3 +130,44 @@ replacement #338 targets main. T1 #328 → T2 #330 → T3 #335 remain an ordered
 ancestor stack. This supersedes the original sibling/dependency limitation above.
 Migrations now follow ingestion progress `0021`, evaluations `0022`, and durable
 AI recovery `0023`. Revision 2 approval and disabled rollout flags are preserved.
+
+## Minimal-use activation preflight
+
+On 2026-09-05 the owner confirmed in Codex task
+`01a0710e-e877-7ab2-ad03-c6008aaf16e9` that the production Groq account uses the
+free plan with Zero Data Retention enabled, and instructed that Groq remain a
+minimal-use fallback. The owner selected `flipstar` as the account owning the
+shared recovery budget. This confirms the previously missing account prerequisite;
+20 daily generation items remains a ceiling, never a target. No paid allocation,
+new account, provider Batch API or automatic application is authorized by this
+confirmation.
+
+PR #335 merged as `81cd983` and deployed with recovery disabled. Production release
+`0df1260` subsequently had healthy API and worker containers, current reconciliation
+and active ingestion. The preflight found zero provider attempts, reservations or
+pending owner cohorts, and one current eligible evaluation. Its parking label
+described availability without stating a monetary amount. The `source-evidence-v1`
+classifier incorrectly treated any nonempty price label as an extraction miss.
+No provider request was sent for that record.
+
+The T3 follow-up introduces `source-evidence-v2`: missing price fields require
+an explicit currency-bearing amount or a bare numeric amount before they qualify
+for recovery. Availability prose and unrelated numbered spaces remain unclassified;
+explicit absence, inclusion evidence, parser warnings and successfully extracted
+values retain their existing classifications. The new policy identity makes old
+eligibility stale and allows bounded metadata reclassification without changing
+canonical offers or deleting evaluation history. Regression fixtures are invented
+and contain no production source text.
+
+Scheduling and automatic application remain off during this correction. After
+release, repeat the eligible-backlog check before the authorized observation
+canary; never generate unnecessary requests to reach ten observations. The real
+provider canary and representative 24-hour acceptance remain outstanding. T4 must
+accept the reviewed policy version before its separately gated replay rollout.
+
+Validation: `make lint`, `make format-check`, `make typecheck` and
+`make contract-check` passed. `make test`, using dedicated E25 Docker image names
+to avoid shared-worktree tag collisions, passed 1,071 backend and 169 frontend
+tests with 90.26% backend coverage. The focused classifier suite passed 26 tests,
+including absent amounts, unrelated digits, real monetary evidence and existing
+inclusion behavior. No schema migration or production dependency was added.
