@@ -28,7 +28,7 @@ CALIBRATED_FIELDS = frozenset(
 )
 _LABELS = {
     "apartment": r"(?:apartment price|price|cena(?: mieszkania)?|цена(?: квартиры| апартамента)?)",
-    "parking": r"(?:parking(?: price)?|паркинг|miejsce postojowe)",
+    "parking": r"(?:parking(?: price)?|паркинг|miejsce postojowe|гараж)",
     "storage": r"(?:storage(?: price)?|кладов(?:ая|ка)|kom[oó]rka lokatorska)",
     "area": r"(?:area|powierzchnia|площадь|площа)",
     "rooms": r"(?:rooms?|pokoje?|комнаты|кімнати)",
@@ -46,6 +46,11 @@ _MARKETS = {
     "wtórny": "secondary",
     "вторичный": "secondary",
 }
+_PARKING_LINE = re.compile(
+    rf"^[ \t]*(?:[•*][ \t]*)?{_LABELS['parking']}[ \t]*"
+    r"(?:[:|][ \t]*|[\u2013\u2014-][ \t]+)(?P<value>[^\r\n]+)",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 
 def _decimal(value: str) -> Decimal:
@@ -70,6 +75,8 @@ def evidence_supports_field(  # noqa: C901, PLR0911, PLR0912 - explicit semantic
         rf"^[ \t]*(?:{_LABELS[family]})[ \t]*:[ \t]*(?P<value>[^\r\n]+)",
         re.IGNORECASE | re.MULTILINE,
     )
+    if family == "parking":
+        pattern = _PARKING_LINE
     if family == "floor":
         pattern = re.compile(
             rf"^[ \t]*{_LABELS[family]}[ \t]*:?[ \t]+"
@@ -123,14 +130,19 @@ def money_currency_matches(source: str, fragment: str, name: str, currency: str 
     pattern = re.compile(
         rf"^[ \t]*{_LABELS[family]}[ \t]*:[ \t]*(?P<value>[^\r\n]+)", re.IGNORECASE | re.MULTILINE
     )
+    if family == "parking":
+        pattern = _PARKING_LINE
+    supporting = False
     for match in pattern.finditer(source):
+        money = _MONEY.fullmatch(match.group("value").strip())
+        if money is None:
+            return False
+        unit = money.group("currency").upper()
+        if {"ZŁ": "PLN", "€": "EUR"}.get(unit, unit) != currency:
+            return False
         if match.start() <= start and end <= match.end():
-            money = _MONEY.fullmatch(match.group("value").strip())
-            if money is None:
-                return False
-            unit = money.group("currency").upper()
-            return {"ZŁ": "PLN", "€": "EUR"}.get(unit, unit) == currency
-    return False
+            supporting = True
+    return supporting
 
 
 def listing_creation_supported(  # noqa: PLR0911 - reject unsupported creation semantics
