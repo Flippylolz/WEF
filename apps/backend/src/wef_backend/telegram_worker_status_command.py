@@ -10,8 +10,6 @@ from dataclasses import asdict
 from datetime import UTC
 from typing import TYPE_CHECKING
 
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
 from wef_backend.features.ingestion.application.telegram_worker_liveness import (
     read_worker_runtime_health,
     worker_liveness_ok,
@@ -24,9 +22,6 @@ from wef_backend.features.ingestion.application.telegram_worker_status import (
 from wef_backend.features.ingestion.domain.telegram_secrets import (
     credentials_present,
     unwrap_secret,
-)
-from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store import (
-    SQLAlchemyTelegramWorkerStatusStore,
 )
 from wef_backend.settings import load_settings
 from wef_backend.telegram_credentials import secret_text
@@ -113,6 +108,14 @@ def _serialize_runtime_health(path: Path) -> dict[str, object]:
 
 async def run_status() -> dict[str, object]:
     """Load DB + env credential presence into a redacted status report."""
+    # The frequent --liveness path reads files only. Keep ORM/model imports out
+    # of its process startup so the same probe fits the existing CPU/timeout budget.
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # noqa: PLC0415
+
+    from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store import (  # noqa: PLC0415
+        SQLAlchemyTelegramWorkerStatusStore,
+    )
+
     settings = load_settings()
     api_hash = secret_text(settings.telegram_api_hash)
     session = secret_text(settings.telegram_session)

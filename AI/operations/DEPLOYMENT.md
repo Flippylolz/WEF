@@ -691,3 +691,8 @@ after the release health checks pass. Observe at least 15 minutes with no worker
 restarts, bounded `/tmp` use, advancing polling/sweep boundaries, continuing
 original-cohort completions, and unchanged receipt/source invariants. Persist
 pause and stop the affected worker again if systemic failure recurs.
+
+The worker's file-only liveness CLI must remain independent of database/ORM
+imports. Full operator status loads those dependencies only when requested; the
+healthcheck timeout and freshness criteria are unchanged. A fresh-process test
+blocks ORM imports while verifying both healthy and stale heartbeat exit codes.

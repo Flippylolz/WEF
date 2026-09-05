@@ -236,3 +236,9 @@ PR #334 merged and deployed, but recurring heartbeat filesystem failures kept
 production acceptance open. The owner approved [correction revision 1](../ROLLOUT_CORRECTION_PLAN.md)
 and its aggregate publication on 2026-09-05. The dedicated follow-up branch is
 `bugfix/E24-T2-bound-media-staging`; the original task remains in progress.
+
+The staging correction merged through PR #340. Its activation exposed an expensive
+file-only health probe under polling CPU load. Follow-up branch
+`bugfix/E24-T2-lightweight-liveness` defers ORM imports until full status is
+requested, preserving all health criteria and resource limits. Fresh-process
+healthy/stale tests verify that the actual console entry function needs no ORM.
