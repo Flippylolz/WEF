@@ -452,3 +452,11 @@ This append-only log records choices made while the owner delegated overnight MV
 - Selected approach: record approval of implementation plan revision 1, make E25-T1 ready, then implement E25 tasks on dedicated branches/PRs in plan order with required validation. Dependent tasks may use valid ordered ancestor PRs under ADR-018.
 - Scope boundary: the exact approved plan, including its narrow scheduled-AI authorization amendment, resource/privacy limits and E24-T1 dependency. This is not merge authorization, production activation, paid spend authorization or approval of E24 work.
 - Reversal: invalidate affected gates if material evidence changes the approved plan; preserve unrelated source/owner/AI data and work.
+
+## AD-053: Approve the E25 merge and staged production rollout
+
+- Time: 2026-09-05.
+- Owner decision: `continue`, in Codex task `01a0710e-e877-7ab2-ad03-c6008aaf16e9`, directly responding to: “May I merge #338 → #328 → #330 → #335 → #337 in dependency order and run the documented staged production rollout?”
+- Selected approach: refresh each PR against its merged parent, verify current-head CI and review requirements, squash-merge in dependency order, and run the documented staged production acceptance and guarded history replay.
+- Scope boundary: the approved E25 implementation and rollout, including its source, canary, quota, privacy and protection gates. This does not authorize paid allocation, unverified provider activation, bypassing CI or incomplete dependency acceptance, or destructive resets.
+- Reversal: pause scheduling/application on failed acceptance; retain source, reservation, proposal and field-lineage records for guarded recovery.

@@ -1,6 +1,8 @@
 # E27-T3 release acceptance evidence
 
-Status: local implementation checks passed; operational acceptance pending.
+Status: owner-directed evidence closeout; final operational acceptance deferred.
+See [the authoritative closeout](EVIDENCE_CLOSEOUT.md) for the six-run snapshot,
+local cache proofs and resumption conditions. Earlier sections retain implementation history.
 This record does not claim a measured speedup or completed epic.
 
 ## Observed baseline and current availability

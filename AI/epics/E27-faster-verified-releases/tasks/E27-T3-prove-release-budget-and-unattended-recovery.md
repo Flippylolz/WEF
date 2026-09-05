@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E27-T3
 epic: E27
 title: "Prove the release budget and unattended recovery"
-status: in_progress
+status: deferred
 revision: 1
 priority: P1
 size: M
@@ -86,7 +86,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 Required task dependencies: E27-T2. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This task is `in_progress`; its originally stacked T2 dependency is now done. The [implementation plan](../IMPLEMENTATION_PLAN.md) specifies modules, contracts, tests, budgets, and rollout.
+This task is `deferred` at the owner’s request; its T2 dependency is done. The [implementation plan](../IMPLEMENTATION_PLAN.md) specifies modules, contracts, tests, budgets, and rollout.
 
 ## Rollout and automatic operation
 
@@ -139,3 +139,15 @@ This rollout changes no target, minimum sample, required check or acceptance
 criterion. Continue collecting ordinary releases; do not generate a synthetic
 production cohort. Record final acceptance through a separately scoped evidence
 follow-up after the observations exist, without reusing the merged code branch.
+
+## Owner-directed deferral
+
+The owner requested "merge evidence and we can close this for now" on 2026-09-05.
+The [evidence closeout](../EVIDENCE_CLOSEOUT.md) records six ordinary releases,
+working production cache counters and isolated local cold/warm proofs. Final
+acceptance is deferred, not passed; completion metadata remains unset.
+The named resumption trigger is the owner reopening E27 to gather at least
+20 eligible observed releases plus the remaining production cache/queue and
+incident/intervention evidence. Use a new branch and revalidate gates then.
+This disposition supersedes earlier ongoing-work statements above without
+changing the original acceptance thresholds or claiming task completion.
