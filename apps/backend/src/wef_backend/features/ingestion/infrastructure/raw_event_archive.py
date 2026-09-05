@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import random
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
@@ -12,16 +13,26 @@ from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
+from wef_backend.features.ingestion.application.archive_retry import (
+    MAX_DATA_FAILURES,
+    RETRY_POLICY_VERSION,
+    ArchiveFailure,
+)
 from wef_backend.features.ingestion.application.raw_replay import ReplayWorkItem
 from wef_backend.features.ingestion.application.telegram_events import (
     RawArchiveKind,
     RawArchiveOutcome,
     RawEventRecord,
 )
+from wef_backend.features.ingestion.infrastructure.archive_retry_store import (
+    prepare_retry_versions,
+    record_retry,
+)
 from wef_backend.features.ingestion.infrastructure.models import (
     OfferSourceRow,
     SourceChannelRow,
     SourceMessageRow,
+    TelegramArchiveExceptionRow,
     TelegramArchiveResolutionRow,
     TelegramRawEventRow,
 )
@@ -30,8 +41,6 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-
-_MAX_ATTEMPTS = 5
 
 
 class SQLAlchemyRawEventArchive:
@@ -61,6 +70,7 @@ class SQLAlchemyRawEventArchive:
                     external_message_id=external_message_id,
                     payload_json=json.loads(json.dumps(payload)),
                     checksum=checksum,
+                    retry_policy_version=RETRY_POLICY_VERSION,
                 )
                 .on_conflict_do_nothing(
                     constraint="uq_telegram_raw_events_dedupe",
@@ -93,13 +103,21 @@ class SQLAlchemyRawEventArchive:
         event_ids: Sequence[UUID] | None = None,
     ) -> Sequence[RawEventRecord]:
         """Return the oldest events that still need a terminal processing outcome."""
-        async with self._session_factory() as session:
+        async with self._session_factory() as session, session.begin():
+            await prepare_retry_versions(session, datetime.now(UTC), 25, channel_external_id)
             rows = (
                 await session.execute(
                     select(TelegramRawEventRow)
                     .where(
                         TelegramRawEventRow.processed_at.is_(None),
-                        (TelegramRawEventRow.attempts < _MAX_ATTEMPTS)
+                        (
+                            (TelegramRawEventRow.data_failure_count < MAX_DATA_FAILURES)
+                            & (TelegramRawEventRow.retry_policy_version == RETRY_POLICY_VERSION)
+                            & (
+                                (TelegramRawEventRow.next_attempt_at.is_(None))
+                                | (TelegramRawEventRow.next_attempt_at <= datetime.now(UTC))
+                            )
+                        )
                         | select(TelegramArchiveResolutionRow.event_id)
                         .where(TelegramArchiveResolutionRow.event_id == TelegramRawEventRow.id)
                         .exists(),
@@ -110,7 +128,13 @@ class SQLAlchemyRawEventArchive:
                         ),
                         *([TelegramRawEventRow.id.in_(event_ids)] if event_ids is not None else []),
                     )
-                    .order_by(TelegramRawEventRow.received_at, TelegramRawEventRow.id)
+                    .order_by(
+                        func.coalesce(
+                            TelegramRawEventRow.next_attempt_at, TelegramRawEventRow.received_at
+                        ),
+                        TelegramRawEventRow.received_at,
+                        TelegramRawEventRow.id,
+                    )
                     .limit(limit),
                 )
             ).scalars()
@@ -138,6 +162,20 @@ class SQLAlchemyRawEventArchive:
     ) -> bool:
         """Record one processing attempt; failed events retry until the cap."""
         now = completed_at or datetime.now(UTC)
+        if outcome == "failed":
+            async with self._session_factory() as session, session.begin():
+                return await record_retry(
+                    session,
+                    event_id,
+                    ArchiveFailure(
+                        "deferred"
+                        if error_category in {"RunLockHeldError", "OSError", "TimeoutError"}
+                        else "data",
+                        error_category or "UnknownError",
+                    ),
+                    now,
+                    random.SystemRandom().random(),
+                )
         async with self._session_factory() as session, session.begin():
             result = await session.execute(
                 update(TelegramRawEventRow)
@@ -148,10 +186,38 @@ class SQLAlchemyRawEventArchive:
                     attempts=TelegramRawEventRow.attempts + 1,
                     outcome=outcome,
                     last_error=error_category,
-                    processed_at=now if outcome != "failed" else None,
+                    processed_at=now,
                 ),
             )
-            return bool(getattr(result, "rowcount", 0))
+            changed = bool(getattr(result, "rowcount", 0))
+            if changed:
+                await session.execute(
+                    update(TelegramArchiveExceptionRow)
+                    .where(TelegramArchiveExceptionRow.event_id == event_id)
+                    .values(state="resolved")
+                )
+            return changed
+
+    async def can_attempt(self, event_id: UUID) -> bool:
+        """Repeated source observations cannot bypass durable quarantine/backoff."""
+        async with self._session_factory() as session:
+            row = await session.get(TelegramRawEventRow, event_id)
+            if row is None or row.processed_at is not None:
+                return False
+            if await session.get(TelegramArchiveResolutionRow, event_id) is not None:
+                return True
+            return (
+                row.retry_policy_version == RETRY_POLICY_VERSION
+                and row.data_failure_count < MAX_DATA_FAILURES
+                and (row.next_attempt_at is None or row.next_attempt_at <= datetime.now(UTC))
+            )
+
+    async def record_failure(self, event_id: UUID, failure: ArchiveFailure) -> bool:
+        """Persist a typed safe failure without collapsing transport into corrupt data."""
+        async with self._session_factory() as session, session.begin():
+            return await record_retry(
+                session, event_id, failure, datetime.now(UTC), random.SystemRandom().random()
+            )
 
     async def failed_exhausted_count(self) -> int:
         """Return how many events permanently failed after the bounded retries."""
@@ -161,7 +227,7 @@ class SQLAlchemyRawEventArchive:
                 .select_from(TelegramRawEventRow)
                 .where(
                     TelegramRawEventRow.outcome == "failed",
-                    TelegramRawEventRow.attempts >= _MAX_ATTEMPTS,
+                    TelegramRawEventRow.data_failure_count >= MAX_DATA_FAILURES,
                 ),
             )
             return int(value or 0)

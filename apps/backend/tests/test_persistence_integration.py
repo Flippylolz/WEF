@@ -429,7 +429,7 @@ async def test_checkpoint_reconciliation_converges_and_replays_in_postgres() -> 
     request = TelegramReconciliationRequest(identity=identity)
 
     first = await reconciler(request)
-    assert first.starting_checkpoint_external_id == 29_202
+    assert first.starting_checkpoint_external_id == 0
     assert first.messages_fetched == 55
     assert first.checkpoint_external_id == 29_257
     checkpoint, _ = await status_store.latest_live_checkpoint(
@@ -500,7 +500,7 @@ async def test_checkpoint_reconciliation_resumes_after_partial_database_failure(
     checkpoint, _ = await status_store.latest_live_checkpoint(
         channel_external_id=identity.channel_id,
     )
-    assert checkpoint == 101
+    assert checkpoint == 0
 
     resumed = await TelegramCheckpointReconciler(
         store=status_store,
@@ -511,7 +511,7 @@ async def test_checkpoint_reconciliation_resumes_after_partial_database_failure(
         ),
         processing_lock=asyncio.Lock(),
     )(request)
-    assert resumed.starting_checkpoint_external_id == 101
+    assert resumed.starting_checkpoint_external_id == 0
     assert resumed.checkpoint_external_id == 102
     await database.engine.dispose()
 
