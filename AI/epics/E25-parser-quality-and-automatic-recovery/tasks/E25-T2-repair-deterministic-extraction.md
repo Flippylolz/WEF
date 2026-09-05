@@ -29,7 +29,7 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-05T10:22:44Z"
 dependency_gate:
-  status: stacked
+  status: satisfied
   verified_by: Codex
   verified_at: "2026-09-05T10:55:21Z"
   evidence:
@@ -117,3 +117,11 @@ The documentation branch is not this task's implementation branch. Follow the ta
 ## Local implementation evidence
 
 See [T2 validation and changed files](../E25-T2-IMPLEMENTATION_EVIDENCE.md).
+
+## Dependency completion for release
+
+E25-T1 is done: PR #328 merged as `ea47448`, release 33973117645 succeeded,
+and its bounded production classification passed current-revision, deduplication
+and eligibility checks. AD-053 authorizes this staged release. Final local T2
+validation passed 891 backend and 169 frontend tests with 90.52% backend coverage.
+The main-targeted PR must pass current-head CI before merge.
