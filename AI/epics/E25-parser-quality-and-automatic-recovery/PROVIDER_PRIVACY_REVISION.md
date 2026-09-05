@@ -108,7 +108,7 @@ Fake providers cannot satisfy those gates. Paid capacity is not authorized.
 
 ## Approval history and outstanding dependencies
 
-AD-050 and AD-051 record the approvals of revision 1. Publication was subsequently
+AD-051 and AD-052 record the approvals of revision 1. Publication was subsequently
 authorized in the same Codex task; PRs 327, 328 and 330 are open. The provider
 compatibility finding invalidates non-done gates under the repository workflow;
 it does not retract prior test results or claim an implemented parser regression.

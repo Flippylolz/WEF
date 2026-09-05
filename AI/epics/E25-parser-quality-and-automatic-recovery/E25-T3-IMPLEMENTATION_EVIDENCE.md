@@ -121,3 +121,12 @@ Do not drop ledger tables to reset quota or resend uncertain attempts.
 - `apps/backend/tests/test_recovery_queue_integration.py`
 - `apps/backend/tests/test_recovery_validation.py`
 - `AI/epics/E25-parser-quality-and-automatic-recovery/E25-T3-IMPLEMENTATION_EVIDENCE.md`
+
+## Current-main integration refresh
+
+The E24 archive and progress changes merged as `64da1bd` and `5fd175f`.
+The E25 planning PR #327 closed without merging when its former base disappeared;
+replacement #338 targets main. T1 #328 → T2 #330 → T3 #335 remain an ordered
+ancestor stack. This supersedes the original sibling/dependency limitation above.
+Migrations now follow ingestion progress `0021`, evaluations `0022`, and durable
+AI recovery `0023`. Revision 2 approval and disabled rollout flags are preserved.
