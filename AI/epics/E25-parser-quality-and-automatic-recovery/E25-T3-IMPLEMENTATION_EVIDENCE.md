@@ -2,6 +2,8 @@
 
 ## Review state
 
+Draft PR: [335](https://github.com/Flippylolz/WEF/pull/335). Implementation commit: `6ece15f`.
+
 Implementation under owner-approved spike and implementation plan revision 2.
 The task remains in progress: upstream E25-T1 is open, required PR checks/review
 and a representative live acceptance window are outstanding. No production
