@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T2
 epic: E25
 title: "Repair deterministic field extraction and money semantics"
-status: draft
+status: ready
 revision: 1
 priority: P1
 size: M
@@ -29,10 +29,14 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-05T10:22:44Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: Codex
+  verified_at: "2026-09-05T10:55:21Z"
+  evidence:
+    - task_id: E25-T1
+      branch: feat/E25-T1-evidence-classification
+      pull_request: https://github.com/Flippylolz/WEF/pull/328
+      head_commit: 44eff1a
 branch:
   required: true
   name: null
