@@ -29,11 +29,11 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-05T10:33:19Z"
 dependency_gate:
-  status: stacked
+  status: satisfied
   verified_by: Codex
-  verified_at: "2026-09-05T11:12:46Z"
+  verified_at: "2026-09-05T13:13:10Z"
   evidence:
-    - "E24-T1: bugfix/E24-T1-original-archive; https://github.com/Flippylolz/WEF/pull/331; head d4fdb9c; immediate ancestor of this branch"
+    - "E24-T1 done: https://github.com/Flippylolz/WEF/pull/331; merged 64da1bd9dd00e64be4e5ddbfce32e53f19c8f2af; deployment 33967260852 and ../PRODUCTION_EVIDENCE.md passing 15-minute window"
 branch:
   required: true
   name: bugfix/E24-T2-cursors-and-retries
@@ -123,8 +123,8 @@ This task was moved from its proposed location and refined to revision 2.
 revision and is approved under AD-049. Its implementation gate is satisfied;
 branch and dependency gates still govern the start of work.
 
-T2 depends on T1 and is implemented on the recorded ordered stack above PR #331. A stacked T2
-may be implemented but cannot merge or complete before T1 is `done`.
+T1 is done following merged PR #331 and its passing production observation. T2 is
+rebased onto that merged release; its dependency gate is satisfied.
 
 ## Rollout and automatic operation
 
@@ -174,8 +174,8 @@ Validation:
   826 backend tests passed, 90.37% coverage; 169 frontend tests passed with coverage floors met.
 - `python3 scripts/check_markdown_links.py` and `git diff --check`: passed.
 
-Task remains `in_progress`: parent completion, required CI/review, authorized
-release, and production observation remain outstanding. No production cursor,
+Task remains `in_progress`: its refreshed required CI/review, authorized
+release, and T2 production observation remain outstanding. No production cursor,
 archive record, or queue was modified during implementation. T3/T4 remain outside
 this approved implementation sequence.
 
@@ -212,3 +212,20 @@ Changed-file manifest (relative to the immediate T1 parent):
 - `apps/backend/tests/test_telegram_live_events.py`
 - `apps/backend/tests/test_telegram_reconciliation.py`
 - `apps/backend/tests/test_telegram_worker_ops.py`
+
+
+## Production dependency clearance
+
+T1 passed its 15-minute production acceptance window on 2026-09-05, documented in
+[production evidence](../PRODUCTION_EVIDENCE.md). This PR records that completed
+dependency and proceeds from T1's merged main commit. Updated dependency evidence
+adds the production record, T1 completion metadata, and epic progress to the
+changed-file manifest above.
+
+Additional dependency/rollout documentation changed in this PR:
+
+- `AI/epics/README.md`
+- `AI/milestones/M5-production-maturity.md`
+- `AI/epics/E24-automatic-ingestion-recovery/README.md`
+- `AI/epics/E24-automatic-ingestion-recovery/PRODUCTION_EVIDENCE.md`
+- `AI/epics/E24-automatic-ingestion-recovery/tasks/E24-T1-terminate-original-archive-work.md`
