@@ -263,3 +263,33 @@ Validation: the focused garage/classifier/calibration suites passed 202 tests.
 169 frontend tests, with 90.19% backend coverage. Version-sensitive rollback and
 report privacy tests were corrected without changing their intended guarantees.
 Equal numeric amounts in conflicting currency quotes are now independently rejected.
+
+## Quota deferral correction
+
+Six recovery cohorts were marked terminal even though no provider submission
+occurred. Daily quota refusal returned a reset time without persisting it on the
+shared account; the recovery queue therefore saw an expired provider window and
+misclassified the unfinished batch as an unsupported proposal.
+
+The correction persists quota refusal eligibility at the next UTC day without
+creating an attempt or increasing usage. The queue also recognizes previously
+exhausted accounts and batches paused for their local daily limit. Daily-limit
+pauses resume when budget is available; manual and other pauses remain paused.
+
+A bounded reconciliation pass restores at most ten incorrectly terminal cohorts
+per enqueue cycle, only for the matching owner and only where all batch items
+remain queued/processing with no outcome, submission timestamp, provider attempt
+(including uncertain attempts), proposal or field event. Reconciliation preserves
+all budget and attempt history. Normal claim checks supersede obsolete parser,
+policy and source identities instead of replaying stale work.
+
+No migration, dependency, API, quota increase or production flag change is needed.
+The normal release activates this reconciliation; operators must not manually
+reset terminal states or delete attempts. Auto-apply and T4 acceptance remain
+unchanged. Synthetic PostgreSQL tests exercise restart, UTC rollover, owner
+isolation, repeated reconciliation, submission/uncertainty exclusions, manual
+pauses and stale parser identities without making provider calls.
+
+Validation: `make lint`, `make format-check`, `make typecheck`,
+`make contract-check` and `git diff --check` passed. Isolated-image `make test`
+passed 1,127 backend tests (90.19% coverage) and 169 frontend tests.

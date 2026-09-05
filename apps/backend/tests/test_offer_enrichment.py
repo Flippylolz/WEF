@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -740,6 +740,17 @@ async def test_process_pauses_when_daily_budget_is_exhausted() -> None:
     paused = store.batches[batch.id]
     assert paused.state is BatchState.PAUSED
     assert paused.failure_category == "daily_limit"
+    # The same durable batch resumes after the UTC daily window, without owner action.
+    outcome = await ProcessOfferEnrichmentItem(
+        store,
+        FakeChatCompletions(payload=_payload(revision.revision_id)),
+        FakeAdminAuditStore(),
+        FakeClock(moment=_NOW + timedelta(days=1)),
+        _runtime(),
+    )(owner_id=owner_id, batch_id=batch.id, request_id=uuid4())
+    assert outcome is not None
+    assert store.batches[batch.id].state is not BatchState.PAUSED
+    assert store.batches[batch.id].failure_category is None
 
 
 async def test_process_dequeues_until_queue_is_exhausted() -> None:

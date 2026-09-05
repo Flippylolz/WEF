@@ -44,6 +44,19 @@ async def test_concurrent_shared_reservation_restart_and_daily_ceiling() -> None
         with pytest.raises(ProviderRequestError) as exhausted:
             await budget.reserve(owner, "over", NOW + timedelta(hours=1), 20)
         assert exhausted.value.retry_at == datetime(2026, 9, 6, tzinfo=UTC)
+        async with db.session_factory() as session:
+            row = (
+                await session.execute(
+                    text(
+                        "SELECT used,next_eligible_at FROM ai_provider_accounts "
+                        "WHERE owner_id=:owner"
+                    ),
+                    {"owner": owner},
+                )
+            ).one()
+            assert row.used == 20
+            assert row.next_eligible_at == exhausted.value.retry_at
+            assert await session.scalar(text("SELECT count(*) FROM ai_provider_attempts")) == 20
         attempt = await budget.reserve(owner, "next-day", NOW + timedelta(days=1), 20)
         await budget.finish(attempt, NOW + timedelta(days=1), None, None)
         with pytest.raises(ProviderRequestError) as duplicate:
