@@ -61,6 +61,7 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Mapping, Sequence
     from uuid import UUID
 
+    from wef_backend.features.ingestion.application.archive_retry import ArchiveFailure
     from wef_backend.features.ingestion.domain.extraction import ListingCandidate
 
 
@@ -520,6 +521,13 @@ class _FakeArchive(RawEventArchivePort):
         self.marked: list[tuple[UUID, str, str | None]] = []
         self.pending: list[RawEventRecord] = []
         self._ids = iter(uuid4() for _ in range(99))
+
+    async def can_attempt(self, event_id: UUID) -> bool:
+        _ = event_id
+        return True
+
+    async def record_failure(self, event_id: UUID, failure: ArchiveFailure) -> bool:
+        return await self.mark_attempt(event_id, outcome="failed", error_category=failure.category)
 
     async def land(
         self,

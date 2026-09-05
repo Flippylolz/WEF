@@ -40,11 +40,15 @@ class WorkerRuntimeState:
     local_checkpoint_external_id: int | None = None
     last_error_category: str | None = None
     release_sha: str | None = None
+    applied_high_water_id: int | None = None
+    history_limited: bool = True
 
     def snapshot(self, *, now: datetime | None = None) -> WorkerRuntimeHealth:
         """Freeze current runtime state for one atomic diagnostic write."""
         return WorkerRuntimeHealth(
             schema_version=RUNTIME_HEALTH_SCHEMA_VERSION,
+            applied_high_water_id=self.applied_high_water_id,
+            history_limited=self.history_limited,
             written_at=(now or datetime.now(UTC)).astimezone(UTC),
             transport_connected=self.transport_connected,
             consumer_running=self.consumer_running,
@@ -87,6 +91,9 @@ def write_worker_runtime_health(path: Path, health: WorkerRuntimeHealth) -> None
     """Atomically publish allowlisted runtime health fields."""
     payload = {
         "schema_version": health.schema_version,
+        "applied_high_water_id": health.applied_high_water_id,
+        "polled_through_id": health.local_checkpoint_external_id,
+        "history_limited": health.history_limited,
         "written_at": _iso(health.written_at),
         "transport_connected": health.transport_connected,
         "consumer_running": health.consumer_running,
@@ -144,6 +151,8 @@ def read_worker_runtime_health(path: Path) -> WorkerRuntimeHealth:
 
     return WorkerRuntimeHealth(
         schema_version=int(payload.get("schema_version", 0)),
+        applied_high_water_id=external_id("applied_high_water_id"),
+        history_limited=payload.get("history_limited", True) is not False,
         written_at=timestamp("written_at") or datetime.min.replace(tzinfo=UTC),
         transport_connected=payload.get("transport_connected") is True,
         consumer_running=payload.get("consumer_running") is True,

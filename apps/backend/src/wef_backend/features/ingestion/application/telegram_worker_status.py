@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from wef_backend.features.ingestion.domain.telegram_channel import (
     default_live_channel_identity,
@@ -19,9 +19,16 @@ from wef_backend.features.ingestion.domain.telegram_worker_ops import (
     session_rotation_rehearsal_steps,
 )
 
+if TYPE_CHECKING:
+    from wef_backend.features.ingestion.application.telegram_progress import ChannelProgress
+
 
 class TelegramWorkerStatusStore(Protocol):
     """Read-only snapshot inputs for worker ops status."""
+
+    async def channel_progress(self, *, channel_external_id: str) -> ChannelProgress:
+        """Read the same committed meanings used by the running worker."""
+        ...
 
     async def max_external_message_id(self, *, channel_external_id: str) -> int:
         """Return the highest persisted Telegram message id for the channel."""
@@ -58,6 +65,7 @@ async def build_telegram_worker_status(
     live_checkpoint, finished_at = await store.latest_live_checkpoint(
         channel_external_id=identity.channel_id,
     )
+    progress = await store.channel_progress(channel_external_id=identity.channel_id)
     checkpoint_id = live_checkpoint or 0
     reconciliation = reconcile_checkpoints(
         channel_id=identity.channel_id,
@@ -97,6 +105,9 @@ async def build_telegram_worker_status(
         max_persisted_external_id=max_id,
         reconciliation=reconciliation,
         notes=tuple(notes),
+        applied_high_water_id=progress.applied_high_water_id,
+        polled_through_id=progress.polled_through_id,
+        history_limited=progress.history_limited,
     )
 
 

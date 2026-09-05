@@ -17,6 +17,9 @@ outputs:
   digest:
     description: Pushed registry manifest digest
     value: ${{ steps.push.outputs.digest }}
+  cache_metrics:
+    description: Exact build cache counters or explicit unknown evidence
+    value: ${{ steps.cache.outputs.cache_metrics }}
 runs:
   using: composite
   steps:
@@ -36,6 +39,7 @@ runs:
     - name: Set up Buildx
       uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
     - name: Build runtime with existing cache
+      id: build
       uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
       with:
         context: .
@@ -50,6 +54,12 @@ runs:
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
         cache-from: type=gha,scope=${{ inputs.component }}-production
         cache-to: type=gha,mode=max,scope=${{ inputs.component }}-production
+    - name: Record build cache counters
+      id: cache
+      shell: bash
+      env:
+        BUILD_METADATA: ${{ steps.build.outputs.metadata }}
+      run: python3 -m scripts.deploy.release_cache
     - name: Inspect runtime user, source and contents
       shell: bash
       env:

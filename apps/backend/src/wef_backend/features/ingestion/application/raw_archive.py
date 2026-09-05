@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
-from wef_backend.features.ingestion.domain.telegram_worker_ops import safe_error_category
+from wef_backend.features.ingestion.application.archive_retry import classify_archive_failure
 
 if TYPE_CHECKING:
     import asyncio
@@ -59,6 +59,7 @@ class ArchiveDrainResult:
     failed: int = 0
     unchanged_terminal: int = 0
     last_committed_at: datetime | None = None
+    deferred: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,7 +88,7 @@ class RawEventDrainer:
             if self.recovery is not None
             else await self.archive.unprocessed_batch(self.batch_size, channel_external_id=channel)
         )
-        completed = failed = repeated = 0
+        completed = failed = repeated = deferred = 0
         latest = None
         for record in records:
             try:
@@ -117,13 +118,15 @@ class RawEventDrainer:
                 if changed:
                     latest = max(latest, receipt.committed_at) if latest else receipt.committed_at
             except Exception as error:  # noqa: BLE001 - isolate malformed records
-                failed += 1
+                failure = classify_archive_failure(error)
+                failed += int(failure.kind != "deferred")
+                deferred += int(failure.kind == "deferred")
                 try:
-                    await self.archive.mark_attempt(
-                        record.id, outcome="failed", error_category=safe_error_category(error)
-                    )
+                    await self.archive.record_failure(record.id, failure)
                 except Exception as ledger_error:
                     raise error from ledger_error
         if self.recovery is not None and records:
             await self.recovery.finish_batch(channel, failed=failed > 0)
-        return ArchiveDrainResult(len(records), len(records), completed, failed, repeated, latest)
+        return ArchiveDrainResult(
+            len(records), len(records), completed, failed, repeated, latest, deferred
+        )
