@@ -95,4 +95,4 @@ Material changes to source semantics, geospatial confidence/precision claims, au
 
 ## Owner decision
 
-The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-050](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation-plan approval remains pending.
+The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-050](../../workflow/AUTONOMOUS_DECISIONS.md#ad-050-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation-plan approval remains pending.
