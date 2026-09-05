@@ -4,7 +4,7 @@ id: E24-T2
 epic: E24
 title: "Make source cursors monotonic and retries fair"
 status: in_progress
-revision: 2
+revision: 3
 priority: P1
 size: L
 milestone: M5
@@ -25,9 +25,9 @@ spike_gate:
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
-  verified_at: "2026-09-05T10:33:19Z"
+  verified_at: "2026-09-05T14:18:47Z"
 dependency_gate:
   status: satisfied
   verified_by: Codex
@@ -229,3 +229,10 @@ Additional dependency/rollout documentation changed in this PR:
 - `AI/epics/E24-automatic-ingestion-recovery/README.md`
 - `AI/epics/E24-automatic-ingestion-recovery/PRODUCTION_EVIDENCE.md`
 - `AI/epics/E24-automatic-ingestion-recovery/tasks/E24-T1-terminate-original-archive-work.md`
+
+## Approved activation correction
+
+PR #334 merged and deployed, but recurring heartbeat filesystem failures kept
+production acceptance open. The owner approved [correction revision 1](../ROLLOUT_CORRECTION_PLAN.md)
+and its aggregate publication on 2026-09-05. The dedicated follow-up branch is
+`bugfix/E24-T2-bound-media-staging`; the original task remains in progress.

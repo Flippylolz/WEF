@@ -679,3 +679,15 @@ when recovery evidence exists. Never reset these tables or restore the prior
 run-completion cursor reader. Resume with a corrected compatible worker. These
 are implementation/rollout instructions; production recovery has not yet been
 measured for this change.
+
+### E24-T2 temporary staging correction
+
+Keep the Telegram worker paused while deploying the approved staging correction.
+Do not enlarge `/tmp`, reset cursors, or delete source/media evidence to conceal
+heartbeat failures. The corrected downloader reserves 56 MiB total with 8 MiB
+free-space headroom, streams polling work, and releases exclusively owned files
+after their consumer finishes. Resume with the existing archive-recovery control
+after the release health checks pass. Observe at least 15 minutes with no worker
+restarts, bounded `/tmp` use, advancing polling/sweep boundaries, continuing
+original-cohort completions, and unchanged receipt/source invariants. Persist
+pause and stop the affected worker again if systemic failure recurs.

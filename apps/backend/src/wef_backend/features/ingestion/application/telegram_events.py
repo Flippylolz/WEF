@@ -283,6 +283,9 @@ class LiveTelegramEventProcessor:
                 release_sha=release_sha,
             )
         finally:
+            for event in events:
+                if event.message is not None and event.message.media_lease is not None:
+                    event.message.media_lease.release()
             if manage_connection:
                 await self.client.disconnect()
 

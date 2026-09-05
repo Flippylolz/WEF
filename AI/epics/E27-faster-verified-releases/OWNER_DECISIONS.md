@@ -43,3 +43,17 @@ The owner's next message was:
 This authorizes the named PRs to merge in order after required checks and
 dependency gates pass, including their resulting normal automatic deployments.
 PR #332 remains a draft; real-release performance acceptance is not waived.
+
+## 2026-09-05 — Evidence merge and close for now
+
+In the same Codex task, after the assistant reported six observations and offered
+future daily monitoring, the owner instructed:
+
+> merge evidence and we can close this for now
+
+This authorizes the documentation evidence PR and its merge after required CI.
+It closes active E27 work for now: E27 and T3 become `deferred`, with a named
+owner-reopening trigger. It does not declare the 20-release budget accepted,
+waive missing production evidence, or mark T3 `done`. No daily monitoring is
+requested. The original implementation approvals and acceptance criteria remain
+unchanged for future revalidation.

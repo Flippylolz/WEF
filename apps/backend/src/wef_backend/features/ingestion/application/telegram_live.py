@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Protocol
 
@@ -36,6 +36,14 @@ class TelegramChannelEntity:
     title: str
 
 
+class MediaLease(Protocol):
+    """Ephemeral download ownership, excluded from archive payloads and checksums."""
+
+    def release(self) -> None:
+        """Release staging only after all consumers have finished."""
+        ...
+
+
 @dataclass(frozen=True, slots=True)
 class LiveTelegramMessage:
     """Minimal live message surface before RawMessage conversion."""
@@ -46,6 +54,7 @@ class LiveTelegramMessage:
     edited_at: datetime | None
     media_group_id: str | None = None
     media: tuple[MediaDescriptor, ...] = ()
+    media_lease: MediaLease | None = field(default=None, compare=False, repr=False)
 
 
 class TelegramLiveClientPort(Protocol):

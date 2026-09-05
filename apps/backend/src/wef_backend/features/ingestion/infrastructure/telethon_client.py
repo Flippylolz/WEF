@@ -26,6 +26,10 @@ from wef_backend.features.ingestion.domain.telegram_secrets import (
     TelegramLoginCodeError,
     TelegramSecretError,
 )
+from wef_backend.features.ingestion.infrastructure.media_staging import (
+    MediaStaging,
+    MediaStagingDeferredError,
+)
 from wef_backend.features.ingestion.infrastructure.telethon_live_media import (
     LiveMediaDownloadLimits,
     download_live_message_media,
@@ -72,6 +76,7 @@ class TelethonLiveClient:
         self._sleep = sleep
         self._media_temp_root = media_temp_root
         self._media_limits = media_limits
+        self._staging = MediaStaging(media_temp_root) if media_temp_root is not None else None
 
     def save_session(self) -> str:
         """Return the current Telethon string session (never log it)."""
@@ -87,7 +92,11 @@ class TelethonLiveClient:
 
     async def disconnect(self) -> None:
         """Disconnect the Telethon client."""
-        await self._client.disconnect()
+        try:
+            await self._client.disconnect()
+        finally:
+            if self._staging is not None:
+                self._staging.close()
 
     async def ensure_authorized(
         self,
@@ -209,25 +218,24 @@ class TelethonLiveClient:
             new_or_edit_event_from_telethon,
         )
 
-        async def _on_new(event: object) -> None:
+        async def enqueue(event: object, kind: LiveTelegramEventKind) -> None:
+            live = None
             try:
                 message = getattr(event, "message", event)
-                live = await self.enrich_message(message)
-                await queue.put(
-                    new_or_edit_event_from_telethon(live, kind=LiveTelegramEventKind.NEW),
-                )
+                live = await self._enrich_callback(message)
+                await queue.put(new_or_edit_event_from_telethon(live, kind=kind))
+                live = None  # The queued consumer now owns the lease.
             except Exception as error:  # noqa: BLE001
                 await queue.fail(error)
+            finally:
+                if live is not None and live.media_lease is not None:
+                    live.media_lease.release()
+
+        async def _on_new(event: object) -> None:
+            await enqueue(event, LiveTelegramEventKind.NEW)
 
         async def _on_edit(event: object) -> None:
-            try:
-                message = getattr(event, "message", event)
-                live = await self.enrich_message(message)
-                await queue.put(
-                    new_or_edit_event_from_telethon(live, kind=LiveTelegramEventKind.EDIT),
-                )
-            except Exception as error:  # noqa: BLE001
-                await queue.fail(error)
+            await enqueue(event, LiveTelegramEventKind.EDIT)
 
         async def _on_delete(event: object) -> None:
             try:
@@ -251,22 +259,32 @@ class TelethonLiveClient:
             return live
         if getattr(message, "media", None) is None:
             return live
-        media = await download_live_message_media(
-            self._client,
-            message,
-            temp_root=self._media_temp_root,
-            limits=self._media_limits,
-        )
-        if not media:
+        if self._staging is None:
             return live
-        return LiveTelegramMessage(
-            external_message_id=live.external_message_id,
-            text=live.text,
-            published_at=live.published_at,
-            edited_at=live.edited_at,
-            media_group_id=live.media_group_id,
-            media=media,
-        )
+        lease = self._staging.acquire(live.external_message_id, self._media_limits.max_bytes)
+        try:
+            media = await download_live_message_media(
+                self._client,
+                message,
+                limits=self._media_limits,
+                lease=lease,
+            )
+            if not media:
+                lease.release()
+                return live
+            return replace(live, media=media, media_lease=lease)
+        except BaseException:
+            lease.release()
+            raise
+
+    async def _enrich_callback(self, message: object) -> LiveTelegramMessage:
+        # Backpressure only the callback owning this observation. Polling has a
+        # durable retry deadline and independently recovers callbacks after restart.
+        while True:
+            try:
+                return await self.enrich_message(message)
+            except MediaStagingDeferredError:
+                await (self._sleep or asyncio.sleep)(5)
 
     async def iter_messages(
         self,
