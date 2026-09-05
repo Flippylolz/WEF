@@ -7,8 +7,8 @@ import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from uuid import UUID
 from urllib.parse import quote
+from uuid import UUID
 
 from scripts.deploy.validate_release import (
     ReleaseContext,
@@ -138,9 +138,7 @@ def _groq_batch_settings_from_environment() -> dict[str, str]:
     max_wait = _optional_env("WEF_GROQ_BATCH_MAX_WAIT_SECONDS", "3600")
     if (
         not max_wait.isdigit()
-        or not MIN_GROQ_BATCH_MAX_WAIT_SECONDS
-        <= int(max_wait)
-        <= MAX_GROQ_BATCH_MAX_WAIT_SECONDS
+        or not MIN_GROQ_BATCH_MAX_WAIT_SECONDS <= int(max_wait) <= MAX_GROQ_BATCH_MAX_WAIT_SECONDS
     ):
         msg = "Groq batch max wait must be an integer from 30 to 86400"
         raise ValueError(msg)

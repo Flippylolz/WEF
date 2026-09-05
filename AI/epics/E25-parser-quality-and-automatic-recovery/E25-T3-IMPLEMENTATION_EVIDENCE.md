@@ -33,6 +33,8 @@ encryption is wired into creation. No new production dependency was added.
 - `COMPOSE_PROJECT_NAME=wef-e25-validation make test`: 996 backend tests and
   169 frontend tests passed; backend coverage 90.11%.
 - `make lint`: passed, including all 17 architecture contracts.
+- Root `scripts/` Ruff format/lint and strict mypy: passed after correcting
+  release-script formatting caught by the initial repository-safety CI run.
 - `make format-check`, `make typecheck`, `make contract-check`: passed.
 - `python3 -m scripts.prove_release_workflow`: passed, including disabled defaults,
   explicit activation values and invalid boolean/owner configuration rejection.
