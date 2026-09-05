@@ -28,7 +28,6 @@ from wef_backend.features.ingestion.application.persistence import (
 )
 from wef_backend.features.ingestion.application.telegram_live import source_identity_from_channel
 from wef_backend.features.ingestion.domain.media_storage import ObservationReason
-from wef_backend.features.ingestion.infrastructure.archive_decoder import decode_archived_payload
 from wef_backend.features.ingestion.infrastructure.media_filesystem import (
     LocalMediaStorage,
     MediaDerivativeError,
@@ -52,6 +51,7 @@ from wef_backend.features.ingestion.infrastructure.models import (
     OfferMediaRow,
     SourceMessageRow,
 )
+from wef_backend.features.ingestion.infrastructure.telegram_record import convert_record
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -99,7 +99,8 @@ async def canonical(db: RecoveryDB, data: dict[str, object]) -> None:
         source_checksum=None,
         release_sha=None,
     )
-    raw = decode_archived_payload(data, source)
+    raw = convert_record(data, 0, source).result.message
+    assert raw is not None
     await db.store.persist_live_upsert(
         channel_id=channel_id,
         run_id=run_id,
@@ -465,3 +466,23 @@ async def test_verified_complete_assets_are_not_transformed_again(
     )
     result = await RecoverStoredMedia(db.factory, storage, AsyncMock())(claim)
     assert result.state == "completed"
+
+
+async def test_non_listing_attachment_does_not_stop_discovery(recovery_db: RecoveryDB) -> None:
+    db = recovery_db
+    attachment = media_payload(100)
+    attachment.pop("photo")
+    attachment.update(text="", file="files/synthetic.pdf", mime_type="application/pdf")
+    await canonical(db, attachment)
+    await canonical(db, media_payload(101))
+    store = SQLAlchemyMediaRecoveryStore(db.factory, db.identity.channel_id)
+    assert await store.discover() == 2
+    claim = await store.claim()
+    assert claim is not None
+    assert claim.raw.external_message_id == 101
+    async with db.factory() as session:
+        row = await session.scalar(
+            select(MediaRecoveryWorkRow).where(MediaRecoveryWorkRow.state == "unsupported")
+        )
+        assert row is not None
+        assert row.offer_id is None

@@ -20,8 +20,10 @@ from wef_backend.features.ingestion.application.media_recovery import (
 from wef_backend.features.ingestion.application.media_storage import MediaWorkItem
 from wef_backend.features.ingestion.domain import SourceIdentity, SourcePlatform
 from wef_backend.features.ingestion.domain.media_grouping import MediaAssociationRule
-from wef_backend.features.ingestion.infrastructure.archive_decoder import decode_archived_payload
-from wef_backend.features.ingestion.infrastructure.media_recovery_discovery import discover_media
+from wef_backend.features.ingestion.infrastructure.media_recovery_discovery import (
+    decode_media_source,
+    discover_media,
+)
 from wef_backend.features.ingestion.infrastructure.models import (
     MediaRecoveryChannelRow,
     MediaRecoveryWorkRow,
@@ -138,7 +140,7 @@ class SQLAlchemyMediaRecoveryStore:
             if not isinstance(revision.raw_payload_json, dict):
                 message = "media source payload is invalid"
                 raise TypeError(message)
-            raw = decode_archived_payload(revision.raw_payload_json, identity)
+            raw = decode_media_source(revision.raw_payload_json, identity)
             return MediaClaim(
                 id=row.id,
                 token=row.lease_token,

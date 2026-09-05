@@ -21,7 +21,6 @@ from wef_backend.features.ingestion.domain.media_storage import (
     TRANSFORM_VERSION,
     descriptor_identity,
 )
-from wef_backend.features.ingestion.infrastructure.archive_decoder import decode_archived_payload
 from wef_backend.features.ingestion.infrastructure.models import (
     MediaRecoveryChannelRow,
     MediaRecoveryIntentionRow,
@@ -31,11 +30,23 @@ from wef_backend.features.ingestion.infrastructure.models import (
     SourceMessageRevisionRow,
     SourceMessageRow,
 )
+from wef_backend.features.ingestion.infrastructure.telegram_record import convert_record
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
     from wef_backend.features.ingestion.domain.model import RawMessage
+
+
+def decode_media_source(payload: Mapping[str, object], identity: SourceIdentity) -> RawMessage:
+    """Retain canonical non-listing attachments for explained media disposition."""
+    message = convert_record(payload, 0, identity).result.message
+    if message is None:
+        error = "canonical media source is malformed"
+        raise ValueError(error)
+    return message
 
 
 async def discover_media(
@@ -165,7 +176,7 @@ async def _discover_revision(
     if not isinstance(source.raw_payload_json, dict):
         message = "media source payload is invalid"
         raise TypeError(message)
-    raw = decode_archived_payload(source.raw_payload_json, identity)
+    raw = decode_media_source(source.raw_payload_json, identity)
     await _seed_explicit(session, source, raw, grouper)
     # Deleted messages are boundaries, not active association owners.
     extraction = extract_listing(raw)
