@@ -25,7 +25,10 @@ from wef_backend.features.ingestion.application.telegram_live import (
 if TYPE_CHECKING:
     from wef_backend.features.ingestion.application.live_media import LiveMediaPipeline
     from wef_backend.features.ingestion.application.persistence import IngestionPersistencePort
-    from wef_backend.features.ingestion.application.telegram_live import TelegramLiveClientPort
+    from wef_backend.features.ingestion.application.telegram_live import (
+        MediaLease,
+        TelegramLiveClientPort,
+    )
     from wef_backend.features.ingestion.domain.model import SourceIdentity
     from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
 
@@ -82,6 +85,7 @@ class LiveTelegramBackfill:
                 )
                 counts = RunCounts()
                 batch: list[tuple[PersistableMessage, int]] = []
+                leases: list[MediaLease] = []
                 try:
                     async for live in self.client.iter_messages(
                         username=request.identity.username,
@@ -90,7 +94,11 @@ class LiveTelegramBackfill:
                         limit=request.limit,
                     ):
                         if live.external_message_id <= min_id:
+                            if live.media_lease is not None:
+                                live.media_lease.release()
                             continue
+                        if live.media_lease is not None:
+                            leases.append(live.media_lease)
                         raw = live_message_to_raw(live, identity=channel)
                         batch.append(
                             (
@@ -98,7 +106,7 @@ class LiveTelegramBackfill:
                                 live.external_message_id,
                             )
                         )
-                        if len(batch) >= request.batch_size:
+                        if leases or len(batch) >= request.batch_size:
                             _, checkpoint, counts, _ = await self.store.persist_batch(
                                 channel_id=channel_id,
                                 run_id=run_id,
@@ -108,6 +116,9 @@ class LiveTelegramBackfill:
                             )
                             await self._process_batch_media(channel, batch)
                             batch.clear()
+                            for lease in leases:
+                                lease.release()
+                            leases.clear()
                     if batch:
                         _, checkpoint, counts, _ = await self.store.persist_batch(
                             channel_id=channel_id,
@@ -126,6 +137,9 @@ class LiveTelegramBackfill:
                         error_summary=redacted_error_summary(error),
                     )
                     raise
+                finally:
+                    for lease in leases:
+                        lease.release()
                 await self.store.finish_run(
                     run_id=run_id,
                     status=RunStatus.SUCCEEDED,
