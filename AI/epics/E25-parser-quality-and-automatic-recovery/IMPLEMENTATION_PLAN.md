@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E25
 title: "Parser quality and automatic recovery"
-status: awaiting_approval
+status: approved
 revision: 1
 owner: owner
 spike_revision: 1
@@ -17,11 +17,11 @@ task_sequence:
     revision: 1
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Flippylolz"
+  decided_at: "2026-09-05T10:22:44Z"
+  approved_revision: 1
+  evidence: "AD-048; owner message continue in Codex task 01a0710e-e877-7ab2-ad03-c6008aaf16e9 directly answering the request to approve E25 implementation plan revision 1."
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -33,7 +33,7 @@ invalidation:
 
 ## Approved baseline and decision requested
 
-The owner approved [spike revision 1](SPIKE.md) on 2026-09-05 in response to the explicit spike-approval question; [AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) records the decision. This plan is revision 1, awaiting separate implementation approval. No implementation has begun.
+The owner approved [spike revision 1](SPIKE.md) on 2026-09-05 in response to the explicit spike-approval question; [AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) records the decision. The owner approved implementation plan revision 1 by replying “continue” directly to its approval request; AD-048 records the scope. Task dependency and branch gates remain enforceable.
 
 Research baseline: main `a2cdb16`, fetched 2026-09-05. The [audit](../../audits/2026-09-05-system-audit.md#p1--confirmed-source-evidenced-parser-misses) confirms the Ostrzycka label/storage gaps, the misleading parse-issue taxonomy, and stale historical parser versions. Its production counts are dated observations, not a new measurement or a field-accuracy benchmark.
 
@@ -180,5 +180,5 @@ A new provider/model, paid allocation, broader automatic field/visibility author
 - [x] Modules, contracts, data ownership, tests, limits, rollout and rollback are defined.
 - [x] No new provider/dependency/spend decision is implicitly approved; existing activation prerequisites remain enforced.
 - [x] No application code, tests, migrations or disposable proof code has been written.
-- [x] This plan is revision 1, `awaiting_approval`, with approval metadata pending.
-- [ ] Owner approves this exact implementation-plan revision.
+- [x] This plan is approved revision 1 with attributable approval metadata.
+- [x] Owner approved this exact implementation-plan revision on 2026-09-05.

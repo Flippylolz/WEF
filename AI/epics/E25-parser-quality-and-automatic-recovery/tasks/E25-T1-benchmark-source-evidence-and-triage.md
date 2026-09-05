@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T1
 epic: E25
 title: "Benchmark source evidence and classify repairable gaps"
-status: draft
+status: ready
 revision: 1
 priority: P1
 size: M
@@ -23,11 +23,11 @@ spike_gate:
   verified_by: Codex
   verified_at: "2026-09-05T10:15:52Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 1
+  verified_by: Codex
+  verified_at: "2026-09-05T10:22:44Z"
 dependency_gate:
   status: satisfied
   verified_by: Codex
@@ -80,9 +80,9 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 ## Dependencies and gates
 
-No task dependency. Spike revision 1 is approved and promotion is recorded. Implementation-plan revision 1 remains pending; implementation is not authorized.
+No task dependency. Spike revision 1 is approved and promotion is recorded. Implementation-plan revision 1 is approved; the dedicated branch gate remains required.
 
-This promoted task remains `draft` under the [workflow](../../../workflow/README.md). The owner must approve [implementation plan revision 1](../IMPLEMENTATION_PLAN.md), then the task must satisfy its dependency and branch gates before implementation.
+This promoted task is `ready` under the [workflow](../../../workflow/README.md). [Implementation plan revision 1](../IMPLEMENTATION_PLAN.md) is approved; the task must satisfy its dependency and branch gates before implementation.
 
 ## Rollout and automatic operation
 
@@ -103,7 +103,7 @@ Do not add production dependencies without owner approval, commit raw source/cre
 ## Readiness and completion
 
 - [x] Spike revision 1 approval and task promotion are recorded; the authoritative file is under `tasks/`.
-- [ ] Implementation plan revision 1 is explicitly approved and the implementation gate is satisfied.
+- [x] Implementation plan revision 1 is explicitly approved and the implementation gate is satisfied.
 - [ ] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
 - [ ] This task passes through `ready` and starts on its own dedicated branch/PR.
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.

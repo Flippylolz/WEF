@@ -406,3 +406,11 @@ This append-only log records choices made while the owner delegated overnight MV
 - Scope boundary: task refinement/promotion and planning only. This approval does not authorize application code, tests, migrations, production replay, AI activation or spend, deployment, or merging. E24-T1 remains an enforceable dependency of E25-T4.
 - Rationale: the owner approved the exact spike revision in response to the explicit approval question; implementation approval is a distinct gate under the repository workflow.
 - Reversal: invalidate affected spike/plan/task gates if the owner withdraws approval or material new evidence changes the approved recommendation.
+
+## AD-048: Approve E25 implementation plan revision 1
+
+- Time: 2026-09-05T10:22:44Z.
+- Owner decision: `continue`, in Codex task `01a0710e-e877-7ab2-ad03-c6008aaf16e9`, directly answering “Do you approve E25 implementation plan revision 1?” after the complete plan and commit e649ab0 were presented.
+- Selected approach: record approval of implementation plan revision 1, make E25-T1 ready, then implement E25 tasks on dedicated branches/PRs in plan order with required validation. Dependent tasks may use valid ordered ancestor PRs under ADR-018.
+- Scope boundary: the exact approved plan, including its narrow scheduled-AI authorization amendment, resource/privacy limits and E24-T1 dependency. This is not merge authorization, production activation, paid spend authorization or approval of E24 work.
+- Reversal: invalidate affected gates if material evidence changes the approved plan; preserve unrelated source/owner/AI data and work.
