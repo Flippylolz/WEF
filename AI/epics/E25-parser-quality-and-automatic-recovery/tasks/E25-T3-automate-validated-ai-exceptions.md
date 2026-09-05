@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T3
 epic: E25
 title: "Automate validated AI exceptions under durable budgets"
-status: ready
+status: invalidated
 revision: 1
 priority: P1
 size: L
@@ -17,13 +17,13 @@ promotion:
   promoted_by: Codex
   promoted_at: "2026-09-05T10:15:52Z"
 spike_gate:
-  status: satisfied
+  status: invalidated
   file: ../SPIKE.md
   approved_revision: 1
   verified_by: Codex
   verified_at: "2026-09-05T10:15:52Z"
 implementation_gate:
-  status: satisfied
+  status: invalidated
   file: ../IMPLEMENTATION_PLAN.md
   approved_revision: 1
   verified_by: Codex
@@ -31,7 +31,7 @@ implementation_gate:
 dependency_gate:
   status: stacked
   verified_by: Codex
-  verified_at: "2026-09-05T11:20:00Z"
+  verified_at: "2026-09-05T11:10:00Z"
   evidence:
     - task_id: E25-T1
       branch: feat/E25-T1-evidence-classification
@@ -42,7 +42,7 @@ branch:
   name: feat/E25-T3-durable-ai-recovery
   task_id: E25-T3
   one_task_only: true
-  created_at: "2026-09-05T11:20:00Z"
+  created_at: "2026-09-05T11:10:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -50,10 +50,10 @@ completion:
   pull_request: null
   evidence: []
 invalidation:
-  invalidated_by: null
-  invalidated_at: null
-  reason: null
-  return_to: null
+  invalidated_by: Codex
+  invalidated_at: "2026-09-05T11:12:47Z"
+  reason: "Official Groq Batch retention contradicts required ZDR. Await provider privacy revision 2."
+  return_to: spike
 ---
 
 # E25-T3: Automate validated AI exceptions under durable budgets
@@ -113,3 +113,11 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
 
 The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
+
+## Provider prerequisite finding
+
+T3 implementation stopped before code was written. The documentation branch
+`doc/E25-provider-privacy-revision` prepares spike/plan revision 2 to resolve
+the Batch/ZDR conflict. Rebase this implementation branch and restore gates only
+after that revision is explicitly approved. Readiness timestamps above correct
+the prior commit’s future minute estimate; readiness commit remains `a9f24f1`.
