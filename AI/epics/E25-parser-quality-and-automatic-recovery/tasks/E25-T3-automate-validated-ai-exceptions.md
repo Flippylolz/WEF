@@ -29,7 +29,7 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-05T11:18:50Z"
 dependency_gate:
-  status: stacked
+  status: satisfied
   verified_by: Codex
   verified_at: "2026-09-05T11:17:46Z"
   evidence:
@@ -132,3 +132,12 @@ commit a9f24f1 and invalidation commit 1448cea remain in history.
 
 See [T3 implementation evidence](../E25-T3-IMPLEMENTATION_EVIDENCE.md) for passing
 local checks, changed files and outstanding live acceptance/dependency gates.
+
+## Authorized release gate
+
+T1 is done on merged `ea47448`; T2 is also done on merged `d9f5e30` with healthy
+production releases and bounded acceptance evidence. AD-053 explicitly authorizes
+this staged release. Current local validation passed 1,060 backend and 169 frontend
+tests, with 90.24% backend coverage. Scheduling, activation verification and apply
+remain off until current free allocation is confirmed and live canary evidence passes.
+The representative 24-hour acceptance window remains required for T3 completion.

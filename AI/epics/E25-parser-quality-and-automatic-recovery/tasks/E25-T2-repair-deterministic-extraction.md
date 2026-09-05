@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T2
 epic: E25
 title: "Repair deterministic field extraction and money semantics"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -45,10 +45,11 @@ branch:
   created_at: "2026-09-05T10:57:00Z"
   pull_request: null
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-05T15:13:49.244346+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/330
+  evidence:
+    - ../E25-T2-IMPLEMENTATION_EVIDENCE.md
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -136,3 +137,10 @@ and its bounded production classification passed current-revision, deduplication
 and eligibility checks. AD-053 authorizes this staged release. Final local T2
 validation passed 891 backend and 169 frontend tests with 90.52% backend coverage.
 The main-targeted PR must pass current-head CI before merge.
+
+## Production completion
+
+PR #330 merged as `d9f5e30`; release 33973752178 succeeded with API and worker
+healthy. The 100-source read-only extraction comparison and bounded metadata
+canary passed; evidence below distinguishes changes/warnings from safe repairs.
+T2 is done. Automatic canonical history application remains the separate T4 gate.
