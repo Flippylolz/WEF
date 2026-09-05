@@ -22,6 +22,8 @@ def test_silent_labeled_price_miss_is_eligible_without_a_warning() -> None:
     result = extract_listing(_message(text))
     assert not result.warnings
     assert result.listing is not None
+    result = replace(result, listing=replace(result.listing, apartment_price=None))
+    assert result.listing is not None
     assert result.listing.apartment_price is None
     quality = classify_parse(text, result)
     assert quality.recovery_eligible
@@ -63,7 +65,10 @@ def test_contradictions_are_not_automatically_repairable() -> None:
 
 def test_included_storage_gap_is_classified_as_inclusion_not_money() -> None:
     text = "Продажа: квартира\nКладовая: входит в цену"
-    quality = classify_parse(text, extract_listing(_message(text)))
+    result = extract_listing(_message(text))
+    assert result.listing is not None
+    result = replace(result, listing=replace(result.listing, storage_included_in_price=None))
+    quality = classify_parse(text, result)
     storage = next(
         field for field in quality.fields if field.field_name == "storage_included_in_price"
     )
@@ -74,6 +79,13 @@ def test_included_storage_gap_is_classified_as_inclusion_not_money() -> None:
 def test_candidate_detection_miss_can_still_have_listing_evidence() -> None:
     text = "Sprzedam mieszkanie\nParking: 45 000 PLN"
     result = extract_listing(_message(text))
+    result = replace(
+        result,
+        listing=None,
+        decision=replace(
+            result.decision, is_candidate=False, score=0, signals=(), content_type=None
+        ),
+    )
     assert not result.decision.is_candidate
     quality = classify_parse(text, result)
     assert quality.classification is ParseClassification.EXTRACTION_MISS
@@ -135,7 +147,10 @@ def test_empty_label_never_borrows_the_following_line() -> None:
 
 def test_implicit_english_property_evidence_exposes_silent_omission() -> None:
     text = "For sale: apartment\nPrice: 700 000 PLN"
-    quality = classify_parse(text, extract_listing(_message(text)))
+    result = extract_listing(_message(text))
+    assert result.listing is not None
+    result = replace(result, listing=replace(result.listing, property_type=None))
+    quality = classify_parse(text, result)
     prop = next(field for field in quality.fields if field.field_name == "property_type")
     assert prop.classification is ParseClassification.EXTRACTION_MISS
     assert prop.spans[0].extract(text) == "apartment"
