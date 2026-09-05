@@ -1,6 +1,7 @@
 #!/bin/sh
 
 set -eu
+export PYTHONDONTWRITEBYTECODE=1
 
 SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 # shellcheck disable=SC1091
@@ -12,6 +13,10 @@ require_directory "$WEF_ROOT/state"
 
 exec 9>"$WEF_ROOT/state/deploy.lock"
 flock -n 9 || fail "another WEF deployment holds the host lock"
+
+if [ -n "${WEF_EXPECTED_CURRENT_SHA:-}" ]; then
+  python3 "$SCRIPT_DIR/release_order.py" guard "$WEF_ROOT" "$WEF_EXPECTED_CURRENT_SHA"
+fi
 
 # Reporting is optional and cannot interrupt release safety or rollback.
 observe_release() {
@@ -43,6 +48,9 @@ if [ "${WEF_DEPLOY_TEST_MODE:-0}" != "1" ] &&
   fail "Geoapify readiness failed; existing application release was not replaced"
 fi
 
+if [ -n "${WEF_EXPECTED_CURRENT_SHA:-}" ]; then
+  python3 "$SCRIPT_DIR/release_order.py" pending "$WEF_ROOT" "$WEF_RELEASE_SHA"
+fi
 production_compose --profile operator run --rm db-permissions
 production_compose up --detach --wait db
 if ! production_compose --profile operator run --rm migrate; then
@@ -92,6 +100,7 @@ if [ "$candidate_healthy" -eq 1 ]; then
     "$WEF_ROOT" \
     "$WEF_RELEASE_DIR" \
     "$WEF_CONFIG_FILE"
+  rm -f "$WEF_ROOT/state/activation-pending.json"
   observe_release activated
   printf 'Activated WEF release %.12s.\n' "$WEF_RELEASE_SHA"
   exit 0
@@ -105,6 +114,7 @@ if [ "$had_previous" -eq 1 ]; then
   )
   observe_release rollback_started
   if "$SCRIPT_DIR/rollback.sh" "$WEF_ROOT" "$previous_state"; then
+    rm -f "$WEF_ROOT/state/activation-pending.json"
     observe_release restored
     python3 "$SCRIPT_DIR/release_state.py" failure \
       "$WEF_ROOT/state/last-failure.json" \

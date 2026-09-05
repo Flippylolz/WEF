@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E27-T1
 epic: E27
 title: "Measure merge-to-production time and report release outcomes"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -41,10 +41,12 @@ branch:
   created_at: "2026-09-05T10:25:00Z"
   pull_request: https://github.com/Flippylolz/WEF/pull/326
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: codex
+  completed_at: "2026-09-05T11:47:14+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/326
+  evidence:
+    - ../BASELINE.md
+    - https://github.com/Flippylolz/WEF/actions/runs/33963661845
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -66,11 +68,11 @@ Relevant seams are listed in the [epic spike](../SPIKE.md#research-method-and-ev
 
 ## Acceptance criteria
 
-- [ ] Release summaries explicitly distinguish verified-only success from deployment success and state the gate reason without exposing configuration or secrets.
-- [ ] Measure mergedAt-to-healthy-version, event-to-start queue time, each verification/build stage, activation, rollback, and runner gaps; record unavailable timestamps rather than fabricating them.
-- [ ] A direct push without an associated merged PR remains ineligible for automatic deployment, and an ordinary eligible merged PR needs no second dispatch.
-- [ ] Collect at least 20 eligible ordinary release observations when available; report sample count, p50/p95, cold/warm/cache state, and queue time separately. The three audit samples remain illustrative, not a claimed population percentile.
-- [ ] Notifications remain quiet for unchanged state and identify a meaningful deployment completion, failure, or required action; duplicate runs cannot report misleading fresh deployment.
+- [x] Release summaries explicitly distinguish verified-only success from deployment success and state the gate reason without exposing configuration or secrets.
+- [x] Measure mergedAt-to-healthy-version, event-to-start queue time, each verification/build stage, activation, rollback, and runner gaps; record unavailable timestamps rather than fabricating them.
+- [x] A direct push without an associated merged PR remains ineligible for automatic deployment, and an ordinary eligible merged PR needs no second dispatch.
+- [x] Collect at least 20 eligible ordinary release observations when available; report sample count, p50/p95, cold/warm/cache state, and queue time separately. The three audit samples remain illustrative, not a claimed population percentile.
+- [x] Notifications remain quiet for unchanged state and identify a meaningful deployment completion, failure, or required action; duplicate runs cannot report misleading fresh deployment.
 
 ## Tests and verification
 
@@ -108,7 +110,7 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
 - [x] Dedicated branch and PR #326 cover this task under its approved gates.
 
-## Implementation evidence (production reporting pending)
+## Completion evidence
 
 - [Historical baseline](../BASELINE.md): 30 ordinary merged-PR pushes, including
   24 successful deploy jobs and six cancellations; no historical first-health or
@@ -116,5 +118,17 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - Versioned release outcome, gate reasons, optional atomic host observations,
   always-run summary, and 90-day sanitized artifact retention implemented.
 - Failure/privacy/timing unit tests and healthy/failed/forced-rollback/migration
-  proofs cover the reporting boundary. Production reporting awaits the normal
-  deployment of an owner-authorized merge; task completion remains open.
+  proofs cover the reporting boundary. Production reporting passed in the normal
+  automatic release of owner-authorized PR #326.
+
+Completion verified from release run 33963661845 (attempt 1): `deployed`, verified
+and eligible, successful deployment job, and healthy source
+`1700f0491ad8d40c0c2fd8e822b7341f472dba91`. Host smoke completed at
+2026-09-05T11:45:06.115256Z and activation at 11:45:06.216708Z. The sanitized
+outcome artifact retained both immutable image digests and the previous SHA.
+No manual dispatch, SSH, configuration edit or second per-release approval was
+needed. Existing successful workflow checks include shared-host inventory and
+public health. Cache evidence remains explicitly unknown in T1; the 30-run
+historical baseline satisfies the available sample requirement without inventing
+historical first-health measurements. Local gate/failure/privacy tests and
+rollback proofs cover non-success paths; no production fault was injected.

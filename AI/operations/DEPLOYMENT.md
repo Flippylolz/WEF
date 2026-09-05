@@ -518,3 +518,64 @@ Merge-to-healthy uses the matching merged PR timestamp and host-observed smoke
 success, an upper bound on first healthy service. Failed, superseded and duplicate
 releases have no fresh-release latency. Existing health/configuration/rollback
 and associated-PR gates are unchanged by reporting.
+
+## Shared verification and release serialization (E27-T2)
+
+PR CI and the main-push release call `.github/workflows/verify.yml` with the
+exact source SHA. Backend, frontend and repository verification run independently;
+backend tests use one disposable host PostGIS service. The release no longer
+runs a duplicate main-push CI workflow or builds Compose test images after
+installing the same host dependencies. PR status adapters preserve the protected
+names `Backend`, `Frontend and contract`, `Repository safety`, `Runtime images`,
+and `Coverage badge`; none can pass from skipped/failed shared verification.
+Coverage publishing consumes successful main-push release runs instead of CI.
+
+The shared runtime-image action checks source identity, builds with existing
+component cache scopes, and inspects runtime users/contents. PR runs have no
+publish credentials or package-write permissions. Release backend/web images
+build independently alongside verification, then the exact published digests
+pass the production runtime/persistence proof. Only the complete verification,
+image and runtime dependency graph can assemble a deployable release artifact.
+[The parity record](../epics/E27-faster-verified-releases/CHECK_PARITY.md) maps
+all previous checks to this graph.
+
+A per-SHA workflow concurrency group prevents duplicate requests from preparing
+the same release simultaneously. The `wef-production` group covers the entire
+deployment job, from private configuration and transfer through health,
+rollback, inventory, bootstrap, registry logout and cleanup; cancellation of an
+active release remains disabled. Different SHAs can verify and build concurrently.
+GitHub can replace a pending concurrency entry; a cancelled candidate is not a
+successful release. Queue order is never treated as source order.
+
+An ordinary manual repeat can reuse a successful same-repository main-push run
+only after checking its exact SHA, complete job results, unexpired artifact,
+verification fingerprint, immutable digests and complete checksum inventory.
+Missing/expired/invalid evidence falls back to full verification. Rehearsal flags
+force fresh verification and cannot silently become no-ops. Both fallback and
+reused artifacts are validated again before deployment. The fingerprint binds
+verification workflow/action definitions and lockfiles to the caller's workflow
+revision. It does not grant older source revisions an exemption from current
+checks. No PR-head artifacts are reused for a merge SHA.
+
+Under the production lock, snapshot current state and immutable digests, verify
+source ancestry, and skip a candidate older than the current healthy release.
+Unrelated history or inconsistent state fails closed. Repeat the current-state
+comparison under the host lock immediately before migration. A same-SHA request
+becomes `already_current` only with matching digests, identical configuration,
+and successful local/public health proofs. Same-SHA configuration changes fail
+comparison and require the existing explicit configuration-management path.
+
+Transfers retry at most three times (immediately, after 5 seconds and after 15
+seconds); migration/activation is never blindly retried. Before guarded mutation,
+`state/activation-pending.json` records uncertainty durably. Verified activation
+or verified rollback removes it. An interrupted or failed migration leaves the
+marker and prevents the next release from silently repeating an ambiguous
+mutation. Reconcile actual health, current/previous state, schema revision and
+host-lock ownership before clearing it through an authorized recovery decision;
+removing the marker alone is not evidence of recovery. A failed snapshot holding
+the host lock also detects an orphaned remote deployment after SSH/runner loss.
+
+Rollback restores the prior workflow through a reviewed change, retaining
+observations and immutable releases. Do not cancel a running migration or rewind
+production data. Existing off-host backup deferral still limits destructive data
+recovery. No production fault injection is included in E27 acceptance.

@@ -278,7 +278,7 @@ def main() -> int:
             healthy_dir,
             healthy_config,
             HEALTHY_SHA,
-            environment,
+            {**environment, "WEF_EXPECTED_CURRENT_SHA": "none"},
             check=True,
         )
         observation = json.loads((root / "state/release-observation.json").read_text())
@@ -295,13 +295,27 @@ def main() -> int:
             assert not runtime_directory.is_symlink()
             assert runtime_directory.stat().st_mode & 0o777 == 0o750
 
+        subprocess.run(  # noqa: S603 - fixed read-only current-release proof
+            [
+                str(REPOSITORY_ROOT / "scripts/deploy/verify_current.sh"),
+                str(root),
+                str(healthy_dir),
+                str(healthy_config),
+                HEALTHY_SHA,
+                "3100",
+            ],
+            env=environment,
+            check=True,
+            capture_output=True,
+        )
+
         unhealthy_dir, unhealthy_config = prepare_release(root, UNHEALTHY_SHA)
         unhealthy = run_deploy(
             root,
             unhealthy_dir,
             unhealthy_config,
             UNHEALTHY_SHA,
-            environment,
+            {**environment, "WEF_EXPECTED_CURRENT_SHA": HEALTHY_SHA},
             check=False,
         )
         observation = json.loads((root / "state/release-observation.json").read_text())
@@ -324,7 +338,11 @@ def main() -> int:
             forced_dir,
             forced_config,
             FORCED_FAILURE_SHA,
-            {**environment, "WEF_FORCE_ROLLBACK_REHEARSAL": "1"},
+            {
+                **environment,
+                "WEF_FORCE_ROLLBACK_REHEARSAL": "1",
+                "WEF_EXPECTED_CURRENT_SHA": HEALTHY_SHA,
+            },
             check=False,
         )
         assert forced_failure.returncode == 42
@@ -341,10 +359,15 @@ def main() -> int:
             migration_dir,
             migration_config,
             MIGRATION_FAILURE_SHA,
-            {**environment, "WEF_FAKE_MIGRATION_FAIL": "1"},
+            {
+                **environment,
+                "WEF_FAKE_MIGRATION_FAIL": "1",
+                "WEF_EXPECTED_CURRENT_SHA": HEALTHY_SHA,
+            },
             check=False,
         )
         observation = json.loads((root / "state/release-observation.json").read_text())
+        assert (root / "state/activation-pending.json").exists()
         assert "healthy_at" not in observation
         assert "restored_at" not in observation
         assert migration_failure.returncode == 1
