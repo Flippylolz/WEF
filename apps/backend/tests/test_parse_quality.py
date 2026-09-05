@@ -44,6 +44,37 @@ def test_non_listing_content_does_not_enter_recovery(text: str) -> None:
     }
 
 
+@pytest.mark.parametrize(
+    ("label", "value"),
+    [
+        ("Parking", "garage rental available"),
+        ("Гараж", "можно арендовать место или оформить абонемент"),
+        ("Parking", "space number 7 available"),
+        ("Storage", "available on floor 2"),
+        ("Price", "contact the agent for details"),
+    ],
+)
+def test_price_label_without_an_amount_never_requests_recovery(label: str, value: str) -> None:
+    text = f"For sale: apartment\nArea: 50 m²\n{label}: {value}"
+    quality = classify_parse(text, extract_listing(_message(text)))
+    assert not quality.recovery_eligible
+    assert not any(
+        field.classification is ParseClassification.EXTRACTION_MISS for field in quality.fields
+    )
+
+
+@pytest.mark.parametrize("amount", ["45000", "45 000 PLN", "EUR 12000", "costs 45 tys. zł"])
+def test_price_evidence_still_exposes_a_silent_parser_gap(amount: str) -> None:
+    text = f"For sale: apartment\nParking: {amount}"
+    result = extract_listing(_message(text))
+    assert result.listing is not None
+    result = replace(result, listing=replace(result.listing, parking_price=None), warnings=())
+    quality = classify_parse(text, result)
+    parking = next(field for field in quality.fields if field.field_name == "parking_price")
+    assert parking.classification is ParseClassification.EXTRACTION_MISS
+    assert quality.recovery_eligible
+
+
 def test_source_absent_is_distinct_from_unrecognized_prose() -> None:
     text = "Sprzedam mieszkanie\nCena: nie podano"
     quality = classify_parse(text, extract_listing(_message(text)))

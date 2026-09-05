@@ -3,7 +3,7 @@ schema: ai-workflow/implementation-plan@1
 epic: E24
 title: "Automatic ingestion recovery"
 status: approved
-revision: 2
+revision: 3
 owner: owner
 spike_revision: 2
 task_sequence:
@@ -11,13 +11,15 @@ task_sequence:
     revision: 2
   - id: E24-T2
     revision: 3
+  - id: E24-T3
+    revision: 2
 approval:
   required_role: owner
   status: approved
   decided_by: Flippylolz
-  decided_at: "2026-09-05T14:18:47Z"
-  approved_revision: 2
-  evidence: "Codex task 01a0710e-adaa-76f2-8bcd-07784c03e9b2: owner message continue directly approving rollout correction revision 1 and publication of aggregate evidence; original plan approval retained in Git history"
+  decided_at: "2026-09-05T16:28:48.314160Z"
+  approved_revision: 3
+  evidence: "Codex task 01a0710e-adaa-76f2-8bcd-07784c03e9b2: owner continue directly approving revision 3 for T3 implementation and green-CI rollout"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -27,7 +29,7 @@ invalidation:
 
 # Implementation plan: Automatic ingestion recovery
 
-## Approved baseline and scope
+## Completed baseline and proposed extension
 
 [Spike revision 2](SPIKE.md) was approved by the owner under
 [AD-048](../../workflow/AUTONOMOUS_DECISIONS.md#ad-048-approve-e24-spike-revision-2-and-prepare-the-first-implementation-plan).
@@ -38,10 +40,13 @@ approved staging correction after the initial T2 activation failed.
 
 Retain PostgreSQL, the backend-authoritative ingestion architecture, source
 evidence, protected offer fields, contact encryption, and existing provider
-budgets. No production dependency is added. T3 media recovery and T4 broad
-progress health/24-hour acceptance remain proposed and require a later plan
-revision. Fixing the drainer's false completion count belongs to T1 because it
+budgets. No production dependency is added. Revision 3 adds T3 media recovery for approval; T4 broad progress health/24-hour
+acceptance remains proposed and requires a later plan revision. Fixing the drainer's false completion count belongs to T1 because it
 is necessary to verify this repair; it does not complete T4.
+
+Revision 2 approval and completed T1/T2 remain historical facts, preserved in Git
+and [production evidence](PRODUCTION_EVIDENCE.md). The owner explicitly approved revision 3 for T3 implementation and green-CI rollout
+by replying `continue` to the revision-specific approval request.
 
 ## Ordered task sequence and delivery
 
@@ -49,6 +54,7 @@ is necessary to verify this repair; it does not complete T4.
 | --- | --- | --- | --- |
 | 1 | [E24-T1 revision 2](tasks/E24-T1-terminate-original-archive-work.md) | None | Original archive work terminates using retained source evidence; safe bounded reconciliation resumes the queue. |
 | 2 | [E24-T2 revision 3](tasks/E24-T2-monotonic-cursors-and-fair-retries.md) | E24-T1 | Durable channel progress, fair retry scheduling, and bounded old-message reconciliation survive concurrency and restarts. |
+| 3 | [E24-T3 revision 2](tasks/E24-T3-recover-media-after-message-commit.md) | E24-T1 (done) | Durable media recovery survives canonical commit and unchanged replay. |
 
 Land planning metadata through its own documentation PR. Use
 `bugfix/E24-T1-original-archive` and `bugfix/E24-T2-cursors-and-retries` as separate
@@ -432,4 +438,127 @@ The owner approved [rollout correction revision 1](ROLLOUT_CORRECTION_PLAN.md)
 after T2 activation exposed temporary staging exhaustion. This explicit addendum
 authorizes bounded staging ownership and streaming, its tests and corrective
 rollout, and publication of aggregate incident evidence. T2 remains in progress
-until the corrective production observation passes. T3/T4 are not promoted.
+until the corrective production observation passes (now completed; see production evidence). At that revision T3/T4 were not promoted; revision 3 promotes T3 for planning.
+
+
+## T3: independent media recovery (revision 3 approval scope)
+
+### Verified gaps and design constraints
+
+Current `telegram_events.py` marks archive work processed before media processing
+and skips media for `UNCHANGED`. `live_media.py` also treats any recorded replay
+as complete. `media_repository.py::persist_media_result` returns early when an
+original disposition exists, so merely calling it again cannot repair failed
+variants. Acquisition in `telethon_live_media.py` happens before text processing;
+a download failure can delay text and can leave no durable expected-media work.
+
+Keep the existing storage classes, descriptor/revision/grouping identities,
+verifier and transform versions, public variants, and association rules. No new
+provider, dependency, public API, worker container, or resource allocation is
+introduced. The T2 shared 56 MiB staging budget and 8 MiB temporary headroom remain
+mandatory. Source-conflict repair and T4 health-policy expansion are excluded.
+
+### Durable intention and identity
+
+Add a PostgreSQL media-recovery ledger and discovery checkpoint with additive
+Alembic migration (allocate the next revision from current main at implementation).
+Persist a unique discovery intention for each canonical source revision in the
+same transaction as canonical upsert, including unchanged replay when intention
+is absent. This closes the crash gap before asynchronous media discovery.
+Represent intended descriptors even before download: stable source channel/message,
+revision, ordinal and provider media identity are distinct from ephemeral paths.
+Never revise raw archive checksums or canonical source text to fit reacquired media.
+
+Resolve each intention into work keyed by source revision, ordinal, descriptor
+identity, grouping version and transform version. Record association evidence,
+state, eligibility time, lease token/expiry, separate transient/data attempts,
+last safe reason and relevant policy version. States are pending, leased,
+retry_wait, completed, unsupported, superseded or quarantined; completed requires
+all supported expected variants, not only a stored original. Unique constraints
+and token-checked completion fence duplicate workers and expired leases.
+
+### Association and historical discovery
+
+Use existing deterministic grouping rules, including text/service boundaries,
+explicit albums, replies and the 120-second burst rule. Feed text-only records
+into association reconstruction too. Persist chronological continuation/grouping
+evidence across pages; never apply arbitrary queue order to a shared grouper.
+Resolve explicit album/reply anchors from retained source evidence. Missing or
+ambiguous context remains explained and unassociated, never attached to the
+nearest convenient offer. A newer revision or deletion cannot publish stale media.
+
+Scan retained canonical revisions in stable pages of 100 using a durable bounded
+watermark; enqueue idempotently and re-check existing storage/variant successes
+before scheduling fetches. Discovery is automatic at worker startup and continues
+in bounded cycles. Do not assume historical local paths exist. Reacquisition must
+match the intended source/media revision or verified original checksum; changed,
+inaccessible or ambiguous source evidence cannot satisfy old work. Preserve a
+safe actionable reason when equivalence is unprovable. Complete scan coverage
+is separate from unresolved work and must survive restarts.
+
+### Acquisition, retry and storage
+
+Move required downloads out of the canonical text path. Live/polling adapters
+capture source metadata and enqueue durable media intentions; the media runner
+fetches one item at a time through the existing leased staging manager, then
+releases its files on success, error, timeout and cancellation. Metadata sweeps
+stay free of downloads. Keep network and transforms outside canonical/row locks.
+
+Claim at most 10 due items per cycle, one active media item, a 5-second idle
+interval, a 120-second renewable lease with token fencing, and the existing
+per-download timeout/byte/pixel limits. Honor provider retry-after; transient
+contention/network/storage errors use 5-second exponential delay capped at
+300 seconds with positive jitter and no malformed-data budget consumption.
+Provider deferral pauses due media fetches without blocking text. Five repeated
+data/transform failures quarantine one work identity. Unsafe paths, unsupported
+types and proven size violations terminate with an explained disposition.
+A relevant verifier/transform/policy change can re-evaluate once; unrelated
+releases cannot reset budgets. Never classify all decode/storage errors alike.
+
+Reuse verified restricted originals to repair missing variants without fetching
+again. Extend persistence so an existing original disposition does not suppress
+missing/failed derivative attempts. Successful variants and public associations
+remain idempotent under duplicate claims, publication-before-commit crashes and
+retries; never remove healthy public assets. Re-check revision/association before
+publishing a public link. Keep originals restricted and use existing sanitized
+content-addressed derivatives. Log only aggregate counts and safe reason codes.
+
+### Modules, tests and diagnostics
+
+Use inward-owned application ports in new `application/media_recovery.py` and
+an infrastructure ledger adapter. Extend ingestion persistence/models/migration,
+`telegram_events.py`, `live_media.py`, `media_storage.py`, `media_repository.py`,
+Telethon metadata/acquisition adapters and `telegram_media_wiring.py`; compose the
+bounded runner in `telegram_worker_command.py`. Reuse existing storage primitives.
+Add separate media queue/oldest-due/success/quarantine counters to private worker
+status; keep the file-only liveness path free of ORM imports and unchanged.
+
+Real database tests must crash after canonical commit before media invocation,
+restart with unchanged input, contend two claims and reject expired completion.
+Test original-success/variant-failure recovery, partial variant success, publication
+before DB failure, stable path-independent identity, changed remote source,
+missing historical local files, album/reply/text-only boundaries across pages,
+non-listing isolation, newer edits/deletes, and bounded historical scan restart.
+Test provider outage with continuing text commits and independent media retries,
+more than five transient failures, poison fairness, policy-scoped re-evaluation,
+unsupported/unsafe dispositions, staging cancellation and zero duplicate links.
+Run all repository checks and the existing real 64 MiB staging and CPU-constrained
+liveness regressions. Update ingestion/storage and operations documentation.
+
+### Rollout and rollback
+
+After plan approval, implement T3 alone on `bugfix/E24-T3-durable-media-recovery`.
+Publish via a dedicated PR after mandatory lint/test/format/type/contract/link
+checks; merge only current-head green CI under standing owner authorization.
+The requested rollout scope includes an additive migration, durable intentions,
+and media recovery canary of 100 intended assets before automatic bounded drain.
+Require receipt/source invariants, successful variant reconciliation, no duplicate
+public links, continuing text/polling work, zero worker restarts and preserved
+staging headroom for a fresh 15-minute production window. An insufficient eligible
+cohort cannot be described as successful derivative recovery; report that gate.
+
+On a systemic failure persist a media-only pause, retaining canonical ingestion,
+ledger, originals and successful derivatives. Do not downgrade schema, reset
+archive/cursors, delete assets or override source ambiguity. Record safe aggregate
+evidence and any exceptional intervention. T3 completion does not close T4 or
+certify the remaining archive conflicts as repaired.

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E24-T2
 epic: E24
 title: "Make source cursors monotonic and retries fair"
-status: in_progress
+status: done
 revision: 3
 priority: P1
 size: L
@@ -42,10 +42,13 @@ branch:
   created_at: "2026-09-05T11:12:46Z"
   pull_request: https://github.com/Flippylolz/WEF/pull/334
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-05T15:53:19Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/334
+  evidence:
+    - "Corrections: https://github.com/Flippylolz/WEF/pull/340 and https://github.com/Flippylolz/WEF/pull/341; all required current-head checks passed"
+    - "Deployment 33975004167 succeeded; ../PRODUCTION_EVIDENCE.md records passing 900-second production observation and preserved archive invariants"
+    - "1062 backend tests (90.25% coverage), 169 frontend tests; lint, format, type, contracts, links and diff checks passed"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -96,17 +99,17 @@ health policy.
 
 ## Acceptance criteria
 
-- [ ] A deterministic race where polling advances the cursor before older archive work gets the lock leaves the persisted cursor unchanged at the higher value.
-- [ ] Lower-ID edits and deletions are applied without decreasing the channel high-water cursor; status and runtime read the same committed meaning.
-- [ ] RunLockHeldError and provider/transport deferrals do not exhaust the malformed-record budget; eligible jobs resume automatically after contention clears.
-- [ ] A poisoned event cannot starve later events, and an exhausted record has one actionable exception record with reason, evidence, and an automatic re-evaluation trigger.
-- [ ] An outage/overlap test covers new records and older edits/deletes under a documented bounded reconciliation policy; unsupported source-history gaps are visible and not falsely marked complete.
-- [ ] A passive high-ID event cannot move the polling boundary over an unobserved interval; crash/restart before a polled batch boundary re-fetches idempotently, with deferred/quarantined records still shown as incomplete canonical coverage.
-- [ ] Two real database sessions plus deterministic barriers prove monotonic progress independently of local lock ownership and run finish order.
-- [ ] More than five lock/transport deferrals remain recoverable without data-budget exhaustion; wrapped database connectivity errors are classified as transient, not malformed data.
-- [ ] Next eligibility survives restart, honors provider minimum delays, and allows healthy later records through. A relevant version change re-evaluates a quarantined original once; unrelated releases cannot reset its budget indefinitely.
-- [ ] Bounded old-ID sweeps resume across restarts and cover retained edits/deletes outside the overlap; incomplete responses and access loss remain unknown with visible coverage limitations.
-- [ ] Legacy progress bootstrap, exhausted lock-failure rescheduling, and diagnostic compatibility preserve source/attempt evidence and never silently initialize polling coverage from maximum source ID.
+- [x] A deterministic race where polling advances the cursor before older archive work gets the lock leaves the persisted cursor unchanged at the higher value.
+- [x] Lower-ID edits and deletions are applied without decreasing the channel high-water cursor; status and runtime read the same committed meaning.
+- [x] RunLockHeldError and provider/transport deferrals do not exhaust the malformed-record budget; eligible jobs resume automatically after contention clears.
+- [x] A poisoned event cannot starve later events, and an exhausted record has one actionable exception record with reason, evidence, and an automatic re-evaluation trigger.
+- [x] An outage/overlap test covers new records and older edits/deletes under a documented bounded reconciliation policy; unsupported source-history gaps are visible and not falsely marked complete.
+- [x] A passive high-ID event cannot move the polling boundary over an unobserved interval; crash/restart before a polled batch boundary re-fetches idempotently, with deferred/quarantined records still shown as incomplete canonical coverage.
+- [x] Two real database sessions plus deterministic barriers prove monotonic progress independently of local lock ownership and run finish order.
+- [x] More than five lock/transport deferrals remain recoverable without data-budget exhaustion; wrapped database connectivity errors are classified as transient, not malformed data.
+- [x] Next eligibility survives restart, honors provider minimum delays, and allows healthy later records through. A relevant version change re-evaluates a quarantined original once; unrelated releases cannot reset its budget indefinitely.
+- [x] Bounded old-ID sweeps resume across restarts and cover retained edits/deletes outside the overlap; incomplete responses and access loss remain unknown with visible coverage limitations.
+- [x] Legacy progress bootstrap, exhausted lock-failure rescheduling, and diagnostic compatibility preserve source/attempt evidence and never silently initialize polling coverage from maximum source ID.
 
 ## Tests and verification
 
@@ -149,7 +152,7 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Scope, acceptance, tests, and recovery constraints match the approved spike.
 - [x] Owner approved implementation plan revision 1 with this task at revision 2 under AD-049.
 - [x] Dependency gate permits implementation through the T1 stack and a dedicated task branch is recorded.
-- [ ] Acceptance evidence, required checks, PR, and definition of done are complete.
+- [x] Acceptance evidence, required checks, PR, and definition of done are complete.
 
 ## Implementation evidence — 2026-09-05
 
@@ -174,8 +177,9 @@ Validation:
   826 backend tests passed, 90.37% coverage; 169 frontend tests passed with coverage floors met.
 - `python3 scripts/check_markdown_links.py` and `git diff --check`: passed.
 
-Task remains `in_progress`: its refreshed required CI/review, authorized
-release, and T2 production observation remain outstanding. No production cursor,
+At this implementation checkpoint, the task remained `in_progress` pending
+required CI/review, authorized release, and T2 production observation. The final
+completion evidence below supersedes that checkpoint. No production cursor,
 archive record, or queue was modified during implementation. T3/T4 remain outside
 this approved implementation sequence.
 
@@ -242,3 +246,24 @@ file-only health probe under polling CPU load. Follow-up branch
 `bugfix/E24-T2-lightweight-liveness` defers ORM imports until full status is
 requested, preserving all health criteria and resource limits. Fresh-process
 healthy/stale tests verify that the actual console entry function needs no ORM.
+
+
+## Completion — 2026-09-05
+
+PR #334 and corrections #340/#341 merged through required green CI. Deployment
+33975004167 and the [passing production window](../PRODUCTION_EVIDENCE.md#t2-final-acceptance--passed)
+complete the operational gate. T1 is done; all T2 acceptance criteria are satisfied.
+
+Acceptance evidence maps to `test_ingestion_progress_integration.py`: independent
+monotonic boundaries and the two-transaction barrier cover cursor races; polling,
+old edits/deletes and source-outage tests cover bounded reconciliation; eight
+contention deferrals followed by success, durable provider delay, poison fairness,
+unique quarantine and policy-scoped re-evaluation cover retry reliability. Sweep
+lease/restart and legacy classification tests preserve progress and attempt
+history. `test_telegram_reconciliation.py` covers overlap and the last durable
+polling boundary after staging deferral. The staging tests and fresh-process
+healthy/stale probe tests cover the two production corrections.
+
+The completion documentation changes only this task, production evidence, the
+epic README, epic registry and M5 milestone. T3/T4 and unresolved source conflicts
+remain outside this completed scope; the epic stays in progress.

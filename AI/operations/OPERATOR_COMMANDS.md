@@ -73,7 +73,7 @@ Prerequisites for any Groq-backed command: `WEF_AI_CURATION_ENABLED=true`,
 **Container:** `api` or `telegram-worker` (database access only; no provider calls).
 
 **Purpose (E25-T1):** Evaluate current retained source revisions, including linked
-offers, under the running parser and `source-evidence-v1` classification policy.
+offers, under the running parser and `source-evidence-v2` classification policy.
 The command writes classification and issue-lifecycle metadata only. It does not
 change canonical offers, call providers, or activate historical parser recovery.
 

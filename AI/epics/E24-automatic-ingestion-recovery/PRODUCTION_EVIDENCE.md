@@ -165,3 +165,54 @@ blocked. A Docker proof using the exact source, 0.5 CPU and a busy background
 process measured five healthy probes at 0.710, 0.699, 0.701, 0.801 and 0.807
 seconds, all within the unchanged 3-second timeout. The proof supplies fresh
 reconciliation evidence as required by the existing policy.
+
+
+### T2 final acceptance — passed
+
+The owner explicitly approved publication/deployment of the liveness follow-up
+and its completion evidence in Codex task `01a0710e-adaa-76f2-8bcd-07784c03e9b2`.
+[PR #341](https://github.com/Flippylolz/WEF/pull/341) passed every required check
+and merged as `f700ee3b9b4488b99e71de40d078a490a0361e80` at 15:30:25Z.
+[Deployment 33975004167](https://github.com/Flippylolz/WEF/actions/runs/33975004167)
+succeeded. The corrected worker became healthy and completed reconciliation before
+acceptance began. Concurrent approved E25 migrations through `20260905_0023`
+were retained; E24 performed no cursor reset or schema downgrade.
+
+A 900-second observation passed on this exact release, with 20 successful samples
+from 2026-09-05T15:38:19Z through 15:53:18Z:
+
+| Measure | First sample | Final sample |
+| --- | ---: | ---: |
+| Completed originals from the initially pending cohort | 15,750 | 17,144 |
+| Pending originals from that cohort | 12,116 | 10,722 |
+| Durable applied high-water | 29,713 | 29,713 |
+| Durable forward polling boundary | 11,472 | 13,559 |
+| Older-known-ID sweep continuation | 3,050 | 3,616 |
+| Historical lock-exhausted originals recovered | 210 | 210 |
+| Worker restarts | 0 | 0 |
+| Receipt checksum mismatches | 0 | 0 |
+| Newly terminal originals without receipts | 0 | 0 |
+
+Recovery remained running, transport/consumer/reconciliation stayed healthy,
+and no applied or polling boundary decreased. The 965 previously terminal records
+retained all 1,522,346 attempts and the frozen original-cohort fingerprint matched
+at every sample. Temporary usage peaked at 8,261,632 bytes (about 7.9 MiB); minimum
+free space was 58,847,232 bytes, comfortably above the required 8 MiB headroom.
+The window completed another 1,394 original records and advanced both forward
+polling and older-known-ID reconciliation without operator intervention.
+
+The final release passed `make lint`, `make format-check`, `make typecheck`,
+`make contract-check`, and `make test` with the isolated `wef-e24` Compose project:
+1,062 backend tests passed with 90.25% coverage, and 169 frontend tests passed.
+The completion branch repeated these checks successfully. Relative Markdown links
+and whitespace checks also pass.
+
+T2 acceptance is complete. This does not certify complete source-history coverage
+or a drained archive: 10,722 original records remain pending, and `history_limited`
+remains true. Across all observations, the final aggregate included 15,563 pending
+records with data-failure accounting and 497 quarantined records; those counts are
+not restricted to the original cohort and must not be added to its pending total.
+The earlier bounded sample identified equal-source-time conflicts, but it does
+not classify every remaining failure. Source equivalence still requires reviewed
+evidence; no retry-budget reset, conflict override, or false completion was used.
+T3/T4 remain proposed, so E24 remains in progress.
