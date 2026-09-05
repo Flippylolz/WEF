@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.deploy.release_cache import cache_metrics
 from scripts.deploy.release_observation import clean_observation
 
 DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -117,6 +118,36 @@ def deployment_result(  # noqa: PLR0911 - explicit terminal outcomes are intenti
     return "deployment_unconfirmed"
 
 
+def cache_evidence(needs: dict[str, Any]) -> dict[str, Any]:
+    """Combine explicitly observed dependency-cache and image-cache counters."""
+    hit = needs.get("verify", {}).get("outputs", {}).get("backend_cache_hit")
+    result: dict[str, Any] = {
+        "backend_dependencies": {"state": {"true": "warm", "false": "cold"}.get(hit, "unknown")}
+    }
+    for component in ("backend", "web"):
+        value = needs.get(f"build-{component}", {}).get("outputs", {}).get("cache_metrics", "{}")
+        try:
+            raw = json.loads(value)
+        except (ValueError, TypeError):
+            raw = {}
+        if isinstance(raw, dict):
+            # Revalidate the producer's counters before publishing a summary.
+            result[f"{component}_image"] = cache_metrics(
+                {
+                    "Status": "completed",
+                    "NumCachedSteps": raw.get("cached_steps"),
+                    "NumTotalSteps": raw.get("total_steps"),
+                }
+            )
+        else:
+            result[f"{component}_image"] = {"state": "unknown"}
+    states = {item["state"] for item in result.values()}
+    result["state"] = (
+        "unknown" if "unknown" in states else next(iter(states)) if len(states) == 1 else "mixed"
+    )
+    return result
+
+
 def build_report(
     needs: dict[str, Any],
     run: dict[str, Any],
@@ -139,6 +170,13 @@ def build_report(
     result = deployment_result(
         verified=verified, eligible=eligible, deploy=deploy, observed=observation
     )
+    if (
+        verified
+        and eligible
+        and needs.get("publish", {}).get("result") in {"failure", "cancelled", "skipped"}
+    ):
+        result = "preparation_failed"
+    cache = cache_evidence(needs)
     stages = [
         {
             **stage(job),
@@ -195,8 +233,11 @@ def build_report(
                 ("web", published.get("web_digest")),
             )
         },
-        "cache_state": "unknown",
-        "cache_unavailable_reason": "cache_hit_not_instrumented",
+        "cache_state": cache["state"],
+        "cache_evidence": cache,
+        "cache_unavailable_reason": "missing_cache_counters"
+        if cache["state"] == "unknown"
+        else None,
         "stages": stages,
         "timing_definition": (
             "UTC observed health is an upper bound; job gaps include dependencies and runner waits"
@@ -232,13 +273,13 @@ def render_summary(report: dict[str, Any]) -> str:
     lines += [
         "",
         report["timing_definition"],
-        "Cache state: unknown; no cache evidence is inferred.",
+        f"Cache state: {report['cache_state']}; warm means at least one observed cache hit.",
         "",
     ]
     return "\n".join(lines)
 
 
-def read_api(endpoint: str) -> dict[str, Any]:
+def read_api(endpoint: str, *, wrap_list: bool = False) -> dict[str, Any]:
     """Retry bounded read-only metadata requests without printing response bodies."""
     executable = shutil.which("gh")
     if executable is None:
@@ -248,7 +289,7 @@ def read_api(endpoint: str) -> dict[str, Any]:
             time.sleep(delay)
         try:
             result = subprocess.run(  # noqa: S603 - fixed gh API command, no shell
-                [executable, "api", endpoint],
+                [executable, "api", endpoint, *(["--jq", "{items: .}"] if wrap_list else [])],
                 capture_output=True,
                 text=True,
                 check=False,

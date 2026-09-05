@@ -40,12 +40,22 @@ concrete task sequence, verification parity, lock boundary, and measurement desi
 for owner review following the selection of E27 on 2026-09-05.
 
 - Spike revision 1 approved by the owner on 2026-09-05; [decision transcript](OWNER_DECISIONS.md).
-- All three tasks promoted as revision-1 definitions with satisfied spike and implementation gates; T1 is ready and T2/T3 await dependencies.
+- All three tasks promoted as revision-1 definitions with satisfied spike and implementation gates; T1 and T2 are done after successful automatic releases; T3 remains in progress.
 - [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) was approved by the owner on 2026-09-05.
-- Task implementation is authorized; merge approval remains separate.
+- Ordered merges #324/#326/#329 were owner-authorized and completed. Current repository policy also provides standing authorization for eligible merges; acceptance gates remain required.
 
 ## Scope and completion
 
 Retain the backend-authoritative modular architecture, current dependency constraints, contact protections, and existing review/deployment safeguards. All task acceptance criteria and the [definition of done](../../workflow/DEFINITION_OF_DONE.md) must pass before completion.
 
 E14 retains shared test infrastructure, general refactoring, capacity, and platform observability. E8 retains passive-event acceptance; E7-T5/E14-T9 retain backup and restore scope. No duplicate authoritative definitions are introduced.
+
+## Review and evidence
+
+- [Planning PR #324](https://github.com/Flippylolz/WEF/pull/324).
+- [T1 outcome reporting PR #326](https://github.com/Flippylolz/WEF/pull/326).
+- [T2 release graph PR #329](https://github.com/Flippylolz/WEF/pull/329).
+- [T1 baseline](BASELINE.md), [required-check parity](CHECK_PARITY.md), and
+  [T3 acceptance evidence](ACCEPTANCE.md).
+
+Planning, T1 and T2 are merged. [T3 PR #332](https://github.com/Flippylolz/WEF/pull/332) delivers the evidence tooling so production can supply cache measurements; T3 remains open for the real-release acceptance cohort. The epic is not complete from one release.

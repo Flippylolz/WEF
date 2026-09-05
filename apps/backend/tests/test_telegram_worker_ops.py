@@ -5,12 +5,14 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Self
 from uuid import uuid4
 
 import pytest
 
 from wef_backend import telegram_worker_command, telegram_worker_status_command
+from wef_backend.features.ingestion.application.telegram_progress import ChannelProgress
 from wef_backend.features.ingestion.application.telegram_worker_liveness import (
     WorkerRuntimeState,
     maintain_worker_heartbeat,
@@ -64,6 +66,12 @@ class _FakeStore:
     checkpoint: int | None = None
     finished_at: datetime | None = None
 
+    async def channel_progress(self, *, channel_external_id: str) -> ChannelProgress:
+        _ = channel_external_id
+        return ChannelProgress(
+            applied_high_water_id=self.max_id, polled_through_id=self.checkpoint or 0
+        )
+
     async def max_external_message_id(self, *, channel_external_id: str) -> int:
         _ = channel_external_id
         return self.max_id
@@ -107,6 +115,9 @@ class _ChannelOnlyFactory:
 
 
 class _ChannelOnlySession:
+    async def get(self, *_args: object) -> None:
+        return None
+
     async def __aenter__(self) -> Self:
         return self
 
@@ -126,6 +137,17 @@ class _LiveResult:
 
 
 class _LiveSession:
+    async def get(self, *_args: object) -> object:
+        return SimpleNamespace(
+            applied_high_water_id=42,
+            polled_through_id=42,
+            history_limited=False,
+            source_retry_at=None,
+            last_applied_at=None,
+            last_polled_at=datetime(2026, 8, 21, tzinfo=UTC),
+            last_sweep_at=None,
+        )
+
     def __init__(self) -> None:
         self._scalar_calls = 0
 
@@ -156,6 +178,9 @@ class _InvalidCheckpointResult:
 
 
 class _InvalidCheckpointSession:
+    async def get(self, *_args: object) -> None:
+        return None
+
     def __init__(self) -> None:
         self._scalar_calls = 0
 
@@ -643,7 +668,7 @@ async def test_status_store_returns_zeros_without_channel() -> None:
     store = SQLAlchemyTelegramWorkerStatusStore(_EmptyFactory())  # type: ignore[arg-type]
     assert await store.max_external_message_id(channel_external_id="2180077318") == 0
     checkpoint, finished = await store.latest_live_checkpoint(channel_external_id="2180077318")
-    assert checkpoint is None
+    assert checkpoint == 0
     assert finished is None
 
 
@@ -651,7 +676,7 @@ async def test_status_store_returns_zeros_without_channel() -> None:
 async def test_status_store_handles_channel_without_live_run() -> None:
     store = SQLAlchemyTelegramWorkerStatusStore(_ChannelOnlyFactory())  # type: ignore[arg-type]
     checkpoint, finished = await store.latest_live_checkpoint(channel_external_id="2180077318")
-    assert checkpoint is None
+    assert checkpoint == 0
     assert finished is None
 
 
@@ -665,11 +690,11 @@ async def test_status_store_reads_checkpoint_and_max_id() -> None:
 
 
 @pytest.mark.asyncio
-async def test_status_store_ignores_invalid_checkpoint() -> None:
+async def test_status_store_ignores_legacy_run_checkpoint() -> None:
     store = SQLAlchemyTelegramWorkerStatusStore(_InvalidCheckpointFactory())  # type: ignore[arg-type]
     checkpoint, finished = await store.latest_live_checkpoint(channel_external_id="2180077318")
-    assert checkpoint is None
-    assert finished is not None
+    assert checkpoint == 0
+    assert finished is None
 
 
 @pytest.mark.asyncio

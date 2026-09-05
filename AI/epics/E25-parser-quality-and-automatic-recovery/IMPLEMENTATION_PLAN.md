@@ -34,7 +34,7 @@ invalidation:
 
 ## Approved revision 2 decision
 
-Revision 1 was approved under AD-051. Revision 2 has explicit owner approval together
+Revision 1 was approved under AD-052. Revision 2 has explicit owner approval together
 with spike revision 2; task dependency and branch gates remain separate.
 The [provider amendment](PROVIDER_PRIVACY_REVISION.md) records current official
 evidence, rejected alternatives, exact transport/state changes and validation.
@@ -43,7 +43,7 @@ T3 implementation and its remaining live acceptance gates are recorded in the ta
 
 ## Historical approved baseline
 
-The owner approved [spike revision 1](SPIKE.md) on 2026-09-05 in response to the explicit spike-approval question; [AD-050](../../workflow/AUTONOMOUS_DECISIONS.md#ad-050-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) records the decision. The owner approved implementation plan revision 1 by replying “continue” directly to its approval request; AD-051 records the scope. Task dependency and branch gates remain enforceable.
+The owner approved [spike revision 1](SPIKE.md) on 2026-09-05 in response to the explicit spike-approval question; [AD-051](../../workflow/AUTONOMOUS_DECISIONS.md#ad-051-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) records the decision. The owner approved implementation plan revision 1 by replying “continue” directly to its approval request; AD-052 records the scope. Task dependency and branch gates remain enforceable.
 
 Research baseline: main `a2cdb16`, fetched 2026-09-05. The [audit](../../audits/2026-09-05-system-audit.md#p1--confirmed-source-evidenced-parser-misses) confirms the Ostrzycka label/storage gaps, the misleading parse-issue taxonomy, and stale historical parser versions. Its production counts are dated observations, not a new measurement or a field-accuracy benchmark.
 

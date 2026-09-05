@@ -74,6 +74,7 @@ from wef_backend.features.ingestion.infrastructure.parse_evaluation_store import
     record_parse_evaluation,
 )
 from wef_backend.features.ingestion.infrastructure.parse_issue_store import insert_parse_issue
+from wef_backend.features.ingestion.infrastructure.telegram_progress_store import advance_applied
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Sequence
@@ -378,6 +379,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                             else "applied"
                         ),
                     )
+                await advance_applied(session, channel_id, message.raw.external_message_id)
                 outcome = MessagePersistOutcome(
                     external_message_id=message.raw.external_message_id,
                     outcome=result.outcome,
@@ -465,6 +467,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                             external_id=external_id,
                         )
                     )
+                    await advance_applied(session, channel_id, external_id)
                     if archive_event_ids is not None and external_id in archive_event_ids:
                         await write_resolution(
                             session,
@@ -551,6 +554,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                     if result.outcome is MessageOutcome.UNCHANGED
                     else "applied"
                 )
+            await advance_applied(session, channel_id, record.external_message_id)
             receipt = await write_resolution(
                 session,
                 event_id=record.id,

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, cast
 from uuid import uuid4
 
 import pytest
+from telethon import functions, types
 from telethon.errors import FloodWaitError
 
 from wef_backend.features.ingestion.application.persistence import (
@@ -445,7 +446,7 @@ class _FakeTelethon:
 
 
 @pytest.mark.asyncio
-async def test_telethon_live_client_resolve_waits_on_flood(
+async def test_telethon_live_client_resolve_defers_flood_without_sleep(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     sleeps: list[float] = []
@@ -463,14 +464,15 @@ async def test_telethon_live_client_resolve_waits_on_flood(
     assert client.is_connected() is False
     await client.connect()
     assert client.is_connected() is True
-    entity = await client.resolve_channel("elestate_warszawa")
-    assert entity.channel_id == "2180077318"
-    assert sleeps == [2]
+    with pytest.raises(telethon_module.TelegramSourceDeferredError) as caught:
+        await client.resolve_channel("elestate_warszawa")
+    assert caught.value.retry_after_seconds == 2
+    assert sleeps == []
     await client.disconnect()
 
 
 @pytest.mark.asyncio
-async def test_telethon_live_client_iter_waits_on_flood(
+async def test_telethon_live_client_iter_defers_flood_without_sleep(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     sleeps: list[float] = []
@@ -486,9 +488,10 @@ async def test_telethon_live_client_iter_waits_on_flood(
     )
     client._client.flood_on_iter = True  # noqa: SLF001
     await client.connect()
-    messages = [item async for item in client.iter_messages(username="elestate_warszawa", min_id=0)]
-    assert len(messages) == 1
-    assert sleeps == [1]
+    with pytest.raises(telethon_module.TelegramSourceDeferredError) as caught:
+        _ = [item async for item in client.iter_messages(username="elestate_warszawa", min_id=0)]
+    assert caught.value.retry_after_seconds == 1
+    assert sleeps == []
     await client.disconnect()
 
 
@@ -775,3 +778,41 @@ async def test_fake_backfill_is_restartable_and_idempotent() -> None:
     assert second.created == 0
     assert second.checkpoint_external_message_id == 13
     assert len(store.messages) == 4
+
+
+@pytest.mark.asyncio
+async def test_known_id_observation_requires_explicit_empty_and_never_downloads(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+
+    class Observer(_FakeTelethon):
+        async def get_input_entity(self, username: str) -> object:
+            assert username == "elestate_warszawa"
+            return types.InputPeerChannel(2180077318, 123)
+
+        async def __call__(self, request: object) -> object:
+            assert isinstance(request, functions.channels.GetMessagesRequest)
+            assert [item.id for item in request.id] == [10, 11, 12]
+            return SimpleNamespace(
+                messages=[
+                    types.Message(
+                        id=10,
+                        peer_id=types.PeerChannel(2180077318),
+                        date=datetime(2026, 9, 5, tzinfo=UTC),
+                        message="synthetic",
+                    ),
+                    types.MessageEmpty(id=11, peer_id=types.PeerChannel(2180077318)),
+                ]
+            )
+
+    monkeypatch.setattr(telethon_module, "TelegramClient", Observer)
+    monkeypatch.setattr(telethon_module, "StringSession", lambda value: value)
+    client = telethon_module.TelethonLiveClient(
+        TelegramWorkerSecrets(api_id=1, api_hash="hash", session="session")
+    )
+    observed = await client.observe_messages(username="elestate_warszawa", ids=(10, 11, 12))
+    assert [item.disposition for item in observed] == ["present", "deleted", "unknown"]
+    assert observed[0].message is not None
+    assert observed[0].message.media == ()
+    with pytest.raises(ValueError, match="100 IDs"):
+        await client.observe_messages(username="elestate_warszawa", ids=tuple(range(101)))

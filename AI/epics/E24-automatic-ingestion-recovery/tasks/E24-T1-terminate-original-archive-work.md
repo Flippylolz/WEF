@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E24-T1
 epic: E24
 title: "Terminate original archive work and repair starvation"
-status: in_progress
+status: done
 revision: 2
 priority: P1
 size: L
@@ -39,12 +39,14 @@ branch:
   task_id: E24-T1
   one_task_only: true
   created_at: "2026-09-05T10:39:00Z"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/331
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-05T13:13:10Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/331
+  evidence:
+    - "Merged 64da1bd9dd00e64be4e5ddbfce32e53f19c8f2af; all required CI green"
+    - "Production deployment 33967260852 succeeded; ../PRODUCTION_EVIDENCE.md records the passing 15-minute fixed-cohort window"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -88,17 +90,17 @@ retry and progress-health policy remain T3/T4 responsibilities.
 
 ## Acceptance criteria
 
-- [ ] A PostGIS regression using a historical payload with photo/entity fields and a differently shaped live payload proves the original record becomes terminal and the next oldest batch advances.
-- [ ] Success, intentional non-candidate, canonical failure, cancellation after commit, and acknowledgement failure have explicit outcomes; restart completes pending work without duplicate offers or revisions.
-- [ ] Replay cannot replace a newer canonical source revision with an older archive version, or resurrect a deleted offer. Add ordered old/new/edit/delete cases.
-- [ ] An automated preflight reports eligible backlog, terminal siblings, oldest age, and proposed transitions; bounded application reconciles every changed row and re-running makes zero additional changes.
-- [ ] A fixed production window shows unique pending work decreasing and terminal rows no longer accumulating attempts every cycle. Record exclusions and source-preservation checks without raw payloads.
-- [ ] Replay creates no archive siblings; duplicate acknowledgement and a delayed failure leave an already-terminal row and its attempt count unchanged.
-- [ ] Source/channel/ID/checksum mismatch and ambiguous same-time content do not mutate canonical state; legacy flattened seeds resolve only through exact retained evidence.
-- [ ] A delete received before canonical creation leaves durable evidence preventing older replay from creating or revealing an offer; live and parser replay preserve the same tombstone and protected-field rules.
-- [ ] A persisted original-event receipt recovers the commit/acknowledgement gap without a second extraction/upsert; cancellation propagates without consuming a data retry.
-- [ ] All-failure and repeated-terminal drain batches do not refresh last committed time. Selected, attempted, and newly terminal counts reconcile separately.
-- [ ] Canary/apply resumes after restart, honors durable pause, and balances its transition ledger. Production evidence covers 15 minutes after authorized release and distinguishes the fixed cohort from new arrivals.
+- [x] A PostGIS regression using a historical payload with photo/entity fields and a differently shaped live payload proves the original record becomes terminal and the next oldest batch advances.
+- [x] Success, intentional non-candidate, canonical failure, cancellation after commit, and acknowledgement failure have explicit outcomes; restart completes pending work without duplicate offers or revisions.
+- [x] Replay cannot replace a newer canonical source revision with an older archive version, or resurrect a deleted offer. Add ordered old/new/edit/delete cases.
+- [x] An automated preflight reports eligible backlog, terminal siblings, oldest age, and proposed transitions; bounded application reconciles every changed row and re-running makes zero additional changes.
+- [x] A fixed production window shows unique pending work decreasing and terminal rows no longer accumulating attempts every cycle. Record exclusions and source-preservation checks without raw payloads.
+- [x] Replay creates no archive siblings; duplicate acknowledgement and a delayed failure leave an already-terminal row and its attempt count unchanged.
+- [x] Source/channel/ID/checksum mismatch and ambiguous same-time content do not mutate canonical state; legacy flattened seeds resolve only through exact retained evidence.
+- [x] A delete received before canonical creation leaves durable evidence preventing older replay from creating or revealing an offer; live and parser replay preserve the same tombstone and protected-field rules.
+- [x] A persisted original-event receipt recovers the commit/acknowledgement gap without a second extraction/upsert; cancellation propagates without consuming a data retry.
+- [x] All-failure and repeated-terminal drain batches do not refresh last committed time. Selected, attempted, and newly terminal counts reconcile separately.
+- [x] Canary/apply resumes after restart, honors durable pause, and balances its transition ledger. Production evidence covers 15 minutes after authorized release and distinguishes the fixed cohort from new arrivals.
 
 ## Tests and verification
 
@@ -139,8 +141,8 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Promotion and approved spike revision 2 verification are recorded.
 - [x] Scope, acceptance, tests, and recovery constraints match the approved spike.
 - [x] Owner approved implementation plan revision 1 with this task at revision 2 under AD-049.
-- [ ] Dependency gate permits implementation and a dedicated task branch is recorded.
-- [ ] Acceptance evidence, required checks, PR, and definition of done are complete.
+- [x] Dependency gate permits implementation and a dedicated task branch is recorded.
+- [x] Acceptance evidence, required checks, PR, and definition of done are complete.
 
 ## Implementation parent
 
@@ -151,9 +153,10 @@ T1 passed through `ready` before its dedicated branch was created.
 
 ## Implementation evidence (2026-09-05)
 
-The implementation is reviewable on its dedicated branch, stacked on planning
-[PR #325](https://github.com/Flippylolz/WEF/pull/325). It is not marked done: merge
-and the authorized 15-minute production observation remain pending.
+The implementation merged through [PR #331](https://github.com/Flippylolz/WEF/pull/331)
+after planning PR #325. The authorized release and 15-minute production window
+passed; [production evidence](../PRODUCTION_EVIDENCE.md) records 4,050 completed
+originals, stable prior terminal attempts, and no receipt inconsistencies.
 
 Validation passed: `make install`, `make lint`, `make format-check`,
 `make typecheck`, `make contract-check`, `python3 scripts/check_markdown_links.py`,

@@ -498,7 +498,7 @@ run; its reason distinguishes missing merged PR association and disabled automat
 deployment. `deployed` requires host smoke and activation timestamps for the exact
 SHA. `already_current` is a duplicate observation, not a fresh release.
 `failed_restored` identifies the failed candidate and restored healthy SHA.
-`failed`, `verification_failed`, `queued`, `superseded`, and
+`failed`, `verification_failed`, `preparation_failed`, `queued`, `superseded`, and
 `deployment_unconfirmed` remain distinct. Also inspect `deployment_job_result`:
 a post-activation inventory/bootstrap failure can fail the job after the release
 became healthy.
@@ -513,7 +513,8 @@ and do not rerun activation merely to obtain a report.
 Timings include per-job/per-step intervals, initial event-to-first-job delay,
 unattributed job time, and gaps between job intervals. Overlapping intervals are
 counted once. Gaps include dependencies and runner waits; the API does not always
-identify those separately. Cache state remains explicitly unknown until measured.
+identify those separately. Cache evidence uses observed component counters; missing
+counters remain explicitly unknown (see E27-T3 below).
 Merge-to-healthy uses the matching merged PR timestamp and host-observed smoke
 success, an upper bound on first healthy service. Failed, superseded and duplicate
 releases have no fresh-release latency. Existing health/configuration/rollback
@@ -580,6 +581,44 @@ observations and immutable releases. Do not cancel a running migration or rewind
 production data. Existing off-host backup deferral still limits destructive data
 recovery. No production fault injection is included in E27 acceptance.
 
+## Release budget and cache evidence (E27-T3)
+
+`python3 -m scripts.deploy.release_cohort --optimized-from FULL_MERGED_SHA
+--limit 100 --output /private/tmp/wef-release-cohort.json --require-budget`
+collects read-only GitHub metadata and sanitized outcome artifacts. Run this as
+one command with the full merged optimization SHA. It writes JSON and Markdown;
+`--input` can summarize a saved sanitized file without network access. A changed
+cutoff requires fresh collection so ancestry is rechecked. Retain successive
+sanitized snapshots if more than 100 runs occur before acceptance.
+
+The collector counts at least 20 distinct eligible ordinary source SHAs with
+observed deployment health, uses nearest-rank p50 <= 300 seconds and p95 <= 420
+seconds, and includes queue time from the merged PR timestamp. Same-SHA retries
+count once, using their earliest observed health since merge. Manual, unmatched,
+verified-only, duplicate, superseded and failed runs remain visible but cannot
+supply a successful fresh-release sample. Successful deploy-job completion is
+reported separately and never substituted for health. Missing evidence, an
+unknown cutoff or too few samples returns a nonzero result with
+`--require-budget`; it does not dispatch another release.
+
+Backend dependency-cache evidence is the pinned setup-uv action's `cache-hit`
+output. Backend/web image evidence is the exact Buildx build record's completed
+step and cached-step counts. Only these numeric counters leave the record;
+inputs, environment and raw build records are not copied into outcome artifacts.
+Image `warm` means at least one cached step, not a fully cached build. Component
+states are retained, with an aggregate `warm`, `cold`, `mixed`, or `unknown`;
+missing counters and reused artifacts stay unknown. Frontend host dependency
+installation currently has no separate restore cache and is not labeled warm.
+Cache observations cannot authorize reuse or bypass any verification gate.
+
+The budget result is only latency evidence. Independently record consecutive
+merge ordering, cold/warm cases, exact healthy SHA and digests, rollback and
+shared-host proofs, provider/runner incidents, and operator interventions.
+Workflow events cannot establish zero SSH/configuration interventions. Do not
+silently exclude slow provider incidents or create production deploys to fill
+the sample. The [acceptance record](../epics/E27-faster-verified-releases/ACCEPTANCE.md)
+tracks measured facts and outstanding operational proof.
+
 ## E24-T1 original-archive recovery
 
 The additive `20260905_0020` migration creates original-event receipts, source
@@ -616,3 +655,27 @@ cursors, delete siblings, clear the entire pending queue, or roll back to a work
 that ignores pause and restarts the known loop. Migration downgrade fails closed
 when recovery evidence is populated; keep the additive schema and roll forward.
 This procedure does not establish an off-host backup or complete T2–T4.
+
+## E24-T2 progress and retry rollout
+
+Apply additive revision `20260905_0021` after E24-T1's `20260905_0020`, then deploy
+the matching worker. Keep the bounded T1 canary and pause controls authoritative.
+Do not initialize polling from the highest stored source ID: existing evidence
+bootstraps applied progress only. Polling begins at zero and the old-ID sweep
+retains its own continuation. Compare operator `applied_high_water_id`,
+`polled_through_id`, and `history_limited` with the corresponding runtime fields;
+the legacy local checkpoint means polling coverage, not latest finished run.
+
+Observe pending and quarantined work alongside polling progress. The forward
+cursor may advance over a durably deferred item, but pending canonical work keeps
+coverage limited. Next-attempt and source retry-after times survive restarts;
+normal contention needs no operator reset. The restricted exception table retains
+one original-event reference and safe reason for data exhaustion. Only a relevant
+retry-policy revision reopens that budget automatically.
+
+On rollback, pause the affected worker and retain the progress, retry counters,
+due times, exception records, and T1 receipts. The migration refuses downgrade
+when recovery evidence exists. Never reset these tables or restore the prior
+run-completion cursor reader. Resume with a corrected compatible worker. These
+are implementation/rollout instructions; production recovery has not yet been
+measured for this change.
