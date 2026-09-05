@@ -1,120 +1,129 @@
-"""Background draining of landed raw events (E17-T1)."""
+"""Bounded original-event draining with truthful terminal progress."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
-from wef_backend.features.ingestion.application.telegram_events import (
-    LiveTelegramEvent,
-    LiveTelegramEventKind,
-)
-from wef_backend.features.ingestion.application.telegram_live import LiveTelegramMessage
-from wef_backend.features.ingestion.application.telegram_reconciliation import (
-    TelegramCheckpointStore,
-    read_durable_telegram_checkpoint,
-)
 from wef_backend.features.ingestion.domain.telegram_worker_ops import safe_error_category
 
 if TYPE_CHECKING:
     import asyncio
-    from collections.abc import Mapping
+    from collections.abc import Sequence
+    from datetime import datetime
 
+    from wef_backend.features.ingestion.application.archive_processing import ArchiveResolution
     from wef_backend.features.ingestion.application.telegram_events import (
-        LiveTelegramEventProcessor,
         RawEventArchivePort,
         RawEventRecord,
     )
     from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
 
 
-def record_to_live_event(record: RawEventRecord) -> LiveTelegramEvent:
-    """Rebuild one archived record into the shared live event boundary."""
-    kind = LiveTelegramEventKind(record.event_kind)
-    if kind is LiveTelegramEventKind.DELETE:
-        return LiveTelegramEvent(kind=kind, deleted_ids=(record.external_message_id,))
-    published_at = _payload_timestamp(record.payload, "date_unixtime")
-    if published_at is None:
-        message = "archived message payload must carry date_unixtime"
-        raise ValueError(message)
-    payload_id = record.payload["id"]
-    if not isinstance(payload_id, str | int):
-        message = "archived message payload id must be numeric"
-        raise TypeError(message)
-    media_group = record.payload.get("media_group_id")
-    return LiveTelegramEvent(
-        kind=kind,
-        message=LiveTelegramMessage(
-            external_message_id=int(payload_id),
-            text=str(record.payload.get("text", "")),
-            published_at=published_at,
-            edited_at=_payload_timestamp(record.payload, "edited_unixtime"),
-            media_group_id=(str(media_group) if isinstance(media_group, str | int) else None),
-        ),
-    )
+MAX_ARCHIVE_BATCH = 25
 
 
-def _payload_timestamp(payload: Mapping[str, object], key: str) -> datetime | None:
-    raw = payload.get(key)
-    if raw is None:
-        return None
-    return datetime.fromtimestamp(int(str(raw)), tz=UTC)
+class ArchiveProcessorPort(Protocol):
+    """Process an original archived record under canonical serialization."""
+
+    async def __call__(
+        self,
+        *,
+        record: RawEventRecord,
+        identity: TelegramChannelIdentity,
+        release_sha: str | None = None,
+    ) -> ArchiveResolution:
+        """Return the original event's durable canonical receipt."""
+        ...
+
+
+class ArchiveRecoveryPort(Protocol):
+    """Durable bounded canary, scheduling and pause boundary."""
+
+    async def claim_batch(self, channel_external_id: str, limit: int) -> Sequence[RawEventRecord]:
+        """Return eligible records only if the recovery state permits a batch."""
+        ...
+
+    async def finish_batch(self, channel_external_id: str, *, failed: bool) -> None:
+        """Verify the canary before expansion or persist its failure pause."""
+        ...
+
+
+@dataclass(frozen=True, slots=True)
+class ArchiveDrainResult:
+    """Separate attempts from new durable terminal transitions."""
+
+    selected: int = 0
+    attempted: int = 0
+    newly_terminal: int = 0
+    failed: int = 0
+    unchanged_terminal: int = 0
+    last_committed_at: datetime | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class RawEventDrainer:
-    """Background recovery: reprocess events landed without a terminal outcome.
-
-    The processor re-lands each record (a no-op against the unique archive key)
-    and records the real outcome; failures are marked here with a safe category
-    so bounded retries can exhaust without blocking the rest of the batch.
-    """
+    """Process original UUIDs; acknowledge only verified committed outcomes."""
 
     archive: RawEventArchivePort
-    processor: LiveTelegramEventProcessor
+    processor: ArchiveProcessorPort
     identity: TelegramChannelIdentity
-    checkpoint_store: TelegramCheckpointStore | None = None
     batch_size: int = 25
+    recovery: ArchiveRecoveryPort | None = None
+
+    def __post_init__(self) -> None:
+        """Keep background recovery bounded."""
+        if not 1 <= self.batch_size <= MAX_ARCHIVE_BATCH:
+            msg = "archive batch size must be between 1 and 25"
+            raise ValueError(msg)
 
     async def drain_once(
-        self,
-        *,
-        release_sha: str | None = None,
-        processing_lock: asyncio.Lock | None = None,
-    ) -> int:
-        """Process pending archived events one by one through the canonical path."""
-        records = await self.archive.unprocessed_batch(self.batch_size)
+        self, *, release_sha: str | None = None, processing_lock: asyncio.Lock | None = None
+    ) -> ArchiveDrainResult:
+        """Replay pending evidence; cancellation remains pending and propagates."""
+        channel = self.identity.channel_id
+        records = (
+            await self.recovery.claim_batch(channel, self.batch_size)
+            if self.recovery is not None
+            else await self.archive.unprocessed_batch(self.batch_size, channel_external_id=channel)
+        )
+        completed = failed = repeated = 0
+        latest = None
         for record in records:
-            resume_after = 0
-            if self.checkpoint_store is not None:
-                resume_after = await read_durable_telegram_checkpoint(
-                    self.checkpoint_store,
-                    channel_external_id=self.identity.channel_id,
-                )
             try:
-                event = record_to_live_event(record)
                 if processing_lock is None:
-                    await self.processor(
-                        identity=self.identity,
-                        events=(event,),
-                        resume_after_external_id=resume_after,
-                        release_sha=release_sha,
-                        manage_connection=False,
+                    receipt = await self.processor(
+                        record=record, identity=self.identity, release_sha=release_sha
                     )
                 else:
                     async with processing_lock:
-                        await self.processor(
-                            identity=self.identity,
-                            events=(event,),
-                            resume_after_external_id=resume_after,
-                            release_sha=release_sha,
-                            manage_connection=False,
+                        receipt = await self.processor(
+                            record=record, identity=self.identity, release_sha=release_sha
                         )
-            except Exception as error:  # noqa: BLE001 - one poisoned event must not block others
-                await self.archive.mark_attempt(
+                if receipt.event_id != record.id:
+                    msg = "archive processor returned a different event identity"
+                    raise ValueError(msg)  # noqa: TRY301 - reject mismatched processor proof
+                changed = await self.archive.mark_attempt(
                     record.id,
-                    outcome="failed",
-                    error_category=safe_error_category(error),
+                    outcome=(
+                        "skipped_non_candidate"
+                        if receipt.disposition == "non_candidate"
+                        else "processed"
+                    ),
+                    completed_at=receipt.committed_at,
                 )
-        return len(records)
+                completed += int(changed)
+                repeated += int(not changed)
+                if changed:
+                    latest = max(latest, receipt.committed_at) if latest else receipt.committed_at
+            except Exception as error:  # noqa: BLE001 - isolate malformed records
+                failed += 1
+                try:
+                    await self.archive.mark_attempt(
+                        record.id, outcome="failed", error_category=safe_error_category(error)
+                    )
+                except Exception as ledger_error:
+                    raise error from ledger_error
+        if self.recovery is not None and records:
+            await self.recovery.finish_batch(channel, failed=failed > 0)
+        return ArchiveDrainResult(len(records), len(records), completed, failed, repeated, latest)

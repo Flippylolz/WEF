@@ -274,6 +274,7 @@ class _FakeStore:
         *,
         channel_id: UUID,
         external_message_ids: Sequence[int],
+        archive_event_ids: dict[int, UUID] | None = None,  # noqa: ARG002 - protocol parity
     ) -> Sequence[SourceDeletionOutcome]:
         _ = channel_id
         return tuple(

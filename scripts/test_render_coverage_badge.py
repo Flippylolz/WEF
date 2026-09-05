@@ -124,7 +124,11 @@ class CoverageBadgeTests(unittest.TestCase):
                 self.assertEqual(main(), 0)
 
     def test_github_actions_enforces_the_coverage_floor(self) -> None:
-        workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+        ci = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+        release = Path(".github/workflows/deploy-production.yml").read_text(encoding="utf-8")
+        self.assertIn("uses: ./.github/workflows/verify.yml", ci)
+        self.assertIn("uses: ./.github/workflows/verify.yml", release)
+        workflow = Path(".github/workflows/verify.yml").read_text(encoding="utf-8")
         makefile = Path("Makefile").read_text(encoding="utf-8")
         self.assertIn("--cov-fail-under=90", workflow)
         self.assertIn("--fail-under 90", workflow)

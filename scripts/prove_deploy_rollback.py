@@ -257,6 +257,7 @@ def main() -> int:
             "PATH": f"{fake_bin}:{os.environ['PATH']}",
             "WEF_DEPLOY_SKIP_PULL": "1",
             "WEF_DEPLOY_TEST_MODE": "1",
+            "WEF_RELEASE_OBSERVATION": str(root / "state/release-observation.json"),
             "WEF_FAKE_DOCKER_LOG": str(Path(directory) / "docker.log"),
             "WEF_MEMINFO_FILE": str(meminfo),
             "WEF_MIN_AVAILABLE_MEMORY_KB": "1",
@@ -277,9 +278,13 @@ def main() -> int:
             healthy_dir,
             healthy_config,
             HEALTHY_SHA,
-            environment,
+            {**environment, "WEF_EXPECTED_CURRENT_SHA": "none"},
             check=True,
         )
+        observation = json.loads((root / "state/release-observation.json").read_text())
+        assert observation["release_sha"] == HEALTHY_SHA
+        assert observation["healthy_at"] <= observation["activated_at"]
+        assert "config_file" not in observation
         assert "Activated WEF release" in healthy.stdout
         assert read_state(root / "state/current.json")["release_sha"] == HEALTHY_SHA
         assert (root / "releases/current").resolve() == healthy_dir.resolve()
@@ -290,15 +295,33 @@ def main() -> int:
             assert not runtime_directory.is_symlink()
             assert runtime_directory.stat().st_mode & 0o777 == 0o750
 
+        subprocess.run(  # noqa: S603 - fixed read-only current-release proof
+            [
+                str(REPOSITORY_ROOT / "scripts/deploy/verify_current.sh"),
+                str(root),
+                str(healthy_dir),
+                str(healthy_config),
+                HEALTHY_SHA,
+                "3100",
+            ],
+            env=environment,
+            check=True,
+            capture_output=True,
+        )
+
         unhealthy_dir, unhealthy_config = prepare_release(root, UNHEALTHY_SHA)
         unhealthy = run_deploy(
             root,
             unhealthy_dir,
             unhealthy_config,
             UNHEALTHY_SHA,
-            environment,
+            {**environment, "WEF_EXPECTED_CURRENT_SHA": HEALTHY_SHA},
             check=False,
         )
+        observation = json.loads((root / "state/release-observation.json").read_text())
+        assert observation["restored_sha"] == HEALTHY_SHA
+        assert observation["rollback_started_at"] <= observation["restored_at"]
+        assert "activated_at" not in observation
         assert unhealthy.returncode == 1
         assert "Previous WEF application release restored" in unhealthy.stderr
         assert read_state(root / "state/current.json")["release_sha"] == HEALTHY_SHA
@@ -315,7 +338,11 @@ def main() -> int:
             forced_dir,
             forced_config,
             FORCED_FAILURE_SHA,
-            {**environment, "WEF_FORCE_ROLLBACK_REHEARSAL": "1"},
+            {
+                **environment,
+                "WEF_FORCE_ROLLBACK_REHEARSAL": "1",
+                "WEF_EXPECTED_CURRENT_SHA": HEALTHY_SHA,
+            },
             check=False,
         )
         assert forced_failure.returncode == 42
@@ -332,9 +359,17 @@ def main() -> int:
             migration_dir,
             migration_config,
             MIGRATION_FAILURE_SHA,
-            {**environment, "WEF_FAKE_MIGRATION_FAIL": "1"},
+            {
+                **environment,
+                "WEF_FAKE_MIGRATION_FAIL": "1",
+                "WEF_EXPECTED_CURRENT_SHA": HEALTHY_SHA,
+            },
             check=False,
         )
+        observation = json.loads((root / "state/release-observation.json").read_text())
+        assert (root / "state/activation-pending.json").exists()
+        assert "healthy_at" not in observation
+        assert "restored_at" not in observation
         assert migration_failure.returncode == 1
         assert "existing application release was not replaced" in migration_failure.stderr
         assert read_state(root / "state/current.json")["release_sha"] == HEALTHY_SHA
