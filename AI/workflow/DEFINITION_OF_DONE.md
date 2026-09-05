@@ -43,12 +43,12 @@ If this evidence is absent, the task cannot be declared done; restore the workfl
 - Deploy configuration remains owned by GitHub Actions variables/secrets and is transferred completely, safely, and atomically.
 - Documentation and traceability links are updated in every affected domain.
 - Accepted backup deferral and single-host data-loss risk are not misstated as backup/recovery guarantees.
-- Procedural branch/PR/CI requirements are satisfied even though GitHub protection is not platform-enforced.
+- Procedural branch/PR/CI requirements and the active GitHub ruleset are satisfied.
 
 ## Completion record
 
 - Before completion, every dependency is `done` and `dependency_gate.status` has transitioned from `stacked` to `satisfied`.
-- Required reviews and CI checks pass on the dedicated task pull request.
+- Every required CI check passes on the dedicated task pull request's current head, and the [repository merge requirements](../governance/REPOSITORY_RULES.md#pull-request-rules) are satisfied. Standing owner authorization covers the merge; a separate per-PR owner request is not required.
 - The pull request links the task and records test, migration, deployment, and rollback evidence.
 - `completion.completed_by`, `completion.completed_at`, `completion.pull_request`, and `completion.evidence` are populated.
 - The task is set to `done` only after the above evidence exists.
