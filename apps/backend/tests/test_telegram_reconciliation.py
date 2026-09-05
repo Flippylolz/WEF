@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -17,6 +18,7 @@ from wef_backend.features.ingestion.application.telegram_live import (
     LiveTelegramMessage,
     TelegramChannelEntity,
 )
+from wef_backend.features.ingestion.application.telegram_progress import ChannelProgress
 from wef_backend.features.ingestion.application.telegram_reconciliation import (
     TelegramCheckpointReconciler,
     TelegramReconciliationRequest,
@@ -33,9 +35,14 @@ from wef_backend.features.ingestion.domain.telegram_worker_ops import CriticalSt
 from wef_backend.features.ingestion.infrastructure.fake_telegram_client import (
     FakeTelegramLiveClient,
 )
+from wef_backend.features.ingestion.infrastructure.media_staging import (
+    MediaStaging,
+    MediaStagingDeferredError,
+)
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import AsyncIterator, Sequence
+    from pathlib import Path
 
     from wef_backend.features.ingestion.application.telegram_events import LiveTelegramEvent
     from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
@@ -147,7 +154,7 @@ async def test_reconciler_closes_observed_55_message_incident_gap() -> None:
     assert result.messages_fetched == 55
     assert result.checkpoint_external_id == 29_257
     assert result.remote_gap is False
-    assert processor.calls[0][0] == tuple(range(29_203, 29_258))
+    assert tuple(call[0][0] for call in processor.calls) == tuple(range(29_203, 29_258))
 
 
 @pytest.mark.asyncio
@@ -164,7 +171,7 @@ async def test_reconciler_is_bounded_and_reports_remaining_remote_gap() -> None:
         TelegramReconciliationRequest(identity=default_live_channel_identity()),
     )
 
-    assert [len(call[0]) for call in processor.calls] == [100, 100, 100, 100, 100]
+    assert [len(call[0]) for call in processor.calls] == [1] * 500
     assert result.messages_fetched == 500
     assert result.checkpoint_external_id == 500
     assert result.remote_head_external_id == 600
@@ -211,10 +218,9 @@ async def test_reconciler_replays_overlap_and_classifies_edits() -> None:
         ),
     )
 
-    ids, kinds, resume = processor.calls[0]
-    assert ids == tuple(range(91, 106))
-    assert kinds[ids.index(95)] is LiveTelegramEventKind.EDIT
-    assert resume == 100
+    assert tuple(call[0][0] for call in processor.calls) == tuple(range(91, 106))
+    assert processor.calls[4][1][0] is LiveTelegramEventKind.EDIT
+    assert processor.calls[0][2] == 100
     assert result.checkpoint_external_id == 105
 
 
@@ -378,3 +384,70 @@ def test_reconciliation_request_rejects_unbounded_settings() -> None:
         TelegramReconciliationRequest(identity=identity, max_messages=501)
     with pytest.raises(ValueError, match="overlap"):
         TelegramReconciliationRequest(identity=identity, overlap=-1)
+
+
+@pytest.mark.asyncio
+async def test_bootstrap_streams_owned_media_beyond_staging_capacity(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """500 downloads fit a two-file budget because every consumer releases ownership."""
+    staging = MediaStaging(tmp_path, budget=256, reserve=0)
+    client = _client(tuple(_message(index) for index in range(1, 601)))
+
+    async def stream(*, limit: int, **kwargs: object) -> AsyncIterator[LiveTelegramMessage]:
+        _ = kwargs
+        for message in client.messages[:limit]:
+            lease = staging.acquire(message.external_message_id, 128)
+            lease.open(".jpg").write(b"x" * 128)
+            yield replace(message, media_lease=lease)
+
+    monkeypatch.setattr(client, "iter_messages", stream)
+    processor = _Processor()
+    store = _CheckpointStore(checkpoint=0, max_id=0)
+    reconciler = TelegramCheckpointReconciler(
+        store=store,
+        client=client,
+        processor=processor,
+        processing_lock=asyncio.Lock(),
+    )
+    result = await reconciler(
+        TelegramReconciliationRequest(identity=default_live_channel_identity())
+    )
+    assert result.messages_fetched == 500
+    assert store.checkpoint == 500
+    assert not list(tmp_path.rglob("*.jpg"))  # noqa: ASYNC240 - bounded test fixture
+
+
+@pytest.mark.asyncio
+async def test_staging_deferral_keeps_last_durable_poll_boundary(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = _client((_message(1), _message(2), _message(3)))
+
+    async def stream(**kwargs: object) -> AsyncIterator[LiveTelegramMessage]:
+        _ = kwargs
+        yield _message(1)
+        raise MediaStagingDeferredError
+
+    monkeypatch.setattr(client, "iter_messages", stream)
+    store = _CheckpointStore(checkpoint=0, max_id=0)
+    sweep = AsyncMock()
+    sweep.channel_progress.return_value = ChannelProgress(applied_high_water_id=100)
+    reconciler = TelegramCheckpointReconciler(
+        store=store,
+        client=client,
+        processor=_Processor(),
+        processing_lock=asyncio.Lock(),
+        sweep_store=sweep,
+    )
+    result = await reconciler(
+        TelegramReconciliationRequest(identity=default_live_channel_identity())
+    )
+    assert result.source_deferred is True
+    assert result.checkpoint_external_id == 1
+    assert store.checkpoint == 1
+    sweep.defer_source.assert_awaited_once_with(
+        default_live_channel_identity().channel_id, seconds=5
+    )
+    sweep.sweep_batch.assert_not_awaited()

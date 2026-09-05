@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, Any, cast
 
 from telethon.tl.types import (
@@ -14,6 +14,10 @@ from telethon.tl.types import (
 )
 
 from wef_backend.features.ingestion.domain.model import MediaDescriptor, MediaKind
+from wef_backend.features.ingestion.infrastructure.media_staging import (
+    MediaStagingDeferredError,
+    StagedMedia,
+)
 
 if TYPE_CHECKING:
     from telethon import TelegramClient
@@ -38,8 +42,8 @@ async def download_live_message_media(
     client: TelegramClient,
     message: object,
     *,
-    temp_root: Path,
     limits: LiveMediaDownloadLimits,
+    lease: StagedMedia,
 ) -> tuple[MediaDescriptor, ...]:
     """Download supported media for one Telethon message into temp_root."""
     payload = cast("Any", message)
@@ -53,13 +57,13 @@ async def download_live_message_media(
         descriptor = await _download_one(
             client,
             message,
-            temp_root=temp_root,
             message_id=message_id,
             ordinal=0,
             kind=MediaKind.PHOTO,
             mime_type="image/jpeg",
             suffix=".jpg",
             limits=limits,
+            lease=lease,
         )
         return () if descriptor is None else (descriptor,)
     if isinstance(media, MessageMediaDocument):
@@ -67,9 +71,9 @@ async def download_live_message_media(
             client,
             message,
             media=media,
-            temp_root=temp_root,
             message_id=message_id,
             limits=limits,
+            lease=lease,
         )
     return ()
 
@@ -79,9 +83,9 @@ async def _download_document_media(  # noqa: PLR0913
     message: object,
     *,
     media: MessageMediaDocument,
-    temp_root: Path,
     message_id: int,
     limits: LiveMediaDownloadLimits,
+    lease: StagedMedia,
 ) -> tuple[MediaDescriptor, ...]:
     document = media.document
     mime_type = str(getattr(document, "mime_type", "") or "")
@@ -104,13 +108,13 @@ async def _download_document_media(  # noqa: PLR0913
     descriptor = await _download_one(
         client,
         message,
-        temp_root=temp_root,
         message_id=message_id,
         ordinal=0,
         kind=kind,
         mime_type=mime_type,
         suffix=suffix,
         limits=limits,
+        lease=lease,
         width=width,
         height=height,
         duration_seconds=duration_seconds,
@@ -123,13 +127,13 @@ async def _download_one(  # noqa: PLR0913
     client: TelegramClient,
     message: object,
     *,
-    temp_root: Path,
     message_id: int,
     ordinal: int,
     kind: MediaKind,
     mime_type: str,
     suffix: str,
     limits: LiveMediaDownloadLimits,
+    lease: StagedMedia,
     width: int | None = None,
     height: int | None = None,
     duration_seconds: int | None = None,
@@ -137,45 +141,36 @@ async def _download_one(  # noqa: PLR0913
 ) -> MediaDescriptor | None:
     if size_bytes is not None and size_bytes > limits.max_bytes:
         return None
-    target_dir = temp_root / str(message_id)
-    target_path = target_dir / f"{ordinal}{suffix}"
-    await asyncio.to_thread(target_dir.mkdir, parents=True, exist_ok=True)
     try:
-        downloaded = await asyncio.wait_for(
-            client.download_media(message, file=str(target_path)),
+        target = lease.open(suffix)
+        await asyncio.wait_for(
+            client.download_media(message, file=target),
             timeout=limits.timeout_seconds,
         )
-    except (TimeoutError, OSError, ValueError):
+        lease.close()
+    except (TimeoutError, OSError) as error:
+        lease.release()
+        message = "media acquisition deferred"
+        raise MediaStagingDeferredError(message) from error
+    except ValueError:
+        lease.release()
         return None
-    if downloaded is None:
-        await asyncio.to_thread(target_path.unlink, missing_ok=True)
+    except BaseException:
+        lease.release()
+        raise
+    if not lease.written:
+        lease.release()
         return None
-    resolved = Path(str(downloaded))
-    inspected = await asyncio.to_thread(_inspect_downloaded_file, resolved, limits.max_bytes)
-    if inspected is None:
-        return None
-    byte_size, filename = inspected
-    relative = PurePosixPath(str(message_id)) / filename
+    relative = PurePosixPath(str(message_id)) / f"{ordinal}{suffix}"
     return MediaDescriptor(
         kind=kind,
         path=str(relative),
         mime_type=mime_type,
-        size_bytes=byte_size,
+        size_bytes=lease.written,
         width=width,
         height=height,
         duration_seconds=duration_seconds,
     )
-
-
-def _inspect_downloaded_file(path: Path, max_bytes: int) -> tuple[int, str] | None:
-    """Validate one downloaded file size without blocking the event loop."""
-    if not path.is_file():
-        return None
-    byte_size = path.stat().st_size
-    if byte_size > max_bytes:
-        path.unlink(missing_ok=True)
-        return None
-    return byte_size, path.name
 
 
 def _suffix_for_mime(mime_type: str) -> str | None:
