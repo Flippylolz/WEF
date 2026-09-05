@@ -2,7 +2,7 @@
 schema: ai-workflow/implementation-plan@1
 epic: E25
 title: "Parser quality and automatic recovery"
-status: awaiting_approval
+status: approved
 revision: 2
 owner: owner
 spike_revision: 2
@@ -17,16 +17,16 @@ task_sequence:
     revision: 1
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-09-05T11:17:46Z"
+  approved_revision: 2
+  evidence: "Owner replied continue I approve directly to the explicit request to approve E25 spike revision 2 and implementation plan revision 2 in Codex task 01a0710e-e877-7ab2-ad03-c6008aaf16e9."
 invalidation:
-  invalidated_by: Codex
-  invalidated_at: "2026-09-05T11:12:47Z"
-  reason: "Groq Batch application-state retention conflicts with the required Zero Data Retention boundary; review queued synchronous transport."
-  return_to: spike
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 
 ---
 
@@ -193,3 +193,9 @@ A new provider/model, paid allocation, broader automatic field/visibility author
 - [x] Revision 1 approval is retained in AD-048 and Git history.
 - [ ] Owner explicitly approves spike revision 2 and this implementation plan revision 2.
 - [ ] Restore non-done task gates against approved revision 2 before resuming work.
+
+## Revision 2 approval
+
+The owner explicitly approved both spike revision 2 and implementation plan
+revision 2 on 2026-09-05. The provider amendment is now the binding transport
+baseline. Merge and production activation are not authorized by this approval.

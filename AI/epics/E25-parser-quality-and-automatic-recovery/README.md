@@ -37,8 +37,8 @@ The owner requested as little manual work as possible, with manual work only in 
 ## Approval and implementation state
 
 Revision 1 approvals are retained in AD-047/AD-048. Spike and implementation plan
-revision 2 await approval of the [provider privacy amendment](PROVIDER_PRIVACY_REVISION.md).
-All non-done task approval gates require revalidation under the workflow.
+revision 2 are owner-approved, including the [provider privacy amendment](PROVIDER_PRIVACY_REVISION.md).
+Approval gates are restored to revision 2; dependency and task branch gates remain enforceable.
 
 - Planning PR [327](https://github.com/Flippylolz/WEF/pull/327): all five required CI checks passed.
 - T1 PR [328](https://github.com/Flippylolz/WEF/pull/328): published, 827 backend and 169 frontend tests passed locally.

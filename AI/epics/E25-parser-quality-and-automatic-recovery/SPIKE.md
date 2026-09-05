@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E25
 title: "Parser quality and automatic recovery"
-status: awaiting_approval
+status: approved
 revision: 2
 owner: owner
 research_only: true
@@ -15,16 +15,16 @@ domain_docs:
 proposed_task_ids: [E25-T1, E25-T2, E25-T3, E25-T4]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: Flippylolz
+  decided_at: "2026-09-05T11:17:46Z"
+  approved_revision: 2
+  evidence: "Owner replied continue I approve directly to the explicit request to approve E25 spike revision 2 and implementation plan revision 2 in Codex task 01a0710e-e877-7ab2-ad03-c6008aaf16e9."
 invalidation:
-  invalidated_by: Codex
-  invalidated_at: "2026-09-05T11:12:47Z"
-  reason: "Groq Batch application-state retention conflicts with the required Zero Data Retention boundary; review queued synchronous transport."
-  return_to: spike
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 
 ---
 
@@ -108,3 +108,9 @@ Material changes to source semantics, geospatial confidence/precision claims, au
 ## Historical owner decision for revision 1
 
 The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation plan revision 1 was subsequently approved under AD-048. Revision 2 is pending explicit approval.
+
+## Revision 2 approval
+
+The owner explicitly approved both spike revision 2 and implementation plan
+revision 2 on 2026-09-05. The provider amendment is now the binding transport
+baseline. Merge and production activation are not authorized by this approval.

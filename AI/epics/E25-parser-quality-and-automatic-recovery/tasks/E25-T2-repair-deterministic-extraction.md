@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T2
 epic: E25
 title: "Repair deterministic field extraction and money semantics"
-status: invalidated
+status: draft
 revision: 1
 priority: P1
 size: M
@@ -17,15 +17,15 @@ promotion:
   promoted_by: Codex
   promoted_at: "2026-09-05T10:15:52Z"
 spike_gate:
-  status: invalidated
+  status: satisfied
   file: ../SPIKE.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
   verified_at: "2026-09-05T10:15:52Z"
 implementation_gate:
-  status: invalidated
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 1
+  approved_revision: 2
   verified_by: Codex
   verified_at: "2026-09-05T10:22:44Z"
 dependency_gate:
@@ -46,10 +46,10 @@ completion:
   pull_request: null
   evidence: []
 invalidation:
-  invalidated_by: Codex
-  invalidated_at: "2026-09-05T11:12:47Z"
-  reason: "Groq Batch application-state retention conflicts with the required Zero Data Retention boundary; review queued synchronous transport."
-  return_to: spike
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 
 ---
 
