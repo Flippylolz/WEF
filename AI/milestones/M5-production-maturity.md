@@ -45,7 +45,7 @@ from loss of the production host.
 
 The [system audit](../audits/2026-09-05-system-audit.md) records passing suites plus production defects and defines the following selected research workspaces:
 
-- [E24: Automatic ingestion recovery](../epics/E24-automatic-ingestion-recovery/README.md) — T1/T2 passed production recovery acceptance under approved plan revision 2 (PRs #331/#334 and corrections #340/#341). Media recovery and broader progress verification remain proposed as T3/T4.
+- [E24: Automatic ingestion recovery](../epics/E24-automatic-ingestion-recovery/README.md) — T1/T2 passed production recovery acceptance under approved plan revision 2 (PRs #331/#334 and corrections #340/#341). T3 media recovery is promoted with plan revision 3 approved; T4 broader progress verification remains proposed.
 - [E25: Parser quality and automatic recovery](../epics/E25-parser-quality-and-automatic-recovery/README.md) — `in_progress`; T1/T2 merged, deployed and accepted; T3/T4 retain provider and historical replay acceptance gates; milestone M5.
 - [E26: Automatic location validation and repair](../epics/E26-automatic-location-validation/README.md) — three proposed tasks; validate address agreement, repair stale points, and present honest precision.
 - [E27: Faster verified releases](../epics/E27-faster-verified-releases/README.md) — delivered T1/T2 and measurement tooling; owner deferred final acceptance and closed active work for now after [six-run evidence and local cache proofs](../epics/E27-faster-verified-releases/EVIDENCE_CLOSEOUT.md). The 20-release target remains unaccepted.
