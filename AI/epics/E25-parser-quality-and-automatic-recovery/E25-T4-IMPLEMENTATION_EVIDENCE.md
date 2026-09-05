@@ -16,7 +16,7 @@ No production canonical history, provider configuration or paid allocation chang
 
 ## Result
 
-- Accepted `e2-v14` / `source-evidence-v1` release metadata, durable source-revision
+- Accepted `e2-v14` / `source-evidence-v2` release metadata, durable source-revision
   work and guarded field lineage. Unknown releases do not schedule; a persisted
   newer release pauses downgrade convergence.
 - Original archive decoding checks retained source ID, checksum and text. Unsupported
@@ -133,6 +133,21 @@ temporary Compose override and collected both replay test modules. GitHub CI
 uses its own isolated exact-SHA build. No repository test configuration changed.
 
 T3's real-provider canary and representative acceptance window remain outstanding.
+
+## Source-evidence-v2 compatibility refresh
+
+The owner explicitly approved merging follow-up #344 and resuming rollout by
+replying `continue` to that request in the E25 Codex task. All required checks
+passed on `0caf849`; #344 merged as `be220fc`. Its reviewed price-evidence policy
+removes unsupported recovery candidates without changing parser values. T4 now
+accepts `e2-v14` / `source-evidence-v2` and retains its blocked dependency gate.
+The merge preserves both the earlier staged-release history and the newer
+minimal-use activation evidence.
+
+After integrating current main, `make lint`, `make format-check`, `make typecheck`
+and `make contract-check` passed. Isolated-image `make test` passed 1,091 backend
+and 169 frontend tests with 90.40% backend coverage. This is compatibility evidence,
+not completion of the live-provider canary or authorization to bypass T3 acceptance.
 T4 stays unmerged with scheduling/application off until that completion gate passes.
 
 ## Latest-main validation and deferred rollout

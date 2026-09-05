@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from wef_backend.features.ingestion.domain.extraction import ExtractionResult
 
 # Acceptance changes with a reviewed benchmark-backed parser release, not runtime input.
-ACCEPTED_RELEASE = ("e2-v14", "source-evidence-v1")
+ACCEPTED_RELEASE = ("e2-v14", "source-evidence-v2")
 SCHEMA_VERSION = "parser-replay-v1"
 
 
