@@ -24,6 +24,7 @@ from wef_backend.features.contacts.application.reveal import (
 )
 from wef_backend.features.contacts.domain.model import ContactKind as StoredContactKind
 from wef_backend.features.contacts.infrastructure.models import ContactPointRow
+from wef_backend.features.ingestion.application.extraction import PARSER_VERSION
 from wef_backend.features.ingestion.application.parse_issue_serialization import (
     build_parse_issue_insert,
 )
@@ -53,6 +54,13 @@ from wef_backend.features.ingestion.application.persistence import (
     redacted_error_summary,
 )
 from wef_backend.features.ingestion.domain.model import RawMessage, SourceIdentity, SourcePlatform
+from wef_backend.features.ingestion.infrastructure.archive_evidence import (
+    ensure_tombstone,
+    proven_payload,
+    resolution_value,
+    source_disposition,
+    write_resolution,
+)
 from wef_backend.features.ingestion.infrastructure.models import (
     DevelopmentRow,
     IngestRunRow,
@@ -60,6 +68,7 @@ from wef_backend.features.ingestion.infrastructure.models import (
     SourceChannelRow,
     SourceMessageRevisionRow,
     SourceMessageRow,
+    TelegramArchiveResolutionRow,
 )
 from wef_backend.features.ingestion.infrastructure.parse_evaluation_store import (
     record_parse_evaluation,
@@ -71,7 +80,13 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+    from wef_backend.features.ingestion.application.archive_processing import (
+        ArchiveDisposition,
+        ArchiveResolution,
+    )
+    from wef_backend.features.ingestion.application.telegram_events import RawEventRecord
     from wef_backend.features.ingestion.domain.extraction import ListingCandidate
+    from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
 
 _SIGNED_64 = (1 << 63) - 1
 _PRIMARY_RELATIONSHIP = "primary"
@@ -158,6 +173,7 @@ class _MessageResult:
     parser_version: str | None = None
     parser_values: dict[str, object] | None = None
     source_changed: bool = False
+    archive_disposition: ArchiveDisposition | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -345,7 +361,23 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                     channel_id=channel_id,
                     persistable=message,
                     run_id=run_id,
+                    enforce_source_order=True,
                 )
+                if message.archive_event_id is not None:
+                    await write_resolution(
+                        session,
+                        event_id=message.archive_event_id,
+                        channel_id=channel_id,
+                        external_id=message.raw.external_message_id,
+                        disposition=result.archive_disposition
+                        or (
+                            "non_candidate"
+                            if result.outcome is MessageOutcome.SKIPPED_NON_CANDIDATE
+                            else "already_canonical"
+                            if result.outcome is MessageOutcome.UNCHANGED
+                            else "applied"
+                        ),
+                    )
                 outcome = MessagePersistOutcome(
                     external_message_id=message.raw.external_message_id,
                     outcome=result.outcome,
@@ -376,75 +408,168 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
         await self._notify_origin_sync(result)
         return outcome, acknowledged, acknowledged_counts, int(result.offer_created)
 
+    async def _delete_source(
+        self,
+        session: AsyncSession,
+        *,
+        channel_id: UUID,
+        external_id: int,
+    ) -> SourceDeletionOutcome:
+        now = datetime.now(UTC)
+        await ensure_tombstone(session, channel_id, external_id, now)
+        existing = await session.scalar(
+            select(SourceMessageRow).where(
+                SourceMessageRow.source_channel_id == channel_id,
+                SourceMessageRow.external_message_id == external_id,
+            )
+        )
+        if existing is None:
+            return SourceDeletionOutcome(external_id, DeletionOutcomeKind.MISSING, 0)
+        if existing.deleted_at is not None:
+            return SourceDeletionOutcome(external_id, DeletionOutcomeKind.ALREADY_DELETED, 0)
+        existing.deleted_at = now
+        result = await session.execute(
+            update(OfferRow)
+            .where(
+                OfferRow.id.in_(
+                    select(OfferSourceRow.offer_id).where(
+                        OfferSourceRow.source_message_id == existing.id,
+                    )
+                ),
+                OfferRow.visibility != OfferVisibility.HIDDEN.value,
+            )
+            .values(visibility=OfferVisibility.HIDDEN.value)
+        )
+        return SourceDeletionOutcome(
+            external_id,
+            DeletionOutcomeKind.DELETED,
+            int(getattr(result, "rowcount", 0) or 0),
+        )
+
     async def mark_source_deleted(
         self,
         *,
         channel_id: UUID,
         external_message_ids: Sequence[int],
+        archive_event_ids: dict[int, UUID] | None = None,
     ) -> Sequence[SourceDeletionOutcome]:
-        """Mark source messages deleted and hide linked offers without erasing lineage."""
-        outcomes: list[SourceDeletionOutcome] = []
+        """Commit tombstones, visibility and any original-event receipts together."""
+        outcomes = []
         try:
             async with self._session_factory() as session, session.begin():
-                now = datetime.now(UTC)
                 for external_id in external_message_ids:
-                    existing = await session.scalar(
-                        select(SourceMessageRow)
-                        .where(
-                            SourceMessageRow.source_channel_id == channel_id,
-                            SourceMessageRow.external_message_id == external_id,
-                        )
-                        .limit(1),
-                    )
-                    if existing is None:
-                        outcomes.append(
-                            SourceDeletionOutcome(
-                                external_message_id=external_id,
-                                outcome=DeletionOutcomeKind.MISSING,
-                                offers_hidden=0,
-                            ),
-                        )
-                        continue
-                    if existing.deleted_at is not None:
-                        outcomes.append(
-                            SourceDeletionOutcome(
-                                external_message_id=external_id,
-                                outcome=DeletionOutcomeKind.ALREADY_DELETED,
-                                offers_hidden=0,
-                            ),
-                        )
-                        continue
-                    existing.deleted_at = now
-                    hide_result = await session.execute(
-                        update(OfferRow)
-                        .where(
-                            OfferRow.id.in_(
-                                select(OfferSourceRow.offer_id).where(
-                                    OfferSourceRow.source_message_id == existing.id,
-                                ),
-                            ),
-                            OfferRow.visibility != OfferVisibility.HIDDEN.value,
-                        )
-                        .values(visibility=OfferVisibility.HIDDEN.value),
-                    )
                     outcomes.append(
-                        SourceDeletionOutcome(
-                            external_message_id=external_id,
-                            outcome=DeletionOutcomeKind.DELETED,
-                            offers_hidden=int(getattr(hide_result, "rowcount", 0) or 0),
-                        ),
+                        await self._delete_source(
+                            session,
+                            channel_id=channel_id,
+                            external_id=external_id,
+                        )
                     )
+                    if archive_event_ids is not None and external_id in archive_event_ids:
+                        await write_resolution(
+                            session,
+                            event_id=archive_event_ids[external_id],
+                            channel_id=channel_id,
+                            external_id=external_id,
+                            disposition="deleted",
+                        )
         except Exception as error:
             raise PersistenceBatchError(redacted_error_summary(error)) from error
         return tuple(outcomes)
 
-    async def _persist_message(
+    async def archive_resolution(self, event_id: UUID) -> ArchiveResolution | None:
+        """Read canonical commit proof before a restarted recovery does any work."""
+        async with self._session_factory() as session:
+            row = await session.get(TelegramArchiveResolutionRow, event_id)
+            return None if row is None else resolution_value(row)
+
+    async def archive_payload(self, record: RawEventRecord) -> Mapping[str, object]:
+        """Recover a legacy flattened seed only with exact retained provenance."""
+        async with self._session_factory() as session:
+            return await proven_payload(session, record)
+
+    async def persist_archived_event(
+        self,
+        *,
+        record: RawEventRecord,
+        identity: TelegramChannelIdentity,
+        message: PersistableMessage | None,
+        release_sha: str | None,
+    ) -> ArchiveResolution:
+        """Commit original-event recovery without publishing a synthetic live cursor."""
+        channel_id = await self.ensure_channel(
+            platform="telegram",
+            external_id=identity.channel_id,
+            display_name=identity.channel_title,
+        )
+        result = None
+        async with self._session_factory() as session, session.begin():
+            prior = await session.get(TelegramArchiveResolutionRow, record.id)
+            if prior is not None:
+                return resolution_value(prior)
+            now = datetime.now(UTC)
+            run_id = uuid4()
+            session.add(
+                IngestRunRow(
+                    id=run_id,
+                    source_channel_id=channel_id,
+                    mode=RunMode.REPROCESS.value,
+                    status=RunStatus.SUCCEEDED.value,
+                    parser_version=PARSER_VERSION,
+                    source_checksum=record.checksum,
+                    release_sha=release_sha,
+                    started_at=now,
+                    finished_at=now,
+                    checkpoint_json={"last_source_index": record.external_message_id},
+                    counts_json={"seen": 1},
+                )
+            )
+            await session.flush()
+            disposition: ArchiveDisposition
+            if record.event_kind == "delete":
+                await self._delete_source(
+                    session,
+                    channel_id=channel_id,
+                    external_id=record.external_message_id,
+                )
+                disposition = "deleted"
+            else:
+                if message is None:
+                    msg = "archived message is required"
+                    raise ValueError(msg)
+                result = await self._persist_message(
+                    session,
+                    channel_id=channel_id,
+                    persistable=message,
+                    run_id=run_id,
+                    enforce_source_order=True,
+                )
+                disposition = result.archive_disposition or (
+                    "non_candidate"
+                    if result.outcome is MessageOutcome.SKIPPED_NON_CANDIDATE
+                    else "already_canonical"
+                    if result.outcome is MessageOutcome.UNCHANGED
+                    else "applied"
+                )
+            receipt = await write_resolution(
+                session,
+                event_id=record.id,
+                channel_id=channel_id,
+                external_id=record.external_message_id,
+                disposition=disposition,
+            )
+        if result is not None:
+            await self._notify_origin_sync(result)
+        return receipt
+
+    async def _persist_message(  # noqa: PLR0915 - existing canonical transaction with ordering guard
         self,
         session: AsyncSession,
         *,
         channel_id: UUID,
         persistable: PersistableMessage,
         run_id: UUID | None = None,
+        enforce_source_order: bool = False,
     ) -> _MessageResult:
         """Reconcile one message and its candidate offer in this transaction."""
         raw = persistable.raw
@@ -457,6 +582,34 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             .limit(1),
         )
         payload = json.loads(_json_text(dict(raw.raw_payload)))
+        disposition = await source_disposition(
+            session,
+            channel_id=channel_id,
+            existing=existing,
+            raw=raw,
+            enforce_order=enforce_source_order,
+        )
+        if disposition is not None:
+            if disposition == "deleted":
+                await self._delete_source(
+                    session, channel_id=channel_id, external_id=raw.external_message_id
+                )
+            revision_number = 0
+            if existing is not None:
+                revision_number = int(
+                    await session.scalar(
+                        select(SourceMessageRevisionRow.revision_number).where(
+                            SourceMessageRevisionRow.id == existing.current_revision_id,
+                        ),
+                    )
+                    or 0
+                )
+            return _MessageResult(
+                outcome=MessageOutcome.UNCHANGED,
+                offer_created=False,
+                revision_number=revision_number,
+                archive_disposition=disposition,
+            )
         entities = json.loads(_json_text(list(raw.text_entities)))
         now = datetime.now(UTC)
         if existing is None:

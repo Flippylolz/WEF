@@ -22,6 +22,7 @@ from wef_backend.features.ingestion.infrastructure.models import (
     OfferSourceRow,
     SourceChannelRow,
     SourceMessageRow,
+    TelegramArchiveResolutionRow,
     TelegramRawEventRow,
 )
 
@@ -84,7 +85,13 @@ class SQLAlchemyRawEventArchive:
                 raise RuntimeError(message)
             return UUID(str(existing))
 
-    async def unprocessed_batch(self, limit: int) -> Sequence[RawEventRecord]:
+    async def unprocessed_batch(
+        self,
+        limit: int,
+        *,
+        channel_external_id: str | None = None,
+        event_ids: Sequence[UUID] | None = None,
+    ) -> Sequence[RawEventRecord]:
         """Return the oldest events that still need a terminal processing outcome."""
         async with self._session_factory() as session:
             rows = (
@@ -92,7 +99,16 @@ class SQLAlchemyRawEventArchive:
                     select(TelegramRawEventRow)
                     .where(
                         TelegramRawEventRow.processed_at.is_(None),
-                        TelegramRawEventRow.attempts < _MAX_ATTEMPTS,
+                        (TelegramRawEventRow.attempts < _MAX_ATTEMPTS)
+                        | select(TelegramArchiveResolutionRow.event_id)
+                        .where(TelegramArchiveResolutionRow.event_id == TelegramRawEventRow.id)
+                        .exists(),
+                        *(
+                            [TelegramRawEventRow.channel_external_id == channel_external_id]
+                            if channel_external_id is not None
+                            else []
+                        ),
+                        *([TelegramRawEventRow.id.in_(event_ids)] if event_ids is not None else []),
                     )
                     .order_by(TelegramRawEventRow.received_at, TelegramRawEventRow.id)
                     .limit(limit),
@@ -107,6 +123,7 @@ class SQLAlchemyRawEventArchive:
                     payload=cast("Mapping[str, object]", row.payload_json),
                     received_at=row.received_at,
                     attempts=row.attempts,
+                    checksum=row.checksum,
                 )
                 for row in rows
             )
@@ -118,13 +135,15 @@ class SQLAlchemyRawEventArchive:
         outcome: RawArchiveOutcome,
         error_category: str | None = None,
         completed_at: datetime | None = None,
-    ) -> None:
+    ) -> bool:
         """Record one processing attempt; failed events retry until the cap."""
         now = completed_at or datetime.now(UTC)
         async with self._session_factory() as session, session.begin():
-            await session.execute(
+            result = await session.execute(
                 update(TelegramRawEventRow)
-                .where(TelegramRawEventRow.id == event_id)
+                .where(
+                    TelegramRawEventRow.id == event_id, TelegramRawEventRow.processed_at.is_(None)
+                )
                 .values(
                     attempts=TelegramRawEventRow.attempts + 1,
                     outcome=outcome,
@@ -132,6 +151,7 @@ class SQLAlchemyRawEventArchive:
                     processed_at=now if outcome != "failed" else None,
                 ),
             )
+            return bool(getattr(result, "rowcount", 0))
 
     async def failed_exhausted_count(self) -> int:
         """Return how many events permanently failed after the bounded retries."""
@@ -223,8 +243,8 @@ class SQLAlchemyRawEventArchive:
 
         Every current source revision already stores its verbatim payload and
         checksum, so replay can cover messages ingested before the archive
-        existed. Telegram's mixed text representation is flattened to the same
-        shape live landing produces; malformed rows are skipped and counted.
+        existed. Original mixed text and entity evidence is retained verbatim;
+        malformed rows are skipped and counted.
         Returns (seeded, skipped).
         """
         async with self._session_factory() as session:
@@ -259,8 +279,8 @@ class SQLAlchemyRawEventArchive:
         skipped = 0
         chunk: list[dict[str, object]] = []
         for row in rows:
-            payload = _flatten_text(cast("Mapping[str, object]", row.raw_payload_json))
-            if payload is None:
+            payload = cast("Mapping[str, object]", row.raw_payload_json)
+            if _flatten_text(payload) is None:
                 skipped += 1
                 continue
             chunk.append(

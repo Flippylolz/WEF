@@ -1,0 +1,86 @@
+name: Build and inspect immutable runtime image
+description: Shared PR/release runtime construction, cache scopes and image safety checks
+inputs:
+  component:
+    description: backend or web
+    required: true
+  release_sha:
+    description: Full checked-out source SHA
+    required: true
+  publish:
+    description: Push inspected image using caller-owned registry credentials
+    default: 'false'
+outputs:
+  image:
+    description: Registry image name
+    value: ${{ steps.identity.outputs.image }}
+  digest:
+    description: Pushed registry manifest digest
+    value: ${{ steps.push.outputs.digest }}
+runs:
+  using: composite
+  steps:
+    - name: Validate source and image identity
+      id: identity
+      shell: bash
+      env:
+        COMPONENT: ${{ inputs.component }}
+        RELEASE_SHA: ${{ inputs.release_sha }}
+      run: |
+        set -euo pipefail
+        [[ "$COMPONENT" == backend || "$COMPONENT" == web ]]
+        [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+        test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
+        image="ghcr.io/${GITHUB_REPOSITORY,,}-${COMPONENT}"
+        echo "image=$image" >> "$GITHUB_OUTPUT"
+    - name: Set up Buildx
+      uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+    - name: Build runtime with existing cache
+      uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+      with:
+        context: .
+        file: apps/${{ inputs.component }}/Dockerfile
+        target: runtime
+        load: true
+        tags: ${{ steps.identity.outputs.image }}:${{ inputs.release_sha }}
+        build-args: |
+          WEF_RELEASE_SHA=${{ inputs.release_sha }}
+        labels: |
+          org.opencontainers.image.revision=${{ inputs.release_sha }}
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+        cache-from: type=gha,scope=${{ inputs.component }}-production
+        cache-to: type=gha,mode=max,scope=${{ inputs.component }}-production
+    - name: Inspect runtime user, source and contents
+      shell: bash
+      env:
+        COMPONENT: ${{ inputs.component }}
+        IMAGE: ${{ steps.identity.outputs.image }}
+        RELEASE_SHA: ${{ inputs.release_sha }}
+      run: |
+        set -euo pipefail
+        tag="$IMAGE:$RELEASE_SHA"
+        test "$(docker image inspect "$tag" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "$RELEASE_SHA"
+        if [[ "$COMPONENT" == backend ]]; then
+          test "$(docker image inspect "$tag" --format '{{.Config.User}}')" = wef
+          docker run --rm --entrypoint sh "$tag" -c \
+            '! command -v uv && ! command -v pytest && ! command -v mypy && ! command -v ruff'
+        else
+          test "$(docker image inspect "$tag" --format '{{.Config.User}}')" = node
+          docker run --rm --entrypoint sh "$tag" -c \
+            'test ! -e /app/contracts && test ! -e /app/apps/web/src'
+        fi
+        docker tag "$tag" "wef-${COMPONENT}:local"
+    - name: Publish inspected image
+      id: push
+      if: inputs.publish == 'true'
+      shell: bash
+      env:
+        IMAGE: ${{ steps.identity.outputs.image }}
+        RELEASE_SHA: ${{ inputs.release_sha }}
+      run: |
+        set -euo pipefail
+        docker push "$IMAGE:$RELEASE_SHA"
+        digest=$(docker image inspect "$IMAGE:$RELEASE_SHA" --format '{{json .RepoDigests}}' |
+          python3 -c 'import json,sys; prefix=sys.argv[1]+"@"; print(next(x[len(prefix):] for x in json.load(sys.stdin) if x.startswith(prefix)))' "$IMAGE")
+        [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+        echo "digest=$digest" >> "$GITHUB_OUTPUT"

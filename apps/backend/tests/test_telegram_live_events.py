@@ -11,6 +11,7 @@ from uuid import uuid4
 
 import pytest
 
+from wef_backend.features.ingestion.application.archive_processing import ArchiveResolution
 from wef_backend.features.ingestion.application.persistence import (
     DeletionOutcomeKind,
     MessageOutcome,
@@ -26,7 +27,6 @@ from wef_backend.features.ingestion.application.persistence import (
 )
 from wef_backend.features.ingestion.application.raw_archive import (
     RawEventDrainer,
-    record_to_live_event,
 )
 from wef_backend.features.ingestion.application.telegram_events import (
     LiveEventHandlerError,
@@ -46,6 +46,7 @@ from wef_backend.features.ingestion.application.telegram_live import (
 )
 from wef_backend.features.ingestion.domain.model import MediaDescriptor, MediaKind
 from wef_backend.features.ingestion.domain.telegram_channel import (
+    TelegramChannelIdentity,
     default_live_channel_identity,
 )
 from wef_backend.features.ingestion.infrastructure.fake_telegram_client import (
@@ -163,6 +164,7 @@ class _FakeStore:
         *,
         channel_id: UUID,
         external_message_ids: Sequence[int],
+        archive_event_ids: dict[int, UUID] | None = None,  # noqa: ARG002 - protocol parity
     ) -> Sequence[SourceDeletionOutcome]:
         _ = channel_id
         outcomes: list[SourceDeletionOutcome] = []
@@ -531,8 +533,17 @@ class _FakeArchive(RawEventArchivePort):
         self.landed.append((str(event_kind), external_message_id, payload))
         return next(self._ids)
 
-    async def unprocessed_batch(self, limit: int) -> Sequence[RawEventRecord]:
-        return self.pending[:limit]
+    async def unprocessed_batch(
+        self,
+        limit: int,
+        *,
+        channel_external_id: str | None = None,
+    ) -> Sequence[RawEventRecord]:
+        return [
+            record
+            for record in self.pending
+            if channel_external_id is None or record.channel_external_id == channel_external_id
+        ][:limit]
 
     async def mark_attempt(
         self,
@@ -541,8 +552,9 @@ class _FakeArchive(RawEventArchivePort):
         outcome: RawArchiveOutcome,
         error_category: str | None = None,
         completed_at: datetime | None = None,  # noqa: ARG002 - contract parity
-    ) -> None:
+    ) -> bool:
         self.marked.append((event_id, str(outcome), error_category))
+        return True
 
 
 async def test_processor_lands_events_verbatim_before_processing() -> None:
@@ -600,6 +612,25 @@ async def test_processor_marks_skipped_non_candidate_and_delete_missing() -> Non
     assert outcomes == ["skipped_non_candidate", "skipped_non_candidate"]
 
 
+class _OriginalProcessor:
+    def __init__(self) -> None:
+        self.records: list[RawEventRecord] = []
+
+    async def __call__(
+        self,
+        *,
+        record: RawEventRecord,
+        identity: TelegramChannelIdentity,
+        release_sha: str | None = None,
+    ) -> ArchiveResolution:
+        _ = identity, release_sha
+        self.records.append(record)
+        if "date_unixtime" not in record.payload:
+            msg = "malformed archived record"
+            raise ValueError(msg)
+        return ArchiveResolution(record.id, "applied", datetime(2026, 9, 5, tzinfo=UTC))
+
+
 async def test_drainer_reprocesses_pending_records_and_marks_failures() -> None:
     """Pending records flow through the processor; poisoned events fail bounded."""
     identity = default_live_channel_identity()
@@ -618,21 +649,18 @@ async def test_drainer_reprocesses_pending_records_and_marks_failures() -> None:
         received_at=datetime(2026, 8, 29, tzinfo=UTC),
         attempts=0,
     )
-    event = record_to_live_event(record)
-    assert event.message is not None
-    assert event.message.external_message_id == 601
 
-    store = _FakeStore()
-    client = FakeTelegramLiveClient(_ENTITY)
     archive = _FakeArchive()
     archive.pending = [record]
-    processor = LiveTelegramEventProcessor(store=store, client=client, archive=archive)
+    processor = _OriginalProcessor()
     drainer = RawEventDrainer(archive=archive, processor=processor, identity=identity)
 
     drained = await drainer.drain_once(release_sha="test-sha")
 
-    assert drained == 1
-    assert store.messages[601].raw.text == record.payload["text"]
+    assert drained.newly_terminal == 1
+    assert processor.records[0] is record
+    assert archive.landed == []
+    assert archive.marked[0][0] == record.id
     assert ("processed" in {outcome for _, outcome, _ in archive.marked}) is True
 
 
@@ -663,16 +691,16 @@ async def test_drainer_marks_failed_without_blocking_the_batch() -> None:
         received_at=datetime(2026, 8, 29, tzinfo=UTC),
         attempts=0,
     )
-    store = _FakeStore()
-    client = FakeTelegramLiveClient(_ENTITY)
     archive = _FakeArchive()
     archive.pending = [poisoned, healthy]
-    processor = LiveTelegramEventProcessor(store=store, client=client, archive=archive)
+    processor = _OriginalProcessor()
     drainer = RawEventDrainer(archive=archive, processor=processor, identity=identity)
 
     drained = await drainer.drain_once()
 
-    assert drained == 2
+    assert drained.selected == 2
+    assert drained.newly_terminal == 1
+    assert drained.failed == 1
     failures = [(eid, err) for eid, outcome, err in archive.marked if outcome == "failed"]
     assert len(failures) == 1
     assert failures[0][0] == poisoned.id

@@ -19,7 +19,7 @@ approval:
   decided_by: "Flippylolz"
   decided_at: "2026-09-05T10:15:52Z"
   approved_revision: 1
-  evidence: "AD-047; owner message in Codex task 01a0710e-e877-7ab2-ad03-c6008aaf16e9 on 2026-09-05: yes I approve, directly answering the request to approve E25 spike revision 1 and prepare the implementation plan."
+  evidence: "AD-050; owner message in Codex task 01a0710e-e877-7ab2-ad03-c6008aaf16e9 on 2026-09-05: yes I approve, directly answering the request to approve E25 spike revision 1 and prepare the implementation plan."
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -91,8 +91,8 @@ Material changes to source semantics, geospatial confidence/precision claims, au
 - [x] Affected modules/domain documents and decisions identified.
 - [x] Proposed task scope, acceptance, dependencies, and exception handling recorded.
 - [x] Outputs are documentation only; no production or disposable proof artifacts created.
-- [x] Owner approved revision 1 on 2026-09-05; see AD-047 and the approval metadata.
+- [x] Owner approved revision 1 on 2026-09-05; see AD-050 and the approval metadata.
 
 ## Owner decision
 
-The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-047](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation-plan approval remains pending.
+The owner replied **“yes I approve”** to the explicit request to approve E25 spike revision 1, promote its four tasks, and prepare the implementation plan. The YAML approval object records that session decision; [AD-050](../../workflow/AUTONOMOUS_DECISIONS.md#ad-047-approve-e25-spike-revision-1-and-prepare-the-implementation-plan) preserves its scope. Implementation-plan approval remains pending.
