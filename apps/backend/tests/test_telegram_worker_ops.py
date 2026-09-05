@@ -715,8 +715,8 @@ async def test_run_status_disposes_engine(
         _ = expire_on_commit
         return _EmptyFactory()
 
-    monkeypatch.setattr(telegram_worker_status_command, "create_async_engine", _engine)
-    monkeypatch.setattr(telegram_worker_status_command, "async_sessionmaker", _factory)
+    monkeypatch.setattr("sqlalchemy.ext.asyncio.create_async_engine", _engine)
+    monkeypatch.setattr("sqlalchemy.ext.asyncio.async_sessionmaker", _factory)
     runtime_path = tmp_path / "worker-health.json"
     write_worker_runtime_health(
         runtime_path,

@@ -142,3 +142,26 @@ pause and stopped only the Telegram worker. Source records, receipts, retry budg
 cursors, and application services were retained. T2 must not be marked done until
 a bounded staging correction passes regression tests and stable production
 observation. Neither larger temporary storage nor repeated restarts is acceptance.
+
+### Corrected staging activation and probe startup
+
+PR #340 merged as `5e8913a3747f34ae29902fb0994b91352ef8da96` and deployment
+[33972300534](https://github.com/Flippylolz/WEF/actions/runs/33972300534) succeeded.
+Recovery resumed, temporary use fell to a few KiB, and worker restart count stayed
+zero. The initial acceptance window nevertheless failed on repeated health-probe
+timeouts: Docker recorded `Health check exceeded timeout (3s)` during polling,
+while runtime heartbeats and canonical progress remained fresh. This is distinct
+from the earlier heartbeat-write OSError/restart failure.
+
+The file-only liveness entry point imported SQLAlchemy and persistence models
+before selecting its mode. A dedicated follow-up defers those imports until full
+operator status is requested. It preserves the existing heartbeat freshness,
+consumer/transport checks, failure exit codes, CPU limit and 3-second probe timeout.
+No broader E24-T4 health-policy change is introduced. T2 acceptance remains open
+until the full observation passes on the corrected probe.
+
+The probe follow-up's fresh-process healthy/stale tests pass with ORM imports
+blocked. A Docker proof using the exact source, 0.5 CPU and a busy background
+process measured five healthy probes at 0.710, 0.699, 0.701, 0.801 and 0.807
+seconds, all within the unchanged 3-second timeout. The proof supplies fresh
+reconciliation evidence as required by the existing policy.
