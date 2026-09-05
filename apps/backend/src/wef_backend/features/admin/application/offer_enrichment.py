@@ -1003,7 +1003,7 @@ class ProcessOfferEnrichmentItem:
         if batch is None or batch.owner_user_id != owner_id:
             message = "batch not found"
             raise AdminDeniedError(message)
-        if batch.state is BatchState.PAUSED:
+        if batch.state is BatchState.PAUSED and batch.failure_category != "daily_limit":
             return None
         if batch.state in {BatchState.COMPLETED, BatchState.REVERTED, BatchState.FAILED}:
             return None
@@ -1044,8 +1044,13 @@ class ProcessOfferEnrichmentItem:
                 finished_at=now,
             )
             return None
-        if batch.state is BatchState.QUEUED or batch.started_at is None:
-            await self._store.set_batch_state(batch_id, state=BatchState.RUNNING, started_at=now)
+        if batch.state in {BatchState.QUEUED, BatchState.PAUSED} or batch.started_at is None:
+            await self._store.set_batch_state(
+                batch_id,
+                state=BatchState.RUNNING,
+                started_at=batch.started_at or now,
+                failure_category=None,
+            )
         prepared: list[_PreparedEnrichmentItem] = []
         last_outcome: ItemOutcome | None = None
         for item in queued:

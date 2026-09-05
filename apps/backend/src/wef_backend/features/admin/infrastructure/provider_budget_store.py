@@ -111,9 +111,15 @@ class SQLAlchemyProviderBudget:
                     ProviderOutcome.RATE_LIMITED, retry_at=previous["next_eligible_at"]
                 )
             elif used_count >= min(20, limit):
-                failure = ProviderRequestError(
-                    ProviderOutcome.RATE_LIMITED, retry_at=max(eligible, next_day(now))
+                eligible = max(eligible, next_day(now))
+                await session.execute(
+                    text(
+                        "UPDATE ai_provider_accounts SET next_eligible_at=:next "
+                        "WHERE owner_id=:owner"
+                    ),
+                    {"next": eligible, "owner": owner},
                 )
+                failure = ProviderRequestError(ProviderOutcome.RATE_LIMITED, retry_at=eligible)
             elif eligible > now:
                 failure = ProviderRequestError(ProviderOutcome.RATE_LIMITED, retry_at=eligible)
             else:

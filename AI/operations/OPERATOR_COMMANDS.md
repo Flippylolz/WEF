@@ -432,6 +432,15 @@ resent automatically. Pausing submissions retains work and proposals; pausing ap
 retains observations and prevents scheduled canonical writes. Existing owner cohorts
 use the same allocation and single-item transport.
 
+Daily allocation refusal persists the next UTC reset without recording a provider
+attempt. Batches paused specifically for `daily_limit` resume when budget becomes
+available; manual pauses remain in place. Each enqueue cycle also reconciles at
+most ten incorrectly terminal unsubmitted cohorts. This repair requires unfinished
+items and no submission marker, attempt, proposal or field event, and preserves
+usage history. Obsolete identities are superseded by the normal claim checks.
+Do not manually reset the six affected cohorts; the release performs this bounded
+repair without resetting quota or replaying uncertain submissions.
+
 Inspect aggregate state in the restricted database session (no source text needed):
 
 ```sql

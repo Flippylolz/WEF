@@ -1088,9 +1088,7 @@ class FakeOfferAiEnrichmentStore:
         updated = replace(
             batch,
             state=state,
-            failure_category=(
-                batch.failure_category if failure_category is None else failure_category
-            ),
+            failure_category=failure_category,
             started_at=batch.started_at if started_at is None else started_at,
             finished_at=batch.finished_at if finished_at is None else finished_at,
         )
