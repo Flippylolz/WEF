@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
@@ -38,6 +39,7 @@ from wef_backend.features.ingestion.application.telegram_reconciliation import (
     TelegramCheckpointReconciler,
     TelegramReconciliationRequest,
 )
+from wef_backend.features.ingestion.domain.telegram_secrets import TelegramSecretError
 from wef_backend.features.ingestion.infrastructure.archive_recovery import SQLAlchemyArchiveRecovery
 from wef_backend.features.ingestion.infrastructure.fake_telegram_client import (
     FakeTelegramLiveClient,
@@ -69,7 +71,12 @@ def payload(message_id: int) -> dict[str, object]:
 
 
 recovery_db = _recovery_db
-pytestmark = pytest.mark.integration
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(
+        os.getenv("TEST_DATABASE_URL") is None, reason="TEST_DATABASE_URL is not configured"
+    ),
+]
 
 
 async def test_contended_record_survives_restarts_and_later_work_advances(
@@ -419,3 +426,42 @@ async def test_systemic_failure_pauses_recovery_and_missing_work_is_ignored(
         assert state.phase == "paused"
         assert state.pause_reason == "TelegramEntityMismatchError"
     assert not await recovery.claim_batch(db.identity.channel_id, 25)
+
+
+async def test_source_access_loss_invalidates_previous_complete_coverage(
+    recovery_db: RecoveryDB,
+) -> None:
+    db = recovery_db
+    identity = db.identity
+    await db.canonical(payload(77))
+    store = SQLAlchemyTelegramWorkerStatusStore(db.factory)
+    await store.advance_live_checkpoint(channel_external_id=identity.channel_id, external_id=77)
+    batch = await store.sweep_batch(identity.channel_id, 100)
+    await store.finish_sweep_batch(identity.channel_id, batch, unknown=0)
+    assert not (
+        await store.channel_progress(channel_external_id=identity.channel_id)
+    ).history_limited
+
+    class Client(FakeTelegramLiveClient):
+        async def latest_message_id(self, username: str) -> int:
+            assert username == identity.username
+            message = "synthetic authorization loss"
+            raise TelegramSecretError(message)
+
+    client = Client(
+        entity=TelegramChannelEntity(
+            username=identity.username, channel_id=identity.channel_id, title=identity.channel_title
+        ),
+        connected=True,
+    )
+    reconciler = TelegramCheckpointReconciler(
+        store,
+        client,
+        LiveTelegramEventProcessor(store=db.store, client=client),
+        asyncio.Lock(),
+        archive=db.archive,
+        sweep_store=store,
+    )
+    with pytest.raises(TelegramSecretError):
+        await reconciler(TelegramReconciliationRequest(identity))
+    assert (await store.channel_progress(channel_external_id=identity.channel_id)).history_limited

@@ -163,6 +163,8 @@ class TelegramCheckpointReconciler:
         except Exception as error:
             failure = classify_archive_failure(error)
             if failure.kind != "deferred" or self.sweep_store is None:
+                if failure.kind == "systemic" and self.sweep_store is not None:
+                    await self.sweep_store.defer_source(channel, seconds=5)
                 raise
             await self.sweep_store.defer_source(
                 channel, seconds=retry_delay(1, 0, failure.retry_after_seconds)

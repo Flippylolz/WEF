@@ -40,7 +40,7 @@ branch:
   task_id: E24-T2
   one_task_only: true
   created_at: "2026-09-05T11:12:46Z"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/334
 completion:
   completed_by: null
   completed_at: null
@@ -171,7 +171,7 @@ Validation:
 - `make lint`: passed, including 17 architecture contracts and frontend lint.
 - `make format-check`, `make typecheck`, `make contract-check`: passed.
 - `make test COMPOSE='docker compose --project-name wef-e24 --file infra/compose.yaml'`:
-  825 backend tests passed, 90.36% coverage; 169 frontend tests passed with coverage floors met.
+  826 backend tests passed, 90.37% coverage; 169 frontend tests passed with coverage floors met.
 - `python3 scripts/check_markdown_links.py` and `git diff --check`: passed.
 
 Task remains `in_progress`: parent completion, required CI/review, authorized
