@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T4
 epic: E25
 title: "Converge parser versions and field provenance automatically"
-status: draft
+status: deferred
 revision: 1
 priority: P1
 size: L
@@ -35,11 +35,11 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: feat/E25-T4-historical-parser-replay
   task_id: E25-T4
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-05T12:49:08Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/337
 completion:
   completed_by: null
   completed_at: null
@@ -83,7 +83,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 Required task dependencies: E24-T1, E25-T2, E25-T3. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This promoted task remains `draft` under the [workflow](../../../workflow/README.md). [Implementation plan revision 1](../IMPLEMENTATION_PLAN.md) is approved; the task must satisfy its dependency and branch gates before implementation.
+This task is `in_progress` after readiness commit `a84ea07` on its dedicated branch under the [workflow](../../../workflow/README.md). [Implementation plan revision 2](../IMPLEMENTATION_PLAN.md) is approved; the task must satisfy its dependency and branch gates before implementation.
 
 ## Rollout and automatic operation
 
@@ -104,15 +104,47 @@ Do not add production dependencies without owner approval, commit raw source/cre
 ## Readiness and completion
 
 - [x] Spike revision 1 approval and task promotion are recorded; the authoritative file is under `tasks/`.
-- [x] Implementation plan revision 1 is explicitly approved and the implementation gate is satisfied.
-- [ ] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
-- [ ] This task passes through `ready` and starts on its own dedicated branch/PR.
+- [x] Implementation plan revision 2 is explicitly approved and the implementation gate is satisfied.
+- [x] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
+- [x] This task passes through `ready` and starts on its own dedicated branch/PR.
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
 
-The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
+The documentation branch is not this task's implementation branch. Follow the task-specific modules, migration ownership, numeric limits, and verification requirements in [implementation plan revision 2](../IMPLEMENTATION_PLAN.md). Acceptance criteria above are preserved from proposed revision 1; promotion adds workflow metadata without changing their scope.
 
 ## Provider revision gate
 
 Spike and implementation plan revision 2 are explicitly owner-approved following the
 [Batch/ZDR incompatibility](../PROVIDER_PRIVACY_REVISION.md). Prior test evidence
 is retained; approval gates are restored explicitly to revision 2.
+
+## Refreshed ancestor evidence
+
+The stack is E24-T1 #331 → E25 planning #327 → E25-T1 #328 → E25-T2
+#330 → E25-T3 #335 → this task. Every recorded dependency head is a Git ancestor.
+No upstream PR was merged into main. Evaluation and AI migrations were sequenced
+as 0021 and 0022 after E24 archive migration 0020; T4 owns the next migration.
+The E24 original-event contract retains source revisions/receipts and does not
+require a material change to the approved T4 replay design.
+
+## Local implementation evidence
+
+[T4 evidence](../E25-T4-IMPLEMENTATION_EVIDENCE.md) records implementation, validation,
+changed files and remaining rollout gates. Local criteria are verified with
+synthetic sources and real PostgreSQL boundaries; production convergence is not
+claimed. Task completion and merge remain blocked by upstream completion/review and
+required release acceptance evidence, not by missing implementation approval.
+
+## Current rollout hold and resume trigger
+
+Implementation began under the valid ancestor stack recorded by readiness commit
+`a84ea07`. Planning, T1, T2 and T3 have since merged. T1/T2 are done; T3 remains
+in progress pending its current provider prerequisites and representative acceptance
+window. Because there is no longer an open T3 ancestor PR and T3 is not done,
+the current dependency gate is blocked and this task is deferred. This changes
+no approved scope or acceptance criterion and preserves the original readiness
+evidence in Git and the implementation record.
+
+Resume when T3's real-provider canary and 24-hour acceptance pass, record its
+completion, then restore a satisfied dependency gate and finish the reviewed
+25-record deterministic canary/application rollout. No additional per-record
+owner action is required by the replay implementation.

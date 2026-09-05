@@ -59,6 +59,7 @@ from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store 
 )
 from wef_backend.features.ingestion.infrastructure.telethon_client import TelethonLiveClient
 from wef_backend.logging_config import configure_logging, configure_safe_telethon_logging
+from wef_backend.parser_replay_worker import maintain_parser_replay
 from wef_backend.recurring_geocode_worker import (
     RecurringGeocodeWorker,
     maintain_recurring_geocode,
@@ -260,6 +261,17 @@ async def _run_connected_worker(  # noqa: PLR0913, PLR0915 - composition of work
                     interval=settings.telegram_reconciliation_interval_seconds,
                 ),
                 "parser_recovery": maintain_automatic_recovery(
+                    settings,
+                    session_factory,
+                    stop,
+                    lambda: (
+                        state.consumer_running
+                        and state.transport_connected
+                        and not processing_lock.locked()
+                        and not queue.has_ready_work
+                    ),
+                ),
+                "parser_replay": maintain_parser_replay(
                     settings,
                     session_factory,
                     stop,

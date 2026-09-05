@@ -404,35 +404,32 @@ def build_source_text_public_masked(text: str, contacts: Sequence[ContactSpan]) 
 
 def canonical_fingerprint(listing: ListingCandidate) -> str:
     """Hash the canonical typed projection as a duplicate suggestion key."""
+    return extraction_fingerprint(json.loads(build_extraction_json(listing)))
 
-    def value_of(item: ExtractedValue[object] | None) -> object:
-        if item is None:
-            return None
-        value = _field_value(item.value)
-        if isinstance(value, str):
-            return " ".join(value.casefold().split())
-        return value
 
+def extraction_fingerprint(document: dict[str, object]) -> str:
+    """Hash the same projection after a guarded partial extraction refresh."""
+    values: dict[str, object] = {}
+    for name in (
+        "content_type",
+        "market_type",
+        "property_type",
+        "location",
+        "district",
+        "development_name",
+        "apartment_price",
+        "parking_price",
+        "storage_price",
+        "area_sqm",
+        "rooms",
+        "floor",
+        "delivery",
+    ):
+        field = document.get(name)
+        value = field.get("value") if isinstance(field, dict) else None
+        values[name] = " ".join(value.casefold().split()) if isinstance(value, str) else value
     payload = json.dumps(
-        {
-            "content_type": value_of(listing.content_type),
-            "market_type": value_of(listing.market_type),
-            "property_type": value_of(listing.property_type),
-            "location": value_of(listing.location),
-            "district": value_of(listing.district),
-            "development_name": value_of(listing.development_name),
-            "apartment_price": value_of(listing.apartment_price),
-            "parking_price": value_of(listing.parking_price),
-            "storage_price": value_of(listing.storage_price),
-            "area_sqm": value_of(listing.area_sqm),
-            "rooms": value_of(listing.rooms),
-            "floor": value_of(listing.floor),
-            "delivery": value_of(listing.delivery),
-        },
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        default=str,
+        values, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str
     )
     return hashlib.sha256(payload.encode()).hexdigest()
 
