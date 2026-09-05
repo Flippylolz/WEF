@@ -241,53 +241,58 @@ class TelegramCheckpointReconciler:
         forward_limit = (
             min(request.max_messages, 400) if self.sweep_store is not None else request.max_messages
         )
-        messages = [
-            message
-            async for message in self.client.iter_messages(
-                username=request.identity.username,
-                min_id=min_id,
-                reverse=True,
-                limit=forward_limit,
-            )
-            if message.external_message_id > min_id
-        ]
-        messages.sort(key=lambda message: message.external_message_id)
         checkpoint = starting
         batches = 0
-        for offset in range(0, len(messages), request.batch_size):
-            batch = messages[offset : offset + request.batch_size]
-            events = tuple(
-                LiveTelegramEvent(
+        fetched = 0
+        previous_id = min_id
+        async for message in self.client.iter_messages(
+            username=request.identity.username,
+            min_id=min_id,
+            reverse=True,
+            limit=forward_limit,
+        ):
+            try:
+                if message.external_message_id <= min_id:
+                    continue
+                if message.external_message_id <= previous_id:
+                    error_message = "forward source response is not ordered"
+                    raise ValueError(error_message)
+                previous_id = message.external_message_id
+                event = LiveTelegramEvent(
                     kind=LiveTelegramEventKind.EDIT
                     if message.edited_at is not None
                     else LiveTelegramEventKind.NEW,
                     message=message,
                 )
-                for message in batch
-            )
-            await self._process_events(request, events, checkpoint)
-            checkpoint = await self.store.advance_live_checkpoint(
-                channel_external_id=request.identity.channel_id,
-                external_id=max(checkpoint, batch[-1].external_message_id),
-            )
-            batches += 1
+                await self._process_events(request, (event,), checkpoint)
+                checkpoint = await self.store.advance_live_checkpoint(
+                    channel_external_id=request.identity.channel_id,
+                    external_id=max(checkpoint, message.external_message_id),
+                )
+                fetched += 1
+                batches += 1
+            finally:
+                if message.media_lease is not None:
+                    message.media_lease.release()
+            if fetched >= forward_limit:
+                break
         # A fully exhausted response can certify empty numeric intervals, never a partial page.
-        if len(messages) < forward_limit:
+        if fetched < forward_limit:
             checkpoint = await self.store.advance_live_checkpoint(
                 channel_external_id=request.identity.channel_id,
                 external_id=max(checkpoint, remote_head),
             )
         if self.sweep_store is not None:
-            await self._sweep(request, max(0, min(100, request.max_messages - len(messages))))
+            await self._sweep(request, max(0, min(100, request.max_messages - fetched)))
         gap = remote_head > checkpoint
         return TelegramReconciliationResult(
             starting,
             checkpoint,
             remote_head,
-            len(messages),
+            fetched,
             batches,
             gap,
-            len(messages) >= forward_limit and gap,
+            fetched >= forward_limit and gap,
         )
 
     async def _sweep(self, request: TelegramReconciliationRequest, budget: int) -> None:

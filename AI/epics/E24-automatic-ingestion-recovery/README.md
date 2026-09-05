@@ -23,8 +23,8 @@ See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for 
 
 ## First implementation phase
 
-- [E24-T1: Terminate original archive work and repair starvation](tasks/E24-T1-terminate-original-archive-work.md) — P1/L, revision 2, `in_progress`; dependencies: none.
-- [E24-T2: Make source cursors monotonic and retries fair](tasks/E24-T2-monotonic-cursors-and-fair-retries.md) — P1/L, revision 2, `draft`; dependencies: E24-T1.
+- [E24-T1: Terminate original archive work and repair starvation](tasks/E24-T1-terminate-original-archive-work.md) — P1/L, revision 2, `done`; dependencies: none.
+- [E24-T2: Make source cursors monotonic and retries fair](tasks/E24-T2-monotonic-cursors-and-fair-retries.md) — P1/L, revision 3, `in_progress`; dependencies: E24-T1.
 
 ## Proposed follow-up tasks
 
@@ -42,7 +42,7 @@ The owner requested as little manual work as possible, with manual work only in 
 
 ## Approval state
 
-- Spike revision 2 is approved under AD-048; implementation plan revision 1 is approved under AD-049.
+- Spike revision 2 is approved under AD-048; implementation plan revision 2 is approved under AD-049.
 - T1 is done after PR #331 and its passing 15-minute production window. T2 is in progress with its dependency gate satisfied. See [production evidence](PRODUCTION_EVIDENCE.md).
 - T3/T4 remain proposed outside this first implementation phase.
 - Approval authorizes implementation and PR preparation; merge and production release remain separate.

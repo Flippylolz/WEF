@@ -548,3 +548,22 @@ acknowledgements bypass the data cap and delay. Relevant retry-policy changes
 permit bounded re-evaluation, while unrelated releases leave the budget intact.
 Legacy classification processes at most 25 rows per selection and preserves the
 historical attempts count. Old lock exhaustion does not consume the data budget.
+
+## Bounded Telegram staging
+
+The E24-T2 activation correction streams forward observations one at a time and
+commits each classified observation's polling boundary. Worker downloads reserve
+a maximum of 56 MiB in total, leaving at least 8 MiB of filesystem capacity for
+heartbeat and other temporary work. Byte limits are enforced before every write.
+Stable descriptor paths retain one exclusive lease until consumer/media processing
+finishes; the lease itself is excluded from payloads and checksums. Failures and
+cancellation remove only their owned temporary file. Queued observations retain
+their lease; overlapping observations wait or defer, never overwrite that file.
+Polling and live callbacks use separate album-association state. The current
+grouper retains association IDs, not previous media files.
+
+Polling capacity pressure persists source backoff without advancing an unobserved
+interval. Callback acquisition waits asynchronously for capacity; polling remains
+the durable completeness boundary across a worker restart. Unsupported/oversized
+media retains its existing policy. Independent recovery after media processing
+failure remains E24-T3 and is not provided by staging cleanup.
