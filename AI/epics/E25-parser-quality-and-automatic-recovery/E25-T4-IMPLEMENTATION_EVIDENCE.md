@@ -134,3 +134,16 @@ uses its own isolated exact-SHA build. No repository test configuration changed.
 
 T3's real-provider canary and representative acceptance window remain outstanding.
 T4 stays unmerged with scheduling/application off until that completion gate passes.
+
+## Latest-main validation and deferred rollout
+
+T3 merged as `81cd983`; the replay branch was retargeted to main and reconciled
+without changing its validated application tree. Main's liveness correction
+`f700ee3` is now included. Dedicated-image validation then passed 1,082 backend
+and 169 frontend tests, with 90.40% backend coverage. Lint, formatting, type,
+contract and Markdown-link checks passed.
+
+The task is deferred with a blocked current dependency gate while T3 awaits
+provider prerequisites, stable worker readiness and representative acceptance.
+The original valid pre-implementation stack remains recorded in `a84ea07` and
+Git history. This is a rollout hold, not a claim of task or epic completion.

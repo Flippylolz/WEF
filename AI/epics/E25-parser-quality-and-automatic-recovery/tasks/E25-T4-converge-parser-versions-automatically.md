@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T4
 epic: E25
 title: "Converge parser versions and field provenance automatically"
-status: in_progress
+status: deferred
 revision: 1
 priority: P1
 size: L
@@ -29,22 +29,10 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-05T11:18:50Z"
 dependency_gate:
-  status: stacked
-  verified_by: Codex
-  verified_at: "2026-09-05T12:49:08Z"
-  evidence:
-    - task_id: E24-T1
-      branch: main
-      pull_request: https://github.com/Flippylolz/WEF/pull/331
-      head_commit: 64da1bd
-    - task_id: E25-T2
-      branch: bugfix/E25-T2-deterministic-extraction
-      pull_request: https://github.com/Flippylolz/WEF/pull/330
-      head_commit: e4cf9c2
-    - task_id: E25-T3
-      branch: feat/E25-T3-durable-ai-recovery
-      pull_request: https://github.com/Flippylolz/WEF/pull/335
-      head_commit: 33d5bbe
+  status: blocked
+  verified_by: null
+  verified_at: null
+  evidence: []
 branch:
   required: true
   name: feat/E25-T4-historical-parser-replay
@@ -145,3 +133,18 @@ changed files and remaining rollout gates. Local criteria are verified with
 synthetic sources and real PostgreSQL boundaries; production convergence is not
 claimed. Task completion and merge remain blocked by upstream completion/review and
 required release acceptance evidence, not by missing implementation approval.
+
+## Current rollout hold and resume trigger
+
+Implementation began under the valid ancestor stack recorded by readiness commit
+`a84ea07`. Planning, T1, T2 and T3 have since merged. T1/T2 are done; T3 remains
+in progress pending its current provider prerequisites and representative acceptance
+window. Because there is no longer an open T3 ancestor PR and T3 is not done,
+the current dependency gate is blocked and this task is deferred. This changes
+no approved scope or acceptance criterion and preserves the original readiness
+evidence in Git and the implementation record.
+
+Resume when T3's real-provider canary and 24-hour acceptance pass, record its
+completion, then restore a satisfied dependency gate and finish the reviewed
+25-record deterministic canary/application rollout. No additional per-record
+owner action is required by the replay implementation.

@@ -130,3 +130,29 @@ replacement #338 targets main. T1 #328 → T2 #330 → T3 #335 remain an ordered
 ancestor stack. This supersedes the original sibling/dependency limitation above.
 Migrations now follow ingestion progress `0021`, evaluations `0022`, and durable
 AI recovery `0023`. Revision 2 approval and disabled rollout flags are preserved.
+
+## Production release and remaining activation gates
+
+PR #335 merged as `81cd983` after all required current-head checks passed.
+[Release 33974422623](https://github.com/Flippylolz/WEF/actions/runs/33974422623)
+succeeded. Both API and worker reported schema `20260905_0023`, recovery enabled
+false, activation verified false, auto-apply false and no configured recovery owner.
+The approved model, key presence and deployed ZDR flag were present. Recovery work,
+provider attempts and account reservations were all empty. No scheduled provider
+request or automatic AI application occurred.
+
+Post-deploy verification found worker liveness probes exceeding the existing
+three-second timeout despite fresh heartbeats and active ingestion. Independently
+merged E24-T2 correction #341 (`f700ee3`) removes ORM imports from that path while
+preserving the same health semantics and timeout. Its release 33975004167 passed.
+The subsequent probe completed in 2.018 seconds but correctly failed while the
+first reconciliation completion remained absent; durable polling continued
+(11,461 → 11,574) with fresh commit timestamps. This is not accepted worker health
+or T3 acceptance. Recovery remains disabled until stable worker readiness and the
+provider prerequisites are verified. No E24 runtime setting or checkpoint was reset.
+
+The Groq console was signed out. Current free-plan evidence was requested from the
+owner; the deployed ZDR flag alone does not prove free allocation or current billing.
+After that evidence and worker readiness, run the approved provider canary and
+representative 24-hour window. T3 remains in progress; T4 cannot merge or activate
+until this dependency is done. Paid capacity remains unauthorized.
