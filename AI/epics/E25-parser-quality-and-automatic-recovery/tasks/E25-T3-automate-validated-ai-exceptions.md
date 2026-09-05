@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E25-T3
 epic: E25
 title: "Automate validated AI exceptions under durable budgets"
-status: draft
+status: ready
 revision: 1
 priority: P1
 size: L
@@ -29,16 +29,20 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-05T10:22:44Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: Codex
+  verified_at: "2026-09-05T11:20:00Z"
+  evidence:
+    - task_id: E25-T1
+      branch: feat/E25-T1-evidence-classification
+      pull_request: https://github.com/Flippylolz/WEF/pull/328
+      head_commit: 44eff1a
 branch:
   required: true
-  name: null
+  name: feat/E25-T3-durable-ai-recovery
   task_id: E25-T3
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-05T11:20:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -104,7 +108,7 @@ Do not add production dependencies without owner approval, commit raw source/cre
 
 - [x] Spike revision 1 approval and task promotion are recorded; the authoritative file is under `tasks/`.
 - [x] Implementation plan revision 1 is explicitly approved and the implementation gate is satisfied.
-- [ ] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
+- [x] Required dependencies are done, or valid ancestor PRs are recorded in a stacked gate.
 - [ ] This task passes through `ready` and starts on its own dedicated branch/PR.
 - [ ] Acceptance criteria, required checks, and the global definition of done pass; completion evidence is recorded.
 
