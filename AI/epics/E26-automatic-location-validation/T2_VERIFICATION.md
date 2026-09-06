@@ -78,3 +78,25 @@ and protected-receipt path and prioritizes them within ordinary claims. It leave
 the durable scan cursor and the 25-item cycle/provider budget unchanged. A real
 PostGIS test proves priority over older general work, idempotence, missing/duplicate/
 oversize rejection and no selection application. The general scan remains automatic.
+
+
+## Combined local verification
+
+T2 was rebased onto the exact approved open T3 ancestor
+`9f2c65d44ca06b0a4cc9eb953ee8e74f31b8c345` (PR #363) to validate the safe
+release combination. T3 merge/deployment remains required before T2 application;
+T2 will be rebased onto the equivalent main merge before publishing its final head.
+
+`make verify` passed on code commit `d3065d8a7ef1ba857e5e6645c36abc37f54fa34e`:
+1,279 backend tests, 91.14% backend coverage, 185 frontend tests, 95.99% frontend
+lines / 90.05% branches, all existing critical coverage floors, 186 script tests,
+format/lint/strict types, generated contract and compatibility/negative probes,
+production topology/rollback/build proofs, architecture enforcement and links.
+No production dependencies or budget increases were added. The dedicated priority
+PostGIS suite passed 17 tests before this complete run.
+
+
+`make test-e2e` then passed on the combined T2/T3 tree: 48 journeys across all five
+profiles, 12 explicit non-Chromium WebGL skips, zero retries and zero failure
+artifacts. The disposable database migrated through `20260906_0026`. This is
+migration/UI integration evidence, not a claim of a production repair.
