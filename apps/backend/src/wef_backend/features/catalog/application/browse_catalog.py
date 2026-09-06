@@ -243,6 +243,8 @@ class OfferBrowseSnapshot:
     matching_count: int
     total_count: int
 
+    location: ListingLocationContext | None = None
+
 
 class LocationOfferQueryPort(Protocol):
     """Selected-location offer collection contract."""
@@ -300,6 +302,8 @@ class LocationOfferPage:
     total_count: int
     next_cursor: str | None
 
+    location: ListingLocationDTO | None = None
+
 
 class BrowseLocationOffers:
     """Return a deterministic backend-decorated selected-location page."""
@@ -343,6 +347,9 @@ class BrowseLocationOffers:
             matching_count=snapshot.matching_count,
             total_count=snapshot.total_count,
             next_cursor=next_cursor,
+            location=decorate_listing_location(snapshot.location)
+            if snapshot.location is not None
+            else None,
         )
 
     @staticmethod
@@ -521,6 +528,28 @@ def _location_confidence_indicator(score: Decimal) -> ConfidenceIndicator:
     return ConfidenceIndicator.LOW
 
 
+def decorate_listing_location(location: ListingLocationContext) -> ListingLocationDTO:
+    """Apply the same backend accuracy policy in cards and selected locations."""
+    return ListingLocationDTO(
+        id=location.id,
+        display_name=location.display_name,
+        display_address=location.display_address,
+        district=location.district,
+        precision=location.precision,
+        confidence_indicator=_location_confidence_indicator(
+            location.confidence,
+        ),
+        longitude=location.longitude,
+        latitude=location.latitude,
+        location_accuracy=project_location_accuracy(
+            precision=location.precision,
+            review_status=location.review_status,
+            confidence=location.confidence,
+            has_point=location.longitude is not None and location.latitude is not None,
+        ),
+    )
+
+
 class BrowseViewportListings:
     """Return a deterministic newest-first backend-decorated page."""
 
@@ -597,24 +626,6 @@ class BrowseViewportListings:
             rooms_max=record.rooms_max,
             floor_label=record.floor_label,
             delivery_label=record.delivery_label,
-            location=ListingLocationDTO(
-                id=record.location.id,
-                display_name=record.location.display_name,
-                display_address=record.location.display_address,
-                district=record.location.district,
-                precision=record.location.precision,
-                confidence_indicator=_location_confidence_indicator(
-                    record.location.confidence,
-                ),
-                longitude=record.location.longitude,
-                latitude=record.location.latitude,
-                location_accuracy=project_location_accuracy(
-                    precision=record.location.precision,
-                    review_status=record.location.review_status,
-                    confidence=record.location.confidence,
-                    has_point=record.location.longitude is not None
-                    and record.location.latitude is not None,
-                ),
-            ),
+            location=decorate_listing_location(record.location),
             data_origin=derive_data_origin(has_active_ai_origin=record.has_active_ai_origin),
         )

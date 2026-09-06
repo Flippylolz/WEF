@@ -21,7 +21,8 @@ if TYPE_CHECKING:
 _PUBLIC_LOCATION = text(
     "SELECT 1 FROM locations "
     "WHERE id = :location_id "
-    "AND review_status = 'accepted' "
+    "AND (review_status = 'accepted' OR EXISTS "
+    "(SELECT 1 FROM offers WHERE location_id = locations.id AND visibility = 'visible')) "
     "AND out_of_scope = false "
     "LIMIT 1",
 )
@@ -41,7 +42,8 @@ class SQLAlchemyFavoriteStore(FavoriteStore):
             "FROM favorite_locations f "
             "JOIN locations l ON l.id = f.location_id "
             "WHERE f.user_id = :user_id "
-            "AND l.review_status = 'accepted' "
+            "AND (l.review_status = 'accepted' OR EXISTS "
+            "(SELECT 1 FROM offers WHERE location_id = l.id AND visibility = 'visible')) "
             "AND l.out_of_scope = false "
             "ORDER BY f.created_at DESC, f.location_id",
         )
@@ -59,7 +61,7 @@ class SQLAlchemyFavoriteStore(FavoriteStore):
         )
 
     async def add_favorite(self, user_id: UUID, location_id: UUID) -> bool:
-        """Star one accepted public location; return False when absent."""
+        """Star a public location, including visible offers awaiting location validation."""
         async with self._session_factory() as session:
             exists = await session.scalar(
                 _PUBLIC_LOCATION,

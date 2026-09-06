@@ -122,7 +122,7 @@ class ViewportListingQueryParams(MapQueryParams):
 class UnmappedListingQueryParams(ViewportListingQueryParams):
     """Bbox scopes only the mapped count; uncertain offers ignore it."""
 
-    bbox: str = Field(default="20.5,51.8,21.3,52.6", min_length=7, max_length=100)
+    bbox: str = Field(default="20.7,52.0,21.4,52.4", min_length=7, max_length=100)
 
 
 router = APIRouter(prefix="/api/v1/map", tags=["map"])

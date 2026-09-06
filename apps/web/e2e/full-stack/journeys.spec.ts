@@ -13,9 +13,13 @@ async function audit(page: Page) {
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
   await page.bringToFront();
-  expect(result.violations.map(({ id, impact }) => ({ id, impact }))).toEqual(
-    [],
-  );
+  expect(
+    result.violations.map(({ id, impact, nodes }) => ({
+      id,
+      impact,
+      targets: nodes.map(({ target }) => target),
+    })),
+  ).toEqual([]);
 }
 
 async function showList(page: Page, isMobile: boolean) {
@@ -439,4 +443,128 @@ test("keyboard-only filters, selection, drawer and return focus", async ({
   ).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(offer).toBeFocused();
+});
+
+test("E26 coarse and quarantined coordinates remain discoverable without map pins", async ({
+  page,
+  request,
+  isMobile,
+}) => {
+  const map = await request.get(
+    "/api/v1/map/locations?bbox=20.8,52.1,21.3,52.4",
+  );
+  const mapped = (await map.json()).features as { id: string }[];
+  expect(
+    mapped.some(({ id }) => id === "e2600000-0000-4000-8000-000000000001"),
+  ).toBe(true);
+  for (const suffix of ["2", "3"]) {
+    expect(
+      mapped.some(
+        ({ id }) => id === `e2600000-0000-4000-8000-00000000000${suffix}`,
+      ),
+    ).toBe(false);
+  }
+  const response = await request.get(
+    `/api/v1/listings/uncertain${centered.slice(1)}&district=praga-poludnie`,
+  );
+  expect(response.ok()).toBe(true);
+  const discovery = await response.json();
+  expect(discovery.matching_count).toBe(2);
+  expect(discovery.mapped_matching_count).toBe(0);
+  expect(discovery.filter_scope).toBe("non_spatial");
+  for (const item of discovery.items)
+    expect(item.location).not.toHaveProperty("geometry");
+  await page.goto(centered);
+  await showList(page, isMobile);
+  await expect(page.locator(".map-loading")).toHaveCount(0);
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get("bbox"))
+    .not.toBe(centered.split("bbox=")[1]);
+  await page.locator(".uncertain-listings summary").click();
+  const initialBbox = new URL(page.url()).searchParams.get("bbox");
+  for (const [name, label] of [
+    ["Synthetic Jugosłowiańska January", "Approximate area"],
+    ["Synthetic Jugosłowiańska May", "Location unresolved"],
+  ]) {
+    const trigger = page.getByRole("button", { name: new RegExp(name!) });
+    await expect(trigger).toContainText(label!);
+    await trigger.focus();
+    await page.keyboard.press("Enter");
+    const detail = page.getByRole("dialog", {
+      name: "Development post · Primary market",
+    });
+    await expect(detail.locator(".location-accuracy")).toContainText(label!);
+    await audit(page);
+    await page.keyboard.press("Escape");
+    await expect(trigger).toBeFocused();
+    expect(new URL(page.url()).searchParams.get("bbox")).toBe(initialBbox);
+  }
+});
+
+test("E26 WebGL street selection states limited confidence independently of offer completeness", async ({
+  page,
+}, info) => {
+  test.skip(
+    info.project.name !== "chromium",
+    "Required WebGL regression uses desktop Chromium",
+  );
+  await page.goto("/?bbox=21.0763269,52.2305096,21.0847269,52.2379096");
+  const canvas = page.locator(".maplibregl-canvas");
+  await expect(canvas).toBeVisible();
+  await expect(page.locator(".map-loading")).toHaveCount(0);
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  await canvas.click({ position: { x: box!.width / 2, y: box!.height / 2 } });
+  await expect(
+    page.getByRole("heading", { name: "Synthetic Ostrzycka" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Approximate street location").first(),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Location confidence is limited.").first(),
+  ).toBeVisible();
+  await audit(page);
+  await page
+    .getByRole("button", {
+      name: "View offer details for Development post · Primary market",
+    })
+    .click();
+  await expect(
+    page.getByRole("dialog").locator(".location-accuracy"),
+  ).toContainText("Approximate street location");
+});
+
+test("E26 WebGL cluster expands without losing precision or finite viewport", async ({
+  page,
+}, info) => {
+  test.skip(
+    info.project.name !== "chromium",
+    "Required WebGL regression uses desktop Chromium",
+  );
+  await page.goto(
+    "/?bbox=21.0415269,52.1992096,21.1215269,52.2692096&district=praga-poludnie",
+  );
+  const canvas = page.locator(".maplibregl-canvas");
+  await expect(canvas).toBeVisible();
+  await expect(page.locator(".map-loading")).toHaveCount(0);
+  const before = new URL(page.url()).searchParams.get("bbox")!;
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  await canvas.click({ position: { x: box!.width / 2, y: box!.height / 2 } });
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get("bbox"))
+    .not.toBe(before);
+  const after = new URL(page.url()).searchParams
+    .get("bbox")!
+    .split(",")
+    .map(Number);
+  expect(after.every(Number.isFinite)).toBe(true);
+  expect(after[2]! - after[0]!).toBeLessThan(0.08);
+  await expect(
+    page.getByRole("button", { name: /Synthetic Ostrzycka/ }),
+  ).toContainText("Approximate street location");
+  await expect(
+    page.getByRole("button", { name: /Synthetic Nearby building/ }),
+  ).toContainText("Building location");
 });

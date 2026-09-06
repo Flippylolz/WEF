@@ -312,6 +312,16 @@ export function setupMapExplorer() {
       state: "ready",
       data: offerPage,
     });
+    vi.spyOn(catalogApi, "fetchUnmappedListings").mockResolvedValue({
+      state: "ready",
+      data: {
+        items: [],
+        matching_count: 0,
+        mapped_matching_count: 1,
+        next_cursor: null,
+        filter_scope: "non_spatial",
+      },
+    });
     vi.spyOn(catalogApi, "fetchViewportListings").mockResolvedValue({
       state: "ready",
       data: listingPage,

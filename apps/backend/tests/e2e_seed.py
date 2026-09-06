@@ -14,6 +14,7 @@ from uuid import UUID, uuid4
 from PIL import Image
 from sqlalchemy import make_url, text
 
+from tests.e26_map_seed import e26_fixture
 from wef_backend.database import create_database_resources
 from wef_backend.features.catalog.application import SeedM1Catalog
 from wef_backend.features.catalog.application.m1_fixture import m1_fixture
@@ -62,6 +63,9 @@ async def seed() -> None:
         await SeedM1Catalog(
             SQLAlchemyCatalogSeedAdapter(database.session_factory), environment="test"
         )(*m1_fixture())
+        await SeedM1Catalog(
+            SQLAlchemyCatalogSeedAdapter(database.session_factory), environment="test"
+        )(*e26_fixture())
         register = RegisterAccount(
             SQLAlchemyIdentityStore(database.session_factory), PwdlibPasswordHasher()
         )

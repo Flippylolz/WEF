@@ -8,6 +8,7 @@ import {
   fetchOfferDetail,
   fetchQuickFilters,
   fetchViewportListings,
+  fetchUnmappedListings,
 } from "@/lib/catalog-api";
 
 const response = (body: object, status = 200) =>
@@ -382,5 +383,37 @@ describe("catalog API", () => {
     expect((await fetchOfferDetail("ready", { fetcher: offline })).state).toBe(
       "error",
     );
+  });
+  it("loads non-spatial discovery without adding geometry and handles transport failures", async () => {
+    const data = {
+      items: [],
+      matching_count: 3,
+      mapped_matching_count: 1,
+      next_cursor: null,
+      filter_scope: "non_spatial",
+    };
+    const signal = new AbortController().signal;
+    const fetcher = vi.fn(async (request: Request) => {
+      expect(new URL(request.url).pathname).toBe("/api/v1/listings/uncertain");
+      expect(new URL(request.url).searchParams.get("cursor")).toBe("u1.next");
+      return response(data);
+    });
+    expect(
+      await fetchUnmappedListings(
+        { bbox: DEFAULT_BBOX, cursor: "u1.next" },
+        { fetcher, signal },
+      ),
+    ).toEqual({ state: "ready", data });
+    for (const fetcher of [
+      vi.fn(async () => response({}, 503)),
+      vi.fn(async () => new Response(null, { status: 200 })),
+      vi.fn(async () => {
+        throw new Error("offline");
+      }),
+    ]) {
+      expect(
+        await fetchUnmappedListings({ bbox: DEFAULT_BBOX }, { fetcher }),
+      ).toEqual({ state: "error" });
+    }
   });
 });

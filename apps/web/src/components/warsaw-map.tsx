@@ -106,8 +106,8 @@ const locationLayer: LayerProps = {
   paint: {
     "circle-color": [
       "case",
-      ["==", ["get", "confidence"], "low"],
-      "#d29922",
+      ["!=", ["get", "effective_precision"], "building"],
+      "#0d1117",
       "#3fb950",
     ],
     "circle-radius": [
@@ -119,7 +119,12 @@ const locationLayer: LayerProps = {
       5,
       15,
     ],
-    "circle-stroke-color": "#0d1117",
+    "circle-stroke-color": [
+      "case",
+      ["==", ["get", "effective_precision"], "building"],
+      "#0d1117",
+      "#e3b341",
+    ],
     "circle-stroke-width": 2,
   },
 };
@@ -177,7 +182,12 @@ function WebGLWarsawMap({
         // MapLibre's vector-tile wrapper coerces a GeoJSON feature id through
         // parseInt, so UUID ids can be truncated or dropped. Properties retain
         // the full string through clustering and rendered-feature queries.
-        properties: { ...feature.properties, location_id: feature.id },
+        properties: {
+          ...feature.properties,
+          location_id: feature.id,
+          effective_precision:
+            feature.properties.location_accuracy?.precision ?? "unresolved",
+        },
       })),
     }),
     [data],

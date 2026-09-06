@@ -1,3 +1,4 @@
+import { LocationAccuracy } from "@/components/location-accuracy";
 import { useTranslations } from "next-intl";
 import { OfferMediaGallery } from "@/components/offer-media-gallery";
 import type { Account } from "@/lib/auth-api";
@@ -137,9 +138,10 @@ export function OfferDetailContent({
             </>
           ) : null}
         </p>
-        {detail.location.confidence === "low" ? (
-          <p className="confidence-note">{t("lowConfidence")}</p>
-        ) : null}
+        <LocationAccuracy
+          accuracy={detail.location.location_accuracy}
+          confidence={detail.location.confidence}
+        />
       </section>
 
       {detail.development ? (

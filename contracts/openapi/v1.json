@@ -185,6 +185,17 @@
         "title": "DevelopmentSummaryResponse",
         "type": "object"
       },
+      "EffectivePrecision": {
+        "description": "Honest display categories; an area is never a precise point.",
+        "enum": [
+          "building",
+          "street",
+          "area",
+          "unresolved"
+        ],
+        "title": "EffectivePrecision",
+        "type": "string"
+      },
       "EstateResponse": {
         "additionalProperties": false,
         "description": "Public representation of one synthetic estate.",
@@ -521,6 +532,16 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "location_accuracy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocationAccuracy"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -533,6 +554,41 @@
           "geometry"
         ],
         "title": "ListingLocationResponse",
+        "type": "object"
+      },
+      "LocationAccuracy": {
+        "description": "Public policy projection, not a probability or fresh geometry verification.",
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "precision": {
+            "$ref": "#/components/schemas/EffectivePrecision"
+          },
+          "uncertainty_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uncertainty Reason"
+          },
+          "validation_status": {
+            "title": "Validation Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "precision",
+          "validation_status",
+          "uncertainty_reason",
+          "label"
+        ],
+        "title": "LocationAccuracy",
         "type": "object"
       },
       "LocationMapFeature": {
@@ -630,6 +686,16 @@
             "title": "Latest Published At",
             "type": "string"
           },
+          "location_accuracy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocationAccuracy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "matching_offer_count": {
             "minimum": 1.0,
             "title": "Matching Offer Count",
@@ -717,6 +783,16 @@
             "title": "Items",
             "type": "array"
           },
+          "location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocationSummaryResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "matching_count": {
             "minimum": 0.0,
             "title": "Matching Count",
@@ -782,6 +858,16 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "location_accuracy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocationAccuracy"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -1772,6 +1858,276 @@
         "title": "SourceHistoryEntryResponse",
         "type": "object"
       },
+      "UnmappedListingItemResponse": {
+        "additionalProperties": false,
+        "description": "Visible dated offer with no fabricated public point geometry.",
+        "properties": {
+          "area_max_sqm": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Max Sqm"
+          },
+          "area_min_sqm": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Min Sqm"
+          },
+          "content_type": {
+            "$ref": "#/components/schemas/ContentType"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "data_confidence": {
+            "$ref": "#/components/schemas/OfferDataConfidence"
+          },
+          "data_origin": {
+            "enum": [
+              "parser",
+              "ai_assisted"
+            ],
+            "title": "Data Origin",
+            "type": "string"
+          },
+          "delivery_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Label"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "floor_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Floor Label"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationSummaryResponse"
+          },
+          "market_type": {
+            "$ref": "#/components/schemas/MarketType"
+          },
+          "parking_included_in_price": {
+            "default": false,
+            "title": "Parking Included In Price",
+            "type": "boolean"
+          },
+          "parking_price_max_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parking Price Max Minor"
+          },
+          "parking_price_min_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parking Price Min Minor"
+          },
+          "price_max_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Max Minor"
+          },
+          "price_min_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Min Minor"
+          },
+          "property_type": {
+            "$ref": "#/components/schemas/PropertyType"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "rooms_max": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rooms Max"
+          },
+          "rooms_min": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rooms Min"
+          },
+          "storage_included_in_price": {
+            "default": false,
+            "title": "Storage Included In Price",
+            "type": "boolean"
+          },
+          "storage_price_max_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Price Max Minor"
+          },
+          "storage_price_min_minor": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Price Min Minor"
+          }
+        },
+        "required": [
+          "id",
+          "content_type",
+          "market_type",
+          "property_type",
+          "display_name",
+          "data_confidence",
+          "published_at",
+          "currency",
+          "floor_label",
+          "delivery_label",
+          "data_origin",
+          "location"
+        ],
+        "title": "UnmappedListingItemResponse",
+        "type": "object"
+      },
+      "UnmappedListingPageResponse": {
+        "additionalProperties": false,
+        "description": "Uncertain offers use non-spatial filters, independently of mapped totals.",
+        "properties": {
+          "filter_scope": {
+            "const": "non_spatial",
+            "default": "non_spatial",
+            "title": "Filter Scope",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UnmappedListingItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "mapped_matching_count": {
+            "minimum": 0.0,
+            "title": "Mapped Matching Count",
+            "type": "integer"
+          },
+          "matching_count": {
+            "minimum": 0.0,
+            "title": "Matching Count",
+            "type": "integer"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "matching_count",
+          "mapped_matching_count",
+          "next_cursor"
+        ],
+        "title": "UnmappedListingPageResponse",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -1865,7 +2221,7 @@
       },
       "ViewportListingItemResponse": {
         "additionalProperties": false,
-        "description": "Dated filter-matching viewport listing summary.",
+        "description": "Mapped listing retains required point geometry for existing clients.",
         "properties": {
           "area_max_sqm": {
             "anyOf": [
@@ -2079,8 +2435,8 @@
           "currency",
           "floor_label",
           "delivery_label",
-          "location",
-          "data_origin"
+          "data_origin",
+          "location"
         ],
         "title": "ViewportListingItemResponse",
         "type": "object"
@@ -2887,6 +3243,282 @@
           }
         },
         "summary": "List paginated offer cards for the current viewport",
+        "tags": [
+          "listings"
+        ]
+      }
+    },
+    "/api/v1/listings/uncertain": {
+      "get": {
+        "description": "Apply non-spatial offer/district filters and return separately scoped totals.",
+        "operationId": "listUnmappedListings",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bbox",
+            "required": false,
+            "schema": {
+              "default": "20.7,52.0,21.4,52.4",
+              "maxLength": 100,
+              "minLength": 7,
+              "title": "Bbox",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "price_min",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1000000000,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Price Min"
+            }
+          },
+          {
+            "in": "query",
+            "name": "price_max",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1000000000,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Price Max"
+            }
+          },
+          {
+            "in": "query",
+            "name": "area_min",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 100000.0,
+                  "type": "number"
+                },
+                {
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Area Min"
+            }
+          },
+          {
+            "in": "query",
+            "name": "area_max",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 100000.0,
+                  "type": "number"
+                },
+                {
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Area Max"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rooms",
+            "required": false,
+            "schema": {
+              "items": {
+                "maximum": 20,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "maxItems": 10,
+              "title": "Rooms",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "district",
+            "required": false,
+            "schema": {
+              "items": {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 20,
+              "title": "District",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "market_type",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/MarketType"
+              },
+              "maxItems": 5,
+              "title": "Market Type",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "content_type",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/ContentType"
+              },
+              "maxItems": 5,
+              "title": "Content Type",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "property_type",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/FilterablePropertyType"
+              },
+              "maxItems": 5,
+              "title": "Property Type",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "published_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Published From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "published_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Published To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "quick_filter",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 32,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Quick Filter"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnmappedListingPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "The filters or cursor are invalid."
+          }
+        },
+        "summary": "Discover uncertain locations outside map results",
         "tags": [
           "listings"
         ]

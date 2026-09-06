@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-from sqlalchemy import and_, case, func, literal, not_, or_, select
+from sqlalchemy import and_, case, exists, func, literal, not_, or_, select
 
 from wef_backend.features.catalog.application import (
     FacetQueryPort,
@@ -178,7 +178,7 @@ class SQLAlchemyCatalogBrowseAdapter(
         """Return a matches-first page plus matching/total counts."""
         base = (*self._visible_base(), LocationRow.id == location_id)
         matching_conditions = SQLAlchemyMapQueryAdapter.filter_conditions(filters)
-        matches = and_(*matching_conditions)
+        matches = or_(and_(*matching_conditions), and_(*self._unmapped_conditions(filters)))
         match_rank = case((matches, 1), else_=0)
         page_conditions: list[ColumnElement[bool]] = list(base)
         if not include_non_matching:
@@ -232,18 +232,38 @@ class SQLAlchemyCatalogBrowseAdapter(
             .join(LocationRow, LocationRow.id == OfferRow.location_id)
             .where(*base)
         )
-        location_statement = select(LocationRow.id).where(
+        location_statement = select(
+            LocationRow, func.ST_X(LocationRow.point), func.ST_Y(LocationRow.point)
+        ).where(
             LocationRow.id == location_id,
-            LocationRow.review_status == LocationReviewStatus.ACCEPTED.value,
             LocationRow.out_of_scope.is_(False),
-            LocationRow.point.is_not(None),
+            exists(
+                select(OfferRow.id).where(
+                    OfferRow.location_id == LocationRow.id,
+                    OfferRow.visibility == OfferVisibility.VISIBLE.value,
+                )
+            ),
         )
         async with self._session_factory() as session:
-            location_exists = (await session.scalar(location_statement)) is not None
+            location = (await session.execute(location_statement)).one_or_none()
+            location_exists = location is not None
             matching_count, total_count = (await session.execute(count_statement)).one()
             rows = (await session.execute(page_statement)).all()
         return OfferBrowseSnapshot(
             location_exists=location_exists,
+            location=ListingLocationContext(
+                id=location[0].id,
+                display_name=location[0].display_name,
+                display_address=location[0].display_address,
+                district=location[0].district,
+                precision=location[0].precision,
+                confidence=location[0].confidence,
+                longitude=float(location[1]) if location[1] is not None else None,
+                latitude=float(location[2]) if location[2] is not None else None,
+                review_status=location[0].review_status,
+            )
+            if location is not None
+            else None,
             records=tuple(
                 OfferBrowseRecord(
                     id=row.id,
@@ -434,9 +454,7 @@ class SQLAlchemyCatalogBrowseAdapter(
     def _visible_base() -> tuple[ColumnElement[bool], ...]:
         """Return public catalog gates shared by both browse queries."""
         return (
-            LocationRow.review_status == LocationReviewStatus.ACCEPTED.value,
             LocationRow.out_of_scope.is_(False),
-            LocationRow.point.is_not(None),
             OfferRow.visibility == OfferVisibility.VISIBLE.value,
         )
 

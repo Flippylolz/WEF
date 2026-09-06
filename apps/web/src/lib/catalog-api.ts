@@ -22,6 +22,10 @@ export type ViewportListingPage =
   paths["/api/v1/listings"]["get"]["responses"][200]["content"]["application/json"];
 export type ViewportListing = ViewportListingPage["items"][number];
 
+export type UnmappedListingPage =
+  paths["/api/v1/listings/uncertain"]["get"]["responses"][200]["content"]["application/json"];
+export type UnmappedListing = UnmappedListingPage["items"][number];
+
 type Ready<T> = { state: "ready"; data: T };
 type Failed = { state: "error" };
 type NotFound = { state: "not_found" };
@@ -211,6 +215,27 @@ export async function fetchViewportListings(
       };
     });
     return { state: "ready", data: { ...data, items } };
+  } catch {
+    return { state: "error" };
+  }
+}
+
+export async function fetchUnmappedListings(
+  query: MapLocationQuery & { cursor?: string; limit?: number },
+  options: RequestOptions = {},
+): Promise<ApiResult<UnmappedListingPage>> {
+  try {
+    const { data, error, response } = await client(options.fetcher).GET(
+      "/api/v1/listings/uncertain",
+      {
+        params: { query },
+        cache: "no-store",
+        ...(options.signal ? { signal: options.signal } : {}),
+      },
+    );
+    if (!response.ok || error !== undefined || data === undefined)
+      return { state: "error" };
+    return { state: "ready", data };
   } catch {
     return { state: "error" };
   }

@@ -165,6 +165,8 @@ class LocationOfferPageResponse(BaseModel):
     total_count: int = Field(ge=0)
     next_cursor: str | None
 
+    location: "LocationSummaryResponse | None" = None
+
 
 class ListingLocationResponse(BaseModel):
     """Public parent location context for one viewport listing card."""
@@ -407,6 +409,17 @@ def present_location_offer_page(
 ) -> LocationOfferPageResponse:
     """Present backend-decorated offers and explicit counts."""
     return LocationOfferPageResponse(
+        location=LocationSummaryResponse(
+            id=page.location.id,
+            display_name=page.location.display_name,
+            display_address=page.location.display_address,
+            district=page.location.district,
+            coordinate_precision=page.location.precision,
+            confidence=page.location.confidence_indicator,
+            location_accuracy=page.location.location_accuracy,
+        )
+        if page.location is not None
+        else None,
         items=tuple(
             OfferSummaryResponse(
                 id=item.id,
