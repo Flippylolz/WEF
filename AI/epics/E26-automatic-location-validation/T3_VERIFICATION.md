@@ -93,3 +93,14 @@ WebGL skips, zero retries and no failure artifacts. The production code is uncha
 from the complete `make verify` pass. `make lint test` also passed again (1,243
 backend and 185 frontend tests), followed by frontend typecheck and the expanded
 browser matrix. The two assertions only wait for actual application readiness.
+
+
+CI run 34026316992 exposed the equivalent initial-fit race in the cluster test:
+the recorded canvas shows both points after successful expansion, but the assertion
+read an earlier URL update. The test now waits for initial fitting, clicks the
+actual cluster, then requires a finite viewport less than half that fitted width.
+It still checks both point precision labels. After this test-only correction,
+`make lint test` passed again (1,243 backend / 185 frontend), frontend typecheck
+passed, and `python3 scripts/run_full_stack_e2e.py --project chromium` passed all
+12 journeys with real WebGL and zero retries. The full combined T2/T3 schema/UI
+matrix also passed all 48 journeys before this narrower synchronization correction.

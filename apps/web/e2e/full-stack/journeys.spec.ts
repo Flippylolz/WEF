@@ -567,19 +567,32 @@ test("E26 WebGL cluster expands without losing precision or finite viewport", as
   const canvas = page.locator(".maplibregl-canvas");
   await expect(canvas).toBeVisible();
   await expect(page.locator(".map-loading")).toHaveCount(0);
-  const before = new URL(page.url()).searchParams.get("bbox")!;
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get("bbox"))
+    .not.toBe("21.0415269,52.1992096,21.1215269,52.2692096");
+  const before = new URL(page.url()).searchParams
+    .get("bbox")!
+    .split(",")
+    .map(Number);
+  const beforeWidth = before[2]! - before[0]!;
   const box = await canvas.boundingBox();
   expect(box).not.toBeNull();
   await canvas.click({ position: { x: box!.width / 2, y: box!.height / 2 } });
   await expect
-    .poll(() => new URL(page.url()).searchParams.get("bbox"))
-    .not.toBe(before);
+    .poll(() => {
+      const bounds = new URL(page.url()).searchParams
+        .get("bbox")!
+        .split(",")
+        .map(Number);
+      return bounds.every(Number.isFinite) ? bounds[2]! - bounds[0]! : Infinity;
+    })
+    .toBeLessThan(beforeWidth / 2);
   const after = new URL(page.url()).searchParams
     .get("bbox")!
     .split(",")
     .map(Number);
   expect(after.every(Number.isFinite)).toBe(true);
-  expect(after[2]! - after[0]!).toBeLessThan(0.08);
+  expect(after[2]! - after[0]!).toBeLessThan(beforeWidth / 2);
   await expect(
     page.getByRole("button", { name: /Synthetic Ostrzycka/ }),
   ).toContainText("Approximate street location");
