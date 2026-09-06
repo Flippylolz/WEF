@@ -39,7 +39,8 @@ fixtures are invented and cannot establish either reported production fix.
 
 1. T3 honest area/unresolved discovery and real map/list precision behavior must
    be deployed before application. E14-T1–T5 are now merged under the owner
-   approval; T3 is undergoing final browser acceptance.
+   approval; T3 is deployed via PR #363 / release 34027321299. The explicit
+   additive-schema rollback prerequisite is PR #364 and must deploy before T2.
 2. Produce the production observation report and named stratified canary (up to
    25). Check identities/favorites, source agreement, effective precision,
    request consumption and public behavior before `verify-canary` enables
@@ -100,3 +101,23 @@ PostGIS suite passed 17 tests before this complete run.
 profiles, 12 explicit non-Chromium WebGL skips, zero retries and zero failure
 artifacts. The disposable database migrated through `20260906_0026`. This is
 migration/UI integration evidence, not a claim of a production repair.
+
+
+Final compatibility integration was verified on code commit
+`5b055b0dae2801849ad8b01d9b35d87975da6e6a`, based on the exact open PR #364 head
+`b7903ef2f08dfcf07cdddef6c3b7ff7e83909233`. `make verify` passed again: 1,280
+backend tests, 185 frontend tests, 186 script tests and all required quality,
+contract, runtime, build and architecture checks. The only rebase conflict was
+the expected schema revision: T2 retains the allowlist but requires `0026`.
+
+The built new reader was run against the separate actual `0025` database with no
+validation tables: it correctly refused readiness. The predecessor image had
+already passed readiness and a real map query against actual `0026` with all three
+new tables. These tests establish both rollout and application-rollback direction.
+
+Read-only production preparation selected ten canaries (the three tracked cases
+plus protected/building/street/district/city strata), saved identity sets and
+selection snapshots outside Git, and confirmed 1,928 requests remained in the
+existing 2,700 daily allocation at that snapshot. There are 263 protected selections;
+these are preserved, not silently classified as automatic repair candidates.
+No existing production selection has yet been changed by T2.
