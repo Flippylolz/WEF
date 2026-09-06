@@ -115,6 +115,9 @@ async def run_status() -> dict[str, object]:
     from wef_backend.features.ingestion.domain.telegram_channel import (  # noqa: PLC0415
         default_live_channel_identity,
     )
+    from wef_backend.features.ingestion.infrastructure.ingestion_progress_store import (  # noqa: PLC0415
+        SQLAlchemyIngestionProgressStore,
+    )
     from wef_backend.features.ingestion.infrastructure.media_recovery_store import (  # noqa: PLC0415
         SQLAlchemyMediaRecoveryStore,
     )
@@ -143,6 +146,9 @@ async def run_status() -> dict[str, object]:
             ),
         )
         payload = _serialize_status(status)
+        payload["ingestion_progress"] = await SQLAlchemyIngestionProgressStore(
+            session_factory, default_live_channel_identity().channel_id
+        ).status()
         payload["media_recovery"] = await SQLAlchemyMediaRecoveryStore(
             session_factory, default_live_channel_identity().channel_id
         ).status()

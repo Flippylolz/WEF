@@ -46,6 +46,9 @@ from wef_backend.features.ingestion.domain.telegram_secrets import (
 )
 from wef_backend.features.ingestion.infrastructure.archive_decoder import decode_archived_payload
 from wef_backend.features.ingestion.infrastructure.archive_recovery import SQLAlchemyArchiveRecovery
+from wef_backend.features.ingestion.infrastructure.ingestion_progress_store import (
+    SQLAlchemyIngestionProgressStore,
+)
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
@@ -56,6 +59,7 @@ from wef_backend.features.ingestion.infrastructure.telegram_worker_status_store 
     SQLAlchemyTelegramWorkerStatusStore,
 )
 from wef_backend.features.ingestion.infrastructure.telethon_client import TelethonLiveClient
+from wef_backend.ingestion_progress_worker import maintain_ingestion_progress
 from wef_backend.logging_config import configure_logging, configure_safe_telethon_logging
 from wef_backend.recurring_geocode_worker import (
     RecurringGeocodeWorker,
@@ -224,6 +228,15 @@ async def _run_connected_worker(  # noqa: PLR0913, PLR0915 - composition of work
         await supervise_worker_tasks(
             {
                 "transport": transport(),
+                "progress_monitor": maintain_ingestion_progress(
+                    SQLAlchemyIngestionProgressStore(
+                        session_factory,
+                        identity.channel_id,
+                        release_sha=settings.release_sha,
+                        traversal_interval_seconds=settings.telegram_reconciliation_interval_seconds,
+                    ),
+                    stop,
+                ),
                 "media_recovery": media_recovery.run(stop),
                 "consumer": consume(),
                 "raw_archive_drain": _maintain_raw_archive_drain(

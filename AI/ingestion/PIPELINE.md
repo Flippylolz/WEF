@@ -665,3 +665,26 @@ and provider minimum delay; five data failures quarantine one identity. Relevant
 policy versions permit one re-evaluation; unrelated releases do not reset the
 budget. A systemic media failure pauses only media work. The archive, canonical
 source, polling progress and successful public assets are preserved.
+
+## Durable ingestion progress (E24-T4)
+
+The worker samples archive, traversal, media discovery and media execution every
+60 seconds. Eligible, delayed, leased, terminal and quarantined populations are
+separate from observations, attempts, unique canonical revisions and public-media
+counts. Archive receipt overrides and policy re-evaluation follow the same rules
+as the worker queue. `fetched_archivable` counts accepted observations since
+instrumentation, including duplicates; historical fetched counts are unavailable.
+
+Three stagnant samples and five minutes with eligible work produce a progress
+stall. Provider deadlines include two sampling intervals of grace; idle sources,
+active leases and delayed-only work do not imply failure. Comparison state survives
+restarts. Progress health is independent of public readiness and the ORM-free
+file-only liveness probe. Failed sampling becomes stale in private status and
+never stops canonical landing.
+
+Monitoring persists bounded 48-hour minute aggregates and one incident per stage
+and reason episode. Two healthy samples close an incident automatically. Existing
+retry, lease and supervision behavior remains authoritative; monitoring cannot
+rewind cursors, reset retry budgets or override source evidence. Structured
+`ingestion_progress_incident` transitions integrate with existing E14 logging;
+unchanged episodes do not emit repeated alerts or send external messages.

@@ -721,3 +721,33 @@ healthy worker, zero restarts and bounded staging. Insufficient eligible repair
 work leaves that acceptance gate open. Publish only safe aggregates and release
 identifiers. On systemic failure pause media and retain additive schema, original
 objects and successful derivatives; do not downgrade or delete public assets.
+
+## E24-T4 progress monitor rollout
+
+Migration `20260906_0025` adds monitoring checkpoints, 48-hour samples, incident
+history, activation controls and transaction-local observation counters. The
+worker starts in observation-only mode, sampling every 60 seconds with a five-second
+statement timeout and ten-second whole-sample bound. No resource or dependency
+increase is required. Keep the existing file-only process liveness probe.
+
+Private operator commands in the worker container:
+
+```sh
+python -m wef_backend.ingestion_progress_command status
+python -m wef_backend.ingestion_progress_command enable
+python -m wef_backend.ingestion_progress_command disable
+```
+
+`enable` requires a contiguous healthy 15-minute observation; `disable` stops
+incident activation while retaining diagnostics and all ingestion state. After
+enabling, private status assesses a fresh 24-hour window. Unhealthy or missing
+samples, release changes and repeated terminal observations restart its comparison;
+a growing eligible backlog prevents a pass. The status result proves the sampled
+runtime criteria, not an independent audit of operator activity. T4 completion
+also requires reviewed evidence of zero routine operator interventions and ordinary
+load. Do not mark it done merely because it deployed.
+
+Roll back by disabling incident activation and retaining the additive tables,
+source evidence and queue state. Do not downgrade production schema, delete media,
+reset retry budgets or manually backfill to manufacture acceptance. T3's actual
+production derivative-repair gate remains independent and open until proven.

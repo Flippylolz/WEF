@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E24-T4
 epic: E24
 title: "Verify ingestion progress and automate recovery escalation"
-status: ready
+status: in_progress
 revision: 2
 priority: P1
 size: M
@@ -36,10 +36,10 @@ dependency_gate:
     - "T1/T2 done; PRODUCTION_EVIDENCE.md. T3 contracts deployed via PR #346; owner explicitly approved independent T4 sequencing."
 branch:
   required: true
-  name: null
+  name: feat/E24-T4-progress-monitoring
   task_id: E24-T4
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-06T05:32:58.775865+00:00"
   pull_request: null
 completion:
   completed_by: null
@@ -116,3 +116,47 @@ progress, durable counters, deadline-aware stall detection, incident deduplicati
 and the 24-hour acceptance window. It proposes an explicit owner-approved
 sequencing change; the current dependencies and non-actionable state remain
 unchanged until that approval is recorded.
+
+## Implementation evidence
+
+The dedicated T4 implementation adds durable minute snapshots, deadline-aware
+classification, incident lifecycle and private observation/activation controls.
+Existing T2 cursor/retry regressions are retained. New tests cover repeated terminal
+work, idle/provider/lease distinctions, transaction rollback, competing monitors,
+retention, activation gaps, episode recovery, policy/receipt eligibility and query
+timeout isolation from canonical landing. The 24-hour result cannot complete T3.
+
+T4 remains `in_progress` through local validation, green CI, the 15-minute initial
+production observation and the full 24-hour acceptance window. No completion claim
+is made by this implementation record.
+
+Planning PR #351 merged as `e13fc3eedd26c0088e5ec9732f40c67a925b1d75`. The
+implementation is rebased on that approved main revision. Read-only aggregate
+query proofs took 7.720–205.675 ms per query on representative production data.
+Exact-source probes under 0.5 CPU took 1.297–2.393 seconds; 500 one-MiB downloads
+and 500 heartbeat writes on 64 MiB tmpfs peaked at 1,052,672 bytes with no retained
+media files. No production state was changed by these measurements.
+
+Changed-file manifest:
+
+- `AI/epics/E24-automatic-ingestion-recovery/tasks/E24-T4-verify-progress-and-automate-recovery.md`
+- `AI/ingestion/PIPELINE.md`
+- `AI/operations/DEPLOYMENT.md`
+- `apps/backend/migrations/versions/20260906_0025_ingestion_progress.py`
+- `apps/backend/src/wef_backend/features/ingestion/domain/ingestion_progress.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/ingestion_observation_counters.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/ingestion_progress_queries.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/ingestion_progress_store.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/raw_event_archive.py`
+- `apps/backend/src/wef_backend/ingestion_progress_command.py`
+- `apps/backend/src/wef_backend/ingestion_progress_worker.py`
+- `apps/backend/src/wef_backend/migration.py`
+- `apps/backend/src/wef_backend/telegram_worker_command.py`
+- `apps/backend/src/wef_backend/telegram_worker_status_command.py`
+- `apps/backend/tests/test_ingestion_monitoring_integration.py`
+- `apps/backend/tests/test_ingestion_progress.py`
+- `apps/backend/tests/test_ingestion_progress_worker.py`
+- `apps/backend/tests/test_telegram_worker_ops.py`
+
+Final local validation passed lint, format, types, contracts, links and full tests:
+1168 backend tests (90.32% coverage) and 169 frontend tests.
