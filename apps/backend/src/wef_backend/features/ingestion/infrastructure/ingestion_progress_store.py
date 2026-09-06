@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import time
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import UTC, datetime, timedelta
 from itertools import pairwise
 from typing import TYPE_CHECKING, Any
@@ -46,6 +46,8 @@ def _checkpoint(payload: dict[str, Any]) -> ProgressCheckpoint:
         healthy_samples=payload["healthy_samples"],
         status=payload["status"],
         reason=payload["reason"],
+        terminal_replays=payload.get("terminal_replays", 0),
+        replay_samples=payload.get("replay_samples", 0),
     )
 
 
@@ -58,11 +60,13 @@ class SQLAlchemyIngestionProgressStore:
         channel: str,
         *,
         release_sha: str | None = None,
+        traversal_interval_seconds: float = 60,
     ) -> None:
         """Scope all observations and incidents to the selected channel."""
         self.factory = factory
         self.channel = channel
         self.release_sha = release_sha
+        self.traversal_interval_seconds = traversal_interval_seconds
 
     async def sample(self, now: datetime | None = None) -> list[dict[str, str]]:
         """Persist one coherent snapshot per minute and emit only incident transitions."""
@@ -179,6 +183,14 @@ class SQLAlchemyIngestionProgressStore:
             quarantined = int(row.get("quarantined", 0))
             phase = control.get("archive_phase" if stage == "archive" else "media_phase")
             pause_reason = control.get("archive_reason" if stage == "archive" else "media_reason")
+            if (
+                stage == "media"
+                and control.get("media_wait") is not None
+                and control["media_wait"] > now
+            ):
+                row["delayed"] += row["eligible"]
+                row["eligible"] = 0
+                row["oldest_due"] = None
             snapshots.append(
                 ProgressSnapshot(
                     stage=stage,
@@ -190,13 +202,22 @@ class SQLAlchemyIngestionProgressStore:
                     wait_until=control.get("media_wait") if stage == "media" else None,
                 )
             )
+        scheduled = control.get("last_polled_at")
+        if scheduled is not None:
+            scheduled += timedelta(seconds=self.traversal_interval_seconds)
+        source_wait = control.get("traversal_wait")
+        deadlines = [value for value in (scheduled, source_wait) if value is not None]
+        traversal_due = max(deadlines) if deadlines else None
+        has_work = bool(control.get("known_head"))
+        waiting = traversal_due is not None and traversal_due > now
         snapshots.append(
             ProgressSnapshot(
                 stage="traversal",
                 token=f"{control.get('polled_through_id')}:{control.get('sweep_after_id')}:{control.get('last_polled_at')}:{control.get('last_sweep_at')}",
-                eligible=int(bool(control.get("known_head"))),
-                oldest_due=control.get("last_polled_at"),
-                wait_until=control.get("traversal_wait"),
+                eligible=int(has_work and not waiting),
+                delayed=int(has_work and waiting),
+                oldest_due=traversal_due,
+                wait_until=traversal_due,
             )
         )
         evidence: dict[str, object] = dict(
@@ -219,6 +240,13 @@ class SQLAlchemyIngestionProgressStore:
             row["name"]: {"value": row["value"], "since": row["since"]} for row in counters
         }
         evidence["legacy_fetched"] = None
+        replays = next(
+            (int(row["value"]) for row in counters if row["name"] == "terminal_replays"), 0
+        )
+        snapshots = [
+            replace(snapshot, terminal_replays=replays) if snapshot.stage == "archive" else snapshot
+            for snapshot in snapshots
+        ]
         return snapshots, evidence
 
     async def _incident(

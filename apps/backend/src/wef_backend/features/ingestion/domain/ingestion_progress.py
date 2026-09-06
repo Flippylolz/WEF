@@ -30,6 +30,7 @@ class ProgressSnapshot:
     wait_until: datetime | None = None
     paused: bool = False
     actionable_pause: bool = False
+    terminal_replays: int = 0
 
     @property
     def total(self) -> int:
@@ -48,6 +49,8 @@ class ProgressCheckpoint:
     healthy_samples: int = 0
     status: str = "observing"
     reason: str | None = None
+    terminal_replays: int = 0
+    replay_samples: int = 0
 
 
 def classify_progress(
@@ -60,9 +63,19 @@ def classify_progress(
     changed = previous is None or snapshot.token != previous.token
     progressed = now if previous is None or changed or discontinuous else previous.progressed_at
     stagnant = 0 if previous is None or changed or discontinuous else previous.stagnant_samples + 1
+    replay_samples = (
+        previous.replay_samples + 1
+        if previous is not None
+        and not discontinuous
+        and snapshot.terminal_replays > previous.terminal_replays
+        else 0
+    )
     reason = None
     if discontinuous:
         status = "observing"
+    elif replay_samples >= MIN_STAGNANT_SAMPLES:
+        status = "stalled"
+        reason = "repeated_terminal_work"
     elif snapshot.paused:
         status = "paused"
         reason = "systemic_pause" if snapshot.actionable_pause else None
@@ -86,7 +99,17 @@ def classify_progress(
         if status in HEALTHY_STATES
         else 0
     )
-    return ProgressCheckpoint(snapshot.token, now, progressed, stagnant, healthy, status, reason)
+    return ProgressCheckpoint(
+        snapshot.token,
+        now,
+        progressed,
+        stagnant,
+        healthy,
+        status,
+        reason,
+        snapshot.terminal_replays,
+        replay_samples,
+    )
 
 
 @dataclass(frozen=True, slots=True)

@@ -243,3 +243,33 @@ async def test_query_timeout_does_not_block_landing(
     with pytest.raises(DBAPIError):
         await sampling
     assert (await progress.status())["snapshot"] is None
+
+
+async def test_configured_poll_interval_is_waiting_not_stalled(
+    recovery_db: RecoveryDB,
+    progress: SQLAlchemyIngestionProgressStore,
+) -> None:
+    db = recovery_db
+    await db.canonical(payload(101))
+    now = datetime.now(UTC)
+    async with db.factory() as session, session.begin():
+        await session.execute(
+            text(
+                "INSERT INTO "
+                "telegram_channel_progress(source_channel_id,applied_high_water_id,"
+                "polled_through_id,last_polled_at) "
+                "SELECT id,101,101,:now FROM source_channels WHERE external_id=:channel "
+                "ON CONFLICT(source_channel_id) DO UPDATE SET "
+                "last_polled_at=excluded.last_polled_at"
+            ),
+            {"channel": progress.channel, "now": now},
+        )
+    monitor = SQLAlchemyIngestionProgressStore(
+        db.factory, progress.channel, traversal_interval_seconds=3600
+    )
+    for minute in range(7):
+        await monitor.sample(now + timedelta(minutes=minute))
+    stage = (await monitor.status())["snapshot"]["stages"]["traversal"]
+    assert stage["status"] == "waiting"
+    assert stage["eligible"] == 0
+    assert stage["delayed"] == 1

@@ -230,7 +230,10 @@ async def _run_connected_worker(  # noqa: PLR0913, PLR0915 - composition of work
                 "transport": transport(),
                 "progress_monitor": maintain_ingestion_progress(
                     SQLAlchemyIngestionProgressStore(
-                        session_factory, identity.channel_id, release_sha=settings.release_sha
+                        session_factory,
+                        identity.channel_id,
+                        release_sha=settings.release_sha,
+                        traversal_interval_seconds=settings.telegram_reconciliation_interval_seconds,
                     ),
                     stop,
                 ),

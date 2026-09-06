@@ -129,3 +129,34 @@ timeout isolation from canonical landing. The 24-hour result cannot complete T3.
 T4 remains `in_progress` through local validation, green CI, the 15-minute initial
 production observation and the full 24-hour acceptance window. No completion claim
 is made by this implementation record.
+
+Planning PR #351 merged as `e13fc3eedd26c0088e5ec9732f40c67a925b1d75`. The
+implementation is rebased on that approved main revision. Read-only aggregate
+query proofs took 7.720–205.675 ms per query on representative production data.
+Exact-source probes under 0.5 CPU took 1.297–2.393 seconds; 500 one-MiB downloads
+and 500 heartbeat writes on 64 MiB tmpfs peaked at 1,052,672 bytes with no retained
+media files. No production state was changed by these measurements.
+
+Changed-file manifest:
+
+- `AI/epics/E24-automatic-ingestion-recovery/tasks/E24-T4-verify-progress-and-automate-recovery.md`
+- `AI/ingestion/PIPELINE.md`
+- `AI/operations/DEPLOYMENT.md`
+- `apps/backend/migrations/versions/20260906_0025_ingestion_progress.py`
+- `apps/backend/src/wef_backend/features/ingestion/domain/ingestion_progress.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/ingestion_observation_counters.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/ingestion_progress_queries.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/ingestion_progress_store.py`
+- `apps/backend/src/wef_backend/features/ingestion/infrastructure/raw_event_archive.py`
+- `apps/backend/src/wef_backend/ingestion_progress_command.py`
+- `apps/backend/src/wef_backend/ingestion_progress_worker.py`
+- `apps/backend/src/wef_backend/migration.py`
+- `apps/backend/src/wef_backend/telegram_worker_command.py`
+- `apps/backend/src/wef_backend/telegram_worker_status_command.py`
+- `apps/backend/tests/test_ingestion_monitoring_integration.py`
+- `apps/backend/tests/test_ingestion_progress.py`
+- `apps/backend/tests/test_ingestion_progress_worker.py`
+- `apps/backend/tests/test_telegram_worker_ops.py`
+
+Final local validation passed lint, format, types, contracts, links and full tests:
+1168 backend tests (90.32% coverage) and 169 frontend tests.

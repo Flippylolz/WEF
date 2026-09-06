@@ -140,3 +140,16 @@ def test_release_change_restarts_acceptance_without_resetting_work() -> None:
     first = AcceptanceSample(NOW, healthy=True, eligible=0, terminal_replays=0, release_sha="old")
     next_sample = replace(first, sampled_at=NOW + timedelta(minutes=1), release_sha="new")
     assert assess_acceptance([first, next_sample], next_sample.sampled_at)["seconds"] == 0
+
+
+def test_repeated_terminal_work_is_unhealthy_even_with_an_empty_queue() -> None:
+    previous = None
+    for minute in range(4):
+        previous = classify_progress(
+            ProgressSnapshot("archive", "same", terminal_replays=minute),
+            previous,
+            NOW + timedelta(minutes=minute),
+        )
+    assert previous is not None
+    assert previous.status == "stalled"
+    assert previous.reason == "repeated_terminal_work"
