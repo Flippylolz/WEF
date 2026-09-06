@@ -89,6 +89,7 @@ export function MapExplorer() {
     selectListing,
     backToResults,
     selectOffer,
+    registerOfferTrigger,
     closeOfferDetail,
     selectedFeature,
   } = useMapSelection(mapQuery.data?.features, isMobile, announceSelection);
@@ -374,6 +375,7 @@ export function MapExplorer() {
                   selectedId ? () => void offersQuery.refetch() : undefined
                 }
                 onSelectOffer={selectOffer}
+                onOfferTrigger={registerOfferTrigger}
               />
               {isMobile ? null : (
                 <button

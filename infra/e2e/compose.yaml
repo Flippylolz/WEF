@@ -1,0 +1,75 @@
+services:
+  db:
+    image: postgis/postgis:17-3.5@sha256:0a23a2b5e4fbd9b4c6980d20ee80dd6b63dec52669379c75a506db58a4116708
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: wef_e2e
+      POSTGRES_USER: wef_e2e
+      POSTGRES_PASSWORD: ephemeral-e2e-only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U wef_e2e -d wef_e2e"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    tmpfs: [/var/lib/postgresql/data]
+    networks: [e2e]
+  seed:
+    build:
+      context: ../..
+      dockerfile: apps/backend/Dockerfile
+      target: development
+    command: ["sh", "-ec", "wef-migrate && python -m tests.e2e_seed"]
+    environment: &backend_environment
+      WEF_ENV: test
+      WEF_DATABASE_URL: postgresql+asyncpg://wef_e2e:ephemeral-e2e-only@db:5432/wef_e2e
+      WEF_CONTACT_ENCRYPTION_KEY: ${WEF_E2E_CONTACT_KEY:?}
+      WEF_CONTACT_HMAC_KEY: ${WEF_E2E_HMAC_KEY:?}
+      WEF_E2E_PASSWORD: ${WEF_E2E_PASSWORD:?}
+      WEF_RELEASE_SHA: ${WEF_E2E_RELEASE:?}
+    volumes: ["public_media:/e2e-public"]
+    depends_on:
+      db: {condition: service_healthy}
+    networks: [e2e]
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/backend/Dockerfile
+      target: runtime
+    environment: *backend_environment
+    depends_on:
+      seed: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks: [e2e]
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+      target: runtime
+      args:
+        NEXT_PUBLIC_MAP_STYLE_URL: /e2e-style.json
+        WEF_RELEASE_SHA: ${WEF_E2E_RELEASE:?}
+    environment:
+      WEF_API_URL: http://api:8000
+      WEF_RELEASE_SHA: ${WEF_E2E_RELEASE:?}
+    volumes: ["./style.json:/app/apps/web/public/e2e-style.json:ro"]
+    depends_on:
+      api: {condition: service_healthy}
+    networks: [e2e]
+  edge:
+    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    ports: ["127.0.0.1:${WEF_E2E_PORT:?}:8080"]
+    volumes:
+      - ../Caddyfile.local:/etc/caddy/Caddyfile:ro
+      - public_media:/srv/media:ro
+    depends_on: [web]
+    networks: [e2e, browser-ingress]
+networks:
+  browser-ingress: {}
+  e2e:
+    internal: true
+volumes:
+  public_media:

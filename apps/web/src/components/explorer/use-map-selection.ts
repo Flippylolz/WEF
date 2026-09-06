@@ -119,6 +119,16 @@ export function useMapSelection(
     setSelectedOfferMatchesFilters(matchesFilters);
   }
 
+  function registerOfferTrigger(
+    offerId: string,
+    trigger: HTMLButtonElement | null,
+  ) {
+    // Catalog refreshes may replace the opener while its detail remains open.
+    if (trigger !== null && offerId === selectedOfferId) {
+      offerTriggerRef.current = trigger;
+    }
+  }
+
   function closeOfferDetail() {
     setSelectedOfferId(null);
     setSelectedOfferMatchesFilters(null);
@@ -145,6 +155,7 @@ export function useMapSelection(
     selectListing,
     backToResults,
     selectOffer,
+    registerOfferTrigger,
     closeOfferDetail,
     selectedFeature,
   };

@@ -29,7 +29,7 @@ help: ## List supported commands.
 		'make test               Run backend tests, then frontend tests' \
 		'make test-backend       Run backend tests' \
 		'make test-frontend      Run frontend tests' \
-		'make test-e2e           Run Playwright Chromium critical-path tests' \
+		'make test-e2e           Run real-stack cross-browser journeys' \
 		'make coverage           Refresh the combined coverage badge after both suites' \
 		'make coverage-backend   Run backend tests with the 90% coverage floor' \
 		'make coverage-frontend  Run frontend tests with the 90% coverage floor' \
@@ -80,10 +80,9 @@ test-frontend: coverage-frontend ## Run frontend tests with global and critical 
 
 test: test-backend test-frontend ## Run backend tests, then frontend tests.
 
-test-e2e: ## Run Playwright Chromium critical-path tests (map canvas disabled).
-	$(PNPM) --filter web test:e2e:install
-	NEXT_PUBLIC_WEF_DISABLE_MAP=1 $(PNPM) --filter web build
-	$(PNPM) --filter web test:e2e
+test-e2e: ## Run the real PostGIS/API/web browser matrix and privacy checks.
+	$(PNPM) --filter web exec playwright install --with-deps chromium firefox webkit
+	python3 scripts/run_full_stack_e2e.py
 
 coverage-backend: ## Run backend tests and write the coverage JSON.
 	mkdir -p "$(CURDIR)/tmp/coverage/backend"
