@@ -76,3 +76,14 @@ zero retries and no failure artifacts. All three WebGL journeys pass in Chromium
 The runner seeded real PostGIS, migrated, built the API/web/edge and removed the
 disposable project. No critical API routes were mocked. This closes synthetic
 rendering/discovery acceptance, not production T2 repair acceptance.
+
+
+CI run 34025491351 correctly blocked merge: Linux Firefox used the supported
+no-WebGL fallback, so waiting for a map-fit URL change was an invalid assertion.
+The discovery regression now accepts a completed map fit or the explicit fallback,
+then still asserts stable viewport, precision, detail access and return focus.
+The same journey additionally forces no WebGL on every profile; mandatory real
+Chromium WebGL selection/cluster cases remain unchanged. A subsequent full local
+run caught accessibility analysis before streamed metadata supplied the title;
+the audit now requires a nonempty title before running every existing Axe rule.
+No retry, timeout, accessibility rule or required browser was removed.

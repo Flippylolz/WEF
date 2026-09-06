@@ -9,6 +9,7 @@ const runtimeErrors = new WeakMap<Page, string[]>();
 const syntheticContact = "+12025550123";
 
 async function audit(page: Page) {
+  await expect(page).toHaveTitle(/\S/);
   const result = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
@@ -445,61 +446,79 @@ test("keyboard-only filters, selection, drawer and return focus", async ({
   await expect(offer).toBeFocused();
 });
 
-test("E26 coarse and quarantined coordinates remain discoverable without map pins", async ({
-  page,
-  request,
-  isMobile,
-}) => {
-  const map = await request.get(
-    "/api/v1/map/locations?bbox=20.8,52.1,21.3,52.4",
-  );
-  const mapped = (await map.json()).features as { id: string }[];
-  expect(
-    mapped.some(({ id }) => id === "e2600000-0000-4000-8000-000000000001"),
-  ).toBe(true);
-  for (const suffix of ["2", "3"]) {
+for (const forceFallback of [false, true]) {
+  test(`E26 coarse and quarantined coordinates remain discoverable without map pins${forceFallback ? " with no WebGL" : ""}`, async ({
+    page,
+    request,
+    isMobile,
+  }) => {
+    const map = await request.get(
+      "/api/v1/map/locations?bbox=20.8,52.1,21.3,52.4",
+    );
+    const mapped = (await map.json()).features as { id: string }[];
     expect(
-      mapped.some(
-        ({ id }) => id === `e2600000-0000-4000-8000-00000000000${suffix}`,
-      ),
-    ).toBe(false);
-  }
-  const response = await request.get(
-    `/api/v1/listings/uncertain${centered.slice(1)}&district=praga-poludnie`,
-  );
-  expect(response.ok()).toBe(true);
-  const discovery = await response.json();
-  expect(discovery.matching_count).toBe(2);
-  expect(discovery.mapped_matching_count).toBe(0);
-  expect(discovery.filter_scope).toBe("non_spatial");
-  for (const item of discovery.items)
-    expect(item.location).not.toHaveProperty("geometry");
-  await page.goto(centered);
-  await showList(page, isMobile);
-  await expect(page.locator(".map-loading")).toHaveCount(0);
-  await expect
-    .poll(() => new URL(page.url()).searchParams.get("bbox"))
-    .not.toBe(centered.split("bbox=")[1]);
-  await page.locator(".uncertain-listings summary").click();
-  const initialBbox = new URL(page.url()).searchParams.get("bbox");
-  for (const [name, label] of [
-    ["Synthetic Jugosłowiańska January", "Approximate area"],
-    ["Synthetic Jugosłowiańska May", "Location unresolved"],
-  ]) {
-    const trigger = page.getByRole("button", { name: new RegExp(name!) });
-    await expect(trigger).toContainText(label!);
-    await trigger.focus();
-    await page.keyboard.press("Enter");
-    const detail = page.getByRole("dialog", {
-      name: "Development post · Primary market",
-    });
-    await expect(detail.locator(".location-accuracy")).toContainText(label!);
-    await audit(page);
-    await page.keyboard.press("Escape");
-    await expect(trigger).toBeFocused();
-    expect(new URL(page.url()).searchParams.get("bbox")).toBe(initialBbox);
-  }
-});
+      mapped.some(({ id }) => id === "e2600000-0000-4000-8000-000000000001"),
+    ).toBe(true);
+    for (const suffix of ["2", "3"]) {
+      expect(
+        mapped.some(
+          ({ id }) => id === `e2600000-0000-4000-8000-00000000000${suffix}`,
+        ),
+      ).toBe(false);
+    }
+    const response = await request.get(
+      `/api/v1/listings/uncertain${centered.slice(1)}&district=praga-poludnie`,
+    );
+    expect(response.ok()).toBe(true);
+    const discovery = await response.json();
+    expect(discovery.matching_count).toBe(2);
+    expect(discovery.mapped_matching_count).toBe(0);
+    expect(discovery.filter_scope).toBe("non_spatial");
+    for (const item of discovery.items)
+      expect(item.location).not.toHaveProperty("geometry");
+    if (forceFallback) {
+      await page.addInitScript(() => {
+        const original = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function (...args) {
+          if (String(args[0]).includes("webgl")) return null;
+          return Reflect.apply(original, this, args);
+        } as typeof original;
+      });
+    }
+    await page.goto(centered);
+    await showList(page, isMobile);
+    await expect(page.locator(".map-loading")).toHaveCount(0);
+    await expect
+      .poll(
+        async () =>
+          new URL(page.url()).searchParams.get("bbox") !==
+            centered.split("bbox=")[1] ||
+          (await page
+            .getByText("Use the location list to continue browsing.")
+            .isVisible()),
+      )
+      .toBe(true);
+    await page.locator(".uncertain-listings summary").click();
+    const initialBbox = new URL(page.url()).searchParams.get("bbox");
+    for (const [name, label] of [
+      ["Synthetic Jugosłowiańska January", "Approximate area"],
+      ["Synthetic Jugosłowiańska May", "Location unresolved"],
+    ]) {
+      const trigger = page.getByRole("button", { name: new RegExp(name!) });
+      await expect(trigger).toContainText(label!);
+      await trigger.focus();
+      await page.keyboard.press("Enter");
+      const detail = page.getByRole("dialog", {
+        name: "Development post · Primary market",
+      });
+      await expect(detail.locator(".location-accuracy")).toContainText(label!);
+      await audit(page);
+      await page.keyboard.press("Escape");
+      await expect(trigger).toBeFocused();
+      expect(new URL(page.url()).searchParams.get("bbox")).toBe(initialBbox);
+    }
+  });
+}
 
 test("E26 WebGL street selection states limited confidence independently of offer completeness", async ({
   page,
