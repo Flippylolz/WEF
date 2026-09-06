@@ -40,7 +40,8 @@ fixtures are invented and cannot establish either reported production fix.
 1. T3 honest area/unresolved discovery and real map/list precision behavior must
    be deployed before application. E14-T1–T5 are now merged under the owner
    approval; T3 is deployed via PR #363 / release 34027321299. The explicit
-   additive-schema rollback prerequisite is PR #364 and must deploy before T2.
+   additive-schema rollback prerequisite is PR #364, carried by PR #365
+   after its browser audit correction. That release must deploy before T2.
 2. Produce the production observation report and named stratified canary (up to
    25). Check identities/favorites, source agreement, effective precision,
    request consumption and public behavior before `verify-canary` enables
@@ -121,3 +122,11 @@ selection snapshots outside Git, and confirmed 1,928 requests remained in the
 existing 2,700 daily allocation at that snapshot. There are 263 protected selections;
 these are preserved, not silently classified as automatic repair candidates.
 No existing production selection has yet been changed by T2.
+
+
+The prior CI attempt `34028465912` failed the browser accessibility gate when
+React replaced metadata during the asynchronous audit. Standalone PR #365
+corrected the readiness assertion without disabling any rule or adding test
+retries, passed all required CI, and merged as `cea47610ea88da7408d5633bd3670503e847a052`.
+T2 is rebased onto that main commit. The replacement compatibility release is
+`34029703306`; it must succeed before worker deployment.
