@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
 from pydantic import SecretStr
 
 from wef_backend.features.ingestion.application.complete_import import ProviderDailyBudgetError
-from wef_backend.features.ingestion.application.location_revalidation import LimitedGeocoder
 from wef_backend.features.ingestion.application.recurring_geocode import RecurringDeferAction
 from wef_backend.features.ingestion.domain.telegram_channel import default_live_channel_identity
 from wef_backend.features.ingestion.infrastructure.complete_import_repository import (
@@ -21,6 +21,9 @@ from wef_backend.recurring_geocode_worker import (
     maintain_recurring_geocode,
 )
 from wef_backend.settings import Settings
+
+if TYPE_CHECKING:
+    from wef_backend.features.ingestion.application.location_revalidation import LimitedGeocoder
 
 
 @dataclass
