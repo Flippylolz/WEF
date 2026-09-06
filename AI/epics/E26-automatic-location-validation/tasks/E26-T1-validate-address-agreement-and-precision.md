@@ -119,7 +119,7 @@ Passed through ready with no task dependencies and approved spike 1 / plan 1 gat
 
 ## Implementation evidence
 
-[T1 verification](../T1_VERIFICATION.md) maps sanitized regressions, persistence/race tests, validation commands and remaining production boundaries. Application acceptance is verified locally; CI, merge and completion metadata remain pending. Existing production Ostrzycka and Jugosłowiańska points are not claimed fixed.
+[T1 verification](../T1_VERIFICATION.md) maps sanitized regressions, persistence/race tests, validation commands and remaining production boundaries. T1 passed required CI, merged and released. The later [production rollout](../PRODUCTION_ROLLOUT.md) records the live outcomes: the reported cases are quarantined and discoverable; exact replacement coordinates are not claimed fixed.
 
 ## Delivery evidence
 

@@ -1,5 +1,14 @@
 # E26-T2 implementation and rollout evidence
 
+Current status: implementation is complete; [production rollout evidence](PRODUCTION_ROLLOUT.md)
+records the eleven verified canaries and automatic expansion. Exact coordinates
+for the three reported cases remain unresolved and their pins are quarantined.
+The sections below retain the historical implementation and pre-release checks;
+the production evidence supersedes their then-pending rollout status.
+
+## Historical implementation record
+
+
 The implementation is on `feat/E26-T2-location-revalidation`, based on T1's
 merged main commit `6722ecb79d47958a92eb3608aeade1a4a3cede9e`. T1's required CI and
 [production release](https://github.com/Flippylolz/WEF/actions/runs/34016504593)

@@ -694,7 +694,7 @@ unchanged episodes do not emit repeated alerts or send external messages.
 `warsaw-address-v3` / `warsaw-review-v2` require structured source/provider
 address agreement before confidence. At most five candidates and two cached
 source-supported query forms are considered; street-only fallback uses
-`forward-geocode-v3-street` and `type=street` through the same durable budget.
+`forward-geocode-v4-street` and `type=street` through the same durable budget.
 Quality exhaustion settles without recurring requests; quotas/transients defer.
 The recurring worker no longer blanket-accepts pending coarse pins under AD-034.
 Genuine owner/AI decisions remain protected inside the selection transaction.

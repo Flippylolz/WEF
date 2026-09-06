@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E26-T2
 epic: E26
 title: "Revalidate and repair existing points automatically"
-status: in_progress
+status: done
 revision: 2
 priority: P1
 size: L
@@ -42,10 +42,10 @@ branch:
   created_at: "2026-09-06T05:55:31Z"
   pull_request: https://github.com/Flippylolz/WEF/pull/357
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-06T12:20:59.385727+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/357
+  evidence: ["../PRODUCTION_ROLLOUT.md", "../T2_VERIFICATION.md", "PR #357 and correction #366 passed all required CI and released successfully", "Eleven live canaries verified before automatic expansion; exact reported coordinates remain unresolved"]
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -67,11 +67,11 @@ Relevant seams are listed in the [epic spike](../SPIKE.md#research-method-and-ev
 
 ## Acceptance criteria
 
-- [ ] The queue includes accepted old-version results, not only ungeocoded rows; changing a normalizer/review version schedules eligible revalidation automatically.
-- [ ] The two owner examples and the town-hall mismatch are tracked to explicit outcomes. Ostrzycka is checked against authoritative street geometry; no exact replacement coordinate is invented without source evidence.
-- [ ] Unambiguous corrections apply automatically with revision/owner-verification guards; source-limited cases remain approximate and irreducible conflicts create rare actionable exceptions.
-- [ ] Rate limits, transient failures, restarts, and concurrent owner edits pause/defer safely and resume automatically; current valid cache evidence is reused without preventing necessary version invalidation.
-- [ ] An aggregate before/after audit reports street agreement, precision distribution, affected visible offers, preserved IDs/favorites, exception reasons, and human interventions. Re-running the same version is a no-op.
+- [x] The queue includes accepted old-version results, not only ungeocoded rows; changing a normalizer/review version schedules eligible revalidation automatically.
+- [x] The two owner examples and the town-hall mismatch are tracked to explicit outcomes. Ostrzycka is checked against authoritative street geometry; no exact replacement coordinate is invented without source evidence.
+- [x] Unambiguous corrections apply automatically with revision/owner-verification guards; source-limited cases remain approximate and irreducible conflicts create rare actionable exceptions.
+- [x] Rate limits, transient failures, restarts, and concurrent owner edits pause/defer safely and resume automatically; current valid cache evidence is reused without preventing necessary version invalidation.
+- [x] An aggregate before/after audit reports street agreement, precision distribution, affected visible offers, preserved IDs/favorites, exception reasons, and human interventions. Re-running the same version is a no-op.
 
 ## Tests and verification
 
@@ -104,10 +104,10 @@ Do not add production dependencies without owner approval, commit raw source/cre
 ## Promotion checklist
 
 - [x] Spike revision 1 approval interpretation recorded in the owner decision.
-- [ ] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
-- [ ] All referenced dependencies and required decisions resolved for the planned sequence.
+- [x] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
+- [x] All referenced dependencies and required decisions resolved for the planned sequence.
 - [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
-- [ ] Dedicated branch and PR will cover this task only after implementation gates clear.
+- [x] Dedicated branch and PR will cover this task only after implementation gates clear.
 
 ## Refined implementation boundary
 
@@ -125,3 +125,12 @@ draft for the approved observation-mode release after required checks and T3
 deployment; task completion and selection application retain all canary gates.
 See the verification record for the release sequencing clarification. Existing
 production examples remain unverified; test fixtures are synthetic.
+
+
+## Completion outcome
+
+Implementation and the verified canary are complete. The remaining catalog pass
+continues automatically under the unchanged quota. The three reported addresses
+are safely quarantined and discoverable, not claimed repaired to exact coordinates.
+See [production evidence](../PRODUCTION_ROLLOUT.md) for outcomes, identity and
+protected-value preservation, municipal geometry, live browser proof and limits.
