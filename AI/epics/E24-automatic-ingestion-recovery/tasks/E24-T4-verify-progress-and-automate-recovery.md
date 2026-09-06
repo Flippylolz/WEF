@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E24-T4
 epic: E24
 title: "Verify ingestion progress and automate recovery escalation"
-status: ready
+status: in_progress
 revision: 2
 priority: P1
 size: M
@@ -36,10 +36,10 @@ dependency_gate:
     - "T1/T2 done; PRODUCTION_EVIDENCE.md. T3 contracts deployed via PR #346; owner explicitly approved independent T4 sequencing."
 branch:
   required: true
-  name: null
+  name: feat/E24-T4-progress-monitoring
   task_id: E24-T4
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-06T05:32:58.775865+00:00"
   pull_request: null
 completion:
   completed_by: null
@@ -116,3 +116,16 @@ progress, durable counters, deadline-aware stall detection, incident deduplicati
 and the 24-hour acceptance window. It proposes an explicit owner-approved
 sequencing change; the current dependencies and non-actionable state remain
 unchanged until that approval is recorded.
+
+## Implementation evidence
+
+The dedicated T4 implementation adds durable minute snapshots, deadline-aware
+classification, incident lifecycle and private observation/activation controls.
+Existing T2 cursor/retry regressions are retained. New tests cover repeated terminal
+work, idle/provider/lease distinctions, transaction rollback, competing monitors,
+retention, activation gaps, episode recovery, policy/receipt eligibility and query
+timeout isolation from canonical landing. The 24-hour result cannot complete T3.
+
+T4 remains `in_progress` through local validation, green CI, the 15-minute initial
+production observation and the full 24-hour acceptance window. No completion claim
+is made by this implementation record.
