@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E14-T4
 epic: E14
 title: "Refactor backend ingestion and operator seams"
-status: draft
+status: in_progress
 revision: 1
 priority: P1
 size: L
@@ -30,16 +30,16 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-06T06:51:36.365914+00:00"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: Codex
+  verified_at: "2026-09-06T07:49:46.660733+00:00"
+  evidence: ["E14-T2 done via PR #359, merge 7367402ff76abe78c414c023d2f0c66254cedc2f; release 34019827017 succeeded"]
 branch:
   required: true
-  name: null
+  name: feat/E14-T4-backend-seams
   task_id: E14-T4
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-06T07:49:46.660733+00:00"
   pull_request: null
 completion:
   completed_by: null
@@ -96,3 +96,10 @@ atomicity, retry, or checkpoint rule requires spike/plan revalidation.
 - [x] E14 spike revision 1 is owner-approved under AD-041.
 - [x] The task was moved to `tasks/` with complete promotion metadata.
 - [ ] E14 implementation plan revision 1 is owner-approved and E14-T2 is done.
+
+## Start evidence
+
+Moved through ready before implementation under owner-approved T1–T5 scope.
+Started from current main 7367402ff76abe78c414c023d2f0c66254cedc2f.
+T2 full canonical verification provides the characterization baseline: 1218
+backend tests, including parser, persistence, live convergence and CLI failures.

@@ -6,17 +6,19 @@ import asyncio
 import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from alembic import command
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 
 from wef_backend.database import create_database_resources
 from wef_backend.features.ingestion.application.complete_import import (
     PIPELINE_VERSION,
     CompleteImportStage,
     CompleteImportStatus,
+    ProviderReservation,
 )
 from wef_backend.features.ingestion.application.persistence import normalized_location_key
 from wef_backend.features.ingestion.domain import SourceIdentity, SourcePlatform
@@ -386,4 +388,103 @@ async def test_run_lease_pause_takeover_and_durable_provider_budget() -> None:
                 {"channel_id": channel_id},
             )
             await session.commit()
+        await database.engine.dispose()
+
+
+async def test_provider_ledger_serializes_competitors_and_rolls_back_failed_attempt() -> None:
+    """Quota and attempt writes remain one transaction after adapter extraction."""
+    assert TEST_DATABASE_URL is not None
+    await asyncio.to_thread(command.upgrade, alembic_config(_settings()), "head")
+    database = create_database_resources(TEST_DATABASE_URL)
+    repository = SQLAlchemyCompleteImportRepository(database.session_factory)
+    persistence = SQLAlchemyIngestionPersistence(database.session_factory)
+    account = f"ledger-{uuid4()}"
+    channel_id = await persistence.ensure_channel(
+        platform="telegram", external_id=account, display_name="Synthetic ledger test"
+    )
+    try:
+        lease = await repository.claim_run(
+            source_channel_id=channel_id,
+            source_checksum="e" * 64,
+            source_size=0,
+            pipeline_version=PIPELINE_VERSION,
+            owner_id="synthetic",
+            stage=CompleteImportStage.GEOCODE,
+            now=NOW,
+            lease_duration=timedelta(minutes=5),
+        )
+
+        async def reserve(run_id: UUID) -> ProviderReservation | None:
+            return await repository.reserve_provider_attempt(
+                run_id=run_id,
+                provider=GeocodeProvider.GEOAPIFY,
+                account_identity=account,
+                query_hash="f" * 64,
+                daily_limit=2,
+                minimum_interval=timedelta(seconds=1),
+                now=NOW,
+            )
+
+        # A missing run fails the FK after budget increment; neither write may survive.
+        with pytest.raises(IntegrityError):
+            await reserve(uuid4())
+        async with database.session_factory() as session:
+            assert (
+                await session.scalar(
+                    text(
+                        "SELECT count(*) FROM provider_daily_budgets "
+                        "WHERE account_identity = :account"
+                    ),
+                    {"account": account},
+                )
+                == 0
+            )
+
+        outcomes = await asyncio.gather(*(reserve(lease.run_id) for _ in range(3)))
+        accepted = [item for item in outcomes if item is not None]
+        assert len(accepted) == 2
+        assert sum(item is None for item in outcomes) == 1
+        assert sorted(item.not_before for item in accepted) == [NOW, NOW + timedelta(seconds=1)]
+        first = accepted[0]
+        await repository.complete_provider_attempt(
+            first.attempt_id, status="succeeded", error_code=None, completed_at=NOW
+        )
+        await repository.complete_provider_attempt(
+            first.attempt_id, status="failed", error_code="must-not-overwrite", completed_at=NOW
+        )
+        async with database.session_factory() as session:
+            row = (
+                await session.execute(
+                    text("SELECT status, error_code FROM provider_attempts WHERE id = :id"),
+                    {"id": first.attempt_id},
+                )
+            ).one()
+            assert tuple(row) == ("succeeded", None)
+            assert (
+                await session.scalar(
+                    text(
+                        "SELECT used_attempts FROM provider_daily_budgets "
+                        "WHERE account_identity = :account"
+                    ),
+                    {"account": account},
+                )
+                == 2
+            )
+    finally:
+        async with database.session_factory() as session, session.begin():
+            await session.execute(
+                text("DELETE FROM provider_attempts WHERE account_identity = :account"),
+                {"account": account},
+            )
+            await session.execute(
+                text("DELETE FROM provider_daily_budgets WHERE account_identity = :account"),
+                {"account": account},
+            )
+            await session.execute(
+                text("DELETE FROM complete_import_runs WHERE source_channel_id = :id"),
+                {"id": channel_id},
+            )
+            await session.execute(
+                text("DELETE FROM source_channels WHERE id = :id"), {"id": channel_id}
+            )
         await database.engine.dispose()
