@@ -40,7 +40,7 @@ branch:
   task_id: E24-T4
   one_task_only: true
   created_at: "2026-09-06T05:32:58.775865+00:00"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/354
 completion:
   completed_by: null
   completed_at: null
@@ -107,15 +107,13 @@ Do not add production dependencies without owner approval, commit raw source/cre
 - [x] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
 - [x] All referenced dependencies and required decisions resolved for the planned sequence.
 - [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
-- [ ] Dedicated branch and PR will cover this task only after implementation gates clear.
+- [x] Dedicated implementation branch and PR #354 cover T4 after approved gates cleared.
 
 ## Concrete monitoring proposal
 
 The [revision 4 proposal](../T4_MONITORING_PROPOSAL.md) defines stage-specific
 progress, durable counters, deadline-aware stall detection, incident deduplication
-and the 24-hour acceptance window. It proposes an explicit owner-approved
-sequencing change; the current dependencies and non-actionable state remain
-unchanged until that approval is recorded.
+and the 24-hour acceptance window. The owner approved its explicit sequencing change, now recorded in plan revision 4. T4 is implemented; production acceptance remains in progress.
 
 ## Implementation evidence
 

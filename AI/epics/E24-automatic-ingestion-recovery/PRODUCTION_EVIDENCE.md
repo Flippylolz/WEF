@@ -292,3 +292,51 @@ The evidence branch passed `make lint`, `make format-check`, `make typecheck`,
 1,097 backend and 169 frontend tests passed. Relative Markdown links and
 `git diff --check` passed. Changed files are this evidence document and the
 [E24-T3 task record](tasks/E24-T3-recover-media-after-message-commit.md).
+
+## T4 progress monitoring rollout — 2026-09-06
+
+The owner explicitly approved implementation-plan revision 4 and independent T4
+sequencing while T3 actual derivative-repair acceptance remains open. Planning
+PR #351 merged as `e13fc3eedd26c0088e5ec9732f40c67a925b1d75`. Implementation
+PR #354 contains only T4 monitoring, its additive migration and regression tests.
+
+Local validation passed lint, format, types, contracts, links and whitespace
+checks. Full tests passed: 1,168 backend tests (90.31% coverage) and 169 frontend
+tests. The existing cursor/retry suite remains intact. Exact-source constrained
+probes took 0.891–1.613 seconds at 0.5 CPU. The 64-MiB tmpfs proof peaked at
+1,052,672 bytes across 500 one-MiB downloads and 500 heartbeat writes, retaining
+zero media files. Read-only aggregate query proofs took 7.720–205.675 ms each.
+
+T4 completion requires the full 24-hour evidence window and reviewed absence of
+routine operator interventions. Deployment or a short healthy observation does
+not complete T4 and cannot satisfy T3's independent missing-variant repair gate.
+
+Implementation [PR #354](https://github.com/Flippylolz/WEF/pull/354) merged as
+`26de1b991d66ac7b1a2cbd5fb27546e0f29198d1`; [release 34015982038](https://github.com/Flippylolz/WEF/actions/runs/34015982038)
+succeeded with additive migration `20260906_0025`. Monitoring started with
+incidents disabled. The initial bounded observer collected healthy samples for
+608 seconds before the unrelated E26-T1 deployment replaced the worker and its
+status subprocess exited 137. This interrupted attempt is diagnostic evidence,
+**not a passed 15-minute observation**. Incident activation must await a complete
+healthy observation on the final deployed revision. Its result will be attached
+to this rollout evidence PR after deployment, avoiding another documentation-only
+release restarting the runtime acceptance window.
+
+During those samples archive eligible work fell from 2,020 to zero, with quarantine
+classification increasing from 60,315 to 62,335. These classifications are not
+successful canonical ingestion. The original cohort remained 27,844 completed and
+22 pending; its frozen fingerprint, 965 prior terminal records and 1,522,346 prior
+terminal attempts stayed unchanged. Receipt checksum mismatches and terminal
+originals without receipts stayed zero. Media remained idle with 3,480 quarantined
+items and no new variant repair evidence. Query time peaked at 0.703 seconds;
+worker restarts were zero before replacement, and tmpfs used 4,096 bytes with
+67,104,768 bytes free. Transport, consumer and reconciliation remained healthy
+through the completed samples.
+
+The evidence branch was rebased onto E26-T1 main commit
+`6722ecb79d47958a92eb3608aeade1a4a3cede9e`. It passed `make lint`,
+`make format-check`, `make typecheck`, `make contract-check`, and `make test`
+using the isolated `wef-e24` Compose project: 1,204 backend and 169 frontend tests.
+Relative Markdown links and whitespace checks passed. This documentation change
+updates this evidence file, the E24 epic README, the E24-T4 task, the epic registry,
+and the E14-T6 observability handoff. T3, T4 and E24 remain open.

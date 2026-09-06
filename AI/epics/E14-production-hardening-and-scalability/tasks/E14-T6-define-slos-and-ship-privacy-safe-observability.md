@@ -98,3 +98,14 @@ operational burden before approving any backend or vendor.
 - [x] E14 spike revision 1 is owner-approved under AD-041.
 - [x] The task was moved to `tasks/` with complete promotion metadata.
 - [ ] E14 implementation plan revision 1 is owner-approved and E8-T5/E14-T1 are done.
+
+## Ingestion signal integration supplied by E24-T4
+
+E24-T4 PR #354 supplies durable private progress status and bounded structured
+`ingestion_progress_incident` events (`stage`, `reason`, `opened`/`closed`
+transition) through the existing logging foundation. Two healthy samples close an
+episode automatically; unchanged samples emit no repeated event. E14 can consume
+these signals without duplicating ingestion ownership or exposing source data.
+
+This does not implement E14 dashboards, external paging or delivery providers,
+and does not complete E14-T6. See the [deployment controls](../../../operations/DEPLOYMENT.md#e24-t4-progress-monitor-rollout).
