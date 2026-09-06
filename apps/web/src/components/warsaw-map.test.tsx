@@ -41,6 +41,9 @@ vi.mock("react-map-gl/maplibre", () => ({
       children,
       onClick,
       onLoad,
+      onIdle,
+      onData,
+      onMoveStart,
       onMoveEnd,
       onError,
       trackResize,
@@ -48,6 +51,9 @@ vi.mock("react-map-gl/maplibre", () => ({
       children: ReactNode;
       onClick: (event: object) => void;
       onLoad: () => void;
+      onIdle: () => void;
+      onData: () => void;
+      onMoveStart: () => void;
       onMoveEnd: (event: object) => void;
       onError: () => void;
       trackResize?: boolean;
@@ -84,6 +90,15 @@ vi.mock("react-map-gl/maplibre", () => ({
     }));
     return (
       <div data-testid="map-component" data-track-resize={trackResize}>
+        <button type="button" onClick={onIdle}>
+          simulated-map-idle
+        </button>
+        <button type="button" onClick={onData}>
+          simulated-map-data
+        </button>
+        <button type="button" onClick={onMoveStart}>
+          simulated-map-move-start
+        </button>
         <button type="button" onClick={onLoad}>
           simulated-map-load
         </button>
@@ -293,6 +308,41 @@ describe("WarsawMap", () => {
       "data-text-font",
       '["Noto Sans Regular"]',
     );
+  });
+
+  it("stays busy until rendering settles and becomes busy for new data or movement", async () => {
+    const user = userEvent.setup();
+    render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+      />,
+    );
+    const map = screen.getByLabelText("Interactive map of Warsaw");
+    expect(map).toHaveAttribute("aria-busy", "true");
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+    expect(map).toHaveAttribute("aria-busy", "true");
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-idle" }),
+    );
+    expect(map).toHaveAttribute("aria-busy", "false");
+    for (const event of ["data", "move-start"]) {
+      await user.click(
+        screen.getByRole("button", { name: `simulated-map-${event}` }),
+      );
+      expect(map).toHaveAttribute("aria-busy", "true");
+      await user.click(
+        screen.getByRole("button", { name: "simulated-map-idle" }),
+      );
+      expect(map).toHaveAttribute("aria-busy", "false");
+    }
   });
 
   it("resizes asynchronously without MapLibre's synchronous resize redraw", async () => {

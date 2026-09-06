@@ -40,6 +40,7 @@ The owner requested as little manual work as possible, with manual work only in 
 - [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is approved by the owner; implementation proceeds task by task.
 - E24-T1, the five owner-approved E14 prerequisites and all three E26 tasks are done. The rollback-compatible release preceded T2; live canary verification preceded automatic expansion.
 - Ostrzycka and both Jugosłowiańska cases have verified quarantine outcomes: no selected coordinate or map pin, with offers retained in uncertain discovery. Exact replacement coordinates remain unresolved. See [production evidence](PRODUCTION_ROLLOUT.md).
+- The final documentation release exposed a separate browser synchronization defect; [map rendering readiness](MAP_RENDER_READINESS.md) records the follow-up correction without changing location policy.
 - The remaining catalog pass is running automatically under the existing daily budget. Epic completion records deployed behavior and verified rollout, not an already-drained queue.
 
 ## Scope and completion
