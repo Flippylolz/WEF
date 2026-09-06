@@ -104,3 +104,14 @@ It still checks both point precision labels. After this test-only correction,
 passed, and `python3 scripts/run_full_stack_e2e.py --project chromium` passed all
 12 journeys with real WebGL and zero retries. The full combined T2/T3 schema/UI
 matrix also passed all 48 journeys before this narrower synchronization correction.
+
+
+## Completion and deployment
+
+PR #363 merged as `3fdcd7bb52b0e30d4160acaf8dab912ca51511c6` after every current-head
+check passed in CI run 34026980040, including the complete Linux browser matrix.
+Production release 34027321299 succeeded. A live read-only discovery check returned
+566 uncertain offers, 2,754 separately mapped offers and `filter_scope=non_spatial`;
+the sampled uncertain location had no geometry. Counts are a dated snapshot, not
+fixed catalog totals. T3 display/discovery acceptance is complete. T2's live case
+revalidation remains separate and no repaired production point is claimed here.
