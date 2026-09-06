@@ -22,6 +22,10 @@ const eslintConfig = defineConfig([
       parser: tsParser,
     },
   },
+  {
+    files: ["src/components/explorer/use-*.ts"],
+    rules: { complexity: ["error", 12] },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

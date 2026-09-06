@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E14-T3
 epic: E14
 title: "Refactor frontend orchestration hotspots"
-status: draft
+status: in_progress
 revision: 1
 priority: P1
 size: L
@@ -30,16 +30,16 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-06T06:51:36.365914+00:00"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: Codex
+  verified_at: "2026-09-06T07:38:56.306225+00:00"
+  evidence: ["E13-T3 done; E14-T2 done via PR #359, merge 7367402ff76abe78c414c023d2f0c66254cedc2f; release 34019827017 succeeded"]
 branch:
   required: true
-  name: null
+  name: feat/E14-T3-frontend-orchestration
   task_id: E14-T3
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-06T07:38:56.306420+00:00"
   pull_request: null
 completion:
   completed_by: null
@@ -98,3 +98,15 @@ smaller file count is not acceptance evidence.
 - [x] E14 spike revision 1 is owner-approved under AD-041.
 - [x] E13-T3 is done and the task was promoted with complete metadata.
 - [ ] E14 implementation plan revision 1 is owner-approved and E14-T2 is done.
+
+## Start evidence
+
+Moved through ready before implementation under scoped owner approval for T1–T5.
+Started from the exact open T2 ancestor recorded above; no completion or merge
+until T2 is done. Existing component tests and a production bundle are the
+characterization baseline before extracting state owners.
+
+T2 subsequently merged with all required CI green and a successful release; T3
+will be rebased onto that main commit before its final gate. Historical start
+ancestor: feat/E14-T2-critical-test-confidence, PR #359,
+f1f46fb4be6811232763f1b2c9b1d57218e3b3d1.
