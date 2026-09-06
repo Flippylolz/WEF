@@ -3,7 +3,7 @@ schema: ai-workflow/spike@1
 epic: E26
 title: "Automatic location validation and repair"
 status: approved
-revision: 1
+revision: 2
 owner: owner
 research_only: true
 code_allowed: false
@@ -12,14 +12,14 @@ domain_docs:
   - AI/ingestion/PIPELINE.md
   - AI/data/QUALITY_AND_READINESS.md
   - AI/operations/OPERATOR_COMMANDS.md
-proposed_task_ids: [E26-T1, E26-T2, E26-T3]
+proposed_task_ids: [E26-T1, E26-T2, E26-T3, E26-T4]
 approval:
   required_role: owner
   status: approved
   decided_by: "Owner (Flippylolz), recorded by Codex"
-  decided_at: "2026-09-06T05:28:07Z"
-  approved_revision: 1
-  evidence: "Owner selected E26 and directed: let's start; see OWNER_DECISION.md"
+  decided_at: "2026-09-06T15:24:20.540396+00:00"
+  approved_revision: 2
+  evidence: "OWNER_DECISION.md: municipal-first follow-up authorization"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -95,3 +95,7 @@ Material changes to source semantics, geospatial confidence/precision claims, au
 ## Owner decision
 
 See [owner decision](OWNER_DECISION.md). The owner selected E26 and directed “let's start”. This is recorded as approval to advance the existing spike recommendation into task refinement and planning. It does not approve the implementation plan prepared afterward.
+
+## Municipal-first follow-up (revision 2)
+
+The owner explicitly requested implementation, merge, deployment verification, and assessment of backfill after the municipal-first proposal. This supersedes the earlier hosted-provider-only scope for E26-T4; completed T1–T3 remain historical facts. See [the follow-up specification](MUNICIPAL_FIRST.md) and [owner direction](OWNER_DECISION.md).

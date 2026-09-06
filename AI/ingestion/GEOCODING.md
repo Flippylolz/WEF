@@ -237,3 +237,10 @@ not become a conflicting neighborhood. Unknown translations and explicit distric
 conflicts remain unresolved; all street/number, city/country, confidence and
 precision guards remain in force. Request generation v4 invalidates the older
 cached interpretation. See [canary evidence](../epics/E26-automatic-location-validation/PROVIDER_DISTRICT_NORMALIZATION.md).
+
+
+## Municipal-first resolution (E26-T4)
+
+Forward request version `forward-geocode-v5` resolves uniquely matched Warsaw municipal street geometry or numbered address points first, then the existing budgeted hosted geocoder. Street geometry produces approximate street precision. Optional, already-authorized AI recovery may quote only source-supported street text and trigger one verified lookup retry; AI supplies no coordinates. Owner selections remain protected. Municipal results retain city attribution and response hashes, use bounded public WFS requests, and refresh on use through weekly cache keys. Outages do not become durable unresolved verdicts when both lookup stages fail. Existing deployment configuration and provider budgets remain unchanged.
+
+The new request version starts a fresh observation generation. Verify production canaries and protected selections before enabling its guarded application/backfill; rolling back to v4 uses its separate control generation. No schema migration is required. See [the policy and verification plan](../epics/E26-automatic-location-validation/MUNICIPAL_FIRST.md).

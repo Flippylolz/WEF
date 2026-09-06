@@ -18,7 +18,7 @@ from wef_backend.features.ingestion.domain.address_evidence import (
 
 NORMALIZER_VERSION = "warsaw-address-v3"
 SCOPE_VERSION = "warsaw-scope-v1"
-REQUEST_VERSION = "forward-geocode-v4"
+REQUEST_VERSION = "forward-geocode-v5"
 STREET_REQUEST_VERSION = f"{REQUEST_VERSION}-street"
 REVIEW_POLICY_VERSION = "warsaw-review-v2"
 
@@ -95,6 +95,8 @@ _DISTRICT_ALIASES = {
 class GeocodeProvider(StrEnum):
     """Supported provider identities included in durable cache keys."""
 
+    MUNICIPAL = "warsaw_municipal"
+    ADDRESS_AI = "address_ai"
     FIXTURE = "fixture"
     GEOAPIFY = "geoapify"
     LOCATIONIQ = "locationiq"
@@ -492,12 +494,27 @@ def review_geocode_result(
     minimum_confidence: Decimal = Decimal("0.80"),
 ) -> ReviewDecision:
     """Fail closed unless a precise, confident result is within Warsaw."""
-    if result.error_code is not None or result.longitude is None or result.latitude is None:
+    ambiguous = dict(result.diagnostic).get("candidate_ambiguity") == "true"
+    if (
+        ambiguous
+        or result.error_code is not None
+        or result.longitude is None
+        or result.latitude is None
+    ):
+        reason = (
+            SelectionReason.AMBIGUOUS_CANDIDATES
+            if ambiguous
+            else (
+                SelectionReason.NO_MATCH
+                if result.error_code is GeocodeErrorCode.NO_RESULT
+                else SelectionReason.PROVIDER_ERROR
+            )
+        )
         return ReviewDecision(
-            status=GeocodeReviewStatus.UNGEOCODED,
-            reason=SelectionReason.NO_MATCH
-            if result.error_code is GeocodeErrorCode.NO_RESULT
-            else SelectionReason.PROVIDER_ERROR,
+            status=GeocodeReviewStatus.NEEDS_REVIEW
+            if ambiguous
+            else GeocodeReviewStatus.UNGEOCODED,
+            reason=reason,
             select_result=False,
             out_of_scope=False,
         )

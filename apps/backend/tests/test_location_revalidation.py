@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -189,3 +190,17 @@ async def test_error_result_from_unwrapped_provider_cannot_erase_a_location() ->
     store = _Store()
     assert (await RevalidateLocations(store, ErrorResolver()).run())["deferred"] == 1
     assert store.finishes == 0
+
+
+@pytest.mark.parametrize("error", [ProviderDailyBudgetError(), ProviderBatchLimitError()])
+async def test_hosted_budget_does_not_block_later_independent_municipal_match(
+    error: Exception,
+) -> None:
+    store = _Store()
+    store.claims.append(store.claims[0])
+    resolver = AsyncMock(side_effect=[error, _resolution()])
+    counts = await RevalidateLocations(store, resolver, independent_lookups=True).run()
+    assert counts["deferred"] == 1
+    assert counts["processed"] == 1
+    assert store.deferrals[0]["reason"] in {"provider_quota", "cycle_budget"}
+    assert store.deferrals[0]["failure"] is False

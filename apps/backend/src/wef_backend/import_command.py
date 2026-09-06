@@ -32,7 +32,6 @@ from wef_backend.features.ingestion.application.complete_import import (
     prepare_import,
 )
 from wef_backend.features.ingestion.application.extraction import PARSER_VERSION
-from wef_backend.features.ingestion.application.geocoding import ResolveGeocode
 from wef_backend.features.ingestion.application.media_grouping import GROUPING_VERSION
 from wef_backend.features.ingestion.application.media_storage import MediaWorkItem, ProcessMedia
 from wef_backend.features.ingestion.application.persistence import (
@@ -50,7 +49,6 @@ from wef_backend.features.ingestion.infrastructure import (
     LocalMediaStorage,
     ProviderPolicy,
     SQLAlchemyCompleteImportRepository,
-    SQLAlchemyGeocodeStore,
     SQLAlchemyMediaRepository,
     TelegramDesktopExportAdapter,
 )
@@ -58,6 +56,7 @@ from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
 from wef_backend.import_progress import TerminalProgress
+from wef_backend.location_resolution import build_location_resolver
 from wef_backend.operator import UnsafeSourceMountError, inspect_source
 from wef_backend.settings import Settings, load_settings
 
@@ -316,7 +315,7 @@ async def _geocode(
         max_provider_requests=max_provider_requests,
         clock=lambda: datetime.now(UTC),
     )
-    resolver = ResolveGeocode(SQLAlchemyGeocodeStore(database.session_factory), budgeted)
+    resolver = build_location_resolver(database.session_factory, budgeted, settings)
     processed = 0
     try:
         for item in pending:
