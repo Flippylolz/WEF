@@ -287,10 +287,17 @@ test("register, persistent favorites, private reveal, password change and logout
   expect(Boolean(session?.httpOnly)).toBe(true);
   expect(session?.sameSite).toBe("Lax");
   await showList(page, isMobile);
+  const saved = page.waitForResponse(
+    (response) =>
+      response.request().method() === "PUT" &&
+      new URL(response.url()).pathname ===
+        `/api/v1/favorites/${centerLocation}`,
+  );
   await page
     .getByRole("button", { name: "Star this location" })
     .first()
     .click();
+  expect((await saved).status()).toBe(204);
   await page.reload();
   await showList(page, isMobile);
   await expect(

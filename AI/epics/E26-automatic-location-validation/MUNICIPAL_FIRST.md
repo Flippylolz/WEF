@@ -64,3 +64,17 @@ Hosted/AI quota exhaustion defers the affected work item until the next UTC day,
 without pausing unrelated municipal lookups in the generation. Cycle limits
 likewise defer individual hosted work while the bounded scan can try later
 municipal matches. The durable shared provider ledgers still enforce all limits.
+
+
+## Release harness follow-up
+
+PR #369 merged as `18f08b57107d630e0937291d8fbd274286f62934` after all
+required checks passed. Release 34044680044 stopped before activation because
+WebKit's existing register/favorites journey failed. Its sanitized screenshot
+shows the authenticated account with an unsaved favorite after reload. The test
+clicked the star and immediately reloaded without awaiting the PUT response,
+allowing navigation to abort the save. The bounded follow-up waits for the real
+favorites endpoint to return 204 before testing persistence across reload. No
+request mocks, added retries, disabled assertions or production behavior changes.
+The municipal release remains unverified in production until a healthy release
+and the guarded observation/application proof complete.
