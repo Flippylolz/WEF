@@ -470,3 +470,46 @@ Runtime rollback first disables scheduling/application and retains additive meta
 Do not erase reservations to regain quota or reset uncertain work for automatic retry.
 Existing field-origin guarded rollback remains authoritative for enrichment fills.
 T4 historical parser convergence has separate dependency and rollout gates.
+
+## E26 location revalidation
+
+Use the authenticated operator shell in the deployed backend environment:
+
+```sh
+python -m wef_backend.location_validation_command status
+python -m wef_backend.location_validation_command observe
+python -m wef_backend.location_validation_command off
+```
+
+`status` reports private aggregate states, reasons, precision transitions and
+current affected location/offer/favorite counts, plus operator interventions.
+These overlapping populations are not additive and current favorite counts are
+not a historical preservation proof. Receipts and persistence tests establish
+which selection fields changed; source contacts and addresses are not printed.
+
+Do not enable production apply until T3 discovery is deployed and the bounded
+observation report is reviewed. Prioritize observation of 1–25 named canaries with
+`python -m wef_backend.location_validation_command observe --canary-id UUID`
+(repeat the flag for each case). This enqueues snapshots through the same
+protection/receipt rules, does not move the 100-row scan checkpoint, and prioritizes
+those claims within the unchanged 25-item cycle/shared provider budget. Missing,
+duplicate or more than 25 IDs are rejected. It never applies selections. Plain
+`observe` clears observation priority and retains ordinary automatic scanning.
+Then supply the observed canaries, including the three tracked cases and
+protected/current-valid/coarse strata:
+
+```sh
+python -m wef_backend.location_validation_command apply --discovery-ready --canary-id UUID
+```
+
+Repeat `--canary-id` for each location. After persisted canary outcomes, identity
+preservation, budget, public map/list behavior and dated authoritative Ostrzycka
+geometry are verified, run `python -m wef_backend.location_validation_command
+verify-canary`. This enables automatic expansion within the existing request
+budget. Neither command substitutes for that evidence.
+
+`python -m wef_backend.location_validation_command rollback` pauses and fences
+work, then examines at most 25 unapplied rollback receipts. Repeat to drain the
+bounded rollback population. Only unchanged automatic predecessors passing the
+current policy are restored; invalid points and subsequent edits are never
+bulk-restored. Leave additive schema in place through application rollback.

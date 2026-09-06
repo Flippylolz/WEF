@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E26-T2
 epic: E26
 title: "Revalidate and repair existing points automatically"
-status: draft
+status: in_progress
 revision: 2
 priority: P1
 size: L
@@ -30,17 +30,17 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-06T05:33:04Z"
 dependency_gate:
-  status: blocked
+  status: satisfied
   verified_by: Codex
   verified_at: "2026-09-06T05:28:07Z"
-  evidence: ["See implementation plan revision 1; incomplete dependencies remain blocked"]
+  evidence: ["E24-T1 done via PR #331", "E26-T1 done via PR #355, merge 6722ecb79d47958a92eb3608aeade1a4a3cede9e; release 34016504593 succeeded"]
 branch:
   required: true
-  name: null
+  name: feat/E26-T2-location-revalidation
   task_id: E26-T2
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-06T05:55:31Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/357
 completion:
   completed_by: null
   completed_at: null
@@ -112,3 +112,16 @@ Do not add production dependencies without owner approval, commit raw source/cre
 ## Refined implementation boundary
 
 Implement the corresponding T2 section of [implementation plan revision 1](../IMPLEMENTATION_PLAN.md), including its numeric budgets, migration/contract boundaries, protected-state guards and verification requirements. This refinement is task revision 2. No acceptance case is marked fixed by planning.
+
+## Start evidence
+
+Passed through ready under the approved plan with E24-T1 done and E26-T1 on ancestor PR #355. Started on the dedicated T2 worktree; no merge/completion until dependency gates are satisfied. Existing-location application and production acceptance remain gated by T3 discovery and the canary requirements.
+
+## Implementation evidence
+
+See [T2_VERIFICATION.md](../T2_VERIFICATION.md) for implemented guards, test
+scope and outstanding release/canary acceptance. The implementation PR can leave
+draft for the approved observation-mode release after required checks and T3
+deployment; task completion and selection application retain all canary gates.
+See the verification record for the release sequencing clarification. Existing
+production examples remain unverified; test fixtures are synthetic.

@@ -23,6 +23,10 @@ from wef_backend.features.ingestion.application.complete_import import (
     ProviderPauseError,
 )
 from wef_backend.features.ingestion.application.geocoding import ResolveGeocode
+from wef_backend.features.ingestion.application.location_revalidation import (
+    LimitedGeocoder,
+    RevalidateLocations,
+)
 from wef_backend.features.ingestion.application.recurring_geocode import (
     RecurringDeferAction,
     build_recurring_monitor_event,
@@ -37,9 +41,14 @@ from wef_backend.features.ingestion.infrastructure.complete_import_repository im
 )
 from wef_backend.features.ingestion.infrastructure.geocode_store import SQLAlchemyGeocodeStore
 from wef_backend.features.ingestion.infrastructure.geocoder_adapters import ProviderPolicy
+from wef_backend.features.ingestion.infrastructure.location_validation_store import (
+    SQLAlchemyLocationValidationStore,
+)
 from wef_backend.settings import Settings  # noqa: TC001
 
 if TYPE_CHECKING:
+    from uuid import UUID
+
     from wef_backend.features.ingestion.domain.telegram_channel import TelegramChannelIdentity
 
 logger = structlog.get_logger("wef.recurring_geocode")
@@ -101,43 +110,20 @@ class RecurringGeocodeWorker:
             )
 
         pending = await repository.pending_locations()
-        batch = pending[: self.settings.telegram_recurring_geocode_batch_size]
-
+        cycle_cap = min(self.settings.telegram_recurring_geocode_batch_size, 25)
+        batch = pending[:cycle_cap]
+        repair_share = (
+            (cycle_cap // 2 if batch else cycle_cap)
+            if self.settings.geocode_revalidation_enabled
+            else 0
+        )
         processed = 0
         defer_action: RecurringDeferAction | None = None
-        if batch:
-            run_id = await repository.recurring_geocode_run_id(
-                source_channel_id=channel_id,
-                pipeline_version=PIPELINE_VERSION,
-                now=now,
-            )
-            underlying = HostedGeocoder(
-                provider=GeocodeProvider.GEOAPIFY,
-                transport=HTTPXJSONTransport(),
-                policy=ProviderPolicy(
-                    requests_per_second=self.settings.geoapify_requests_per_second,
-                    quota=self.settings.telegram_recurring_geocode_batch_size,
-                    retries=0,
-                    timeout_seconds=15,
-                    identifying_user_agent="WEF recurring geocoder/1.0",
-                ),
-                api_key=api_key.get_secret_value(),
-            )
-            budgeted = DurableBudgetedGeocoder(
-                geocoder=underlying,
-                budget=repository,
-                run_id=run_id,
-                account_identity=self.settings.geoapify_account_identity,
-                daily_limit=self.settings.geoapify_daily_quota,
-                minimum_interval=timedelta(
-                    seconds=float(Decimal(1) / self.settings.geoapify_requests_per_second),
-                ),
-                max_provider_requests=self.settings.telegram_recurring_geocode_batch_size,
-                clock=lambda: datetime.now(UTC),
-            )
+        if batch or self.settings.geocode_revalidation_enabled:
+            budgeted = await self._budgeted_geocoder(repository, channel_id, cycle_cap)
             resolver = ResolveGeocode(
                 SQLAlchemyGeocodeStore(self.session_factory),
-                budgeted,
+                LimitedGeocoder(budgeted, cycle_cap - repair_share),
             )
             try:
                 for item in batch:
@@ -147,7 +133,9 @@ class RecurringGeocodeWorker:
                         location_id=item.location_id,
                     )
                     processed += 1
-            except (ProviderDailyBudgetError, ProviderBatchLimitError, ProviderPauseError) as error:
+            except ProviderBatchLimitError:
+                pass  # The next scheduled cycle resumes foreground work.
+            except (ProviderDailyBudgetError, ProviderPauseError) as error:
                 defer_action = classify_recurring_budget_error(error)
                 self._apply_defer(defer_action, now=datetime.now(UTC))
                 monitor = build_recurring_monitor_event(
@@ -158,7 +146,8 @@ class RecurringGeocodeWorker:
                 )
                 fields = monitor.as_log_fields()
                 logger.info(fields.pop("event"), **fields)
-
+            if self.settings.geocode_revalidation_enabled and defer_action is None:
+                await self._run_revalidation(budgeted, repair_share)
         if processed:
             logger.info(
                 "recurring_geocode_cycle",
@@ -175,6 +164,55 @@ class RecurringGeocodeWorker:
             defer_action=defer_action,
             locations_accepted=locations_accepted,
             offers_promoted=offers_promoted,
+        )
+
+    async def _run_revalidation(self, budgeted: DurableBudgetedGeocoder, repair_share: int) -> None:
+        """Observe or apply persisted repair work inside its shared request allowance."""
+        stats = await RevalidateLocations(
+            SQLAlchemyLocationValidationStore(self.session_factory),
+            ResolveGeocode(
+                SQLAlchemyGeocodeStore(self.session_factory),
+                LimitedGeocoder(budgeted, repair_share),
+            ),
+        ).run()
+        if any(stats.values()):
+            logger.info("location_revalidation_cycle", **stats)
+
+    async def _budgeted_geocoder(
+        self,
+        repository: SQLAlchemyCompleteImportRepository,
+        channel_id: UUID,
+        cycle_cap: int,
+    ) -> DurableBudgetedGeocoder:
+        """Compose one shared durable budget for foreground and repair forms."""
+        run_id = await repository.recurring_geocode_run_id(
+            source_channel_id=channel_id,
+            pipeline_version=PIPELINE_VERSION,
+            now=datetime.now(UTC),
+        )
+        key = self.settings.geoapify_api_key
+        return DurableBudgetedGeocoder(
+            geocoder=HostedGeocoder(
+                provider=GeocodeProvider.GEOAPIFY,
+                transport=HTTPXJSONTransport(),
+                policy=ProviderPolicy(
+                    requests_per_second=self.settings.geoapify_requests_per_second,
+                    quota=cycle_cap,
+                    retries=0,
+                    timeout_seconds=15,
+                    identifying_user_agent="WEF recurring geocoder/1.0",
+                ),
+                api_key=key.get_secret_value() if key else None,
+            ),
+            budget=repository,
+            run_id=run_id,
+            account_identity=self.settings.geoapify_account_identity,
+            daily_limit=self.settings.geoapify_daily_quota,
+            minimum_interval=timedelta(
+                seconds=float(Decimal(1) / self.settings.geoapify_requests_per_second)
+            ),
+            max_provider_requests=cycle_cap,
+            clock=lambda: datetime.now(UTC),
         )
 
     async def _refresh_live_catalog(self) -> tuple[int, int]:
