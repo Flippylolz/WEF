@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E26
 title: "Automatic location validation and repair"
-status: in_progress
+status: done
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -29,7 +29,7 @@ See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for 
 
 Each file defines one independently reviewable change, tests, acceptance evidence, rollout, rollback, and exceptional manual handling. Dependencies are task IDs and remain enforceable at promotion.
 
-- [E26-T4: Municipal-first resolution](tasks/E26-T4-resolve-municipal-first.md) — P1/M; dependencies: E26-T1–T3; deployed and canary-verified under approved revision 2; broader backfill awaits owner approval.
+- [E26-T4: Municipal-first resolution](tasks/E26-T4-resolve-municipal-first.md) — P1/M; dependencies: E26-T1–T3; deployed and canary-verified under approved revision 2; catalog-wide backfill explicitly authorized, enabled and verified.
 
 ## Automation requirement
 
@@ -51,4 +51,4 @@ Retain the backend-authoritative modular architecture, current dependency constr
 
 E14 retains shared test infrastructure, general refactoring, capacity, and platform observability. E8 retains passive-event acceptance; E7-T5/E14-T9 retain backup and restore scope. No duplicate authoritative definitions are introduced.
 
-The municipal follow-up is deployed with six live probes and nine canaries verified. [T4 verification](T4_VERIFICATION.md) records the current guarded backfill state.
+The municipal follow-up is deployed with six live probes and nine canaries verified. [T4 verification](T4_VERIFICATION.md) records the verified catalog-wide backfill and continuing budget-paced processing.

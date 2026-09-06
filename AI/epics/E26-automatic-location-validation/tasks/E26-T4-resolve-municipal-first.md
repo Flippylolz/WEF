@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E26-T4
 epic: E26
 title: "Resolve locations from municipal data before hosted geocoding and AI"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -42,10 +42,10 @@ branch:
   created_at: "2026-09-06T15:24:20.540396+00:00"
   pull_request: https://github.com/Flippylolz/WEF/pull/369
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-06T18:25:58.996581+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/371
+  evidence: ["PRs #369–371 merged after current-head CI; release 34046973793 succeeded", "make verify passed on deployed implementation; six live municipal probes and nine canaries passed", "Owner explicitly authorized all-offers backfill; catalog-wide apply enabled and production/public checks passed; see T4_VERIFICATION.md"]
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -66,4 +66,4 @@ Implement the owner-authorized [follow-up specification](../MUNICIPAL_FIRST.md).
 
 ## Deployment verification
 
-Implementation and bounded production verification passed. See [T4 verification](../T4_VERIFICATION.md). Catalog-wide application remains locked pending explicit owner approval after automatic approval review rejected expansion beyond the nine verified canaries.
+Implementation and bounded production verification passed. See [T4 verification](../T4_VERIFICATION.md). The owner explicitly authorized all-offers backfill; catalog-wide application is enabled and verified. Pending and quota-deferred work continues automatically under existing budgets.
