@@ -18,6 +18,7 @@ from wef_backend.features.ingestion.application.geocoding import (
     GeocodeStorePort,
     MissClaim,
 )
+from wef_backend.features.ingestion.domain.address_evidence import AddressEvidence
 from wef_backend.features.ingestion.domain.geocoding import (
     REVIEW_POLICY_VERSION,
     GeocodeCacheKey,
@@ -151,7 +152,10 @@ class SQLAlchemyGeocodeStore(GeocodeStorePort):
             "precision": result.precision.value,
             "confidence": result.confidence,
             "within_scope": result.within_scope,
-            "response_json": dict(result.diagnostic),
+            "response_json": {
+                **dict(result.diagnostic),
+                "address_evidence": result.address.as_json() if result.address else None,
+            },
             "attribution_text": result.attribution_text,
             "attempted_at": attempted_at,
             "expires_at": expires_at,
@@ -251,11 +255,24 @@ class SQLAlchemyGeocodeStore(GeocodeStorePort):
                 message = "location does not exist"
                 raise ValueError(message)
             latest = await session.scalar(
-                select(func.max(LocationGeocodeSelectionRow.selection_version)).where(
-                    LocationGeocodeSelectionRow.location_id == location_id,
-                ),
+                select(LocationGeocodeSelectionRow)
+                .where(LocationGeocodeSelectionRow.location_id == location_id)
+                .order_by(LocationGeocodeSelectionRow.selection_version.desc())
+                .limit(1),
             )
-            selection_version = (latest or 0) + 1
+            if (
+                actor_type == "automatic_policy"
+                and latest is not None
+                and (
+                    latest.actor_type != "automatic_policy"
+                    and not (
+                        latest.actor_type == "operator"
+                        and latest.actor_id == "ad-034-accept-pending-pins"
+                    )
+                )
+            ):
+                return
+            selection_version = (latest.selection_version if latest else 0) + 1
             result = cached.result
             selected_id = cached.result_id if decision.select_result else None
             point = None
@@ -310,6 +327,13 @@ def _cached_from_record(
         within_scope=row.within_scope,
         attribution_text=row.attribution_text,
         error_code=GeocodeErrorCode(row.error_code) if row.error_code is not None else None,
-        diagnostic=tuple(sorted((str(key), str(value)) for key, value in diagnostic.items())),
+        diagnostic=tuple(
+            sorted(
+                (str(key), str(value))
+                for key, value in diagnostic.items()
+                if key != "address_evidence"
+            )
+        ),
+        address=AddressEvidence.from_json(diagnostic.get("address_evidence")),
     )
     return CachedGeocode(result_id=row.id, result=result, expires_at=row.expires_at)

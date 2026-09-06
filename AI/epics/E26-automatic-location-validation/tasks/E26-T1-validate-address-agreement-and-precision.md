@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E26-T1
 epic: E26
 title: "Validate address agreement and source-supported precision"
-status: draft
+status: in_progress
 revision: 2
 priority: P1
 size: L
@@ -36,11 +36,11 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: bugfix/E26-T1-address-agreement
   task_id: E26-T1
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-06T05:33:04Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/355
 completion:
   completed_by: null
   completed_at: null
@@ -67,11 +67,11 @@ Relevant seams are listed in the [epic spike](../SPIKE.md#research-method-and-ev
 
 ## Acceptance criteria
 
-- [ ] The Jugosłowiańska-to-Grochowska-town-hall regression is rejected or retried despite provider confidence 1.00; amenity classification cannot supply unsupported building precision.
-- [ ] Gocław is resolved as a neighborhood within the Warsaw context rather than displayed as a replacement city; both source variants preserve street tokens and source text provenance.
-- [ ] Street/house-number/locality agreement is required at the claimed precision; missing numbers never become invented building-level matches, and a neighborhood centroid never claims to locate the requested street.
-- [ ] Low-confidence and low-precision results receive bounded automatic normalization/candidate retries with versioned evidence; unresolved ambiguity is explicit and does not trigger endless provider requests.
-- [ ] Actor/reason lineage distinguishes automatic decisions from genuine owner review; tests cover wrong street, duplicate street names, incompatible district, out-of-scope result, cache hit, quota limit, and manual verified override.
+- [x] The Jugosłowiańska-to-Grochowska-town-hall regression is rejected or retried despite provider confidence 1.00; amenity classification cannot supply unsupported building precision.
+- [x] Gocław is resolved as a neighborhood within the Warsaw context rather than displayed as a replacement city; both source variants preserve street tokens and source text provenance.
+- [x] Street/house-number/locality agreement is required at the claimed precision; missing numbers never become invented building-level matches, and a neighborhood centroid never claims to locate the requested street.
+- [x] Low-confidence and low-precision results receive bounded automatic normalization/candidate retries with versioned evidence; unresolved ambiguity is explicit and does not trigger endless provider requests.
+- [x] Actor/reason lineage distinguishes automatic decisions from genuine owner review; tests cover wrong street, duplicate street names, incompatible district, out-of-scope result, cache hit, quota limit, and manual verified override.
 
 ## Tests and verification
 
@@ -112,3 +112,11 @@ Do not add production dependencies without owner approval, commit raw source/cre
 ## Refined implementation boundary
 
 Implement the corresponding T1 section of [implementation plan revision 1](../IMPLEMENTATION_PLAN.md), including its numeric budgets, migration/contract boundaries, protected-state guards and verification requirements. This refinement is task revision 2. No acceptance case is marked fixed by planning.
+
+## Start evidence
+
+Passed through ready with no task dependencies and approved spike 1 / plan 1 gates. Started on the dedicated T1 branch from main `4ba7e23` plus planning commit `a226bb1`. The planning branch is the documentation ancestor; it must land before this task PR.
+
+## Implementation evidence
+
+[T1 verification](../T1_VERIFICATION.md) maps sanitized regressions, persistence/race tests, validation commands and remaining production boundaries. Application acceptance is verified locally; CI, merge and completion metadata remain pending. Existing production Ostrzycka and Jugosłowiańska points are not claimed fixed.

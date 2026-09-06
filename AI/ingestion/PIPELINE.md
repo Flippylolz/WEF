@@ -688,3 +688,16 @@ retry, lease and supervision behavior remains authoritative; monitoring cannot
 rewind cursors, reset retry budgets or override source evidence. Structured
 `ingestion_progress_incident` transitions integrate with existing E14 logging;
 unchanged episodes do not emit repeated alerts or send external messages.
+
+## E26 geocoding acceptance
+
+`warsaw-address-v3` / `warsaw-review-v2` require structured source/provider
+address agreement before confidence. At most five candidates and two cached
+source-supported query forms are considered; street-only fallback uses
+`forward-geocode-v3-street` and `type=street` through the same durable budget.
+Quality exhaustion settles without recurring requests; quotas/transients defer.
+The recurring worker no longer blanket-accepts pending coarse pins under AD-034.
+Genuine owner/AI decisions remain protected inside the selection transaction.
+See [geocoding policy](GEOCODING.md#e26-address-validation-warsaw-review-v2).
+Accepted legacy rows are unchanged by this task; E26-T2 owns repair, and T3 owns
+honest precision/discovery before broad existing-location application.

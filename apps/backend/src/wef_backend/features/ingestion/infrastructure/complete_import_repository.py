@@ -22,6 +22,7 @@ from wef_backend.features.ingestion.domain import SourceAnchor
 from wef_backend.features.ingestion.domain.geocoding import (
     NORMALIZER_VERSION,
     REQUEST_VERSION,
+    STREET_REQUEST_VERSION,
     SelectionReason,
 )
 from wef_backend.features.ingestion.infrastructure.models import (
@@ -416,10 +417,14 @@ class SQLAlchemyCompleteImportRepository:
                             SelectionReason.OUT_OF_SCOPE.value,
                         ),
                     ),
-                    (GeocodeResultRow.expires_at.is_(None))
+                    (GeocodeResultRow.id.is_(None))
                     | (GeocodeResultRow.expires_at <= now)
                     | (GeocodeResultRow.normalizer_version != NORMALIZER_VERSION)
-                    | (GeocodeResultRow.request_version != REQUEST_VERSION),
+                    | (
+                        GeocodeResultRow.request_version.not_in(
+                            (REQUEST_VERSION, STREET_REQUEST_VERSION)
+                        )
+                    ),
                 )
             )
             rows = await session.execute(

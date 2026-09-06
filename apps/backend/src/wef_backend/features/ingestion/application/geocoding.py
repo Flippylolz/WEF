@@ -3,18 +3,22 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from typing import TYPE_CHECKING, Protocol
 from uuid import uuid4
 
 from wef_backend.features.ingestion.domain.geocoding import (
+    REQUEST_VERSION,
+    STREET_REQUEST_VERSION,
     GeocodeCacheKey,
+    GeocodeErrorCode,
     GeocodeProvider,
     GeocodeResult,
     NormalizedGeocodeQuery,
     ReviewDecision,
+    SelectionReason,
     normalize_geocode_query,
     review_geocode_result,
 )
@@ -164,14 +168,36 @@ class ResolveGeocode:
     ) -> GeocodeResolution:
         """Resolve from cache or one owned provider call, then apply review."""
         query = normalize_geocode_query(source_query, district)
+        resolution = await self._resolve(query)
+        fallback = _fallback_query(query)
+        if (
+            not resolution.decision.select_result
+            and resolution.cached.result.error_code in {None, GeocodeErrorCode.NO_RESULT}
+            and resolution.decision.reason is not SelectionReason.AMBIGUOUS_CANDIDATES
+            and fallback is not None
+        ):
+            resolution = await self._resolve(fallback)
+        if location_id is not None:
+            await self.store.select_for_location(
+                location_id=location_id,
+                cached=resolution.cached,
+                decision=resolution.decision,
+                actor_type="automatic_policy",
+                actor_id=None,
+            )
+        return resolution
+
+    async def _resolve(self, query: NormalizedGeocodeQuery) -> GeocodeResolution:
+        """Resolve one form through the durable cache and account-budgeted port."""
         key = GeocodeCacheKey(
             provider=self.geocoder.provider,
             normalized_query=query.normalized,
+            request_version=STREET_REQUEST_VERSION if query.street_only else REQUEST_VERSION,
         )
         now = self.clock()
         cached = await self.store.get_cached(key)
         if cached is not None and cached.usable_at(now):
-            return await self._review(cached, cache_hit=True, location_id=location_id)
+            return await self._review(cached, query=query, cache_hit=True)
 
         owner_id = str(uuid4())
         claim = await self.store.claim_miss(
@@ -187,7 +213,7 @@ class ResolveGeocode:
             now = self.clock()
             cached = await self.store.get_cached(key)
             if cached is not None and cached.usable_at(now):
-                return await self._review(cached, cache_hit=True, location_id=location_id)
+                return await self._review(cached, query=query, cache_hit=True)
             claim = await self.store.claim_miss(
                 key,
                 owner_id=owner_id,
@@ -213,30 +239,38 @@ class ResolveGeocode:
             attempted_at=attempted_at,
             expires_at=expires_at,
         )
-        return await self._review(cached, cache_hit=False, location_id=location_id)
+        return await self._review(cached, query=query, cache_hit=False)
 
     async def _review(
         self,
         cached: CachedGeocode,
         *,
         cache_hit: bool,
-        location_id: UUID | None,
+        query: NormalizedGeocodeQuery,
     ) -> GeocodeResolution:
         """Apply fail-closed policy and optional atomic location selection."""
-        decision = review_geocode_result(cached.result)
-        if location_id is not None:
-            await self.store.select_for_location(
-                location_id=location_id,
-                cached=cached,
-                decision=decision,
-                actor_type="automatic_policy",
-                actor_id=None,
-            )
+        decision = review_geocode_result(cached.result, query=query)
         return GeocodeResolution(cached=cached, decision=decision, cache_hit=cache_hit)
 
 
 def _result_expiry(result: GeocodeResult, attempted_at: datetime) -> datetime | None:
     """Persist successes indefinitely and bound negative/error caching."""
-    if result.error_code is None:
+    if result.error_code in {None, GeocodeErrorCode.NO_RESULT}:
         return None
     return attempted_at + timedelta(hours=24)
+
+
+def _fallback_query(query: NormalizedGeocodeQuery) -> NormalizedGeocodeQuery | None:
+    """Build at most one source-supported form without weakening constraints."""
+    source = query.address
+    if source is None or not source.street:
+        return None
+    street = source.street
+    if source.house_number:
+        street = f"{street} {source.house_number}"
+    parts = [street, source.neighborhood, source.district, source.city, source.country_code]
+    normalized = ", ".join(part for part in parts if part).casefold()
+    street_only = not source.house_number
+    if normalized == query.normalized and not street_only:
+        return None
+    return replace(query, normalized=normalized, street_only=street_only)
