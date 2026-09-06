@@ -49,7 +49,13 @@ def main() -> None:
         nargs="?",
         default="status",
     )
-    parser.add_argument("--canary-id", action="append", type=UUID, default=[])
+    parser.add_argument(
+        "--canary-id",
+        action="append",
+        type=UUID,
+        default=[],
+        help="Prioritize 1-25 observation cases; restrict initial apply to observed cases",
+    )
     parser.add_argument("--discovery-ready", action="store_true")
     args = parser.parse_args()
     sys.stdout.write(

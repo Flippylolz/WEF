@@ -24,6 +24,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 from wef_backend.features.ingestion.infrastructure.geocode_store import SQLAlchemyGeocodeStore
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from datetime import datetime
 
     from sqlalchemy.engine import RowMapping
@@ -135,35 +136,7 @@ class SQLAlchemyLocationValidationStore:
                 .mappings()
                 .all()
             )
-            inserted = 0
-            for row in rows:
-                source = _source(row)
-                work_id = uuid4()
-                added = await session.scalar(
-                    text("""
-                    INSERT INTO location_validation_work
-                        (id,location_id,source_fingerprint,target,source_json,selection_version,state,outcome)
-                    VALUES (:id,:location,:fingerprint,:target,CAST(:source AS jsonb),
-                            :version,:state,:outcome)
-                    ON CONFLICT DO NOTHING RETURNING id
-                """),
-                    {
-                        "id": work_id,
-                        "location": row["id"],
-                        "fingerprint": _fingerprint(source),
-                        "target": target,
-                        "source": json.dumps(source),
-                        "version": row["selection_version"],
-                        "state": "exception" if _protected(row) else "pending",
-                        "outcome": "protected" if _protected(row) else None,
-                    },
-                )
-                if added:
-                    inserted += 1
-                    if _protected(row):
-                        await self._receipt(
-                            session, work_id, "observe", _snapshot(row), _snapshot(row), "protected"
-                        )
+            inserted = await self._enqueue(session, target=target, rows=rows)
             await session.execute(
                 text(
                     "UPDATE location_validation_control SET cursor_id=:cursor, "
@@ -176,6 +149,41 @@ class SQLAlchemyLocationValidationStore:
                 },
             )
             return inserted
+
+    async def _enqueue(
+        self, session: AsyncSession, *, target: str, rows: Sequence[RowMapping]
+    ) -> int:
+        """Use identical snapshot/protection rules for scan and bounded canary priority."""
+        inserted = 0
+        for row in rows:
+            source = _source(row)
+            work_id = uuid4()
+            added = await session.scalar(
+                text("""
+                INSERT INTO location_validation_work
+                    (id,location_id,source_fingerprint,target,source_json,selection_version,state,outcome)
+                VALUES (:id,:location,:fingerprint,:target,CAST(:source AS jsonb),
+                        :version,:state,:outcome)
+                ON CONFLICT DO NOTHING RETURNING id
+            """),
+                {
+                    "id": work_id,
+                    "location": row["id"],
+                    "fingerprint": _fingerprint(source),
+                    "target": target,
+                    "source": json.dumps(source),
+                    "version": row["selection_version"],
+                    "state": "exception" if _protected(row) else "pending",
+                    "outcome": "protected" if _protected(row) else None,
+                },
+            )
+            if added:
+                inserted += 1
+                if _protected(row):
+                    await self._receipt(
+                        session, work_id, "observe", _snapshot(row), _snapshot(row), "protected"
+                    )
+        return inserted
 
     async def claim(self, *, target: str, now: datetime) -> ValidationClaim | None:
         """Lease one eligible snapshot with a monotonically increasing fence."""
@@ -211,7 +219,9 @@ class SQLAlchemyLocationValidationStore:
                     OR (state='observed' AND :mode='apply')
                 ) AND (:mode != 'apply' OR :verified OR location_id::text IN
                     (SELECT jsonb_array_elements_text(CAST(:canaries AS jsonb))))
-                ORDER BY next_attempt_at,id LIMIT 1 FOR UPDATE SKIP LOCKED
+                ORDER BY CASE WHEN location_id::text IN
+                    (SELECT jsonb_array_elements_text(CAST(:canaries AS jsonb)))
+                    THEN 0 ELSE 1 END, next_attempt_at,id LIMIT 1 FOR UPDATE SKIP LOCKED
             """),
                         {
                             "target": target,
@@ -532,7 +542,27 @@ class SQLAlchemyLocationValidationStore:
         if mode == "apply" and (not discovery_ready or not 1 <= len(canary_ids) <= CANARY_LIMIT):
             message = "application requires verified discovery and 1-25 observed canary locations"
             raise ValueError(message)
+        if len(canary_ids) > CANARY_LIMIT or len(set(canary_ids)) != len(canary_ids):
+            message = "canaries require at most 25 distinct locations"
+            raise ValueError(message)
         async with self.factory() as session, session.begin():
+            if mode == "observe" and canary_ids:
+                rows = (
+                    (
+                        await session.execute(
+                            text(
+                                _LOCATION + " WHERE l.id::text IN "
+                                "(SELECT jsonb_array_elements_text(CAST(:ids AS jsonb)))"
+                            ),
+                            {"ids": json.dumps([str(item) for item in canary_ids])},
+                        )
+                    )
+                    .mappings()
+                    .all()
+                )
+                if len(rows) != len(canary_ids):
+                    message = "every observation canary must exist"
+                    raise ValueError(message)
             if mode == "apply":
                 observed = await session.scalar(
                     text("""
@@ -555,7 +585,8 @@ class SQLAlchemyLocationValidationStore:
                 SET mode=excluded.mode,
                     discovery_ready=CASE WHEN excluded.mode='apply' THEN excluded.discovery_ready
                         ELSE location_validation_control.discovery_ready END,
-                    canary_ids=CASE WHEN excluded.mode='apply' THEN excluded.canary_ids
+                    canary_ids=CASE WHEN excluded.mode IN ('apply','observe')
+                        THEN excluded.canary_ids
                         ELSE location_validation_control.canary_ids END,
                     canary_verified=false, updated_at=now(),
                     operator_actions=location_validation_control.operator_actions+1
@@ -568,6 +599,8 @@ class SQLAlchemyLocationValidationStore:
                 },
             )
 
+            if mode == "observe" and canary_ids:
+                await self._enqueue(session, target=target, rows=rows)
             await session.execute(
                 text(
                     "UPDATE location_validation_work SET state='deferred', fence=fence+1, "

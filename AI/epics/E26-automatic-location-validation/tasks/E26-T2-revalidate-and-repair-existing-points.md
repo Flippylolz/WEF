@@ -120,6 +120,8 @@ Passed through ready under the approved plan with E24-T1 done and E26-T1 on ance
 ## Implementation evidence
 
 See [T2_VERIFICATION.md](../T2_VERIFICATION.md) for implemented guards, test
-scope and outstanding release/canary acceptance. The implementation PR remains
-draft while these acceptance gates are open. Existing production examples remain
-unverified; test fixtures are synthetic.
+scope and outstanding release/canary acceptance. The implementation PR can leave
+draft for the approved observation-mode release after required checks and T3
+deployment; task completion and selection application retain all canary gates.
+See the verification record for the release sequencing clarification. Existing
+production examples remain unverified; test fixtures are synthetic.

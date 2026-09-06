@@ -402,3 +402,65 @@ async def test_durable_keyset_scan_and_concurrent_claims_are_bounded() -> None:
     assert len({claim.work_id for claim in claims if claim is not None}) == 2
     assert (await store.status(target=VALIDATION_TARGET))["population"]["unique_locations"] == 105
     await database.engine.dispose()
+
+
+async def test_bounded_observation_canary_priority_does_not_apply_or_advance_scan() -> None:
+    database, location, store, resolver, _ = await _fixture()
+    with pytest.raises(ValueError, match="25 distinct"):
+        await store.control(target=VALIDATION_TARGET, mode="observe", canary_ids=(location,) * 26)
+    with pytest.raises(ValueError, match="25 distinct"):
+        await store.control(
+            target=VALIDATION_TARGET, mode="observe", canary_ids=(location, location)
+        )
+    with pytest.raises(ValueError, match="must exist"):
+        await store.control(target=VALIDATION_TARGET, mode="observe", canary_ids=(uuid4(),))
+    await store.control(target=VALIDATION_TARGET, mode="observe", canary_ids=(location,))
+    async with database.session_factory() as session:
+        assert (
+            await session.scalar(text("SELECT cursor_id FROM location_validation_control")) is None
+        )
+        before = await session.scalar(
+            text("SELECT review_status FROM locations WHERE id=:id"), {"id": location}
+        )
+        await session.execute(
+            text("UPDATE location_validation_work SET next_attempt_at=now() - interval '1 hour'")
+        )
+        await session.commit()
+    other = uuid4()
+    async with database.session_factory() as session, session.begin():
+        await session.execute(
+            text("""
+            INSERT INTO locations (id,display_name,display_address,normalized_address,
+              normalized_address_hash,district,city,country_code,point,precision,
+              confidence,review_status,out_of_scope)
+            SELECT :other,display_name,display_address,normalized_address,:fingerprint,
+              district,city,country_code,point,precision,confidence,review_status,out_of_scope
+            FROM locations WHERE id=:id
+        """),
+            {"other": other, "id": location, "fingerprint": str(other)},
+        )
+    await store.discover(target=VALIDATION_TARGET, now=NOW)
+    async with database.session_factory() as session, session.begin():
+        await session.execute(
+            text(
+                "UPDATE location_validation_work SET next_attempt_at=now() - interval '2 hours' "
+                "WHERE location_id=:id"
+            ),
+            {"id": other},
+        )
+    await store.control(target=VALIDATION_TARGET, mode="observe", canary_ids=(location,))
+    claim = await store.claim(target=VALIDATION_TARGET, now=NOW)
+    assert claim is not None
+    assert claim.location_id == location
+    assert claim.mode == "observe"
+    result = await resolver(source_query=SOURCE, district="Praga-Południe")
+    await store.finish(claim, result, now=NOW)
+    async with database.session_factory() as session:
+        assert await session.scalar(text("SELECT count(*) FROM location_validation_work")) == 2
+        assert (
+            await session.scalar(
+                text("SELECT review_status FROM locations WHERE id=:id"), {"id": location}
+            )
+            == before
+        )
+    await database.engine.dispose()

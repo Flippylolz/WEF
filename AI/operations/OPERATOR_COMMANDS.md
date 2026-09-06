@@ -488,8 +488,15 @@ not a historical preservation proof. Receipts and persistence tests establish
 which selection fields changed; source contacts and addresses are not printed.
 
 Do not enable production apply until T3 discovery is deployed and the bounded
-observation report is reviewed. Then supply 1–25 observed canaries, including the
-three tracked cases and protected/current-valid/coarse strata:
+observation report is reviewed. Prioritize observation of 1–25 named canaries with
+`python -m wef_backend.location_validation_command observe --canary-id UUID`
+(repeat the flag for each case). This enqueues snapshots through the same
+protection/receipt rules, does not move the 100-row scan checkpoint, and prioritizes
+those claims within the unchanged 25-item cycle/shared provider budget. Missing,
+duplicate or more than 25 IDs are rejected. It never applies selections. Plain
+`observe` clears observation priority and retains ordinary automatic scanning.
+Then supply the observed canaries, including the three tracked cases and
+protected/current-valid/coarse strata:
 
 ```sh
 python -m wef_backend.location_validation_command apply --discovery-ready --canary-id UUID
