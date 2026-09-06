@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import uuid4
@@ -17,6 +17,7 @@ from wef_backend.features.ingestion.application.geocoding import (
     MissClaim,
     ResolveGeocode,
 )
+from wef_backend.features.ingestion.domain.address_evidence import AddressEvidence
 from wef_backend.features.ingestion.domain.geocoding import (
     WARSAW_BIAS_LAT,
     WARSAW_BIAS_LON,
@@ -77,6 +78,13 @@ def _result(
         attribution_text="Synthetic fixture",
         error_code=error,
         diagnostic=(("result_type", precision.value),) if error is None else (),
+        address=AddressEvidence(
+            street="Marszałkowska",
+            house_number="1",
+            city="Warszawa",
+            country_code="PL",
+            result_type=precision.value,
+        ),
     )
 
 
@@ -189,7 +197,7 @@ def test_cache_identity_covers_provider_and_every_version() -> None:
         (
             _result(lon=None, lat=None, confidence="0", error=GeocodeErrorCode.NO_RESULT),
             GeocodeReviewStatus.UNGEOCODED,
-            SelectionReason.PROVIDER_ERROR,
+            SelectionReason.NO_MATCH,
             False,
             False,
         ),
@@ -203,7 +211,7 @@ def test_review_policy_fails_closed(
     out_of_scope: bool,  # noqa: FBT001
 ) -> None:
     """Only precise, confident, in-scope points auto-select."""
-    decision = review_geocode_result(result)
+    decision = review_geocode_result(result, query=normalize_geocode_query("ul. Marszałkowska 1"))
     assert (decision.status, decision.reason) == (status, reason)
     assert decision.select_result is selected
     assert decision.out_of_scope is out_of_scope
@@ -325,7 +333,7 @@ async def test_resolution_uses_cache_without_provider_call_and_selects() -> None
     assert store.selections[0][0] == location_id
 
 
-async def test_resolution_owns_miss_persists_once_and_negative_cache_expires() -> None:
+async def test_resolution_owns_miss_and_caches_exhausted_quality_outcome() -> None:
     """Owned calls happen outside the store and persist bounded negative semantics."""
     query = normalize_geocode_query("Unknown place")
     store = FakeStore()
@@ -334,7 +342,7 @@ async def test_resolution_owns_miss_persists_once_and_negative_cache_expires() -
     )
     assert not resolution.cache_hit
     assert resolution.cached.result.error_code is GeocodeErrorCode.NO_RESULT
-    assert resolution.cached.expires_at == NOW + timedelta(hours=24)
+    assert resolution.cached.expires_at is None
     assert store.completions == 1
 
 
@@ -449,7 +457,8 @@ async def test_hosted_adapters_map_sanitized_provider_shapes_without_fanout() ->
     assert geoapify_params["apiKey"] == "not-logged"
     assert geoapify_params["filter"] == f"rect:{west},{south},{east},{north}|countrycode:pl"
     assert geoapify_params["bias"] == f"proximity:{WARSAW_BIAS_LON},{WARSAW_BIAS_LAT}"
-    assert dict(mapped.diagnostic) == {"result_type": "building"}
+    assert dict(mapped.diagnostic)["result_type"] == "building"
+    assert "candidate_evidence" in dict(mapped.diagnostic)
 
     locationiq_transport = FakeTransport(
         [

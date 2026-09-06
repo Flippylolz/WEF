@@ -6,7 +6,7 @@
 - Live ingestion later: a small number of new/changed posts per day.
 - Every successful response is persisted in `GeocodeResult`; the application never geocodes again on page views.
 - Queries are restricted/bias-validated to Warsaw/Poland and rejected/reviewed when out of bounds or low precision.
-- Live Geoapify forward requests (`REQUEST_VERSION=forward-geocode-v2`) send
+- Live Geoapify forward requests (`REQUEST_VERSION=forward-geocode-v3`) send
   `filter=rect:<Warsaw bounds>|countrycode:pl` and `bias=proximity:<city center>`
   so same-named streets outside Warsaw are not preferred; results are still
   validated with `within_warsaw` before acceptance.
@@ -130,7 +130,7 @@ review decisions through the same lineage contract as the automated pipeline:
 
 - Every decision appends one `location_geocode_selections` row with
   `actor_type="operator"`, `actor_id=<owner account id>`,
-  `review_policy_version=warsaw-review-v1`, and a monotonic
+  the current `review_policy_version`, and a monotonic
   `selection_version`, then updates the `locations` row in one transaction.
 - **Manual point placement** accepts a location with coordinates the owner
   placed on a map after checking the retained offer text: `reason_code=manual_accept`
@@ -140,7 +140,7 @@ review decisions through the same lineage contract as the automated pipeline:
   the write, preserving `ck_locations_accepted_public_point`.
 - **Candidate acceptance** promotes the latest selection's geocode result when it
   carries an in-scope, error-free point; the copied precision/confidence and
-  result id mirror the batch-accept CLI.
+  result id retain explicit owner authority; the automated batch command cannot bypass address validation.
 - **Rejection** (`manual_reject`) and **unresolve** (`manual_unresolve`, only
   from `accepted`/`rejected` back to `needs_review`) keep any existing point on
   the row; public map eligibility remains governed by `review_status`.
@@ -156,3 +156,42 @@ review decisions through the same lineage contract as the automated pipeline:
 ## Recommendation
 
 Use Geoapify for the historical import under ADR-021 and for **recurring live ingestion** under D-002/E8-T4 (revalidated 2026-08-21). Keep Geoapify-only aggregate quality evidence and explicit manual review from E3-T5. Public Nominatim remains ineligible for recurring jobs; at most it may be a potential small one-time seed fallback if its policy permits the specific use and every condition is met. Defer self-hosting until usage or provider terms justify a separate benchmark/host. Operator command: `wef-revalidate-recurring-geocoder [--live-check]`.
+
+## E26 address validation (warsaw-review-v2)
+
+Automatic selection compares versioned source/provider street, house number and
+locality evidence before the 0.80 confidence floor. Missing structured evidence
+cannot prove agreement. Geoapify amenities no longer map to building precision;
+street-only sources require a street result, and an area centroid cannot satisfy
+a street request. Gocław is a Warsaw neighborhood with Praga-Południe context.
+
+Each response contributes at most five candidates. Multiple address-compatible
+positions remain ambiguous even when one has higher confidence. The resolver may
+try one additional source-supported form; street-only fallback sends `type=street`
+and has its own `forward-geocode-v3-street` cache identity. Both forms use the
+existing durable provider budget. Base normalization/request versions are
+`warsaw-address-v3` and `forward-geocode-v3`. Geoapify's documented
+[forward geocoding fields and request parameters](https://apidocs.geoapify.com/docs/geocoding/)
+were checked on 2026-09-06; no provider or paid capacity changed.
+
+The existing JSONB response envelope gains a bounded `address_evidence` allowlist
+and sanitized candidate summaries. Old rows without that evidence remain readable
+but unvalidated; no schema migration or historical evidence rewrite is needed.
+Selections retain provider result IDs, policy version, automatic actor and reason.
+Quality `no_result` is cached for its version and settles as `no_match`; low
+precision/confidence, mismatch and ambiguity also settle after bounded forms.
+Transient/quota outcomes retain defer behavior and never trigger a quality fallback.
+Current out-of-scope terminal results do not churn the pending queue; stale
+request/normalizer versions can still retry through the existing negative path.
+
+E26-T1 supersedes recurring AD-034 blanket acceptance. The worker no longer calls
+pending-pin acceptance; the explicit command rechecks at most 25 pending candidates
+with the same policy and records `automatic_policy`, never counterfeit owner review.
+Under a location lock, automatic writes preserve genuine owner/AI and unknown actor
+lineage. Only the exact historical `operator` / `ad-034-accept-pending-pins` actor is
+recognized as the prior automatic override. Historical entries are retained.
+
+This changes future decisions. E26-T2 owns version-aware revalidation of accepted
+locations; E26-T3 owns honest map/list discovery. Existing Ostrzycka and
+Jugosłowiańska points are not verified repaired by the policy tests. Broad existing
+location application waits for the plan's observation, discovery and canary gates.

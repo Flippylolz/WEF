@@ -291,7 +291,7 @@ $COMPOSE exec -T api wef-batch-ingestion-ai-parse --link-existing-offers --limit
 # 2. Generate + apply up to daily budget (one Groq Batch job per run)
 $COMPOSE exec -T api wef-batch-ingestion-ai-parse --link-existing-offers --limit 20
 
-# 3. Geocode + map-ready promotion on worker (do not run parallel manual geocode)
+# 3. Recheck cached candidates (no blanket pin acceptance or provider calls)
 $COMPOSE exec -T telegram-worker wef-accept-pending-geocode-pins
 # Worker also runs promote_map_ready_offers each recurring_geocode cycle.
 ```
@@ -319,8 +319,10 @@ Use only for deliberate catalog-wide promotion passes, not live E21 recovery.
 
 **Container:** **`telegram-worker`** (Geoapify environment; not on `api` by design).
 
-**Purpose:** Accept in-scope pending geocode results onto locations (`manual_accept`
-lineage). **Output:** `locations_accepted`, `map_eligible_locations`,
+**Purpose:** Recheck up to 25 pending candidates against current source/address
+agreement and precision rules (`automatic_policy` lineage). Coarse, low-confidence,
+mismatching or legacy evidence is not blanket-accepted. This does not re-geocode
+existing accepted points; E26-T2 owns that durable repair queue. **Output:** `locations_accepted`, `map_eligible_locations`,
 `remaining_needs_review_without_point`, `remaining_ungeocoded`.
 
 The worker's `recurring_geocode` loop also calls map-ready promotion

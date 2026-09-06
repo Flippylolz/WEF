@@ -182,3 +182,25 @@ async def test_maintain_recurring_geocode_runs_until_stop() -> None:
 
 def _secret(value: str) -> SecretStr:
     return SecretStr(value)
+
+
+@pytest.mark.asyncio
+async def test_catalog_refresh_only_promotes_already_validated_locations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Refreshing discovery cannot bypass the address policy with AD-034 acceptance."""
+
+    class PromotionOnly:
+        async def promote_map_ready_offers(self) -> int:
+            return 3
+
+    monkeypatch.setattr(
+        "wef_backend.recurring_geocode_worker.SQLAlchemyPromotePublicCatalogAdapter",
+        lambda _factory: PromotionOnly(),
+    )
+    worker = RecurringGeocodeWorker(
+        settings=Settings(),
+        session_factory=object(),  # type: ignore[arg-type]
+        channel=default_live_channel_identity(),
+    )
+    assert await worker._refresh_live_catalog() == (0, 3)  # noqa: SLF001
