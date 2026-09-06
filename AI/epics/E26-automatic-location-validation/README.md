@@ -21,11 +21,11 @@ Audit M1 identifies both owner-reported cases and an additional Jugosłowiańska
 
 See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for tests, production observations, source references, uncertainty, and the cross-epic sequence.
 
-## Proposed tasks
+## Promoted tasks
 
-- [E26-T1: Validate address agreement and source-supported precision](proposed-tasks/E26-T1-validate-address-agreement-and-precision.md) — P1/L; dependencies: none.
-- [E26-T2: Revalidate and repair existing points automatically](proposed-tasks/E26-T2-revalidate-and-repair-existing-points.md) — P1/L; dependencies: E24-T1, E26-T1.
-- [E26-T3: Show honest map precision and prove real pin behavior](proposed-tasks/E26-T3-show-honest-map-precision.md) — P1/M; dependencies: E26-T1, E14-T5.
+- [E26-T1: Validate address agreement and source-supported precision](tasks/E26-T1-validate-address-agreement-and-precision.md) — P1/L; dependencies: none.
+- [E26-T2: Revalidate and repair existing points automatically](tasks/E26-T2-revalidate-and-repair-existing-points.md) — P1/L; dependencies: E24-T1, E26-T1.
+- [E26-T3: Show honest map precision and prove real pin behavior](tasks/E26-T3-show-honest-map-precision.md) — P1/M; dependencies: E26-T1, E14-T5.
 
 Each file defines one independently reviewable change, tests, acceptance evidence, rollout, rollback, and exceptional manual handling. Dependencies are task IDs and remain enforceable at promotion.
 
@@ -35,11 +35,11 @@ The owner requested as little manual work as possible, with manual work only in 
 
 ## Approval state
 
-- Epic selected for documentation/research.
-- [Spike](SPIKE.md) revision 1 is researched and awaiting owner approval.
-- All 3 candidates remain `proposed`, `actionable: false`.
-- [Implementation plan](IMPLEMENTATION_PLAN.md) is an empty draft shell until spike approval and task promotion.
-- The audit request authorizes research and planning documents; it is not recorded as approval of future production changes.
+- Spike revision 1 advanced to approved from the owner's direction to start; interpretation and exact instruction are in [OWNER_DECISION.md](OWNER_DECISION.md).
+- All three tasks are promoted at revision 2; implementation gates are approved.
+- [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is approved by the owner; implementation proceeds task by task.
+- E24-T1 is done in current main. E14-T5 remains draft and blocks E26-T3; it does not block E26-T1 or E26-T2 after their own gates pass.
+- Ostrzycka and Jugosłowiańska remain unverified. Planning does not establish a corrected coordinate or a production fix.
 
 ## Scope and completion
 
