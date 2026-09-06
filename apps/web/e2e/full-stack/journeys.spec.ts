@@ -9,18 +9,22 @@ const runtimeErrors = new WeakMap<Page, string[]>();
 const syntheticContact = "+12025550123";
 
 async function audit(page: Page) {
-  await expect(page).toHaveTitle(/\S/);
-  const result = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-    .analyze();
-  await page.bringToFront();
-  expect(
-    result.violations.map(({ id, impact, nodes }) => ({
-      id,
-      impact,
-      targets: nodes.map(({ target }) => target),
-    })),
-  ).toEqual([]);
+  // Hydration can replace server-rendered metadata after toHaveTitle passes.
+  // Poll the complete audit so persistent violations still fail the journey.
+  await expect(async () => {
+    await expect(page).toHaveTitle(/\S/);
+    const result = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze();
+    await page.bringToFront();
+    expect(
+      result.violations.map(({ id, impact, nodes }) => ({
+        id,
+        impact,
+        targets: nodes.map(({ target }) => target),
+      })),
+    ).toEqual([]);
+  }).toPass({ timeout: 15_000, intervals: [250, 500, 1000] });
 }
 
 async function showList(page: Page, isMobile: boolean) {
