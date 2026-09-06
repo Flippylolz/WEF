@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E26
 title: "Automatic location validation and repair"
-status: done
+status: in_progress
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -29,6 +29,8 @@ See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for 
 
 Each file defines one independently reviewable change, tests, acceptance evidence, rollout, rollback, and exceptional manual handling. Dependencies are task IDs and remain enforceable at promotion.
 
+- [E26-T4: Municipal-first resolution](tasks/E26-T4-resolve-municipal-first.md) — P1/M; dependencies: E26-T1–T3; implementation in progress under approved revision 2.
+
 ## Automation requirement
 
 The owner requested as little manual work as possible, with manual work only in extreme cases. Routine processing must use durable, bounded automatic recovery. Measure eligible work completed and human interventions. Do not trade correctness or source evidence for a superficially empty queue.
@@ -39,7 +41,7 @@ The owner requested as little manual work as possible, with manual work only in 
 - All three tasks are promoted at revision 2; implementation gates are approved.
 - [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is approved by the owner; implementation proceeds task by task.
 - E24-T1, the five owner-approved E14 prerequisites and all three E26 tasks are done. The rollback-compatible release preceded T2; live canary verification preceded automatic expansion.
-- Ostrzycka and both Jugosłowiańska cases have verified quarantine outcomes: no selected coordinate or map pin, with offers retained in uncertain discovery. Exact replacement coordinates remain unresolved. See [production evidence](PRODUCTION_ROLLOUT.md).
+- The original wrong pins were quarantined. On 6 September, owner-authorized municipal street-level corrections were applied and verified for Ostrzycka and both Jugosłowiańska cases. These operator selections are protected; exact buildings remain unknown. See the follow-up [municipal policy](MUNICIPAL_FIRST.md).
 - The final documentation release exposed a separate browser synchronization defect; [map rendering readiness](MAP_RENDER_READINESS.md) records the follow-up correction without changing location policy.
 - The remaining catalog pass is running automatically under the existing daily budget. Epic completion records deployed behavior and verified rollout, not an already-drained queue.
 

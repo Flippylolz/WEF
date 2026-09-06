@@ -71,7 +71,7 @@ async def test_process_once_defers_until_next_utc_day_on_budget_error(
         lambda _factory: fake_repo,
     )
     monkeypatch.setattr(
-        "wef_backend.recurring_geocode_worker.ResolveGeocode",
+        "wef_backend.recurring_geocode_worker.build_location_resolver",
         lambda *_args, **_kwargs: _ResolverRaisesBudget(),
     )
 
@@ -89,7 +89,8 @@ async def test_process_once_defers_until_next_utc_day_on_budget_error(
     assert result.defer_action is RecurringDeferAction.DEFER_UNTIL_NEXT_UTC_DAY
 
     second = await worker.process_once()
-    assert second.skipped
+    assert not second.skipped
+    assert second.defer_action is RecurringDeferAction.DEFER_UNTIL_NEXT_UTC_DAY
     assert second.processed == 0
 
 
@@ -132,7 +133,7 @@ async def test_process_once_refreshes_catalog_after_geocoding(
         lambda _factory: fake_repo,
     )
     monkeypatch.setattr(
-        "wef_backend.recurring_geocode_worker.ResolveGeocode",
+        "wef_backend.recurring_geocode_worker.build_location_resolver",
         lambda *_args, **_kwargs: _SuccessfulResolver(),
     )
 
@@ -236,7 +237,7 @@ async def test_revalidation_reserves_foreground_share_of_one_budget(
     async def resolve(**_kwargs: object) -> None:
         return None
 
-    def make_resolver(_store: object, limited: LimitedGeocoder) -> object:
+    def make_resolver(_store: object, limited: LimitedGeocoder, _settings: Settings) -> object:
         assert limited.geocoder is budget
         assert limited.limit == min(cap, 25) - share
         return resolve
@@ -247,7 +248,9 @@ async def test_revalidation_reserves_foreground_share_of_one_budget(
     monkeypatch.setattr(RecurringGeocodeWorker, "_budgeted_geocoder", make_budget)
     monkeypatch.setattr(RecurringGeocodeWorker, "_run_revalidation", run_revalidation)
     monkeypatch.setattr(RecurringGeocodeWorker, "_refresh_live_catalog", refresh)
-    monkeypatch.setattr("wef_backend.recurring_geocode_worker.ResolveGeocode", make_resolver)
+    monkeypatch.setattr(
+        "wef_backend.recurring_geocode_worker.build_location_resolver", make_resolver
+    )
     worker = RecurringGeocodeWorker(
         settings=Settings(
             geoapify_api_key=_secret("synthetic"), telegram_recurring_geocode_batch_size=cap

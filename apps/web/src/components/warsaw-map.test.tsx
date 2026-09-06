@@ -286,7 +286,9 @@ describe("WarsawMap", () => {
       "10000000-0000-4000-8000-000000000001",
     );
     expect(
-      screen.getByText("© OpenFreeMap · © OpenStreetMap contributors"),
+      screen.getByText(
+        "© OpenFreeMap · © OpenStreetMap contributors · Dane lokalizacji: Urząd m.st. Warszawy",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByTestId("source-warsaw-districts")).toHaveAttribute(
       "data-source-url",

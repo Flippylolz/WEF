@@ -13,3 +13,9 @@ Ostrzycka, the owner-reported Jugosłowiańska case and the additional Jugosłow
 ## Implementation approval
 
 At 2026-09-06T05:33:04Z, the owner replied “i approve” directly to “Do you approve this plan for implementation?” after E26 implementation plan revision 1 was presented. Record revision 1 as approved and proceed within its task boundaries and dependency gates. E14-T5 remains a T3 dependency, and existing-location production application remains gated on the specified observation/canary/discovery conditions.
+
+## Municipal-first follow-up authorization
+
+Owner: prepare and merge a pr; after deployment run a verification run, maybe we’ll need a backfill; summary here. Authorizes the municipal → geocoding → bounded AI-address-recovery proposal in this conversation.
+
+Recorded 2026-09-06T15:24:20.540396+00:00. The request authorizes implementation and normal release of the described routing policy, not increased paid quotas, invented AI coordinates, or overwriting protected corrections. Revision 2 records this direction; no additional per-PR permission is required.

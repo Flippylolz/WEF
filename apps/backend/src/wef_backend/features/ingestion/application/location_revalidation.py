@@ -106,6 +106,7 @@ class RevalidateLocations:
     store: ValidationStore
     resolver: GeocodeResolver
     target: str = VALIDATION_TARGET
+    independent_lookups: bool = False
 
     async def run(self, *, limit: int = 25) -> dict[str, int]:
         """Discover and resolve no more than one bounded cycle under shared quotas."""
@@ -124,9 +125,15 @@ class RevalidateLocations:
                     hour=0, minute=0, second=0, microsecond=0
                 )
                 await self.store.defer(
-                    claim, reason="quota", next_attempt=tomorrow, failure=False, now=now
+                    claim,
+                    reason="provider_quota" if self.independent_lookups else "quota",
+                    next_attempt=tomorrow,
+                    failure=False,
+                    now=now,
                 )
                 counts["deferred"] += 1
+                if self.independent_lookups:
+                    continue
                 break
             except ProviderBatchLimitError:
                 now = datetime.now(UTC)
@@ -138,6 +145,8 @@ class RevalidateLocations:
                     now=now,
                 )
                 counts["deferred"] += 1
+                if self.independent_lookups:
+                    continue
                 break
             except Exception:  # noqa: BLE001 - redacted durable systemic retry
                 now = datetime.now(UTC)

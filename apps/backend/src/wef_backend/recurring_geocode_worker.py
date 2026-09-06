@@ -22,14 +22,12 @@ from wef_backend.features.ingestion.application.complete_import import (
     ProviderDailyBudgetError,
     ProviderPauseError,
 )
-from wef_backend.features.ingestion.application.geocoding import ResolveGeocode
 from wef_backend.features.ingestion.application.location_revalidation import (
     LimitedGeocoder,
     RevalidateLocations,
 )
 from wef_backend.features.ingestion.application.recurring_geocode import (
     RecurringDeferAction,
-    build_recurring_monitor_event,
     classify_recurring_budget_error,
 )
 from wef_backend.features.ingestion.application.telegram_live import source_identity_from_channel
@@ -39,11 +37,11 @@ from wef_backend.features.ingestion.infrastructure import HostedGeocoder, HTTPXJ
 from wef_backend.features.ingestion.infrastructure.complete_import_repository import (
     SQLAlchemyCompleteImportRepository,
 )
-from wef_backend.features.ingestion.infrastructure.geocode_store import SQLAlchemyGeocodeStore
 from wef_backend.features.ingestion.infrastructure.geocoder_adapters import ProviderPolicy
 from wef_backend.features.ingestion.infrastructure.location_validation_store import (
     SQLAlchemyLocationValidationStore,
 )
+from wef_backend.location_resolution import build_location_resolver
 from wef_backend.settings import Settings  # noqa: TC001
 
 if TYPE_CHECKING:
@@ -79,15 +77,6 @@ class RecurringGeocodeWorker:
 
     async def process_once(self) -> RecurringGeocodeCycleResult:
         """Geocode up to one batch of pending locations, deferring on budget errors."""
-        now = datetime.now(UTC)
-        if self._defer_until is not None and now < self._defer_until:
-            return RecurringGeocodeCycleResult(
-                processed=0,
-                pending=0,
-                skipped=True,
-                defer_action=None,
-            )
-
         api_key = self.settings.geoapify_api_key
         if api_key is None or not api_key.get_secret_value():
             return RecurringGeocodeCycleResult(
@@ -121,32 +110,27 @@ class RecurringGeocodeWorker:
         defer_action: RecurringDeferAction | None = None
         if batch or self.settings.geocode_revalidation_enabled:
             budgeted = await self._budgeted_geocoder(repository, channel_id, cycle_cap)
-            resolver = ResolveGeocode(
-                SQLAlchemyGeocodeStore(self.session_factory),
+            resolver = build_location_resolver(
+                self.session_factory,
                 LimitedGeocoder(budgeted, cycle_cap - repair_share),
+                self.settings,
             )
-            try:
-                for item in batch:
+            for item in batch:
+                try:
                     await resolver(
                         source_query=item.address,
                         district=item.district,
                         location_id=item.location_id,
                     )
                     processed += 1
-            except ProviderBatchLimitError:
-                pass  # The next scheduled cycle resumes foreground work.
-            except (ProviderDailyBudgetError, ProviderPauseError) as error:
-                defer_action = classify_recurring_budget_error(error)
-                self._apply_defer(defer_action, now=datetime.now(UTC))
-                monitor = build_recurring_monitor_event(
-                    provider=GeocodeProvider.GEOAPIFY,
-                    disposition=defer_action,
-                    error_code=None,
-                    account_identity=self.settings.geoapify_account_identity,
-                )
-                fields = monitor.as_log_fields()
-                logger.info(fields.pop("event"), **fields)
-            if self.settings.geocode_revalidation_enabled and defer_action is None:
+                except ProviderBatchLimitError:
+                    continue  # Municipal cache/geometry may still resolve later items.
+                except (ProviderDailyBudgetError, ProviderPauseError) as error:
+                    defer_action = classify_recurring_budget_error(error)
+                    self._apply_defer(defer_action, now=datetime.now(UTC))
+                    # The durable hosted/AI budget still defers its own requests;
+                    # it must not stop unrelated municipal matches.
+            if self.settings.geocode_revalidation_enabled:
                 await self._run_revalidation(budgeted, repair_share)
         if processed:
             logger.info(
@@ -170,10 +154,10 @@ class RecurringGeocodeWorker:
         """Observe or apply persisted repair work inside its shared request allowance."""
         stats = await RevalidateLocations(
             SQLAlchemyLocationValidationStore(self.session_factory),
-            ResolveGeocode(
-                SQLAlchemyGeocodeStore(self.session_factory),
-                LimitedGeocoder(budgeted, repair_share),
+            build_location_resolver(
+                self.session_factory, LimitedGeocoder(budgeted, repair_share), self.settings
             ),
+            independent_lookups=True,
         ).run()
         if any(stats.values()):
             logger.info("location_revalidation_cycle", **stats)

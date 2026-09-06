@@ -411,7 +411,7 @@ function WebGLWarsawMap({
         <NavigationControl position="top-right" showCompass={false} />
         <AttributionControl
           position="bottom-right"
-          customAttribution="© OpenFreeMap · © OpenStreetMap contributors"
+          customAttribution="© OpenFreeMap · © OpenStreetMap contributors · Dane lokalizacji: Urząd m.st. Warszawy"
         />
         <Source id="warsaw-districts" type="geojson" data={DISTRICT_BOUNDARIES}>
           <Layer {...districtFillLayer} />

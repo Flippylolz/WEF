@@ -3,9 +3,9 @@ schema: ai-workflow/implementation-plan@1
 epic: E26
 title: "Automatic location validation and repair"
 status: approved
-revision: 1
+revision: 2
 owner: owner
-spike_revision: 1
+spike_revision: 2
 task_sequence:
   - id: E26-T1
     revision: 2
@@ -13,13 +13,15 @@ task_sequence:
     revision: 2
   - id: E26-T3
     revision: 2
+  - id: E26-T4
+    revision: 1
 approval:
   required_role: owner
   status: approved
   decided_by: "Owner (Flippylolz)"
-  decided_at: "2026-09-06T05:33:04Z"
-  approved_revision: 1
-  evidence: "Owner: i approve, responding to approval request for E26 implementation plan revision 1; OWNER_DECISION.md"
+  decided_at: "2026-09-06T15:24:20.540396+00:00"
+  approved_revision: 2
+  evidence: "OWNER_DECISION.md: municipal-first follow-up authorization"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -45,7 +47,9 @@ Each task gets a dedicated branch and PR after approval. Merge in dependency ord
 | --- | --- | --- |
 | [E26-T1 revision 2](tasks/E26-T1-validate-address-agreement-and-precision.md) | None | Source/provider agreement, bounded candidate selection and removal of automatic blanket acceptance |
 | [E26-T2 revision 2](tasks/E26-T2-revalidate-and-repair-existing-points.md) | E26-T1; E24-T1 is done via PR #331, merge `64da1bd9dd00e64be4e5ddbfce32e53f19c8f2af`, present in inspected main | Durable version-aware revalidation and guarded correction of existing locations |
-| [E26-T3 revision 2](tasks/E26-T3-show-honest-map-precision.md) | E26-T1; E14-T5 remains draft with implementation approval blocked | Backend precision/discovery contract and accessible map/list behavior proven through the shared real-stack harness |
+| [E26-T3 revision 2](tasks/E26-T3-show-honest-map-precision.md) | E26-T1 and E14-T5 done; T3 released via PR #363 | Backend precision/discovery contract and accessible map/list behavior proven through the shared real-stack harness |
+
+| [E26-T4 revision 1](tasks/E26-T4-resolve-municipal-first.md) | E26-T1–T3 done and deployed | Municipal-first resolution, bounded hosted/AI fallback, production verification and guarded backfill |
 
 Recheck dependency state before starting and merging. E14-T5 does not block T1/T2; it does block starting T3 without a valid ancestor stack and completing T3 without its full acceptance. This plan does not authorize implementing E14's separate epic. Do not mark E26 done while T3 is blocked.
 
@@ -141,3 +145,7 @@ New provider/cost, changed source or protected-write authority, broader geometry
 ## Owner decision
 
 Approval of revision 1 authorizes its bounded implementation sequence. It does not mark incomplete dependencies done or waive CI, review, protected state, canary or real-case verification gates.
+
+## Municipal-first follow-up (revision 2)
+
+The owner explicitly requested implementation, merge, deployment verification, and assessment of backfill after the municipal-first proposal. This supersedes the earlier hosted-provider-only scope for E26-T4; completed T1–T3 remain historical facts. See [the follow-up specification](MUNICIPAL_FIRST.md) and [owner direction](OWNER_DECISION.md).

@@ -11,7 +11,6 @@ from uuid import uuid4
 
 from wef_backend.features.ingestion.domain.geocoding import (
     REQUEST_VERSION,
-    STREET_REQUEST_VERSION,
     GeocodeCacheKey,
     GeocodeErrorCode,
     GeocodeProvider,
@@ -158,6 +157,8 @@ class ResolveGeocode:
     wait: Wait = _no_wait
     lease_duration: timedelta = _DEFAULT_LEASE
     wait_attempts: int = _DEFAULT_WAIT_ATTEMPTS
+    request_version: str = REQUEST_VERSION
+    fallback_forms: bool = True
 
     async def __call__(
         self,
@@ -171,7 +172,8 @@ class ResolveGeocode:
         resolution = await self._resolve(query)
         fallback = _fallback_query(query)
         if (
-            not resolution.decision.select_result
+            self.fallback_forms
+            and not resolution.decision.select_result
             and resolution.cached.result.error_code in {None, GeocodeErrorCode.NO_RESULT}
             and resolution.decision.reason is not SelectionReason.AMBIGUOUS_CANDIDATES
             and fallback is not None
@@ -192,7 +194,9 @@ class ResolveGeocode:
         key = GeocodeCacheKey(
             provider=self.geocoder.provider,
             normalized_query=query.normalized,
-            request_version=STREET_REQUEST_VERSION if query.street_only else REQUEST_VERSION,
+            request_version=f"{self.request_version}-street"
+            if query.street_only
+            else self.request_version,
         )
         now = self.clock()
         cached = await self.store.get_cached(key)
