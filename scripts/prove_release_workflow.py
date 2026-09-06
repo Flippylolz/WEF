@@ -120,10 +120,13 @@ def assert_shared_verification(source: str) -> None:
         "check_markdown_links.py",
         "git ls-files",
         "render_coverage_badge.py",
-        "scripts.test_release_report",
-        "scripts.test_release_order",
+        "make quality-gates",
     ):
         assert command in shared, command
+    makefile = (REPOSITORY_ROOT / "Makefile").read_text()
+    assert "python3 -m unittest discover -s scripts -t . -p 'test_*.py'" in makefile
+    for name in ("test_release_report.py", "test_release_order.py"):
+        assert (REPOSITORY_ROOT / "scripts" / name).is_file()
     assert "make production-runtime-proof" in source
     assert "load: true" in image
     assert "docker push" in image

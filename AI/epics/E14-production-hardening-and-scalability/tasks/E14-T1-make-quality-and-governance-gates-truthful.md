@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E14-T1
 epic: E14
 title: "Make quality and governance gates truthful"
-status: draft
+status: in_progress
 revision: 1
 priority: P1
 size: M
@@ -24,11 +24,11 @@ spike_gate:
   verified_by: "Codex agent (AD-041)"
   verified_at: "2026-08-29T21:17:35Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 1
+  verified_by: Codex
+  verified_at: "2026-09-06T06:51:36.365914+00:00"
 dependency_gate:
   status: satisfied
   verified_by: "Codex agent"
@@ -36,10 +36,10 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: feat/E14-T1-truthful-quality-gates
   task_id: E14-T1
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-06T06:51:36.365914+00:00"
   pull_request: null
 completion:
   completed_by: null
@@ -96,3 +96,8 @@ parallel focused jobs as long as missing jobs fail closed.
 - [x] E14 spike revision 1 is owner-approved under AD-041.
 - [x] The task was moved to `tasks/` with complete promotion metadata.
 - [ ] E14 implementation plan revision 1 is owner-approved and the implementation gate is satisfied.
+
+## Start evidence
+
+Moved through ready with scoped owner approval in OWNER_DECISION.md and no task
+dependencies. Started from main `2ab0c57` in an isolated worktree.
