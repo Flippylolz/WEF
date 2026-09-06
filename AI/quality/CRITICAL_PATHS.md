@@ -12,7 +12,7 @@ floors fail closed. High aggregate coverage cannot hide a low critical module.
 | Contact reveal / unit + PostGIS/API | 98% combined | Hidden offers with stored contacts never decrypt; password-change/rate/key failures; malformed ciphertext; minimized audits; normalized dedupe and clearing |
 | Map query / unit + PostGIS | 95% combined | Finite/ordered/bounded bbox, filter conflicts, stable ETags and backend visibility; inverted-bbox fault sample |
 | Browse application / unit + PostGIS | 95% combined | Pagination/order/filter validation and public projection boundaries |
-| Persistence application / unit + PostGIS | 97% combined | Atomic batches, immutable source identity, revisions, duplicate/reordered replay, transaction failure and cancellation |
+| Persistence application and extracted projection / unit + PostGIS | 97% combined independently for each | Atomic batches, immutable source identity, revisions, duplicate/reordered replay, transaction failure and cancellation |
 | Raw replay application / unit + PostGIS | 98% combined | Invalid/non-derivable archives, five-round bound, failed run/redaction, cancellation unlock and no false success; real version/sentinel replay |
 | Complete import / unit + PostGIS | 95% combined | Unchanged checksums skipped; daily/cycle budget boundaries, no-result/quota/transient outcomes and redacted charged exceptions |
 | Web auth transport / unit | 98% lines, 91% branches | Refused/expired sessions and request failure mapping; no browser-owned authorization rule |

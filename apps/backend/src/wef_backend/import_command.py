@@ -6,7 +6,7 @@ import argparse
 import asyncio
 import json
 import sys
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, time, timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -57,12 +57,12 @@ from wef_backend.features.ingestion.infrastructure import (
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
+from wef_backend.import_progress import TerminalProgress
 from wef_backend.operator import UnsafeSourceMountError, inspect_source
 from wef_backend.settings import Settings, load_settings
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-    from io import TextIOBase
 
     from wef_backend.database import DatabaseResources
     from wef_backend.features.ingestion.application.complete_import import RunLease
@@ -73,57 +73,17 @@ _DEFAULT_GEOCODE_BATCH_SIZE = 25
 _DEFAULT_MAX_PROVIDER_REQUESTS = 500
 _LEASE_DURATION = timedelta(minutes=5)
 _MEDIA_CONCURRENCY = 4
-_NONINTERACTIVE_PROGRESS_STEP = 500
 
 
-class TerminalProgress:
-    """Small dependency-free progress bar that never logs source values."""
+@dataclass(frozen=True, slots=True)
+class ImportStageContext:
+    """Outer composition dependencies shared by media and geocode stages."""
 
-    def __init__(
-        self,
-        label: str,
-        total: int | None,
-        *,
-        output: TextIOBase | None = None,
-    ) -> None:
-        """Initialize one bounded terminal renderer."""
-        self.label = label
-        self.total = total
-        self.output = output or sys.stderr
-        self.current = 0
-        self._last_rendered = -1
-        self._interactive = bool(getattr(self.output, "isatty", lambda: False)())
-
-    def update(self, current: int) -> None:
-        """Render monotonic progress without emitting one line per record."""
-        self.current = max(self.current, current)
-        if (
-            self._interactive
-            or self.current == 1
-            or self.current - self._last_rendered >= _NONINTERACTIVE_PROGRESS_STEP
-        ):
-            self._render(final=False)
-
-    def finish(self, *, complete: bool = True) -> None:
-        """Render one final line, optionally without claiming completion."""
-        if complete and self.total is not None:
-            self.current = max(self.current, self.total)
-        self._render(final=True)
-
-    def _render(self, *, final: bool) -> None:
-        width = 28
-        if self.total is None or self.total <= 0:
-            bar = "=" * min(width, (self.current // 100) % (width + 1))
-            rendered = f"{self.label:12} [{bar:<{width}}] {self.current:,}"
-        else:
-            ratio = min(1.0, self.current / self.total)
-            filled = round(width * ratio)
-            bar = "#" * filled + "-" * (width - filled)
-            rendered = f"{self.label:12} [{bar}] {ratio:6.1%} {self.current:,}/{self.total:,}"
-        end = "\n" if final or not self._interactive else "\r"
-        self.output.write(rendered + end)
-        self.output.flush()
-        self._last_rendered = self.current
+    prepared: PreparedImport
+    repository: SQLAlchemyCompleteImportRepository
+    persistence: SQLAlchemyIngestionPersistence
+    database: DatabaseResources
+    settings: Settings
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -301,17 +261,15 @@ async def _persist(
     )
 
 
-async def _geocode(  # noqa: PLR0913
-    prepared: PreparedImport,
-    repository: SQLAlchemyCompleteImportRepository,
-    persistence: SQLAlchemyIngestionPersistence,
-    database: DatabaseResources,
-    settings: Settings,
+async def _geocode(
+    context: ImportStageContext,
     *,
     batch_size: int,
     max_provider_requests: int,
     lease: RunLease | None = None,
 ) -> RunLease:
+    prepared, repository, persistence = context.prepared, context.repository, context.persistence
+    database, settings = context.database, context.settings
     active = lease or await _claim(
         prepared,
         repository,
@@ -441,16 +399,14 @@ async def _pause(  # noqa: PLR0913, PLR0917
     )
 
 
-async def _media(  # noqa: PLR0913
-    prepared: PreparedImport,
-    repository: SQLAlchemyCompleteImportRepository,
-    persistence: SQLAlchemyIngestionPersistence,
-    database: DatabaseResources,
-    settings: Settings,
+async def _media(
+    context: ImportStageContext,
     *,
     batch_size: int,
     lease: RunLease | None = None,
 ) -> RunLease:
+    prepared, repository, persistence = context.prepared, context.repository, context.persistence
+    database, settings = context.database, context.settings
     active = lease or await _claim(
         prepared,
         repository,
@@ -592,6 +548,7 @@ async def run_import(args: argparse.Namespace, settings: Settings) -> dict[str, 
         contact_cipher=contact_cipher,
         field_origin_sync=build_offer_origin_sync(database.session_factory),
     )
+    context = ImportStageContext(prepared, repository, persistence, database, settings)
     try:
         if args.command == "dry-run":
             return await _dry_run(prepared, repository)
@@ -609,11 +566,7 @@ async def run_import(args: argparse.Namespace, settings: Settings) -> dict[str, 
                 return {"run_id": str(lease.run_id), "stage": "persistence", "status": "ok"}
         if args.command in {"geocode", "run"}:
             lease = await _geocode(
-                prepared,
-                repository,
-                persistence,
-                database,
-                settings,
+                context,
                 batch_size=args.geocode_batch_size,
                 max_provider_requests=args.max_provider_requests,
                 lease=lease,
@@ -635,11 +588,7 @@ async def run_import(args: argparse.Namespace, settings: Settings) -> dict[str, 
                 }
         if args.command in {"media", "run"}:
             lease = await _media(
-                prepared,
-                repository,
-                persistence,
-                database,
-                settings,
+                context,
                 batch_size=args.batch_size,
                 lease=lease,
             )
@@ -683,3 +632,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+__all__ = ["TerminalProgress", "main", "run_import"]
