@@ -43,7 +43,7 @@ describe("map-explorer selection", () => {
     const location = await screen.findByRole("button", {
       name: /Synthetic Central Residence/,
     });
-    expect(screen.getByText("lowConfidence")).toBeInTheDocument();
+    expect(screen.getByText("locationConfidenceLimited")).toBeInTheDocument();
 
     await user.click(location);
 

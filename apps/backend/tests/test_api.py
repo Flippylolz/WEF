@@ -43,6 +43,7 @@ from wef_backend.features.catalog.application.offer_detail import (
     LocationSummaryDTO,
     OfferDetailRecord,
 )
+from wef_backend.features.catalog.application.unmapped_listings import BrowseUnmappedListings
 from wef_backend.features.catalog.domain import ContentType, MarketType, PropertyType
 from wef_backend.features.estates.application import EstateRecord, ListEstates
 from wef_backend.features.estates.domain import Availability, GeoPoint
@@ -63,6 +64,9 @@ def create_test_app(
         query_facets=QueryFacets(browse),
         browse_location_offers=BrowseLocationOffers(browse),
         browse_viewport_listings=BrowseViewportListings(browse),
+        browse_unmapped_listings=BrowseUnmappedListings(
+            FakeCatalogBrowse(facets=empty_facet_snapshot())
+        ),
         get_offer_detail=GetOfferDetail(FakeOfferDetailQuery()),
         is_ready=ready_check,
         close=close_nothing,
@@ -531,3 +535,23 @@ async def test_viewport_listings_present_parent_location_and_reject_bad_cursor()
     assert bad_cursor.json()["detail"] == "cursor is invalid"
 
     assert schema["paths"]["/api/v1/listings"]["get"]["operationId"] == ("listViewportListings")
+
+
+async def test_uncertain_discovery_default_scope_and_invalid_cursor() -> None:
+    """Discovery works without viewport input and rejects foreign cursor namespaces."""
+    app = create_test_app()
+    async with api_client(app) as client:
+        response = await client.get("/api/v1/listings/uncertain")
+        for cursor in ("not-valid!", "u1.not-valid!"):
+            invalid = await client.get("/api/v1/listings/uncertain", params={"cursor": cursor})
+            assert invalid.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+        invalid_limit = await client.get("/api/v1/listings/uncertain", params={"limit": 51})
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {
+        "items": [],
+        "matching_count": 0,
+        "mapped_matching_count": 0,
+        "next_cursor": None,
+        "filter_scope": "non_spatial",
+    }
+    assert invalid_limit.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT

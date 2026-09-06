@@ -100,7 +100,7 @@ async def test_grouped_map_query_semantics_and_performance() -> None:  # noqa: P
             MapFilters(bbox=WARSAW, property_types=(FilterablePropertyType.APARTMENT,)),
         )
 
-        assert len(all_results.records) == 4
+        assert len(all_results.records) == 3
         center = next(
             item
             for item in all_results.records
@@ -126,7 +126,7 @@ async def test_grouped_map_query_semantics_and_performance() -> None:  # noqa: P
             "wola",
         }
         assert [item.district for item in combined_groups.records] == ["srodmiescie"]
-        assert {item.district for item in dated.records} == {"praga-polnoc"}
+        assert dated.records == ()
         assert {item.id for item in apartments.records} == {
             UUID("10000000-0000-4000-8000-000000000001"),
             UUID("10000000-0000-4000-8000-000000000003"),
@@ -363,7 +363,7 @@ async def test_viewport_listing_projection_order_gates_and_pagination() -> None:
                 cursor=cursor,
                 limit=2,
             )
-            assert page.matching_count == 5
+            assert page.matching_count == 4
             collected.extend(item.id for item in page.items)
             published_order.extend(item.published_at for item in page.items)
             cursor = page.next_cursor
@@ -371,8 +371,8 @@ async def test_viewport_listing_projection_order_gates_and_pagination() -> None:
                 break
 
         assert cursor is None
-        assert len(collected) == 5
-        assert len(set(collected)) == 5
+        assert len(collected) == 4
+        assert len(set(collected)) == 4
         assert published_order == sorted(published_order, reverse=True)
         newest = await listings_service(
             filters=MapFilters(bbox=WARSAW),

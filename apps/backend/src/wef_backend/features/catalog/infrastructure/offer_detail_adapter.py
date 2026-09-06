@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 
 from sqlalchemy import and_, select
 
+from wef_backend.features.catalog.application.location_accuracy import project_location_accuracy
 from wef_backend.features.catalog.application.offer_detail import (
     DevelopmentSummaryDTO,
     LocationSummaryDTO,
@@ -19,7 +20,6 @@ from wef_backend.features.catalog.application.offer_detail import (
 )
 from wef_backend.features.catalog.domain import (
     ContentType,
-    LocationReviewStatus,
     MarketType,
     OfferVisibility,
     PropertyType,
@@ -86,9 +86,7 @@ class SQLAlchemyOfferDetailAdapter(OfferDetailQueryPort):
             .where(
                 OfferRow.id == offer_id,
                 OfferRow.visibility == OfferVisibility.VISIBLE.value,
-                LocationRow.review_status == LocationReviewStatus.ACCEPTED.value,
                 LocationRow.out_of_scope.is_(False),
-                LocationRow.point.is_not(None),
             )
         )
         async with self._session_factory() as session:
@@ -144,6 +142,12 @@ class SQLAlchemyOfferDetailAdapter(OfferDetailQueryPort):
                 district=location.district,
                 coordinate_precision=location.precision,
                 confidence=confidence_indicator_from_score(float(location.confidence)),
+                location_accuracy=project_location_accuracy(
+                    precision=location.precision,
+                    review_status=location.review_status,
+                    confidence=location.confidence,
+                    has_point=location.point is not None,
+                ),
             ),
             development=development,
             field_confidence=field_confidence,

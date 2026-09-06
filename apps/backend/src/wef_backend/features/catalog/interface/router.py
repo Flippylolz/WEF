@@ -35,12 +35,14 @@ from wef_backend.features.catalog.interface.presenter import (
     LocationOfferPageResponse,
     OfferDetailResponse,
     QuickFilterListResponse,
+    UnmappedListingPageResponse,
     ViewportListingPageResponse,
     present_facets,
     present_location_map,
     present_location_offer_page,
     present_offer_detail,
     present_quick_filters,
+    present_unmapped_listing_page,
     present_viewport_listing_page,
 )
 
@@ -115,6 +117,12 @@ class ViewportListingQueryParams(MapQueryParams):
 
     cursor: str | None = Field(default=None, max_length=512)
     limit: int = Field(default=20, ge=1, le=50)
+
+
+class UnmappedListingQueryParams(ViewportListingQueryParams):
+    """Bbox scopes only the mapped count; uncertain offers ignore it."""
+
+    bbox: str = Field(default="20.7,52.0,21.4,52.4", min_length=7, max_length=100)
 
 
 router = APIRouter(prefix="/api/v1/map", tags=["map"])
@@ -263,6 +271,28 @@ async def list_viewport_listings(
     except CursorError as error:
         raise QueryValidationError(str(error)) from error
     return present_viewport_listing_page(page)
+
+
+@listings_router.get(
+    "/listings/uncertain",
+    operation_id="listUnmappedListings",
+    summary="Discover uncertain locations outside map results",
+    responses={
+        422: {"model": ProblemResponse, "description": "The filters or cursor are invalid."}
+    },
+)
+async def list_unmapped_listings(
+    request: Request, response: Response, query: Annotated[UnmappedListingQueryParams, Query()]
+) -> UnmappedListingPageResponse:
+    """Apply non-spatial offer/district filters and return separately scoped totals."""
+    response.headers["Cache-Control"] = "public, max-age=30"
+    try:
+        page = await request.app.state.browse_unmapped_listings(
+            filters=query.to_filters(), cursor=query.cursor, limit=query.limit
+        )
+    except CursorError as error:
+        raise QueryValidationError(str(error)) from error
+    return present_unmapped_listing_page(page)
 
 
 @offers_router.get(

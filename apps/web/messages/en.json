@@ -245,7 +245,14 @@
     "publishedOn": "Published {date}",
     "mobileShowListings": "Show {count, plural, one {# listing} other {# listings}}",
     "listingRoom": "{rooms} room",
-    "listingRooms": "{rooms} rooms"
+    "listingRooms": "{rooms} rooms",
+    "locationUnresolved": "Location unresolved",
+    "locationConfidenceLimited": "Location confidence is limited.",
+    "uncertainTitle": "Location uncertain — outside map results",
+    "uncertainScope": "These offers match your non-spatial filters. Their location is not limited to the visible map area.",
+    "uncertainCount": "{count} offers outside map results",
+    "uncertainError": "Uncertain locations are unavailable right now.",
+    "uncertainEmpty": "No uncertain locations match these filters."
   },
   "errors": {
     "segmentTitle": "This view could not be loaded",

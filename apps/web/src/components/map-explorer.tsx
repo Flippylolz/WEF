@@ -8,6 +8,7 @@ import {
   countAppliedGroups,
 } from "@/components/filter-chips";
 import { MapFilterControls } from "@/components/map-filter-controls";
+import { UnmappedListings } from "@/components/explorer/unmapped-listings";
 import { ListingCard } from "@/components/listing-card";
 import { LiveAnnouncement } from "@/components/live-announcement";
 import { UserToolbar, type AuthOpener } from "@/components/user-toolbar";
@@ -357,6 +358,14 @@ export function MapExplorer() {
                   ) : null}
                 </>
               ) : null}
+              <UnmappedListings
+                query={mapQueryParams}
+                onOfferTrigger={registerOfferTrigger}
+                onSelectOffer={selectOffer}
+                favoriteIds={favoriteIds}
+                signedIn={signedIn}
+                onToggleStar={toggleFavorite}
+              />
             </section>
           ) : (
             <section className="results-panel" aria-label={t("locationsLabel")}>

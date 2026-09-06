@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E26-T3
 epic: E26
 title: "Show honest map precision and prove real pin behavior"
-status: draft
+status: in_progress
 revision: 2
 priority: P1
 size: M
@@ -30,16 +30,16 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-06T05:33:04Z"
 dependency_gate:
-  status: blocked
+  status: satisfied
   verified_by: Codex
   verified_at: "2026-09-06T05:28:07Z"
-  evidence: ["See implementation plan revision 1; incomplete dependencies remain blocked"]
+  evidence: ["E26-T1 done via PR #355, merge 6722ecb79d47958a92eb3608aeade1a4a3cede9e", "E14-T5 done via PR #362, merge 8ff50a9a41b9fe4b1160e2afd1983d2ae9119c6d; full local checks and current-head CI passed"]
 branch:
   required: true
-  name: null
+  name: feat/E26-T3-honest-map-precision
   task_id: E26-T3
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-06T09:01:57.120807+00:00"
   pull_request: null
 completion:
   completed_by: null
@@ -112,3 +112,13 @@ Do not add production dependencies without owner approval, commit raw source/cre
 ## Refined implementation boundary
 
 Implement the corresponding T3 section of [implementation plan revision 1](../IMPLEMENTATION_PLAN.md), including its numeric budgets, migration/contract boundaries, protected-state guards and verification requirements. This refinement is task revision 2. No acceptance case is marked fixed by planning.
+
+## Start evidence
+
+Moved through ready before implementation on 2026-09-06T09:01:57.120807+00:00. The owner-approved E26
+spike/plan revision 1 and task revision 2 remain authoritative. E14-T5 is the exact
+open ancestor above; its CI and merge are required before E26-T3 completion.
+Ostrzycka and Jugosłowiańska are not verified fixed by this start record.
+
+The recorded ancestor merged after task start. Dependency gate is now satisfied;
+the task branch is rebased onto that main merge before further implementation.

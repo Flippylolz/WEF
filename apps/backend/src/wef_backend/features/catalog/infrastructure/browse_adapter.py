@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-from sqlalchemy import and_, case, func, or_, select
+from sqlalchemy import and_, case, exists, func, literal, not_, or_, select
 
 from wef_backend.features.catalog.application import (
     FacetQueryPort,
@@ -23,6 +23,8 @@ from wef_backend.features.catalog.application import (
     ViewportListingQueryPort,
     ViewportListingSnapshot,
 )
+from wef_backend.features.catalog.application.location_accuracy import POINT_PRECISIONS
+from wef_backend.features.catalog.application.unmapped_listings import UnmappedListingQueryPort
 from wef_backend.features.catalog.domain import (
     ContentType,
     FilterablePropertyType,
@@ -77,6 +79,7 @@ class SQLAlchemyCatalogBrowseAdapter(
     FacetQueryPort,
     LocationOfferQueryPort,
     ViewportListingQueryPort,
+    UnmappedListingQueryPort,
 ):
     """Aggregate visible facets and deterministic browse pages."""
 
@@ -86,7 +89,10 @@ class SQLAlchemyCatalogBrowseAdapter(
 
     async def query_facets(self) -> FacetSnapshot:
         """Return visible/in-scope canonical options and dataset bounds."""
-        base = self._visible_base()
+        base = (
+            LocationRow.out_of_scope.is_(False),
+            OfferRow.visibility == OfferVisibility.VISIBLE.value,
+        )
         bounds_statement = (
             select(
                 func.min(OfferRow.price_min_minor),
@@ -172,7 +178,7 @@ class SQLAlchemyCatalogBrowseAdapter(
         """Return a matches-first page plus matching/total counts."""
         base = (*self._visible_base(), LocationRow.id == location_id)
         matching_conditions = SQLAlchemyMapQueryAdapter.filter_conditions(filters)
-        matches = and_(*matching_conditions)
+        matches = or_(and_(*matching_conditions), and_(*self._unmapped_conditions(filters)))
         match_rank = case((matches, 1), else_=0)
         page_conditions: list[ColumnElement[bool]] = list(base)
         if not include_non_matching:
@@ -226,18 +232,38 @@ class SQLAlchemyCatalogBrowseAdapter(
             .join(LocationRow, LocationRow.id == OfferRow.location_id)
             .where(*base)
         )
-        location_statement = select(LocationRow.id).where(
+        location_statement = select(
+            LocationRow, func.ST_X(LocationRow.point), func.ST_Y(LocationRow.point)
+        ).where(
             LocationRow.id == location_id,
-            LocationRow.review_status == LocationReviewStatus.ACCEPTED.value,
             LocationRow.out_of_scope.is_(False),
-            LocationRow.point.is_not(None),
+            exists(
+                select(OfferRow.id).where(
+                    OfferRow.location_id == LocationRow.id,
+                    OfferRow.visibility == OfferVisibility.VISIBLE.value,
+                )
+            ),
         )
         async with self._session_factory() as session:
-            location_exists = (await session.scalar(location_statement)) is not None
+            location = (await session.execute(location_statement)).one_or_none()
+            location_exists = location is not None
             matching_count, total_count = (await session.execute(count_statement)).one()
             rows = (await session.execute(page_statement)).all()
         return OfferBrowseSnapshot(
             location_exists=location_exists,
+            location=ListingLocationContext(
+                id=location[0].id,
+                display_name=location[0].display_name,
+                display_address=location[0].display_address,
+                district=location[0].district,
+                precision=location[0].precision,
+                confidence=location[0].confidence,
+                longitude=float(location[1]) if location[1] is not None else None,
+                latitude=float(location[2]) if location[2] is not None else None,
+                review_status=location[0].review_status,
+            )
+            if location is not None
+            else None,
             records=tuple(
                 OfferBrowseRecord(
                     id=row.id,
@@ -277,7 +303,26 @@ class SQLAlchemyCatalogBrowseAdapter(
         limit: int,
     ) -> ViewportListingSnapshot:
         """Return a newest-first filtered page plus the filtered count."""
-        conditions = SQLAlchemyMapQueryAdapter.filter_conditions(filters)
+        return await self._query_listings(
+            filters=filters, cursor=cursor, limit=limit, unmapped=False
+        )
+
+    async def query_unmapped_listings(
+        self, *, filters: MapFilters, cursor: ListingCursor | None, limit: int
+    ) -> ViewportListingSnapshot:
+        """Apply ordinary filters without assigning point-less rows to the viewport."""
+        return await self._query_listings(
+            filters=filters, cursor=cursor, limit=limit, unmapped=True
+        )
+
+    async def _query_listings(
+        self, *, filters: MapFilters, cursor: ListingCursor | None, limit: int, unmapped: bool
+    ) -> ViewportListingSnapshot:
+        conditions = (
+            self._unmapped_conditions(filters)
+            if unmapped
+            else SQLAlchemyMapQueryAdapter.filter_conditions(filters)
+        )
         page_conditions: list[ColumnElement[bool]] = list(conditions)
         if cursor is not None:
             page_conditions.append(self._after_listing_cursor(cursor))
@@ -309,8 +354,13 @@ class SQLAlchemyCatalogBrowseAdapter(
                 LocationRow.district.label("location_district"),
                 LocationRow.precision.label("location_precision"),
                 LocationRow.confidence.label("location_confidence"),
-                func.ST_X(LocationRow.point).label("location_longitude"),
-                func.ST_Y(LocationRow.point).label("location_latitude"),
+                LocationRow.review_status.label("location_review_status"),
+                (literal(None) if unmapped else func.ST_X(LocationRow.point)).label(
+                    "location_longitude"
+                ),
+                (literal(None) if unmapped else func.ST_Y(LocationRow.point)).label(
+                    "location_latitude"
+                ),
                 active_ai_origin_exists(OfferRow.id).label("has_active_ai_origin"),
             )
             .join(LocationRow, LocationRow.id == OfferRow.location_id)
@@ -328,6 +378,15 @@ class SQLAlchemyCatalogBrowseAdapter(
         )
         async with self._session_factory() as session:
             matching_count = await session.scalar(count_statement)
+            mapped_count = (
+                await session.scalar(
+                    select(func.count(OfferRow.id))
+                    .join(LocationRow, LocationRow.id == OfferRow.location_id)
+                    .where(*SQLAlchemyMapQueryAdapter.filter_conditions(filters))
+                )
+                if unmapped
+                else matching_count
+            )
             rows = (await session.execute(page_statement)).all()
         return ViewportListingSnapshot(
             records=tuple(
@@ -359,23 +418,43 @@ class SQLAlchemyCatalogBrowseAdapter(
                         district=row.location_district,
                         precision=row.location_precision,
                         confidence=row.location_confidence,
-                        longitude=float(row.location_longitude),
-                        latitude=float(row.location_latitude),
+                        longitude=float(row.location_longitude)
+                        if row.location_longitude is not None
+                        else None,
+                        latitude=float(row.location_latitude)
+                        if row.location_latitude is not None
+                        else None,
+                        review_status=row.location_review_status,
                     ),
                     has_active_ai_origin=bool(row.has_active_ai_origin),
                 )
                 for row in rows
             ),
             matching_count=int(matching_count or 0),
+            mapped_matching_count=int(mapped_count or 0),
+        )
+
+    @staticmethod
+    def _unmapped_conditions(filters: MapFilters) -> tuple[ColumnElement[bool], ...]:
+        """Complement eligible points; viewport coordinates never filter this set."""
+        return (
+            LocationRow.out_of_scope.is_(False),
+            OfferRow.visibility == OfferVisibility.VISIBLE.value,
+            not_(
+                and_(
+                    LocationRow.review_status == LocationReviewStatus.ACCEPTED.value,
+                    LocationRow.point.is_not(None),
+                    LocationRow.precision.in_(POINT_PRECISIONS),
+                )
+            ),
+            *SQLAlchemyMapQueryAdapter.non_spatial_conditions(filters),
         )
 
     @staticmethod
     def _visible_base() -> tuple[ColumnElement[bool], ...]:
         """Return public catalog gates shared by both browse queries."""
         return (
-            LocationRow.review_status == LocationReviewStatus.ACCEPTED.value,
             LocationRow.out_of_scope.is_(False),
-            LocationRow.point.is_not(None),
             OfferRow.visibility == OfferVisibility.VISIBLE.value,
         )
 

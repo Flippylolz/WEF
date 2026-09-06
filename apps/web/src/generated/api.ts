@@ -309,6 +309,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/listings/uncertain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Discover uncertain locations outside map results
+         * @description Apply non-spatial offer/district filters and return separately scoped totals.
+         */
+        get: operations["listUnmappedListings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/locations/{location_id}/offers": {
         parameters: {
             query?: never;
@@ -568,6 +588,12 @@ export interface components {
             name_confidence: components["schemas"]["ConfidenceIndicator"];
         };
         /**
+         * EffectivePrecision
+         * @description Honest display categories; an area is never a precise point.
+         * @enum {string}
+         */
+        EffectivePrecision: "building" | "street" | "area" | "unresolved";
+        /**
          * EstateResponse
          * @description Public representation of one synthetic estate.
          */
@@ -695,6 +721,20 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            location_accuracy?: components["schemas"]["LocationAccuracy"] | null;
+        };
+        /**
+         * LocationAccuracy
+         * @description Public policy projection, not a probability or fresh geometry verification.
+         */
+        LocationAccuracy: {
+            /** Label */
+            label: string;
+            precision: components["schemas"]["EffectivePrecision"];
+            /** Uncertainty Reason */
+            uncertainty_reason: string | null;
+            /** Validation Status */
+            validation_status: string;
         };
         /**
          * LocationMapFeature
@@ -744,6 +784,7 @@ export interface components {
              * Format: date-time
              */
             latest_published_at: string;
+            location_accuracy?: components["schemas"]["LocationAccuracy"] | null;
             /** Matching Offer Count */
             matching_offer_count: number;
             /** Price Max Minor */
@@ -775,6 +816,7 @@ export interface components {
         LocationOfferPageResponse: {
             /** Items */
             items: components["schemas"]["OfferSummaryResponse"][];
+            location?: components["schemas"]["LocationSummaryResponse"] | null;
             /** Matching Count */
             matching_count: number;
             /** Next Cursor */
@@ -801,6 +843,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            location_accuracy?: components["schemas"]["LocationAccuracy"] | null;
         };
         /**
          * LoginRequest
@@ -1165,6 +1208,90 @@ export interface components {
              */
             source_message_id: string;
         };
+        /**
+         * UnmappedListingItemResponse
+         * @description Visible dated offer with no fabricated public point geometry.
+         */
+        UnmappedListingItemResponse: {
+            /** Area Max Sqm */
+            area_max_sqm?: string | null;
+            /** Area Min Sqm */
+            area_min_sqm?: string | null;
+            content_type: components["schemas"]["ContentType"];
+            /** Currency */
+            currency: string | null;
+            data_confidence: components["schemas"]["OfferDataConfidence"];
+            /**
+             * Data Origin
+             * @enum {string}
+             */
+            data_origin: "parser" | "ai_assisted";
+            /** Delivery Label */
+            delivery_label: string | null;
+            /** Display Name */
+            display_name: string;
+            /** Floor Label */
+            floor_label: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            location: components["schemas"]["LocationSummaryResponse"];
+            market_type: components["schemas"]["MarketType"];
+            /**
+             * Parking Included In Price
+             * @default false
+             */
+            parking_included_in_price: boolean;
+            /** Parking Price Max Minor */
+            parking_price_max_minor?: number | null;
+            /** Parking Price Min Minor */
+            parking_price_min_minor?: number | null;
+            /** Price Max Minor */
+            price_max_minor?: number | null;
+            /** Price Min Minor */
+            price_min_minor?: number | null;
+            property_type: components["schemas"]["PropertyType"];
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Rooms Max */
+            rooms_max?: number | null;
+            /** Rooms Min */
+            rooms_min?: number | null;
+            /**
+             * Storage Included In Price
+             * @default false
+             */
+            storage_included_in_price: boolean;
+            /** Storage Price Max Minor */
+            storage_price_max_minor?: number | null;
+            /** Storage Price Min Minor */
+            storage_price_min_minor?: number | null;
+        };
+        /**
+         * UnmappedListingPageResponse
+         * @description Uncertain offers use non-spatial filters, independently of mapped totals.
+         */
+        UnmappedListingPageResponse: {
+            /**
+             * Filter Scope
+             * @default non_spatial
+             * @constant
+             */
+            filter_scope: "non_spatial";
+            /** Items */
+            items: components["schemas"]["UnmappedListingItemResponse"][];
+            /** Mapped Matching Count */
+            mapped_matching_count: number;
+            /** Matching Count */
+            matching_count: number;
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -1211,7 +1338,7 @@ export interface components {
         };
         /**
          * ViewportListingItemResponse
-         * @description Dated filter-matching viewport listing summary.
+         * @description Mapped listing retains required point geometry for existing clients.
          */
         ViewportListingItemResponse: {
             /** Area Max Sqm */
@@ -1847,6 +1974,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ViewportListingPageResponse"];
+                };
+            };
+            /** @description The filters or cursor are invalid. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+        };
+    };
+    listUnmappedListings: {
+        parameters: {
+            query?: {
+                area_max?: number | string | null;
+                area_min?: number | string | null;
+                bbox?: string;
+                content_type?: components["schemas"]["ContentType"][];
+                cursor?: string | null;
+                district?: string[];
+                limit?: number;
+                market_type?: components["schemas"]["MarketType"][];
+                price_max?: number | null;
+                price_min?: number | null;
+                property_type?: components["schemas"]["FilterablePropertyType"][];
+                published_from?: string | null;
+                published_to?: string | null;
+                quick_filter?: string | null;
+                rooms?: number[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnmappedListingPageResponse"];
                 };
             };
             /** @description The filters or cursor are invalid. */

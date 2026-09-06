@@ -509,7 +509,7 @@ input:focus-visible {
 }
 
 .button-primary:hover {
-  background: #2ea043;
+  background: #267f38;
 }
 
 .button-secondary:hover {
@@ -1689,4 +1689,30 @@ input:focus-visible {
 
 .account-danger .account-modal-hint {
   margin: 0;
+}
+
+.location-accuracy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.location-accuracy[data-precision="street"],
+.location-accuracy[data-precision="area"],
+.location-accuracy[data-precision="unresolved"] {
+  color: #e3b341;
+}
+.uncertain-listings {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+.uncertain-listings summary {
+  cursor: pointer;
+  color: #e3b341;
+  font-weight: 600;
+}
+.uncertain-listings > p {
+  color: var(--muted);
 }

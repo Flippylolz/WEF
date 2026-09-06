@@ -24,7 +24,7 @@ Persisted entity semantics are defined in the [data model](DATA_MODEL.md), and d
 
 ### `GET /api/v1/map/locations`
 
-Returns a GeoJSON `FeatureCollection` of visible locations with at least one matching offer.
+Returns a GeoJSON `FeatureCollection` of accepted building/street locations with a stored point and at least one matching visible offer. Coarse or unresolved locations never receive GeoJSON geometry.
 
 Query parameters:
 
@@ -223,3 +223,31 @@ These commands fail non-zero when their safety or completion conditions are not 
 - Removing, renaming, or changing field meaning requires `/v2` or a coordinated deprecation.
 - Database migrations are forward-only in production and must remain compatible with the previous application release during a rolling/restart window where feasible.
 - Parser changes do not overwrite source history; reprocessing records the new parser version and import run.
+
+
+## E26 location accuracy and uncertain discovery
+
+Map, viewport cards, selected-location offer pages and offer details include an
+optional `location_accuracy` object: `precision` (`building`, `street`, `area`,
+`unresolved`), persisted `validation_status`, `uncertainty_reason` and backend
+`label`. The status is not fresh geometry verification; provider confidence is
+not a probability of positional accuracy. Old geometry fields remain required
+on map and viewport responses. Clients treat absent/unknown accuracy explicitly
+as unresolved rather than inferring accuracy from offer completeness.
+
+`GET /api/v1/listings/uncertain` returns visible, in-scope offers excluded from
+map eligibility. It shares ordinary non-spatial filters and trusted district
+filters, newest-first ordering, and a 1–50 `limit` (default 20). Its separately
+namespaced cursor starts with `u1.`; foreign or malformed cursors return 422.
+Items retain offer/location IDs but location summaries have no geometry.
+
+`matching_count` counts this non-spatial set; `mapped_matching_count` counts
+eligible mapped offers using the supplied `bbox` and the same other filters.
+The optional bbox defaults to `20.7,52.0,21.4,52.4` and never bounds uncertain
+results. `filter_scope` is always `non_spatial`. These counts must not be added
+and described as a viewport total. `next_cursor` is null at the end. Public cache
+lifetime is 30 seconds, matching ordinary listing responses.
+
+Visible offer details and selected-location offers remain accessible after
+location quarantine. Hidden/out-of-scope records and existing authorization
+boundaries remain enforced. See [E26 behavior and verification](../epics/E26-automatic-location-validation/T3_VERIFICATION.md).

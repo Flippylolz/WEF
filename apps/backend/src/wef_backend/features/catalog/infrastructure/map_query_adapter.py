@@ -13,6 +13,7 @@ from wef_backend.features.catalog.application import (
     MapQueryPort,
     MapQuerySnapshot,
 )
+from wef_backend.features.catalog.application.location_accuracy import POINT_PRECISIONS
 from wef_backend.features.catalog.domain import LocationReviewStatus, OfferVisibility
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
 from wef_backend.features.ingestion.domain.geocoding import district_match_values
@@ -111,6 +112,7 @@ class SQLAlchemyMapQueryAdapter(MapQueryPort):
             LocationRow.review_status == LocationReviewStatus.ACCEPTED.value,
             LocationRow.out_of_scope.is_(False),
             LocationRow.point.is_not(None),
+            LocationRow.precision.in_(POINT_PRECISIONS),
             OfferRow.visibility == OfferVisibility.VISIBLE.value,
             func.ST_Intersects(
                 LocationRow.point,
@@ -123,9 +125,13 @@ class SQLAlchemyMapQueryAdapter(MapQueryPort):
                 ),
             ),
         )
+        return required + SQLAlchemyMapQueryAdapter.non_spatial_conditions(filters)
+
+    @staticmethod
+    def non_spatial_conditions(filters: MapFilters) -> tuple[ColumnElement[bool], ...]:
+        """Share non-spatial filters with honest list-only discovery."""
         return (
-            required
-            + SQLAlchemyMapQueryAdapter._range_conditions(filters)
+            SQLAlchemyMapQueryAdapter._range_conditions(filters)
             + SQLAlchemyMapQueryAdapter._group_conditions(filters)
             + SQLAlchemyMapQueryAdapter._date_conditions(filters)
         )

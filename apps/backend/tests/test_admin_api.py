@@ -39,6 +39,7 @@ from wef_backend.features.catalog.application import (
     QueryFacets,
     QueryMapLocations,
 )
+from wef_backend.features.catalog.application.unmapped_listings import BrowseUnmappedListings
 from wef_backend.features.estates.application import ListEstates
 from wef_backend.features.identity.domain.model import UserRole
 from wef_backend.features.identity.infrastructure import MemoryRateLimiter
@@ -68,6 +69,9 @@ async def admin_client(
         ),
         browse_viewport_listings=BrowseViewportListings(
             FakeCatalogBrowse(facets=empty_facet_snapshot()),
+        ),
+        browse_unmapped_listings=BrowseUnmappedListings(
+            FakeCatalogBrowse(facets=empty_facet_snapshot())
         ),
         get_offer_detail=GetOfferDetail(FakeOfferDetailQuery()),
         is_ready=always_ready,

@@ -12,6 +12,10 @@ from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
 
 from wef_backend.features.catalog.application.data_origin import DataOrigin, derive_data_origin
+from wef_backend.features.catalog.application.location_accuracy import (
+    LocationAccuracy,
+    project_location_accuracy,
+)
 from wef_backend.features.catalog.application.map_query import ConfidenceIndicator
 from wef_backend.features.catalog.application.offer_display_name import offer_display_name
 
@@ -239,6 +243,8 @@ class OfferBrowseSnapshot:
     matching_count: int
     total_count: int
 
+    location: ListingLocationContext | None = None
+
 
 class LocationOfferQueryPort(Protocol):
     """Selected-location offer collection contract."""
@@ -296,6 +302,8 @@ class LocationOfferPage:
     total_count: int
     next_cursor: str | None
 
+    location: ListingLocationDTO | None = None
+
 
 class BrowseLocationOffers:
     """Return a deterministic backend-decorated selected-location page."""
@@ -339,6 +347,9 @@ class BrowseLocationOffers:
             matching_count=snapshot.matching_count,
             total_count=snapshot.total_count,
             next_cursor=next_cursor,
+            location=decorate_listing_location(snapshot.location)
+            if snapshot.location is not None
+            else None,
         )
 
     @staticmethod
@@ -395,8 +406,10 @@ class ListingLocationContext:
     district: str | None
     precision: str
     confidence: Decimal
-    longitude: float
-    latitude: float
+    longitude: float | None
+    latitude: float | None
+
+    review_status: str = "accepted"
 
 
 @dataclass(frozen=True, slots=True)
@@ -434,6 +447,8 @@ class ViewportListingSnapshot:
     records: tuple[ListingBrowseRecord, ...]
     matching_count: int
 
+    mapped_matching_count: int = 0
+
 
 class ViewportListingQueryPort(Protocol):
     """Viewport offer-summary projection contract."""
@@ -459,8 +474,10 @@ class ListingLocationDTO:
     district: str | None
     precision: str
     confidence_indicator: ConfidenceIndicator
-    longitude: float
-    latitude: float
+    longitude: float | None
+    latitude: float | None
+
+    location_accuracy: LocationAccuracy | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -511,6 +528,28 @@ def _location_confidence_indicator(score: Decimal) -> ConfidenceIndicator:
     return ConfidenceIndicator.LOW
 
 
+def decorate_listing_location(location: ListingLocationContext) -> ListingLocationDTO:
+    """Apply the same backend accuracy policy in cards and selected locations."""
+    return ListingLocationDTO(
+        id=location.id,
+        display_name=location.display_name,
+        display_address=location.display_address,
+        district=location.district,
+        precision=location.precision,
+        confidence_indicator=_location_confidence_indicator(
+            location.confidence,
+        ),
+        longitude=location.longitude,
+        latitude=location.latitude,
+        location_accuracy=project_location_accuracy(
+            precision=location.precision,
+            review_status=location.review_status,
+            confidence=location.confidence,
+            has_point=location.longitude is not None and location.latitude is not None,
+        ),
+    )
+
+
 class BrowseViewportListings:
     """Return a deterministic newest-first backend-decorated page."""
 
@@ -543,13 +582,13 @@ class BrowseViewportListings:
                 ),
             )
         return ViewportListingPage(
-            items=tuple(self._decorate(record) for record in visible_records),
+            items=tuple(self.decorate(record) for record in visible_records),
             matching_count=snapshot.matching_count,
             next_cursor=next_cursor,
         )
 
     @staticmethod
-    def _decorate(record: ListingBrowseRecord) -> ListingSummaryDTO:
+    def decorate(record: ListingBrowseRecord) -> ListingSummaryDTO:
         """Own public labels and coarse completeness decisions."""
         complete = all(
             value is not None
@@ -587,17 +626,6 @@ class BrowseViewportListings:
             rooms_max=record.rooms_max,
             floor_label=record.floor_label,
             delivery_label=record.delivery_label,
-            location=ListingLocationDTO(
-                id=record.location.id,
-                display_name=record.location.display_name,
-                display_address=record.location.display_address,
-                district=record.location.district,
-                precision=record.location.precision,
-                confidence_indicator=_location_confidence_indicator(
-                    record.location.confidence,
-                ),
-                longitude=record.location.longitude,
-                latitude=record.location.latitude,
-            ),
+            location=decorate_listing_location(record.location),
             data_origin=derive_data_origin(has_active_ai_origin=record.has_active_ai_origin),
         )

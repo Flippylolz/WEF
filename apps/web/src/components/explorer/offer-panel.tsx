@@ -1,3 +1,4 @@
+import { LocationAccuracy } from "@/components/location-accuracy";
 import { useTranslations } from "next-intl";
 import type { LocationMapFeature, LocationOfferPage } from "@/lib/catalog-api";
 import {
@@ -32,7 +33,10 @@ export function OfferPanel({
   onOfferTrigger,
 }: OfferPanelProps) {
   const t = useTranslations("map");
-  if (!feature) {
+  const location =
+    feature?.properties ??
+    (offers.status === "ready" ? offers.data.location : undefined);
+  if (!location && offers.status !== "loading") {
     return <p className="offer-placeholder">{t("selectLocation")}</p>;
   }
   if (offers.status === "loading") {
@@ -63,7 +67,7 @@ export function OfferPanel({
       <div className="panel-heading">
         <div>
           <p className="eyebrow">{t("selectedEyebrow")}</p>
-          <h3 id="offer-panel-title">{feature.properties.display_name}</h3>
+          <h3 id="offer-panel-title">{location?.display_name}</h3>
         </div>
         <span className="result-count">
           {t("offerCountSummary", {
@@ -72,6 +76,10 @@ export function OfferPanel({
           })}
         </span>
       </div>
+      <LocationAccuracy
+        accuracy={location?.location_accuracy}
+        confidence={location?.confidence}
+      />
       <ul className="offer-list">
         {offers.data.items.map((offer) => (
           <li
