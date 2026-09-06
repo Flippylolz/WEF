@@ -278,6 +278,8 @@ This append-only log records choices made while the owner delegated overnight MV
 
 ## AD-034: Accept in-scope pending geocode pins for public map coverage
 
+**Recurring automatic use superseded by owner-approved E26 implementation plan revision 1 / E26-T1.** Retain this historical decision and its selection lineage. New automated work must pass source/provider address agreement; it cannot claim manual acceptance. Genuine owner review remains protected.
+
 - Time: 2026-08-21.
 - Prompt avoided: leave ~306 in-scope geocoded locations unpinned (`needs_review` without `point`) after the owner asked for historical records to be visible; or start Telethon while B-003 remains open.
 - Selected approach: under AD-009 `continue` after AD-033, accept in-scope `low_precision`/`low_confidence` geocode results onto locations with `manual_accept` lineage; ship `wef-accept-pending-geocode-pins`; leave out-of-scope and `no_result` ungeocoded rows unpinned.

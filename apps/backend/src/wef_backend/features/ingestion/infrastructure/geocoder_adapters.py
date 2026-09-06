@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING, Protocol
 
 import httpx
 
+from wef_backend.features.ingestion.domain.address_evidence import AddressEvidence
+from wef_backend.features.ingestion.domain.geocode_candidates import (
+    MAX_GEOCODE_CANDIDATES,
+    choose_geocode_candidate,
+)
 from wef_backend.features.ingestion.domain.geocoding import (
     WARSAW_BIAS_LAT,
     WARSAW_BIAS_LON,
@@ -18,6 +23,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
     GeocodeProvider,
     GeocodeResult,
     NormalizedGeocodeQuery,
+    canonical_warsaw_district,
     within_warsaw,
 )
 
@@ -182,7 +188,7 @@ class HostedGeocoder:
                     headers={"User-Agent": self.policy.identifying_user_agent},
                     timeout_seconds=self.policy.timeout_seconds,
                 )
-                return _map_payload(self.provider, payload)
+                return _map_candidates(self.provider, payload, query)
             except ProviderQuotaTransportError:
                 return _error_result(
                     provider=self.provider,
@@ -216,11 +222,13 @@ def _params(
     query: NormalizedGeocodeQuery,
     api_key: str | None,
 ) -> dict[str, str]:
-    common = {"format": "json", "limit": "1"}
+    common = {"format": "json", "limit": str(MAX_GEOCODE_CANDIDATES), "addressdetails": "1"}
     if provider is GeocodeProvider.GEOAPIFY:
         west, south, east, north = WARSAW_BOUNDS
         return {
+            **({"type": "street"} if query.street_only else {}),
             "text": query.normalized,
+            "limit": str(MAX_GEOCODE_CANDIDATES),
             "filter": f"rect:{west},{south},{east},{north}|countrycode:pl",
             "bias": f"proximity:{WARSAW_BIAS_LON},{WARSAW_BIAS_LAT}",
             "apiKey": api_key or "",
@@ -229,6 +237,44 @@ def _params(
     if provider is GeocodeProvider.LOCATIONIQ:
         result["key"] = api_key or ""
     return result
+
+
+def _map_candidates(
+    provider: GeocodeProvider,
+    payload: object,
+    query: NormalizedGeocodeQuery,
+) -> GeocodeResult:
+    """Map a bounded address allowlist and delegate ranking to the domain."""
+    items = payload.get("features") if isinstance(payload, dict) else payload
+    if not isinstance(items, list) or not items:
+        return _map_payload(provider, payload)
+    results = []
+    for item in items[:MAX_GEOCODE_CANDIDATES]:
+        envelope = {"features": [item]} if provider is GeocodeProvider.GEOAPIFY else [item]
+        result = _map_payload(provider, envelope)
+        address = _provider_address(provider, item)
+        results.append(replace(result, address=address))
+    return choose_geocode_candidate(query, tuple(results))
+
+
+def _provider_address(provider: GeocodeProvider, item: object) -> AddressEvidence | None:
+    if not isinstance(item, dict):
+        return None
+    fields = item.get("properties") if provider is GeocodeProvider.GEOAPIFY else item.get("address")
+    if not isinstance(fields, dict):
+        return None
+    suburb = _optional_string(fields.get("suburb"))
+    district = canonical_warsaw_district(_optional_string(fields.get("district")))
+    district = district or canonical_warsaw_district(suburb)
+    return AddressEvidence(
+        street=_optional_string(fields.get("street") or fields.get("road")),
+        house_number=_optional_string(fields.get("housenumber") or fields.get("house_number")),
+        neighborhood=suburb if canonical_warsaw_district(suburb) is None else None,
+        district=district,
+        city=_optional_string(fields.get("city") or fields.get("town") or fields.get("village")),
+        country_code=_optional_string(fields.get("country_code")),
+        result_type=_optional_string(fields.get("result_type") or item.get("type")),
+    )
 
 
 def _map_payload(provider: GeocodeProvider, payload: object) -> GeocodeResult:
@@ -340,7 +386,7 @@ def _optional_string(value: object) -> str | None:
 
 def _precision(value: str) -> GeocodePrecision:
     normalized = value.casefold()
-    if normalized in {"building", "amenity", "house"}:
+    if normalized in {"building", "house"}:
         return GeocodePrecision.BUILDING
     if normalized in {"street", "road"}:
         return GeocodePrecision.STREET

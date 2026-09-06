@@ -1,36 +1,57 @@
 """Durable geocode cache, fencing, and selection integration tests."""
 
+from __future__ import annotations
+
 import asyncio
 import os
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import pytest
 from alembic import command
 from sqlalchemy import text
 
+from tests.test_geocode_address_accuracy import _feature, _mapped
+from tests.test_geocoding import FakeTransport, _policy
 from wef_backend.database import DatabaseResources, create_database_resources
 from wef_backend.features.catalog.application import SeedM1Catalog
 from wef_backend.features.catalog.application.m1_fixture import m1_fixture
-from wef_backend.features.catalog.application.seed_m1 import SeedLocation
 from wef_backend.features.catalog.infrastructure import SQLAlchemyCatalogSeedAdapter
 from wef_backend.features.ingestion.application.geocoding import ClaimDisposition, ResolveGeocode
+from wef_backend.features.ingestion.domain.address_evidence import AddressEvidence
 from wef_backend.features.ingestion.domain.geocoding import (
     GeocodeCacheKey,
     GeocodeErrorCode,
     GeocodePrecision,
     GeocodeProvider,
     GeocodeResult,
+    NormalizedGeocodeQuery,
     normalize_geocode_query,
+    review_geocode_result,
+)
+from wef_backend.features.ingestion.infrastructure.accept_pending_geocode_pins_adapter import (
+    SQLAlchemyAcceptPendingGeocodePinsAdapter,
+)
+from wef_backend.features.ingestion.infrastructure.complete_import_repository import (
+    SQLAlchemyCompleteImportRepository,
 )
 from wef_backend.features.ingestion.infrastructure.geocode_store import (
     SQLAlchemyGeocodeStore,
     StaleGeocodeClaimError,
 )
-from wef_backend.features.ingestion.infrastructure.geocoder_adapters import FixtureGeocoder
+from wef_backend.features.ingestion.infrastructure.geocoder_adapters import (
+    FixtureGeocoder,
+    HostedGeocoder,
+)
 from wef_backend.migration import alembic_config
 from wef_backend.settings import Settings
+
+if TYPE_CHECKING:
+    from wef_backend.features.catalog.application.seed_m1 import SeedLocation
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 NOW = datetime(2026, 8, 15, 6, 30, tzinfo=UTC)
@@ -92,6 +113,13 @@ async def test_cross_process_claim_cache_and_selection_lineage() -> None:
         confidence=Decimal("0.95"),
         within_scope=True,
         attribution_text="Synthetic no-network fixture",
+        address=AddressEvidence(
+            street="Marszałkowska",
+            house_number="1",
+            city="Warszawa",
+            country_code="PL",
+            result_type="building",
+        ),
     )
     geocoder = FixtureGeocoder({query.normalized: fixture_result})
     resolution = await ResolveGeocode(store_one, geocoder, clock=lambda: NOW)(
@@ -239,4 +267,141 @@ async def test_abandoned_claim_can_be_reclaimed_before_original_expiry() -> None
     )
     assert reclaimed.disposition is ClaimDisposition.OWNER
     assert reclaimed.fencing_token == original.fencing_token + 1
+    await database.engine.dispose()
+
+
+@pytest.mark.parametrize(
+    ("actor_type", "actor_id", "preserved"),
+    [
+        ("operator", "owner-id", True),
+        ("operator", "unknown-legacy-actor", True),
+        ("operator", "ad-034-accept-pending-pins", False),
+        ("automatic_policy", None, False),
+    ],
+)
+async def test_address_policy_preserves_owner_lineage_during_provider_io(
+    actor_type: str,
+    actor_id: str | None,
+    *,
+    preserved: bool,
+) -> None:
+    """The selection transaction rechecks current protection after network work."""
+    database, location = await _prepare()
+    transport = FakeTransport([{"features": [_feature("Grochowska", result_type="amenity")]}] * 2)
+    hosted = HostedGeocoder(GeocodeProvider.GEOAPIFY, transport, _policy(), api_key="fake")
+
+    class EditingGeocoder:
+        provider = GeocodeProvider.GEOAPIFY
+
+        async def geocode(self, query: NormalizedGeocodeQuery) -> GeocodeResult:
+            async with database.session_factory() as session:
+                await session.execute(
+                    text(
+                        "INSERT INTO location_geocode_selections "
+                        "(id, location_id, from_state, to_state, reason_code, actor_type, "
+                        "actor_id, review_policy_version, selection_version, decided_at) "
+                        "SELECT :id, :location, 'accepted', 'accepted', 'manual_accept', "
+                        ":actor_type, :actor_id, 'warsaw-review-v1', 1, now() "
+                        "WHERE NOT EXISTS (SELECT 1 FROM location_geocode_selections "
+                        "WHERE location_id = :location)"
+                    ),
+                    {
+                        "id": uuid4(),
+                        "location": location.id,
+                        "actor_type": actor_type,
+                        "actor_id": actor_id,
+                    },
+                )
+                await session.commit()
+            return await hosted.geocode(query)
+
+    resolution = await ResolveGeocode(
+        SQLAlchemyGeocodeStore(database.session_factory), EditingGeocoder()
+    )(
+        source_query="ul. Jugosłowiańska",
+        location_id=location.id,
+    )
+    assert not resolution.decision.select_result
+    async with database.session_factory() as session:
+        row = (
+            await session.execute(
+                text(
+                    "SELECT review_status, point IS NOT NULL AS has_point "
+                    "FROM locations WHERE id = :id"
+                ),
+                {"id": location.id},
+            )
+        ).one()
+        selections = (
+            await session.execute(
+                text(
+                    "SELECT actor_type, reason_code FROM location_geocode_selections "
+                    "WHERE location_id = :id ORDER BY selection_version"
+                ),
+                {"id": location.id},
+            )
+        ).all()
+    assert row.has_point is preserved
+    assert len(selections) == (1 if preserved else 2)
+    if not preserved:
+        assert tuple(selections[-1]) == ("automatic_policy", "address_mismatch")
+    await database.engine.dispose()
+
+
+async def test_pending_pin_command_cannot_reaccept_coarse_or_legacy_evidence() -> None:
+    """Both cached missing evidence and area centroids remain unpinned in PostGIS."""
+    database, location = await _prepare()
+    store = SQLAlchemyGeocodeStore(database.session_factory)
+    query = normalize_geocode_query("ul. Jugosłowiańska")
+    precise = await _mapped(_feature())
+    for result in [
+        replace(precise, address=None),
+        replace(precise, precision=GeocodePrecision.DISTRICT),
+    ]:
+        # Different request versions preserve each independent historical fixture.
+        key = GeocodeCacheKey(
+            GeocodeProvider.GEOAPIFY,
+            query.normalized,
+            request_version=str(result.precision) + str(result.address is None),
+        )
+        claim = await store.claim_miss(
+            key, owner_id="fixture", now=NOW, lease_expires_at=NOW + timedelta(seconds=30)
+        )
+        cached = await store.complete_miss(
+            key, claim=claim, query=query, result=result, attempted_at=NOW, expires_at=None
+        )
+
+        decision = review_geocode_result(result, query=query)
+        await store.select_for_location(
+            location_id=location.id,
+            cached=cached,
+            decision=decision,
+            actor_type="automatic_policy",
+            actor_id=None,
+        )
+        adapter = SQLAlchemyAcceptPendingGeocodePinsAdapter(database.session_factory)
+        assert await adapter.accept_in_scope_pending_pins() == 0
+        async with database.session_factory() as session:
+            assert await session.scalar(
+                text("SELECT point IS NULL FROM locations WHERE id = :id"), {"id": location.id}
+            )
+    await database.engine.dispose()
+
+
+async def test_two_form_exhaustion_is_durable_and_removed_from_pending_work() -> None:
+    """Restarted resolvers use persisted evidence without spending or queue churn."""
+    database, location = await _prepare()
+    source = "Warszawa | ul. Ostrzycka"
+    transport = FakeTransport([{"features": [_feature("Inna")]}, {"features": []}])
+    geocoder = HostedGeocoder(GeocodeProvider.GEOAPIFY, transport, _policy(), api_key="fixture")
+    for _ in range(2):
+        result = await ResolveGeocode(SQLAlchemyGeocodeStore(database.session_factory), geocoder)(
+            source_query=source, location_id=location.id
+        )
+        assert not result.decision.select_result
+    assert len(transport.calls) == 2
+    pending = await SQLAlchemyCompleteImportRepository(database.session_factory).pending_locations()
+    assert location.id not in {item.location_id for item in pending}
+    async with database.session_factory() as session:
+        assert await session.scalar(text("SELECT count(*) FROM geocode_results")) == 2
     await database.engine.dispose()

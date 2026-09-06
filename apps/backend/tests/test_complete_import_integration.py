@@ -22,7 +22,7 @@ from wef_backend.features.ingestion.application.persistence import normalized_lo
 from wef_backend.features.ingestion.domain import SourceIdentity, SourcePlatform
 from wef_backend.features.ingestion.domain.geocoding import (
     NORMALIZER_VERSION,
-    REQUEST_VERSION,
+    STREET_REQUEST_VERSION,
     GeocodeProvider,
 )
 from wef_backend.features.ingestion.infrastructure.complete_import_repository import (
@@ -147,7 +147,7 @@ async def test_pending_locations_retry_stale_request_and_out_of_scope() -> None:
             )
         for result_id, request_version, with_point, error_code in (
             (result_ids[0], "forward-geocode-v1", True, None),
-            (result_ids[1], REQUEST_VERSION, True, None),
+            (result_ids[1], STREET_REQUEST_VERSION, True, None),
             (result_ids[2], "forward-geocode-v1", False, "no_result"),
         ):
             await session.execute(
@@ -173,7 +173,7 @@ async def test_pending_locations_retry_stale_request_and_out_of_scope() -> None:
                     "within_scope": False if with_point else None,
                     "with_point": with_point,
                     "attempted_at": NOW,
-                    "expires_at": future,
+                    "expires_at": None if result_id == result_ids[1] else future,
                     "error_code": error_code,
                 },
             )

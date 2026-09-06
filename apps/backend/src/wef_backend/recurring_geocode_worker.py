@@ -15,9 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker  # noqa: TC0
 from wef_backend.features.catalog.infrastructure.promote_public_catalog_adapter import (
     SQLAlchemyPromotePublicCatalogAdapter,
 )
-from wef_backend.features.ingestion.application.accept_pending_geocode_pins import (
-    AcceptPendingGeocodePins,
-)
 from wef_backend.features.ingestion.application.complete_import import (
     PIPELINE_VERSION,
     DurableBudgetedGeocoder,
@@ -35,9 +32,6 @@ from wef_backend.features.ingestion.application.telegram_live import source_iden
 from wef_backend.features.ingestion.domain.geocoding import GeocodeProvider
 from wef_backend.features.ingestion.domain.telegram_worker_ops import safe_error_category
 from wef_backend.features.ingestion.infrastructure import HostedGeocoder, HTTPXJSONTransport
-from wef_backend.features.ingestion.infrastructure.accept_pending_geocode_pins_adapter import (
-    SQLAlchemyAcceptPendingGeocodePinsAdapter,
-)
 from wef_backend.features.ingestion.infrastructure.complete_import_repository import (
     SQLAlchemyCompleteImportRepository,
 )
@@ -184,20 +178,17 @@ class RecurringGeocodeWorker:
         )
 
     async def _refresh_live_catalog(self) -> tuple[int, int]:
-        """Accept in-scope pending pins and publish offers tied to map-ready locations."""
-        pins = await AcceptPendingGeocodePins(
-            SQLAlchemyAcceptPendingGeocodePinsAdapter(self.session_factory),
-        )()
+        """Publish offers only after the resolver's address-aware acceptance."""
         promoted = await SQLAlchemyPromotePublicCatalogAdapter(
             self.session_factory,
         ).promote_map_ready_offers()
-        if pins.locations_accepted or promoted:
+        if promoted:
             logger.info(
                 "recurring_catalog_refresh",
-                locations_accepted=pins.locations_accepted,
+                locations_accepted=0,
                 offers_promoted=promoted,
             )
-        return pins.locations_accepted, promoted
+        return 0, promoted
 
     def _apply_defer(self, action: RecurringDeferAction, *, now: datetime) -> None:
         if action is RecurringDeferAction.DEFER_UNTIL_NEXT_UTC_DAY:
