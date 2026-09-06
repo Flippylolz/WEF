@@ -78,3 +78,20 @@ favorites endpoint to return 204 before testing persistence across reload. No
 request mocks, added retries, disabled assertions or production behavior changes.
 The municipal release remains unverified in production until a healthy release
 and the guarded observation/application proof complete.
+
+
+## First production observation
+
+PR #370 passed CI 34045389303 and merged as
+`14fbb3af9fc783428e5cb6c3b0038a933f5ee812`. Release 34045825003 succeeded;
+the active SHA and public readiness were verified. The first 100-location v5
+observation had 11 municipal matches (eight street, three building), two
+explicit ambiguities, ten protected cases, and bounded pending/deferred work.
+All three owner corrections retained their operator selections and coordinates.
+
+A read-only negative municipal probe found that an empty address response carries
+`crs: null`; the original adapter accessed that value before checking for empty
+features. The follow-up treats a complete empty response as no match and requires
+a valid EPSG:2178 CRS object for every nonempty response. Malformed nonempty CRS
+shapes produce the existing transient municipal-unavailable outcome. Production
+remains in observation mode until this regression and the canary proof pass.

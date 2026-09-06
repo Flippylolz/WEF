@@ -313,9 +313,11 @@ class MunicipalGeocoder:
         if data.get("numberMatched") != len(features) or len(features) >= _LIMIT:
             message = "incomplete municipal address response"
             raise ValueError(message)
-        if (
-            data.get("crs", {}).get("properties", {}).get("name") != "urn:ogc:def:crs:EPSG::2178"
-            and features
+        crs = data.get("crs")
+        properties = crs.get("properties") if isinstance(crs, dict) else None
+        if features and (
+            not isinstance(properties, dict)
+            or properties.get("name") != "urn:ogc:def:crs:EPSG::2178"
         ):
             message = "wrong municipal CRS"
             raise ValueError(message)
