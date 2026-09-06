@@ -269,3 +269,7 @@ The workflow's [expanded definition of done](../workflow/DEFINITION_OF_DONE.md) 
 - Live channel ingestion implementation: E8-T1 through E8-T5; blocker-priority source-completeness recovery and operational acceptance: E15-T1 through E15-T3.
 - Raw-event retention with parser replay/re-import, currency-word price correctness, backend-owned canonical filter facets, and owner-gated backup replay promotion: E17-T1 through E17-T6.
 - Post-launch maintainability, test confidence, SLOs, capacity, release integrity, and disaster-recovery evidence: E14-T1 through E14-T9, with existing E7-T5 as E14-T9's non-duplicated recovery prerequisite.
+
+E24 continuation (2026-09-06): implementation-plan revision 4 is owner-approved.
+T4 revision 2 is promoted and ready with completed T1/T2 dependencies and verified
+deployed T3 interfaces. T3's actual production derivative-repair gate remains open.

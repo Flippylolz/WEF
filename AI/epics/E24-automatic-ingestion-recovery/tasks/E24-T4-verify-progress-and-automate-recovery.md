@@ -1,24 +1,56 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E24-T4
 epic: E24
 title: "Verify ingestion progress and automate recovery escalation"
-status: proposed
-revision: 1
-actionable: false
+status: ready
+revision: 2
 priority: P1
 size: M
 milestone: M5
-dependencies: [E24-T1, E24-T2, E24-T3]
+dependencies: [E24-T1, E24-T2]
 requirement_ids: [P-006, P-007]
 decision_ids: [ADR-003, ADR-005, ADR-006, ADR-007, ADR-012, ADR-015]
 deferred_decision_ids: []
-source: "owner-requested-system-audit:2026-09-05"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E24-T4-verify-progress-and-automate-recovery.md
+  promoted_by: Codex
+  promoted_at: "2026-09-06T05:30:10.288298+00:00"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 2
+  verified_by: Codex
+  verified_at: "2026-09-06T05:30:10.288298+00:00"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 4
+  verified_by: Codex
+  verified_at: "2026-09-06T05:30:10.288298+00:00"
+dependency_gate:
+  status: satisfied
+  verified_by: Codex
+  verified_at: "2026-09-06T05:30:10.288298+00:00"
+  evidence:
+    - "T1/T2 done; PRODUCTION_EVIDENCE.md. T3 contracts deployed via PR #346; owner explicitly approved independent T4 sequencing."
+branch:
+  required: true
+  name: null
+  task_id: E24-T4
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E24-T4: Verify ingestion progress and automate recovery escalation
@@ -49,9 +81,9 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 ## Dependencies and gates
 
-Required task dependencies: E24-T1, E24-T2, E24-T3. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
+Required task dependencies: E24-T1, E24-T2. T3 deployed ledger/status contracts are verified prerequisites; its separate production repair acceptance remains open. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This candidate remains non-actionable under the [workflow](../../../workflow/README.md). It must move rather than copy to `tasks/`, retain its ID, and receive complete promotion and gate metadata.
+Promoted after owner approval of implementation-plan revision 4 and its explicit sequencing change.
 
 ## Rollout and automatic operation
 
@@ -71,8 +103,16 @@ Do not add production dependencies without owner approval, commit raw source/cre
 
 ## Promotion checklist
 
-- [ ] Current epic spike revision explicitly approved.
-- [ ] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
-- [ ] All referenced dependencies and required decisions resolved for the planned sequence.
-- [ ] File moved, not copied, into `tasks/` with attributable promotion metadata.
+- [x] Current epic spike revision explicitly approved.
+- [x] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
+- [x] All referenced dependencies and required decisions resolved for the planned sequence.
+- [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
 - [ ] Dedicated branch and PR will cover this task only after implementation gates clear.
+
+## Concrete monitoring proposal
+
+The [revision 4 proposal](../T4_MONITORING_PROPOSAL.md) defines stage-specific
+progress, durable counters, deadline-aware stall detection, incident deduplication
+and the 24-hour acceptance window. It proposes an explicit owner-approved
+sequencing change; the current dependencies and non-actionable state remain
+unchanged until that approval is recorded.
