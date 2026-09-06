@@ -70,6 +70,8 @@ jobs:
             --cov-fail-under=90 \
             --cov-report=term-missing \
             --cov-report=json:../../tmp/backend-coverage.json
+      - name: Critical backend coverage
+        run: python3 scripts/check_critical_coverage.py --backend tmp/backend-coverage.json
       - name: Upload backend coverage
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -112,7 +114,9 @@ jobs:
           pnpm --filter web lint
           pnpm --filter web typecheck
       - name: Tests with 90% coverage
-        run: pnpm --filter web test:coverage
+        run: |
+          pnpm --filter web test:coverage
+          python3 scripts/check_critical_coverage.py --frontend apps/web/coverage/coverage-summary.json
       - name: Contract and static documentation
         run: |
           pnpm --filter web contract:check
