@@ -76,7 +76,7 @@ async def test_process_once_defers_until_next_utc_day_on_budget_error(
 
     monkeypatch.setattr(RecurringGeocodeWorker, "_refresh_live_catalog", _noop_refresh)
     worker = RecurringGeocodeWorker(
-        settings=Settings(geoapify_api_key=_secret("test-key")),
+        settings=Settings(geoapify_api_key=_secret("test-key"), geocode_revalidation_enabled=False),
         session_factory=object(),  # type: ignore[arg-type]
         channel=default_live_channel_identity(),
     )
@@ -106,7 +106,7 @@ async def test_process_once_refreshes_catalog_when_queue_empty(
 
     monkeypatch.setattr(RecurringGeocodeWorker, "_refresh_live_catalog", _refresh)
     worker = RecurringGeocodeWorker(
-        settings=Settings(geoapify_api_key=_secret("test-key")),
+        settings=Settings(geoapify_api_key=_secret("test-key"), geocode_revalidation_enabled=False),
         session_factory=object(),  # type: ignore[arg-type]
         channel=default_live_channel_identity(),
     )
@@ -140,7 +140,7 @@ async def test_process_once_refreshes_catalog_after_geocoding(
 
     monkeypatch.setattr(RecurringGeocodeWorker, "_refresh_live_catalog", _refresh)
     worker = RecurringGeocodeWorker(
-        settings=Settings(geoapify_api_key=_secret("test-key")),
+        settings=Settings(geoapify_api_key=_secret("test-key"), geocode_revalidation_enabled=False),
         session_factory=object(),  # type: ignore[arg-type]
         channel=default_live_channel_identity(),
     )

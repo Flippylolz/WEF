@@ -254,61 +254,82 @@ class SQLAlchemyGeocodeStore(GeocodeStorePort):
             if location is None:
                 message = "location does not exist"
                 raise ValueError(message)
-            latest = await session.scalar(
-                select(LocationGeocodeSelectionRow)
-                .where(LocationGeocodeSelectionRow.location_id == location_id)
-                .order_by(LocationGeocodeSelectionRow.selection_version.desc())
-                .limit(1),
+            await self.select_in_session(
+                session,
+                location=location,
+                cached=cached,
+                decision=decision,
+                actor_type=actor_type,
+                actor_id=actor_id,
             )
-            if (
-                actor_type == "automatic_policy"
-                and latest is not None
-                and (
-                    latest.actor_type != "automatic_policy"
-                    and not (
-                        latest.actor_type == "operator"
-                        and latest.actor_id == "ad-034-accept-pending-pins"
-                    )
+
+    async def select_in_session(  # noqa: PLR0913
+        self,
+        session: AsyncSession,
+        *,
+        location: LocationRow,
+        cached: CachedGeocode,
+        decision: ReviewDecision,
+        actor_type: str,
+        actor_id: str | None,
+    ) -> None:
+        """Share a locked location transaction with an atomic recovery receipt."""
+        location_id = location.id
+        latest = await session.scalar(
+            select(LocationGeocodeSelectionRow)
+            .where(LocationGeocodeSelectionRow.location_id == location_id)
+            .order_by(LocationGeocodeSelectionRow.selection_version.desc())
+            .limit(1),
+        )
+        if (
+            actor_type == "automatic_policy"
+            and latest is not None
+            and (
+                latest.actor_type != "automatic_policy"
+                and not (
+                    latest.actor_type == "operator"
+                    and latest.actor_id == "ad-034-accept-pending-pins"
                 )
-            ):
-                return
-            selection_version = (latest.selection_version if latest else 0) + 1
-            result = cached.result
-            selected_id = cached.result_id if decision.select_result else None
-            point = None
-            if decision.select_result:
-                if result.longitude is None or result.latitude is None:
-                    message = "selected result must have coordinates"
-                    raise ValueError(message)
-                point = WKTElement(f"POINT({result.longitude} {result.latitude})", srid=4326)
-            session.add(
-                LocationGeocodeSelectionRow(
-                    id=uuid4(),
-                    location_id=location_id,
-                    geocode_result_id=cached.result_id,
-                    from_state=location.review_status,
-                    to_state=decision.status.value,
-                    reason_code=decision.reason.value,
-                    actor_type=actor_type,
-                    actor_id=actor_id,
-                    review_policy_version=REVIEW_POLICY_VERSION,
-                    selection_version=selection_version,
-                    decided_at=datetime.now(UTC),
-                ),
             )
-            await session.execute(
-                update(LocationRow)
-                .where(LocationRow.id == location_id)
-                .values(
-                    selected_geocode_result_id=selected_id,
-                    point=point,
-                    precision=result.precision.value,
-                    confidence=result.confidence,
-                    review_status=decision.status.value,
-                    out_of_scope=decision.out_of_scope,
-                    updated_at=datetime.now(UTC),
-                ),
-            )
+        ):
+            return
+        selection_version = (latest.selection_version if latest else 0) + 1
+        result = cached.result
+        selected_id = cached.result_id if decision.select_result else None
+        point = None
+        if decision.select_result:
+            if result.longitude is None or result.latitude is None:
+                message = "selected result must have coordinates"
+                raise ValueError(message)
+            point = WKTElement(f"POINT({result.longitude} {result.latitude})", srid=4326)
+        session.add(
+            LocationGeocodeSelectionRow(
+                id=uuid4(),
+                location_id=location_id,
+                geocode_result_id=cached.result_id,
+                from_state=location.review_status,
+                to_state=decision.status.value,
+                reason_code=decision.reason.value,
+                actor_type=actor_type,
+                actor_id=actor_id,
+                review_policy_version=REVIEW_POLICY_VERSION,
+                selection_version=selection_version,
+                decided_at=datetime.now(UTC),
+            ),
+        )
+        await session.execute(
+            update(LocationRow)
+            .where(LocationRow.id == location_id)
+            .values(
+                selected_geocode_result_id=selected_id,
+                point=point,
+                precision=result.precision.value,
+                confidence=result.confidence,
+                review_status=decision.status.value,
+                out_of_scope=decision.out_of_scope,
+                updated_at=datetime.now(UTC),
+            ),
+        )
 
 
 def _cached_from_record(

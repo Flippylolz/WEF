@@ -80,6 +80,7 @@ class Settings(BaseSettings):
     telegram_media_temp_path: Path = Path("/tmp/wef-telegram-media")  # noqa: S108
     telegram_media_download_timeout_seconds: float = Field(default=120.0, ge=1, le=600)
     telegram_media_download_concurrency: int = Field(default=2, ge=1, le=8)
+    geocode_revalidation_enabled: bool = True
     telegram_recurring_geocode_interval_seconds: float = Field(default=60.0, ge=10, le=3600)
     telegram_recurring_geocode_batch_size: int = Field(default=10, ge=1, le=100)
     ingestion_report_path: Path = Path("/app/media/reports/e2-dry-run")
