@@ -374,3 +374,31 @@ async def test_rollback_only_restores_unchanged_valid_predecessor(case: str) -> 
     assert await store.rollback(target=VALIDATION_TARGET) == {}
     assert (await store.status(target=VALIDATION_TARGET))["control"]["mode"] == "off"
     await database.engine.dispose()
+
+
+async def test_durable_keyset_scan_and_concurrent_claims_are_bounded() -> None:
+    import asyncio  # noqa: PLC0415 - exercise simultaneous independent DB sessions
+
+    database, _, store, _, _ = await _fixture()
+    async with database.session_factory() as session:
+        await session.execute(
+            text("""
+            INSERT INTO locations(id,display_name,display_address,normalized_address,
+                normalized_address_hash,precision,confidence,review_status)
+            SELECT gen_random_uuid(),'Synthetic','ul. Testowa','testowa',
+                md5(n::text),'unknown',0,'ungeocoded' FROM generate_series(1,104) n
+        """)
+        )
+        await session.commit()
+    assert await store.discover(target=VALIDATION_TARGET, now=NOW) == 100
+    restarted = SQLAlchemyLocationValidationStore(database.session_factory)
+    assert await restarted.discover(target=VALIDATION_TARGET, now=NOW) == 5
+    assert await restarted.discover(target=VALIDATION_TARGET, now=NOW) == 0
+    claims = await asyncio.gather(
+        store.claim(target=VALIDATION_TARGET, now=NOW),
+        restarted.claim(target=VALIDATION_TARGET, now=NOW),
+    )
+    assert all(claim is not None for claim in claims)
+    assert len({claim.work_id for claim in claims if claim is not None}) == 2
+    assert (await store.status(target=VALIDATION_TARGET))["population"]["unique_locations"] == 105
+    await database.engine.dispose()

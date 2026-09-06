@@ -116,3 +116,10 @@ Implement the corresponding T2 section of [implementation plan revision 1](../IM
 ## Start evidence
 
 Passed through ready under the approved plan with E24-T1 done and E26-T1 on ancestor PR #355. Started on the dedicated T2 worktree; no merge/completion until dependency gates are satisfied. Existing-location application and production acceptance remain gated by T3 discovery and the canary requirements.
+
+## Implementation evidence
+
+See [T2_VERIFICATION.md](../T2_VERIFICATION.md) for implemented guards, test
+scope and outstanding release/canary acceptance. The implementation PR remains
+draft while these acceptance gates are open. Existing production examples remain
+unverified; test fixtures are synthetic.

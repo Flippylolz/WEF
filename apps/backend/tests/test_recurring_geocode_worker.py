@@ -10,6 +10,7 @@ import pytest
 from pydantic import SecretStr
 
 from wef_backend.features.ingestion.application.complete_import import ProviderDailyBudgetError
+from wef_backend.features.ingestion.application.location_revalidation import LimitedGeocoder
 from wef_backend.features.ingestion.application.recurring_geocode import RecurringDeferAction
 from wef_backend.features.ingestion.domain.telegram_channel import default_live_channel_identity
 from wef_backend.features.ingestion.infrastructure.complete_import_repository import (
@@ -204,3 +205,53 @@ async def test_catalog_refresh_only_promotes_already_validated_locations(
         channel=default_live_channel_identity(),
     )
     assert await worker._refresh_live_catalog() == (0, 3)  # noqa: SLF001
+
+
+@pytest.mark.parametrize(
+    ("foreground", "cap", "share"), [(True, 10, 5), (False, 10, 10), (True, 1, 0)]
+)
+async def test_revalidation_reserves_foreground_share_of_one_budget(
+    monkeypatch: pytest.MonkeyPatch, *, foreground: bool, cap: int, share: int
+) -> None:
+    item = LocationWorkItem(uuid4(), "ul. Testowa 1", "Mokotów")
+    repository = _FakeRepository(uuid4(), (item,) if foreground else ())
+    monkeypatch.setattr(
+        "wef_backend.recurring_geocode_worker.SQLAlchemyCompleteImportRepository",
+        lambda _factory: repository,
+    )
+    budget = object()
+    seen: list[object] = []
+
+    async def make_budget(*_args: object) -> object:
+        return budget
+
+    async def run_revalidation(_self: object, shared: object, allowance: int) -> None:
+        assert shared is budget
+        assert allowance == share
+        seen.append(shared)
+
+    async def resolve(**_kwargs: object) -> None:
+        return None
+
+    def make_resolver(_store: object, limited: LimitedGeocoder) -> object:
+        assert limited.geocoder is budget
+        assert limited.limit == min(cap, 25) - share
+        return resolve
+
+    async def refresh(_self: object) -> tuple[int, int]:
+        return 0, 0
+
+    monkeypatch.setattr(RecurringGeocodeWorker, "_budgeted_geocoder", make_budget)
+    monkeypatch.setattr(RecurringGeocodeWorker, "_run_revalidation", run_revalidation)
+    monkeypatch.setattr(RecurringGeocodeWorker, "_refresh_live_catalog", refresh)
+    monkeypatch.setattr("wef_backend.recurring_geocode_worker.ResolveGeocode", make_resolver)
+    worker = RecurringGeocodeWorker(
+        settings=Settings(
+            geoapify_api_key=_secret("synthetic"), telegram_recurring_geocode_batch_size=cap
+        ),
+        session_factory=object(),  # type: ignore[arg-type]
+        channel=default_live_channel_identity(),
+    )
+    result = await worker.process_once()
+    assert result.processed == int(foreground)
+    assert len(seen) == 1

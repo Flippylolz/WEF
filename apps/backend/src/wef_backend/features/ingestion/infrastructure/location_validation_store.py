@@ -392,6 +392,14 @@ class SQLAlchemyLocationValidationStore:
     async def _owned(
         self, session: AsyncSession, claim: ValidationClaim, now: datetime
     ) -> RowMapping | None:
+        # Match claim/control/rollback lock order before taking the work-row lock.
+        await session.execute(
+            text(
+                "SELECT target FROM location_validation_control WHERE target=("
+                "SELECT target FROM location_validation_work WHERE id=:id) FOR UPDATE"
+            ),
+            {"id": claim.work_id},
+        )
         return (
             (
                 await session.execute(
@@ -400,7 +408,7 @@ class SQLAlchemyLocationValidationStore:
             JOIN location_validation_control c ON c.target=w.target
             WHERE w.id=:id AND w.state='leased' AND w.fence=:fence AND w.lease_until>:now
                 AND c.mode=w.mode AND c.mode != 'off'
-            FOR UPDATE OF w,c
+            FOR UPDATE OF w
         """),
                     {"id": claim.work_id, "fence": claim.fence, "now": now},
                 )
