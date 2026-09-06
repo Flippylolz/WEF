@@ -12,6 +12,10 @@ from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
 
 from wef_backend.features.catalog.application.data_origin import DataOrigin, derive_data_origin
+from wef_backend.features.catalog.application.location_accuracy import (
+    LocationAccuracy,
+    project_location_accuracy,
+)
 from wef_backend.features.catalog.application.map_query import ConfidenceIndicator
 from wef_backend.features.catalog.application.offer_display_name import offer_display_name
 
@@ -395,8 +399,10 @@ class ListingLocationContext:
     district: str | None
     precision: str
     confidence: Decimal
-    longitude: float
-    latitude: float
+    longitude: float | None
+    latitude: float | None
+
+    review_status: str = "accepted"
 
 
 @dataclass(frozen=True, slots=True)
@@ -434,6 +440,8 @@ class ViewportListingSnapshot:
     records: tuple[ListingBrowseRecord, ...]
     matching_count: int
 
+    mapped_matching_count: int = 0
+
 
 class ViewportListingQueryPort(Protocol):
     """Viewport offer-summary projection contract."""
@@ -459,8 +467,10 @@ class ListingLocationDTO:
     district: str | None
     precision: str
     confidence_indicator: ConfidenceIndicator
-    longitude: float
-    latitude: float
+    longitude: float | None
+    latitude: float | None
+
+    location_accuracy: LocationAccuracy | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -543,13 +553,13 @@ class BrowseViewportListings:
                 ),
             )
         return ViewportListingPage(
-            items=tuple(self._decorate(record) for record in visible_records),
+            items=tuple(self.decorate(record) for record in visible_records),
             matching_count=snapshot.matching_count,
             next_cursor=next_cursor,
         )
 
     @staticmethod
-    def _decorate(record: ListingBrowseRecord) -> ListingSummaryDTO:
+    def decorate(record: ListingBrowseRecord) -> ListingSummaryDTO:
         """Own public labels and coarse completeness decisions."""
         complete = all(
             value is not None
@@ -598,6 +608,13 @@ class BrowseViewportListings:
                 ),
                 longitude=record.location.longitude,
                 latitude=record.location.latitude,
+                location_accuracy=project_location_accuracy(
+                    precision=record.location.precision,
+                    review_status=record.location.review_status,
+                    confidence=record.location.confidence,
+                    has_point=record.location.longitude is not None
+                    and record.location.latitude is not None,
+                ),
             ),
             data_origin=derive_data_origin(has_active_ai_origin=record.has_active_ai_origin),
         )

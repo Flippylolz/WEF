@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E14-T5
 epic: E14
 title: "Add full-stack cross-browser and accessibility journeys"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: L
@@ -40,12 +40,12 @@ branch:
   task_id: E14-T5
   one_task_only: true
   created_at: "2026-09-06T08:08:28.800204+00:00"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/362
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-06T09:11:28.349416+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/362
+  evidence: ["Full make verify: 1232 backend / 176 frontend / 186 scripts; fresh-stack matrix 36 passed, 4 explicit WebGL skips", "All current-head required CI succeeded on 69749d38b06d5aebf757bf5e48a43602e9e6bd3e; PR #362 merged as 8ff50a9a41b9fe4b1160e2afd1983d2ae9119c6d"]
 invalidation:
   invalidated_by: null
   invalidated_at: null

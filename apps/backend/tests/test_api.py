@@ -43,6 +43,7 @@ from wef_backend.features.catalog.application.offer_detail import (
     LocationSummaryDTO,
     OfferDetailRecord,
 )
+from wef_backend.features.catalog.application.unmapped_listings import BrowseUnmappedListings
 from wef_backend.features.catalog.domain import ContentType, MarketType, PropertyType
 from wef_backend.features.estates.application import EstateRecord, ListEstates
 from wef_backend.features.estates.domain import Availability, GeoPoint
@@ -63,6 +64,9 @@ def create_test_app(
         query_facets=QueryFacets(browse),
         browse_location_offers=BrowseLocationOffers(browse),
         browse_viewport_listings=BrowseViewportListings(browse),
+        browse_unmapped_listings=BrowseUnmappedListings(
+            FakeCatalogBrowse(facets=empty_facet_snapshot())
+        ),
         get_offer_detail=GetOfferDetail(FakeOfferDetailQuery()),
         is_ready=ready_check,
         close=close_nothing,

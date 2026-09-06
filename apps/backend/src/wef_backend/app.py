@@ -50,6 +50,7 @@ def _configure_services(app: FastAPI, services: AppServices) -> None:
     app.state.query_facets = services.query_facets
     app.state.browse_location_offers = services.browse_location_offers
     app.state.browse_viewport_listings = services.browse_viewport_listings
+    app.state.browse_unmapped_listings = services.browse_unmapped_listings
     app.state.get_offer_detail = services.get_offer_detail
     app.state.is_ready = services.is_ready
     app.state.identity = services.identity

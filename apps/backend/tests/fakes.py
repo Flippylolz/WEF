@@ -175,6 +175,8 @@ class FakeCatalogBrowse:
     total_count: int = 0
     viewport_records: tuple[ListingBrowseRecord, ...] = ()
     viewport_matching_count: int = 0
+    unmapped_records: tuple[ListingBrowseRecord, ...] = ()
+    unmapped_matching_count: int = 0
 
     async def query_facets(self) -> FacetSnapshot:
         """Return deterministic facet values."""
@@ -192,6 +194,17 @@ class FakeCatalogBrowse:
         return ViewportListingSnapshot(
             records=self.viewport_records[:limit],
             matching_count=self.viewport_matching_count,
+        )
+
+    async def query_unmapped_listings(
+        self, *, filters: MapFilters, cursor: ListingCursor | None, limit: int
+    ) -> ViewportListingSnapshot:
+        """Return an independent bounded uncertain listing fixture."""
+        del filters, cursor
+        return ViewportListingSnapshot(
+            records=self.unmapped_records[:limit],
+            matching_count=self.unmapped_matching_count,
+            mapped_matching_count=self.viewport_matching_count,
         )
 
     async def query_location_offers(
