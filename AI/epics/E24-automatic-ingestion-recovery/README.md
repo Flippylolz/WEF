@@ -26,15 +26,14 @@ See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for 
 - [E24-T1: Terminate original archive work and repair starvation](tasks/E24-T1-terminate-original-archive-work.md) — P1/L, revision 2, `done`; dependencies: none.
 - [E24-T2: Make source cursors monotonic and retries fair](tasks/E24-T2-monotonic-cursors-and-fair-retries.md) — P1/L, revision 3, `done`; dependencies: E24-T1.
 
-## Next task and remaining candidate
+## Active acceptance work
 
-- [E24-T3: Recover media independently after message commit](tasks/E24-T3-recover-media-after-message-commit.md) — P1/L, revision 2, `in_progress`; implementation-plan revision 3 approved; dependencies: E24-T1.
-- [E24-T4: Verify ingestion progress and automate recovery escalation](tasks/E24-T4-verify-progress-and-automate-recovery.md) — P1/M; dependencies: E24-T1, E24-T2, E24-T3.
+- [E24-T3: Recover media independently after message commit](tasks/E24-T3-recover-media-after-message-commit.md) — deployed through PR #346; `in_progress` because actual production derivative-repair evidence remains open.
+- [E24-T4: Verify ingestion progress and automate recovery escalation](tasks/E24-T4-verify-progress-and-automate-recovery.md) — revision 2, `in_progress` through PR #354; implementation-plan revision 4 is approved. Dependencies T1/T2 are done; deployed T3 interfaces are verified under the owner-approved sequencing change.
 
-Each file defines one independently reviewable change, tests, acceptance evidence,
-rollout, rollback, and exceptional manual handling. The first plan sequences T1
-then T2 as requested. T3 is promoted with plan revision 3 approved; T4 requires later promotion and planning;
-finishing T1/T2 alone cannot close the epic.
+Historical media discovery is drained. At 2026-09-06T05:26Z, 22,266 assets were
+completed, 3,480 quarantined and 2,356 unsupported, with no pending intentions or
+work. No new variants were generated, so this does not close T3 acceptance.
 
 ## Automation requirement
 
@@ -42,10 +41,10 @@ The owner requested as little manual work as possible, with manual work only in 
 
 ## Approval state
 
-- Spike revision 2 is approved under AD-048. Completed plan revision 2 remains historical; revision 3 is approved for T3.
-- T1 is done after PR #331 and its passing 15-minute production window. T2 is done after PR #334, corrections #340/#341, and a passing 900-second production window. See [production evidence](PRODUCTION_EVIDENCE.md).
-- T3 is in progress with its implementation gate satisfied; T4 remains proposed.
-- Approval authorizes implementation and PR preparation; merge and production release remain separate.
+- Spike revision 2 and implementation-plan revision 4 are owner-approved. Earlier approved revisions remain historical evidence.
+- T1 and T2 are done; see [production evidence](PRODUCTION_EVIDENCE.md).
+- T3 remains open for actual repair evidence. The owner explicitly allowed T4 implementation against its deployed interfaces without waiting for that separate acceptance gate.
+- T4 has merged through green CI and remains in progress until its production rollout and full 24-hour acceptance are verified. No separate per-PR merge confirmation is required.
 
 ## Scope and completion
 
@@ -56,8 +55,7 @@ E14 retains shared test infrastructure, general refactoring, capacity, and platf
 
 ## Current continuation gate
 
-T1/T2 remain done. T3 is promoted for planning under approved spike revision 2; implementation-plan revision 3 is owner-approved. T4 remains proposed. Planning continuation does not authorize source-conflict overrides or T3 code before that approval.
-
-E24 continuation (2026-09-06): implementation-plan revision 4 is owner-approved.
-T4 revision 2 is promoted and ready with completed T1/T2 dependencies and verified
-deployed T3 interfaces. T3's actual production derivative-repair gate remains open.
+T4 starts with observation-only samples, then a healthy 15-minute window permits
+incident activation. A full 24-hour runtime window and reviewed absence of routine
+operator interventions are required before T4 completion. T3's actual production
+repair gate remains independent; neither task's deployment alone closes E24.
