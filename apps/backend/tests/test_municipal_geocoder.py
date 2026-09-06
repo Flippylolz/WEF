@@ -245,3 +245,22 @@ async def test_duplicate_numbered_points_remain_ambiguous() -> None:
     ).geocode(normalize_geocode_query(SOURCE.replace("Syntetyczna", "Syntetyczna 12")))
     assert dict(result.diagnostic)["candidate_ambiguity"] == "true"
     assert result.longitude is None
+
+
+async def test_empty_city_address_response_allows_null_crs() -> None:
+    body = json.dumps({"numberMatched": 0, "features": [], "crs": None}).encode()
+    result = await MunicipalGeocoder(MagicMock(), Transport(address=body)).geocode(
+        normalize_geocode_query(SOURCE.replace("Syntetyczna", "Syntetyczna 99"))
+    )
+    assert result.longitude is None
+    assert dict(result.diagnostic)["candidate_ambiguity"] == "false"
+
+
+@pytest.mark.parametrize("crs", [None, [], {"properties": None}, {"properties": []}])
+async def test_nonempty_address_requires_valid_crs_shape(crs: object) -> None:
+    data = json.loads(addresses())
+    data["crs"] = crs
+    with pytest.raises(MunicipalUnavailableError):
+        await MunicipalGeocoder(MagicMock(), Transport(address=json.dumps(data).encode())).geocode(
+            normalize_geocode_query(SOURCE.replace("Syntetyczna", "Syntetyczna 12"))
+        )
