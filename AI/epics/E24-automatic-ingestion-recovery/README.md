@@ -29,7 +29,7 @@ See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for 
 ## Next task and remaining candidate
 
 - [E24-T3: Recover media independently after message commit](tasks/E24-T3-recover-media-after-message-commit.md) — P1/L, revision 2, `in_progress`; implementation-plan revision 3 approved; dependencies: E24-T1.
-- [E24-T4: Verify ingestion progress and automate recovery escalation](proposed-tasks/E24-T4-verify-progress-and-automate-recovery.md) — P1/M; dependencies: E24-T1, E24-T2, E24-T3.
+- [E24-T4: Verify ingestion progress and automate recovery escalation](tasks/E24-T4-verify-progress-and-automate-recovery.md) — P1/M; dependencies: E24-T1, E24-T2, E24-T3.
 
 Each file defines one independently reviewable change, tests, acceptance evidence,
 rollout, rollback, and exceptional manual handling. The first plan sequences T1
@@ -57,3 +57,7 @@ E14 retains shared test infrastructure, general refactoring, capacity, and platf
 ## Current continuation gate
 
 T1/T2 remain done. T3 is promoted for planning under approved spike revision 2; implementation-plan revision 3 is owner-approved. T4 remains proposed. Planning continuation does not authorize source-conflict overrides or T3 code before that approval.
+
+E24 continuation (2026-09-06): implementation-plan revision 4 is owner-approved.
+T4 revision 2 is promoted and ready with completed T1/T2 dependencies and verified
+deployed T3 interfaces. T3's actual production derivative-repair gate remains open.
