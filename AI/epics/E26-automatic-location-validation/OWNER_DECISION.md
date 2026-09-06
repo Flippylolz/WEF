@@ -19,3 +19,7 @@ At 2026-09-06T05:33:04Z, the owner replied “i approve” directly to “Do you
 Owner: prepare and merge a pr; after deployment run a verification run, maybe we’ll need a backfill; summary here. Authorizes the municipal → geocoding → bounded AI-address-recovery proposal in this conversation.
 
 Recorded 2026-09-06T15:24:20.540396+00:00. The request authorizes implementation and normal release of the described routing policy, not increased paid quotas, invented AI coordinates, or overwriting protected corrections. Revision 2 records this direction; no additional per-PR permission is required.
+
+## Catalog-wide backfill authorization
+
+On 6 September 2026, the owner explicitly instructed: “please run this backfill agains all the offers so we can get better precision”. This resolves the earlier tentative backfill boundary and authorizes application across the catalog under the existing provider budgets, source-agreement checks, retry pacing and protected-selection rules. After all nine canary snapshots were rechecked unchanged, `verify-canary` succeeded: apply mode now covers the full catalog. No quota increase or protection override was requested or performed.

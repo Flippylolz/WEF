@@ -32,6 +32,14 @@ Detailed bounded evidence is retained privately on the server at `/home/nuc/wef/
 
 A complete discovery pass covered 2,239 locations, 3,334 offers (3,320 visible), and three favorites. At the recorded checkpoint there were 206 further validated observations, four canary corrections, four unresolved observations/outcomes, 266 protected locations, and bounded pending/deferred work. The assessment demonstrates a useful backfill beyond the canary.
 
-Wider application remains locked: mode is `apply` restricted to the nine canaries, with `canary_verified=false`. The external canary proof passed, but the `verify-canary` command also unlocks catalog-wide application. Automatic approval review rejected that scope because the owner's “maybe we’ll need a backfill” wording was tentative. Explicit owner approval has been requested; no workaround or broad mutation was executed.
+The owner subsequently explicitly requested the backfill against all offers. All nine canary snapshots were rechecked unchanged before expansion. The normal `verify-canary` command succeeded: `mode=apply`, `canary_verified=true`, and three audited operator actions. Catalog-wide application is enabled for the current v5 target.
 
-Provider budgets and activation gates are unchanged. The hosted daily budget is exhausted, but municipal matches continue independently. Deferred hosted/AI work must retain its existing pacing; no completion claim is made for the full catalog.
+At the first broader checkpoint, 283 locations were corrected and six remained unresolved; 266 protected locations were unchanged, 1,400 were pending, and 284 were deferred. All 2,239 locations and 3,334 linked offers remain covered by discovery. An earlier precision checkpoint already showed 181 previously unmapped locations gaining usable points, including four building matches; numberless street matches retain approximate street labels. Counts are moving checkpoints, not a claim that the queue has drained.
+
+Public verification passed four newly backfilled locations through map coordinates, precision labels, offer details, map readiness and keyboard return focus, plus both unresolved discovery controls. All nine original canary snapshots remained identical after broader application, including the three protected Ostrzycka/Jugosłowiańska cases and their source/offer/favorite relationships.
+
+Sequential bounded cycles use the existing shared provider ledgers and lease protections. Provider budgets and retry eligibility are unchanged. The hosted daily budget is exhausted, but municipal matches continue independently; hosted quota deferrals resume no earlier than the next UTC day. The recurring worker remains responsible for pending/deferred work and future new or changed locations. Implementation and verified rollout are complete; full-catalog processing continues automatically.
+
+The catalog-wide authorization, aggregate checkpoint and public verification are retained at `/home/nuc/wef/state/e26-t4-all-offers-verified-20260906.json`, mode 0600, without raw source text or user identifiers.
+
+A subsequent read-only repeatable snapshot rechecked all 377 corrected locations then present: source agreement, accepted status, selected coordinates and recorded precision all passed. The documentation follow-up passed `make verify` and Markdown-link validation.
