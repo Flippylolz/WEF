@@ -24,7 +24,7 @@ Locked dependencies installed with `UV_PYTHON=/Users/flippylolz/.asdf/installs/p
 - `UV_CACHE_DIR=/private/tmp/wef-e26-uv make typecheck`: pass, backend and frontend.
 - `UV_CACHE_DIR=/private/tmp/wef-e26-uv make format-check`: pass.
 - `UV_CACHE_DIR=/private/tmp/wef-e26-uv make contract-check`: pass; no OpenAPI/generated TypeScript drift.
-- `COMPOSE_PROJECT_NAME=wef-e26-t1 make test`: final run passed 1,163 backend tests (90.38% combined line/branch coverage) and 169 frontend tests (95.76% lines, 90.14% branches). The three existing backend warnings did not fail the suite.
+- `COMPOSE_PROJECT_NAME=wef-e26-t1 make test`: final run passed 1,168 backend tests (90.39% combined line/branch coverage) and 169 frontend tests (95.76% lines, 90.14% branches). The three existing backend warnings did not fail the suite.
 - `git diff --check`: pass.
 
 Tests use an isolated Compose project and disposable PostGIS, not the shared live stack. No production provider calls or data changes were made for these tests.
