@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E26-T3
 epic: E26
 title: "Show honest map precision and prove real pin behavior"
-status: in_progress
+status: done
 revision: 2
 priority: P1
 size: M
@@ -40,12 +40,12 @@ branch:
   task_id: E26-T3
   one_task_only: true
   created_at: "2026-09-06T09:01:57.120807+00:00"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/363
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-06T10:35:17.087892+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/363
+  evidence: ["T3_VERIFICATION.md; PR #363 merge 3fdcd7bb52b0e30d4160acaf8dab912ca51511c6; CI 34026980040 and release 34027321299 succeeded"]
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -67,11 +67,11 @@ Relevant seams are listed in the [epic spike](../SPIKE.md#research-method-and-ev
 
 ## Acceptance criteria
 
-- [ ] A district/city centroid is never styled or described as an exact street/building position; street-only evidence explicitly says approximate street location.
-- [ ] Low-confidence location warnings appear in the selected-location flow, independent of missing structured-value notes; building/street/area semantics agree across map, detail, and list.
-- [ ] Unresolved offers remain discoverable under a documented backend filter/projection rule without fabricated coordinates; map/list counts remain reconcilable.
-- [ ] A WebGL-enabled regression loads real backend-persisted representative coordinates, selects each audited case, and verifies the displayed point/area, text, selection, and cluster interaction.
-- [ ] Keyboard/mobile flows retain access to precision information; generated API checks and existing offer IDs, favorites, URL state, and provider attribution remain compatible.
+- [x] A district/city centroid is never styled or described as an exact street/building position; street-only evidence explicitly says approximate street location.
+- [x] Low-confidence location warnings appear in the selected-location flow, independent of missing structured-value notes; building/street/area semantics agree across map, detail, and list.
+- [x] Unresolved offers remain discoverable under a documented backend filter/projection rule without fabricated coordinates; map/list counts remain reconcilable.
+- [x] A WebGL-enabled regression loads real backend-persisted representative coordinates, selects each audited case, and verifies the displayed point/area, text, selection, and cluster interaction.
+- [x] Keyboard/mobile flows retain access to precision information; generated API checks and existing offer IDs, favorites, URL state, and provider attribution remain compatible.
 
 ## Tests and verification
 
@@ -104,10 +104,10 @@ Do not add production dependencies without owner approval, commit raw source/cre
 ## Promotion checklist
 
 - [x] Spike revision 1 approval interpretation recorded in the owner decision.
-- [ ] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
-- [ ] All referenced dependencies and required decisions resolved for the planned sequence.
+- [x] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
+- [x] All referenced dependencies and required decisions resolved for the planned sequence.
 - [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
-- [ ] Dedicated branch and PR will cover this task only after implementation gates clear.
+- [x] Dedicated branch and PR will cover this task only after implementation gates clear.
 
 ## Refined implementation boundary
 

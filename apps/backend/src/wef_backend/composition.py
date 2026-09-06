@@ -122,7 +122,7 @@ from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
 from wef_backend.middleware.public_rate_limit import RateLimiter
-from wef_backend.migration import EXPECTED_DATABASE_REVISION
+from wef_backend.migration import EXPECTED_DATABASE_REVISION, READ_COMPATIBLE_DATABASE_REVISIONS
 from wef_backend.settings import Settings, load_settings
 
 ReadyCheck = Callable[[], Awaitable[bool]]
@@ -291,7 +291,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
         except SQLAlchemyError as error:
             logger.warning("database_not_ready", error=str(error))
             return False
-        if revision != EXPECTED_DATABASE_REVISION:
+        if revision not in READ_COMPATIBLE_DATABASE_REVISIONS:
             logger.warning(
                 "database_revision_mismatch",
                 expected=EXPECTED_DATABASE_REVISION,

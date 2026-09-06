@@ -38,7 +38,7 @@ The owner requested as little manual work as possible, with manual work only in 
 - Spike revision 1 advanced to approved from the owner's direction to start; interpretation and exact instruction are in [OWNER_DECISION.md](OWNER_DECISION.md).
 - All three tasks are promoted at revision 2; implementation gates are approved.
 - [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is approved by the owner; implementation proceeds task by task.
-- E24-T1 is done in current main. E14-T5 remains draft and blocks E26-T3; it does not block E26-T1 or E26-T2 after their own gates pass.
+- E24-T1 and the five owner-approved E14 prerequisites are done. E26-T3 merged in PR #363 and its production release succeeded. T2 application remains gated by the [additive-schema rollback prerequisite](ROLLBACK_COMPATIBILITY.md), observation and canary evidence.
 - Ostrzycka and Jugosłowiańska remain unverified. Planning does not establish a corrected coordinate or a production fix.
 
 ## Scope and completion

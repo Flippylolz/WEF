@@ -274,3 +274,33 @@ async def test_offer_ai_enrichment_schema_exists_at_head() -> None:
         assert revision == EXPECTED_DATABASE_REVISION
     finally:
         await database.engine.dispose()
+
+
+async def test_readiness_allows_only_explicit_additive_rollback_revision() -> None:
+    """The previous reader accepts the known additive revision, not arbitrary drift."""
+    assert TEST_DATABASE_URL is not None
+    settings = Settings(
+        env="test", database_url=TEST_DATABASE_URL, alembic_config=Path("alembic.ini")
+    )
+    database = create_database_resources(TEST_DATABASE_URL)
+    await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
+    services = build_services(settings)
+    try:
+        for revision, ready in (
+            ("20260906_0026", True),
+            ("20260906_0027", False),
+            ("unknown", False),
+        ):
+            async with database.session_factory() as session, session.begin():
+                await session.execute(
+                    text("UPDATE alembic_version SET version_num=:revision"), {"revision": revision}
+                )
+            assert await services.is_ready() is ready
+    finally:
+        async with database.session_factory() as session, session.begin():
+            await session.execute(
+                text("UPDATE alembic_version SET version_num=:revision"),
+                {"revision": EXPECTED_DATABASE_REVISION},
+            )
+        await services.close()
+        await database.engine.dispose()

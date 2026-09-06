@@ -6,9 +6,13 @@ from alembic.config import Config
 from wef_backend.settings import Settings, load_settings
 
 EXPECTED_DATABASE_REVISION = "20260906_0025"
+# E26's next migration only adds independent validation tables. Permit this
+# release to serve reads if application rollback follows that schema upgrade.
+READ_COMPATIBLE_DATABASE_REVISIONS = frozenset({EXPECTED_DATABASE_REVISION, "20260906_0026"})
 
 __all__ = [
     "EXPECTED_DATABASE_REVISION",
+    "READ_COMPATIBLE_DATABASE_REVISIONS",
     "alembic_command",
     "alembic_config",
     "migrate",
