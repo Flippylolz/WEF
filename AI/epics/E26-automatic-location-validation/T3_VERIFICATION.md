@@ -87,3 +87,9 @@ Chromium WebGL selection/cluster cases remain unchanged. A subsequent full local
 run caught accessibility analysis before streamed metadata supplied the title;
 the audit now requires a nonempty title before running every existing Axe rule.
 No retry, timeout, accessibility rule or required browser was removed.
+
+Final expanded `make test-e2e` passed: 48 journeys, 12 explicit non-Chromium
+WebGL skips, zero retries and no failure artifacts. The production code is unchanged
+from the complete `make verify` pass. `make lint test` also passed again (1,243
+backend and 185 frontend tests), followed by frontend typecheck and the expanded
+browser matrix. The two assertions only wait for actual application readiness.
