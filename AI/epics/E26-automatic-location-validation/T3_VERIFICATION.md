@@ -26,16 +26,19 @@ Location confidence warnings are independent of offer data completeness. Unknown
 or absent accuracy fields fall back to “Location unresolved”. No uncertainty
 radius or area polygon is fabricated.
 
-## Evidence so far
+## Local verification
 
 - E14-T5 merged in PR #362 and production release 34023893584 succeeded.
-- `COMPOSE_PROJECT_NAME=wef-e26-t3 make test-backend`: 1,242 tests passed,
-  91.06% coverage before the additional cursor regression.
+- `make verify` passed on code commit `4c034ec`: 1,243 backend tests,
+  185 frontend tests, 91.10% backend coverage, all critical coverage floors, 186 script tests, contract
+  generation/compatibility and negative gates, runtime/rollback proofs, production
+  builds, architecture probes and Markdown links.
 - `uv run pytest tests/test_api.py -q`: 13 passed including no-bbox discovery,
   foreign/malformed cursor rejection and page-size bound.
 - `pnpm --filter web test:coverage`: 185 tests passed; 95.99% lines,
   90.05% branches, existing thresholds retained.
-- Strict backend mypy and frontend typecheck/lint passed during implementation.
+- Strict backend mypy (351 files) and frontend typecheck/lint passed. Production
+  JavaScript is 567,632 gzip bytes across 17 chunks, below the unchanged 569,273 budget.
 - Real PostGIS transition test preserves favorite access across quarantine,
   excludes coordinates from discovery, reconciles counts, tests pagination and
   district/price filters outside the viewport, then proves hidden offers vanish.
@@ -60,3 +63,16 @@ before broad T2 application so quarantined visible offers remain discoverable.
 T2 must not treat a passing synthetic browser case as permission to assert a live
 case was repaired. Rollback must preserve coarse-pin exclusion and list-only
 access; reverting to centroid point rendering is not a safe rollback.
+
+The first browser pass exposed an assertion before map fitting settled; it now
+waits for the actual viewport. The second pass passed 42 journeys and isolated a
+mobile Chrome contact-button hover contrast failure. The hover green was darkened
+while retaining white text. No test retries, contrast exemptions or budget changes
+were introduced. These intermediate failures are not acceptance passes.
+
+Final `make test-e2e` passed on `4c034ec` with 43 journeys across Chromium,
+Firefox, WebKit, Pixel 7 and iPhone 13; 12 explicit non-Chromium WebGL skips,
+zero retries and no failure artifacts. All three WebGL journeys pass in Chromium.
+The runner seeded real PostGIS, migrated, built the API/web/edge and removed the
+disposable project. No critical API routes were mocked. This closes synthetic
+rendering/discovery acceptance, not production T2 repair acceptance.
