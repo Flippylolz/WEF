@@ -12,7 +12,7 @@
     "format:check": "prettier --check .",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage --coverage.reporter=json-summary --coverage.reporter=text",
     "test:e2e": "node ./scripts/prepare-standalone-e2e.mjs && playwright test",

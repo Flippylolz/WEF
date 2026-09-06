@@ -88,10 +88,10 @@ async def test_reveal_rate_limit_and_openapi_path() -> None:
             store=store,
             rate_limiter=FakeRateLimiter(blocked={f"reveal:{user_id}"}),
         )
+        client.cookies.set("wef_session", token_user)
         limited = await client.post(
             f"/api/v1/offers/{offer_id}/contacts/reveal",
             json={},
-            cookies={"wef_session": token_user},
         )
 
     assert limited.status_code == status.HTTP_429_TOO_MANY_REQUESTS

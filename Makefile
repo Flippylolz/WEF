@@ -20,6 +20,7 @@ IMPORTER := $(COMPOSE) --profile operator run --rm historical-importer \
 
 help: ## List supported commands.
 	@printf '%s\n' \
+		'make verify             Run the complete local quality gate (installs locked dependencies)' \
 		'make install            Install frozen backend/frontend dependencies' \
 		'make format             Format backend/frontend source' \
 		'make format-check       Verify source formatting' \
@@ -193,3 +194,23 @@ import-run: ## Run persistence, geocoding, media, and verification until complet
 
 seed-m1: ## Converge the invented local M1 fixture after migrations.
 	$(COMPOSE) --profile operator run --rm seed
+
+.PHONY: verify quality-gates contract-compatibility
+verify: ## Complete local mapping; Runtime images additionally proves deployment topology in CI.
+	@for tool in uv pnpm docker shellcheck git; do command -v "$$tool" >/dev/null || { echo "make verify requires $$tool; see AI/epics/E14-production-hardening-and-scalability/T1_VERIFICATION.md"; exit 1; }; done
+	$(MAKE) install
+	$(MAKE) format-check lint typecheck test contract-check
+	$(MAKE) quality-gates contract-compatibility
+	env -u COMPOSE_PROJECT_NAME $(MAKE) compose-config production-proof build
+	cd apps/backend && $(UV) run python scripts/prove_architecture_violation.py
+	python3 scripts/check_markdown_links.py
+
+quality-gates: ## Fail on drift and prove deliberate removal of quality gates is rejected.
+	$(BACKEND) ruff format --check ../../scripts
+	$(BACKEND) ruff check ../../scripts
+	$(BACKEND) mypy --strict ../../scripts
+	python3 scripts/check_quality_gates.py
+	python3 -m unittest discover -s scripts -t . -p 'test_*.py'
+
+contract-compatibility: ## Compare the generated contract to current main and prove rejection.
+	sh scripts/check_openapi_compatibility.sh

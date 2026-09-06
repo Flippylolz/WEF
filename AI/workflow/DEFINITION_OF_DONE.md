@@ -53,3 +53,11 @@ If this evidence is absent, the task cannot be declared done; restore the workfl
 - `completion.completed_by`, `completion.completed_at`, `completion.pull_request`, and `completion.evidence` are populated.
 - The task is set to `done` only after the above evidence exists.
 - The branch is squash-merged and deleted; follow-up work receives a new task and branch.
+
+## Canonical local gate (E14-T1)
+
+After a fresh checkout, run `make verify` with the recorded tools and Docker.
+The target installs locked dependencies and runs the complete local mapping;
+[the E14-T1 mapping](../epics/E14-production-hardening-and-scalability/T1_VERIFICATION.md)
+names CI-only browser/runtime delegates explicitly.
+A local pass never substitutes for missing or failing required CI checks.
