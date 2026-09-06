@@ -293,3 +293,29 @@ pauses and stale parser identities without making provider calls.
 Validation: `make lint`, `make format-check`, `make typecheck`,
 `make contract-check` and `git diff --check` passed. Isolated-image `make test`
 passed 1,127 backend tests (90.19% coverage) and 169 frontend tests.
+
+## Evidenced recovery field scope correction
+
+At 2026-09-06 05:27 UTC, aggregate production evidence showed 24 transport
+successes, four in the new UTC allocation window, zero validated observations,
+zero duplicate recovery identities and auto-apply off. New rejected proposals
+included area and parking fields; transport success does not establish acceptance.
+
+Code inspection confirmed automatic recovery used the classified gap only for
+preflight, then requested every missing offer field from the enrichment service.
+The correction carries the gap's canonical field allowlist through preparation,
+provider instructions and response selection, including reused durable batches.
+Protected or no-longer-missing fields are excluded immediately before submission;
+an empty scope makes no provider request. A price gap authorizes numeric price
+fields, not a parking/storage inclusion inference. Owner-driven enrichment keeps
+its existing default scope. Source-semantic validation remains unchanged.
+
+This correction makes future eligible requests narrower. It does not replay
+terminal or uncertain attempts, relabel failed proposals as accepted, or change
+quota, release flags, schema or dependencies. Ten fully validated unique revisions
+and the representative window remain required; T4 #337 stays draft.
+
+Validation: lint, formatting, typecheck, API contract checks and diff whitespace
+checks passed. Isolated-image `make test` passed 1,132 backend tests (90.20%
+coverage) and 169 frontend tests; the final strengthened focused assertions passed
+35 tests. No production provider requests were made for verification.
