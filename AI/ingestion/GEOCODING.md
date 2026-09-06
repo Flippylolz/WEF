@@ -195,3 +195,35 @@ This changes future decisions. E26-T2 owns version-aware revalidation of accepte
 locations; E26-T3 owns honest map/list discovery. Existing Ostrzycka and
 Jugosłowiańska points are not verified repaired by the policy tests. Broad existing
 location application waits for the plan's observation, discovery and canary gates.
+
+## E26 durable revalidation (T2 rollout pending)
+
+Migration `20260906_0026` adds an empty control row namespace, keyset work queue
+and immutable observation/application/rollback receipts. It changes no existing
+coordinate. `GEOCODE_REVALIDATION_ENABLED` defaults true; new policy generations
+start in **observe**, never apply. Every worker cycle scans at most 100 locations
+and resolves at most 25 work items. A source fingerprint and target
+normalizer/request/review version make completed work idempotent. Protected
+selection actors become exceptions without a provider request.
+
+Foreground and revalidation share one durable account budget, capped at the
+configured cycle allowance or 25 requests, whichever is lower. With foreground
+work, repair uses at most half that allowance. Both query forms consume this
+same budget. Current cache evidence is reused. Quota pauses the target until the
+UTC daily reset; transient failures use bounded backoff and stop after five
+consecutive failures. Work leases last 120 seconds and renew during active I/O.
+Source/selection revisions, actor protection and the lease fence are checked
+under lock before selection and receipt commit together.
+
+Apply requires deployed honest discovery, completed observations and 1–25 named
+canaries. The queue does not infer real-world correctness from canary completion:
+`verify-canary` records the operator's geometry/map/list verification before
+allowing automatic expansion. No production application or case verification
+has occurred in this implementation. T3 and its E14-T5 dependency remain open.
+
+Rollback pauses scheduling, fences in-flight work and examines up to 25 applied
+receipts per invocation. It restores only unchanged automatic selections whose
+predecessor still passes current source agreement. Missing/invalid predecessors
+are retained without restoration; source/owner/selection edits are skipped.
+Rollback receipts make repeated batches resumable. Schema and history remain in
+place; do not downgrade or restore blanket acceptance during application rollback.

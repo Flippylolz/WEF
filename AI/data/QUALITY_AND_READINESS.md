@@ -137,3 +137,10 @@ accuracy. Exact source offsets alone are insufficient: semantic role, currency, 
 current snapshot and protected ownership are independent application gates. Unknown
 formats remain observation-only. Report the live eligible denominator, unresolved
 reasons, actual spend availability and human interventions before claiming acceptance.
+
+E26-T2 observation reports distinguish quality outcomes from quota/transient
+exceptions and separate observed precision transitions from applied receipts.
+Existing-location counts overlap offer/favorite counts and must not be summed.
+A green synthetic regression suite does not verify the live Ostrzycka or
+Jugosłowiańska pins; those remain open until persisted canary and public discovery
+checks, including authoritative Ostrzycka geometry, are recorded.

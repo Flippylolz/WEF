@@ -237,6 +237,21 @@ class SQLAlchemyGeocodeStore(GeocodeStorePort):
             _cached_from_record((record[0], record[1], record[2])) if record is not None else None
         )
 
+    async def result_in_session(
+        self, session: AsyncSession, result_id: UUID
+    ) -> CachedGeocode | None:
+        """Read immutable predecessor evidence within a guarded rollback transaction."""
+        record = (
+            await session.execute(
+                select(
+                    GeocodeResultRow,
+                    func.ST_X(GeocodeResultRow.point),
+                    func.ST_Y(GeocodeResultRow.point),
+                ).where(GeocodeResultRow.id == result_id)
+            )
+        ).one_or_none()
+        return _cached_from_record((record[0], record[1], record[2])) if record else None
+
     async def select_for_location(
         self,
         *,

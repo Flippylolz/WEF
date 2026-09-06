@@ -470,3 +470,39 @@ Runtime rollback first disables scheduling/application and retains additive meta
 Do not erase reservations to regain quota or reset uncertain work for automatic retry.
 Existing field-origin guarded rollback remains authoritative for enrichment fills.
 T4 historical parser convergence has separate dependency and rollout gates.
+
+## E26 location revalidation
+
+Use the authenticated operator shell in the deployed backend environment:
+
+```sh
+python -m wef_backend.location_validation_command status
+python -m wef_backend.location_validation_command observe
+python -m wef_backend.location_validation_command off
+```
+
+`status` reports private aggregate states, reasons, precision transitions and
+current affected location/offer/favorite counts, plus operator interventions.
+These overlapping populations are not additive and current favorite counts are
+not a historical preservation proof. Receipts and persistence tests establish
+which selection fields changed; source contacts and addresses are not printed.
+
+Do not enable production apply until T3 discovery is deployed and the bounded
+observation report is reviewed. Then supply 1–25 observed canaries, including the
+three tracked cases and protected/current-valid/coarse strata:
+
+```sh
+python -m wef_backend.location_validation_command apply --discovery-ready --canary-id UUID
+```
+
+Repeat `--canary-id` for each location. After persisted canary outcomes, identity
+preservation, budget, public map/list behavior and dated authoritative Ostrzycka
+geometry are verified, run `python -m wef_backend.location_validation_command
+verify-canary`. This enables automatic expansion within the existing request
+budget. Neither command substitutes for that evidence.
+
+`python -m wef_backend.location_validation_command rollback` pauses and fences
+work, then examines at most 25 unapplied rollback receipts. Repeat to drain the
+bounded rollback population. Only unchanged automatic predecessors passing the
+current policy are restored; invalid points and subsequent edits are never
+bulk-restored. Leave additive schema in place through application rollback.

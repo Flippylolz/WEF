@@ -30,10 +30,10 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-06T05:33:04Z"
 dependency_gate:
-  status: stacked
+  status: satisfied
   verified_by: Codex
   verified_at: "2026-09-06T05:28:07Z"
-  evidence: ["E24-T1 done via PR #331", "E26-T1 ancestor PR #355, bugfix/E26-T1-address-agreement, 6d8b954; planning ancestor PR #352"]
+  evidence: ["E24-T1 done via PR #331", "E26-T1 done via PR #355, merge 6722ecb79d47958a92eb3608aeade1a4a3cede9e; release 34016504593 succeeded"]
 branch:
   required: true
   name: feat/E26-T2-location-revalidation

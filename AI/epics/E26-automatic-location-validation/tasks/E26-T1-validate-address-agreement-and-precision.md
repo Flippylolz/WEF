@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E26-T1
 epic: E26
 title: "Validate address agreement and source-supported precision"
-status: in_progress
+status: done
 revision: 2
 priority: P1
 size: L
@@ -42,10 +42,10 @@ branch:
   created_at: "2026-09-06T05:33:04Z"
   pull_request: https://github.com/Flippylolz/WEF/pull/355
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-06T06:45:00Z"
+  pull_request: https://github.com/Flippylolz/WEF/pull/355
+  evidence: ["Merge 6722ecb79d47958a92eb3608aeade1a4a3cede9e", "Release run 34016504593 succeeded", "T1_VERIFICATION.md; 1204 backend and 169 frontend tests passed"]
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -120,3 +120,7 @@ Passed through ready with no task dependencies and approved spike 1 / plan 1 gat
 ## Implementation evidence
 
 [T1 verification](../T1_VERIFICATION.md) maps sanitized regressions, persistence/race tests, validation commands and remaining production boundaries. Application acceptance is verified locally; CI, merge and completion metadata remain pending. Existing production Ostrzycka and Jugosłowiańska points are not claimed fixed.
+
+## Delivery evidence
+
+PR #355 merged as `6722ecb79d47958a92eb3608aeade1a4a3cede9e`; all required checks and [release](https://github.com/Flippylolz/WEF/actions/runs/34016504593) succeeded. This completes future-decision validation, not the existing-location repair or either owner-reported production case.

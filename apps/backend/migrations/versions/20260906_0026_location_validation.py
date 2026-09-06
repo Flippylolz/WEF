@@ -50,7 +50,7 @@ def upgrade() -> None:
         CREATE TABLE location_validation_receipts (
             id uuid PRIMARY KEY,
             work_id uuid NOT NULL REFERENCES location_validation_work(id) ON DELETE CASCADE,
-            mode varchar(16) NOT NULL CHECK (mode IN ('observe','apply')),
+            mode varchar(16) NOT NULL CHECK (mode IN ('observe','apply','rollback')),
             before_json jsonb NOT NULL,
             after_json jsonb NOT NULL,
             outcome varchar(48) NOT NULL,

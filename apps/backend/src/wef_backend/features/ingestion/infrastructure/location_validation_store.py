@@ -16,7 +16,11 @@ from wef_backend.features.ingestion.application.location_revalidation import (
     LEASE_SECONDS,
     ValidationClaim,
 )
-from wef_backend.features.ingestion.domain.geocoding import normalize_location_display_name
+from wef_backend.features.ingestion.domain.geocoding import (
+    normalize_geocode_query,
+    normalize_location_display_name,
+    review_geocode_result,
+)
 from wef_backend.features.ingestion.infrastructure.geocode_store import SQLAlchemyGeocodeStore
 
 if TYPE_CHECKING:
@@ -222,7 +226,6 @@ class SQLAlchemyLocationValidationStore:
                 .one_or_none()
             )
             if row is None:
-                await self._advance_canary(session, control)
                 return None
             await session.execute(
                 text("""
@@ -457,7 +460,8 @@ class SQLAlchemyLocationValidationStore:
             )
         ).all()
         if len(outcomes) == len(control["canary_ids"]) and all(
-            row.state == "terminal" and row.outcome in {"corrected", "unresolved"}
+            (row.state == "terminal" and row.outcome in {"corrected", "unresolved"})
+            or (row.state == "exception" and row.outcome == "protected")
             for row in outcomes
         ):
             await session.execute(
@@ -466,6 +470,43 @@ class SQLAlchemyLocationValidationStore:
                     "target=:target"
                 ),
                 {"target": control["target"]},
+            )
+
+    async def verify_canary(self, *, target: str) -> None:
+        """Record operator verification of real geometry/discovery after canary application."""
+        async with self.factory() as session, session.begin():
+            control = (
+                (
+                    await session.execute(
+                        text(
+                            "SELECT * FROM location_validation_control "
+                            "WHERE target=:target FOR UPDATE"
+                        ),
+                        {"target": target},
+                    )
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if control is None or control["mode"] != "apply":
+                message = "canary verification requires active application"
+                raise ValueError(message)
+            await self._advance_canary(session, control)
+            verified = await session.scalar(
+                text(
+                    "SELECT canary_verified FROM location_validation_control WHERE target=:target"
+                ),
+                {"target": target},
+            )
+            if not verified:
+                message = "all canaries must have completed application before verification"
+                raise ValueError(message)
+            await session.execute(
+                text(
+                    "UPDATE location_validation_control SET operator_actions=operator_actions+1 "
+                    "WHERE target=:target"
+                ),
+                {"target": target},
             )
 
     async def control(
@@ -488,7 +529,8 @@ class SQLAlchemyLocationValidationStore:
                 observed = await session.scalar(
                     text("""
                     SELECT count(DISTINCT location_id) FROM location_validation_work
-                    WHERE target=:target AND state IN ('observed','terminal')
+                    WHERE target=:target AND (state IN ('observed','terminal')
+                        OR (state='exception' AND outcome='protected'))
                         AND location_id::text IN
                         (SELECT jsonb_array_elements_text(CAST(:ids AS jsonb)))
                 """),
@@ -517,6 +559,113 @@ class SQLAlchemyLocationValidationStore:
                     "ids": json.dumps([str(item) for item in canary_ids]),
                 },
             )
+
+            await session.execute(
+                text(
+                    "UPDATE location_validation_work SET state='deferred', fence=fence+1, "
+                    "lease_until=NULL, next_attempt_at=now() "
+                    "WHERE target=:target AND state='leased'"
+                ),
+                {"target": target},
+            )
+
+    async def rollback(self, *, target: str) -> dict[str, int]:
+        """Pause work and restore at most 25 unchanged, still-valid automatic predecessors."""
+        await self.control(target=target, mode="off")
+        counts: dict[str, int] = {}
+        async with self.factory() as session, session.begin():
+            control = await session.scalar(
+                text(
+                    "SELECT mode FROM location_validation_control WHERE target=:target FOR UPDATE"
+                ),
+                {"target": target},
+            )
+            if control != "off":
+                message = "rollback requires paused validation"
+                raise ValueError(message)
+            receipts = (
+                (
+                    await session.execute(
+                        text("""
+                SELECT r.work_id,r.before_json,r.after_json,w.location_id,w.source_fingerprint
+                FROM location_validation_receipts r
+                JOIN location_validation_work w ON w.id=r.work_id
+                WHERE w.target=:target AND r.mode='apply' AND NOT EXISTS (
+                    SELECT 1 FROM location_validation_receipts done
+                    WHERE done.work_id=w.id AND done.mode='rollback')
+                ORDER BY r.created_at DESC,r.id LIMIT 25
+            """),
+                        {"target": target},
+                    )
+                )
+                .mappings()
+                .all()
+            )
+            for receipt in receipts:
+                location = await session.scalar(
+                    select(LocationRow)
+                    .where(LocationRow.id == receipt["location_id"])
+                    .with_for_update()
+                )
+                if location is None:
+                    continue
+                row = (
+                    (
+                        await session.execute(
+                            text(_LOCATION + " WHERE l.id=:id"), {"id": location.id}
+                        )
+                    )
+                    .mappings()
+                    .one()
+                )
+                before = _snapshot(row)
+                outcome = "retained_quarantine"
+                unchanged = (
+                    not _protected(row)
+                    and _fingerprint(_source(row)) == receipt["source_fingerprint"]
+                    and all(
+                        before.get(key) == value
+                        for key, value in receipt["after_json"].items()
+                        if key != "reason"
+                    )
+                )
+                predecessor = receipt["before_json"].get("result_id")
+                after = before
+                if not unchanged:
+                    outcome = "edited_or_protected"
+                elif predecessor:
+                    geocodes = SQLAlchemyGeocodeStore(self.factory)
+                    cached = await geocodes.result_in_session(session, UUID(predecessor))
+                    if cached is not None:
+                        decision = review_geocode_result(
+                            cached.result,
+                            query=normalize_geocode_query(
+                                row["display_address"], district=row["district"]
+                            ),
+                        )
+                        if decision.select_result:
+                            await geocodes.select_in_session(
+                                session,
+                                location=location,
+                                cached=cached,
+                                decision=decision,
+                                actor_type="automatic_policy",
+                                actor_id="e26-guarded-rollback",
+                            )
+                            await session.flush()
+                            after = _snapshot(
+                                (
+                                    await session.execute(
+                                        text(_LOCATION + " WHERE l.id=:id"), {"id": location.id}
+                                    )
+                                )
+                                .mappings()
+                                .one()
+                            )
+                            outcome = "restored_valid_predecessor"
+                await self._receipt(session, receipt["work_id"], "rollback", before, after, outcome)
+                counts[outcome] = counts.get(outcome, 0) + 1
+        return counts
 
     async def status(self, *, target: str) -> dict[str, Any]:
         """Return aggregate progress and transition counts without source addresses."""
@@ -564,6 +713,45 @@ class SQLAlchemyLocationValidationStore:
                 .mappings()
                 .all()
             )
+            populations = (
+                (
+                    await session.execute(
+                        text("""
+                    WITH affected AS (
+                        SELECT DISTINCT location_id FROM location_validation_work
+                        WHERE target=:target
+                    )
+                    SELECT (SELECT count(*) FROM affected) AS unique_locations,
+                        (SELECT count(*) FROM offers o
+                            JOIN affected a ON a.location_id=o.location_id)
+                            AS existing_offers,
+                        (SELECT count(*) FROM offers o
+                            JOIN affected a ON a.location_id=o.location_id
+                            WHERE o.visibility='visible') AS visible_offers,
+                        (SELECT count(*) FROM favorite_locations f
+                            JOIN affected a ON a.location_id=f.location_id) AS existing_favorites
+                """),
+                        {"target": target},
+                    )
+                )
+                .mappings()
+                .one()
+            )
+            reasons = (
+                (
+                    await session.execute(
+                        text("""
+                    SELECT r.mode,r.after_json->>'reason' AS reason,count(*) AS count
+                    FROM location_validation_receipts r
+                    JOIN location_validation_work w ON w.id=r.work_id
+                    WHERE w.target=:target GROUP BY r.mode,reason
+                """),
+                        {"target": target},
+                    )
+                )
+                .mappings()
+                .all()
+            )
             return {
                 "target": target,
                 "control": {
@@ -574,4 +762,6 @@ class SQLAlchemyLocationValidationStore:
                 else None,
                 "states": [dict(row) for row in states],
                 "transitions": [dict(row) for row in transitions],
+                "population": dict(populations),
+                "reasons": [dict(row) for row in reasons],
             }

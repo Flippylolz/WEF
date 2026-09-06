@@ -701,3 +701,8 @@ Genuine owner/AI decisions remain protected inside the selection transaction.
 See [geocoding policy](GEOCODING.md#e26-address-validation-warsaw-review-v2).
 Accepted legacy rows are unchanged by this task; E26-T2 owns repair, and T3 owns
 honest precision/discovery before broad existing-location application.
+
+E26-T2 adds a versioned existing-location scan to recurring geocoding, initially
+in observation mode. It shares the foreground account budget and leaves source
+identity, offers, favorites and protected corrections untouched. Explicit apply
+and verified-canary controls gate canonical changes; see [GEOCODING.md](GEOCODING.md).

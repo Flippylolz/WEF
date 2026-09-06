@@ -24,7 +24,11 @@ async def run(
     database = create_database_resources(settings.database_url)
     try:
         store = SQLAlchemyLocationValidationStore(database.session_factory)
-        if action != "status":
+        if action == "rollback":
+            await store.rollback(target=VALIDATION_TARGET)
+        elif action == "verify-canary":
+            await store.verify_canary(target=VALIDATION_TARGET)
+        elif action != "status":
             await store.control(
                 target=VALIDATION_TARGET,
                 mode=action,
@@ -40,7 +44,10 @@ def main() -> None:
     """Require explicit discovery readiness and observed canaries before apply mode."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "action", choices=("status", "off", "observe", "apply"), nargs="?", default="status"
+        "action",
+        choices=("status", "off", "observe", "apply", "verify-canary", "rollback"),
+        nargs="?",
+        default="status",
     )
     parser.add_argument("--canary-id", action="append", type=UUID, default=[])
     parser.add_argument("--discovery-ready", action="store_true")

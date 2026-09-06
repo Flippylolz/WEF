@@ -163,19 +163,15 @@ class RevalidateLocations:
         )
         try:
             while True:
-                try:
-                    result = await asyncio.wait_for(
-                        asyncio.shield(task), timeout=RESOLUTION_POLL_SECONDS
-                    )
-                except TimeoutError:
-                    if task.done():
-                        raise
+                done, _ = await asyncio.wait({task}, timeout=RESOLUTION_POLL_SECONDS)
+                if not done:
                     if not await self.store.renew(claim, now=datetime.now(UTC)):
-                        raise CacheWaitExpiredError from None
-                else:
-                    if result.cached.result.error_code not in {None, GeocodeErrorCode.NO_RESULT}:
-                        raise ProviderPauseError
-                    return result
+                        raise CacheWaitExpiredError
+                    continue
+                result = task.result()
+                if result.cached.result.error_code not in {None, GeocodeErrorCode.NO_RESULT}:
+                    raise ProviderPauseError
+                return result
         finally:
             if not task.done():
                 task.cancel()
