@@ -1,11 +1,10 @@
 ---
-schema: ai-workflow/proposed-task@1
+schema: ai-workflow/task@1
 id: E26-T3
 epic: E26
 title: "Show honest map precision and prove real pin behavior"
-status: proposed
-revision: 1
-actionable: false
+status: draft
+revision: 2
 priority: P1
 size: M
 milestone: M5
@@ -15,10 +14,43 @@ decision_ids: [ADR-003, ADR-005, ADR-012, ADR-021]
 deferred_decision_ids: []
 source: "owner-requested-system-audit:2026-09-05"
 promotion:
-  status: not_promoted
-  target: null
-  promoted_by: null
-  promoted_at: null
+  source: ../proposed-tasks/E26-T3-show-honest-map-precision.md
+  promoted_by: Codex
+  promoted_at: "2026-09-06T05:28:07Z"
+spike_gate:
+  status: satisfied
+  file: ../SPIKE.md
+  approved_revision: 1
+  verified_by: Codex
+  verified_at: "2026-09-06T05:28:07Z"
+implementation_gate:
+  status: satisfied
+  file: ../IMPLEMENTATION_PLAN.md
+  approved_revision: 1
+  verified_by: Codex
+  verified_at: "2026-09-06T05:33:04Z"
+dependency_gate:
+  status: blocked
+  verified_by: Codex
+  verified_at: "2026-09-06T05:28:07Z"
+  evidence: ["See implementation plan revision 1; incomplete dependencies remain blocked"]
+branch:
+  required: true
+  name: null
+  task_id: E26-T3
+  one_task_only: true
+  created_at: null
+  pull_request: null
+completion:
+  completed_by: null
+  completed_at: null
+  pull_request: null
+  evidence: []
+invalidation:
+  invalidated_by: null
+  invalidated_at: null
+  reason: null
+  return_to: null
 ---
 
 # E26-T3: Show honest map precision and prove real pin behavior
@@ -51,7 +83,7 @@ Run affected format/lint/type/test/contract checks, the [definition of done](../
 
 Required task dependencies: E26-T1, E14-T5. Their completed or valid stacked state must be proven before implementation begins; all must be done before completion/merge.
 
-This candidate remains non-actionable under the [workflow](../../../workflow/README.md). It must move rather than copy to `tasks/`, retain its ID, and receive complete promotion and gate metadata.
+This task is promoted under spike revision 1. Implementation plan revision 1 is approved; the dependency gate must be satisfied or validly stacked before implementation.
 
 ## Rollout and automatic operation
 
@@ -71,8 +103,12 @@ Do not add production dependencies without owner approval, commit raw source/cre
 
 ## Promotion checklist
 
-- [ ] Current epic spike revision explicitly approved.
+- [x] Spike revision 1 approval interpretation recorded in the owner decision.
 - [ ] Scope, acceptance, dependencies, tests, risks, rollout, and rollback reviewed against that revision.
 - [ ] All referenced dependencies and required decisions resolved for the planned sequence.
-- [ ] File moved, not copied, into `tasks/` with attributable promotion metadata.
+- [x] File moved, not copied, into `tasks/` with attributable promotion metadata.
 - [ ] Dedicated branch and PR will cover this task only after implementation gates clear.
+
+## Refined implementation boundary
+
+Implement the corresponding T3 section of [implementation plan revision 1](../IMPLEMENTATION_PLAN.md), including its numeric budgets, migration/contract boundaries, protected-state guards and verification requirements. This refinement is task revision 2. No acceptance case is marked fixed by planning.

@@ -2,7 +2,7 @@
 schema: ai-workflow/spike@1
 epic: E26
 title: "Automatic location validation and repair"
-status: awaiting_approval
+status: approved
 revision: 1
 owner: owner
 research_only: true
@@ -15,11 +15,11 @@ domain_docs:
 proposed_task_ids: [E26-T1, E26-T2, E26-T3]
 approval:
   required_role: owner
-  status: pending
-  decided_by: null
-  decided_at: null
-  approved_revision: null
-  evidence: null
+  status: approved
+  decided_by: "Owner (Flippylolz), recorded by Codex"
+  decided_at: "2026-09-06T05:28:07Z"
+  approved_revision: 1
+  evidence: "Owner selected E26 and directed: let's start; see OWNER_DECISION.md"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -40,9 +40,9 @@ Map positions agree with source addresses and expose their true precision. Routi
 The owner selected this audit and requested minimal manual operation on 2026-09-05. Routine human approvals/actions are not the product recovery mechanism. Existing [repository governance](../../governance/REPOSITORY_RULES.md) and [delivery workflow](../../workflow/README.md) still govern implementation revisions and releases. No new production dependency, provider spend increase, destructive data repair, or topology change is implicitly approved.
 
 Affected domain documentation:
-- [AI/ingestion/PIPELINE.md](../../../AI/ingestion/PIPELINE.md)
-- [AI/data/QUALITY_AND_READINESS.md](../../../AI/data/QUALITY_AND_READINESS.md)
-- [AI/operations/OPERATOR_COMMANDS.md](../../../AI/operations/OPERATOR_COMMANDS.md)
+- [AI/ingestion/PIPELINE.md](../../ingestion/PIPELINE.md)
+- [AI/data/QUALITY_AND_READINESS.md](../../data/QUALITY_AND_READINESS.md)
+- [AI/operations/OPERATOR_COMMANDS.md](../../operations/OPERATOR_COMMANDS.md)
 
 ## Research method and evidence
 
@@ -69,9 +69,9 @@ The task files define proposed acceptance and rollout boundaries, not approval t
 
 ## Proposed task boundaries
 
-- [E26-T1: Validate address agreement and source-supported precision](proposed-tasks/E26-T1-validate-address-agreement-and-precision.md) — P1/L; dependencies: none.
-- [E26-T2: Revalidate and repair existing points automatically](proposed-tasks/E26-T2-revalidate-and-repair-existing-points.md) — P1/L; dependencies: E24-T1, E26-T1.
-- [E26-T3: Show honest map precision and prove real pin behavior](proposed-tasks/E26-T3-show-honest-map-precision.md) — P1/M; dependencies: E26-T1, E14-T5.
+- [E26-T1: Validate address agreement and source-supported precision](tasks/E26-T1-validate-address-agreement-and-precision.md) — P1/L; dependencies: none.
+- [E26-T2: Revalidate and repair existing points automatically](tasks/E26-T2-revalidate-and-repair-existing-points.md) — P1/L; dependencies: E24-T1, E26-T1.
+- [E26-T3: Show honest map precision and prove real pin behavior](tasks/E26-T3-show-honest-map-precision.md) — P1/M; dependencies: E26-T1, E14-T5.
 
 ## Risks and open questions
 
@@ -90,8 +90,8 @@ Material changes to source semantics, geospatial confidence/precision claims, au
 - [x] Affected modules/domain documents and decisions identified.
 - [x] Proposed task scope, acceptance, dependencies, and exception handling recorded.
 - [x] Outputs are documentation only; no production or disposable proof artifacts created.
-- [x] Revision 1 is awaiting approval; decision metadata remains pending.
+- [x] Owner direction to start E26 recorded as approval to advance revision 1 into task refinement and planning; implementation approval remains separate.
 
 ## Owner decision
 
-Record an attributable owner decision for this exact revision using the YAML approval object and durable evidence. Approval permits task refinement/promotion and implementation planning, not production code by itself.
+See [owner decision](OWNER_DECISION.md). The owner selected E26 and directed “let's start”. This is recorded as approval to advance the existing spike recommendation into task refinement and planning. It does not approve the implementation plan prepared afterward.
