@@ -1,0 +1,1 @@
+{"version": 8, "name": "Synthetic offline browser fixture", "sources": {}, "layers": [{"id": "background", "type": "background", "paint": {"background-color": "#172233"}}], "glyphs": "/media/e2e-glyphs.pbf?font={fontstack}&range={range}"}

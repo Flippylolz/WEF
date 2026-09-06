@@ -16,6 +16,7 @@ type OfferPanelProps = {
   feature: LocationMapFeature | null;
   offers: OfferState;
   onRetry?: () => void;
+  onOfferTrigger: (offerId: string, trigger: HTMLButtonElement | null) => void;
   onSelectOffer: (
     offerId: string,
     matchesFilters: boolean,
@@ -28,6 +29,7 @@ export function OfferPanel({
   offers,
   onRetry,
   onSelectOffer,
+  onOfferTrigger,
 }: OfferPanelProps) {
   const t = useTranslations("map");
   if (!feature) {
@@ -130,6 +132,7 @@ export function OfferPanel({
             ) : null}
             <button
               className="offer-detail-trigger"
+              ref={(node) => onOfferTrigger(offer.id, node)}
               type="button"
               onClick={(event) =>
                 onSelectOffer(

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E14-T4
 epic: E14
 title: "Refactor backend ingestion and operator seams"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: L
@@ -40,12 +40,12 @@ branch:
   task_id: E14-T4
   one_task_only: true
   created_at: "2026-09-06T07:49:46.660733+00:00"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/361
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-06T08:40:32.182542+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/361
+  evidence: ["Full make verify passed: 1232 backend, 172 frontend, 184 script tests", "PR #361 all required checks passed; merge a786d6b785253a3413ed5d338a443ba917fb5a70; release 34021148552 succeeded", "See ../T4_VERIFICATION.md"]
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -75,12 +75,12 @@ replay identity, provenance, public projections, and CLI behavior remain compati
 
 ## Acceptance criteria and checks
 
-- [ ] Characterization tests show identical accepted/rejected extraction, persisted values, revision/provenance, live new/edit/delete convergence, checkpoints, and operator output/exit codes.
-- [ ] Transaction and lock ownership is documented and protected by rollback, cancellation, duplicate/replay, and concurrent-attempt tests.
-- [ ] Domain/application layers remain framework independent and all 17+ architecture contracts plus the violation probe pass.
-- [ ] Error paths remain bounded and redact source text, contacts, credentials, sessions, paths, and provider secrets.
-- [ ] Complexity/suppression counts improve in the selected hotspots without moving responsibilities into generic utility modules.
-- [ ] Ruff, strict mypy, architecture, unit, PostGIS integration, migration, replay/idempotency, cancellation, CLI, and coverage checks pass.
+- [x] Characterization tests show identical accepted/rejected extraction, persisted values, revision/provenance, live new/edit/delete convergence, checkpoints, and operator output/exit codes.
+- [x] Transaction and lock ownership is documented and protected by rollback, cancellation, duplicate/replay, and concurrent-attempt tests.
+- [x] Domain/application layers remain framework independent and all 17+ architecture contracts plus the violation probe pass.
+- [x] Error paths remain bounded and redact source text, contacts, credentials, sessions, paths, and provider secrets.
+- [x] Complexity/suppression counts improve in the selected hotspots without moving responsibilities into generic utility modules.
+- [x] Ruff, strict mypy, architecture, unit, PostGIS integration, migration, replay/idempotency, cancellation, CLI, and coverage checks pass.
 
 ## Dependencies and gates
 
@@ -95,7 +95,7 @@ atomicity, retry, or checkpoint rule requires spike/plan revalidation.
 
 - [x] E14 spike revision 1 is owner-approved under AD-041.
 - [x] The task was moved to `tasks/` with complete promotion metadata.
-- [ ] E14 implementation plan revision 1 is owner-approved and E14-T2 is done.
+- [x] E14 implementation plan revision 1 is owner-approved and E14-T2 is done.
 
 ## Start evidence
 

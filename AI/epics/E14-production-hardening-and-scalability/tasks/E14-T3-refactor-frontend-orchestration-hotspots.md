@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E14-T3
 epic: E14
 title: "Refactor frontend orchestration hotspots"
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: L
@@ -40,12 +40,12 @@ branch:
   task_id: E14-T3
   one_task_only: true
   created_at: "2026-09-06T07:38:56.306420+00:00"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/360
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-06T08:08:28.800204+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/360
+  evidence: ["Full make verify passed: 1218 backend, 172 frontend, 184 scripts; axe/keyboard, cycle and bundle probes", "PR #360 all required CI passed; merged 88aaa5c1467b66323d531786548e1033814d9a23; release 34020756109 succeeded"]
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -76,12 +76,12 @@ API contracts, and rendered behavior remain unchanged.
 
 ## Acceptance criteria and checks
 
-- [ ] Characterization tests prove identical URL serialization, filter application, map/list selection, modal/drawer focus, auth/contact/favorite flows, and error/empty/loading states before and after refactor.
-- [ ] Each extracted seam has one clear owner and a narrow typed interface; cross-seam cycles are absent.
-- [ ] No backend-owned visibility, authorization, grouping, masking, or filter rule is copied into frontend logic.
-- [ ] Axe/component tests cover changed interactive surfaces and keyboard/focus behavior.
-- [ ] Production build succeeds and the route's shipped JavaScript does not regress beyond an approved bundle budget.
-- [ ] Format, lint, strict type, unit/component, coverage, accessibility, contract, build, and bundle-diff checks pass.
+- [x] Characterization tests prove identical URL serialization, filter application, map/list selection, modal/drawer focus, auth/contact/favorite flows, and error/empty/loading states before and after refactor.
+- [x] Each extracted seam has one clear owner and a narrow typed interface; cross-seam cycles are absent.
+- [x] No backend-owned visibility, authorization, grouping, masking, or filter rule is copied into frontend logic.
+- [x] Axe/component tests cover changed interactive surfaces and keyboard/focus behavior.
+- [x] Production build succeeds and the route's shipped JavaScript does not regress beyond an approved bundle budget.
+- [x] Format, lint, strict type, unit/component, coverage, accessibility, contract, build, and bundle-diff checks pass.
 
 ## Dependencies and gates
 
@@ -97,7 +97,7 @@ smaller file count is not acceptance evidence.
 
 - [x] E14 spike revision 1 is owner-approved under AD-041.
 - [x] E13-T3 is done and the task was promoted with complete metadata.
-- [ ] E14 implementation plan revision 1 is owner-approved and E14-T2 is done.
+- [x] E14 implementation plan revision 1 is owner-approved and E14-T2 is done.
 
 ## Start evidence
 

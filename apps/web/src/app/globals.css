@@ -61,7 +61,6 @@ body {
   box-shadow: 0 0.2rem 0.8rem rgb(0 0 0 / 40%);
   font-size: 0.65rem;
   line-height: 1.2;
-  opacity: 0.78;
   pointer-events: none;
   backdrop-filter: blur(4px);
 }

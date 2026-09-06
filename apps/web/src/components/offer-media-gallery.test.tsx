@@ -127,7 +127,27 @@ describe("OfferMediaGallery", () => {
         name: /media 1 of 2/,
       }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "detailClose" })).toHaveFocus();
+    await user.tab();
+    expect(
+      screen.getByRole("button", { name: "detailMediaNext" }),
+    ).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(screen.getByRole("button", { name: "detailClose" })).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(
+      screen.getByRole("button", { name: "detailMediaNext" }),
+    ).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "detailClose" })).toHaveFocus();
+    const parentEscape = vi.fn();
+    window.addEventListener("keydown", parentEscape);
     await user.keyboard("{Escape}");
+    window.removeEventListener("keydown", parentEscape);
+    expect(parentEscape).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: 'detailOpenMedia:{"index":1}' }),
+    ).toHaveFocus();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 

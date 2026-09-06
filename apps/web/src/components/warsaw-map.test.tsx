@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { forwardRef, useImperativeHandle, type ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WarsawMap } from "@/components/warsaw-map";
 import type { LocationMap } from "@/lib/catalog-api";
@@ -217,8 +217,14 @@ const mapData: LocationMap = {
 };
 
 describe("WarsawMap", () => {
+  beforeEach(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+      getExtension: () => ({ loseContext: vi.fn() }),
+    } as unknown as WebGL2RenderingContext);
+  });
   afterEach(() => {
     cleanup();
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     vi.useRealTimers();
     vi.stubGlobal("ResizeObserver", ResizeObserverMock);
@@ -656,11 +662,10 @@ describe("WarsawMap", () => {
   });
   it("recenters only when the focus target leaves the comfortable core", async () => {
     const user = userEvent.setup();
-    const data = mapData;
     const { rerender } = render(
       <WarsawMap
         bbox="20.8,52.1,21.2,52.4"
-        data={data}
+        data={mapData}
         selectedId={null}
         loadingLabel="Loading interactive map"
         onSelect={() => undefined}
@@ -677,7 +682,7 @@ describe("WarsawMap", () => {
     rerender(
       <WarsawMap
         bbox="20.8,52.1,21.2,52.4"
-        data={data}
+        data={mapData}
         selectedId={null}
         loadingLabel="Loading interactive map"
         onSelect={() => undefined}
@@ -690,5 +695,50 @@ describe("WarsawMap", () => {
     expect(easeTo).toHaveBeenCalledWith(
       expect.objectContaining({ center: [20.81, 52.39] }),
     );
+  });
+  it.each(["unavailable", "throws"])(
+    "preserves fallback when WebGL2 is %s",
+    (mode) => {
+      vi.mocked(HTMLCanvasElement.prototype.getContext).mockImplementation(
+        () => {
+          if (mode === "throws") throw new Error("Synthetic GPU failure");
+          return null;
+        },
+      );
+      const onFailure = vi.fn();
+      render(
+        <WarsawMap
+          bbox="20.8,52.1,21.2,52.4"
+          data={mapData}
+          selectedId={null}
+          onSelect={vi.fn()}
+          onViewportChange={vi.fn()}
+          onFailure={onFailure}
+          loadingLabel="Loading"
+        />,
+      );
+      expect(onFailure).toHaveBeenCalledOnce();
+    },
+  );
+  it("renders without the optional context-loss extension", () => {
+    vi.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValue({
+      getExtension: () => null,
+    } as unknown as WebGL2RenderingContext);
+    const onFailure = vi.fn();
+    render(
+      <WarsawMap
+        bbox="20.8,52.1,21.2,52.4"
+        data={mapData}
+        selectedId={null}
+        onSelect={vi.fn()}
+        onViewportChange={vi.fn()}
+        onFailure={onFailure}
+        loadingLabel="Loading"
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "simulated-map-click" }),
+    ).toBeVisible();
+    expect(onFailure).not.toHaveBeenCalled();
   });
 });

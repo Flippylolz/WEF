@@ -107,7 +107,7 @@ def assert_shared_verification(source: str) -> None:
         "prove_contract_drift.py",
         "breaking --fail-on ERR",
         "openapi-breaking-probe.json",
-        "test:e2e",
+        "make test-e2e",
         "pnpm audit --prod --audit-level high",
         "make compose-config",
         "make production-proof",

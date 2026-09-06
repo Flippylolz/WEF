@@ -137,7 +137,27 @@ type WarsawMapProps = {
   reduceMotion?: boolean;
 };
 
-export function WarsawMap({
+function supportsWebGL2() {
+  try {
+    const context = document.createElement("canvas").getContext("webgl2");
+    if (!context) return false;
+    context.getExtension("WEBGL_lose_context")?.loseContext();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function WarsawMap(props: WarsawMapProps) {
+  const [supported] = useState(supportsWebGL2);
+  const { onFailure } = props;
+  useEffect(() => {
+    if (!supported) onFailure();
+  }, [supported, onFailure]);
+  return supported ? <WebGLWarsawMap {...props} /> : null;
+}
+
+function WebGLWarsawMap({
   bbox,
   data,
   selectedId,
