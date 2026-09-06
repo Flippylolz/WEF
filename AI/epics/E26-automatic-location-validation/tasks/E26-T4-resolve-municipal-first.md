@@ -40,7 +40,7 @@ branch:
   task_id: E26-T4
   one_task_only: true
   created_at: "2026-09-06T15:24:20.540396+00:00"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/369
 completion:
   completed_by: null
   completed_at: null
@@ -63,3 +63,7 @@ Implement the owner-authorized [follow-up specification](../MUNICIPAL_FIRST.md).
 - Hosted fallback retains budgets and address/precision checks. AI only recovers source-supported address text, followed by verified lookup; never AI coordinates.
 - Durable versioned caches, bounded attempts, restart behavior, owner protection and uncertainty are tested.
 - Required local/CI gates pass; release succeeds; production observation identifies backfill needs before bounded application.
+
+## Deployment verification
+
+Implementation and bounded production verification passed. See [T4 verification](../T4_VERIFICATION.md). Catalog-wide application remains locked pending explicit owner approval after automatic approval review rejected expansion beyond the nine verified canaries.

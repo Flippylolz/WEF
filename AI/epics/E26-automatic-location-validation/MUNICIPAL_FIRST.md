@@ -95,3 +95,6 @@ features. The follow-up treats a complete empty response as no match and require
 a valid EPSG:2178 CRS object for every nonempty response. Malformed nonempty CRS
 shapes produce the existing transient municipal-unavailable outcome. Production
 remains in observation mode until this regression and the canary proof pass.
+
+
+The empty-response correction is released and the live municipal/canary checks passed. [Final verification and backfill state](T4_VERIFICATION.md) supersede the interim rollout notes above.
