@@ -7,6 +7,7 @@ import pytest
 from tests.fakes import FakeContactCipher, FakeContactStore, FakeRateLimiter
 from wef_backend.features.contacts.application.reveal import (
     ContactInput,
+    PersistOfferContacts,
     RevealOfferContacts,
     build_contact_records,
 )
@@ -187,3 +188,56 @@ def test_decode_secret_key_rejects_bad_material() -> None:
     assert full.available is True
     with pytest.raises(Exception, match="invalid"):
         full.decrypt("not-valid-ciphertext")
+
+
+async def test_replacing_contact_set_deduplicates_and_can_clear_without_keys() -> None:
+    store = FakeContactStore()
+    offer = uuid4()
+    cipher = FakeContactCipher()
+    persist = PersistOfferContacts(store, cipher)
+    await persist(
+        offer_id=offer,
+        source_message_id=None,
+        contacts=(
+            ContactInput(ContactKind.PHONE, "+48 111 222 333"),
+            ContactInput(ContactKind.PHONE, "+48111222333"),
+        ),
+    )
+    assert len(store.contacts[offer]) == 1
+    assert store.contacts[offer][0].masked_value != "+48111222333"
+    await PersistOfferContacts(store, FakeContactCipher(available=False))(
+        offer_id=offer,
+        source_message_id=None,
+        contacts=(),
+    )
+    assert store.contacts[offer] == []
+    assert build_contact_records(cipher, offer_id=offer, source_message_id=None, contacts=()) == ()
+
+
+async def test_hidden_offer_with_contacts_never_decrypts_or_returns_them() -> None:
+    class DecryptionForbidden(FakeContactCipher):
+        def decrypt(self, ciphertext: str) -> str:
+            del ciphertext
+            message = "hidden contact decryption was attempted"
+            raise AssertionError(message)
+
+    offer = uuid4()
+    store = FakeContactStore()
+    store.contacts[offer] = list(
+        build_contact_records(
+            FakeContactCipher(),
+            offer_id=offer,
+            source_message_id=None,
+            contacts=(ContactInput(ContactKind.TELEGRAM, "@synthetic_agent"),),
+        )
+    )
+    result = await RevealOfferContacts(store, DecryptionForbidden(), FakeRateLimiter())(
+        user_id=uuid4(),
+        offer_id=offer,
+        request_id=uuid4(),
+        must_change_password=False,
+    )
+    assert result.outcome is RevealOutcome.FORBIDDEN
+    assert result.contacts == ()
+    assert result.not_found
+    assert "synthetic_agent" not in str(store.audits)

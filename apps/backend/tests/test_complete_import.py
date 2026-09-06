@@ -19,6 +19,7 @@ from wef_backend.features.ingestion.application.complete_import import (
     PreparedImport,
     ProviderBatchLimitError,
     ProviderDailyBudgetError,
+    ProviderPauseError,
     ProviderReservation,
     build_incremental_plan,
     messages_to_process,
@@ -247,3 +248,60 @@ async def test_budgeted_geocoder_pauses_without_network_when_daily_budget_is_ful
         await geocoder.geocode(normalize_geocode_query("Warszawa"))
 
     assert hosted.calls == 0
+
+
+@pytest.mark.parametrize(
+    ("code", "outcome", "exception"),
+    [
+        (GeocodeErrorCode.NO_RESULT, "no_result", None),
+        (GeocodeErrorCode.QUOTA, "quota", ProviderDailyBudgetError),
+        (GeocodeErrorCode.TIMEOUT, "transient", ProviderPauseError),
+    ],
+)
+async def test_provider_outcomes_are_recorded_without_losing_quota_semantics(
+    code: GeocodeErrorCode, outcome: str, exception: type[Exception] | None
+) -> None:
+    budget = FakeBudget([ProviderReservation(uuid4(), NOW)])
+    geocoder = DurableBudgetedGeocoder(
+        FakeGeocoder(_result(code)),
+        budget,
+        uuid4(),
+        "synthetic",
+        10,
+        timedelta(0),
+        1,
+        clock=lambda: NOW,
+    )
+    if exception:
+        with pytest.raises(exception):
+            await geocoder.geocode(normalize_geocode_query("Warszawa"))
+    else:
+        result = await geocoder.geocode(normalize_geocode_query("Warszawa"))
+        assert result.error_code is GeocodeErrorCode.NO_RESULT
+    assert budget.completions == [(outcome, code.value)]
+
+
+async def test_provider_exception_records_redacted_failure_and_charges_request() -> None:
+    class FailingGeocoder:
+        provider = GeocodeProvider.GEOAPIFY
+
+        async def geocode(self, _query: object) -> GeocodeResult:
+            message = "synthetic private payload"
+            raise RuntimeError(message)
+
+    budget = FakeBudget([ProviderReservation(uuid4(), NOW)])
+    geocoder = DurableBudgetedGeocoder(
+        FailingGeocoder(),
+        budget,
+        uuid4(),
+        "synthetic",
+        10,
+        timedelta(0),
+        1,
+        clock=lambda: NOW,
+    )
+    with pytest.raises(RuntimeError, match="synthetic private"):
+        await geocoder.geocode(normalize_geocode_query("Warszawa"))
+    assert budget.completions == [("failed", "provider_exception")]
+    with pytest.raises(ProviderBatchLimitError):
+        await geocoder.geocode(normalize_geocode_query("Warszawa"))

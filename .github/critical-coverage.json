@@ -1,0 +1,16 @@
+{
+  "backend": {
+    "src/wef_backend/features/identity/domain/model.py": {"combined": 98},
+    "src/wef_backend/features/identity/application/identity.py": {"combined": 92},
+    "src/wef_backend/features/contacts/application/reveal.py": {"combined": 98},
+    "src/wef_backend/features/catalog/application/map_query.py": {"combined": 95},
+    "src/wef_backend/features/catalog/application/browse_catalog.py": {"combined": 95},
+    "src/wef_backend/features/ingestion/application/persistence.py": {"combined": 97},
+    "src/wef_backend/features/ingestion/application/raw_replay.py": {"combined": 98},
+    "src/wef_backend/features/ingestion/application/complete_import.py": {"combined": 95}
+  },
+  "frontend": {
+    "src/lib/auth-api.ts": {"lines": 98, "branches": 91},
+    "src/lib/map-search-params.ts": {"lines": 98, "branches": 94}
+  }
+}

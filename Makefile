@@ -74,13 +74,9 @@ typecheck: ## Run static type checks.
 	$(BACKEND) mypy
 	$(PNPM) --filter web typecheck
 
-test-backend: ## Run backend tests against disposable PostGIS.
-	$(COMPOSE) --profile test up --detach --wait db
-	$(COMPOSE) --profile test run --rm --no-deps test-db-reset
-	$(COMPOSE) --profile test run --rm --no-deps --build backend-test
+test-backend: coverage-backend ## Run PostGIS tests and independently enforce critical floors.
 
-test-frontend: ## Run frontend unit tests.
-	$(COMPOSE) --profile test run --rm --no-deps --build frontend-test
+test-frontend: coverage-frontend ## Run frontend tests with global and critical floors.
 
 test: test-backend test-frontend ## Run backend tests, then frontend tests.
 
@@ -98,12 +94,14 @@ coverage-backend: ## Run backend tests and write the coverage JSON.
 		backend-test pytest --cov=wef_backend --cov-branch \
 		--cov-fail-under=90 \
 		--cov-report=json:/coverage/coverage.json --cov-report=term-missing
+	python3 scripts/check_critical_coverage.py --backend tmp/coverage/backend/coverage.json
 
 coverage-frontend: ## Run frontend tests and write the coverage JSON.
 	mkdir -p "$(CURDIR)/tmp/coverage/frontend"
 	$(COMPOSE) --profile test run --rm --no-deps --build \
 		--volume "$(CURDIR)/tmp/coverage/frontend:/coverage" \
 		frontend-test pnpm test:coverage --coverage.reportsDirectory=/coverage/report
+	python3 scripts/check_critical_coverage.py --frontend tmp/coverage/frontend/report/coverage-summary.json
 
 coverage: coverage-backend coverage-frontend ## Refresh the combined coverage badge.
 	python3 scripts/render_coverage_badge.py \
@@ -210,6 +208,7 @@ quality-gates: ## Fail on drift and prove deliberate removal of quality gates is
 	$(BACKEND) ruff check ../../scripts
 	$(BACKEND) mypy --strict ../../scripts
 	python3 scripts/check_quality_gates.py
+	$(BACKEND) python ../../scripts/prove_critical_faults.py
 	python3 -m unittest discover -s scripts -t . -p 'test_*.py'
 
 contract-compatibility: ## Compare the generated contract to current main and prove rejection.
