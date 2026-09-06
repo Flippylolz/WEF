@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E26
 title: "Automatic location validation and repair"
-status: selected
+status: done
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -38,8 +38,9 @@ The owner requested as little manual work as possible, with manual work only in 
 - Spike revision 1 advanced to approved from the owner's direction to start; interpretation and exact instruction are in [OWNER_DECISION.md](OWNER_DECISION.md).
 - All three tasks are promoted at revision 2; implementation gates are approved.
 - [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is approved by the owner; implementation proceeds task by task.
-- E24-T1 and the five owner-approved E14 prerequisites are done. E26-T3 merged in PR #363 and its production release succeeded. T2 application remains gated by the [additive-schema rollback prerequisite](ROLLBACK_COMPATIBILITY.md), observation and canary evidence.
-- Ostrzycka and Jugosłowiańska remain unverified. Planning does not establish a corrected coordinate or a production fix.
+- E24-T1, the five owner-approved E14 prerequisites and all three E26 tasks are done. The rollback-compatible release preceded T2; live canary verification preceded automatic expansion.
+- Ostrzycka and both Jugosłowiańska cases have verified quarantine outcomes: no selected coordinate or map pin, with offers retained in uncertain discovery. Exact replacement coordinates remain unresolved. See [production evidence](PRODUCTION_ROLLOUT.md).
+- The remaining catalog pass is running automatically under the existing daily budget. Epic completion records deployed behavior and verified rollout, not an already-drained queue.
 
 ## Scope and completion
 

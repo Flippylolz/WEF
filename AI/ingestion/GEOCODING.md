@@ -6,7 +6,7 @@
 - Live ingestion later: a small number of new/changed posts per day.
 - Every successful response is persisted in `GeocodeResult`; the application never geocodes again on page views.
 - Queries are restricted/bias-validated to Warsaw/Poland and rejected/reviewed when out of bounds or low precision.
-- Live Geoapify forward requests (`REQUEST_VERSION=forward-geocode-v3`) send
+- Live Geoapify forward requests (`REQUEST_VERSION=forward-geocode-v4`) send
   `filter=rect:<Warsaw bounds>|countrycode:pl` and `bias=proximity:<city center>`
   so same-named streets outside Warsaw are not preferred; results are still
   validated with `within_warsaw` before acceptance.
@@ -168,9 +168,9 @@ a street request. Gocław is a Warsaw neighborhood with Praga-Południe context.
 Each response contributes at most five candidates. Multiple address-compatible
 positions remain ambiguous even when one has higher confidence. The resolver may
 try one additional source-supported form; street-only fallback sends `type=street`
-and has its own `forward-geocode-v3-street` cache identity. Both forms use the
+and has its own `forward-geocode-v4-street` cache identity. Both forms use the
 existing durable provider budget. Base normalization/request versions are
-`warsaw-address-v3` and `forward-geocode-v3`. Geoapify's documented
+`warsaw-address-v3` and `forward-geocode-v4`. Geoapify's documented
 [forward geocoding fields and request parameters](https://apidocs.geoapify.com/docs/geocoding/)
 were checked on 2026-09-06; no provider or paid capacity changed.
 
@@ -227,3 +227,13 @@ predecessor still passes current source agreement. Missing/invalid predecessors
 are retained without restoration; source/owner/selection edits are skipped.
 Rollback receipts make repeated batches resumable. Schema and history remain in
 place; do not downgrade or restore blanket acceptance during application rollback.
+
+
+### Provider district translations (E26 canary correction)
+
+The adapter recognizes the reviewed provider district/suburb values `South Praga`
+and `North Praga` as Praga-Południe and Praga-Północ. A translated district does
+not become a conflicting neighborhood. Unknown translations and explicit district
+conflicts remain unresolved; all street/number, city/country, confidence and
+precision guards remain in force. Request generation v4 invalidates the older
+cached interpretation. See [canary evidence](../epics/E26-automatic-location-validation/PROVIDER_DISTRICT_NORMALIZATION.md).

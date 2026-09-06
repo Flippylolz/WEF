@@ -29,3 +29,8 @@ The built runtime image `wef-backend:e26-compatible-reader` (expected revision
 That database was at `20260906_0026` and contained all three new validation tables.
 The prior reader passed readiness and the actual PostGIS-backed grouped map query.
 No production schema or data was changed for this proof.
+
+
+The compatible reader deployed successfully through PR #365 / release
+`34029703306` before T2 migration/application. The subsequent worker and provider
+normalization releases succeeded. See [production rollout](PRODUCTION_ROLLOUT.md).
