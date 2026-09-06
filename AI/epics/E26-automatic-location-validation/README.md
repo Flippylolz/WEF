@@ -29,7 +29,7 @@ See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for 
 
 Each file defines one independently reviewable change, tests, acceptance evidence, rollout, rollback, and exceptional manual handling. Dependencies are task IDs and remain enforceable at promotion.
 
-- [E26-T4: Municipal-first resolution](tasks/E26-T4-resolve-municipal-first.md) — P1/M; dependencies: E26-T1–T3; implementation in progress under approved revision 2.
+- [E26-T4: Municipal-first resolution](tasks/E26-T4-resolve-municipal-first.md) — P1/M; dependencies: E26-T1–T3; deployed and canary-verified under approved revision 2; broader backfill awaits owner approval.
 
 ## Automation requirement
 
@@ -50,3 +50,5 @@ The owner requested as little manual work as possible, with manual work only in 
 Retain the backend-authoritative modular architecture, current dependency constraints, contact protections, and existing review/deployment safeguards. All task acceptance criteria and the [definition of done](../../workflow/DEFINITION_OF_DONE.md) must pass before completion.
 
 E14 retains shared test infrastructure, general refactoring, capacity, and platform observability. E8 retains passive-event acceptance; E7-T5/E14-T9 retain backup and restore scope. No duplicate authoritative definitions are introduced.
+
+The municipal follow-up is deployed with six live probes and nine canaries verified. [T4 verification](T4_VERIFICATION.md) records the current guarded backfill state.
