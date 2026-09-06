@@ -193,6 +193,7 @@ function WebGLWarsawMap({
     [data],
   );
   const [mapReady, setMapReady] = useState(false);
+  const [mapIdle, setMapIdle] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapRef>(null);
   const mapLoaded = useRef(false);
@@ -365,6 +366,7 @@ function WebGLWarsawMap({
       ref={containerRef}
       className="map-canvas"
       aria-label="Interactive map of Warsaw"
+      aria-busy={!mapReady || !mapIdle}
     >
       {!mapReady ? (
         <div className="map-loading" role="status">
@@ -392,6 +394,9 @@ function WebGLWarsawMap({
         interactiveLayerIds={["location-clusters", "locations-unclustered"]}
         onClick={(event) => void handleClick(event)}
         onMoveEnd={handleMoveEnd}
+        onMoveStart={() => setMapIdle(false)}
+        onData={() => setMapIdle(false)}
+        onIdle={() => setMapIdle(true)}
         onLoad={() => {
           mapLoaded.current = true;
           setMapReady(true);

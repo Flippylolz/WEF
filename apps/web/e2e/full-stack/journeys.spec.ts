@@ -535,6 +535,11 @@ test("E26 WebGL street selection states limited confidence independently of offe
   const canvas = page.locator(".maplibregl-canvas");
   await expect(canvas).toBeVisible();
   await expect(page.locator(".map-loading")).toHaveCount(0);
+  // Map load and camera URL updates can precede GeoJSON worker rendering.
+  await expect(page.getByLabel("Interactive map of Warsaw")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
   const box = await canvas.boundingBox();
   expect(box).not.toBeNull();
   await canvas.click({ position: { x: box!.width / 2, y: box!.height / 2 } });
@@ -574,6 +579,11 @@ test("E26 WebGL cluster expands without losing precision or finite viewport", as
   await expect
     .poll(() => new URL(page.url()).searchParams.get("bbox"))
     .not.toBe("21.0415269,52.1992096,21.1215269,52.2692096");
+  // Map load and camera URL updates can precede GeoJSON worker rendering.
+  await expect(page.getByLabel("Interactive map of Warsaw")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
   const before = new URL(page.url()).searchParams
     .get("bbox")!
     .split(",")
