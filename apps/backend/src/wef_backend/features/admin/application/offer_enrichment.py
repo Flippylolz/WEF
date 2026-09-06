@@ -997,6 +997,7 @@ class ProcessOfferEnrichmentItem:
         batch_id: UUID,
         request_id: UUID,
         auto_apply: bool = True,
+        allowed_fields: frozenset[str] | None = None,
     ) -> ItemOutcome | None:
         """Process up to one Groq Batch chunk, or pause when the daily budget is exhausted."""
         batch = await self._store.get_batch(batch_id)
@@ -1059,6 +1060,7 @@ class ProcessOfferEnrichmentItem:
                 item=item,
                 now=now,
                 prepared=prepared,
+                allowed_fields=allowed_fields,
             )
         if not prepared:
             return last_outcome
@@ -1143,6 +1145,7 @@ class ProcessOfferEnrichmentItem:
         item: OfferAiEnrichmentItem,
         now: datetime,
         prepared: list[_PreparedEnrichmentItem],
+        allowed_fields: frozenset[str] | None = None,
     ) -> ItemOutcome:
         """Validate one item and append it to the provider batch when eligible."""
         del batch
@@ -1161,6 +1164,9 @@ class ProcessOfferEnrichmentItem:
             )
             return ItemOutcome.STALE
         missing = missing_fields(snapshot)
+        if allowed_fields is not None:
+            protected = await self._store.protected_field_names(item.offer_id)
+            missing = tuple(name for name in missing if name in allowed_fields - protected)
         revisions = await self._store.list_offer_source_revisions(
             item.offer_id,
             limit=self._runtime.max_sources,
