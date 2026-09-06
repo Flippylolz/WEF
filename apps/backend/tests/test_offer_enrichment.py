@@ -1121,3 +1121,45 @@ async def test_process_stale_disabled_and_empty_payload() -> None:
         snapshot6.id,
     )
     assert "floor_label" in names
+
+
+@pytest.mark.parametrize("allowed", [frozenset({"floor_label"}), frozenset()])
+@pytest.mark.parametrize("protected", [False, True])
+async def test_recovery_scope_limits_prompt_and_accepted_fields(
+    allowed: frozenset[str],
+    *,
+    protected: bool,
+) -> None:
+    """An automatic gap cannot expand into unrelated missing fields or empty calls."""
+    owner = uuid4()
+    snapshot, revision = _snapshot(), _revision()
+    store = FakeOfferAiEnrichmentStore(
+        snapshots={snapshot.id: snapshot}, sources={snapshot.id: (revision,)}
+    )
+    batch = await _start(store, owner_id=owner)
+    if protected:
+        store.origins[(snapshot.id, "floor_label")] = _origin(snapshot)
+    provider = FakeChatCompletions(
+        payload=_payload(
+            revision.revision_id,
+            _field(revision.revision_id),
+            _field(revision.revision_id, name="market_type", value="secondary"),
+        )
+    )
+    await ProcessOfferEnrichmentItem(
+        store, provider, FakeAdminAuditStore(), FakeClock(moment=_NOW), _runtime()
+    )(
+        owner_id=owner,
+        batch_id=batch.id,
+        request_id=uuid4(),
+        auto_apply=False,
+        allowed_fields=allowed,
+    )
+    if not allowed or protected:
+        assert not provider.calls
+        assert not store.events
+        return
+    assert len(provider.calls) == 1
+    assert 'missing=["floor_label"]' in provider.calls[0][1]["content"]
+    assert {event.field_name for event in store.events} == {"floor_label"}
+    assert store.snapshots[snapshot.id] == snapshot

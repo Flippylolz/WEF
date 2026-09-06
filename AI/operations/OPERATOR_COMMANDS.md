@@ -430,7 +430,11 @@ Quota and rate-limit deferrals resume automatically; three local systemic failur
 produce one terminal reason. An uncertain submission consumes quota and is never
 resent automatically. Pausing submissions retains work and proposals; pausing apply
 retains observations and prevents scheduled canonical writes. Existing owner cohorts
-use the same allocation and single-item transport.
+use the same allocation and single-item transport. Automatic recovery requests
+only canonical fields mapped from its classified gap and still missing and
+unprotected at preparation time. Price gaps do not authorize inclusion-flag
+inference. An empty scope consumes no request. Existing terminal/uncertain work
+is not retried when this request-scope correction is deployed.
 
 Daily allocation refusal persists the next UTC reset without recording a provider
 attempt. Batches paused specifically for `daily_limit` resume when budget becomes

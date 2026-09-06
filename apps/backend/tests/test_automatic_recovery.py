@@ -9,6 +9,7 @@ from wef_backend.features.admin.application.ai_review import ReviewRunState
 from wef_backend.features.admin.application.automatic_recovery import (
     AutomaticRecovery,
     RecoveryWork,
+    repairable_offer_fields,
 )
 from wef_backend.features.admin.application.ingestion_ai_parse import IngestionAiParseStatus
 from wef_backend.features.admin.application.offer_enrichment import BatchState
@@ -39,7 +40,7 @@ async def test_linked_work_reuses_cohort_and_observes_until_canary() -> None:
     queue, generate, apply, parses, start, process, enrichment = (AsyncMock() for _ in range(7))
     service = AutomaticRecovery(queue, generate, apply, parses, start, process, enrichment)
     owner, now = uuid4(), datetime.now(UTC)
-    work = RecoveryWork(uuid4(), uuid4(), owner, uuid4(), uuid4(), None, 1)
+    work = RecoveryWork(uuid4(), uuid4(), owner, uuid4(), uuid4(), None, 1, ("parking_price",))
     queue.claim.return_value = work
     queue.cohort_outcome.return_value = ("observed", "validated_observation")
     queue.canary_passed.return_value = False
@@ -48,6 +49,9 @@ async def test_linked_work_reuses_cohort_and_observes_until_canary() -> None:
     await service.tick(owner, now, submit=True, apply=True)
     start.assert_not_called()
     assert process.call_args.kwargs["auto_apply"] is False
+    assert process.call_args.kwargs["allowed_fields"] == frozenset(
+        {"parking_price_min", "parking_price_max"}
+    )
     enrichment.get_batch.return_value.state = BatchState.COMPLETED
     await service.tick(owner, now, submit=True, apply=True)
     assert process.await_count == 1
@@ -119,3 +123,9 @@ async def test_linked_work_with_no_repairable_missing_fields_never_generates() -
     start.assert_not_called()
     process.assert_not_called()
     assert queue.finish.call_args.args[2] == "already_resolved_or_unsupported"
+
+
+def test_price_gap_does_not_authorize_inclusion_inference() -> None:
+    assert repairable_offer_fields(("parking_price", "storage_price")) == frozenset(
+        {"parking_price_min", "parking_price_max", "storage_price_min", "storage_price_max"}
+    )
