@@ -18,7 +18,7 @@ from wef_backend.features.ingestion.domain.address_evidence import (
 
 NORMALIZER_VERSION = "warsaw-address-v3"
 SCOPE_VERSION = "warsaw-scope-v1"
-REQUEST_VERSION = "forward-geocode-v3"
+REQUEST_VERSION = "forward-geocode-v4"
 STREET_REQUEST_VERSION = f"{REQUEST_VERSION}-street"
 REVIEW_POLICY_VERSION = "warsaw-review-v2"
 

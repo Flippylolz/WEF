@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass, field, replace
 from decimal import Decimal
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import pytest
 
@@ -306,3 +307,78 @@ async def test_clean_street_query_uses_distinct_cached_street_request() -> None:
 async def test_conflicting_source_addresses_do_not_use_the_last_segment(source: str) -> None:
     result = await _mapped(_feature("Testowa", result_type="building", number="1"), source=source)
     assert not review_geocode_result(result, query=normalize_geocode_query(source)).select_result
+
+
+@pytest.mark.parametrize(
+    ("suburb", "source", "district"),
+    [
+        ("South Praga", "ul. Jugosłowiańska | Gocław", "Praga-Południe"),
+        (" south PRAGA ", "ul. Ostrzycka | Gocław", "Praga-Południe"),
+        ("North Praga", "ul. Testowa | Praga-Północ", "Praga-Północ"),
+    ],
+)
+async def test_provider_translated_district_is_not_an_unrelated_neighborhood(
+    suburb: str, source: str, district: str
+) -> None:
+    query = normalize_geocode_query(source)
+    assert query.address is not None
+    feature = _feature(query.address.street or "", district=None, city="Warsaw")
+    properties = feature["properties"]
+    assert isinstance(properties, dict)
+    properties["suburb"] = suburb
+    result = await _mapped(feature, source=source)
+    assert result.address is not None
+    assert result.address.district == district
+    assert result.address.neighborhood is None
+    assert review_geocode_result(result, query=query).select_result
+    assert result.precision is GeocodePrecision.STREET
+
+
+@pytest.mark.parametrize(
+    ("suburb", "district", "reason"),
+    [
+        ("North Praga", None, SelectionReason.ADDRESS_MISMATCH),
+        ("South Praga vicinity", None, SelectionReason.MISSING_ADDRESS_EVIDENCE),
+        ("South Praga", "Mokotów", SelectionReason.ADDRESS_MISMATCH),
+    ],
+)
+async def test_provider_alias_does_not_relax_unknown_or_conflicting_districts(
+    suburb: str, district: str | None, reason: SelectionReason
+) -> None:
+    source = "ul. Jugosłowiańska | Gocław"
+    feature = _feature(district=district)
+    properties = feature["properties"]
+    assert isinstance(properties, dict)
+    properties["suburb"] = suburb
+    result = await _mapped(feature, source=source)
+    decision = review_geocode_result(result, query=normalize_geocode_query(source))
+    assert not decision.select_result
+    assert decision.reason is reason
+
+
+async def test_provider_alias_upgrade_does_not_reuse_v3_address_cache() -> None:
+    source = "ul. Jugosłowiańska | Gocław"
+    query = normalize_geocode_query(source)
+    feature = _feature(district=None, city="Warsaw")
+    properties = feature["properties"]
+    assert isinstance(properties, dict)
+    properties["suburb"] = "South Praga"
+    current = await _mapped(feature, source=source)
+    assert current.address is not None
+    old = replace(
+        current, address=replace(current.address, district=None, neighborhood="South Praga")
+    )
+    store = _KeyedStore()
+    old_key = GeocodeCacheKey(
+        GeocodeProvider.GEOAPIFY, query.normalized, request_version="forward-geocode-v3"
+    )
+    store.values[old_key.query_hash] = CachedGeocode(uuid4(), old, None)
+    transport = FakeTransport([{"features": [feature]}])
+    geocoder = HostedGeocoder(GeocodeProvider.GEOAPIFY, transport, _policy(), api_key="private")
+    resolver = ResolveGeocode(store, geocoder, clock=lambda: NOW)
+    first = await resolver(source_query=source)
+    assert first.decision.select_result
+    assert not first.cache_hit
+    assert (await resolver(source_query=source)).cache_hit
+    assert len(transport.calls) == 1
+    assert len(store.values) == 2

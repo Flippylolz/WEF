@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Protocol
 
 import httpx
 
-from wef_backend.features.ingestion.domain.address_evidence import AddressEvidence
+from wef_backend.features.ingestion.domain.address_evidence import AddressEvidence, fold_address
 from wef_backend.features.ingestion.domain.geocode_candidates import (
     MAX_GEOCODE_CANDIDATES,
     choose_geocode_candidate,
@@ -264,17 +264,25 @@ def _provider_address(provider: GeocodeProvider, item: object) -> AddressEvidenc
     if not isinstance(fields, dict):
         return None
     suburb = _optional_string(fields.get("suburb"))
-    district = canonical_warsaw_district(_optional_string(fields.get("district")))
-    district = district or canonical_warsaw_district(suburb)
+    district = _provider_district(_optional_string(fields.get("district")))
+    district = district or _provider_district(suburb)
     return AddressEvidence(
         street=_optional_string(fields.get("street") or fields.get("road")),
         house_number=_optional_string(fields.get("housenumber") or fields.get("house_number")),
-        neighborhood=suburb if canonical_warsaw_district(suburb) is None else None,
+        neighborhood=suburb if _provider_district(suburb) is None else None,
         district=district,
         city=_optional_string(fields.get("city") or fields.get("town") or fields.get("village")),
         country_code=_optional_string(fields.get("country_code")),
         result_type=_optional_string(fields.get("result_type") or item.get("type")),
     )
+
+
+def _provider_district(value: str | None) -> str | None:
+    """Recognize reviewed provider translations without fuzzy locality matching."""
+    return canonical_warsaw_district(value) or {
+        "south praga": "Praga-Południe",
+        "north praga": "Praga-Północ",
+    }.get(fold_address(value))
 
 
 def _map_payload(provider: GeocodeProvider, payload: object) -> GeocodeResult:
