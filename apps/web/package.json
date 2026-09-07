@@ -56,7 +56,7 @@
     "prettier": "^3.9.6",
     "tailwindcss": "^4",
     "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vitest": "^4.1.11",
+    "vitest": "^5.0.0",
     "vitest-axe": "^0.1.0"
   },
   "packageManager": "pnpm@11.21.0"
