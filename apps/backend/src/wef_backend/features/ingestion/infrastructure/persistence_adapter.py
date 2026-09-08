@@ -1149,6 +1149,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                         OfferRow.location_id,
                         OfferRow.visibility,
                         LocationRow.display_name,
+                        LocationRow.point.is_not(None).label("has_point"),
                     )
                     .join(OfferSourceRow, OfferSourceRow.offer_id == OfferRow.id)
                     .join(LocationRow, LocationRow.id == OfferRow.location_id)
@@ -1159,6 +1160,25 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                     .limit(1)
                 )
             ).first()
+            selection_actor = (
+                await session.scalar(
+                    text(
+                        "SELECT actor_type FROM location_geocode_selections WHERE location_id=:id "
+                        "ORDER BY selection_version DESC LIMIT 1"
+                    ),
+                    {"id": existing.location_id},
+                )
+                if existing
+                else None
+            )
+            preserve_location = bool(
+                existing
+                and (
+                    existing.display_name != "Unknown location"
+                    or existing.has_point
+                    or selection_actor not in {None, "automatic_policy"}
+                )
+            )
             outcome = "update_candidate" if existing else "create_candidate"
             if run_id is not None:
                 result = await self._persist_message(
@@ -1172,7 +1192,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                     # Replay does not undo manual hiding or relocate an established
                     # address. Only an unresolved sentinel can gain newly parsed identity.
                     preserved: dict[str, object] = {"visibility": existing.visibility}
-                    if existing.display_name != "Unknown location":
+                    if preserve_location:
                         preserved["location_id"] = existing.location_id
                     await session.execute(
                         update(OfferRow).where(OfferRow.id == existing.id).values(**preserved)

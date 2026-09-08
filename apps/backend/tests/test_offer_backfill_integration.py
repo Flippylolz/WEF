@@ -78,6 +78,15 @@ async def test_dry_run_apply_and_resume_preserve_identity_visibility_and_live_cu
         async with database.session_factory() as session, session.begin():
             offer = (await session.scalars(select(OfferRow))).one()
             offer_id = offer.id
+            protected_location_id = offer.location_id
+            await session.execute(
+                text(
+                    "UPDATE locations SET display_name='Unknown location', "
+                    "normalized_address_hash=:hash, "
+                    "point=ST_SetSRID(ST_MakePoint(21.01,52.23),4326)"
+                ),
+                {"hash": "0" * 64},
+            )
             await session.execute(
                 update(OfferRow).values(visibility="hidden", parser_version="old")
             )
@@ -93,6 +102,7 @@ async def test_dry_run_apply_and_resume_preserve_identity_visibility_and_live_cu
             offer = (await session.scalars(select(OfferRow))).one()
             assert offer.id == offer_id
             assert offer.visibility == "hidden"
+            assert offer.location_id == protected_location_id
             assert offer.price_min_minor == 81200000
             after = (
                 await session.execute(
