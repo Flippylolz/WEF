@@ -29,7 +29,7 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-08T06:48:39Z"
 dependency_gate:
-  status: stacked
+  status: satisfied
   verified_by: Codex
   verified_at: "2026-09-08T06:48:39Z"
   evidence:
@@ -43,11 +43,11 @@ branch:
   task_id: E28-T2
   one_task_only: true
   created_at: "2026-09-08T07:09:17.634182+00:00"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/380
 completion:
   completed_by: null
   completed_at: null
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/380
   evidence: []
 invalidation:
   invalidated_by: null
