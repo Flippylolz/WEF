@@ -1,5 +1,5 @@
 {
-  "baselineCommit": "315d66a0259e4520059f1d96eca7454ff95bc463",
+  "baselineCommit": "520eaca7e89d487d8da1a277e4966554e18c52b1",
   "baselineGzipBytes": 593735,
   "maxGzipBytes": 599672,
   "scope": "All production .next/static/chunks JavaScript, including lazy route chunks; 1% growth allowance"

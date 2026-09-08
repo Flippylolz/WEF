@@ -1,7 +1,10 @@
 # September 2026 frontend dependency update
 
 This is unplanned dependency maintenance requested by the repository owner,
-tracked in PR #374. No API, schema, environment, or deployment migration is needed.
+tracked in PR #381 (Dependabot replaced #374 after regrouping updates). No API, schema, environment, or deployment migration is needed.
+
+The runtime updates are unchanged from #374; #381 additionally refreshes
+Playwright, ESLint, and Redocly development tooling.
 
 The complete locked patch/minor update produces 593,735 gzip bytes in production
 JavaScript, compared with 567,719 bytes for the current application with its
