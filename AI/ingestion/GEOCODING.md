@@ -244,3 +244,16 @@ cached interpretation. See [canary evidence](../epics/E26-automatic-location-val
 Forward request version `forward-geocode-v5` resolves uniquely matched Warsaw municipal street geometry or numbered address points first, then the existing budgeted hosted geocoder. Street geometry produces approximate street precision. Optional, already-authorized AI recovery may quote only source-supported street text and trigger one verified lookup retry; AI supplies no coordinates. Owner selections remain protected. Municipal results retain city attribution and response hashes, use bounded public WFS requests, and refresh on use through weekly cache keys. Outages do not become durable unresolved verdicts when both lookup stages fail. Existing deployment configuration and provider budgets remain unchanged.
 
 The new request version starts a fresh observation generation. Verify production canaries and protected selections before enabling its guarded application/backfill; rolling back to v4 uses its separate control generation. No schema migration is required. See [the policy and verification plan](../epics/E26-automatic-location-validation/MUNICIPAL_FIRST.md).
+
+## E28 current-offer street resolution
+
+`warsaw-address-v4` treats the reviewed Sielce neighborhood as Warsaw/Mokotów,
+just as Gocław maps to Praga-Południe. Explicit incompatible districts or cities
+remain mismatches. `municipal-v2` supports disconnected geometry components of
+one exact municipal street identity: after clipping to the verified district,
+it uses the midpoint of the longest nonzero line component with a stable geometry
+tie-break. This is a representative **street** position, never a building claim.
+Different hosted candidate coordinates remain ambiguous; this rule does not
+combine unrelated provider records. Cache/validation versioning makes old
+terminal decisions eligible for current-policy revalidation; protected selections
+and observation/canary rollout remain authoritative.

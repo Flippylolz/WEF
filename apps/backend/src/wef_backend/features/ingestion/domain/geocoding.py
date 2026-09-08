@@ -16,7 +16,7 @@ from wef_backend.features.ingestion.domain.address_evidence import (
     fold_address,
 )
 
-NORMALIZER_VERSION = "warsaw-address-v3"
+NORMALIZER_VERSION = "warsaw-address-v4"
 SCOPE_VERSION = "warsaw-scope-v1"
 REQUEST_VERSION = "forward-geocode-v5"
 STREET_REQUEST_VERSION = f"{REQUEST_VERSION}-street"
@@ -89,6 +89,10 @@ _DISTRICT_ALIASES = {
     "praga poludnie": "Praga-Południe",
     "praga pólnoc": "Praga-Północ",
     "praga polnoc": "Praga-Północ",
+}
+_NEIGHBORHOODS = {
+    "goclaw": ("Gocław", "Praga-Południe"),
+    "sielce": ("Sielce", "Mokotów"),
 }
 
 
@@ -301,7 +305,7 @@ def _extract_other_city(segment: str) -> str | None:
     cleaned = _WHITESPACE.sub(" ", cleaned).strip(" ,")
     if not cleaned or _STREET_TOKEN.search(cleaned):
         return None
-    if warsaw_district_in(cleaned) is not None or fold_address(cleaned) == "goclaw":
+    if warsaw_district_in(cleaned) is not None or fold_address(cleaned) in _NEIGHBORHOODS:
         return None
     if _CITY_NAMES.search(cleaned):
         return "Warszawa"
@@ -338,8 +342,9 @@ def _parse_display_name_segments(
             if candidate:
                 street = candidate
             continue
-        if fold_address(_AREA_WORD_PREFIX.sub("", segment)) == "goclaw":
-            resolved_district = resolved_district or "Praga-Południe"
+        neighborhood = _NEIGHBORHOODS.get(fold_address(_AREA_WORD_PREFIX.sub("", segment)))
+        if neighborhood:
+            resolved_district = resolved_district or neighborhood[1]
             continue
         segment_district = warsaw_district_in(segment)
         if segment_district is not None:
@@ -413,11 +418,13 @@ def normalize_geocode_query(source: str, district: str | None = None) -> Normali
     value = _PUNCTUATION.sub(", ", value)
     value = _WHITESPACE.sub(" ", value).strip(" ,")
     normalized_district = canonical_warsaw_district(district) or warsaw_district_in(original)
-    if normalized_district is None and any(
-        fold_address(_AREA_WORD_PREFIX.sub("", segment)) == "goclaw"
+    neighborhoods = {
+        _NEIGHBORHOODS[fold_address(_AREA_WORD_PREFIX.sub("", segment))][1]
         for segment in _ADDRESS_SEGMENT_SPLIT.split(original)
-    ):
-        normalized_district = "Praga-Południe"
+        if fold_address(_AREA_WORD_PREFIX.sub("", segment)) in _NEIGHBORHOODS
+    }
+    if normalized_district is None and len(neighborhoods) == 1:
+        normalized_district = next(iter(neighborhoods))
     folded = value.casefold()
     if "warszawa" not in folded:
         value = f"{value}, Warszawa"
@@ -567,8 +574,9 @@ def source_address_evidence(source: str, district: str | None = None) -> Address
     neighborhood = None
     segments = [segment.strip() for segment in _ADDRESS_SEGMENT_SPLIT.split(source)]
     for segment in segments:
-        if fold_address(_AREA_WORD_PREFIX.sub("", segment)) == "goclaw":
-            neighborhood = "Gocław"
+        known = _NEIGHBORHOODS.get(fold_address(_AREA_WORD_PREFIX.sub("", segment)))
+        if known:
+            neighborhood = known[0]
             continue
         if warsaw_district_in(segment) or _CITY_NAMES.search(segment):
             # A combined street/city segment is deliberately left unresolved.
@@ -655,7 +663,8 @@ def _locality_conflicts(source: AddressEvidence, provider: AddressEvidence) -> b
         folded = fold_address(value)
         return "warszawa" if folded in {"warsaw", "warszawa", "варшава"} else folded
 
-    if source.neighborhood == "Gocław" and source.district != "Praga-Południe":
+    known = _NEIGHBORHOODS.get(fold_address(source.neighborhood))
+    if known and source.district != known[1]:
         return True
     if city(source.city) != city(provider.city):
         return True

@@ -81,15 +81,11 @@ async def test_real_numbered_address_and_source_mismatch() -> None:
     ("line", "point"),
     [
         ("MULTILINESTRING((7505300 5788900,7505400 5788900))", [7505350, 5789500]),
-        (
-            "MULTILINESTRING((7505300 5788900,7505400 5788900),(7505600 5788900,7505700 5788900))",
-            None,
-        ),
         ("MULTILINESTRING((7505300 5788900,7505300 5788900))", None),
         ("MULTILINESTRING((7500000 5780000,7500100 5780000))", None),
     ],
 )
-async def test_real_district_and_disconnected_geometry_reject(
+async def test_real_district_and_invalid_geometry_reject(
     line: str, point: list[float] | None
 ) -> None:
     assert TEST_DATABASE_URL
@@ -98,6 +94,29 @@ async def test_real_district_and_disconnected_geometry_reject(
         line, POLYGON_GML, point
     )
     assert result is None
+
+
+async def test_one_verified_street_with_disconnected_segments_has_stable_street_pin() -> None:
+    assert TEST_DATABASE_URL
+    database = create_database_resources(TEST_DATABASE_URL)
+    # These are geometry components of one verified municipal street identity,
+    # not independent hosted candidates sharing a display label.
+    segments = ["7505300 5788900,7505400 5788900", "7505500 5789000,7505700 5789000"]
+    points = []
+    geocoder = MunicipalGeocoder(database.session_factory, Transport())
+    for ordered in (segments, list(reversed(segments))):
+        line = "MULTILINESTRING(" + ",".join(f"({segment})" for segment in ordered) + ")"
+        result = await geocoder._project(line, POLYGON_GML, None)  # noqa: SLF001
+        assert result is not None
+        points.append(result)
+    assert points[0] == points[1]
+    async with database.session_factory() as session:
+        x = await session.scalar(
+            text("SELECT ST_X(ST_Transform(ST_SetSRID(ST_MakePoint(:lon,:lat),4326),2178))"),
+            {"lon": points[0][0], "lat": points[0][1]},
+        )
+    assert abs(x - 7505600) < 0.01
+    await database.engine.dispose()
 
 
 async def test_real_line_is_clipped_to_source_district() -> None:

@@ -3,14 +3,14 @@ schema: ai-workflow/implementation-plan@1
 epic: E28
 title: Deliver current channel offers and galleries to the map
 status: approved
-revision: 1
+revision: 2
 owner: owner
 spike_revision: 1
 task_sequence:
   - id: E28-T1
     revision: 1
   - id: E28-T2
-    revision: 1
+    revision: 2
   - id: E28-T3
     revision: 1
   - id: E28-T4
@@ -21,8 +21,8 @@ approval:
   required_role: owner
   status: approved
   decided_by: owner
-  decided_at: "2026-09-08T06:48:39Z"
-  approved_revision: 1
+  decided_at: "2026-09-08T07:09:17.634182+00:00"
+  approved_revision: 2
   evidence: OWNER_DIRECTION.md
 invalidation:
   invalidated_by: null
@@ -40,7 +40,7 @@ invalidation:
 ## Ordered changes
 
 1. **T1 — current templates:** `extraction.py`, `parse_quality.py`, extraction regression tests and real persistence tests. Version parser/evidence identities so existing replay machinery can reevaluate. No database/API schema change. Negatives protect rent/services, per-area prices, addons and conflicts. Release normally; do not claim older stored offers are repaired until bounded replay is verified.
-2. **T2 — Warsaw street resolution:** `geocoding.py`, `address_evidence.py`, `geocode_candidates.py`, `municipal_geocoder.py` and versioned revalidation. Neighborhood identity and same-street geometry have separate negative evidence checks. Existing E26 source/owner/version fencing remains authoritative. Observe, canary the two audited locations, then apply bounded current-policy revalidation. No arbitrary point averaging or confidence-only selection.
+2. **T2 — Warsaw street resolution:** depends on T1 (the initial epic baseline); a stack may proceed against PR #377 until it merges. `geocoding.py`, `address_evidence.py`, `geocode_candidates.py`, `municipal_geocoder.py` and versioned revalidation. Neighborhood identity and same-street geometry have separate negative evidence checks. Existing E26 source/owner/version fencing remains authoritative. Observe, canary the two audited locations, then apply bounded current-policy revalidation. No arbitrary point averaging or confidence-only selection.
 3. **T3 — nearby localities:** depends on T1. Extract and persist actual source locality, version scope/cache, resolve unique nearby municipality through existing provider, and render verified coarse precision. Touch location persistence, domain scope and public catalog/frontend only where needed; regenerate contracts if they change. Read compatible old rows; require a migration only if existing city/precision columns cannot represent the result. Test town-name ambiguity and viewport/filter discoverability; canary the audited house before broader rollout.
 4. **T4 — recovered galleries:** depends on T1. Extend `media_recovery_discovery.py`/store and canonical-link integration to reopen only repairable unassociated work and rescan its bounded album context. Source revisions and verified media identity remain authoritative; use existing work/intention tables if sufficient. Test real transactions, idempotency, edits/deletes and adjacent albums. First dry-run/reconcile the cohort, then repair with existing worker/service paths and verify current unique gallery assets.
 5. **T5 — delivery acceptance:** depends on T1–T4. Extend ingestion progress query/application/worker seams to observe actual offer-to-map/gallery outcomes. Use existing operator commands for bounded recovery with exact cohort counts; preserve dry-run/apply receipts. Test integrated public map/gallery behavior and real browser selection. Verify the five posts and a 24-hour live window. Keep task open when acceptance evidence is incomplete.
@@ -58,3 +58,7 @@ New parsing can create false positives or alter fingerprints; guard with benchma
 ## Completion boundary
 
 This plan starts fixes with T1; the epic remains in progress until all task acceptance criteria and the complete production delivery window pass. Extending beyond nearby source-evidenced localities, changing AI auto-apply calibration, adding providers/dependencies or raising budgets invalidates this baseline.
+
+## Revision 2 owner continuation
+
+The owner requested implementation of the entire epic and a backfill afterwards. This authorizes continuing T2–T5 and production backfill after reviewed releases, not only starting T1. T2 explicitly depends on T1 so the epic baseline can use an ordered stack while CI runs. Backfill covers current retained offer revisions through bounded, resumable existing mutation paths, with changed/missed offers and galleries reconciled; existing protected selections and quotas remain binding. Do not wait for a second per-record or per-PR authorization. The 24-hour passive acceptance window may be scheduled after backfill with notification only for actionable results.
