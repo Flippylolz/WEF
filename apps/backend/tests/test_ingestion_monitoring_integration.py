@@ -273,3 +273,24 @@ async def test_configured_poll_interval_is_waiting_not_stalled(
     assert stage["status"] == "waiting"
     assert stage["eligible"] == 0
     assert stage["delayed"] == 1
+
+
+async def test_delivery_monitor_exposes_unlinked_photo_caption_but_not_album_children(
+    recovery_db: RecoveryDB, progress: SQLAlchemyIngestionProgressStore
+) -> None:
+    db = recovery_db
+    caption = payload(800)
+    caption["text"] = "Unclassified synthetic caption with a source photo"
+    caption.pop("text_entities", None)
+    caption["date_unixtime"] = str(int(datetime.now(UTC).timestamp()))
+    child = {**caption, "id": 801, "text": ""}
+    for data in (caption, child):
+        await db.land(data)
+    await db.drainer().drain_once()
+    await progress.sample()
+    snapshot = (await progress.status())["snapshot"]
+    delivery = snapshot["evidence"]["recent_offer_delivery"]
+    assert delivery["expected"] == 1
+    assert delivery["missing_offer"] == 1
+    assert delivery["terminal"] == 0
+    assert snapshot["stages"]["offer_delivery"]["eligible"] == 1

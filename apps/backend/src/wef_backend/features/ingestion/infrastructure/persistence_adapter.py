@@ -25,7 +25,7 @@ from wef_backend.features.contacts.application.reveal import (
 )
 from wef_backend.features.contacts.domain.model import ContactKind as StoredContactKind
 from wef_backend.features.contacts.infrastructure.models import ContactPointRow
-from wef_backend.features.ingestion.application.extraction import PARSER_VERSION
+from wef_backend.features.ingestion.application.extraction import PARSER_VERSION, extract_listing
 from wef_backend.features.ingestion.application.parse_issue_serialization import (
     build_parse_issue_insert,
 )
@@ -1118,6 +1118,68 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                 ),
             )
             await session.commit()
+
+    async def replay_current_revision(
+        self, revision_id: UUID, *, run_id: UUID | None = None
+    ) -> str:
+        """Inspect or replay one current retained revision without moving live cursors."""
+        result = None
+        async with self._session_factory() as session, session.begin():
+            revision = await session.get(SourceMessageRevisionRow, revision_id)
+            if revision is None:
+                return "stale"
+            source = await session.get(
+                SourceMessageRow, revision.source_message_id, with_for_update=run_id is not None
+            )
+            if source is None or source.current_revision_id != revision_id or source.deleted_at:
+                return "stale"
+            channel = await session.get(SourceChannelRow, source.source_channel_id)
+            if channel is None:
+                return "stale"
+            raw = _raw_message_from_stored_revision(
+                revision=revision, message=source, channel=channel
+            )
+            extraction = extract_listing(raw)
+            if extraction.listing is None:
+                return "non_candidate"
+            existing = (
+                await session.execute(
+                    select(
+                        OfferRow.id,
+                        OfferRow.location_id,
+                        OfferRow.visibility,
+                        LocationRow.display_name,
+                    )
+                    .join(OfferSourceRow, OfferSourceRow.offer_id == OfferRow.id)
+                    .join(LocationRow, LocationRow.id == OfferRow.location_id)
+                    .where(
+                        OfferSourceRow.source_message_id == source.id,
+                        OfferSourceRow.relationship == "primary",
+                    )
+                    .limit(1)
+                )
+            ).first()
+            outcome = "update_candidate" if existing else "create_candidate"
+            if run_id is not None:
+                result = await self._persist_message(
+                    session,
+                    channel_id=channel.id,
+                    run_id=run_id,
+                    persistable=PersistableMessage(raw, extraction),
+                    enforce_source_order=True,
+                )
+                if existing:
+                    # Replay does not undo manual hiding or relocate an established
+                    # address. Only an unresolved sentinel can gain newly parsed identity.
+                    preserved: dict[str, object] = {"visibility": existing.visibility}
+                    if existing.display_name != "Unknown location":
+                        preserved["location_id"] = existing.location_id
+                    await session.execute(
+                        update(OfferRow).where(OfferRow.id == existing.id).values(**preserved)
+                    )
+        if result is not None:
+            await self._notify_origin_sync(result)
+        return outcome
 
     async def persist_owner_ai_listing(
         self,

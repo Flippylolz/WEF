@@ -13,6 +13,7 @@ from uuid import uuid4
 from sqlalchemy import text
 
 from wef_backend.features.ingestion.application.archive_retry import RETRY_POLICY_VERSION
+from wef_backend.features.ingestion.application.location_revalidation import VALIDATION_TARGET
 from wef_backend.features.ingestion.application.media_recovery import MEDIA_RECOVERY_POLICY
 from wef_backend.features.ingestion.domain.ingestion_progress import (
     MAX_SAMPLE_GAP,
@@ -162,6 +163,7 @@ class SQLAlchemyIngestionProgressStore:
             "now": now,
             "archive_policy": RETRY_POLICY_VERSION,
             "media_policy": MEDIA_RECOVERY_POLICY,
+            "validation_target": VALIDATION_TARGET,
         }
         control = dict(
             (await session.execute(text(queries.CONTROL), params)).mappings().first() or {}
@@ -222,6 +224,19 @@ class SQLAlchemyIngestionProgressStore:
         )
         evidence: dict[str, object] = dict(
             (await session.execute(text(queries.EVIDENCE), params)).mappings().one()
+        )
+        delivery = dict((await session.execute(text(queries.DELIVERY), params)).mappings().one())
+        evidence["recent_offer_delivery"] = delivery
+        snapshots.append(
+            ProgressSnapshot(
+                stage="offer_delivery",
+                token=str(delivery["terminal"]),
+                terminal=int(delivery["terminal"]),
+                completed=int(delivery["terminal"]),
+                eligible=int(delivery["eligible"]),
+                delayed=int(delivery["delayed"]),
+                oldest_due=delivery["oldest_due"],
+            )
         )
         counters = (
             (

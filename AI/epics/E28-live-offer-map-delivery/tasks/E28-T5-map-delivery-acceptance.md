@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E28-T5
 epic: E28
 title: Verify and monitor complete offer delivery
-status: draft
+status: in_progress
 revision: 1
 priority: P1
 size: M
@@ -67,3 +67,13 @@ All five audited offer-bearing posts resolve to current public map offers with c
 Follow the task-specific module boundary and rollout in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Use invented fixtures, unit and real PostGIS integration tests; add contract/browser tests when public behavior changes. Run `make install`, `make lint`, `make test`, `make format-check`, `make typecheck`, and `make contract-check` before pushing affected implementation. Record exact results in the PR and task evidence.
 
 Keep this change in its own task branch/PR; do not mark done before current-head CI and production acceptance pass. Roll back the immutable application release or pause only this recovery path, preserving raw revisions, owner selections and existing unrelated workloads. Do not claim application rollback undoes data changes. Operator repair receipts and current-source guards must support audit/recovery.
+
+## Owner continuation
+
+The owner requests full implementation and a backfill afterwards. Work on the
+bounded operator and aggregate acceptance seams proceeds while predecessor PRs
+are validated; application and completion remain blocked until T1–T4 release.
+The old raw replay command selects linked offers only, so it cannot recover the
+reported missing offers. This task adds a current-revision bounded operator using
+the existing parser/persistence path, preserving live checkpoints and known
+locations/visibility and existing field-origin protections.

@@ -83,6 +83,14 @@ def classify_progress(
         status = "waiting"
     elif snapshot.leased:
         status = "in_flight"
+    elif (
+        snapshot.stage == "offer_delivery"
+        and snapshot.eligible
+        and snapshot.oldest_due
+        and (now - snapshot.oldest_due).total_seconds() >= STALL_SECONDS
+    ):
+        status = "stalled"
+        reason = "offer_delivery_deadline"
     elif snapshot.eligible:
         since = max(progressed, snapshot.oldest_due or progressed)
         if stagnant >= MIN_STAGNANT_SAMPLES and (now - since).total_seconds() >= STALL_SECONDS:
