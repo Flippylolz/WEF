@@ -3,8 +3,8 @@ schema: ai-workflow/task@1
 id: E28-T1
 epic: E28
 title: Recognize current offer templates
-status: done
-revision: 1
+status: in_progress
+revision: 2
 priority: P1
 size: M
 milestone: M5
@@ -25,7 +25,7 @@ spike_gate:
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 6
+  approved_revision: 7
   verified_by: Codex
   verified_at: "2026-09-08T06:48:39Z"
 dependency_gate:
@@ -35,15 +35,15 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: bugfix/E28-T1-current-offer-templates
+  name: bugfix/E28-T1-backfill-price-formats
   task_id: E28-T1
   one_task_only: true
   created_at: "2026-09-08T06:52:17Z"
   pull_request: https://github.com/Flippylolz/WEF/pull/377
 completion:
-  completed_by: Codex
-  completed_at: "2026-09-08T07:42:00Z"
-  pull_request: https://github.com/Flippylolz/WEF/pull/377
+  completed_by: null
+  completed_at: null
+  pull_request: null
   evidence:
     - ../T1_VERIFICATION.md
 invalidation:
@@ -76,3 +76,11 @@ Passed through `ready` in planning commit `cba13bd`. Dedicated branch created fr
 ## Local implementation evidence
 
 [Verification](../T1_VERIFICATION.md) records the 1,378 backend and 186 frontend passing tests, the bounded frontend retry, source comparison and remaining rollout boundary.
+
+## Full backfill follow-up
+
+Revision 2 retains the accepted initial release and adds bounded developer inventory
+rows, honest open price bounds, Cyrillic per-area quote separation, and the exact
+spaced Praga Północ district spelling. The five older incomplete records are replayed
+only after release. Two source street abbreviations require individually reviewed
+municipal identities; retained precision and audited selection are mandatory.

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from wef_backend.features.catalog.domain import ContentType, MarketType, PropertyType
+from wef_backend.features.ingestion.application.extraction_inventory import extract_inventory
 from wef_backend.features.ingestion.application.extraction_numbers import (
     _FLAGS,
     _MAX_ROOM_COUNT,
@@ -52,7 +53,7 @@ if TYPE_CHECKING:
 
 from wef_backend.features.ingestion.domain.nearby_locality import nearby_locality
 
-PARSER_VERSION = "e2-v17"
+PARSER_VERSION = "e2-v18"
 CANDIDATE_THRESHOLD = 5
 
 # A number may end only at whitespace/punctuation or directly before a tracked
@@ -96,6 +97,7 @@ _CANDIDATE_RULES = (
         ContentType.DEVELOPMENT,
         re.compile(
             r"(?:\b(?:inwestycj[ae]|development|новостройк[аи]|инвестици[яи])\b"
+            r"|квартиры\s+от\s+застройщика\b"
             r"|(?:rynek|рынок)\s+(?:pierwotny|первичн\w+))",
             _FLAGS,
         ),
@@ -355,6 +357,21 @@ def extract_listing(
         PARSER_VERSION,
         warnings,
     )
+    if (
+        content_type is not None
+        and content_type.value is ContentType.DEVELOPMENT
+        and not any(
+            p.search(message.text)
+            for p in (_APARTMENT_PRICE_PATTERN, _AREA_PATTERN, _ROOMS_PATTERN)
+        )
+        and (inventory := extract_inventory(message.text)) is not None
+    ):
+        provenance = _provenance(
+            "extract.development_inventory", PARSER_VERSION, Confidence.MEDIUM, inventory.span
+        )
+        apartment_price = ExtractedValue(value=inventory.price, provenance=provenance)
+        area = ExtractedValue(value=inventory.area, provenance=provenance)
+        rooms = ExtractedValue(value=inventory.rooms, provenance=provenance)
     floor = _string_field(message.text, _FLOOR_PATTERN, "floor", PARSER_VERSION, warnings)
     delivery = _string_field(
         message.text,
@@ -810,6 +827,10 @@ def _money_field(
             if _NUMBER_PATTERN.search(value):
                 warnings.append(_invalid_range_warning(field_name, text, match))
                 invalid = True
+            continue
+        if money.is_lower_bound and field_name != "apartment_price":
+            warnings.append(_invalid_range_warning(field_name, text, match))
+            invalid = True
             continue
         if money.currency is None:
             warnings.append(

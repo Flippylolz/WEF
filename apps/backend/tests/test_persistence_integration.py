@@ -12,11 +12,14 @@ import pytest
 from alembic import command
 from sqlalchemy import text, update
 
+from tests.test_inventory_extraction import SOURCE
+from tests.test_listing_extraction import _message
 from tests.test_persistence_application import _contact, _listing, _raw
 from wef_backend.database import create_database_resources
 from wef_backend.features.catalog.domain import ContentType, OfferVisibility
 from wef_backend.features.catalog.infrastructure.models import OfferRow
 from wef_backend.features.ingestion.application.complete_import import prepare_import
+from wef_backend.features.ingestion.application.extraction import extract_listing
 from wef_backend.features.ingestion.application.persistence import (
     PersistableMessage,
     PersistenceBatchError,
@@ -746,3 +749,33 @@ async def test_multilingual_offsets_reproduce_python_slicing() -> None:
     area_offsets = provenance["area_sqm"]
     assert source_text[area_offsets["source_start"] : area_offsets["source_end"]] == "40 m²"
     await database.engine.dispose()
+
+
+async def test_development_starting_prices_persist_without_inventing_a_ceiling() -> None:
+    """Public canonical bounds remain honest and replay creates no duplicate offer."""
+    assert TEST_DATABASE_URL is not None
+    await _prepare()
+    raw = _message(SOURCE)
+    database = create_database_resources(TEST_DATABASE_URL)
+    try:
+        service = PersistHistoricalIngestion(
+            store=SQLAlchemyIngestionPersistence(database.session_factory), batch_size=2
+        )
+        for _ in range(2):
+            await service(
+                channel=raw.source,
+                messages=[PersistableMessage(raw, extract_listing(raw))],
+                metadata=RunMetadata(parser_version="integration@inventory"),
+            )
+        async with database.session_factory() as session:
+            row = (
+                await session.execute(
+                    text(
+                        "SELECT price_min_minor, price_max_minor, content_type, "
+                        "area_min_sqm, area_max_sqm, rooms_min, rooms_max FROM offers"
+                    )
+                )
+            ).one()
+            assert tuple(row) == (51000000, None, "development", Decimal(35), Decimal(78), 2, 3)
+    finally:
+        await database.engine.dispose()

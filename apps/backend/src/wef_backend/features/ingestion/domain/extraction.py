@@ -170,6 +170,7 @@ class MoneyRange:
 
     amount: DecimalRange
     currency: str | None
+    is_lower_bound: bool = False
 
     def __post_init__(self) -> None:
         """Require normalized ISO-like currency when it is known."""

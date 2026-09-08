@@ -74,3 +74,8 @@ describe("offer-presentation", () => {
     expect(isSafeExternalUrl("not a url")).toBe(false);
   });
 });
+
+it("renders a starting price without inventing an upper bound", () => {
+  expect(formatPrice(51_000_000, null)).toContain("≥");
+  expect(formatPrice(51_000_000, null)).toContain("510,000");
+});

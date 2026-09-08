@@ -3,12 +3,12 @@ schema: ai-workflow/implementation-plan@1
 epic: E28
 title: Deliver current channel offers and galleries to the map
 status: approved
-revision: 6
+revision: 7
 owner: owner
 spike_revision: 1
 task_sequence:
   - id: E28-T1
-    revision: 1
+    revision: 2
   - id: E28-T2
     revision: 3
   - id: E28-T3
@@ -22,7 +22,7 @@ approval:
   status: approved
   decided_by: owner
   decided_at: "2026-09-08T07:09:17.634182+00:00"
-  approved_revision: 5
+  approved_revision: 7
   evidence: OWNER_DIRECTION.md
 invalidation:
   invalidated_by: null
@@ -98,3 +98,7 @@ Production canaries and public map/browser acceptance precede completion.
 The authorized backfill audit found municipal full names in `NAZWA_PODST` while `NAZWA_SKROC` stores initials. Match either exact official field on a single unique street identity; never fuzzy-match surnames. Validate all bounded official district polygons for a single street crossing districts when the source supplies none, and choose a street point within their union. Explicit source district and building-number constraints remain binding. Bump normalization and municipal cache targets, test wrong full names/independent identities/invalid boundaries and real PostGIS projection, then deploy and run guarded recent-offer canaries. This T2 follow-up starts after merged #387 and must preserve its area-only gates.
 
 One official street geometry is valid but self-intersecting at junctions. Accept valid linework while retaining exact identity, finite geometry, source boundary clipping and an on-street representative point; simplicity is not a requirement for a road network. Invalid or zero-length geometries remain rejected.
+
+## Revision 7: finish legacy backfill formats
+
+The authorized complete backfill recovered 39 offers; five older sources additionally require Cyrillic per-area quote separation and complete developer inventory rows. Recognize an explicit developer header, aggregate only fully parsed bounded rows into advertised room/area/price ranges, and preserve starting-price lower bounds with the existing nullable maximum contract. Wrong currencies, malformed/partial rows, rent, add-ons and per-area-only prices remain guarded. Recognize the exact Praga Północ source spelling as the existing Warsaw district. Parser v18 and normalizer v9 enable guarded replay; verify invented regressions, real persistence and public lower-bound presentation. Reconcile the five sources and one changed older album through existing fenced services, preserve owner selections, and record any individually reviewed municipal address evidence.

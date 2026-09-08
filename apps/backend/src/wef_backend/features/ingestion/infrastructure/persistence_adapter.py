@@ -907,7 +907,11 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             "latest_source_at": raw.edited_at or raw.published_at,
             "currency": apartment.currency if apartment else None,
             "price_min_minor": (money_to_minor(apartment.amount.lower) if apartment else None),
-            "price_max_minor": (money_to_minor(apartment.amount.upper) if apartment else None),
+            "price_max_minor": (
+                money_to_minor(apartment.amount.upper)
+                if apartment and not apartment.is_lower_bound
+                else None
+            ),
             "parking_price_min_minor": (
                 None
                 if parking_included or parking is None

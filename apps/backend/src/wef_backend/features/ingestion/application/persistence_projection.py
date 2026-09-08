@@ -46,7 +46,7 @@ def _field_value(value: object) -> object:
     if isinstance(value, MoneyRange):
         return {
             "min_minor": money_to_minor(value.amount.lower),
-            "max_minor": money_to_minor(value.amount.upper),
+            "max_minor": None if value.is_lower_bound else money_to_minor(value.amount.upper),
             "currency": value.currency,
         }
     if isinstance(value, DecimalRange):
