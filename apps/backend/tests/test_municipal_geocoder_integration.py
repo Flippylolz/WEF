@@ -10,8 +10,10 @@ from sqlalchemy import text
 from tests.test_geocoding_integration import TEST_DATABASE_URL, _prepare
 from tests.test_municipal_geocoder import POLYGON, SOURCE, Transport, collection, district, street
 from wef_backend.database import create_database_resources
+from wef_backend.features.catalog.application import BoundingBox, MapFilters, QueryMapLocations
+from wef_backend.features.catalog.infrastructure import SQLAlchemyMapQueryAdapter
 from wef_backend.features.ingestion.application.geocoding import ResolveGeocode
-from wef_backend.features.ingestion.domain.geocoding import normalize_geocode_query
+from wef_backend.features.ingestion.domain.geocoding import SelectionReason, normalize_geocode_query
 from wef_backend.features.ingestion.infrastructure.geocode_store import SQLAlchemyGeocodeStore
 from wef_backend.features.ingestion.infrastructure.municipal_geocoder import MunicipalGeocoder
 
@@ -150,3 +152,45 @@ async def test_real_city_surface_patch_shape() -> None:
         normalize_geocode_query(SOURCE)
     )
     assert result.longitude is not None
+
+
+async def test_district_only_offer_uses_verified_area_point_and_public_map() -> None:
+    database, location = await _prepare()
+    transport = Transport()
+    resolver = ResolveGeocode(
+        SQLAlchemyGeocodeStore(database.session_factory),
+        MunicipalGeocoder(database.session_factory, transport),
+        request_version="municipal-v3-test",
+        fallback_forms=False,
+    )
+    result = await resolver(source_query="Praga-Południe, Warszawa", location_id=location.id)
+    assert result.decision.reason is SelectionReason.AUTO_DISTRICT_IN_SCOPE
+    assert result.cached.result.precision.value == "district"
+    assert len(transport.calls) == 1
+    async with database.session_factory() as session:
+        inside = await session.scalar(
+            text("""
+            SELECT ST_Covers(ST_SetSRID(ST_GeomFromGML(:polygon),2178),
+                ST_Transform(point,2178)) FROM locations WHERE id=:id
+        """),
+            {"polygon": POLYGON_GML, "id": location.id},
+        )
+        assert inside
+    # Existing fixture offers are public; the backend must expose truthful area accuracy.
+    public_map = QueryMapLocations(SQLAlchemyMapQueryAdapter(database.session_factory))
+    result_map = await public_map(MapFilters(bbox=BoundingBox.parse("20.7,52.0,21.4,52.6")))
+    feature = next(item for item in result_map.records if item.id == location.id)
+    assert feature.location_accuracy is not None
+    assert feature.location_accuracy.label == "Approximate area"
+    await database.engine.dispose()
+
+
+@pytest.mark.parametrize("source", ["Mokotów, Warszawa", "Praga-Południe, Kraków"])
+async def test_district_area_rejects_wrong_authoritative_identity(source: str) -> None:
+    assert TEST_DATABASE_URL
+    database = create_database_resources(TEST_DATABASE_URL)
+    result = await MunicipalGeocoder(database.session_factory, Transport()).geocode(
+        normalize_geocode_query(source)
+    )
+    assert result.longitude is None
+    await database.engine.dispose()

@@ -125,7 +125,8 @@ WITH recent AS (
         AND w.state='deferred' AND w.next_attempt_at>CAST(:now AS timestamptz))
    ) AS retry_until,
    coalesce(visibility='visible' AND review_status='accepted' AND NOT out_of_scope
-     AND point IS NOT NULL AND precision IN ('building','street','city'),false) AS mapped,
+     AND point IS NOT NULL
+     AND precision IN ('building','street','city','district'),false) AS mapped,
    EXISTS (SELECT 1 FROM offer_media om JOIN media_derivatives d
      ON d.media_asset_id=om.media_asset_id
      WHERE om.offer_id=r.offer_id GROUP BY om.media_asset_id

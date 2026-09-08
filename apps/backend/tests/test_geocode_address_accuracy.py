@@ -435,3 +435,57 @@ async def test_avenue_alias_preserves_address_identity_constraints(feature: obje
     source = "Warszawa, al. Testowa 18B"
     result = await _mapped(feature, source=source)
     assert not review_geocode_result(result, query=normalize_geocode_query(source)).select_result
+
+
+@pytest.mark.parametrize(
+    "source", ["Bielany, Warszawa", "Stare Bielany, Bielany, Warszawa", "Huta, Bielany, Warszawa"]
+)
+async def test_known_warsaw_district_accepts_only_authoritative_area(source: str) -> None:
+    query = normalize_geocode_query(source)
+    result = await _mapped(_feature("", result_type="district", district="Bielany"), source=source)
+    assert not review_geocode_result(result, query=query).select_result
+    municipal = replace(result, provider=GeocodeProvider.MUNICIPAL)
+    decision = review_geocode_result(municipal, query=query)
+    assert decision.select_result
+    assert decision.reason is SelectionReason.AUTO_DISTRICT_IN_SCOPE
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "Warszawa",
+        "Bielany, Mokotów, Warszawa",
+        "район Bielany, district Mokotów, Warszawa",
+        "ul. Syntetyczna, Bielany, Warszawa",
+        "ul. Syntetyczna 1, Bielany, Warszawa",
+    ],
+)
+async def test_area_cannot_replace_missing_conflicting_or_precise_source(source: str) -> None:
+    result = await _mapped(_feature("", result_type="district", district="Bielany"), source=source)
+    result = replace(result, provider=GeocodeProvider.MUNICIPAL)
+    assert not review_geocode_result(result, query=normalize_geocode_query(source)).select_result
+
+
+@pytest.mark.parametrize(
+    "feature",
+    [
+        _feature("", result_type="district", district="Mokotów"),
+        _feature("", result_type="district", district=None),
+        _feature("", result_type="district", district="Bielany", city="Kraków"),
+        _feature("", result_type="district", district="Bielany", country="de"),
+        _feature("", result_type="district", district="Bielany", confidence=0.5),
+        _feature("", result_type="district", district="Bielany", longitude=19),
+    ],
+)
+async def test_district_area_retains_independent_evidence_checks(feature: object) -> None:
+    source = "Bielany, Warszawa"
+    result = replace(await _mapped(feature, source=source), provider=GeocodeProvider.MUNICIPAL)
+    assert not review_geocode_result(result, query=normalize_geocode_query(source)).select_result
+
+
+async def test_explicit_district_cannot_be_replaced_by_conflicting_hint() -> None:
+    source = "Bielany, Warszawa"
+    result = await _mapped(_feature("", result_type="district", district="Mokotów"), source=source)
+    result = replace(result, provider=GeocodeProvider.MUNICIPAL)
+    query = normalize_geocode_query(source, district="Mokotów")
+    assert not review_geocode_result(result, query=query).select_result

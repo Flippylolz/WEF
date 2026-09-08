@@ -137,7 +137,7 @@ async def test_wrong_or_ambiguous_streets_never_acquire_points(
     assert len(transport.calls) == 1
 
 
-@pytest.mark.parametrize("source", ["Mokotów, Warszawa", "ul. Syntetyczna, Kraków, DE"])
+@pytest.mark.parametrize("source", ["Warszawa", "ul. Syntetyczna, Kraków, DE"])
 async def test_absent_street_or_conflicting_locality_does_not_call_city(source: str) -> None:
     query = normalize_geocode_query(source)
     if "DE" in source:

@@ -186,12 +186,13 @@ class MunicipalGeocoder:
         address = query.address
         if (
             not address
-            or not address.street
             or fold_address(address.city) not in {"warszawa", "warsaw"}
             or fold_address(address.country_code) != "pl"
         ):
             return _empty()
         try:
+            if not address.street and not address.house_number:
+                return await self._district_area(address)
             return await self._lookup(address)
         except (
             httpx.HTTPError,
@@ -203,6 +204,52 @@ class MunicipalGeocoder:
         ) as error:
             message = "municipal lookup unavailable"
             raise MunicipalUnavailableError(message) from error
+
+    async def _district_area(self, address: AddressEvidence) -> GeocodeResult:
+        """Use one authoritative district polygon only for area-only source evidence."""
+        district = canonical_warsaw_district(address.district)
+        if district is None:
+            return _empty()
+        body = await self.transport.get(WFS, _params("GRANICE_DZIELNIC", "DZIELNICA", district))
+        rows = [
+            row
+            for row in _records(body, "GRANICE_DZIELNIC")
+            if canonical_warsaw_district(_field(row, "DZIELNICA")) == district
+        ]
+        if len(rows) != 1:
+            return _empty(ambiguous=len(rows) > 1)
+        polygon = ET.tostring(_polygon(rows[0]), encoding="unicode")
+        async with self.sessions() as session:
+            row = (
+                await session.execute(
+                    text("""
+                WITH area AS (SELECT ST_SetSRID(ST_GeomFromGML(:polygon),2178) geom),
+                valid AS (SELECT geom FROM area WHERE ST_IsValid(geom)
+                    AND NOT ST_IsEmpty(geom) AND ST_Area(geom)>0),
+                point AS (SELECT ST_Transform(ST_PointOnSurface(geom),4326) geom FROM valid)
+                SELECT ST_X(geom),ST_Y(geom) FROM point
+            """),
+                    {"polygon": polygon},
+                )
+            ).one_or_none()
+        if row is None:
+            return _empty()
+        lon, lat = Decimal(str(row[0])), Decimal(str(row[1]))
+        return GeocodeResult(
+            provider=self.provider,
+            provider_result_id=f"GRANICE_DZIELNIC:{district}",
+            longitude=lon,
+            latitude=lat,
+            display_name=f"{district}, Warszawa",
+            precision=GeocodePrecision.DISTRICT,
+            confidence=Decimal(1),
+            within_scope=within_warsaw(lon, lat),
+            attribution_text=ATTRIBUTION,
+            address=AddressEvidence(
+                district=district, city="Warszawa", country_code="PL", result_type="district"
+            ),
+            diagnostic=(("municipal_district_sha256", hashlib.sha256(body).hexdigest()),),
+        )
 
     async def _lookup(self, address: AddressEvidence) -> GeocodeResult:
         if address.street is None:
