@@ -9,19 +9,19 @@
 - T5: PR #385 deployed as b27df267a7184bf029cd87ead8969f584adbbc4b (run 34206723530). Full bounded parser backfill completed successfully.
 - T2 avenue follow-up: PR #386 deployed as 4f43adfac521e8807369853b704cf51e641c08e0 (run 34210144129). Retaining a common avenue token for al./Aleja/Aleje fixed the last apartment's address mismatch. All five latest offers passed public map, price/area/rooms and precision checks, with 48 unique gallery assets and 96 successful thumbnail/content HTTP checks. Explicit v6 canary verification passed. A fresh production browser showed all five in results; the recovered apartment opened with separate parking price and ten gallery images.
 - T3 district-area follow-up: PR #387 deployed as 5a67fe4010978f4a5cf910ca5ecdb35f642f1789 (run 34212810239). Nine guarded v7 canaries completed application and explicit verification. All four district-only locations appeared in the public map with Approximate area labels. A fresh browser selected the Bemowo offer and displayed the area label, correct fields and ten-photo gallery. The revised local and CI browser matrices passed.
-- T2 municipal identity follow-up: PR #388 merged as c4d34c58e555adcd5c7e8ca9a3feb60dfdcda5ac. Exact full/short official names, bounded district unions for unique cross-district streets and valid street junctions resolve seven read-only probes. Production acceptance awaits the release and guarded v8 revalidation.
+- T2 municipal identity follow-up: PR #388 deployed as c4d34c58e555adcd5c7e8ca9a3feb60dfdcda5ac (run 34215384687). All 16 guarded v8 canaries completed apply and explicit verification. All 32 seven-day offers passed actual public map/detail checks, including all 307 unique gallery assets and 614 successful image HTTP checks. Public precision distribution: 21 street, four building, four district, three city.
 
 All canaries use existing source-current/owner-selection fences. No direct visibility/point overrides, provider budget increases or new dependencies were used. Receipts containing operational IDs remain outside Git; this record contains only aggregate acceptance and release references.
 
 ## Validation
 
-The final integrated tree passed `make lint`, `make format-check`, `make typecheck`, `make contract-check`, and `make test`: 1,406 backend and 186 frontend tests, both coverage floors. Local frontend testing used two workers to avoid host CPU contention. Parent-squash rebases preserved the exact tested tree; current-head GitHub verification reran for each final branch. Five required contexts passed before each ordinary exact-head squash merge.
+The final integrated tree passed `make lint`, `make format-check`, `make typecheck`, `make contract-check`, and `make test`: 1,439 backend and 186 frontend tests, both coverage floors. Local frontend testing used two workers to avoid host CPU contention. Parent-squash rebases preserved the exact tested tree; current-head GitHub verification reran for each final branch. Five required contexts passed before each ordinary exact-head squash merge.
 
 ## Backfill
 
 Frozen boundary: source message 29761. Active retained population: 28,312 messages. Dry-run and apply each completed 57 pages of at most 500 current retained revisions, with identical classifications: 24,954 non-candidates, 3,321 update candidates and 37 create candidates. Every apply page succeeded. Together with the separate latest-apartment and house canaries, 39 previously absent offers were recovered. The offer count increased from 3,338 after the house canary to 3,376 after the remaining replay. The five hidden offers and their identity fingerprint were unchanged. Live traversal remained aligned at 29761.
 
-A seven-day comparison now has all 32 expected offer records and 307 current associated photos, with no missing galleries or pending media in that group. Location completeness remains a separate acceptance gate. Five media quarantines compared against live Telegram had changed photo/album identities despite unchanged text and timestamps. A bounded metadata refresh used the existing live persistence path over 307 messages: 248 revised, 59 unchanged, zero created, checkpoint 29761. Current revisions completed ordinary media recovery; older quarantines were not force-reopened or treated as equivalent images. The five hidden-offer identities remained unchanged after this refresh.
+A seven-day comparison now has all 32 expected offer records and 307 current associated photos, with no missing galleries or pending media in that group. All 32 also passed actual public map/detail delivery verification after v8 revalidation. Five media quarantines compared against live Telegram had changed photo/album identities despite unchanged text and timestamps. A bounded metadata refresh used the existing live persistence path over 307 messages: 248 revised, 59 unchanged, zero created, checkpoint 29761. Current revisions completed ordinary media recovery; older quarantines were not force-reopened or treated as equivalent images. The five hidden-offer identities remained unchanged after this refresh.
 
 ## Passive acceptance
 
@@ -31,3 +31,19 @@ An hourly task heartbeat (`verify-e28-delivery-window`) checks the durable produ
 acceptance window and stays quiet unless a new actionable failure or completion
 occurs. It will record successful acceptance and pause after closing the epic
 through the normal checked PR workflow.
+
+## Older recovered cohort follow-up
+
+The 39 newly recovered offers all have complete current galleries. One older house
+needed a bounded ten-message REPROCESS metadata refresh; all ten revisions were
+updated, then the existing media worker completed its ten-photo gallery. This
+operation used a separate run cursor and did not advance the live checkpoint.
+
+Five older posts additionally exposed developer inventory price formats, a house
+price-per-area annotation, and an exact district spelling. PR #389 addresses these
+parser/projection cases. Two street abbreviations were individually compared with
+official municipal identities and geometry, then accepted through the existing
+operator selection service with current-source and protected-selection guards.
+The recorded result retains building/street precision, municipal cache evidence
+and explicit manual-accept lineage. No generic surname matcher or arbitrary point
+was added. Final replay and full recovered-cohort public checks follow deployment.
