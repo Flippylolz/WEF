@@ -1,6 +1,7 @@
 # Weekly version updates for every committed dependency ecosystem.
 # Security updates remain enabled via GitHub Dependabot alerts/security PRs.
-# Major upgrades stay ungrouped (individual PRs). Auto-merge is E1-T7 only.
+# Major upgrades stay separate except the coupled Vitest runner/coverage pair.
+# Auto-merge is E1-T7 only.
 version: 2
 
 updates:
@@ -16,10 +17,18 @@ updates:
       - dependencies
       - npm
     groups:
+      vitest:
+        applies-to: version-updates
+        patterns:
+          - "vitest"
+          - "@vitest/*"
       npm-patch-minor:
         applies-to: version-updates
         patterns:
           - "*"
+        exclude-patterns:
+          - "vitest"
+          - "@vitest/*"
         update-types:
           - minor
           - patch
