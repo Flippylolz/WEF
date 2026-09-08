@@ -32,3 +32,11 @@ python3 scripts/check_critical_coverage.py --frontend tmp/coverage/frontend/repo
 ```
 
 The external temporary Compose override only assigns unique `wef-e28-backend:test` and `wef-e28-web:test` image names; it does not alter source, assertions, service behavior or thresholds. CI remains the default hosted required gate.
+
+Production acceptance: PR #377 merged after all required checks passed. Release
+34199617611 (main ffb338b, containing T1) completed successfully. The running
+worker reports parser e2-v16, connected transport, consumer running, no error,
+freshness fresh and checkpoint/head 29761 aligned. Read-only extraction of all
+five audited production descriptions with the new parser detected each offer
+with correct evidenced values; T3 owns the house locality. Historical repairs
+remain explicitly deferred to the full E28 backfill.

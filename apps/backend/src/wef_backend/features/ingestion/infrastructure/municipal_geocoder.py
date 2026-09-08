@@ -284,7 +284,10 @@ class MunicipalGeocoder:
             diagnostic=(
                 ("municipal_street_sha256", hashlib.sha256(body).hexdigest()),
                 ("municipal_district_sha256", hashlib.sha256(district_body).hexdigest()),
-                ("coordinate_method", "address_point" if point else "street_line_midpoint"),
+                (
+                    "coordinate_method",
+                    "address_point" if point else "longest_street_segment_midpoint",
+                ),
                 ("source_url", ADDRESS_WFS if point else WFS),
                 ("municipal_address_sha256", address_hash),
             ),
@@ -362,8 +365,12 @@ class MunicipalGeocoder:
                     FROM geometry WHERE ST_IsValid(district) AND ST_IsSimple(line)
                 ), target AS (
                     SELECT *, CASE WHEN :numbered THEN ST_SetSRID(ST_MakePoint(:x,:y),2178)
-                              WHEN GeometryType(clipped)='LINESTRING' AND ST_Length(clipped)>0
-                              THEN ST_LineInterpolatePoint(clipped,0.5) END point
+                              ELSE (SELECT ST_LineInterpolatePoint(segment.geom,0.5)
+                                    FROM ST_Dump(ST_CollectionExtract(clipped,2)) segment
+                                    WHERE ST_Length(segment.geom)>0
+                                    ORDER BY ST_Length(segment.geom) DESC,
+                                             ST_AsEWKB(segment.geom)
+                                    LIMIT 1) END point
                     FROM valid
                 )
                 SELECT ST_X(ST_Transform(point,4326)),ST_Y(ST_Transform(point,4326))

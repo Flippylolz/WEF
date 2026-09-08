@@ -186,7 +186,7 @@ async def test_ai_budget_defers_without_caching_false_failure(outcome: ProviderO
 def test_ai_composition_retains_all_existing_activation_gates() -> None:
     resolver = build_location_resolver(MagicMock(), MagicMock(), Settings())
     assert resolver.recovery is None
-    assert resolver.municipal.request_version.startswith("municipal-v1-")
+    assert resolver.municipal.request_version.startswith("municipal-v2-")
     enabled = Settings(
         ai_curation_enabled=True,
         ai_recovery_enabled=True,

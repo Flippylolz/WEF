@@ -151,6 +151,28 @@ async def test_goclaw_preserves_street_and_warsaw_context(source: str) -> None:
     assert review_geocode_result(result, query=query).select_result
 
 
+@pytest.mark.parametrize("source", ["ul. Syntetyczna, Sielce", "Warszawa, Sielce, ul. Syntetyczna"])
+async def test_sielce_is_warsaw_neighborhood_not_another_city(source: str) -> None:
+    query = normalize_geocode_query(source)
+    assert query.address is not None
+    assert query.address.city == "Warszawa"
+    assert query.address.neighborhood == "Sielce"
+    assert query.address.district == "Mokotów"
+    assert normalize_location_display_name(source) == "ul. Syntetyczna, Mokotów, Warszawa"
+    result = await _mapped(_feature("Syntetyczna", district="Mokotów"), source=source)
+    assert review_geocode_result(result, query=query).select_result
+    wrong = await _mapped(_feature("Syntetyczna", city="Kraków"), source=source)
+    assert not review_geocode_result(wrong, query=query).select_result
+
+
+async def test_neighborhood_does_not_override_conflicting_explicit_district() -> None:
+    source = "ul. Syntetyczna, Sielce, Bemowo, Warszawa"
+    result = await _mapped(_feature("Syntetyczna", district="Bemowo"), source=source)
+    assert review_geocode_result(result, query=normalize_geocode_query(source)).reason is (
+        SelectionReason.ADDRESS_MISMATCH
+    )
+
+
 async def test_candidate_order_cannot_prefer_high_confidence_wrong_street() -> None:
     wrong = _feature("Grochowska", result_type="amenity")
     right = _feature(confidence=0.9)
