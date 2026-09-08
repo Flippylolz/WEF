@@ -16,3 +16,9 @@ Production gallery acceptance remains pending release and bounded backfill.
 
 Migration 0027 adds a Boolean receipt and partial lookup index only. T3 prepares
 the rollback reader; T4 deployment and completion depend on T3 production success.
+
+## Production acceptance
+
+The deployed canary passed. [Production acceptance](PRODUCTION_ACCEPTANCE.md) records
+the immutable release, guarded recovery and public API/browser evidence. Earlier
+pending statements above describe the pre-deployment validation checkpoint.

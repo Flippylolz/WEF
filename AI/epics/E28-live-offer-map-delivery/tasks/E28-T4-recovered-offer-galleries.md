@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E28-T4
 epic: E28
 title: Reconnect galleries after offer recovery
-status: in_progress
+status: done
 revision: 2
 priority: P1
 size: M
@@ -29,7 +29,7 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-08T06:48:39Z"
 dependency_gate:
-  status: stacked
+  status: satisfied
   verified_by: Codex
   verified_at: "2026-09-08T07:34:00Z"
   evidence:
@@ -47,12 +47,14 @@ branch:
   task_id: E28-T4
   one_task_only: true
   created_at: "2026-09-08T07:34:00Z"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/384
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-08T11:27:30.299784+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/384
+  evidence:
+    - ../T4_VERIFICATION.md
+    - ../PRODUCTION_ACCEPTANCE.md
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -83,3 +85,9 @@ branch includes merged T1; production acceptance remains pending. An additive
 per-link discovery receipt is needed to detect canonical owners created after the
 chronological media scan, including AI-created offers, without polling terminal
 media forever or changing source evidence.
+
+## Final production acceptance
+
+[Production acceptance](../PRODUCTION_ACCEPTANCE.md) records the deployed releases,
+guarded replay/canaries, public map checks and complete galleries. Task scope is
+accepted; T5 and the epic remain open for the continuous 24-hour delivery window.

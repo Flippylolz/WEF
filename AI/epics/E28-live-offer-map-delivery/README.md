@@ -26,3 +26,11 @@ The [completed spike](SPIKE.md) identifies four hidden offers among the five mos
 ## Acceptance
 
 All five audited offer-bearing posts must reach the public map with their correct gallery after bounded recovery. The Dosin house must retain its actual locality and honest approximate precision. Neither a green worker status nor parser `complete` is delivery acceptance. Measure unique current offer revisions, map-visible offers, current associated photos, oldest unresolved age, and reasons; do not confuse descriptor attempts or old revisions with unique missing photos. New offers should publish within five minutes when provider availability/budget allows; delays remain retryable and observable. Completion additionally requires a 24-hour live window and deterministic edit/replay/restart tests, without silently exempting unclassified posts.
+
+## Rollout
+
+T1–T4 and their follow-ups are deployed and accepted. All 39 recovered offers
+appear on the public map with complete galleries; all 32 seven-day offers also
+passed public map/gallery checks. T5 code is deployed and its backfill completed;
+[production acceptance](PRODUCTION_ACCEPTANCE.md) tracks the bounded backfill and
+real 24-hour delivery window. E28 remains in progress until that window passes.
