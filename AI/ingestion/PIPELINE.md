@@ -129,6 +129,17 @@ Location/address sources (in priority order):
    (`extract.location_pin` / `extract.district_pin` rules); divergent pin lines emit
    `conflicting_values` instead of choosing.
 
+Current channel template support (`e2-v16`, E28-T1) also counts Cyrillic `м²`/`м2`
+area evidence, recognizes the Russian house-sale header, and reads standalone
+`Квартира:` / `Цена дома:` total prices. `Паркоместо:` and storage labels containing
+a size keep their own monetary values; the storage size and per-square-metre price
+never become the property total. Pipe-delimited room summaries retain their own
+source spans and must agree with labeled/tagged totals. A generic house-sale
+heading does not contradict an explicit semi-detached description; an explicit
+detached-house description still does. Independent `source-evidence-v3` classification
+recognizes these price labels even if candidate detection fails. Nearby-locality
+resolution and previously unassociated galleries remain separate E28 tasks.
+
 ### 6. Normalization
 
 Address normalization produces a comparison/search form, not replacement display copy:

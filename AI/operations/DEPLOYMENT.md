@@ -1,5 +1,8 @@
 # Deployment
 
+See [shared application ports](SHARED_EDGE_APPLICATION_PORTS.md) for the owner-requested
+3100 HTTP / 3200 HTTPS routing update and WEF rollback port migration.
+
 ## Delivery model
 
 The MVP runs as a Docker Compose project on one Linux server. GitHub-hosted runners build application images; the production host pulls immutable images and never builds source code.
