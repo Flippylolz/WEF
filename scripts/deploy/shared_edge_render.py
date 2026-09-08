@@ -53,6 +53,8 @@ class EdgeConfiguration:
     wef_web_upstream: str
     forecast_hostname: str | None = None
     forecast_upstream: str | None = None
+    forecast_http_upstream: str | None = None
+    fillable_upstream: str | None = None
     client_max_body_size: str = "1m"
     acme_server: str | None = None
     email: str | None = None
@@ -132,6 +134,9 @@ def validate_configuration(config: EdgeConfiguration) -> None:
         fixture_mode=config.fixture_mode,
         label="WEF hostname",
     )
+    for upstream in (config.forecast_http_upstream, config.fillable_upstream):
+        if upstream is not None:
+            validate_upstream(upstream, "HTTP application upstream")
     validate_forecast_pair(config)
     for label, value in (
         ("WEF API upstream", config.wef_api_upstream),
@@ -179,7 +184,28 @@ def tls_replacements(
             forecast_block = "\n" + forecast_block
         if not forecast_block.endswith("\n"):
             forecast_block += "\n"
+    http_blocks = []
+    if config.forecast_http_upstream is not None:
+        http_blocks.append(
+            render_template(
+                (templates_dir / "http-vhost.conf.in").read_text(encoding="utf-8"),
+                {"HTTP_UPSTREAM": config.forecast_http_upstream},
+            )
+        )
+    fillable_block = ""
+    if config.fillable_upstream is not None:
+        fillable_block = render_template(
+            (templates_dir / "fillable-vhost.conf.in").read_text(encoding="utf-8"),
+            {
+                "FILLABLE_UPSTREAM": config.fillable_upstream,
+                "WEF_HOSTNAME": config.wef_hostname,
+            },
+        )
     return {
+        "FILLABLE_SERVER_BLOCK": fillable_block,
+        "HTTP_SERVER_BLOCKS": "\n".join(http_blocks),
+        # HSTS applies to every port of a hostname. Clear it when HTTP is enabled.
+        "HSTS_MAX_AGE": "0" if http_blocks else "31536000",
         "CLIENT_MAX_BODY_SIZE": config.client_max_body_size,
         "FORECAST_SERVER_BLOCK": forecast_block,
         "WEF_API_UPSTREAM": config.wef_api_upstream,
@@ -276,6 +302,8 @@ def parse_configuration(argv: list[str] | None) -> tuple[EdgeConfiguration, Path
     parser.add_argument("--wef-media-upstream", required=True)
     parser.add_argument("--wef-web-upstream", required=True)
     parser.add_argument("--forecast-upstream", default=None)
+    parser.add_argument("--forecast-http-upstream", default=None)
+    parser.add_argument("--fillable-upstream", default=None)
     parser.add_argument("--client-max-body-size", default="1m")
     parser.add_argument("--email", default=None)
     parser.add_argument("--acme-server", default=PRODUCTION_ACME_SERVER)
@@ -294,6 +322,8 @@ def parse_configuration(argv: list[str] | None) -> tuple[EdgeConfiguration, Path
         wef_media_upstream=arguments.wef_media_upstream,
         wef_web_upstream=arguments.wef_web_upstream,
         forecast_upstream=arguments.forecast_upstream,
+        forecast_http_upstream=arguments.forecast_http_upstream,
+        fillable_upstream=arguments.fillable_upstream,
         client_max_body_size=arguments.client_max_body_size,
         acme_server=arguments.acme_server,
         email=arguments.email,

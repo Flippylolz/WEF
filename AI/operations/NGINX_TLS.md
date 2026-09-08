@@ -1,5 +1,8 @@
 # Nginx and TLS
 
+See [shared application ports](SHARED_EDGE_APPLICATION_PORTS.md) for the owner-requested
+3100 HTTP / 3200 HTTPS routing update and WEF rollback port migration.
+
 ## Status
 
 This is the approved target architecture from [ADR-020](../decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md). **Live WEF HTTPS is active** on `https://2fa54e2405.duckdns.org` via the `wef-shared-edge` Nginx/Certbot project (E7-T10, 2026-08-20). AI Forecast remains on public host port 3000. Caddy on port 3100 is retained as WEF rollback. Tooling and inert proofs: [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) / [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md); live cutover evidence is on [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md).

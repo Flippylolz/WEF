@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 # ruff: noqa: C901, PLR0912, PLR0915, PLR2004, PT018, S101, S108, T201, TRY003, EM101, EM102
+import dataclasses
 import json
 import os
 import shutil
@@ -378,6 +379,55 @@ def assert_wef_only_renderer() -> None:
         assert "forecast.test" not in issuance, "forecast must not appear in issuance"
 
 
+def assert_application_ports() -> None:
+    """Prove opt-in HTTP Forecast and TLS Fillable routing and unsafe inputs."""
+    with tempfile.TemporaryDirectory() as workspace:
+        root = Path(workspace)
+        base = fixture_configuration()
+        config = dataclasses.replace(
+            base,
+            forecast_http_upstream="host.docker.internal:3000",
+            fillable_upstream="fillable-gateway:8080",
+        )
+        write_release(config, root / "apps")
+        for name in (TLS_CONFIG, TLS_REDIRECT_CONFIG):
+            text = (root / "apps" / name).read_text(encoding="utf-8")
+            http = text.split("listen 3100;", 1)[1].split("listen 3200 ssl;", 1)[0]
+            assert "proxy_pass http://$http_app_upstream;" in http
+            assert "return 301" not in http and "ssl_certificate" not in http
+            assert "X-Forwarded-Proto http;" in http
+            assert 'Strict-Transport-Security "max-age=0"' in text
+            tls = text.split("listen 3200 ssl;", 1)[1]
+            assert "fillable-gateway:8080" in tls
+            assert "X-Forwarded-Proto https;" in tls
+            assert "X-Forwarded-Port 3200;" in tls
+            assert "Host $http_host;" in tls
+            assert "/live/wef.test/fullchain.pem" in tls
+            assert "client_max_body_size 12m;" in tls
+        write_release(
+            dataclasses.replace(base, fillable_upstream="fillable-gateway:8080"),
+            root / "tls-only",
+        )
+        assert 'Strict-Transport-Security "max-age=31536000"' in (
+            root / "tls-only" / TLS_CONFIG
+        ).read_text(encoding="utf-8")
+        for index, invalid in enumerate(
+            (
+                dataclasses.replace(base, forecast_http_upstream="bad:8080; injected"),
+                dataclasses.replace(base, fillable_upstream="bad:8080; injected"),
+            )
+        ):
+            try:
+                write_release(
+                    invalid,
+                    root / f"bad-{index}",
+                )
+            except SharedEdgeRenderError:
+                pass
+            else:
+                raise AssertionError("unsafe application upstream accepted")
+
+
 def assert_renderer_negative() -> None:
     """Prove the renderer rejects unsafe or non-deterministic inputs."""
     with tempfile.TemporaryDirectory() as workspace:
@@ -502,6 +552,7 @@ def main() -> int:
     rendered = assert_renderer_positive()
     assert_generated_configuration_policy(rendered)
     assert_wef_only_renderer()
+    assert_application_ports()
     assert_renderer_negative()
     assert_image_pin_consistency()
     print("shared-edge topology proof: all assertions passed")
