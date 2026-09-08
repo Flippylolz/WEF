@@ -458,7 +458,7 @@ test("keyboard-only filters, selection, drawer and return focus", async ({
 });
 
 for (const forceFallback of [false, true]) {
-  test(`E26 coarse and quarantined coordinates remain discoverable without map pins${forceFallback ? " with no WebGL" : ""}`, async ({
+  test(`E28 accepted districts map as areas while quarantined coordinates remain discoverable${forceFallback ? " with no WebGL" : ""}`, async ({
     page,
     request,
     isMobile,
@@ -466,11 +466,24 @@ for (const forceFallback of [false, true]) {
     const map = await request.get(
       "/api/v1/map/locations?bbox=20.8,52.1,21.3,52.4",
     );
-    const mapped = (await map.json()).features as { id: string }[];
+    const mapped = (await map.json()).features as {
+      id: string;
+      properties: {
+        coordinate_precision: string;
+        location_accuracy: { precision: string; label: string };
+      };
+    }[];
     expect(
       mapped.some(({ id }) => id === "e2600000-0000-4000-8000-000000000001"),
     ).toBe(true);
-    for (const suffix of ["2", "3"]) {
+    expect(
+      mapped.find(({ id }) => id === "e2600000-0000-4000-8000-000000000002")
+        ?.properties,
+    ).toMatchObject({
+      coordinate_precision: "district",
+      location_accuracy: { precision: "area", label: "Approximate area" },
+    });
+    for (const suffix of ["3"]) {
       expect(
         mapped.some(
           ({ id }) => id === `e2600000-0000-4000-8000-00000000000${suffix}`,
@@ -482,7 +495,7 @@ for (const forceFallback of [false, true]) {
     );
     expect(response.ok()).toBe(true);
     const discovery = await response.json();
-    expect(discovery.matching_count).toBe(2);
+    expect(discovery.matching_count).toBe(1);
     expect(discovery.mapped_matching_count).toBe(0);
     expect(discovery.filter_scope).toBe("non_spatial");
     for (const item of discovery.items)
@@ -512,7 +525,6 @@ for (const forceFallback of [false, true]) {
     await page.locator(".uncertain-listings summary").click();
     const initialBbox = new URL(page.url()).searchParams.get("bbox");
     for (const [name, label] of [
-      ["Synthetic Jugosłowiańska January", "Approximate area"],
       ["Synthetic Jugosłowiańska May", "Location unresolved"],
     ]) {
       const trigger = page.getByRole("button", { name: new RegExp(name!) });
