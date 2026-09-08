@@ -6,9 +6,9 @@ from alembic.config import Config
 from wef_backend.settings import Settings, load_settings
 
 EXPECTED_DATABASE_REVISION = "20260906_0026"
-# The prior 0025 reader explicitly accepted this additive schema. This reader
-# requires 0026, so the set cannot report ready before its migration has run.
-READ_COMPATIBLE_DATABASE_REVISIONS = frozenset({EXPECTED_DATABASE_REVISION, "20260906_0026"})
+# E28-T4 adds only a defaulted discovery receipt to offer_sources. This reader
+# is the verified rollback target for that additive migration.
+READ_COMPATIBLE_DATABASE_REVISIONS = frozenset({EXPECTED_DATABASE_REVISION, "20260908_0027"})
 
 __all__ = [
     "EXPECTED_DATABASE_REVISION",

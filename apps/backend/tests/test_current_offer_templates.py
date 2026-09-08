@@ -71,7 +71,8 @@ def test_house_header_and_total_are_independent_of_warsaw_location_support() -> 
     assert listing.area_sqm.value.lower == 145
     assert listing.rooms is not None
     assert listing.rooms.value == IntegerRange(5, 5)
-    assert listing.location is None  # E28-T3 owns explicit nearby-locality resolution.
+    assert listing.location is not None
+    assert listing.location.value == "Miejscowość Testowa, гмина Testowa"
     assert not result.warnings
 
 

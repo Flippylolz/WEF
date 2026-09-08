@@ -257,3 +257,19 @@ Different hosted candidate coordinates remain ambiguous; this rule does not
 combine unrelated provider records. Cache/validation versioning makes old
 terminal decisions eligible for current-policy revalidation; protected selections
 and observation/canary rollout remain authoritative.
+
+## E28 nearby locality precision
+
+A complete source pin naming a locality and `gmina` preserves both names and no
+longer injects Warsaw. The existing Geoapify request uses `type=city`, requiring
+positive city, municipality and PL country agreement, unique candidate position,
+high confidence and bounded Warsaw-environs coordinates (north 52.6). Street or
+house evidence cannot degrade to a locality point. The public projection permits
+accepted city points with the existing **Approximate area** label; district and
+unresolved points remain outside spatial results. Default map bounds include this
+northern area. Normalizer/scope/review versions invalidate old cached decisions.
+
+The provider's [geocoding documentation](https://apidocs.geoapify.com/docs/geocoding/)
+documents town/village requests through `type=city`. A bounded read-only production
+probe returned one matching Dosin/gmina Serock result; production canary selection
+remains part of E28 backfill acceptance. No provider quota or dependency changed.

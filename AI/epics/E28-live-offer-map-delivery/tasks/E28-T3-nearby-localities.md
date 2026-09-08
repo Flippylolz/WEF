@@ -3,12 +3,12 @@ schema: ai-workflow/task@1
 id: E28-T3
 epic: E28
 title: Support source-evidenced nearby localities
-status: draft
-revision: 1
+status: in_progress
+revision: 2
 priority: P1
 size: M
 milestone: M5
-dependencies: [E28-T1]
+dependencies: [E28-T1, E28-T2]
 requirement_ids: []
 decision_ids: [ADR-006]
 deferred_decision_ids: []
@@ -25,20 +25,28 @@ spike_gate:
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 2
+  approved_revision: 4
   verified_by: Codex
   verified_at: "2026-09-08T06:48:39Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: Codex
+  verified_at: "2026-09-08T07:25:00Z"
+  evidence:
+    - task_id: E28-T1
+      branch: bugfix/E28-T1-current-offer-templates
+      pull_request: https://github.com/Flippylolz/WEF/pull/377
+      head_commit: 7bb566cd00d13d70ef5e2f584b7cb289934d219a
+    - task_id: E28-T2
+      branch: bugfix/E28-T2-warsaw-street-resolution
+      pull_request: https://github.com/Flippylolz/WEF/pull/380
+      head_commit: d1ba6e8cc15477daa62fba1cb6482b86c8b9e3c2
 branch:
   required: true
-  name: null
+  name: feat/E28-T3-nearby-localities
   task_id: E28-T3
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-08T07:25:00Z"
   pull_request: null
 completion:
   completed_by: null
@@ -67,3 +75,9 @@ The Dosin acceptance offer is located in its evidenced locality rather than Wars
 Follow the task-specific module boundary and rollout in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Use invented fixtures, unit and real PostGIS integration tests; add contract/browser tests when public behavior changes. Run `make install`, `make lint`, `make test`, `make format-check`, `make typecheck`, and `make contract-check` before pushing affected implementation. Record exact results in the PR and task evidence.
 
 Keep this change in its own task branch/PR; do not mark done before current-head CI and production acceptance pass. Roll back the immutable application release or pause only this recovery path, preserving raw revisions, owner selections and existing unrelated workloads. Do not claim application rollback undoes data changes. Operator repair receipts and current-source guards must support audit/recovery.
+
+## Start evidence
+
+Owner continuation authorizes the full epic and subsequent backfill. T1 is merged
+in main; this dependent branch contains it and proceeds while production release
+acceptance is pending. Completion remains gated on that acceptance.

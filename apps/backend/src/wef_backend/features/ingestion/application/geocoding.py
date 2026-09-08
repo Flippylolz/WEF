@@ -194,7 +194,9 @@ class ResolveGeocode:
         key = GeocodeCacheKey(
             provider=self.geocoder.provider,
             normalized_query=query.normalized,
-            request_version=f"{self.request_version}-street"
+            request_version=f"{self.request_version}-city"
+            if query.locality_only
+            else f"{self.request_version}-street"
             if query.street_only
             else self.request_version,
         )
