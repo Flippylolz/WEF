@@ -12,7 +12,7 @@ from wef_backend.features.ingestion.domain.extraction import SourceSpan
 if TYPE_CHECKING:
     from wef_backend.features.ingestion.domain.extraction import ExtractionResult
 
-POLICY_VERSION = "source-evidence-v2"
+POLICY_VERSION = "source-evidence-v3"
 
 
 class ParseClassification(StrEnum):
@@ -51,13 +51,17 @@ class ParseQuality:
 # extraction success so a supported label can expose a silent extraction gap.
 _LABELS = {
     "apartment_price": (
-        r"(?:cena(?: mieszkania)?|(?:apartment )?price|цена(?: квартиры| апартамента)?|"
+        r"(?:cena(?: mieszkania)?|(?:apartment )?price|"
+        r"цена(?: квартиры| апартамента| дома)?|квартира|"
         r"стоимость(?: квартиры)?|ціна(?: квартири)?|вартість(?: квартири)?)"
     ),
     "area_sqm": r"(?:powierzchnia|area|площадь|площа)",
     "rooms": r"(?:pokoje?|rooms?|комнаты|комнат|кімнати|кімнат)",
-    "parking_price": r"(?:parking(?: price)?|cena parkingu|паркинг|парковка|гараж)",
-    "storage_price": r"(?:storage(?: price)?|komórka(?: lokatorska)?|кладовка|кладовая|комірка)",
+    "parking_price": r"(?:parking(?: price)?|cena parkingu|паркинг|парковка|паркоместо|гараж)",
+    "storage_price": (
+        r"(?:storage(?: price)?|komórka(?: lokatorska)?|"
+        r"кладов(?:ка|ая)(?:[ \t]+\d+(?:[.,]\d+)?[ \t]*[mм][²2])?|комірка)"
+    ),
     "market_type": r"(?:rynek|market|рынок|ринок)",
     "property_type": r"(?:typ nieruchomości|property type|тип недвижимости|тип нерухомості)",
 }
@@ -87,10 +91,11 @@ _NEGATIVE = re.compile(
     r"usługi|ремонт квартир|послуги|advertising services)\b"
 )
 _SALE = re.compile(
-    r"(?i)\b(?:for sale|sprzedam|sprzedaż|продажа|прода[мю]|продаж|продається|купівля|покупка)\b"
+    r"(?i)\b(?:for sale|sprzedam|sprzedaż|продажа|продажу|"
+    r"прода[мю]|продаж|продається|купівля|покупка)\b"
 )
 _UNIT = re.compile(
-    r"(?i)\b(?:mieszkanie|apartament|apartment|flat|house|квартир\w*|апартамент\w*|будинок|dom)\b"
+    r"(?i)\b(?:mieszkanie|apartament|apartment|flat|house|квартир\w*|апартамент\w*|будинок|dom|дом)\b"
 )
 
 

@@ -1,0 +1,6 @@
+# Enable only after moving the WEF rollback listener off host port 3100.
+# Fillable owns host port 3200 through its TCP relay on the wef-edge network.
+services:
+  nginx:
+    ports:
+      - "${WEF_EDGE_BIND_ADDRESS:-0.0.0.0}:3100:3100"

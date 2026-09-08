@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import select, text
 
 from tests.parser_benchmark import FIXTURE
+from tests.test_current_offer_templates import APARTMENT
 from tests.test_listing_extraction import _message
 from tests.test_persistence_integration import TEST_DATABASE_URL, _prepare, _purge, _settings
 from wef_backend.database import create_database_resources
@@ -19,6 +20,7 @@ from wef_backend.features.ingestion.application.persistence import (
     PersistableMessage,
     PersistHistoricalIngestion,
     RunMetadata,
+    RunMode,
 )
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
@@ -28,6 +30,63 @@ pytestmark = [
     pytest.mark.integration,
     pytest.mark.skipif(TEST_DATABASE_URL is None, reason="TEST_DATABASE_URL is not configured"),
 ]
+
+
+@pytest.mark.asyncio
+async def test_current_template_replay_creates_one_offer_without_rewriting_source() -> None:
+    await _prepare()
+    database = create_database_resources(_settings().database_url)
+    try:
+        raw = _message(APARTMENT)
+        extraction = extract_listing(raw)
+        old_miss = replace(
+            extraction,
+            listing=None,
+            decision=replace(
+                extraction.decision,
+                parser_version="e2-v15",
+                is_candidate=False,
+                score=0,
+                signals=(),
+                content_type=None,
+            ),
+        )
+        service = PersistHistoricalIngestion(
+            store=SQLAlchemyIngestionPersistence(database.session_factory)
+        )
+        await service(
+            channel=raw.source,
+            messages=[PersistableMessage(raw, old_miss)],
+            metadata=RunMetadata(parser_version="e2-v15"),
+        )
+        async with database.session_factory() as session:
+            assert await session.scalar(text("SELECT count(*) FROM offers")) == 0
+        for _ in range(2):
+            await service(
+                channel=raw.source,
+                messages=[PersistableMessage(raw, extraction)],
+                metadata=RunMetadata(parser_version=PARSER_VERSION, mode=RunMode.REPROCESS),
+            )
+        async with database.session_factory() as session:
+            offers = (await session.scalars(select(OfferRow))).all()
+            assert len(offers) == 1
+            offer = offers[0]
+            assert offer.price_min_minor == offer.price_max_minor == 81200000
+            assert offer.parking_price_min_minor == offer.parking_price_max_minor == 4200000
+            assert offer.storage_price_min_minor == offer.storage_price_max_minor == 2300000
+            assert offer.area_min_sqm == Decimal("38.60")
+            assert offer.rooms_min == offer.rooms_max == 2
+            assert offer.currency == "PLN"
+            assert offer.parser_version == PARSER_VERSION
+            assert offer.visibility == "needs_review"
+            assert await session.scalar(text("SELECT count(*) FROM offer_sources")) == 1
+            assert await session.scalar(text("SELECT count(*) FROM source_message_revisions")) == 1
+            assert await session.scalar(text("SELECT raw_checksum FROM source_messages")) == (
+                raw.checksum
+            )
+    finally:
+        await database.engine.dispose()
+        await _purge()
 
 
 @pytest.mark.asyncio
