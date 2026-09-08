@@ -1,7 +1,7 @@
 # Deployment
 
-See [shared application ports](SHARED_EDGE_APPLICATION_PORTS.md) for the owner-requested
-3100 HTTP / 3200 HTTPS routing update and WEF rollback port migration.
+See [shared application ports](SHARED_EDGE_APPLICATION_PORTS.md) for Fillable HTTPS
+on 3200; Forecast remains on 3000 and WEF rollback remains on 3100.
 
 ## Delivery model
 
