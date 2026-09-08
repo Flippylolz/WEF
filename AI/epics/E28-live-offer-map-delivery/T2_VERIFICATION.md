@@ -63,3 +63,10 @@ regressions cover full names versus wrong same-initial names, numbered address
 aliases proved by the same official identity, cross-district projection without
 an invented district and self-intersecting valid street linework. Release and
 guarded current-source acceptance remain required.
+
+## Production acceptance
+
+The initial release canary passed; follow-up releases have their own acceptance gates.
+[Production acceptance](PRODUCTION_ACCEPTANCE.md) records
+the immutable release, guarded recovery and public API/browser evidence. Earlier
+pending statements above describe the pre-deployment validation checkpoint.

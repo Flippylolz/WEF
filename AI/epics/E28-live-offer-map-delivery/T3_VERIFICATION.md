@@ -40,3 +40,10 @@ accepted district areas and still exclude unreviewed/hidden/out-of-scope rows.
 Read-only production probes confirmed one valid municipal polygon and an interior
 representative point for each of Bielany, Bemowo and Ursus. No source data was
 changed by those probes. Browser and deployed acceptance remain pending.
+
+## Production acceptance
+
+The initial release canary passed; follow-up releases have their own acceptance gates.
+[Production acceptance](PRODUCTION_ACCEPTANCE.md) records
+the immutable release, guarded recovery and public API/browser evidence. Earlier
+pending statements above describe the pre-deployment validation checkpoint.
