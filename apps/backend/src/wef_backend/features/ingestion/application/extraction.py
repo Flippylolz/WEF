@@ -50,7 +50,7 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v15"
+PARSER_VERSION = "e2-v16"
 CANDIDATE_THRESHOLD = 5
 
 # A number may end only at whitespace/punctuation or directly before a tracked
@@ -59,6 +59,10 @@ CANDIDATE_THRESHOLD = 5
 _VALUE_SUFFIX = r"[ \t]*(?:[:|][ \t]*|[\u2013\u2014-][ \t]+)(?P<value>\S[^\r\n]*)"
 _ROOM_HYPHEN_PATTERN = re.compile(
     r"\b(?P<rooms>\d+)\s*-\s*(?:комнат(?:ная|ные)|кімнат(?:на|ні))\b",
+    _FLAGS,
+)
+_ROOM_SUMMARY_PATTERN = re.compile(
+    r"(?m)\|[ \t]*(?P<rooms>\d+)[ \t]+комнат(?:\u0430|ы)?(?=[ \t]*(?:\||$))",
     _FLAGS,
 )
 _INCLUDED_PATTERN = re.compile(
@@ -101,7 +105,8 @@ _CANDIDATE_RULES = (
         re.compile(
             r"(?:^|\n)\s*(?:[\U0001F3D9\U0001F3E0\U0001F3E1]\ufe0f?\s*)?"
             r"(?:(?:покупка|продажа|купівля|kupno|for sale)\s*[|:\u2013\u2014-]"
-            r"|sprzedam\s+(?:mieszkanie|apartament|dom)\b)",
+            r"|sprzedam\s+(?:mieszkanie|apartament|dom)\b"
+            r"|дом[ \t]+на[ \t]+продажу(?=[ \t]*(?:\||$)))",
             _FLAGS,
         ),
     ),
@@ -127,7 +132,7 @@ _CANDIDATE_RULES = (
         CandidateReason.AREA_MARKER,
         2,
         None,
-        re.compile(r"(?:\b(?:powierzchnia|area|площадь)\b|m[²2])", _FLAGS),
+        re.compile(r"(?:\b(?:powierzchnia|area|площадь)\b|[mм][²2])", _FLAGS),
     ),
     _CandidateRule(
         CandidateReason.ROOM_MARKER,
@@ -199,12 +204,13 @@ _HOUSE_PATTERN = re.compile(
     r"\b(?:dom\s+(?:jednorodzinny|wolnostoj\w*)|jednorodzinny|detached\s+house|"
     r"standalone\s+house|частн\w+\s+дом|dom\s+particulier|will[ae]|villa|"
     r"дім\w*|особняк\w*|"
-    r"дом\s+(?:на\s+продаж\w*|\u0441\s+садом|под\s+\w+)|"
+    r"дом\s+(?:\u0441\s+садом|под\s+\w+)|"
     r"\d+[\s-]*комнатн\w*\s+дом|"
     r"(?:сімейн\w*|приватн\w*)\s+будинок|"
     r"будинок\s+(?:на\s+продаж\w*|\u0437\s+садом))\b",
     _FLAGS,
 )
+_HOUSE_SALE_PATTERN = re.compile(r"\bдом\s+на\s+продаж\w*\b", _FLAGS)  # noqa: RUF001
 _LOCATION_PATTERN = re.compile(
     rf"(?:lokalizacja|location|adres|локализаци[яи]|адрес){_VALUE_SUFFIX}",
     _FLAGS,
@@ -224,7 +230,8 @@ _DEVELOPMENT_PATTERN = re.compile(
 )
 _APARTMENT_PRICE_PATTERN = re.compile(
     rf"(?:cena(?: mieszkania)?|apartment price|price|"
-    rf"цена(?: квартиры| апартамента)?|стоимость(?: квартиры)?|"
+    rf"цена(?: квартиры| апартамента| дома)?|стоимость(?: квартиры)?|"
+    rf"(?m:^[ \t]*(?:[•*][ \t]*)?квартира)|"
     rf"ціна(?: квартири)?|вартість(?: квартири)?)"
     rf"{_VALUE_SUFFIX}",
     _FLAGS,
@@ -237,12 +244,13 @@ _GARAGE_PRICE_LABEL = (
     rf"[ \t]*(?:PLN|zł|EUR|€|USD|GBP)[ \t]*$))"
 )
 _PARKING_PATTERN = re.compile(
-    rf"(?:parking(?: price)?|паркинг|паркінг|miejsce postojowe|{_GARAGE_PRICE_LABEL})"
+    rf"(?:parking(?: price)?|паркинг|паркінг|паркоместо|miejsce postojowe|{_GARAGE_PRICE_LABEL})"
     rf"{_VALUE_SUFFIX}",
     _FLAGS,
 )
 _STORAGE_PATTERN = re.compile(
-    rf"(?:storage(?: price)?|комора|кладов(?:ая|ка)|kom[oó]rka lokatorska){_VALUE_SUFFIX}",
+    rf"(?:storage(?: price)?|комора|кладов(?:ая|ка)(?:[ \t]+{_NUMBER}[ \t]*[mм][²2])?"
+    rf"|kom[oó]rka lokatorska){_VALUE_SUFFIX}",
     _FLAGS,
 )
 _AREA_PATTERN = re.compile(rf"(?:powierzchnia|area|площа(?:дь)?){_VALUE_SUFFIX}", _FLAGS)
@@ -520,6 +528,12 @@ def _property_type(
         match = pattern.search(text)
         if match is not None and ptype not in categories:
             categories[ptype] = SourceSpan(*match.span())
+
+    # A generic house-sale heading is compatible with a specific semi-detached
+    # description. Explicit detached-house evidence still conflicts above.
+    generic_house = _HOUSE_SALE_PATTERN.search(text)
+    if generic_house is not None and PropertyType.SEMI_DETACHED not in categories:
+        categories.setdefault(PropertyType.HOUSE, SourceSpan(*generic_house.span()))
 
     if len(categories) > 1:
         warnings.append(
@@ -935,6 +949,9 @@ def _rooms_field(
     hyphen_matches = tuple(_ROOM_HYPHEN_PATTERN.finditer(text))
     parsed: list[tuple[IntegerRange, SourceSpan]] = []
     for match in labeled_matches:
+        if re.search(r"\d[ \t]+$", text[: match.start()]):
+            # In '| 4 комнаты | Warsaw', the following segment is not a room value.
+            continue
         value = _trimmed_value(text, match)
         if _is_room_tag_list(value):
             continue
@@ -943,6 +960,12 @@ def _rooms_field(
             warnings.append(_invalid_range_warning("rooms", text, match))
             continue
         parsed.append((room_range, _trimmed_span(text, match)))
+
+    # Summary counts are a single stated total, not a list of room-tag options.
+    # Keep them separate so disagreements with tags/labels remain conflicts.
+    parsed.extend(
+        _append_hyphenated_room_tags(tuple(_ROOM_SUMMARY_PATTERN.finditer(text)), warnings=warnings)
+    )
 
     valid_tag_ranges: list[tuple[IntegerRange, SourceSpan]] = []
     for match in tag_matches:
