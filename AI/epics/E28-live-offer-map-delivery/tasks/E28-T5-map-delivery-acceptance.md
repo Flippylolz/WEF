@@ -29,16 +29,20 @@ implementation_gate:
   verified_by: Codex
   verified_at: "2026-09-08T06:48:39Z"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: stacked
+  verified_by: Codex
+  verified_at: "2026-09-08T08:02:00Z"
+  evidence:
+    - task_id: E28-T4
+      branch: bugfix/E28-T4-recovered-offer-galleries
+      pull_request: https://github.com/Flippylolz/WEF/pull/384
+      head_commit: 30726abd2182ae63351f7548c69066249aa44d75
 branch:
   required: true
-  name: null
+  name: feat/E28-T5-map-delivery-acceptance
   task_id: E28-T5
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-08T08:02:00Z"
   pull_request: null
 completion:
   completed_by: null
