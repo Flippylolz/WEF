@@ -5,10 +5,10 @@ from alembic.config import Config
 
 from wef_backend.settings import Settings, load_settings
 
-EXPECTED_DATABASE_REVISION = "20260906_0026"
-# E28-T4 adds only a defaulted discovery receipt to offer_sources. This reader
-# is the verified rollback target for that additive migration.
-READ_COMPATIBLE_DATABASE_REVISIONS = frozenset({EXPECTED_DATABASE_REVISION, "20260908_0027"})
+EXPECTED_DATABASE_REVISION = "20260908_0027"
+# E28-T3 prepares the previous reader for this additive receipt column.
+# This writer requires 0027 before accessing the new receipt.
+READ_COMPATIBLE_DATABASE_REVISIONS = frozenset({EXPECTED_DATABASE_REVISION})
 
 __all__ = [
     "EXPECTED_DATABASE_REVISION",

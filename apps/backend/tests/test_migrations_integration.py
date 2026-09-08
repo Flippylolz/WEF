@@ -287,7 +287,7 @@ async def test_readiness_allows_only_explicit_additive_rollback_revision() -> No
     services = build_services(settings)
     try:
         for revision, ready in (
-            ("20260906_0026", True),
+            ("20260906_0026", False),
             ("20260908_0027", True),
             ("20260906_0027", False),
             ("unknown", False),
