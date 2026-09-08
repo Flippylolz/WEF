@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E28
 title: Reliable delivery of every new channel offer to the map
-status: ready
+status: in_progress
 milestones: [M5]
 owner: owner
 spike: SPIKE.md

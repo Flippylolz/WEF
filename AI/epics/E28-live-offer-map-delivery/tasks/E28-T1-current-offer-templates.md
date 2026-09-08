@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E28-T1
 epic: E28
 title: Recognize current offer templates
-status: ready
+status: in_progress
 revision: 1
 priority: P1
 size: M
@@ -35,10 +35,10 @@ dependency_gate:
   evidence: []
 branch:
   required: true
-  name: null
+  name: bugfix/E28-T1-current-offer-templates
   task_id: E28-T1
   one_task_only: true
-  created_at: null
+  created_at: "2026-09-08T06:52:17Z"
   pull_request: null
 completion:
   completed_by: null
@@ -67,3 +67,11 @@ Invented equivalents of the latest header/price families parse correctly with ex
 Follow the task-specific module boundary and rollout in [implementation plan revision 1](../IMPLEMENTATION_PLAN.md). Use invented fixtures, unit and real PostGIS integration tests; add contract/browser tests when public behavior changes. Run `make install`, `make lint`, `make test`, `make format-check`, `make typecheck`, and `make contract-check` before pushing affected implementation. Record exact results in the PR and task evidence.
 
 Keep this change in its own task branch/PR; do not mark done before current-head CI and production acceptance pass. Roll back the immutable application release or pause only this recovery path, preserving raw revisions, owner selections and existing unrelated workloads. Do not claim application rollback undoes data changes. Operator repair receipts and current-source guards must support audit/recovery.
+
+## Start evidence
+
+Passed through `ready` in planning commit `cba13bd`. Dedicated branch created from current main with the completed documentation baseline before implementation.
+
+## Local implementation evidence
+
+[Verification](../T1_VERIFICATION.md) records the 1,378 backend and 186 frontend passing tests, the bounded frontend retry, source comparison and remaining rollout boundary.
