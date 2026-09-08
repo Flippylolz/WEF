@@ -83,7 +83,9 @@ class StatefulMediaGrouper:
         if group_id is not None:
             self._state.explicit_groups[group_id] = listing_id
 
-    def ingest(self, item: GroupingInput) -> tuple[MediaDisposition, ...]:
+    def ingest(
+        self, item: GroupingInput, *, canonical_owner: bool = False
+    ) -> tuple[MediaDisposition, ...]:
         """Associate one chronological message and advance internal state."""
         if not self.grouping_version:
             error = "grouping version must not be empty"
@@ -95,7 +97,7 @@ class StatefulMediaGrouper:
             dispositions = tuple(
                 _unassociated(message, UnassociatedMediaReason.SERVICE_BOUNDARY),
             )
-        elif item.candidate.is_candidate:
+        elif item.candidate.is_candidate or canonical_owner:
             dispositions = tuple(_candidate_media(message, self._state, self.grouping_version))
         else:
             dispositions = tuple(

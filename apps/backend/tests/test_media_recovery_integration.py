@@ -85,7 +85,7 @@ def media_payload(number: int) -> dict[str, object]:
     return result
 
 
-async def canonical(db: RecoveryDB, data: dict[str, object]) -> None:
+async def canonical(db: RecoveryDB, data: dict[str, object], *, missed: bool = False) -> None:
     source = source_identity_from_channel(db.identity)
     channel_id = await db.store.ensure_channel(
         platform="telegram",
@@ -101,10 +101,19 @@ async def canonical(db: RecoveryDB, data: dict[str, object]) -> None:
     )
     raw = convert_record(data, 0, source).result.message
     assert raw is not None
+    extraction = extract_listing(raw)
+    if missed:
+        extraction = replace(
+            extraction,
+            listing=None,
+            decision=replace(
+                extraction.decision, is_candidate=False, score=0, signals=(), content_type=None
+            ),
+        )
     await db.store.persist_live_upsert(
         channel_id=channel_id,
         run_id=run_id,
-        message=PersistableMessage(raw, extract_listing(raw)),
+        message=PersistableMessage(raw, extraction),
         checkpoint=RunCheckpoint(),
         counts=RunCounts(),
         advance_checkpoint=True,
@@ -486,3 +495,55 @@ async def test_non_listing_attachment_does_not_stop_discovery(recovery_db: Recov
         )
         assert row is not None
         assert row.offer_id is None
+
+
+async def test_recovered_owner_reopens_only_unassociated_album_and_publishes_gallery(
+    recovery_db: RecoveryDB,
+    tmp_path: Path,
+) -> None:
+    db = recovery_db
+    anchor = media_payload(100)
+    child = media_payload(101)
+    child["text"] = ""
+    boundary = media_payload(102)
+    boundary["text"] = "synthetic unrelated boundary"
+    boundary.pop("photo")
+    orphan = media_payload(103)
+    orphan["text"] = ""
+    await canonical(db, anchor, missed=True)
+    for data in (child, boundary, orphan):
+        await canonical(db, data)
+    store = SQLAlchemyMediaRecoveryStore(db.factory, db.identity.channel_id)
+    for _ in range(5):
+        await store.discover(1)
+    async with db.factory() as session:
+        rows = list(await session.scalars(select(MediaRecoveryWorkRow)))
+        assert len(rows) == 3
+        original_ids = {row.id for row in rows}
+        assert {row.state for row in rows} == {"unsupported"}
+    await canonical(db, anchor)
+    for _ in range(5):
+        await SQLAlchemyMediaRecoveryStore(db.factory, db.identity.channel_id).discover(1)
+    storage = LocalMediaStorage(tmp_path / "source", tmp_path / "originals", tmp_path / "public")
+    for number in (100, 101):
+        claim = await store.claim()
+        assert claim is not None
+        assert claim.raw.external_message_id == number
+        source_path = storage.source_root / claim.item.descriptor.path
+        source_path.parent.mkdir(parents=True, exist_ok=True)
+        Image.new("RGB", (20, 20), "blue" if number == 100 else "red").save(
+            source_path, format="JPEG"
+        )
+        await ProcessMedia(storage, SQLAlchemyMediaRepository(db.factory))(claim.item)
+        assert await store.finish(claim, MediaRecoveryOutcome("completed"))
+    assert await store.claim() is None
+    # Unchanged parser replays and discovery do not reopen completed originals.
+    await canonical(db, anchor)
+    for _ in range(3):
+        assert await store.discover() == 0
+    async with db.factory() as session:
+        rows = list(await session.scalars(select(MediaRecoveryWorkRow)))
+        assert {row.id for row in rows} == original_ids
+        assert sorted(row.state for row in rows) == ["completed", "completed", "unsupported"]
+        assert await session.scalar(select(func.count()).select_from(OfferMediaRow)) == 2
+        assert await session.scalar(select(func.count()).select_from(MediaDerivativeRow)) == 4

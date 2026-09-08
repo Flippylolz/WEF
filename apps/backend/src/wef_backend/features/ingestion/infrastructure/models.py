@@ -187,6 +187,11 @@ class OfferSourceRow(IngestionBase):
             name="ck_offer_sources_confidence",
         ),
         Index("ix_offer_sources_message", "source_message_id"),
+        Index(
+            "ix_offer_sources_media_undiscovered",
+            "source_message_id",
+            postgresql_where=sa_text("relationship = 'primary' AND NOT media_recovery_discovered"),
+        ),
         Index("ix_offer_sources_offer", "offer_id"),
     )
 
@@ -203,6 +208,7 @@ class OfferSourceRow(IngestionBase):
     relationship: Mapped[str] = mapped_column(String(24))
     confidence: Mapped[Decimal] = mapped_column(Numeric(4, 3))
     extraction_json: Mapped[object] = mapped_column(JSONB)
+    media_recovery_discovered: Mapped[bool] = mapped_column(Boolean, server_default="false")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

@@ -74,6 +74,26 @@ async def discover_media(
             raise RuntimeError(message)
         if state.phase == "paused":
             return 0
+        # A newly canonical owner behind the cursor changes album association.
+        # Rewind only to the earliest such owner; normal bounded pages rebuild
+        # continuation, and per-link receipts prevent terminal-work hot loops.
+        recovered = await session.scalar(
+            select(SourceMessageRow.external_message_id)
+            .join(OfferSourceRow, OfferSourceRow.source_message_id == SourceMessageRow.id)
+            .where(
+                SourceMessageRow.source_channel_id == channel.id,
+                SourceMessageRow.deleted_at.is_(None),
+                SourceMessageRow.external_message_id <= state.scan_after_id,
+                OfferSourceRow.relationship == "primary",
+                OfferSourceRow.source_message_revision_id == SourceMessageRow.current_revision_id,
+                OfferSourceRow.media_recovery_discovered.is_(False),
+            )
+            .order_by(SourceMessageRow.external_message_id)
+            .limit(1)
+        )
+        if recovered is not None:
+            state.scan_after_id = recovered - 1
+            state.grouping_json = {}
         identity = SourceIdentity(
             SourcePlatform.TELEGRAM, external_id, channel.display_name, "public_channel"
         )
@@ -184,7 +204,27 @@ async def _discover_revision(
         grouper.reset()
         intention.discovered = True
         return
-    dispositions = grouper.ingest(GroupingInput(raw, extraction.decision))
+    primary = await session.scalar(
+        select(OfferSourceRow.id)
+        .where(
+            OfferSourceRow.source_message_id == source.id,
+            OfferSourceRow.source_message_revision_id == source.current_revision_id,
+            OfferSourceRow.relationship == "primary",
+        )
+        .limit(1)
+    )
+    dispositions = grouper.ingest(
+        GroupingInput(raw, extraction.decision), canonical_owner=primary is not None
+    )
+    await session.execute(
+        update(OfferSourceRow)
+        .where(
+            OfferSourceRow.source_message_id == source.id,
+            OfferSourceRow.source_message_revision_id == source.current_revision_id,
+            OfferSourceRow.relationship == "primary",
+        )
+        .values(media_recovery_discovered=True)
+    )
     now = datetime.now(UTC)
     for disposition in dispositions:
         association = disposition.association
@@ -206,28 +246,48 @@ async def _discover_revision(
                 )
             ).first()
         descriptor = disposition.reference.descriptor
+        statement = insert(MediaRecoveryWorkRow).values(
+            id=uuid4(),
+            source_revision_id=source.current_revision_id,
+            ordinal=disposition.reference.media_index,
+            descriptor_identity=descriptor_identity(descriptor),
+            grouping_version=GROUPING_VERSION,
+            transform_version=TRANSFORM_VERSION,
+            policy_version=MEDIA_RECOVERY_POLICY,
+            descriptor_json=asdict(descriptor),
+            offer_id=owner[0] if owner else None,
+            association_revision_id=owner[1] if owner else None,
+            association_rule=association.rule.value if association and owner else None,
+            association_confidence=(1.0 if association.confidence.value == "high" else 0.6)
+            if association and owner
+            else None,
+            state="pending" if owner else "unsupported",
+            next_attempt_at=now,
+            reason=None if owner else "unassociated_source_evidence",
+        )
+        repair_fields = (
+            "offer_id",
+            "association_revision_id",
+            "association_rule",
+            "association_confidence",
+            "state",
+            "next_attempt_at",
+            "reason",
+        )
         await session.execute(
-            insert(MediaRecoveryWorkRow)
-            .values(
-                id=uuid4(),
-                source_revision_id=source.current_revision_id,
-                ordinal=disposition.reference.media_index,
-                descriptor_identity=descriptor_identity(descriptor),
-                grouping_version=GROUPING_VERSION,
-                transform_version=TRANSFORM_VERSION,
-                policy_version=MEDIA_RECOVERY_POLICY,
-                descriptor_json=asdict(descriptor),
-                offer_id=owner[0] if owner else None,
-                association_revision_id=owner[1] if owner else None,
-                association_rule=association.rule.value if association and owner else None,
-                association_confidence=(1.0 if association.confidence.value == "high" else 0.6)
-                if association and owner
-                else None,
-                state="pending" if owner else "unsupported",
-                next_attempt_at=now,
-                reason=None if owner else "unassociated_source_evidence",
+            statement.on_conflict_do_update(
+                index_elements=[
+                    "source_revision_id",
+                    "ordinal",
+                    "descriptor_identity",
+                    "grouping_version",
+                    "transform_version",
+                ],
+                set_={name: getattr(statement.excluded, name) for name in repair_fields},
+                where=(MediaRecoveryWorkRow.state == "unsupported")
+                & (MediaRecoveryWorkRow.reason == "unassociated_source_evidence")
+                & statement.excluded.offer_id.is_not(None),
             )
-            .on_conflict_do_nothing()
         )
     intention.discovered = True
     await session.execute(

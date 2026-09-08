@@ -724,3 +724,16 @@ and verified-canary controls gate canonical changes; see [GEOCODING.md](GEOCODIN
 Forward request version `forward-geocode-v5` resolves uniquely matched Warsaw municipal street geometry or numbered address points first, then the existing budgeted hosted geocoder. Street geometry produces approximate street precision. Optional, already-authorized AI recovery may quote only source-supported street text and trigger one verified lookup retry; AI supplies no coordinates. Owner selections remain protected. Municipal results retain city attribution and response hashes, use bounded public WFS requests, and refresh on use through weekly cache keys. Outages do not become durable unresolved verdicts when both lookup stages fail. Existing deployment configuration and provider budgets remain unchanged.
 
 The new request version starts a fresh observation generation. Verify production canaries and protected selections before enabling its guarded application/backfill; rolling back to v4 uses its separate control generation. No schema migration is required. See [the policy and verification plan](../epics/E26-automatic-location-validation/MUNICIPAL_FIRST.md).
+
+### Recovered offer gallery discovery (E28)
+
+A canonical primary source link carries an additive media-discovery receipt. A new
+current owner behind the chronological cursor rewinds only to that owner's source
+ID, then uses normal bounded chronological pages and retained album boundaries.
+This covers parser and AI-created owners without rescanning unchanged terminal
+work forever. A current canonical owner can anchor an album even if deterministic
+extraction still cannot classify its caption. Reopening is restricted to
+`unsupported/unassociated_source_evidence` with a newly evidenced owner;
+completed, leased, quarantined, edited/deleted source fences remain authoritative.
+The new 0027 writer requires its migration; deploy the E28-T3 compatible reader
+first to provide an application rollback target. No media is deleted by migration.
