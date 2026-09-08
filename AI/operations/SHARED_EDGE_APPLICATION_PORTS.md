@@ -17,7 +17,9 @@ changing its listeners, templates, certificates, or deployment settings.
 - WEF retains HTTPS on port 443. Its Caddy rollback listener moves from public
   port 3100 to loopback port 13101. GitHub deployment variables must use
   `WEF_PUBLIC_PORT=13101` and `WEF_BIND_ADDRESS=127.0.0.1` so later releases retain
-  the port assignment. Historical references to rollback port 3100 describe the
+  the port assignment. The release validator explicitly permits both public
+  `0.0.0.0` and loopback `127.0.0.1` bindings in production; arbitrary addresses
+  remain rejected. Historical references to rollback port 3100 describe the
   old topology.
 
 ## Rendering and deployment

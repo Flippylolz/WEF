@@ -143,9 +143,8 @@ def _validate_runtime_boundaries(
     ):
         msg = "public port does not match the safe deployment context"
         raise ReleaseConfigurationError(msg)
-    allowed_bind_addresses = {"0.0.0.0"}  # noqa: S104 - deliberate public edge
-    if context.test_mode:
-        allowed_bind_addresses.add("127.0.0.1")
+    # A shared public ingress can retain the application rollback edge on loopback.
+    allowed_bind_addresses = {"0.0.0.0", "127.0.0.1"}  # noqa: S104 - explicit public option
     if values["WEF_BIND_ADDRESS"] not in allowed_bind_addresses:
         msg = "public bind address is not allowed"
         raise ReleaseConfigurationError(msg)

@@ -271,6 +271,23 @@ def assert_negative_configuration_gate() -> None:
         ),
     )
 
+    loopback_context = ReleaseContext(
+        root=WEF_ROOT,
+        release_dir=RELEASE_DIR,
+        release_sha=RELEASE_SHA,
+        public_port=13101,
+    )
+    loopback = {**valid, "WEF_BIND_ADDRESS": "127.0.0.1", "WEF_PUBLIC_PORT": "13101"}
+    validate_environment(loopback, loopback_context)
+    for unsupported in ("localhost", "192.0.2.1", "127.0.0.1; injected"):
+        try:
+            validate_environment({**loopback, "WEF_BIND_ADDRESS": unsupported}, loopback_context)
+        except ReleaseConfigurationError:
+            pass
+        else:
+            msg = "unsupported production bind address accepted"
+            raise AssertionError(msg)
+
     invalid = dict(valid)
     invalid["WEF_BACKEND_IMAGE"] = "ghcr.io/flippylolz/wef-backend:latest"
     try:
