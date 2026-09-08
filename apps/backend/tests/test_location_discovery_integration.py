@@ -70,12 +70,13 @@ async def test_non_spatial_discovery_preserves_detail_favorites_and_counts() -> 
             await session.commit()
         assert await favorites.add_favorite(user_id, CENTER)
         baseline = await discovery(filters=MapFilters(bbox=WARSAW), cursor=None, limit=10)
-        assert baseline.matching_count == 1
-        assert baseline.mapped_matching_count == 4
-        assert baseline.items[0].location.location_accuracy is not None
-        assert baseline.items[0].location.location_accuracy.precision == "area"
-        assert baseline.items[0].location.longitude is None
-        assert len((await map_service(MapFilters(bbox=WARSAW))).records) == 3
+        assert baseline.matching_count == 0
+        assert baseline.mapped_matching_count == 5
+        mapped = (await map_service(MapFilters(bbox=WARSAW))).records
+        assert len(mapped) == 4
+        area = next(item for item in mapped if item.precision == "district")
+        assert area.location_accuracy is not None
+        assert area.location_accuracy.label == "Approximate area"
 
         async with database.session_factory() as session:
             await session.execute(
@@ -88,12 +89,12 @@ async def test_non_spatial_discovery_preserves_detail_favorites_and_counts() -> 
         assert await favorites.add_favorite(user_id, CENTER)
         outside = MapFilters(bbox=BoundingBox.parse("20.90,52.20,20.97,52.25"))
         first = await discovery(filters=outside, cursor=None, limit=1)
-        assert first.matching_count == 3
+        assert first.matching_count == 2
         assert first.mapped_matching_count == 1
         assert first.next_cursor is not None
         second = await discovery(filters=outside, cursor=first.next_cursor, limit=2)
         assert second.next_cursor is None
-        assert len({item.id for item in (*first.items, *second.items)}) == 3
+        assert len({item.id for item in (*first.items, *second.items)}) == 2
         for item in present_unmapped_listing_page(second).model_dump()["items"]:
             assert "geometry" not in item["location"]
 
@@ -135,7 +136,7 @@ async def test_non_spatial_discovery_preserves_detail_favorites_and_counts() -> 
             is None
         )
         hidden = await discovery(filters=MapFilters(bbox=WARSAW), cursor=None, limit=10)
-        assert hidden.matching_count == 1
+        assert hidden.matching_count == 0
     finally:
         async with database.session_factory() as session:
             await session.execute(delete(UserRow).where(UserRow.id == user_id))

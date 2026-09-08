@@ -4,7 +4,7 @@ id: E28-T3
 epic: E28
 title: Support source-evidenced nearby localities
 status: in_progress
-revision: 2
+revision: 3
 priority: P1
 size: M
 milestone: M5
@@ -25,7 +25,7 @@ spike_gate:
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 4
+  approved_revision: 5
   verified_by: Codex
   verified_at: "2026-09-08T06:48:39Z"
 dependency_gate:
@@ -38,12 +38,12 @@ dependency_gate:
       pull_request: https://github.com/Flippylolz/WEF/pull/377
       head_commit: 7bb566cd00d13d70ef5e2f584b7cb289934d219a
     - task_id: E28-T2
-      branch: bugfix/E28-T2-warsaw-street-resolution
-      pull_request: https://github.com/Flippylolz/WEF/pull/380
-      head_commit: d1ba6e8cc15477daa62fba1cb6482b86c8b9e3c2
+      branch: bugfix/E28-T2-avenue-address-matching
+      pull_request: https://github.com/Flippylolz/WEF/pull/386
+      head_commit: 566ee74d0aea44f3402902c901ca707f61c1f03f
 branch:
   required: true
-  name: feat/E28-T3-nearby-localities
+  name: feat/E28-T3-district-area-delivery
   task_id: E28-T3
   one_task_only: true
   created_at: "2026-09-08T07:25:00Z"
@@ -81,3 +81,9 @@ Keep this change in its own task branch/PR; do not mark done before current-head
 Owner continuation authorizes the full epic and subsequent backfill. T1 is merged
 in main; this dependent branch contains it and proceeds while production release
 acceptance is pending. Completion remains gated on that acceptance.
+
+## District-only delivery follow-up
+
+Plan revision 5 adds source-supported municipal district areas to the same
+truthful coarse-location path. T2 avenue follow-up #386 is the immediate stack
+parent. Existing town, street, building and protected selections remain covered.

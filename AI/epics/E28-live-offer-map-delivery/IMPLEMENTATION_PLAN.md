@@ -3,7 +3,7 @@ schema: ai-workflow/implementation-plan@1
 epic: E28
 title: Deliver current channel offers and galleries to the map
 status: approved
-revision: 4
+revision: 5
 owner: owner
 spike_revision: 1
 task_sequence:
@@ -12,7 +12,7 @@ task_sequence:
   - id: E28-T2
     revision: 2
   - id: E28-T3
-    revision: 2
+    revision: 3
   - id: E28-T4
     revision: 2
   - id: E28-T5
@@ -22,7 +22,7 @@ approval:
   status: approved
   decided_by: owner
   decided_at: "2026-09-08T07:09:17.634182+00:00"
-  approved_revision: 4
+  approved_revision: 5
   evidence: OWNER_DIRECTION.md
 invalidation:
   invalidated_by: null
@@ -72,3 +72,23 @@ rollback reader for additive migration 0027. Ordered PRs permit useful validatio
 while predecessors finish; no child completes before predecessor acceptance.
 This includes revision 3’s gallery migration dependency and introduces no new
 product/provider scope.
+
+
+## Revision 5 delivery audit follow-up
+
+The authorized full backfill exposed source-evidenced district-only Warsaw offers.
+Under the owner's request that all new offer posts appear on the map, T3 now also
+supports a verified municipal district area when the source has no street or house
+number. Use one exact municipal district polygon and an interior representative
+point, retain district precision and the existing Approximate area projection.
+This stays within Warsaw and the existing provider, database columns and API
+contract; it does not authorize guessed buildings, generic city pins, broad street
+fallback, new dependencies, changed budgets or protected-selection overrides.
+A district-only source must name one consistent canonical Warsaw district; city,
+country, geometry, precision and source-current gates remain mandatory.
+
+This is a bounded implementation adjustment within the full-delivery instruction,
+not a claim that the owner separately supplied a street address. An optional
+presentation preference was requested; absent a different preference, the existing
+honest area label is used. The T3 follow-up stacks on T2's avenue-matching fix #386.
+Production canaries and public map/browser acceptance precede completion.

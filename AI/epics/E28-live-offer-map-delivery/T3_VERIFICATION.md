@@ -18,3 +18,25 @@ This release also prepares read compatibility for T4's additive 0027 per-source
 media-discovery receipt so T4 can roll back to this reader. T4 must deploy after
 this release. Production acceptance remains pending; source descriptions and
 provider exports are not committed.
+
+
+## District-only production audit follow-up
+
+The seven-day delivery audit identified valid offers with only a Warsaw district.
+The follow-up resolves one matching official municipal district polygon and uses
+an interior point with district precision and the existing Approximate area label.
+It cannot replace a supplied street/house or accept hosted coarse results, missing
+city/country, contradictory district names, invalid geometry or wrong geography.
+Reviewed Bielany neighborhood forms retain Warsaw/Bielany context.
+Normalizer v7, review v4 and municipal cache prefix v3 make stale observations
+eligible without changing provider allowances. No schema or API additions.
+Focused, PostGIS, full-stack and deployed canary results are recorded below as
+completed; the passive acceptance window remains separate.
+
+The district follow-up passed 114 focused tests and full `make test`: 1,435
+backend and 186 frontend tests, including coverage floors. Lint, formatting,
+types and contracts passed. Existing public-query tests now explicitly cover
+accepted district areas and still exclude unreviewed/hidden/out-of-scope rows.
+Read-only production probes confirmed one valid municipal polygon and an interior
+representative point for each of Bielany, Bemowo and Ursus. No source data was
+changed by those probes. Browser and deployed acceptance remain pending.

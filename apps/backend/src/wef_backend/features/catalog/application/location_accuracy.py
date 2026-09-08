@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
 
-POINT_PRECISIONS = ("building", "street", "city")
+POINT_PRECISIONS = ("building", "street", "city", "district")
 _HIGH_CONFIDENCE = Decimal("0.90")
 
 

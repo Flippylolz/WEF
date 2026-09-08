@@ -17,11 +17,11 @@ from wef_backend.features.ingestion.domain.address_evidence import (
 )
 from wef_backend.features.ingestion.domain.nearby_locality import nearby_locality
 
-NORMALIZER_VERSION = "warsaw-address-v6"
+NORMALIZER_VERSION = "warsaw-address-v7"
 SCOPE_VERSION = "warsaw-scope-v2"
 REQUEST_VERSION = "forward-geocode-v5"
 STREET_REQUEST_VERSION = f"{REQUEST_VERSION}-street"
-REVIEW_POLICY_VERSION = "warsaw-review-v3"
+REVIEW_POLICY_VERSION = "warsaw-review-v4"
 
 _WHITESPACE = re.compile(r"\s+")
 _PUNCTUATION = re.compile(r"\s*[,;|]+\s*")
@@ -94,6 +94,8 @@ _DISTRICT_ALIASES = {
 _NEIGHBORHOODS = {
     "goclaw": ("Gocław", "Praga-Południe"),
     "sielce": ("Sielce", "Mokotów"),
+    "stare bielany": ("Stare Bielany", "Bielany"),
+    "huta": ("Huta", "Bielany"),
 }
 
 
@@ -142,6 +144,7 @@ class SelectionReason(StrEnum):
     """Stable reasons for automatic or manual selection transitions."""
 
     AUTO_LOCALITY_IN_SCOPE = "auto_locality_in_scope"
+    AUTO_DISTRICT_IN_SCOPE = "auto_district_in_scope"
     AUTO_PRECISE_IN_SCOPE = "auto_precise_in_scope"
     LOW_CONFIDENCE = "low_confidence"
     LOW_PRECISION = "low_precision"
@@ -564,7 +567,27 @@ def review_geocode_result(
         and result.address is not None
         and result.address.result_type in {"city", "town", "village", "municipality"}
     )
-    if not locality_match and result.precision not in {
+    district_match = (
+        query is not None
+        and query.address is not None
+        and not query.address.street
+        and not query.address.house_number
+        and canonical_warsaw_district(query.address.district) is not None
+        and fold_address(query.address.city) in {"warszawa", "warsaw"}
+        and fold_address(query.address.country_code) == "pl"
+        and {
+            name
+            for part in _ADDRESS_SEGMENT_SPLIT.split(query.original)
+            if (name := canonical_warsaw_district(_AREA_WORD_PREFIX.sub("", part.strip())))
+            is not None
+        }
+        <= {query.address.district}
+        and result.provider is GeocodeProvider.MUNICIPAL
+        and result.precision is GeocodePrecision.DISTRICT
+        and result.address is not None
+        and result.address.result_type == "district"
+    )
+    if not (locality_match or district_match) and result.precision not in {
         GeocodePrecision.BUILDING,
         GeocodePrecision.STREET,
     }:
@@ -585,6 +608,8 @@ def review_geocode_result(
         status=GeocodeReviewStatus.ACCEPTED,
         reason=SelectionReason.AUTO_LOCALITY_IN_SCOPE
         if locality_match
+        else SelectionReason.AUTO_DISTRICT_IN_SCOPE
+        if district_match
         else SelectionReason.AUTO_PRECISE_IN_SCOPE,
         select_result=True,
         out_of_scope=False,
