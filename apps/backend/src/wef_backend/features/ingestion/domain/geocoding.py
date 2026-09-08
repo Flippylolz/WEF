@@ -17,7 +17,7 @@ from wef_backend.features.ingestion.domain.address_evidence import (
 )
 from wef_backend.features.ingestion.domain.nearby_locality import nearby_locality
 
-NORMALIZER_VERSION = "warsaw-address-v7"
+NORMALIZER_VERSION = "warsaw-address-v8"
 SCOPE_VERSION = "warsaw-scope-v2"
 REQUEST_VERSION = "forward-geocode-v5"
 STREET_REQUEST_VERSION = f"{REQUEST_VERSION}-street"

@@ -44,3 +44,22 @@ The follow-up passed 49 focused address tests, full `make test` (1,417 backend
 and 186 frontend tests with coverage), `make lint`, `make format-check`,
 `make typecheck`, and `make contract-check`. Initial fresh PostgreSQL startup
 raced test reset; the complete retry after initialization passed.
+
+## Municipal identity follow-up after full backfill
+
+The seven-day audit exposed full official street names whose municipal short-name
+field contains initials, unique streets spanning more than one district, and a
+valid street line intersecting itself at junctions. Implementation-plan revision
+6 matches either exact official name, retains a single unique street identity,
+validates its bounded district polygons and clips to their union when the source
+supplies no district. Valid linework may contain junctions; the representative
+point stays on the verified street. Explicit district/number constraints,
+independent-identity ambiguity, finite geometry and scope gates remain binding.
+Normalizer v8 and municipal request v4 invalidate stale evidence.
+
+Seven read-only live municipal/PostGIS probes selected street-level points under
+the proposed policy. No production location was mutated by those probes. Added
+regressions cover full names versus wrong same-initial names, numbered address
+aliases proved by the same official identity, cross-district projection without
+an invented district and self-intersecting valid street linework. Release and
+guarded current-source acceptance remain required.

@@ -38,7 +38,7 @@ def build_location_resolver(
         store,
         MunicipalGeocoder(sessions, MunicipalHTTP()),
         lease_duration=timedelta(seconds=120),
-        request_version="municipal-v3-" + datetime.now(UTC).strftime("%G-W%V"),
+        request_version="municipal-v4-" + datetime.now(UTC).strftime("%G-W%V"),
         fallback_forms=False,
     )
     recovery = None

@@ -4,7 +4,7 @@ id: E28-T2
 epic: E28
 title: Resolve valid Warsaw street locations
 status: in_progress
-revision: 2
+revision: 3
 priority: P1
 size: M
 milestone: M5
@@ -25,7 +25,7 @@ spike_gate:
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 5
+  approved_revision: 6
   verified_by: Codex
   verified_at: "2026-09-08T06:48:39Z"
 dependency_gate:

@@ -264,3 +264,31 @@ async def test_nonempty_address_requires_valid_crs_shape(crs: object) -> None:
         await MunicipalGeocoder(MagicMock(), Transport(address=json.dumps(data).encode())).geocode(
             normalize_geocode_query(SOURCE.replace("Syntetyczna", "Syntetyczna 12"))
         )
+
+
+@pytest.mark.parametrize("numbered", [False, True])
+async def test_exact_official_full_name_can_match_abbreviated_street(
+    monkeypatch: pytest.MonkeyPatch, *, numbered: bool
+) -> None:
+    full = "Antoniego Przykładowego"
+    road = street("A. Przykładowego").replace(
+        "</f:ULICE>", f"<f:NAZWA_PODST>ulica {full}</f:NAZWA_PODST></f:ULICE>"
+    )
+    transport = Transport(road=collection(road), address=addresses(name="A. Przykładowego"))
+    monkeypatch.setattr(
+        MunicipalGeocoder,
+        "_project",
+        AsyncMock(return_value=(Decimal("21.079"), Decimal("52.234"))),
+    )
+    query = normalize_geocode_query(
+        SOURCE.replace("Syntetyczna", full + (" 12" if numbered else ""))
+    )
+    result = await MunicipalGeocoder(MagicMock(), transport).geocode(query)
+    assert review_geocode_result(result, query=query).select_result
+    assert result.address
+    assert result.address.street == full
+    assert "NAZWA_PODST" in transport.calls[0][1]["FILTER"]
+    if numbered:
+        assert "ulica " + full in transport.calls[-1][1]["CQL_FILTER"]
+    wrong = normalize_geocode_query(SOURCE.replace("Syntetyczna", "Adama Przykładowego"))
+    assert (await MunicipalGeocoder(MagicMock(), transport).geocode(wrong)).longitude is None
