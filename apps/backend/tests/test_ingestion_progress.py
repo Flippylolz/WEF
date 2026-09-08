@@ -153,3 +153,19 @@ def test_repeated_terminal_work_is_unhealthy_even_with_an_empty_queue() -> None:
     assert previous is not None
     assert previous.status == "stalled"
     assert previous.reason == "repeated_terminal_work"
+
+
+def test_new_deliveries_cannot_hide_an_older_overdue_offer() -> None:
+    state = None
+    for minute in range(7):
+        state = classify_progress(
+            ProgressSnapshot("offer_delivery", str(minute), eligible=1, oldest_due=NOW),
+            state,
+            NOW + timedelta(minutes=minute),
+        )
+    assert state is not None
+    assert state.status == "stalled"
+    assert state.reason == "offer_delivery_deadline"
+    deferred = ProgressSnapshot("offer_delivery", "6", delayed=1)
+    state = classify_progress(deferred, state, NOW + timedelta(minutes=7))
+    assert state.status == "waiting"

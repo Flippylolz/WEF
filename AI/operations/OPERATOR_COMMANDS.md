@@ -513,3 +513,31 @@ work, then examines at most 25 unapplied rollback receipts. Repeat to drain the
 bounded rollback population. Only unchanged automatic predecessors passing the
 current policy are restored; invalid points and subsequent edits are never
 bulk-restored. Leave additive schema in place through application rollback.
+
+## Current offer backfill (E28)
+
+After E28-T1–T4 releases, inspect a frozen current-source range with:
+
+```sh
+python -m wef_backend.offer_backfill_command --channel CHANNEL_ID --after-id 0 --through-id HEAD_ID --limit 100
+```
+
+The default is read-only. The receipt counts create/update/non-candidate
+and stale outcomes without descriptions or contacts. Add `--apply` for the same
+reviewed page, then resume with `next_after_id`; retain JSON receipts outside Git.
+A page is complete when `exhausted` is true. Never advance past a failed page:
+replay from the previous acknowledged cursor is idempotent. Live checkpoints do
+not move. Deleted/revised sources are fenced; existing known locations and visibility remain preserved. Field-origin
+protections and encrypted contact persistence use existing application paths.
+This operator also considers unlinked current source revisions, unlike legacy
+`wef-replay-parser`. Run ordinary location revalidation and media recovery after
+parser backfill; never force visibility or overwrite protected map selections.
+
+Ingestion status now reports `offer_delivery` and `recent_offer_delivery` counts
+for seven days of text-bearing photo posts/linked offers. It separates missing
+canonical offers, map eligibility and galleries. Current derivative work and both
+thumbnail variants must complete. Media-only posts, deleted sources and explicitly
+hidden offers are excluded. Explicit media/location retry deadlines count as
+waiting; otherwise an undelivered offer older than five minutes is actionable even
+while newer offers succeed. This is aggregate operational evidence; production
+map/gallery HTTP acceptance and a continuous 24-hour observation remain required.
