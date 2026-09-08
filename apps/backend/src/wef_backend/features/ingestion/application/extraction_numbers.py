@@ -50,7 +50,7 @@ _CURRENCY_PATTERN = re.compile(
 _PER_AREA_CONTEXT_PATTERN = re.compile(
     rf"(?:\(\s*)?{_NUMBER}\s*(?:PLN|EUR|USD|GBP|zł|€|\$|{_CURRENCY_WORD})?\s*"
     r"(?:/|\bper\b|\bza\b|\bna\b|\b\u0437\u0430\b)\s*"
-    r"(?:m(?:²|2)|sqm|\u043a\u0432\.?\s*\u043c)(?:\s*\))?",
+    r"(?:[mм](?:²|2)|sqm|\u043a\u0432\.?\s*\u043c)(?:\s*\))?",
     _FLAGS,
 )
 
@@ -134,7 +134,12 @@ def _single_currency_money(value: str) -> MoneyRange | None:
     amount = _decimal_range(amount_text)
     if amount is None:
         return None
-    return MoneyRange(amount, next(iter(currencies), None))
+    return MoneyRange(
+        amount,
+        next(iter(currencies), None),
+        is_lower_bound=amount.lower == amount.upper
+        and re.match(r"\s*(?:od|from|от)\b", value, _FLAGS) is not None,
+    )
 
 
 def _room_range(value: str) -> IntegerRange | None:

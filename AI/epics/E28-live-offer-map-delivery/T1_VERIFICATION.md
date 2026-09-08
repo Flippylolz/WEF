@@ -40,3 +40,17 @@ freshness fresh and checkpoint/head 29761 aligned. Read-only extraction of all
 five audited production descriptions with the new parser detected each offer
 with correct evidenced values; T3 owns the house locality. Historical repairs
 remain explicitly deferred to the full E28 backfill.
+
+## Retained inventory follow-up (parser e2-v18)
+
+The full backfill exposed older developer inventory rows and a Cyrillic per-area
+annotation beside a house total. Complete bounded rows now populate development
+area/room ranges and quoted prices; starting quotes persist a minimum with no
+invented maximum and render with ≥. Addon-only, incomplete, mismatched-currency
+and per-area rows remain rejected. Exact spaced Praga Północ stays within Warsaw.
+
+`make lint`, `make format-check`, `make typecheck`, `make contract-check`, and
+`make test` passed: 1,449 backend and 187 frontend tests, including real PostGIS
+persistence/replay of an open price bound. Both coverage floors passed. Frontend
+tests used two workers on the disposable stack. Production replay and individually
+reviewed official address selections remain a post-release acceptance gate.
