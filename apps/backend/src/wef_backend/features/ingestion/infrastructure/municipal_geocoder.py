@@ -111,6 +111,23 @@ def _records(body: bytes, layer: str) -> list[ET.Element]:
     return rows
 
 
+def _street_params(term: str) -> dict[str, str]:
+    """Match either official short or full name, without fuzzy surname matching."""
+    params = _params("ULICE", "NAZWA_SKROC", term)
+    conditions = "".join(
+        "<PropertyIsEqualTo>"
+        f"<PropertyName>{field}</PropertyName><Literal>{escape(value)}</Literal>"
+        "</PropertyIsEqualTo>"
+        for field, value in (
+            ("NAZWA_SKROC", term),
+            ("NAZWA_PODST", term),
+            ("NAZWA_PODST", "ulica " + term),
+        )
+    )
+    params["FILTER"] = f'<Filter xmlns="http://www.opengis.net/ogc"><Or>{conditions}</Or></Filter>'
+    return params
+
+
 def _field(row: ET.Element, name: str) -> str:
     return (row.findtext(f"{{{_NS}}}{name}") or "").strip()
 
@@ -256,11 +273,12 @@ class MunicipalGeocoder:
             return _empty()
         # Exact municipal identity is required; unsupported spellings use hosted fallback.
         term = address.street.removeprefix("ul. ").removeprefix("ulica ")
-        body = await self.transport.get(WFS, _params("ULICE", "NAZWA_SKROC", term))
+        body = await self.transport.get(WFS, _street_params(term))
         rows = [
             row
             for row in _records(body, "ULICE")
-            if fold_address(_field(row, "NAZWA_SKROC")) == fold_address(address.street)
+            if fold_address(address.street)
+            in {fold_address(_field(row, field)) for field in ("NAZWA_SKROC", "NAZWA_PODST")}
         ]
         if address.district:
             rows = [
@@ -275,20 +293,29 @@ class MunicipalGeocoder:
         district = canonical_warsaw_district(address.district) or canonical_warsaw_district(
             _field(row, "DZIELNICE")
         )
-        if not district:
-            return _empty(ambiguous=True)
-        district_body = await self.transport.get(
-            WFS, _params("GRANICE_DZIELNIC", "DZIELNICA", district)
+        names = (
+            [district]
+            if district
+            else [canonical_warsaw_district(v) for v in _field(row, "DZIELNICE").split(",")]
         )
-        districts = [
-            r
-            for r in _records(district_body, "GRANICE_DZIELNIC")
-            if canonical_warsaw_district(_field(r, "DZIELNICA")) == district
-        ]
-        if len(districts) != 1:
-            message = "municipal district unavailable"
-            raise ValueError(message)
-        polygon = _polygon(districts[0])
+        if not names or None in names or len(names) >= _LIMIT:
+            return _empty(ambiguous=True)
+        polygon = ET.Element(f"{{{_GML}}}MultiPolygon", {"srsName": "EPSG:2178"})
+        district_bodies = []
+        for name in names:
+            district_body = await self.transport.get(
+                WFS, _params("GRANICE_DZIELNIC", "DZIELNICA", str(name))
+            )
+            district_bodies.append(district_body)
+            districts = [
+                r
+                for r in _records(district_body, "GRANICE_DZIELNIC")
+                if canonical_warsaw_district(_field(r, "DZIELNICA")) == name
+            ]
+            if len(districts) != 1:
+                message = "municipal district unavailable"
+                raise ValueError(message)
+            ET.SubElement(polygon, f"{{{_GML}}}polygonMember").append(_polygon(districts[0]))
         point = None
         address_hash = ""
         identity = "ULICE:" + _field(row, "OBJECTID")
@@ -305,7 +332,7 @@ class MunicipalGeocoder:
             return _empty()
         lon, lat = coordinates
         evidence = AddressEvidence(
-            street=_field(row, "NAZWA_SKROC"),
+            street=term,
             house_number=address.house_number,
             district=district,
             city="Warszawa",
@@ -320,7 +347,7 @@ class MunicipalGeocoder:
             display_name=(
                 f"{evidence.street}"
                 f"{' ' + address.house_number if address.house_number else ''}"
-                f", {district}, Warszawa"
+                f"{', ' + district if district else ''}, Warszawa"
             ),
             precision=GeocodePrecision.BUILDING if point else GeocodePrecision.STREET,
             confidence=Decimal("0.95"),
@@ -330,7 +357,10 @@ class MunicipalGeocoder:
             address=evidence,
             diagnostic=(
                 ("municipal_street_sha256", hashlib.sha256(body).hexdigest()),
-                ("municipal_district_sha256", hashlib.sha256(district_body).hexdigest()),
+                (
+                    "municipal_district_sha256",
+                    hashlib.sha256(b"".join(district_bodies)).hexdigest(),
+                ),
                 (
                     "coordinate_method",
                     "address_point" if point else "longest_street_segment_midpoint",
@@ -346,7 +376,11 @@ class MunicipalGeocoder:
         def literal(value: str) -> str:
             return "'" + value.replace("'", "''") + "'"
 
-        names = " OR ".join(f"NAZWA_ULICY = {literal(v)}" for v in (street, "ulica " + street))
+        full_name = (address.street or "").removeprefix("ul. ").removeprefix("ulica ")
+        names = " OR ".join(
+            f"NAZWA_ULICY = {literal(v)}"
+            for v in dict.fromkeys((street, "ulica " + street, full_name, "ulica " + full_name))
+        )
         params = {
             "service": "WFS",
             "version": "2.0.0",
@@ -375,7 +409,8 @@ class MunicipalGeocoder:
         for feature in features:
             props = feature["properties"]
             if (
-                fold_address(props.get("NAZWA_ULICY")) != fold_address(address.street)
+                fold_address(props.get("NAZWA_ULICY"))
+                not in {fold_address(address.street), fold_address(street)}
                 or fold_address(props.get("NUMER_PORZADKOWY")) != fold_address(address.house_number)
                 or props.get("NAZWA_MIEJSCOWOSCI") != "Warszawa"
             ):
@@ -403,13 +438,17 @@ class MunicipalGeocoder:
             row = (
                 await session.execute(
                     text("""
-                WITH geometry AS (
+                WITH areas AS (
+                    SELECT ST_SetSRID(ST_GeomFromGML(:polygon),2178) geom
+                ), geometry AS (
                     SELECT ST_LineMerge(ST_GeomFromText(:line,2178)) line,
-                           ST_SetSRID(ST_GeomFromGML(:polygon),2178) district
+                           ST_UnaryUnion(geom) district FROM areas
+                    WHERE NOT EXISTS (SELECT 1 FROM ST_Dump(geom) part
+                                      WHERE NOT ST_IsValid(part.geom))
                 ), valid AS (
                     SELECT *, CASE WHEN ST_Covers(district,line) THEN line
                                    ELSE ST_LineMerge(ST_Intersection(line,district)) END clipped
-                    FROM geometry WHERE ST_IsValid(district) AND ST_IsSimple(line)
+                    FROM geometry WHERE ST_IsValid(district) AND ST_IsValid(line)
                 ), target AS (
                     SELECT *, CASE WHEN :numbered THEN ST_SetSRID(ST_MakePoint(:x,:y),2178)
                               ELSE (SELECT ST_LineInterpolatePoint(segment.geom,0.5)

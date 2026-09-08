@@ -3,14 +3,14 @@ schema: ai-workflow/implementation-plan@1
 epic: E28
 title: Deliver current channel offers and galleries to the map
 status: approved
-revision: 5
+revision: 6
 owner: owner
 spike_revision: 1
 task_sequence:
   - id: E28-T1
     revision: 1
   - id: E28-T2
-    revision: 2
+    revision: 3
   - id: E28-T3
     revision: 3
   - id: E28-T4
@@ -92,3 +92,9 @@ not a claim that the owner separately supplied a street address. An optional
 presentation preference was requested; absent a different preference, the existing
 honest area label is used. The T3 follow-up stacks on T2's avenue-matching fix #386.
 Production canaries and public map/browser acceptance precede completion.
+
+## Revision 6: exact municipal names and streets across districts
+
+The authorized backfill audit found municipal full names in `NAZWA_PODST` while `NAZWA_SKROC` stores initials. Match either exact official field on a single unique street identity; never fuzzy-match surnames. Validate all bounded official district polygons for a single street crossing districts when the source supplies none, and choose a street point within their union. Explicit source district and building-number constraints remain binding. Bump normalization and municipal cache targets, test wrong full names/independent identities/invalid boundaries and real PostGIS projection, then deploy and run guarded recent-offer canaries. This T2 follow-up starts after merged #387 and must preserve its area-only gates.
+
+One official street geometry is valid but self-intersecting at junctions. Accept valid linework while retaining exact identity, finite geometry, source boundary clipping and an on-street representative point; simplicity is not a requirement for a road network. Invalid or zero-length geometries remain rejected.

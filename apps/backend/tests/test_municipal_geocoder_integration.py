@@ -13,7 +13,11 @@ from wef_backend.database import create_database_resources
 from wef_backend.features.catalog.application import BoundingBox, MapFilters, QueryMapLocations
 from wef_backend.features.catalog.infrastructure import SQLAlchemyMapQueryAdapter
 from wef_backend.features.ingestion.application.geocoding import ResolveGeocode
-from wef_backend.features.ingestion.domain.geocoding import SelectionReason, normalize_geocode_query
+from wef_backend.features.ingestion.domain.geocoding import (
+    SelectionReason,
+    normalize_geocode_query,
+    review_geocode_result,
+)
 from wef_backend.features.ingestion.infrastructure.geocode_store import SQLAlchemyGeocodeStore
 from wef_backend.features.ingestion.infrastructure.municipal_geocoder import MunicipalGeocoder
 
@@ -193,4 +197,65 @@ async def test_district_area_rejects_wrong_authoritative_identity(source: str) -
         normalize_geocode_query(source)
     )
     assert result.longitude is None
+    await database.engine.dispose()
+
+
+async def test_cross_district_street_uses_validated_union() -> None:
+    assert TEST_DATABASE_URL
+    database = create_database_resources(TEST_DATABASE_URL)
+
+    class Boundaries(Transport):
+        async def get(self, url: str, params: dict[str, str]) -> bytes:
+            if "Wola" in params.get("FILTER", ""):
+                return district(
+                    "7505800 5788500 7506600 5788500 7506600 5789300 "
+                    "7505800 5789300 7505800 5788500"
+                ).replace(b"Praga-Po\xc5\x82udnie", b"Wola")
+            return await super().get(url, params)
+
+    transport = Boundaries(
+        road=collection(
+            street(district="Praga-Południe, Wola", line="7505100 5788900 7506500 5788900")
+        )
+    )
+    geocoder = MunicipalGeocoder(database.session_factory, transport)
+    query = normalize_geocode_query("ul. Syntetyczna, Warszawa")
+    result = await geocoder.geocode(query)
+    assert result.address
+    assert result.address.district is None
+    assert result.precision.value == "street"
+    assert result.longitude is not None
+    assert result.latitude is not None
+
+    assert review_geocode_result(result, query=query).select_result
+    async with database.session_factory() as session:
+        on_street = await session.scalar(
+            text(
+                "SELECT ST_DWithin(ST_Transform(ST_SetSRID(ST_MakePoint(:x,:y),4326),2178),"
+                "ST_GeomFromText('LINESTRING(7505100 5788900,7506500 5788900)',2178),0.01)"
+            ),
+            {"x": float(result.longitude), "y": float(result.latitude)},
+        )
+    assert on_street
+    wrong = await geocoder.geocode(normalize_geocode_query("ul. Syntetyczna, Ursus, Warszawa"))
+    assert wrong.longitude is None
+    await database.engine.dispose()
+
+
+async def test_valid_single_street_junction_keeps_point_on_its_geometry() -> None:
+    assert TEST_DATABASE_URL
+    database = create_database_resources(TEST_DATABASE_URL)
+    line = "MULTILINESTRING((7505200 5788700,7505600 5789100,7505200 5789100,7505600 5788700))"
+    geocoder = MunicipalGeocoder(database.session_factory, Transport())
+    point = await geocoder._project(line, POLYGON_GML, None)  # noqa: SLF001
+    assert point is not None
+    async with database.session_factory() as session:
+        on_street = await session.scalar(
+            text(
+                "SELECT ST_DWithin(ST_Transform(ST_SetSRID(ST_MakePoint(:x,:y),4326),2178),"
+                "ST_GeomFromText(:line,2178),0.01)"
+            ),
+            {"x": float(point[0]), "y": float(point[1]), "line": line},
+        )
+    assert on_street
     await database.engine.dispose()
