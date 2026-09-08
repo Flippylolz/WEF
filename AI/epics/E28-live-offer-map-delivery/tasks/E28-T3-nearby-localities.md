@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E28-T3
 epic: E28
 title: Support source-evidenced nearby localities
-status: in_progress
+status: done
 revision: 3
 priority: P1
 size: M
@@ -47,12 +47,14 @@ branch:
   task_id: E28-T3
   one_task_only: true
   created_at: "2026-09-08T07:25:00Z"
-  pull_request: null
+  pull_request: https://github.com/Flippylolz/WEF/pull/387
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-08T11:27:30.299784+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/387
+  evidence:
+    - ../T3_VERIFICATION.md
+    - ../PRODUCTION_ACCEPTANCE.md
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -87,3 +89,9 @@ acceptance is pending. Completion remains gated on that acceptance.
 Plan revision 5 adds source-supported municipal district areas to the same
 truthful coarse-location path. T2 avenue follow-up #386 is the immediate stack
 parent. Existing town, street, building and protected selections remain covered.
+
+## Final production acceptance
+
+[Production acceptance](../PRODUCTION_ACCEPTANCE.md) records the deployed releases,
+guarded replay/canaries, public map checks and complete galleries. Task scope is
+accepted; T5 and the epic remain open for the continuous 24-hour delivery window.

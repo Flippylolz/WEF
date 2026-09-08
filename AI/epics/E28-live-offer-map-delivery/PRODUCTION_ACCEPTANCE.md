@@ -15,7 +15,7 @@ All canaries use existing source-current/owner-selection fences. No direct visib
 
 ## Validation
 
-The final integrated tree passed `make lint`, `make format-check`, `make typecheck`, `make contract-check`, and `make test`: 1,439 backend and 186 frontend tests, both coverage floors. Local frontend testing used two workers to avoid host CPU contention. Parent-squash rebases preserved the exact tested tree; current-head GitHub verification reran for each final branch. Five required contexts passed before each ordinary exact-head squash merge.
+The final integrated tree passed `make lint`, `make format-check`, `make typecheck`, `make contract-check`, and `make test`: 1,449 backend and 187 frontend tests, both coverage floors. Local frontend testing used two workers to avoid host CPU contention. Parent-squash rebases preserved the exact tested tree; current-head GitHub verification reran for each final branch. Five required contexts passed before each ordinary exact-head squash merge.
 
 ## Backfill
 
@@ -40,10 +40,23 @@ updated, then the existing media worker completed its ten-photo gallery. This
 operation used a separate run cursor and did not advance the live checkpoint.
 
 Five older posts additionally exposed developer inventory price formats, a house
-price-per-area annotation, and an exact district spelling. PR #389 addresses these
-parser/projection cases. Two street abbreviations were individually compared with
+price-per-area annotation, and an exact district spelling. PR #389 deployed as 380d93203f0606e2c819d0dc9c35d990a8588a78
+(run 34219222036), parser e2-v18 and normalization v9, and addresses these
+parser/projection cases. Five exact-message dry-runs and applies each updated one
+existing offer without creating duplicates. Two street abbreviations were individually compared with
 official municipal identities and geometry, then accepted through the existing
 operator selection service with current-source and protected-selection guards.
 The recorded result retains building/street precision, municipal cache evidence
 and explicit manual-accept lineage. No generic surname matcher or arbitrary point
-was added. Final replay and full recovered-cohort public checks follow deployment.
+was added. All eleven v9 canaries completed application and explicit verification. All 39
+recovered offers then passed public map/detail checks with 315 unique gallery
+assets and 630 successful thumbnail/content HTTP checks. All five corrected legacy
+price/area/room ranges passed public field checks; both starting prices retain a
+null ceiling. A real browser showed the development range and ≥ price, and opened
+a recovered floor-plan image from its five-item gallery. The seven-day cohort
+passed again: 32 mapped offers, 307 gallery assets, 614 successful image checks.
+The five hidden-offer identities remained unchanged.
+
+Final worker receipt: release `380d932`, live and remote head both 29761, healthy
+progress and no active incidents. The durable acceptance state was still
+`collecting`; no 24-hour completion is claimed.

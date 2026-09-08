@@ -29,7 +29,8 @@ All five audited offer-bearing posts must reach the public map with their correc
 
 ## Rollout
 
-The initial T1–T4 releases passed production canaries; district/street follow-ups
-remain under acceptance. T5 code is merged and its parser backfill completed;
+T1–T4 and their follow-ups are deployed and accepted. All 39 recovered offers
+appear on the public map with complete galleries; all 32 seven-day offers also
+passed public map/gallery checks. T5 code is deployed and its backfill completed;
 [production acceptance](PRODUCTION_ACCEPTANCE.md) tracks the bounded backfill and
 real 24-hour delivery window. E28 remains in progress until that window passes.

@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E28-T1
 epic: E28
 title: Recognize current offer templates
-status: in_progress
+status: done
 revision: 2
 priority: P1
 size: M
@@ -39,13 +39,14 @@ branch:
   task_id: E28-T1
   one_task_only: true
   created_at: "2026-09-08T06:52:17Z"
-  pull_request: https://github.com/Flippylolz/WEF/pull/377
+  pull_request: https://github.com/Flippylolz/WEF/pull/389
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
+  completed_by: Codex
+  completed_at: "2026-09-08T11:27:30.299784+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/389
   evidence:
     - ../T1_VERIFICATION.md
+    - ../PRODUCTION_ACCEPTANCE.md
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -84,3 +85,9 @@ rows, honest open price bounds, Cyrillic per-area quote separation, and the exac
 spaced Praga Północ district spelling. The five older incomplete records are replayed
 only after release. Two source street abbreviations require individually reviewed
 municipal identities; retained precision and audited selection are mandatory.
+
+## Final production acceptance
+
+[Production acceptance](../PRODUCTION_ACCEPTANCE.md) records the deployed releases,
+guarded replay/canaries, public map checks and complete galleries. Task scope is
+accepted; T5 and the epic remain open for the continuous 24-hour delivery window.

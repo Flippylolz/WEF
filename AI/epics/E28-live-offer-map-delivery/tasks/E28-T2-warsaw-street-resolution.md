@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E28-T2
 epic: E28
 title: Resolve valid Warsaw street locations
-status: in_progress
+status: done
 revision: 3
 priority: P1
 size: M
@@ -45,10 +45,12 @@ branch:
   created_at: "2026-09-08T07:09:17.634182+00:00"
   pull_request: https://github.com/Flippylolz/WEF/pull/380
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: https://github.com/Flippylolz/WEF/pull/380
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-08T11:27:30.299784+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/388
+  evidence:
+    - ../T2_VERIFICATION.md
+    - ../PRODUCTION_ACCEPTANCE.md
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -75,3 +77,9 @@ Keep this change in its own task branch/PR; do not mark done before current-head
 ## Start evidence
 
 Passed through ready under the approved spike; implementation plan revision 2 authorizes the explicit T1 stack, verified against open, mergeable PR #377 at the recorded head.
+
+## Final production acceptance
+
+[Production acceptance](../PRODUCTION_ACCEPTANCE.md) records the deployed releases,
+guarded replay/canaries, public map checks and complete galleries. Task scope is
+accepted; T5 and the epic remain open for the continuous 24-hour delivery window.
