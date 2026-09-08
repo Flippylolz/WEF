@@ -205,6 +205,8 @@ Policy:
 - Group compatible patch/minor development updates by ecosystem.
 - Keep a bounded open-pull-request limit.
 - Do not group major runtime/framework upgrades with routine updates.
+- Group the Vitest runner and `@vitest/*` tooling together, including major
+  upgrades, because the coverage provider must match the runner version.
 - Pin GitHub Actions to full commit SHAs; Dependabot updates those pins through reviewed pull requests.
 
 Dependabot provides the update schedule and creates pull requests natively on GitHub Free. The custom scheduled merge controller remains authoritative for its unattended Dependabot merges even though repository-level native auto-merge is available; controller-managed auto-merge must not bypass its owner-label, update-classification, or bot-commit checks. Agent-managed dependency PRs follow the standing authorization and merge requirements above.
