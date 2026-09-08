@@ -50,7 +50,9 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v16"
+from wef_backend.features.ingestion.domain.nearby_locality import nearby_locality
+
+PARSER_VERSION = "e2-v17"
 CANDIDATE_THRESHOLD = 5
 
 # A number may end only at whitespace/punctuation or directly before a tracked
@@ -619,7 +621,7 @@ def _location_field(
         "location",
         parser_version,
         warnings,
-        lambda value: value if looks_like_warsaw_address(value) else None,
+        lambda value: value if looks_like_warsaw_address(value) or nearby_locality(value) else None,
     )
 
 

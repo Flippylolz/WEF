@@ -226,7 +226,13 @@ def _params(
     if provider is GeocodeProvider.GEOAPIFY:
         west, south, east, north = WARSAW_BOUNDS
         return {
-            **({"type": "street"} if query.street_only else {}),
+            **(
+                {"type": "city"}
+                if query.locality_only
+                else {"type": "street"}
+                if query.street_only
+                else {}
+            ),
             "text": query.normalized,
             "limit": str(MAX_GEOCODE_CANDIDATES),
             "filter": f"rect:{west},{south},{east},{north}|countrycode:pl",
@@ -272,6 +278,7 @@ def _provider_address(provider: GeocodeProvider, item: object) -> AddressEvidenc
         neighborhood=suburb if _provider_district(suburb) is None else None,
         district=district,
         city=_optional_string(fields.get("city") or fields.get("town") or fields.get("village")),
+        municipality=_optional_string(fields.get("municipality")),
         country_code=_optional_string(fields.get("country_code")),
         result_type=_optional_string(fields.get("result_type") or item.get("type")),
     )
@@ -400,7 +407,7 @@ def _precision(value: str) -> GeocodePrecision:
         return GeocodePrecision.STREET
     if normalized in {"district", "suburb", "borough"}:
         return GeocodePrecision.DISTRICT
-    if normalized in {"city", "municipality"}:
+    if normalized in {"city", "town", "village", "municipality"}:
         return GeocodePrecision.CITY
     return GeocodePrecision.UNKNOWN
 

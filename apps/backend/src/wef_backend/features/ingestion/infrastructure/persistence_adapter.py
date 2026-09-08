@@ -54,6 +54,7 @@ from wef_backend.features.ingestion.application.persistence import (
     normalized_location_key,
     redacted_error_summary,
 )
+from wef_backend.features.ingestion.domain.geocoding import source_address_evidence
 from wef_backend.features.ingestion.domain.model import RawMessage, SourceIdentity, SourcePlatform
 from wef_backend.features.ingestion.infrastructure.archive_evidence import (
     ensure_tombstone,
@@ -830,6 +831,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             LocationRow(
                 id=location_id,
                 display_name=location_text,
+                city=source_address_evidence(parsed).city if parsed else "Warszawa",
                 display_address=location_text,
                 normalized_address=" ".join(location_text.casefold().split()),
                 normalized_address_hash=key,

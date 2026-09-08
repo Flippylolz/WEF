@@ -15,12 +15,13 @@ from wef_backend.features.ingestion.domain.address_evidence import (
     AddressEvidence,
     fold_address,
 )
+from wef_backend.features.ingestion.domain.nearby_locality import nearby_locality
 
-NORMALIZER_VERSION = "warsaw-address-v4"
-SCOPE_VERSION = "warsaw-scope-v1"
+NORMALIZER_VERSION = "warsaw-address-v5"
+SCOPE_VERSION = "warsaw-scope-v2"
 REQUEST_VERSION = "forward-geocode-v5"
 STREET_REQUEST_VERSION = f"{REQUEST_VERSION}-street"
-REVIEW_POLICY_VERSION = "warsaw-review-v2"
+REVIEW_POLICY_VERSION = "warsaw-review-v3"
 
 _WHITESPACE = re.compile(r"\s+")
 _PUNCTUATION = re.compile(r"\s*[,;|]+\s*")
@@ -44,7 +45,7 @@ _LEADING_DECORATION = re.compile(r"^[\s•·\-\u2013—*]+")
 _ADDRESS_SEGMENT_SPLIT = re.compile(r"[,|]")
 _CITY_NAMES = re.compile(r"\b(?:warszawa|варшава|варшаві|warsaw)\b", re.IGNORECASE)
 # lon/lat order: west, south, east, north — shared with provider request filters.
-WARSAW_BOUNDS = (20.28, 51.94, 21.37, 52.37)
+WARSAW_BOUNDS = (20.28, 51.94, 21.37, 52.6)
 _WARSAW_BOUNDS = WARSAW_BOUNDS
 WARSAW_BIAS_LON = Decimal("21.0122")
 WARSAW_BIAS_LAT = Decimal("52.2297")
@@ -140,6 +141,7 @@ class GeocodeErrorCode(StrEnum):
 class SelectionReason(StrEnum):
     """Stable reasons for automatic or manual selection transitions."""
 
+    AUTO_LOCALITY_IN_SCOPE = "auto_locality_in_scope"
     AUTO_PRECISE_IN_SCOPE = "auto_precise_in_scope"
     LOW_CONFIDENCE = "low_confidence"
     LOW_PRECISION = "low_precision"
@@ -167,6 +169,7 @@ class NormalizedGeocodeQuery:
     country_code: str = "PL"
     address: AddressEvidence | None = None
     street_only: bool = False
+    locality_only: bool = False
 
     def __post_init__(self) -> None:
         """Reject empty or invented queries."""
@@ -389,6 +392,8 @@ def normalize_location_display_name(source: str | None, *, district: str | None 
     """Return a Polish-forward display name without changing location identity keys."""
     if not source or not source.strip():
         return "Unknown location"
+    if locality := nearby_locality(source):
+        return locality.display
     original = source.strip()
 
     value = unicodedata.normalize("NFKC", original)
@@ -407,6 +412,15 @@ def normalize_location_display_name(source: str | None, *, district: str | None 
 
 def normalize_geocode_query(source: str, district: str | None = None) -> NormalizedGeocodeQuery:
     """Normalize supported Warsaw forms without replacing the display value."""
+    if locality := nearby_locality(source):
+        return NormalizedGeocodeQuery(
+            original=source,
+            normalized=f"{locality.display}, PL".casefold(),
+            district=None,
+            city=locality.city,
+            locality_only=True,
+            address=source_address_evidence(source),
+        )
     original = source
     value = unicodedata.normalize("NFKC", source).strip()
     value = _LEADING_DECORATION.sub("", value)
@@ -426,8 +440,9 @@ def normalize_geocode_query(source: str, district: str | None = None) -> Normali
     if normalized_district is None and len(neighborhoods) == 1:
         normalized_district = next(iter(neighborhoods))
     folded = value.casefold()
-    if "warszawa" not in folded:
-        value = f"{value}, Warszawa"
+    address = source_address_evidence(original, normalized_district)
+    if (address.city or "Warszawa").casefold() not in folded:
+        value = f"{value}, {address.city or 'Warszawa'}"
     if normalized_district is not None and normalized_district.casefold() not in value.casefold():
         value = f"{value}, {normalized_district}"
     value = f"{value}, PL"
@@ -435,7 +450,8 @@ def normalize_geocode_query(source: str, district: str | None = None) -> Normali
         original=original,
         normalized=value.casefold(),
         district=normalized_district,
-        address=source_address_evidence(original, normalized_district),
+        address=address,
+        city=address.city or "Warszawa",
     )
 
 
@@ -541,7 +557,17 @@ def review_geocode_result(
             select_result=False,
             out_of_scope=False,
         )
-    if result.precision not in {GeocodePrecision.BUILDING, GeocodePrecision.STREET}:
+    locality_match = (
+        query is not None
+        and query.locality_only
+        and result.precision is GeocodePrecision.CITY
+        and result.address is not None
+        and result.address.result_type in {"city", "town", "village", "municipality"}
+    )
+    if not locality_match and result.precision not in {
+        GeocodePrecision.BUILDING,
+        GeocodePrecision.STREET,
+    }:
         return ReviewDecision(
             status=GeocodeReviewStatus.NEEDS_REVIEW,
             reason=SelectionReason.LOW_PRECISION,
@@ -557,7 +583,9 @@ def review_geocode_result(
         )
     return ReviewDecision(
         status=GeocodeReviewStatus.ACCEPTED,
-        reason=SelectionReason.AUTO_PRECISE_IN_SCOPE,
+        reason=SelectionReason.AUTO_LOCALITY_IN_SCOPE
+        if locality_match
+        else SelectionReason.AUTO_PRECISE_IN_SCOPE,
         select_result=True,
         out_of_scope=False,
     )
@@ -568,6 +596,10 @@ _HOUSE_NUMBER = re.compile(r"^(.*?)\s+(\d+[a-zA-Z]?(?:[-/]\d+[a-zA-Z]?)?)$")
 
 def source_address_evidence(source: str, district: str | None = None) -> AddressEvidence:
     """Decompose exact source tokens; unknown prose cannot claim street precision."""
+    if locality := nearby_locality(source):
+        return AddressEvidence(
+            city=locality.city, municipality=locality.municipality, country_code="PL"
+        )
     street = None
     house = None
     city = "Warszawa"
@@ -623,6 +655,8 @@ def address_agreement_reason(
         or (source.district and not provider.district)
     ):
         return SelectionReason.MISSING_ADDRESS_EVIDENCE
+    if source.municipality and not provider.municipality:
+        return SelectionReason.MISSING_ADDRESS_EVIDENCE
     if _locality_conflicts(source, provider):
         return SelectionReason.ADDRESS_MISMATCH
     return _street_agreement_reason(source, provider, result.precision)
@@ -669,6 +703,10 @@ def _locality_conflicts(source: AddressEvidence, provider: AddressEvidence) -> b
     if city(source.city) != city(provider.city):
         return True
     if fold_address(source.country_code) != fold_address(provider.country_code):
+        return True
+    if source.municipality and fold_address(source.municipality) != fold_address(
+        re.sub(r"^gmina\s+", "", provider.municipality or "", flags=re.IGNORECASE)
+    ):
         return True
     for field in ("district", "neighborhood"):
         expected = getattr(source, field)

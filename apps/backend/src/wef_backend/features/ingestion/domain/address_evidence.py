@@ -28,6 +28,7 @@ class AddressEvidence:
     neighborhood: str | None = None
     district: str | None = None
     city: str | None = None
+    municipality: str | None = None
     country_code: str | None = None
     result_type: str | None = None
     version: str = ADDRESS_EVIDENCE_VERSION
