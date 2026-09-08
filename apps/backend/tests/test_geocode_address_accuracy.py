@@ -404,3 +404,34 @@ async def test_provider_alias_upgrade_does_not_reuse_v3_address_cache() -> None:
     assert (await resolver(source_query=source)).cache_hit
     assert len(transport.calls) == 1
     assert len(store.values) == 2
+
+
+@pytest.mark.parametrize("prefix", ["al.", "Aleja", "Aleje"])
+@pytest.mark.parametrize("number", [None, "18B"])
+async def test_avenue_abbreviation_matches_full_provider_name(
+    prefix: str, number: str | None
+) -> None:
+    source = f"Warszawa, {prefix} Testowa {number or ''}".strip()
+    result = await _mapped(
+        _feature("Aleje Testowa", result_type="building" if number else "street", number=number),
+        source=source,
+    )
+    decision = review_geocode_result(result, query=normalize_geocode_query(source))
+    assert decision.select_result
+    assert decision.reason is SelectionReason.AUTO_PRECISE_IN_SCOPE
+
+
+@pytest.mark.parametrize(
+    "feature",
+    [
+        _feature("Aleje Inna", result_type="building", number="18B"),
+        _feature("Aleje Testowa", result_type="building", number="18A"),
+        _feature("Aleje Testowa", result_type="building", number="18B", city="Kraków"),
+        _feature("Aleje Testowa", result_type="building", number="18B", country="de"),
+        _feature("ul. Testowa", result_type="building", number="18B"),
+    ],
+)
+async def test_avenue_alias_preserves_address_identity_constraints(feature: object) -> None:
+    source = "Warszawa, al. Testowa 18B"
+    result = await _mapped(feature, source=source)
+    assert not review_geocode_result(result, query=normalize_geocode_query(source)).select_result

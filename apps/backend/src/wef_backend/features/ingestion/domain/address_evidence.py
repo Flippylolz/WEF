@@ -7,6 +7,7 @@ import unicodedata
 from dataclasses import asdict, dataclass
 
 ADDRESS_EVIDENCE_VERSION = "address-evidence-v1"
+_AVENUE_PREFIX = re.compile(r"^(?:aleja|aleje|al)\.?\s+", re.IGNORECASE)
 _PREFIX = re.compile(r"^(?:ulica|улица|вулиця|street|ul|ул|вул)\.?\s+", re.IGNORECASE)
 
 
@@ -16,6 +17,7 @@ def fold_address(value: str | None) -> str:
     value = "".join(
         char for char in unicodedata.normalize("NFKD", value) if not unicodedata.combining(char)
     )
+    value = _AVENUE_PREFIX.sub("aleja ", value)
     return " ".join(_PREFIX.sub("", value).replace("\u2013", "-").split()).strip(" .,")
 
 

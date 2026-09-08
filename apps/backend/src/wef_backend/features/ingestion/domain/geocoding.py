@@ -17,7 +17,7 @@ from wef_backend.features.ingestion.domain.address_evidence import (
 )
 from wef_backend.features.ingestion.domain.nearby_locality import nearby_locality
 
-NORMALIZER_VERSION = "warsaw-address-v5"
+NORMALIZER_VERSION = "warsaw-address-v6"
 SCOPE_VERSION = "warsaw-scope-v2"
 REQUEST_VERSION = "forward-geocode-v5"
 STREET_REQUEST_VERSION = f"{REQUEST_VERSION}-street"
@@ -30,7 +30,7 @@ _STREET_PREFIX = re.compile(
     re.IGNORECASE,
 )
 _STREET_TOKEN = re.compile(
-    r"(?<!\w)(?:ulica|aleja|osiedle|plac|улица|ul|al|os|pl|вул|ул)(?!\w)\.?",
+    r"(?<!\w)(?:ulica|aleja|aleje|osiedle|plac|улица|ul|al|os|pl|вул|ул)(?!\w)\.?",
     re.IGNORECASE,
 )
 _INLINE_STREET_PREFIX = re.compile(

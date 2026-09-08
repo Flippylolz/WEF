@@ -26,3 +26,21 @@ municipal request version; its assertion now checks the intentionally bumped v2.
 Production acceptance awaits the release and guarded revalidation. T1's release
 passed verification but failed configuration validation before activation; the
 concurrent shared-edge task is repairing loopback binding support.
+
+
+## Production backfill follow-up
+
+The current-template backfill exposed a further exact address mismatch: source
+`al.` and provider `Aleje` avenue prefixes. T2 now normalizes only reviewed Polish
+avenue spellings to one retained avenue token. It does not discard the avenue
+identity or conflate it with an ordinary street; street names, house numbers,
+city, country, confidence, ambiguity and owner fences remain authoritative.
+Normalizer v6 invalidates stale address-mismatch observations for guarded replay.
+Invented regression cases cover all three spellings and the conflicting components.
+No raw offer text or provider exports are committed. Production acceptance requires
+revalidation of the newly recovered apartment after this follow-up release.
+
+The follow-up passed 49 focused address tests, full `make test` (1,417 backend
+and 186 frontend tests with coverage), `make lint`, `make format-check`,
+`make typecheck`, and `make contract-check`. Initial fresh PostgreSQL startup
+raced test reset; the complete retry after initialization passed.
