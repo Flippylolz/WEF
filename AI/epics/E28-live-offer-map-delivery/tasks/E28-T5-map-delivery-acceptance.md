@@ -25,7 +25,7 @@ spike_gate:
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 2
+  approved_revision: 4
   verified_by: Codex
   verified_at: "2026-09-08T06:48:39Z"
 dependency_gate:

@@ -4,11 +4,11 @@ id: E28-T3
 epic: E28
 title: Support source-evidenced nearby localities
 status: in_progress
-revision: 1
+revision: 2
 priority: P1
 size: M
 milestone: M5
-dependencies: [E28-T1]
+dependencies: [E28-T1, E28-T2]
 requirement_ids: []
 decision_ids: [ADR-006]
 deferred_decision_ids: []
@@ -25,7 +25,7 @@ spike_gate:
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 2
+  approved_revision: 4
   verified_by: Codex
   verified_at: "2026-09-08T06:48:39Z"
 dependency_gate:
@@ -37,6 +37,10 @@ dependency_gate:
       branch: bugfix/E28-T1-current-offer-templates
       pull_request: https://github.com/Flippylolz/WEF/pull/377
       head_commit: 7bb566cd00d13d70ef5e2f584b7cb289934d219a
+    - task_id: E28-T2
+      branch: bugfix/E28-T2-warsaw-street-resolution
+      pull_request: https://github.com/Flippylolz/WEF/pull/380
+      head_commit: d1ba6e8cc15477daa62fba1cb6482b86c8b9e3c2
 branch:
   required: true
   name: feat/E28-T3-nearby-localities

@@ -3,7 +3,7 @@ schema: ai-workflow/implementation-plan@1
 epic: E28
 title: Deliver current channel offers and galleries to the map
 status: approved
-revision: 2
+revision: 4
 owner: owner
 spike_revision: 1
 task_sequence:
@@ -12,9 +12,9 @@ task_sequence:
   - id: E28-T2
     revision: 2
   - id: E28-T3
-    revision: 1
+    revision: 2
   - id: E28-T4
-    revision: 1
+    revision: 2
   - id: E28-T5
     revision: 1
 approval:
@@ -22,7 +22,7 @@ approval:
   status: approved
   decided_by: owner
   decided_at: "2026-09-08T07:09:17.634182+00:00"
-  approved_revision: 2
+  approved_revision: 4
   evidence: OWNER_DIRECTION.md
 invalidation:
   invalidated_by: null
@@ -62,3 +62,13 @@ This plan starts fixes with T1; the epic remains in progress until all task acce
 ## Revision 2 owner continuation
 
 The owner requested implementation of the entire epic and a backfill afterwards. This authorizes continuing T2–T5 and production backfill after reviewed releases, not only starting T1. T2 explicitly depends on T1 so the epic baseline can use an ordered stack while CI runs. Backfill covers current retained offer revisions through bounded, resumable existing mutation paths, with changed/missed offers and galleries reconciled; existing protected selections and quotas remain binding. Do not wait for a second per-record or per-PR authorization. The 24-hour passive acceptance window may be scheduled after backfill with notification only for actionable results.
+
+## Revision 4 integrated delivery stack
+
+Under the owner’s full-epic authorization, T3 additionally depends on T2 because
+both change address normalization. T3 stacks on #380, preserving its street fixes
+while adding locality scope. T4 additionally depends on T3, which prepares the
+rollback reader for additive migration 0027. Ordered PRs permit useful validation
+while predecessors finish; no child completes before predecessor acceptance.
+This includes revision 3’s gallery migration dependency and introduces no new
+product/provider scope.

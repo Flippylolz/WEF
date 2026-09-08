@@ -4,11 +4,11 @@ id: E28-T4
 epic: E28
 title: Reconnect galleries after offer recovery
 status: draft
-revision: 1
+revision: 2
 priority: P1
 size: M
 milestone: M5
-dependencies: [E28-T1]
+dependencies: [E28-T1, E28-T3]
 requirement_ids: []
 decision_ids: [ADR-006]
 deferred_decision_ids: []
@@ -25,7 +25,7 @@ spike_gate:
 implementation_gate:
   status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: 2
+  approved_revision: 4
   verified_by: Codex
   verified_at: "2026-09-08T06:48:39Z"
 dependency_gate:
