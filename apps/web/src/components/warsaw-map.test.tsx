@@ -6,9 +6,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WarsawMap } from "@/components/warsaw-map";
 import type { LocationMap } from "@/lib/catalog-api";
 
-const setWorkerUrl = vi.hoisted(() => vi.fn());
+const workerConfiguration = vi.hoisted(() => ({
+  url: undefined as string | undefined,
+}));
 
-vi.mock("maplibre-gl", () => ({ setWorkerUrl }));
+vi.mock("maplibre-gl", () => ({
+  setWorkerUrl: (url: string) => {
+    workerConfiguration.url = url;
+  },
+}));
 
 const easeTo = vi.fn();
 const jumpTo = vi.fn();
@@ -248,7 +254,7 @@ describe("WarsawMap", () => {
   it("selects an unclustered backend feature and shows attribution", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    expect(setWorkerUrl).toHaveBeenCalledWith(
+    expect(workerConfiguration.url).toBe(
       "/vendor/maplibre/maplibre-gl-worker.mjs",
     );
     clickedFeature = {
