@@ -80,3 +80,15 @@ street and retain rejection of other cities and unknown development-like names.
 
 E28-T5 remains in progress until the deployed correction, guarded backfill and
 fresh continuous 24-hour delivery window pass.
+
+The v10 release (#391, `4d4324f`, successful production run 34785859206)
+completed the incremental parser backfill through message 29887: 126 current
+messages, 13 update candidates, 113 non-candidates, zero creates; dry-run and apply
+matched. Observation validated the development-label correction and accepted
+controls while preserving the protected selection. The remaining numbered
+address revealed two municipal address points on identically named streets in
+different districts. Version v11 filters the complete bounded point set through
+the already verified street and district geometry before testing uniqueness.
+Two supported points still fail as ambiguous; provider ordering cannot choose a
+winner. Real PostGIS tests cover separate districts, distance from the supported
+street, both candidate orders and unresolved ambiguity.
