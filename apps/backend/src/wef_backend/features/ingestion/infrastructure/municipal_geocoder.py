@@ -316,18 +316,18 @@ class MunicipalGeocoder:
                 message = "municipal district unavailable"
                 raise ValueError(message)
             ET.SubElement(polygon, f"{{{_GML}}}polygonMember").append(_polygon(districts[0]))
+        line = _line(row)
+        polygon_text = ET.tostring(polygon, encoding="unicode")
         point = None
         address_hash = ""
         identity = "ULICE:" + _field(row, "OBJECTID")
         if address.house_number:
             point, identity, address_hash = await self._address_point(
-                address, _field(row, "NAZWA_SKROC")
+                address, _field(row, "NAZWA_SKROC"), line=line, polygon=polygon_text
             )
             if point is None:
                 return _empty(ambiguous=identity == "ambiguous")
-        coordinates = await self._project(
-            _line(row), ET.tostring(polygon, encoding="unicode"), point
-        )
+        coordinates = await self._project(line, polygon_text, point)
         if coordinates is None:
             return _empty()
         lon, lat = coordinates
@@ -371,7 +371,7 @@ class MunicipalGeocoder:
         )
 
     async def _address_point(
-        self, address: AddressEvidence, street: str
+        self, address: AddressEvidence, street: str, *, line: str, polygon: str
     ) -> tuple[list[float] | None, str, str]:
         def literal(value: str) -> str:
             return "'" + value.replace("'", "''") + "'"
@@ -425,6 +425,15 @@ class MunicipalGeocoder:
                 message = "invalid address point"
                 raise ValueError(message)
             matches.append((coords, str(props["ID_IIP"])))
+        if len(matches) > 1:
+            # Same street names and numbers can occur in separate Warsaw districts.
+            # Filter with the already verified street and district geometry before
+            # deciding uniqueness; multiple supported points remain ambiguous.
+            matches = [
+                match
+                for match in matches
+                if await self._project(line, polygon, match[0]) is not None
+            ]
         return (
             (*matches[0], hashlib.sha256(body).hexdigest())
             if len(matches) == 1

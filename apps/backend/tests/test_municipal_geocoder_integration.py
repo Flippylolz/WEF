@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+import json
+from copy import deepcopy
 from decimal import Decimal
 
 import pytest
 from sqlalchemy import text
 
 from tests.test_geocoding_integration import TEST_DATABASE_URL, _prepare
-from tests.test_municipal_geocoder import POLYGON, SOURCE, Transport, collection, district, street
+from tests.test_municipal_geocoder import (
+    POLYGON,
+    SOURCE,
+    Transport,
+    addresses,
+    collection,
+    district,
+    street,
+)
 from wef_backend.database import create_database_resources
 from wef_backend.features.catalog.application import BoundingBox, MapFilters, QueryMapLocations
 from wef_backend.features.catalog.infrastructure import SQLAlchemyMapQueryAdapter
@@ -259,3 +269,42 @@ async def test_valid_single_street_junction_keeps_point_on_its_geometry() -> Non
         )
     assert on_street
     await database.engine.dispose()
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize(
+    ("other_point", "accepted"),
+    [
+        ([7515350, 5788920], True),  # Another district with the same address.
+        ([7505350, 5789200], True),  # Inside district, but away from this street.
+        ([7505360, 5788920], False),  # Two supported distinct points stay ambiguous.
+    ],
+)
+async def test_numbered_candidates_use_verified_district_and_street_before_uniqueness(
+    other_point: list[int], *, accepted: bool, reverse: bool
+) -> None:
+    assert TEST_DATABASE_URL
+    database = create_database_resources(TEST_DATABASE_URL)
+    try:
+        data = json.loads(addresses())
+        other = deepcopy(data["features"][0])
+        other["geometry"]["coordinates"] = other_point
+        other["properties"]["ID_IIP"] = "synthetic-other-address"
+        data["features"].append(other)
+        data["numberMatched"] = 2
+        if reverse:
+            data["features"].reverse()
+        query = normalize_geocode_query(SOURCE.replace("Syntetyczna", "Syntetyczna 12"))
+        result = await MunicipalGeocoder(
+            database.session_factory, Transport(address=json.dumps(data).encode())
+        ).geocode(query)
+        decision = review_geocode_result(result, query=query)
+        assert decision.select_result is accepted
+        if accepted:
+            assert result.provider_result_id == "synthetic-address-12"
+            assert result.precision.value == "building"
+        else:
+            assert decision.reason is SelectionReason.AMBIGUOUS_CANDIDATES
+            assert result.longitude is None
+    finally:
+        await database.engine.dispose()

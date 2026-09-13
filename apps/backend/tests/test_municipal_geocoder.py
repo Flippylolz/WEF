@@ -236,7 +236,12 @@ async def test_http_boundary_is_bounded(
             await client.get(url, {})
 
 
-async def test_duplicate_numbered_points_remain_ambiguous() -> None:
+async def test_duplicate_numbered_points_remain_ambiguous(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        MunicipalGeocoder,
+        "_project",
+        AsyncMock(return_value=(Decimal("21.079"), Decimal("52.234"))),
+    )
     data = json.loads(addresses())
     data["features"] *= 2
     data["numberMatched"] = 2
