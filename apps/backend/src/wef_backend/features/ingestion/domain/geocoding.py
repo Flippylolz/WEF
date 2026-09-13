@@ -17,7 +17,7 @@ from wef_backend.features.ingestion.domain.address_evidence import (
 )
 from wef_backend.features.ingestion.domain.nearby_locality import nearby_locality
 
-NORMALIZER_VERSION = "warsaw-address-v9"
+NORMALIZER_VERSION = "warsaw-address-v10"
 SCOPE_VERSION = "warsaw-scope-v2"
 REQUEST_VERSION = "forward-geocode-v5"
 STREET_REQUEST_VERSION = f"{REQUEST_VERSION}-street"
@@ -95,9 +95,13 @@ _DISTRICT_ALIASES = {
 _NEIGHBORHOODS = {
     "goclaw": ("Gocław", "Praga-Południe"),
     "sielce": ("Sielce", "Mokotów"),
+    "rakow": ("Raków", "Włochy"),
     "stare bielany": ("Stare Bielany", "Bielany"),
     "huta": ("Huta", "Bielany"),
 }
+
+# Exact source spellings of a development, never a separate municipality.
+_WARSAW_DEVELOPMENTS = frozenset({"ostoja wilanow", "ostoya wilanow"})
 
 
 class GeocodeProvider(StrEnum):
@@ -312,7 +316,11 @@ def _extract_other_city(segment: str) -> str | None:
     cleaned = _WHITESPACE.sub(" ", cleaned).strip(" ,")
     if not cleaned or _STREET_TOKEN.search(cleaned):
         return None
-    if warsaw_district_in(cleaned) is not None or fold_address(cleaned) in _NEIGHBORHOODS:
+    if (
+        warsaw_district_in(cleaned) is not None
+        or fold_address(cleaned) in _NEIGHBORHOODS
+        or fold_address(cleaned) in _WARSAW_DEVELOPMENTS
+    ):
         return None
     if _CITY_NAMES.search(cleaned):
         return "Warszawa"
