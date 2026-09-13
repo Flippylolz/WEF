@@ -60,3 +60,23 @@ The five hidden-offer identities remained unchanged.
 Final worker receipt: release `380d932`, live and remote head both 29761, healthy
 progress and no active incidents. The durable acceptance state was still
 `collecting`; no 24-hour completion is claimed.
+
+## Live acceptance locality follow-up
+
+The live monitor detected two newer offers with complete galleries but rejected
+map locations. Exact source inspection showed that a Warsaw neighborhood and a
+named Wilanów development were incorrectly classified as separate cities.
+Normalization v10 recognizes Raków as Włochy and excludes the exact development
+spellings Ostoja/Ostoya Wilanów from city inference. The existing street, building,
+district, provider-city and protected-selection checks remain binding. This
+repairs both fresh ingestion and retained normalized addresses through bounded
+versioned revalidation. No raw offer descriptions are retained in this record.
+
+The [municipal MSI registry](https://zdm.waw.pl/miejski-system-informacji/obszary-msi/dzielnica-wlochy/)
+identifies Raków within Włochy; the [construction supplier's project record](https://www.soprema.pl/referencje/mapa-realizacji/osiedle-ostoja-wilanow)
+identifies Ostoja Wilanów at Hlonda. The alternate spelling was reviewed in the
+source with an explicit Wilanów district. Regression fixtures use an invented
+street and retain rejection of other cities and unknown development-like names.
+
+E28-T5 remains in progress until the deployed correction, guarded backfill and
+fresh continuous 24-hour delivery window pass.

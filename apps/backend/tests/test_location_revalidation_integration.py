@@ -464,3 +464,42 @@ async def test_bounded_observation_canary_priority_does_not_apply_or_advance_sca
             == before
         )
     await database.engine.dispose()
+
+
+@pytest.mark.parametrize(
+    ("source", "district", "old_city"),
+    [
+        ("ul. Syntetyczna, Raków", "Włochy", "Raków"),
+        ("ul. Syntetyczna, Wilanów, Ostoya Wilanów", "Wilanów", "Ostoya Wilanów"),
+    ],
+)
+async def test_revalidate_retained_address_with_misclassified_local_area(
+    source: str, district: str, old_city: str
+) -> None:
+    database, location, store, resolver, transport = await _fixture()
+    try:
+        async with database.session_factory() as session, session.begin():
+            await session.execute(
+                text("UPDATE locations SET display_address=:source, district=NULL, city=:city"),
+                {"source": source, "city": old_city},
+            )
+        transport.payloads[:] = [{"features": [_feature("Syntetyczna", district=district)]}] * 2
+        observed = await RevalidateLocations(store, resolver).run()
+        assert observed["validated"] == 1
+        await store.control(
+            target=VALIDATION_TARGET, mode="apply", canary_ids=(location,), discovery_ready=True
+        )
+        applied = await RevalidateLocations(store, resolver).run()
+        assert applied["corrected"] == 1
+        point = await _point(database, location)
+        assert point[2] == "accepted"
+        assert point[3] == f"ul. Syntetyczna, {district}, Warszawa"
+        async with database.session_factory() as session:
+            assert (
+                await session.scalar(
+                    text("SELECT display_address FROM locations WHERE id=:id"), {"id": location}
+                )
+                == source
+            )
+    finally:
+        await database.engine.dispose()

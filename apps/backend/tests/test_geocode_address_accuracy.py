@@ -489,3 +489,36 @@ async def test_explicit_district_cannot_be_replaced_by_conflicting_hint() -> Non
     result = replace(result, provider=GeocodeProvider.MUNICIPAL)
     query = normalize_geocode_query(source, district="Mokotów")
     assert not review_geocode_result(result, query=query).select_result
+
+
+@pytest.mark.parametrize(
+    ("source", "district", "neighborhood"),
+    [
+        ("Warszawa, Raków, ul. Syntetyczna 3", "Włochy", "Raków"),
+        ("ul. Syntetyczna 3, Rakow", "Włochy", "Raków"),
+        ("Warszawa, Wilanów, Ostoya Wilanów, ul. Syntetyczna", "Wilanów", None),
+        ("ul. Syntetyczna, Wilanów, Ostoja Wilanów", "Wilanów", None),
+    ],
+)
+async def test_reviewed_local_area_labels_do_not_become_cities(
+    source: str, district: str, neighborhood: str | None
+) -> None:
+    query = normalize_geocode_query(source)
+    assert query.address is not None
+    assert query.city == query.address.city == "Warszawa"
+    assert query.address.district == district
+    assert query.address.neighborhood == neighborhood
+    display = normalize_location_display_name(source)
+    assert display == f"ul. Syntetyczna{' 3' if neighborhood else ''}, {district}, Warszawa"
+    result = await _mapped(_feature("Syntetyczna", district=district), source=source)
+    assert review_geocode_result(result, query=query).select_result
+    wrong = await _mapped(_feature("Syntetyczna", district=district, city="Kraków"), source=source)
+    assert review_geocode_result(wrong, query=query).reason is SelectionReason.ADDRESS_MISMATCH
+
+
+@pytest.mark.parametrize("city", ["Kraków", "Nowe Miasto", "Ostoya Inna"])
+async def test_unknown_city_tokens_are_not_discarded_by_development_aliases(city: str) -> None:
+    query = normalize_geocode_query(f"ul. Syntetyczna, {city}")
+    assert query.city == city
+    result = await _mapped(_feature("Syntetyczna"), source=query.original)
+    assert review_geocode_result(result, query=query).reason is SelectionReason.ADDRESS_MISMATCH
