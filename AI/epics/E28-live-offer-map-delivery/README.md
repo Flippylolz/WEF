@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E28
 title: Reliable delivery of every new channel offer to the map
-status: in_progress
+status: done
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -33,4 +33,11 @@ T1–T4 and their follow-ups are deployed and accepted. All 39 recovered offers
 appear on the public map with complete galleries; all 32 seven-day offers also
 passed public map/gallery checks. T5 code is deployed and its backfill completed;
 [production acceptance](PRODUCTION_ACCEPTANCE.md) tracks the bounded backfill and
-real 24-hour delivery window. E28 remains in progress until that window passes.
+real 24-hour delivery window, which passed on 2026-09-14.
+
+## Completion
+
+All five tasks are complete. The bounded historical and incremental backfills
+and real 24-hour live acceptance passed;
+[the production record](PRODUCTION_ACCEPTANCE.md#completed-live-acceptance)
+contains the final release, duration, public verification and preservation evidence.

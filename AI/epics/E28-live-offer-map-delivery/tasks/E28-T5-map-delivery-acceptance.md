@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E28-T5
 epic: E28
 title: Verify and monitor complete offer delivery
-status: in_progress
+status: done
 revision: 1
 priority: P1
 size: M
@@ -45,10 +45,14 @@ branch:
   created_at: "2026-09-08T08:02:00Z"
   pull_request: https://github.com/Flippylolz/WEF/pull/385
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-14T23:19:16.139429+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/392
+  evidence:
+    - ../PRODUCTION_ACCEPTANCE.md
+    - https://github.com/Flippylolz/WEF/pull/385
+    - https://github.com/Flippylolz/WEF/pull/391
+    - https://github.com/Flippylolz/WEF/pull/392
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -81,3 +85,10 @@ The old raw replay command selects linked offers only, so it cannot recover the
 reported missing offers. This task adds a current-revision bounded operator using
 the existing parser/persistence path, preserving live checkpoints and known
 locations/visibility and existing field-origin protections.
+
+## Completion
+
+The durable acceptance window passed on release `1955758` after 88,557 seconds
+of continuous healthy samples. The fixed 19-offer public cohort and all 306 image
+checks passed again. See the final dated record in
+[production acceptance](../PRODUCTION_ACCEPTANCE.md#completed-live-acceptance).

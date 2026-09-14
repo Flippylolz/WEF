@@ -23,14 +23,13 @@ Frozen boundary: source message 29761. Active retained population: 28,312 messag
 
 A seven-day comparison now has all 32 expected offer records and 307 current associated photos, with no missing galleries or pending media in that group. All 32 also passed actual public map/detail delivery verification after v8 revalidation. Five media quarantines compared against live Telegram had changed photo/album identities despite unchanged text and timestamps. A bounded metadata refresh used the existing live persistence path over 307 messages: 248 revised, 59 unchanged, zero created, checkpoint 29761. Current revisions completed ordinary media recovery; older quarantines were not force-reopened or treated as equivalent images. The five hidden-offer identities remained unchanged after this refresh.
 
-## Passive acceptance
+## Initial passive acceptance (historical)
 
-The 24-hour window is not yet complete. Keep E28-T5 and E28 in progress until real continuous delivery samples pass; no elapsed-time or replay substitute is accepted.
+At the initial rollout, the 24-hour window was incomplete. E28-T5 and E28 remained in progress until real continuous delivery samples passed; no elapsed-time or replay substitute was accepted.
 
-An hourly task heartbeat (`verify-e28-delivery-window`) checks the durable production
-acceptance window and stays quiet unless a new actionable failure or completion
-occurs. It will record successful acceptance and pause after closing the epic
-through the normal checked PR workflow.
+An hourly task heartbeat (`verify-e28-delivery-window`) checked the durable
+production acceptance window, staying quiet unless a new actionable failure or
+completion occurred. Its dedicated acceptance work ends with this checked closeout.
 
 ## Older recovered cohort follow-up
 
@@ -78,8 +77,8 @@ identifies Ostoja Wilanów at Hlonda. The alternate spelling was reviewed in the
 source with an explicit Wilanów district. Regression fixtures use an invented
 street and retain rejection of other cities and unknown development-like names.
 
-E28-T5 remains in progress until the deployed correction, guarded backfill and
-fresh continuous 24-hour delivery window pass.
+At this follow-up stage E28-T5 remained in progress pending the deployed
+correction, guarded backfill and fresh continuous 24-hour delivery window.
 
 The v10 release (#391, `4d4324f`, successful production run 34785859206)
 completed the incremental parser backfill through message 29887: 126 current
@@ -92,3 +91,38 @@ the already verified street and district geometry before testing uniqueness.
 Two supported points still fail as ambiguous; provider ordering cannot choose a
 winner. Real PostGIS tests cover separate districts, distance from the supported
 street, both candidate orders and unresolved ambiguity.
+
+
+## Completed live acceptance
+
+On 2026-09-14T23:19:16.139429Z, the production worker reported acceptance `passed`
+with 88,557 seconds of continuous durable samples beginning at
+2026-09-13T22:43:18.871091Z. Release
+`19557580e6989a09198af7ff2b49c2cc5b8e67aa` (#392; successful release run 34787043071)
+was unchanged throughout that window. Samples were fresh, progress healthy,
+all eligible backlogs empty, and there were no active incidents. The live and
+remote checkpoints both remained 29887; this passive window does not claim new
+channel traffic or substitute replay for live elapsed samples.
+
+The final v11 canary completed seven accepted corrections and preserved one
+protected selection. Explicit canary verification passed. All eight source
+snapshots and the protected selection receipts were unchanged; the five hidden
+offers retained the same identity fingerprint. Post-release replay over the
+126-message increment through 29887 matched its dry-run: 113 non-candidates,
+13 existing-offer updates, zero creates. Public browser checks verified both
+recovered offers, their correct street/building precision and full-size galleries
+of ten and eight images.
+
+The rolling seven-day delivery cohort was 17/17 mapped after recovery and 13/13
+at completion as four older posts aged out; no offer or gallery was missing.
+The fixed 19-offer public verification set, including those older controls,
+passed again at completion with all 306 thumbnail/content HTTP checks successful.
+The rolling denominator decrease was not used to hide unresolved work.
+
+The final implementation passed `make install`, `make lint`, `make format-check`,
+`make typecheck`, `make contract-check`, and `make test` (1,464 backend and 187
+frontend tests, with coverage gates). Every required PR check passed before
+#391 and #392 merged, and both production releases passed their health gates.
+E28-T5 and E28 are complete. The closeout includes cleanup of verified merged
+E28 worktrees/branches and retirement of the dedicated acceptance heartbeat;
+production ingestion and its durable health monitoring remain active.
