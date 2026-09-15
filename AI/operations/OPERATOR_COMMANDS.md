@@ -73,7 +73,7 @@ Prerequisites for any Groq-backed command: `WEF_AI_CURATION_ENABLED=true`,
 **Container:** `api` or `telegram-worker` (database access only; no provider calls).
 
 **Purpose (E25-T1):** Evaluate current retained source revisions, including linked
-offers, under the running parser and `source-evidence-v2` classification policy.
+offers, under the running parser and `source-evidence-v3` classification policy.
 The command writes classification and issue-lifecycle metadata only. It does not
 change canonical offers, call providers, or activate historical parser recovery.
 
@@ -523,7 +523,13 @@ python -m wef_backend.offer_backfill_command --channel CHANNEL_ID --after-id 0 -
 ```
 
 The default is read-only. The receipt counts create/update/non-candidate
-and stale outcomes without descriptions or contacts. Add `--apply` for the same
+and stale outcomes without descriptions or contacts. An `update_candidate` means
+the current parser recognizes a linked source, not that canonical values differ
+or that applying the page will change them. Compare field values and extraction
+provenance separately; evaluation-version convergence is not canonical-field
+convergence. The guarded automatic historical convergence path remains owned by
+[E25-T4](../epics/E25-parser-quality-and-automatic-recovery/tasks/E25-T4-converge-parser-versions-automatically.md)
+and its dependency/rollout gates. Add `--apply` for the same
 reviewed page, then resume with `next_after_id`; retain JSON receipts outside Git.
 A page is complete when `exhausted` is true. Never advance past a failed page:
 replay from the previous acknowledged cursor is idempotent. Live checkpoints do

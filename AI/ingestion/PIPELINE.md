@@ -8,6 +8,22 @@
 - Share canonical persistence, revisions, visibility, and checkpoint behavior between historical and live Telegram ingestion.
 - Make heuristic decisions visible through confidence, reason codes, and reports.
 
+## Current deployed baseline
+
+As of 2026-09-15, production runs parser `e2-v18`, source-evidence policy
+`source-evidence-v3`, and location normalization `warsaw-address-v11`. Earlier
+version-specific sections below record the evolution of the pipeline. E28
+completed its fixed-cohort public map/gallery verification and continuous
+24-hour delivery acceptance; see [E28 production acceptance](../epics/E28-live-offer-map-delivery/PRODUCTION_ACCEPTANCE.md).
+This does not close the distinct D-003 passive new/edit/delete gate or establish
+whole-history field accuracy.
+
+Parse evaluations describe current source/parser/policy identities. Existing
+canonical field values and extraction provenance can retain older parser
+versions even after evaluation and operator replay. E25-T4 owns guarded
+historical field convergence; its separate approval, dependency and rollout
+gates still apply.
+
 ## Pipeline boundary
 
 Each source adapter emits a common `RawMessage`:
