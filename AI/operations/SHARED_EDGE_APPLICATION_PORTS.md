@@ -45,7 +45,7 @@ upstreams and separately recorded the absent Fillable application.
 Fillable's public relay and application must be deployed before its public URL
 works. Its staged `/home/nuc/fillable/runtime.env` currently uses an HTTP public
 origin; the Fillable deployment must set
-`FILLABLE_PUBLIC_ORIGIN=https://2fa54e2405.duckdns.org:3200`.
+`FILLABLE_PUBLIC_ORIGIN=https://flipstarnuc.duckdns.org:3200`.
 
 Rollback restores the `previous` edge release (`r-20260830-osm-tiles`), validates
 Nginx, and sends HUP. Before-state configuration and activation evidence are kept
