@@ -7,6 +7,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from scripts.deploy.activate_historical_candidate import (
     ActivationContext,
@@ -16,9 +17,33 @@ from scripts.deploy.activate_historical_candidate import (
     resolve_compose_files,
     restore_media_roots,
     rewrite_database_url,
+    smoke_public_https,
     update_environment_values,
     validate_candidate_media,
 )
+
+
+class PublicHttpsSmokeTests(unittest.TestCase):
+    def test_primary_hostname_and_explicit_alias_override(self) -> None:
+        root = Path("/synthetic/wef")
+        with patch("scripts.deploy.activate_historical_candidate._probe_public_https") as probe:
+            probe.return_value = None
+            smoke_public_https(root)
+            probe.assert_called_once_with("https://flipstarnuc.duckdns.org", root)
+            probe.reset_mock()
+            smoke_public_https(root, "https://2fa54e2405.duckdns.org")
+            probe.assert_called_once_with("https://2fa54e2405.duckdns.org", root)
+
+    def test_unhealthy_primary_origin_blocks_activation(self) -> None:
+        with (
+            patch("scripts.deploy.activate_historical_candidate._probe_public_https") as probe,
+            patch("scripts.deploy.activate_historical_candidate.time.sleep") as sleep,
+        ):
+            probe.return_value = "not ready"
+            with self.assertRaisesRegex(HistoricalActivationError, "failed after 2 attempts"):
+                smoke_public_https(Path("/synthetic/wef"), attempts=2)
+            self.assertEqual(probe.call_count, 2)
+            sleep.assert_called_once_with(5.0)
 
 
 class RewriteDatabaseUrlTests(unittest.TestCase):

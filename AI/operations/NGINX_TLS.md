@@ -5,7 +5,26 @@ on 3200; Forecast remains on 3000 and WEF rollback remains on 3100.
 
 ## Status
 
-This is the approved target architecture from [ADR-020](../decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md). **Live WEF HTTPS is active** on `https://2fa54e2405.duckdns.org` via the `wef-shared-edge` Nginx/Certbot project (E7-T10, 2026-08-20). AI Forecast remains on public host port 3000. Caddy on port 3100 is retained as WEF rollback. Tooling and inert proofs: [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) / [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md); live cutover evidence is on [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md).
+This is the approved target architecture from [ADR-020](../decisions/adr/ADR-020-use-nginx-shared-tls-ingress.md). **Live WEF HTTPS is active** on `https://flipstarnuc.duckdns.org` via the `wef-shared-edge` Nginx/Certbot project (E7-T10, 2026-08-20). AI Forecast remains on public host port 3000. Caddy on port 3100 is retained as WEF rollback. Tooling and inert proofs: [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md) / [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md); live cutover evidence is on [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md).
+
+## Hostname migration (2026-09-28)
+
+The owner selected `flipstarnuc.duckdns.org` as the primary name. The old
+`2fa54e2405.duckdns.org` remains active: DuckDNS updates both names, shared Nginx
+accepts both, and the existing certificate lineage now covers both hostnames.
+Keep the existing lineage directory name and renewal configuration; do not rename
+certificate paths or remove the alias as part of an application release.
+
+The server uses DuckDNS DNS-01 renewal hooks because external port 80 could not
+complete HTTP-01 validation. Token material and hook state stay private on the
+server. The renewal dry run and HTTPS checks for both names passed during the
+migration. Public HTTP port-80 forwarding was not proven; use HTTPS.
+
+WEF deploy/rollback smoke defaults and historical activation now use the primary
+name. `WEF_PUBLIC_HTTPS_BASE_URL` remains an explicit override for ordinary release
+smokes. Existing GitHub SSH host/known-host settings may still use the retained
+alias; verify and migrate those together before retiring it. Ordinary WEF releases
+do not recreate the shared edge or retire either hostname.
 
 ## Live topology
 
@@ -27,7 +46,7 @@ This is the approved target architecture from [ADR-020](../decisions/adr/ADR-020
 
 ## Migration and rollback
 
-1. Confirm the owner-approved WEF hostname (`2fa54e2405.duckdns.org`), DNS resolution, and router forwarding for 80/443.
+1. Confirm the owner-approved WEF hostname (`flipstarnuc.duckdns.org`), DNS resolution, and router forwarding for 80/443.
 2. Inventory Nginx/Caddy/system listeners, Docker projects, AI Forecast 3000 health, WEF 3100 health, and all relevant persistent paths.
 3. Start the isolated Nginx/Certbot edge without changing WEF or Forecast application upstreams.
 4. Issue the WEF certificate, validate Nginx configuration, and prove WEF HTTPS.
