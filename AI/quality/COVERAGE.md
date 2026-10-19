@@ -52,6 +52,13 @@ SQL adapters, operator commands and external-provider error paths stay in scope.
 Protocol/type-only declarations and ordinary coverage-tool exclusions remain
 non-executable exclusions rather than tests of type declarations.
 
+The [backend domain pass](BACKEND_DOMAIN_COVERAGE.md) adds 57 failure-case tests.
+All 20 domain implementations now measure 100% of their 1,739 statements and 420
+branch paths, with independent 100% floors. The full PostGIS suite passes 1,549
+tests at 91.86% backend coverage; 1,208 lines and 598 branch paths remain uncovered
+outside the domain layer. One documented exhaustive-enum fall-through is excluded
+structurally, and the mapping test checks every enum member.
+
 Operational scripts already have their own `make quality-gates` tests and runtime
 proofs, but those tests are not yet included in the application coverage reports.
 Their coverage inventory, backend-owned admin JavaScript and the backend gaps must

@@ -22,7 +22,7 @@ class Availability(StrEnum):
         match self:
             case Availability.AVAILABLE:
                 return "estates.availability.available"
-            case Availability.RESERVED:
+            case Availability.RESERVED:  # pragma: no branch - final member of the exhaustive enum
                 return "estates.availability.reserved"
 
 

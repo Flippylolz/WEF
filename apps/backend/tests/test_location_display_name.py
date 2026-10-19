@@ -2,11 +2,27 @@
 
 from __future__ import annotations
 
+import pytest
+
 from wef_backend.features.ingestion.application.persistence import (
     normalize_location_text,
     normalized_location_key,
 )
 from wef_backend.features.ingestion.domain.geocoding import normalize_location_display_name
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("street: Syntetyczna 7", "ul. Syntetyczna 7, Warszawa"),
+        ("district (source annotation)", "district (source annotation)"),
+        ("(aleja)", "(aleja)"),
+    ],
+)
+def test_unusual_labels_and_unresolved_fragments_keep_honest_display_values(
+    source: str, expected: str
+) -> None:
+    assert normalize_location_display_name(source) == expected
 
 
 def test_cyrillic_pipe_template_maps_to_street_district_warszawa() -> None:
