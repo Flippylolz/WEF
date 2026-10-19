@@ -13,6 +13,7 @@ apps/web/*
 !apps/web/scripts
 apps/web/scripts/*
 !apps/web/scripts/check-frontend-boundaries.mjs
+!apps/web/scripts/prepare-standalone-e2e.mjs
 !apps/web/next-env.d.ts
 !apps/web/next.config.ts
 !apps/web/postcss.config.mjs

@@ -46,6 +46,9 @@ def _measure(row: dict[str, object], *, metric: str, backend: bool) -> float:
     else:
         summary = _object(row[metric])
         covered, total = _count(summary["covered"]), _count(summary["total"])
+        if metric == "branches" and covered == total == 0:
+            # The required lines metric still rejects an empty/non-executable file.
+            return MAXIMUM
     return _percentage(covered, total)
 
 

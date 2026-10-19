@@ -11,7 +11,13 @@ export default defineConfig({
     include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["./src/test/setup.ts"],
     coverage: {
-      include: ["src/**/*.{ts,tsx}"],
+      include: [
+        "src/**/*.{ts,tsx}",
+        "next.config.ts",
+        "scripts/*.mjs",
+        "../backend/src/wef_backend/features/admin/interface/statics/place_picker.js",
+      ],
+      allowExternal: true,
       exclude: [
         ...coverageConfigDefaults.exclude,
         "src/generated/**",

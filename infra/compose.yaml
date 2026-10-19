@@ -68,6 +68,7 @@ services:
       [
         "pytest",
         "--cov=wef_backend",
+        "--cov=migrations",
         "--cov-branch",
         "--cov-fail-under=100",
         "--cov-report=term-missing",
@@ -91,6 +92,8 @@ services:
       target: development
     command: ["pnpm", "test:coverage"]
     network_mode: none
+    volumes:
+      - ../apps/backend/src/wef_backend/features/admin/interface/statics/place_picker.js:/workspace/apps/backend/src/wef_backend/features/admin/interface/statics/place_picker.js:ro
     restart: "no"
 
   media-init:

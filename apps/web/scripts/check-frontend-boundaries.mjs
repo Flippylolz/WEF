@@ -65,8 +65,8 @@ function check(file, stack = []) {
       `Frontend import cycle: ${[...stack, file].map((item) => item.slice(root.length + 1)).join(" -> ")}`,
     );
   if (visited.has(file)) return;
-  for (const dependency of graph.get(file) ?? [])
-    check(dependency, [...stack, file]);
+  // Every admitted dependency was added to the graph before traversal.
+  for (const dependency of graph.get(file)) check(dependency, [...stack, file]);
   visited.add(file);
 }
 for (const file of sources) check(file);

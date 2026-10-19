@@ -74,10 +74,9 @@ Run `make format-check lint typecheck test contract-check quality-gates` with th
 locked toolchain before pushing. The deliberate-fault tests cover a 99% backend
 or badge floor and removal of the complete package/branch settings.
 
-This package milestone does not complete repository-wide coverage. Operational
-Python/shell, backend admin JavaScript, handwritten migrations and build entry
-points still require measured coverage. The operational audit passes its existing
-196 tests; a separate diagnostic reports 56.96% for Python operations after excluding
-only test/proof drivers. It is not a completion result. Operational guards,
-transfers and deployment behavior stay in scope. All applicable final global,
-per-file and badge thresholds must require 100% before the overall goal is complete.
+The subsequent [application boundary pass](APPLICATION_BOUNDARY_COVERAGE.md) adds
+measured migrations, browser assets and frontend build entry points. Operational
+Python and shell remain part of the active repository-wide goal. The initial
+operational diagnostic measured 56.96% after excluding only test/proof drivers;
+it is not a completion result. Operational commands, transfers and deployment
+guards remain in scope, with all applicable final gates required at 100%.

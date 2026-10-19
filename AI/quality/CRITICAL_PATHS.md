@@ -1,7 +1,7 @@
 # Critical-path confidence (E14-T2)
 
 The backend requires 100% combined line/branch coverage globally and independently
-for all 233 executable package files. Frontend lines, branches, functions
+for all 262 executable package and migration files. Frontend lines, branches, functions
 and statements now require 100% in every runtime file, with the source inventory
 and exclusions described in [COVERAGE.md](COVERAGE.md).
 `.github/critical-coverage.json` additionally enforces these independently measured

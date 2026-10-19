@@ -141,6 +141,8 @@ class CoverageBadgeTests(unittest.TestCase):
         workflow = Path(".github/workflows/verify.yml").read_text(encoding="utf-8")
         makefile = Path("Makefile").read_text(encoding="utf-8")
         self.assertIn("--cov-fail-under=100", workflow)
+        self.assertIn("--cov=migrations", workflow)
+        self.assertIn("--cov=migrations", makefile)
         self.assertIn("--fail-under 100", workflow)
         self.assertIn("--fail-under 100", makefile)
         self.assertIn("test-backend:", makefile)
@@ -150,6 +152,7 @@ class CoverageBadgeTests(unittest.TestCase):
         compose = Path("infra/compose.yaml").read_text(encoding="utf-8")
         vitest = Path("apps/web/vitest.config.mts").read_text(encoding="utf-8")
         self.assertIn("--cov-fail-under=100", compose)
+        self.assertIn("--cov=migrations", compose)
         self.assertIn("lines: 100", vitest)
         self.assertIn("branches: 100", vitest)
 

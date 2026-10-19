@@ -81,3 +81,18 @@ class CriticalCoverageTests(unittest.TestCase):
             check(report, {"src/core.ts": {"lines": 100, "branches": 100}}, backend=False),
             [],
         )
+
+    def test_source_without_conditions_has_no_branch_shortfall(self) -> None:
+        report = {
+            "next.config.ts": {
+                "lines": {"covered": 11, "total": 11},
+                "branches": {"covered": 0, "total": 0},
+            }
+        }
+        policy = {"next.config.ts": {"lines": 100, "branches": 100}}
+        self.assertEqual(check(report, policy, backend=False), [])
+        report["next.config.ts"]["lines"] = {"covered": 10, "total": 11}
+        self.assertTrue(check(report, policy, backend=False))
+        report["next.config.ts"]["lines"] = {"covered": 0, "total": 0}
+        with self.assertRaises(ValueError):
+            check(report, policy, backend=False)

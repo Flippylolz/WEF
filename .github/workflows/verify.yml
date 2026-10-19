@@ -26,18 +26,18 @@ jobs:
       postgis:
         image: "postgis/postgis:17-3.5@sha256:01a6a70e41e6c4467c8f55f6063555ed72db2d6662cd0d571040d42eadaeb6f6"
         env:
-          POSTGRES_DB: wef_proof
+          POSTGRES_DB: wef_test
           POSTGRES_PASSWORD: proof
           POSTGRES_USER: wef
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -h 127.0.0.1 -U wef -d wef_proof"
+          --health-cmd "pg_isready -h 127.0.0.1 -U wef -d wef_test"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 20
     env:
-      TEST_DATABASE_URL: postgresql+asyncpg://wef:proof@127.0.0.1:5432/wef_proof
+      TEST_DATABASE_URL: postgresql+asyncpg://wef:proof@127.0.0.1:5432/wef_test
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -66,6 +66,7 @@ jobs:
           mkdir -p tmp
           uv --directory apps/backend run pytest \
             --cov=wef_backend \
+            --cov=migrations \
             --cov-branch \
             --cov-fail-under=100 \
             --cov-report=term-missing \
@@ -239,4 +240,3 @@ jobs:
           test ! -e est-test.tar.gz
           test ! -e .env
           ! git ls-files | grep -E '(^|/)(est-test|media|secrets)(/|$)|\.session(-journal)?$|\.pem$|\.key$'
-

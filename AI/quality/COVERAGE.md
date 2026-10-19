@@ -8,8 +8,10 @@ and production deployment configuration remain within their existing boundaries.
 ## Frontend gate
 
 Vitest measures every `src/**/*.{ts,tsx}` file, including files never imported by
-tests. Lines, branches, functions and statements each require 100%, independently
-for every file. Next.js entry points, middleware, error documents, translation
+tests. The inventory also includes `next.config.ts`, frontend `scripts/*.mjs` and
+the backend-owned `place_picker.js` through explicit external-file measurement.
+Lines, branches, functions and statements each require 100%, independently for
+every file. Next.js entry points, middleware, error documents, translation
 configuration, API clients, hooks and components are all measured.
 
 The explicit file exclusions are:
@@ -45,11 +47,16 @@ Its deliberate-fault tests cover each of those regressions.
 
 ## Backend and remaining repository work
 
-The [backend completion pass](BACKEND_COMPLETE_COVERAGE.md) passes 2,260 locked
-PostGIS tests at exactly 100%: all 18,267 statements and 3,886 branch paths are
-covered. All 233 executable package files have independent 100% floors. The local
-pytest, Compose, shared CI and per-report badge gates require 100%. Branch tracking
-and the complete package source inventory cannot be weakened by configuration.
+The [application boundary pass](APPLICATION_BOUNDARY_COVERAGE.md) passes 2,266
+locked PostGIS tests at exactly 100%: all 18,839 statements and 3,930 branch paths
+across the package and handwritten migrations are covered. All 262 executable
+backend Python files have independent 100% floors. The expanded frontend report passes 355
+tests with 100% of every metric per file, including the owner map and build entry
+points. Local pytest, Compose, shared CI and the per-report badge gates require
+100%; policy tests reject narrowing either inventory.
+
+The earlier [backend package completion](BACKEND_COMPLETE_COVERAGE.md) reached 100%
+with 2,260 tests before migrations were added to its denominator.
 
 The initial full PostGIS run on 2026-10-19 passed 1,492 tests at 91.36% combined
 line/branch coverage. The added cases close application, SQL adapter, command,
@@ -88,14 +95,16 @@ That combined PostGIS pass completed with 1,603 tests at 92.29% backend coverage
 
 Operational scripts already have their own `make quality-gates` tests and runtime
 proofs, but those tests are not yet included in the application coverage reports.
-Their measured coverage, backend-owned admin JavaScript, handwritten migrations
-and build entry points must also be addressed before declaring the repository-wide
-goal complete. A separate Python operations diagnostic measures 56.96% after
-excluding test/proof drivers; its remaining guards and transfer behavior stay in scope.
+Operational Python and shell coverage remain required before declaring the
+repository-wide goal complete. An initial Python operations diagnostic measured
+56.96% after excluding test/proof drivers; its remaining guards and transfer
+behavior stay in scope. Measuring the existing release, topology and rollback
+proofs raises that diagnostic to 65.10%; 1,505 lines and 630 branch paths remain
+uncovered in the scoped operational Python report. Shell coverage remains open.
 
 The badge combines backend/frontend counters for display and independently requires
 100% from each report. It currently measures the application suites; the remaining
-operational and build scope above is still required for the repository-wide goal.
+operational scope above is still required for the repository-wide goal.
 
 The [ingestion orchestration pass](INGESTION_ORCHESTRATION_COVERAGE.md) adds 43
 cases and independent 100% floors for seven implementations containing 620

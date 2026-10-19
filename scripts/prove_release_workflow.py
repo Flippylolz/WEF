@@ -95,6 +95,7 @@ def assert_shared_verification(source: str) -> None:
         "lint-imports",
         "prove_architecture_violation.py",
         "--cov-fail-under=100",
+        "--cov=migrations",
         "--cov-branch",
         "wef-export-openapi",
         "pip-audit",
