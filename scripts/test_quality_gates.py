@@ -111,6 +111,19 @@ class QualityGateTests(unittest.TestCase):
             )
             for name in ("cutover", "inventory", "release")
         )
+        faults.extend(
+            (
+                FILES[10],
+                f'"scripts/deploy/{name}.py"',
+                f'"scripts/missing-config-{name}.py"',
+            )
+            for name in (
+                "build_candidate_config",
+                "build_release_config",
+                "candidate_config",
+                "validate_release",
+            )
+        )
         for path, before, after in faults:
             with self.subTest(path=path, fault=before):
                 files = {p: (ROOT / p).read_text() for p in FILES}

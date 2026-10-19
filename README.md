@@ -75,6 +75,10 @@ bot-only commit authorization uses nonempty evidence with GitHub identities.
 also require 100% per file. Regression assertions cover preserved rollback targets,
 failed reload restoration and protocol-aware host listener evidence.
 
+[Production and candidate configuration builders/validators](AI/quality/RELEASE_CONFIGURATION_COVERAGE.md)
+also require 100% per file, covering private env-file writes, unsafe configuration
+refusal and candidate identity/loopback boundaries.
+
 Static API documentation is generated as an artifact and is not served by the
 production API.
 
