@@ -54,10 +54,19 @@ non-executable exclusions rather than tests of type declarations.
 
 The [backend domain pass](BACKEND_DOMAIN_COVERAGE.md) adds 57 failure-case tests.
 All 20 domain implementations now measure 100% of their 1,739 statements and 420
-branch paths, with independent 100% floors. The full PostGIS suite passes 1,549
-tests at 91.86% backend coverage; 1,208 lines and 598 branch paths remain uncovered
-outside the domain layer. One documented exhaustive-enum fall-through is excluded
+branch paths, with independent 100% floors. That pass completed with 1,549 tests at
+91.86% backend coverage. One documented exhaustive-enum fall-through is excluded
 structurally, and the mapping test checks every enum member.
+
+All 16 implementations in the catalog, contacts, estates and identity application
+layers now have independent 100% combined line/branch floors. The added tests cover
+well-formed but unsupported cursors, repeated filter bounds, invalid account states,
+dummy-hash refusal and owner bootstrap collisions. See the
+[public application evidence](PUBLIC_APPLICATION_COVERAGE.md). Remaining backend
+and operational coverage work stays in scope. The combined PostGIS suite now
+passes 1,571 tests at 92.04% backend coverage, with 1,181 lines and 586 branch paths
+still uncovered. After that work reaches 100%, every
+applicable global, per-file and badge threshold must also require 100%.
 
 Operational scripts already have their own `make quality-gates` tests and runtime
 proofs, but those tests are not yet included in the application coverage reports.

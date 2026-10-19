@@ -24,6 +24,16 @@ def test_list_quick_filter_presets_is_stable() -> None:
     assert presets[0].label_key == "quickFilter.last_day"
 
 
+def test_every_advertised_quick_filter_resolves() -> None:
+    """A newly advertised preset must implement its rolling cutoff."""
+    now = datetime(2026, 8, 19, tzinfo=UTC)
+    cutoffs = {
+        preset.id: resolve_quick_filter_published_from(preset_id=preset.id, now=now)
+        for preset in list_quick_filter_presets()
+    }
+    assert cutoffs == {"last_day": now - timedelta(hours=24)}
+
+
 def test_last_day_resolves_to_rolling_twenty_four_hours() -> None:
     """Resolve last_day relative to the backend clock."""
     now = datetime(2026, 8, 19, 12, 0, tzinfo=UTC)

@@ -1,6 +1,8 @@
 """Identity interactor unit tests over in-memory fakes."""
 
-from datetime import timedelta
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 import pytest
 
@@ -18,6 +20,8 @@ from wef_backend.features.identity.application.identity import (
     BootstrapOwnerError,
     InvalidCredentialsError,
     RegistrationDeclinedError,
+    new_account_id,
+    utc_now,
 )
 from wef_backend.features.identity.domain.model import (
     Account,
@@ -250,6 +254,138 @@ async def test_dummy_hash_verification_equalizes_unknown_username() -> None:
     with pytest.raises(InvalidCredentialsError):
         await authenticate(username="ghost", password="longenough123")
     assert verified == [AuthenticateAccount._DUMMY_HASH]  # noqa: SLF001
+
+
+async def test_dummy_hash_refusal_remains_invalid_credentials() -> None:
+    """A failing hasher cannot expose unknown usernames or establish sessions."""
+    verified: list[tuple[str, str]] = []
+
+    class RefusingHasher(FakeHasher):
+        def verify(self, password: str, hashed: str) -> bool:
+            """Simulate a provider refusing the otherwise valid dummy hash."""
+            verified.append((password, hashed))
+            message = "synthetic hasher failure"
+            raise RuntimeError(message)
+
+    store = FakeIdentityStore()
+    service = build_identity_service(store=store, hasher=RefusingHasher())
+
+    with pytest.raises(InvalidCredentialsError, match=r"^invalid credentials$"):
+        await service.authenticate(username="ghost", password="longenough123")
+
+    assert verified == [("longenough123", AuthenticateAccount._DUMMY_HASH)]  # noqa: SLF001
+    assert store.accounts == {}
+    assert store.sessions == {}
+
+
+@pytest.mark.parametrize("state", ["missing", "disabled", "deleted"])
+async def test_live_session_refuses_unavailable_account(state: str) -> None:
+    """An unexpired, unrevoked token cannot outlive its usable account."""
+    store = FakeIdentityStore()
+    clock = FakeClock()
+    service = build_identity_service(store=store, clock=clock)
+    await service.register(username="warsaw", password="longenough123")
+    login = await service.authenticate(username="warsaw", password="longenough123")
+    account = store.accounts["warsaw"]
+    if state == "missing":
+        del store.accounts["warsaw"]
+    elif state == "disabled":
+        store.accounts["warsaw"] = replace(account, is_active=False, disabled_at=clock.now())
+    else:
+        store.accounts["warsaw"] = replace(account, deleted_at=clock.now())
+
+    assert await service.resolve_session(login.raw_token) is None
+    session = store.sessions["hashed:raw-token-1"]
+    assert session.revoked_at is None
+    assert session.expires_at > clock.now()
+
+
+@pytest.mark.parametrize("operation", ["change-password", "disable"])
+@pytest.mark.parametrize("state", ["missing", "deleted"])
+async def test_account_mutations_refuse_missing_or_deleted_accounts(
+    operation: str,
+    state: str,
+) -> None:
+    """Refusals do not mutate account data or revoke unrelated live sessions."""
+    store = FakeIdentityStore()
+    clock = FakeClock()
+    service = build_identity_service(store=store, clock=clock)
+    account = await service.register(username="warsaw", password="longenough123")
+    await service.authenticate(username="warsaw", password="longenough123")
+    if state == "missing":
+        del store.accounts["warsaw"]
+    else:
+        store.accounts["warsaw"] = replace(store.accounts["warsaw"], deleted_at=clock.now())
+    accounts_before = store.accounts.copy()
+    sessions_before = store.sessions.copy()
+
+    mutation = (
+        service.change_password(
+            account_id=account.id,
+            current_password="longenough123",
+            new_password="otherlongenough456",
+        )
+        if operation == "change-password"
+        else service.disable_account(account.id)
+    )
+    with pytest.raises(InvalidCredentialsError, match=r"^invalid credentials$"):
+        await mutation
+
+    assert store.accounts == accounts_before
+    assert store.sessions == sessions_before
+
+
+async def test_delete_missing_account_remains_invalid_credentials() -> None:
+    """Deletion of an unknown identifier leaves accounts and sessions intact."""
+    store = FakeIdentityStore()
+    service = build_identity_service(store=store)
+    await service.register(username="warsaw", password="longenough123")
+    await service.authenticate(username="warsaw", password="longenough123")
+    accounts_before = store.accounts.copy()
+    sessions_before = store.sessions.copy()
+
+    with pytest.raises(InvalidCredentialsError, match=r"^invalid credentials$"):
+        await service.delete_account(UUID(int=0))
+
+    assert store.accounts == accounts_before
+    assert store.sessions == sessions_before
+
+
+async def test_bootstrap_refuses_username_owned_by_nonowner() -> None:
+    """Owner bootstrap cannot replace an existing normalized username."""
+    store = FakeIdentityStore()
+    service = build_identity_service(store=store)
+    await service.register(username="operator", password="longenough123")
+    accounts_before = store.accounts.copy()
+    bootstrap = BootstrapOwner(
+        store,
+        FakeHasher(),
+        username=" OPERATOR ",
+        password="ownerlongenough123",
+    )
+
+    with pytest.raises(BootstrapOwnerError, match=r"^username unavailable$"):
+        await bootstrap()
+
+    assert store.accounts == accounts_before
+    assert await store.owner_exists() is False
+
+
+def test_account_ids_are_distinct_random_uuids() -> None:
+    """The command composition helper supplies usable random account keys."""
+    first, second = new_account_id(), new_account_id()
+    assert first.version == 4
+    assert second.version == 4
+    assert first != second
+
+
+def test_command_clock_returns_current_utc_time() -> None:
+    """Command timestamps are aware UTC values from the current interval."""
+    before = datetime.now(UTC)
+    actual = utc_now()
+    after = datetime.now(UTC)
+    assert actual.tzinfo is UTC
+    assert before <= actual <= after
 
 
 async def test_unknown_username_with_real_hasher_stays_invalid() -> None:

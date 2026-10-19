@@ -58,6 +58,38 @@ def test_filter_rejects_contradictory_ranges() -> None:
         )
 
 
+def test_filter_requires_resolved_quick_filter_time() -> None:
+    """A quick-filter label cannot silently query an unbounded date range."""
+    with pytest.raises(MapFilterError, match="quick_filter requires a resolved published_from"):
+        MapFilters(bbox=BoundingBox.parse("20.9,52.1,21.2,52.4"), quick_filter="last_day")
+
+
+@pytest.mark.parametrize(
+    ("rooms", "districts"),
+    [(tuple(range(11)), ()), ((), tuple(f"Synthetic district {index}" for index in range(21)))],
+    ids=["too-many-rooms", "too-many-districts"],
+)
+def test_filter_bounds_repeated_groups(rooms: tuple[int, ...], districts: tuple[str, ...]) -> None:
+    """Each repeated group independently refuses requests above its bound."""
+    with pytest.raises(MapFilterError, match="too many repeated filter values"):
+        MapFilters(
+            bbox=BoundingBox.parse("20.9,52.1,21.2,52.4"),
+            rooms=rooms,
+            districts=districts,
+        )
+
+
+def test_filter_accepts_repeated_groups_at_their_limits() -> None:
+    """The advertised upper bounds are inclusive."""
+    filters = MapFilters(
+        bbox=BoundingBox.parse("20.9,52.1,21.2,52.4"),
+        rooms=tuple(range(10)),
+        districts=tuple(f"Synthetic district {index}" for index in range(20)),
+    )
+    assert len(filters.rooms) == 10
+    assert len(filters.districts) == 20
+
+
 def test_normalized_key_identity_is_repeat_and_order_stable() -> None:
     """Equivalent repeated/ordered filter inputs serialize to one identity."""
     base = MapFilters(bbox=BoundingBox.parse("20.9,52.1,21.2,52.4"))
