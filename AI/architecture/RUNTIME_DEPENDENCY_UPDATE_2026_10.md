@@ -1,0 +1,39 @@
+# October 2026 runtime and tooling refresh
+
+This is unplanned owner-requested maintenance following the Dependabot repairs.
+Stable package registries and upstream image registries were checked on
+2026-10-19. The selected versions are Python 3.13.16, Node.js 22.23.3, uv 0.13.1,
+pnpm 12.14.0, oasdiff 1.34.0, the current Dockerfile frontend, Caddy 2.11.7, stable Nginx 1.30.6, and Certbot 5.8.0. Runtime images
+remain pinned to immutable multi-platform digests. PostGIS uses the current
+patched digest of the existing PostgreSQL 17 / PostGIS 3.5 image line.
+
+Language and database version families remain unchanged. Python 3.14/3.15,
+Node.js 24/26, PostgreSQL 18, and PostGIS 3.6 would require their own compatibility
+and database-extension migration review. TypeScript's native compiler is already
+7.0.2; its JavaScript API companion remains the latest TypeScript 6 compatibility
+package, as required by the existing Next/ESLint/OpenAPI integration.
+
+The pnpm 12 launcher is native. Its package-manager metadata is committed in the
+lockfile, with the application dependency graph preserved. Docker, CI, package
+manifests, local tool versions, and setup documentation use the same selected
+versions. The existing immutable Nginx/Certbot topology proofs follow the new
+image pins; no deployment topology or configuration ownership changes.
+
+Validation includes locked install, format/lint/type/test/contract gates, runtime
+image builds, Compose checks, and the deployment/shared-edge runtime proofs.
+No application or database migration is introduced. Roll back by reverting this
+PR's squash commit to restore the previous tools and image digests.
+
+Dependabot also tracks the committed Compose image manifests in `infra` and
+`infra/e2e`, with weekly bounded patch/minor groups and local build-image names
+excluded. The configuration regression test covers both directories. Current
+upstream Dependabot code supports pnpm 12 and explicitly reads the environment
+and application YAML documents in its lockfile, despite the public support table
+lagging those implementations. No dependency updater is replaced.
+
+The final registry scan also found FastAPI 0.147.0, released at 09:48 UTC on
+2026-10-19 after the earlier Python refresh. Its omitted-boolean HTML form
+change does not affect this API, which has no FastAPI Form parameters and uses
+JSON request bodies. The lock selects that stable release with the current uv
+lock metadata; generated OpenAPI compatibility and the full suites are rechecked.
+Upstream release: <https://github.com/fastapi/fastapi/releases/tag/0.147.0>.

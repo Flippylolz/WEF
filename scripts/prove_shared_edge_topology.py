@@ -30,13 +30,13 @@ FIXTURES_COMPOSE_FILE = REPOSITORY_ROOT / "infra" / "compose.shared-edge-fixture
 PRODUCTION_COMPOSE_FILE = REPOSITORY_ROOT / "infra" / "compose.production.yaml"
 NGINX_TEMPLATES_DIR = REPOSITORY_ROOT / "infra" / "nginx"
 NGINX_IMAGE = (
-    "nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236"
+    "nginx:1.30.6-alpine@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5"
 )
 CERTBOT_IMAGE = (
-    "certbot/certbot:v4.2.0@sha256:9626d72120577cf72da4fc7948806e9993598981720a4cbe04340a502468d67b"
+    "certbot/certbot:v5.8.0@sha256:f70ad0adbb7e117f0fe42a63c553f28ea451edabc0148757b6efcd9735acaa20"
 )
 FIXTURE_IMAGE = (
-    "python:3.13-alpine@sha256:540c7d91f98ff6880174c40e99067bf5941eb54d818a7a5e094d188b196a934d"
+    "python:3.13-alpine@sha256:2d9aefe2fef018a7eb2c13064c89c71929800fd2e5dccdbf52ea5da5bb8d929a"
 )
 PEBBLE_IMAGE = (
     "ghcr.io/letsencrypt/pebble:latest@sha256:ddf230642b1a584f519f32e347de1b0"

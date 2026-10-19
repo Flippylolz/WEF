@@ -18,7 +18,7 @@ x-edge-security: &edge-security
 
 services:
   nginx:
-    image: nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    image: nginx:1.30.6-alpine@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5
     user: "1000:1000"
     entrypoint:
       [
@@ -66,7 +66,7 @@ services:
   certbot:
     profiles:
       - renew
-    image: certbot/certbot:v4.2.0@sha256:9626d72120577cf72da4fc7948806e9993598981720a4cbe04340a502468d67b
+    image: certbot/certbot:v5.8.0@sha256:f70ad0adbb7e117f0fe42a63c553f28ea451edabc0148757b6efcd9735acaa20
     <<: *edge-security
     # Reviewed exceptions: the deploy hook administrates permissions and
     # ownership across the operator-owned edge tree (chgrp of private keys
