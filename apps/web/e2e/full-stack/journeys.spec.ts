@@ -6,6 +6,13 @@ const centerOffer = "20000000-0000-4000-8000-000000000001";
 const centerLocation = "10000000-0000-4000-8000-000000000001";
 const centered = "/?bbox=21.008,52.226,21.0164,52.2334";
 const runtimeErrors = new WeakMap<Page, string[]>();
+const completedCatalog = new WeakMap<Page, Set<string>>();
+const initialDocumentBbox = new WeakMap<Page, string | null>();
+const catalogPaths = new Set([
+  "/api/v1/map/locations",
+  "/api/v1/listings",
+  "/api/v1/listings/uncertain",
+]);
 const syntheticContact = "+12025550123";
 
 async function audit(page: Page) {
@@ -35,7 +42,34 @@ async function showList(page: Page, isMobile: boolean) {
   ).toBeVisible();
 }
 
+async function waitForInitialCatalog(page: Page) {
+  await expect
+    .poll(async () => {
+      if (
+        await page
+          .getByText("Use the location list to continue browsing.")
+          .isVisible()
+      )
+        return true;
+      return (
+        (await page.locator(".map-canvas[aria-busy='false']").count()) > 0 &&
+        new URL(page.url()).searchParams.get("bbox") !==
+          initialDocumentBbox.get(page)
+      );
+    })
+    .toBe(true);
+  await expect
+    .poll(() => {
+      const bbox = new URL(page.url()).searchParams.get("bbox");
+      return [...catalogPaths].every((path) =>
+        completedCatalog.get(page)?.has(JSON.stringify([path, bbox])),
+      );
+    })
+    .toBe(true);
+}
+
 async function openDetail(page: Page, isMobile: boolean) {
+  await waitForInitialCatalog(page);
   await showList(page, isMobile);
   await page
     .getByRole("button", { name: /Synthetic Central Residence/i })
@@ -57,6 +91,28 @@ test.beforeEach(async ({ context, page }, info) => {
   const errors: string[] = [];
   runtimeErrors.set(page, errors);
   page.on("pageerror", (error) => errors.push(error.name));
+  const completed = new Set<string>();
+  completedCatalog.set(page, completed);
+  page.on("request", (request) => {
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame())
+      completed.clear();
+  });
+  page.on("domcontentloaded", () => {
+    initialDocumentBbox.set(page, new URL(page.url()).searchParams.get("bbox"));
+  });
+  page.on("response", (response) => {
+    const url = new URL(response.url());
+    if (!catalogPaths.has(url.pathname)) return;
+    void response.finished().then(
+      (error) => {
+        if (error === null && response.ok())
+          completed.add(
+            JSON.stringify([url.pathname, url.searchParams.get("bbox")]),
+          );
+      },
+      () => undefined,
+    );
+  });
   if (!/register,|forced-password/.test(info.title)) {
     await context.tracing.start({
       screenshots: true,
@@ -107,6 +163,11 @@ test("real routing, migrations, catalog, release identity and shareable filters"
       (feature: { id: string }) => feature.id === centerLocation,
     ),
   ).toBe(true);
+  const serverTransitions: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).searchParams.has("_rsc"))
+      serverTransitions.push("rsc");
+  });
   await page.goto("/");
   await showList(page, isMobile);
   await audit(page);
@@ -114,16 +175,38 @@ test("real routing, migrations, catalog, release identity and shareable filters"
   await expect(page.getByRole("dialog", { name: "Filters" })).toBeVisible();
   await audit(page);
   await page.getByLabel("Minimum price").fill("900000");
+  const catalogResponses = Promise.all(
+    [...catalogPaths].map((path) =>
+      page.waitForResponse((response) => {
+        const url = new URL(response.url());
+        return (
+          url.pathname === path &&
+          url.searchParams.get("price_min") === "90000000"
+        );
+      }),
+    ),
+  );
   await page.getByRole("button", { name: "Apply" }).click();
   await expect
     .poll(() => new URL(page.url()).searchParams.get("price_min"))
     .toBe("90000000");
+  for (const response of await catalogResponses) {
+    expect(response.ok()).toBe(true);
+    await response.finished();
+  }
   const url = page.url();
+  await page.goBack();
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get("price_min"))
+    .toBeNull();
+  await page.goForward();
+  await expect.poll(() => page.url()).toBe(url);
   await page.reload();
   await expect.poll(() => page.url()).toBe(url);
   await expect(page.locator(".version-badge")).toContainText(
     process.env.WEF_E2E_RELEASE!.slice(0, 7),
   );
+  expect(serverTransitions).toEqual([]);
 });
 
 test("real detail, media gallery and keyboard return focus", async ({
@@ -269,6 +352,7 @@ test("register, persistent favorites, private reveal, password change and logout
   const password = process.env.WEF_E2E_PASSWORD!;
   const username = `e2e_${info.project.name}_${Date.now().toString(36)}`;
   await page.goto(centered);
+  await waitForInitialCatalog(page);
   await page
     .getByRole("button", { name: "Create account", exact: true })
     .click();
@@ -298,6 +382,9 @@ test("register, persistent favorites, private reveal, password change and logout
     .first()
     .click();
   expect((await saved).status()).toBe(204);
+  // A deliberate reload tests persistence after the initial map has settled,
+  // rather than starting requests from a document that is already unloading.
+  await waitForInitialCatalog(page);
   await page.reload();
   await showList(page, isMobile);
   await expect(

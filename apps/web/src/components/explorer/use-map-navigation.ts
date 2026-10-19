@@ -1,5 +1,5 @@
 "use client";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { FilterChipGroup } from "@/components/filter-chips";
 import {
@@ -15,7 +15,6 @@ import {
 
 export function useMapNavigation() {
   const pathname = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const rawSearch = searchParams.toString();
   const searchState = useMemo(
@@ -46,9 +45,9 @@ export function useMapNavigation() {
   useEffect(() => {
     cancelViewportUpdate();
     if (rawSearch !== canonicalSearch) {
-      router.replace(href(pathname, canonicalSearch), { scroll: false });
+      window.history.replaceState(null, "", href(pathname, canonicalSearch));
     }
-  }, [cancelViewportUpdate, canonicalSearch, pathname, rawSearch, router]);
+  }, [cancelViewportUpdate, canonicalSearch, pathname, rawSearch]);
 
   useEffect(() => {
     return cancelViewportUpdate;
@@ -59,9 +58,16 @@ export function useMapNavigation() {
       cancelViewportUpdate();
       const nextSearch = serializeMapSearchState(nextState);
       if (nextSearch === canonicalSearch) return;
-      router[mode](href(pathname, nextSearch), { scroll: false });
+      // URL state is consumed by API queries on this page. A server navigation
+      // races clicks and reloads without providing catalog data. Next integrates
+      // these history updates with useSearchParams, including back/forward.
+      if (mode === "replace") {
+        window.history.replaceState(null, "", href(pathname, nextSearch));
+      } else {
+        window.history.pushState(null, "", href(pathname, nextSearch));
+      }
     },
-    [cancelViewportUpdate, canonicalSearch, pathname, router],
+    [cancelViewportUpdate, canonicalSearch, pathname],
   );
 
   const handleViewportChange = useCallback(
