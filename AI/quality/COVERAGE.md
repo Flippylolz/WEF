@@ -45,20 +45,24 @@ Its deliberate-fault tests cover each of those regressions.
 
 ## Backend and remaining repository work
 
+The [backend completion pass](BACKEND_COMPLETE_COVERAGE.md) passes 2,260 locked
+PostGIS tests at exactly 100%: all 18,267 statements and 3,886 branch paths are
+covered. All 233 executable package files have independent 100% floors. The local
+pytest, Compose, shared CI and per-report badge gates require 100%. Branch tracking
+and the complete package source inventory cannot be weakened by configuration.
+
 The initial full PostGIS run on 2026-10-19 passed 1,492 tests at 91.36% combined
-line/branch coverage. Backend code has not reached 100%; its 90% gate and existing
-critical-module floors remain active while genuine missing behavior is covered.
-SQL adapters, operator commands and external-provider error paths stay in scope.
-Protocol/type-only declarations and ordinary coverage-tool exclusions remain
-non-executable exclusions rather than tests of type declarations.
+line/branch coverage. The added cases close application, SQL adapter, command,
+provider, recovery, owner-console and worker failure paths. Protocol/type-only
+declarations and ordinary coverage-tool exclusions remain non-executable scope.
+No runtime module was removed to meet the target.
 
 The [historical import command pass](IMPORT_COMMAND_COVERAGE.md) adds 19 cases
 and enforces a 100% floor for all 223 statements and 50 branch paths in the
 operator composition. Source preparation, lease/checkpoint ownership, provider
 pauses, bounded media work and final verification remain source-free and resumable.
 No runtime behavior or coverage exclusions change in this pass.
-The combined PostGIS suite now passes 1,665 tests at 93.14% backend coverage;
-1,014 lines and 507 branch paths remain uncovered outside the completed modules.
+That combined PostGIS pass completed with 1,665 tests at 93.14% backend coverage.
 
 The [backend domain pass](BACKEND_DOMAIN_COVERAGE.md) adds 57 failure-case tests.
 All 20 domain implementations now measure 100% of their 1,739 statements and 420
@@ -84,13 +88,14 @@ That combined PostGIS pass completed with 1,603 tests at 92.29% backend coverage
 
 Operational scripts already have their own `make quality-gates` tests and runtime
 proofs, but those tests are not yet included in the application coverage reports.
-Their coverage inventory, backend-owned admin JavaScript and the backend gaps must
-also be addressed before declaring the repository-wide goal complete.
+Their measured coverage, backend-owned admin JavaScript, handwritten migrations
+and build entry points must also be addressed before declaring the repository-wide
+goal complete. A separate Python operations diagnostic measures 56.96% after
+excluding test/proof drivers; its remaining guards and transfer behavior stay in scope.
 
-The badge combines backend/frontend counters for display. It is not evidence that
-the repository goal is complete: the backend remains below 100%, and the badge's
-90% per-report minimum is supplemented by the stricter frontend job and critical
-file checks.
+The badge combines backend/frontend counters for display and independently requires
+100% from each report. It currently measures the application suites; the remaining
+operational and build scope above is still required for the repository-wide goal.
 
 The [ingestion orchestration pass](INGESTION_ORCHESTRATION_COVERAGE.md) adds 43
 cases and independent 100% floors for seven implementations containing 620

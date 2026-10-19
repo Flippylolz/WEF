@@ -64,7 +64,6 @@ _AI_RULE_ID = "ai-parse-v1"
 _AI_RULE_VERSION = "1"
 _PARSE_TTL = timedelta(hours=24)
 _MAX_LABEL_LENGTH = 80
-_ALLOWED_CURRENCIES = frozenset({"PLN", "EUR", "USD", "GBP"})
 _CURRENCY_ALIASES = {
     "zł": "PLN",
     "zl": "PLN",
@@ -499,9 +498,6 @@ def _normalize_currency(value: object) -> str:
     alias = _CURRENCY_ALIASES.get(raw.casefold())
     if alias is not None:
         return alias
-    upper = raw.upper()
-    if upper in _ALLOWED_CURRENCIES:
-        return upper
     message = "unsupported currency"
     raise AdminDeniedError(message)
 

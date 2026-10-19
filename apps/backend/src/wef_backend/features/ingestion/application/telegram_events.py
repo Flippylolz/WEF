@@ -6,7 +6,7 @@ import asyncio
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import TYPE_CHECKING, Literal, Protocol
+from typing import TYPE_CHECKING, Literal, Protocol, cast
 
 from wef_backend.features.ingestion.application.extraction import PARSER_VERSION, extract_listing
 from wef_backend.features.ingestion.application.persistence import (
@@ -137,18 +137,17 @@ async def land_live_event(
             )
             landed.append((row_id, deleted_id))
         return landed
-    if event.message is None:
-        message = "new/edit events require a message payload"
-        raise ValueError(message)
-    payload = live_message_payload(event.message)
+    # LiveTelegramEvent validates the message/delete shape when constructed.
+    live = cast("LiveTelegramMessage", event.message)
+    payload = live_message_payload(live)
     row_id = await archive.land(
         event_kind="new" if event.kind is LiveTelegramEventKind.NEW else "edit",
         channel_external_id=channel_external_id,
-        external_message_id=event.message.external_message_id,
+        external_message_id=live.external_message_id,
         payload=payload,
         checksum=canonical_json_checksum(payload),
     )
-    return [(row_id, event.message.external_message_id)]
+    return [(row_id, live.external_message_id)]
 
 
 @dataclass(frozen=True, slots=True)
@@ -170,7 +169,7 @@ class LiveTelegramEvent:
             if self.deleted_ids:
                 message = "new/edit events must not carry deleted ids"
                 raise ValueError(message)
-        elif self.kind is LiveTelegramEventKind.DELETE:
+        else:
             if self.message is not None:
                 message = "delete events must not carry a message payload"
                 raise ValueError(message)
@@ -351,11 +350,10 @@ class LiveTelegramEventProcessor:
                         missing_on_delete += missing_delta
                         offers_hidden += hidden_delta
                         continue
-                    if event.message is None:
-                        message = "new/edit events require a message payload"
-                        raise RuntimeError(message)  # noqa: TRY301 - invalid event boundary
-                    raw = live_message_to_raw(event.message, identity=channel)
-                    message_id = event.message.external_message_id
+                    # The event constructor already enforces this invariant.
+                    live = cast("LiveTelegramMessage", event.message)
+                    raw = live_message_to_raw(live, identity=channel)
+                    message_id = live.external_message_id
                     advance = message_id > checkpoint.last_source_index
                     persist_outcome, checkpoint, counts, _ = await self.store.persist_live_upsert(
                         channel_id=channel_id,

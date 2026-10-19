@@ -174,7 +174,8 @@ class HostedGeocoder:
 
     async def geocode(self, query: NormalizedGeocodeQuery) -> GeocodeResult:
         """Call only the configured provider; never fan out or expose secrets."""
-        for attempt in range(self.policy.retries + 1):
+        retries_left = self.policy.retries
+        while True:
             if not await self.policy.enter():
                 return _error_result(
                     provider=self.provider,
@@ -196,17 +197,13 @@ class HostedGeocoder:
                     attribution=_attribution(self.provider),
                 )
             except ProviderTransportError:
-                if attempt == self.policy.retries:
+                if retries_left == 0:
                     return _error_result(
                         provider=self.provider,
                         error=GeocodeErrorCode.TRANSIENT,
                         attribution=_attribution(self.provider),
                     )
-        return _error_result(
-            provider=self.provider,
-            error=GeocodeErrorCode.TRANSIENT,
-            attribution=_attribution(self.provider),
-        )
+                retries_left -= 1
 
 
 def _endpoint(provider: GeocodeProvider) -> str:

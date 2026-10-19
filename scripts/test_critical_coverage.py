@@ -23,14 +23,17 @@ class CriticalCoverageTests(unittest.TestCase):
                 }
             },
         }
-        errors = check(report, {"src/critical.py": {"combined": 95}}, backend=True)
-        self.assertIn("50.00% < 95%", errors[0])
+        errors = check(report, {"src/critical.py": {"combined": 100}}, backend=True)
+        self.assertIn("50.00% < 100%", errors[0])
 
     def test_missing_or_ambiguous_measured_module_fails(self) -> None:
-        cases: tuple[dict[str, object], ...] = ({}, {"a/src/core.py": {}, "b/src/core.py": {}})
+        cases: tuple[dict[str, object], ...] = (
+            {},
+            {"a/src/core.py": {}, "b/src/core.py": {}},
+        )
         for files in cases:
             self.assertTrue(
-                check({"files": files}, {"src/core.py": {"combined": 95}}, backend=True)
+                check({"files": files}, {"src/core.py": {"combined": 100}}, backend=True)
             )
 
     def test_frontend_checks_branches_independently_of_lines(self) -> None:
@@ -40,17 +43,17 @@ class CriticalCoverageTests(unittest.TestCase):
                 "branches": {"covered": 90, "total": 100},
             }
         }
-        errors = check(report, {"src/core.ts": {"lines": 98, "branches": 95}}, backend=False)
+        errors = check(report, {"src/core.ts": {"lines": 100, "branches": 100}}, backend=False)
         self.assertEqual(len(errors), 1)
         self.assertIn("branches", errors[0])
 
     def test_zero_negative_boolean_counters_and_weak_policy_are_rejected(self) -> None:
         for covered, total, floor in (
-            (0, 0, 95),
-            (-1, 100, 95),
-            (True, 100, 95),
-            (101, 100, 95),
-            (100, 100, 90),
+            (0, 0, 100),
+            (-1, 100, 100),
+            (True, 100, 100),
+            (101, 100, 100),
+            (100, 100, 99),
         ):
             report = {
                 "src/core.ts": {
@@ -59,17 +62,22 @@ class CriticalCoverageTests(unittest.TestCase):
                 }
             }
             with self.assertRaises(ValueError):
-                check(report, {"src/core.ts": {"lines": floor, "branches": 95}}, backend=False)
+                check(
+                    report,
+                    {"src/core.ts": {"lines": floor, "branches": 100}},
+                    backend=False,
+                )
         with self.assertRaises(ValueError):
             check({}, {}, backend=False)
 
     def test_exact_floor_and_absolute_paths_pass(self) -> None:
         report = {
             "/runner/src/core.ts": {
-                "lines": {"covered": 95, "total": 100},
-                "branches": {"covered": 95, "total": 100},
+                "lines": {"covered": 100, "total": 100},
+                "branches": {"covered": 100, "total": 100},
             }
         }
         self.assertEqual(
-            check(report, {"src/core.ts": {"lines": 95, "branches": 95}}, backend=False), []
+            check(report, {"src/core.ts": {"lines": 100, "branches": 100}}, backend=False),
+            [],
         )

@@ -600,7 +600,7 @@ def _evidence_fragment_variants(fragment: str) -> tuple[str, ...]:
 
 def _resolve_first_non_contact_match(source_text: str, needle: str) -> tuple[int, int]:
     start = 0
-    while start <= len(source_text):
+    while True:
         found = source_text.find(needle, start)
         if found < 0:
             message = "evidence fragment not found"
@@ -610,8 +610,6 @@ def _resolve_first_non_contact_match(source_text: str, needle: str) -> tuple[int
         if not any(found < contact.span.end and end > contact.span.start for contact in contacts):
             return found, end
         start = found + 1
-    message = "evidence fragment not found"
-    raise AdminDeniedError(message)
 
 
 def _resolve_unique_match(source_text: str, needle: str) -> tuple[int, int]:

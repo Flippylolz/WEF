@@ -291,7 +291,7 @@ class SQLAlchemyOfferDetailAdapter(OfferDetailQueryPort):
             url = build_public_media_url(row.storage_key)
             if row.variant == _THUMBNAIL_WEBP:
                 bucket["thumbnail_url"] = url
-            elif row.variant == _THUMBNAIL_JPEG:
+            else:  # The join admits only WebP/JPEG variants; null joins were skipped above.
                 bucket["content_url"] = url
         return tuple(
             OfferMediaDTO(

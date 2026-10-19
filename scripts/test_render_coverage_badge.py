@@ -11,6 +11,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from scripts.render_coverage_badge import (
+    COVERAGE_FLOOR,
     CoverageCounts,
     CoverageDataError,
     backend_counts,
@@ -23,6 +24,15 @@ from scripts.render_coverage_badge import (
 
 class CoverageBadgeTests(unittest.TestCase):
     """Verify report parsing, aggregation, and SVG rendering."""
+
+    def test_default_floor_rejects_a_percentage_that_rounds_to_one_hundred(
+        self,
+    ) -> None:
+        self.assertEqual(COVERAGE_FLOOR, 100)
+        self.assertEqual(
+            coverage_shortfalls({"backend": CoverageCounts(99999, 100000)}, COVERAGE_FLOOR),
+            ("backend 100.0%",),
+        )
 
     def test_combines_coverage_counts(self) -> None:
         self.assertEqual(
@@ -53,9 +63,9 @@ class CoverageBadgeTests(unittest.TestCase):
             self.assertEqual(frontend_counts(frontend), CoverageCounts(49, 55))
 
     def test_renders_accessible_badge(self) -> None:
-        badge = render_badge(93.14)
+        badge = render_badge(100)
 
-        self.assertIn("Repository branch-aware coverage: 93.1%", badge)
+        self.assertIn("Repository branch-aware coverage: 100.0%", badge)
         self.assertIn('fill="#4c1"', badge)
 
     def test_shortfalls_ignore_totals_at_the_floor(self) -> None:
@@ -102,7 +112,7 @@ class CoverageBadgeTests(unittest.TestCase):
     def test_main_passes_when_every_total_meets_the_floor(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)
-            backend, frontend, output = self._write_reports(root, backend=91, frontend=90)
+            backend, frontend, output = self._write_reports(root, backend=100, frontend=100)
             with (
                 patch(
                     "sys.argv",
@@ -115,7 +125,7 @@ class CoverageBadgeTests(unittest.TestCase):
                         "--output",
                         str(output),
                         "--fail-under",
-                        "90",
+                        "100",
                     ],
                 ),
                 patch("sys.stdout", StringIO()),
@@ -130,16 +140,16 @@ class CoverageBadgeTests(unittest.TestCase):
         self.assertIn("uses: ./.github/workflows/verify.yml", release)
         workflow = Path(".github/workflows/verify.yml").read_text(encoding="utf-8")
         makefile = Path("Makefile").read_text(encoding="utf-8")
-        self.assertIn("--cov-fail-under=90", workflow)
-        self.assertIn("--fail-under 90", workflow)
-        self.assertIn("--fail-under 90", makefile)
+        self.assertIn("--cov-fail-under=100", workflow)
+        self.assertIn("--fail-under 100", workflow)
+        self.assertIn("--fail-under 100", makefile)
         self.assertIn("test-backend:", makefile)
         self.assertIn("test-frontend:", makefile)
         self.assertIn("coverage-backend:", makefile)
         self.assertIn("coverage-frontend:", makefile)
         compose = Path("infra/compose.yaml").read_text(encoding="utf-8")
         vitest = Path("apps/web/vitest.config.mts").read_text(encoding="utf-8")
-        self.assertIn("--cov-fail-under=90", compose)
+        self.assertIn("--cov-fail-under=100", compose)
         self.assertIn("lines: 100", vitest)
         self.assertIn("branches: 100", vitest)
 

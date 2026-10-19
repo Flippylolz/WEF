@@ -33,6 +33,8 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+    from wef_backend.features.ingestion.domain.model import FrozenJSONValue
+
 
 @dataclass(frozen=True, slots=True)
 class ParseIssueBackfillSummary:
@@ -64,10 +66,7 @@ def _row_to_raw(
         payload=message.raw_payload_json,
         external_message_id=message.external_message_id,
     )
-    frozen = freeze_json(dict(payload))
-    if not isinstance(frozen, Mapping):
-        error = "source message payload must freeze as an object"
-        raise TypeError(error)
+    frozen = cast("Mapping[str, FrozenJSONValue]", freeze_json(dict(payload)))
     return RawMessage(
         source=SourceIdentity(
             platform=SourcePlatform.TELEGRAM,
