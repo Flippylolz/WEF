@@ -173,6 +173,17 @@ def test_excerpt_truncates_to_bound() -> None:
     assert len(excerpt) == 280
 
 
+def test_contact_masking_merges_overlapping_nested_and_adjacent_spans() -> None:
+    """Overlaps cannot duplicate private text or leave a partial contact exposed."""
+    text = "before ABCDEFGHIJ after"
+    contacts = tuple(
+        _contact(start, end, text[start:end])
+        for start, end in ((9, 14), (7, 12), (8, 10), (14, 17))
+    )
+    assert build_source_text_excerpt(text, contacts) == "before  after"
+    assert build_source_text_public_masked(text, contacts) == "before ••• after"
+
+
 def test_fingerprint_and_location_keys_are_deterministic() -> None:
     """Fingerprints and location keys replay identically for equal inputs."""
     first = _listing(text="a", location=" ul. Przykładowa 5 ")
@@ -378,11 +389,25 @@ def _service(store: FakeStore, batch_size: int = 2) -> PersistHistoricalIngestio
     return PersistHistoricalIngestion(store=store, batch_size=batch_size)
 
 
-async def test_service_batches_locks_and_finishes() -> None:
+@pytest.mark.parametrize("with_progress", [False, True])
+async def test_service_batches_locks_and_finishes(*, with_progress: bool) -> None:
     """The orchestrator locks, batches, and records success."""
     store = FakeStore()
+    acknowledged: list[RunCounts] = []
+
+    async def report(counts: RunCounts) -> None:
+        """Observe progress only after a successfully acknowledged batch."""
+        assert len(store.batches) == counts.seen
+        assert store.calls[-1] == "start_run"
+        acknowledged.append(counts)
+
     messages = [PersistableMessage(raw=_raw(message_id=i), extraction=None) for i in range(1, 6)]
-    summary = await _service(store)(
+    service = PersistHistoricalIngestion(
+        store=store,
+        batch_size=2,
+        progress=report if with_progress else None,
+    )
+    summary = await service(
         channel=_identity(),
         messages=messages,
         metadata=RunMetadata(parser_version="test@1"),
@@ -392,6 +417,7 @@ async def test_service_batches_locks_and_finishes() -> None:
     assert store.calls[-1] == "finish:succeeded:None"
     assert summary.counts.seen == 3
     assert summary.status is RunStatus.SUCCEEDED
+    assert [counts.seen for counts in acknowledged] == ([1, 2, 3] if with_progress else [])
 
 
 async def test_service_failure_keeps_last_checkpoint() -> None:

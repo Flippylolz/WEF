@@ -62,11 +62,18 @@ All 16 implementations in the catalog, contacts, estates and identity applicatio
 layers now have independent 100% combined line/branch floors. The added tests cover
 well-formed but unsupported cursors, repeated filter bounds, invalid account states,
 dummy-hash refusal and owner bootstrap collisions. See the
-[public application evidence](PUBLIC_APPLICATION_COVERAGE.md). Remaining backend
-and operational coverage work stays in scope. The combined PostGIS suite now
-passes 1,571 tests at 92.04% backend coverage, with 1,181 lines and 586 branch paths
-still uncovered. After that work reaches 100%, every
+[public application evidence](PUBLIC_APPLICATION_COVERAGE.md). That pass completed
+with 1,571 tests at 92.04% backend coverage. Remaining backend and operational
+coverage work stays in scope. After that work reaches 100%, every
 applicable global, per-file and badge threshold must also require 100%.
+
+The [ingestion extraction/projection pass](INGESTION_PROJECTION_COVERAGE.md) adds
+32 boundary cases and enforces 100% coverage for six implementations containing
+818 statements and 282 branch paths. These cases assert currency/amount coherence,
+source offsets, contact masking and preservation of protected replay values.
+No new runtime exclusions or behavior changes are needed for this pass.
+The combined PostGIS suite now passes 1,603 tests at 92.29% backend coverage;
+1,152 lines and 558 branch paths remain uncovered outside the completed modules.
 
 Operational scripts already have their own `make quality-gates` tests and runtime
 proofs, but those tests are not yet included in the application coverage reports.
