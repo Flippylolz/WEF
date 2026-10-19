@@ -4,10 +4,23 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING
 
 from wef_backend.features.catalog.domain import ContentType, MarketType, PropertyType
+from wef_backend.features.ingestion.application.extraction_inventory import extract_inventory
+from wef_backend.features.ingestion.application.extraction_numbers import (
+    _FLAGS,
+    _MAX_ROOM_COUNT,
+    _NUMBER,
+    _NUMBER_PATTERN,
+    _ROOM_SLUG,
+    _ROOM_TAG_PATTERN,
+    _decimal_range,
+    _is_room_tag_list,
+    _parsed_money,
+    _room_range,
+    _room_tag_range,
+)
 from wef_backend.features.ingestion.domain import (
     CandidateDecision,
     CandidateReason,
@@ -38,48 +51,21 @@ from wef_backend.features.ingestion.domain.geocoding import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-PARSER_VERSION = "e2-v14"
-CANDIDATE_THRESHOLD = 5
-_MAX_RANGE_VALUES = 2
-_MAX_ROOM_COUNT = 20
+from wef_backend.features.ingestion.domain.nearby_locality import nearby_locality
 
-_FLAGS = re.IGNORECASE | re.UNICODE
+PARSER_VERSION = "e2-v18"
+CANDIDATE_THRESHOLD = 5
+
 # A number may end only at whitespace/punctuation or directly before a tracked
 # currency word (an 850k example: "850 000" + PLN-word suffix), so grouped
 # amounts keep their magnitude.
-_CURRENCY_WORD = r"(?:злот\w*|złot\w*|zlot\w*)"
-_NUMBER = (
-    r"(?<!\w)(?:\d{1,3}(?:[ \u00a0]\d{3})+(?:[,.]\d+)?|\d+(?:[,.]\d+)?)"
-    r"(?=$|[\s\u00a0.,;:|()\[\]{}»«\"'\u2013\u2014-]|" + _CURRENCY_WORD + r")"
-)
 _VALUE_SUFFIX = r"[ \t]*(?:[:|][ \t]*|[\u2013\u2014-][ \t]+)(?P<value>\S[^\r\n]*)"
-_NUMBER_PATTERN = re.compile(_NUMBER)
-_ROOM_SLUG = r"(?:комнат(?:ная|ные|[аы])|кімнат(?:на|ні))"
-_ROOM_TAG_PATTERN = re.compile(
-    rf"#\s*\d+\s*[_ -]?\s*(?:pokoje?|rooms?|{_ROOM_SLUG})(?!\w)",
-    _FLAGS,
-)
 _ROOM_HYPHEN_PATTERN = re.compile(
     r"\b(?P<rooms>\d+)\s*-\s*(?:комнат(?:ная|ные)|кімнат(?:на|ні))\b",
     _FLAGS,
 )
-_ROOM_RANGE_PATTERN = re.compile(
-    r"\s*(?P<lower>\d+)(?:\s*(?:-|\u2013|\u2014|\b\u0434\u043e\b|\bto\b)"
-    r"\s*(?P<upper>\d+))?\s*",
-    _FLAGS,
-)
-_RANGE_JOINER_PATTERN = re.compile(
-    r"(?:-|\u2013|\u2014|\b\u0434\u043e\b|\bto\b)",
-    _FLAGS,
-)
-_CURRENCY_PATTERN = re.compile(
-    rf"(?:\b(?P<iso>PLN|EUR|USD|GBP)\b|(?P<symbol>zł|€|\$)|(?P<word>{_CURRENCY_WORD}))",
-    _FLAGS,
-)
-_PER_AREA_CONTEXT_PATTERN = re.compile(
-    rf"(?:\(\s*)?{_NUMBER}\s*(?:PLN|EUR|USD|GBP|zł|€|\$|{_CURRENCY_WORD})?\s*"
-    r"(?:/|\bper\b|\bza\b|\bna\b|\b\u0437\u0430\b)\s*"
-    r"(?:m(?:²|2)|sqm|\u043a\u0432\.?\s*\u043c)(?:\s*\))?",
+_ROOM_SUMMARY_PATTERN = re.compile(
+    r"(?m)\|[ \t]*(?P<rooms>\d+)[ \t]+комнат(?:\u0430|ы)?(?=[ \t]*(?:\||$))",
     _FLAGS,
 )
 _INCLUDED_PATTERN = re.compile(
@@ -111,6 +97,7 @@ _CANDIDATE_RULES = (
         ContentType.DEVELOPMENT,
         re.compile(
             r"(?:\b(?:inwestycj[ae]|development|новостройк[аи]|инвестици[яи])\b"
+            r"|квартиры\s+от\s+застройщика\b"
             r"|(?:rynek|рынок)\s+(?:pierwotny|первичн\w+))",
             _FLAGS,
         ),
@@ -122,7 +109,8 @@ _CANDIDATE_RULES = (
         re.compile(
             r"(?:^|\n)\s*(?:[\U0001F3D9\U0001F3E0\U0001F3E1]\ufe0f?\s*)?"
             r"(?:(?:покупка|продажа|купівля|kupno|for sale)\s*[|:\u2013\u2014-]"
-            r"|sprzedam\s+(?:mieszkanie|apartament|dom)\b)",
+            r"|sprzedam\s+(?:mieszkanie|apartament|dom)\b"
+            r"|дом[ \t]+на[ \t]+продажу(?=[ \t]*(?:\||$)))",
             _FLAGS,
         ),
     ),
@@ -148,7 +136,7 @@ _CANDIDATE_RULES = (
         CandidateReason.AREA_MARKER,
         2,
         None,
-        re.compile(r"(?:\b(?:powierzchnia|area|площадь)\b|m[²2])", _FLAGS),
+        re.compile(r"(?:\b(?:powierzchnia|area|площадь)\b|[mм][²2])", _FLAGS),
     ),
     _CandidateRule(
         CandidateReason.ROOM_MARKER,
@@ -220,12 +208,13 @@ _HOUSE_PATTERN = re.compile(
     r"\b(?:dom\s+(?:jednorodzinny|wolnostoj\w*)|jednorodzinny|detached\s+house|"
     r"standalone\s+house|частн\w+\s+дом|dom\s+particulier|will[ae]|villa|"
     r"дім\w*|особняк\w*|"
-    r"дом\s+(?:на\s+продаж\w*|\u0441\s+садом|под\s+\w+)|"
+    r"дом\s+(?:\u0441\s+садом|под\s+\w+)|"
     r"\d+[\s-]*комнатн\w*\s+дом|"
     r"(?:сімейн\w*|приватн\w*)\s+будинок|"
     r"будинок\s+(?:на\s+продаж\w*|\u0437\s+садом))\b",
     _FLAGS,
 )
+_HOUSE_SALE_PATTERN = re.compile(r"\bдом\s+на\s+продаж\w*\b", _FLAGS)  # noqa: RUF001
 _LOCATION_PATTERN = re.compile(
     rf"(?:lokalizacja|location|adres|локализаци[яи]|адрес){_VALUE_SUFFIX}",
     _FLAGS,
@@ -245,17 +234,27 @@ _DEVELOPMENT_PATTERN = re.compile(
 )
 _APARTMENT_PRICE_PATTERN = re.compile(
     rf"(?:cena(?: mieszkania)?|apartment price|price|"
-    rf"цена(?: квартиры| апартамента)?|стоимость(?: квартиры)?|"
+    rf"цена(?: квартиры| апартамента| дома)?|стоимость(?: квартиры)?|"
+    rf"(?m:^[ \t]*(?:[•*][ \t]*)?квартира)|"
     rf"ціна(?: квартири)?|вартість(?: квартири)?)"
     rf"{_VALUE_SUFFIX}",
     _FLAGS,
 )
+# The newly calibrated garage form is a complete labeled scalar quote. Do not
+# interpret rental prose, availability, or a garage mention as a purchase price.
+_GARAGE_PRICE_LABEL = (
+    rf"(?m:^[ \t]*(?:[•*][ \t]*)?гараж"
+    rf"(?=[ \t]*[:|\u2013\u2014-][ \t]*{_NUMBER}"
+    rf"[ \t]*(?:PLN|zł|EUR|€|USD|GBP)[ \t]*$))"
+)
 _PARKING_PATTERN = re.compile(
-    rf"(?:parking(?: price)?|паркинг|паркінг|miejsce postojowe){_VALUE_SUFFIX}",
+    rf"(?:parking(?: price)?|паркинг|паркінг|паркоместо|miejsce postojowe|{_GARAGE_PRICE_LABEL})"
+    rf"{_VALUE_SUFFIX}",
     _FLAGS,
 )
 _STORAGE_PATTERN = re.compile(
-    rf"(?:storage(?: price)?|комора|кладов(?:ая|ка)|kom[oó]rka lokatorska){_VALUE_SUFFIX}",
+    rf"(?:storage(?: price)?|комора|кладов(?:ая|ка)(?:[ \t]+{_NUMBER}[ \t]*[mм][²2])?"
+    rf"|kom[oó]rka lokatorska){_VALUE_SUFFIX}",
     _FLAGS,
 )
 _AREA_PATTERN = re.compile(rf"(?:powierzchnia|area|площа(?:дь)?){_VALUE_SUFFIX}", _FLAGS)
@@ -358,6 +357,21 @@ def extract_listing(
         PARSER_VERSION,
         warnings,
     )
+    if (
+        content_type is not None
+        and content_type.value is ContentType.DEVELOPMENT
+        and not any(
+            p.search(message.text)
+            for p in (_APARTMENT_PRICE_PATTERN, _AREA_PATTERN, _ROOMS_PATTERN)
+        )
+        and (inventory := extract_inventory(message.text)) is not None
+    ):
+        provenance = _provenance(
+            "extract.development_inventory", PARSER_VERSION, Confidence.MEDIUM, inventory.span
+        )
+        apartment_price = ExtractedValue(value=inventory.price, provenance=provenance)
+        area = ExtractedValue(value=inventory.area, provenance=provenance)
+        rooms = ExtractedValue(value=inventory.rooms, provenance=provenance)
     floor = _string_field(message.text, _FLOOR_PATTERN, "floor", PARSER_VERSION, warnings)
     delivery = _string_field(
         message.text,
@@ -534,6 +548,12 @@ def _property_type(
         if match is not None and ptype not in categories:
             categories[ptype] = SourceSpan(*match.span())
 
+    # A generic house-sale heading is compatible with a specific semi-detached
+    # description. Explicit detached-house evidence still conflicts above.
+    generic_house = _HOUSE_SALE_PATTERN.search(text)
+    if generic_house is not None and PropertyType.SEMI_DETACHED not in categories:
+        categories.setdefault(PropertyType.HOUSE, SourceSpan(*generic_house.span()))
+
     if len(categories) > 1:
         warnings.append(
             ExtractionWarning(
@@ -618,7 +638,7 @@ def _location_field(
         "location",
         parser_version,
         warnings,
-        lambda value: value if looks_like_warsaw_address(value) else None,
+        lambda value: value if looks_like_warsaw_address(value) or nearby_locality(value) else None,
     )
 
 
@@ -808,6 +828,10 @@ def _money_field(
                 warnings.append(_invalid_range_warning(field_name, text, match))
                 invalid = True
             continue
+        if money.is_lower_bound and field_name != "apartment_price":
+            warnings.append(_invalid_range_warning(field_name, text, match))
+            invalid = True
+            continue
         if money.currency is None:
             warnings.append(
                 ExtractionWarning(
@@ -948,6 +972,9 @@ def _rooms_field(
     hyphen_matches = tuple(_ROOM_HYPHEN_PATTERN.finditer(text))
     parsed: list[tuple[IntegerRange, SourceSpan]] = []
     for match in labeled_matches:
+        if re.search(r"\d[ \t]+$", text[: match.start()]):
+            # In '| 4 комнаты | Warsaw', the following segment is not a room value.
+            continue
         value = _trimmed_value(text, match)
         if _is_room_tag_list(value):
             continue
@@ -956,6 +983,12 @@ def _rooms_field(
             warnings.append(_invalid_range_warning("rooms", text, match))
             continue
         parsed.append((room_range, _trimmed_span(text, match)))
+
+    # Summary counts are a single stated total, not a list of room-tag options.
+    # Keep them separate so disagreements with tags/labels remain conflicts.
+    parsed.extend(
+        _append_hyphenated_room_tags(tuple(_ROOM_SUMMARY_PATTERN.finditer(text)), warnings=warnings)
+    )
 
     valid_tag_ranges: list[tuple[IntegerRange, SourceSpan]] = []
     for match in tag_matches:
@@ -1039,138 +1072,6 @@ def _unique_parsed_value[T](
             _trimmed_span(text, match),
         ),
     )
-
-
-def _decimal_range(value: str) -> DecimalRange | None:
-    matches = tuple(_NUMBER_PATTERN.finditer(value))
-    if not 0 < len(matches) <= _MAX_RANGE_VALUES:
-        return None
-    try:
-        lower = _decimal(matches[0].group())
-        upper = lower
-        if len(matches) == _MAX_RANGE_VALUES:
-            separator = value[matches[0].end() : matches[1].start()]
-            if _RANGE_JOINER_PATTERN.fullmatch(separator.strip()) is None:
-                return None
-            upper = _decimal(matches[1].group())
-        return DecimalRange(lower=lower, upper=upper)
-    except (InvalidOperation, ValueError):
-        return None
-
-
-def _primary_money_fragment(value: str) -> str:
-    """Separate explicitly named appended add-ons, never an unexplained sum."""
-    parts = re.split(r"\s+\+\s+", value, maxsplit=1)
-    if len(parts) == 2 and re.match(  # noqa: PLR2004 - optional appended part
-        r"(?:parking|паркинг|паркінг|storage|комора|кладов\w*|kom[oó]rka)\b",
-        parts[1],
-        _FLAGS,
-    ):
-        return parts[0]
-    return value
-
-
-def _parsed_money(value: str) -> MoneyRange | None:
-    """Keep quote currency, actual ranges and per-area context distinct."""
-    value = _primary_money_fragment(value)
-    contexts = tuple(_PER_AREA_CONTEXT_PATTERN.finditer(value))
-    numbers = tuple(
-        match
-        for match in _NUMBER_PATTERN.finditer(value)
-        if not any(context.start() <= match.start() < context.end() for context in contexts)
-    )
-    if not numbers or any(context.start() < numbers[-1].end() for context in contexts):
-        return None
-    primary = value[: contexts[0].start()] if contexts else value
-    primary = primary.strip().rstrip("(").strip()
-    # Explicit alternatives are independently denominated scalar quotes. PLN is
-    # selected only when supplied; the second quote is never an exchange rate.
-    alternatives = re.split(
-        r"\s*(?:/|=|\bor\b|\blub\b|\bили\b|\b\u0430\u0431\u043e\b|\()\s*", primary, flags=_FLAGS
-    )
-    if len(alternatives) > 1:
-        quotes = tuple(_single_currency_money(part.strip().rstrip(")")) for part in alternatives)
-        if len(quotes) != 2 or any(quote is None for quote in quotes):  # noqa: PLR2004
-            return None
-        valid = tuple(quote for quote in quotes if quote is not None)
-        if any(
-            quote.currency is None or quote.amount.lower != quote.amount.upper for quote in valid
-        ):
-            return None
-        if len({quote.currency for quote in valid}) != len(valid):
-            return None
-        return next((quote for quote in valid if quote.currency == "PLN"), None)
-    return _single_currency_money(primary)
-
-
-def _single_currency_money(value: str) -> MoneyRange | None:
-    currencies = {_currency(match.group()) for match in _CURRENCY_PATTERN.finditer(value)}
-    if len(currencies) > 1:
-        return None
-    numbers = tuple(_NUMBER_PATTERN.finditer(value))
-    if not 0 < len(numbers) <= _MAX_RANGE_VALUES:
-        return None
-    if re.search(r"[-\u2212]", value[: numbers[0].start()]):
-        return None
-    # Strip currency markers between endpoints only after verifying agreement.
-    amount_text = numbers[0].group()
-    if len(numbers) == _MAX_RANGE_VALUES:
-        separator = _CURRENCY_PATTERN.sub("", value[numbers[0].end() : numbers[1].start()])
-        amount_text += separator + numbers[1].group()
-    amount = _decimal_range(amount_text)
-    if amount is None:
-        return None
-    return MoneyRange(amount, next(iter(currencies), None))
-
-
-def _room_range(value: str) -> IntegerRange | None:
-    match = _ROOM_RANGE_PATTERN.fullmatch(value)
-    if match is None:
-        return None
-    lower = int(match.group("lower"))
-    upper_group = match.group("upper")
-    upper = int(upper_group) if upper_group is not None else lower
-    if not 0 < lower <= upper <= _MAX_ROOM_COUNT:
-        return None
-    return IntegerRange(lower=lower, upper=upper)
-
-
-def _is_room_tag_list(value: str) -> bool:
-    if _ROOM_TAG_PATTERN.search(value) is None:
-        return False
-    remainder = _ROOM_TAG_PATTERN.sub("", value)
-    return not remainder.strip(" \t,;|")
-
-
-def _room_tag_range(value: str) -> IntegerRange | None:
-    match = re.search(r"\d+", value)
-    if match is None:
-        return None
-    room = int(match.group())
-    if not 0 < room <= _MAX_ROOM_COUNT:
-        return None
-    return IntegerRange(lower=room, upper=room)
-
-
-def _decimal(value: str) -> Decimal:
-    return Decimal(value.replace(" ", "").replace("\u00a0", "").replace(",", "."))
-
-
-def _currency(value: str) -> str | None:
-    match = _CURRENCY_PATTERN.search(value)
-    if match is None:
-        return None
-    if match.group("word") is not None:
-        return "PLN"
-    currency_marker = match.group("iso") or match.group("symbol")
-    folded = currency_marker.casefold()
-    if folded == "zł":
-        return "PLN"
-    if currency_marker == "€":
-        return "EUR"
-    if currency_marker == "$":
-        return "USD"
-    return currency_marker.upper()
 
 
 def _map_links(text: str, parser_version: str) -> tuple[LinkSpan, ...]:

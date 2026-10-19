@@ -138,6 +138,13 @@ current snapshot and protected ownership are independent application gates. Unkn
 formats remain observation-only. Report the live eligible denominator, unresolved
 reasons, actual spend availability and human interventions before claiming acceptance.
 
+E26-T2 observation reports distinguish quality outcomes from quota/transient
+exceptions and separate observed precision transitions from applied receipts.
+Existing-location counts overlap offer/favorite counts and must not be summed.
+A green synthetic regression suite does not verify the live Ostrzycka or
+Jugosłowiańska pins; those remain open until persisted canary and public discovery
+checks, including authoritative Ostrzycka geometry, are recorded.
+
 ### Historical parser convergence
 
 A newer parser evaluation is not itself proof that a canonical field changed.
@@ -148,7 +155,7 @@ claimed and read-only observed records count as deferred. A partially repaired
 record with protected fields counts once as protected-conflict; field-event values
 show which safe fields changed. Denominators count source-revision/release identities.
 
-The accepted `e2-v14` / `source-evidence-v1` release remains tied to the reviewed
-75-case benchmark. An unaccepted version or downgrade cannot silently begin replay.
+The accepted `e2-v18` / `source-evidence-v3` release is backed by the current
+extraction benchmark and current-template/inventory regression suites. An unaccepted version or downgrade cannot silently begin replay.
 Fixture canaries and local test coverage do not establish production prevalence or
 satisfy the still-outstanding representative live acceptance window.

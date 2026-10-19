@@ -6,7 +6,7 @@ Warsaw Estate Platform (WEF) turns a Telegram real-estate export into a filterab
 
 ## Current status
 
-The historical Warsaw catalog is live at [2fa54e2405.duckdns.org](https://2fa54e2405.duckdns.org) behind the shared Nginx/Let's Encrypt edge. The shipped product includes backend-authoritative grouped-map queries, URL-backed and server-defined quick filters, dated offer detail and media, pseudonymous accounts, favorites, audited contact reveal, and the owner console. The complete historical import, Geoapify-backed geocoding, media pipeline, immutable GitHub deployment, health-gated rollback, and production diagnostics are implemented.
+The historical Warsaw catalog is live at [flipstarnuc.duckdns.org](https://flipstarnuc.duckdns.org) behind the shared Nginx/Let's Encrypt edge. The shipped product includes backend-authoritative grouped-map queries, URL-backed and server-defined quick filters, dated offer detail and media, pseudonymous accounts, favorites, audited contact reveal, and the owner console. The complete historical import, Geoapify-backed geocoding, media pipeline, immutable GitHub deployment, health-gated rollback, and production diagnostics are implemented.
 
 The Telethon new/edit/delete pipeline, restartable backfill, worker status, and production worker service are also implemented. M4 remains open until verified live entity/event delivery, gap reconciliation, and outage-recovery evidence close B-003; historical data remains available if the worker is unavailable.
 

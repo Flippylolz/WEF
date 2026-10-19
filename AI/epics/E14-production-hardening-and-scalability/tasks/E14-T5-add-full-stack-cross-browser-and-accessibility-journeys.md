@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E14-T5
 epic: E14
 title: "Add full-stack cross-browser and accessibility journeys"
-status: draft
+status: done
 revision: 1
 priority: P1
 size: L
@@ -24,28 +24,28 @@ spike_gate:
   verified_by: "Codex agent (AD-041)"
   verified_at: "2026-08-29T21:17:35Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 1
+  verified_by: Codex
+  verified_at: "2026-09-06T06:51:36.365914+00:00"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: Codex
+  verified_at: "2026-09-06T08:08:28.800204+00:00"
+  evidence: ["E14-T3 done via PR #360, merge 88aaa5c1467b66323d531786548e1033814d9a23", "E14-T4 done via PR #361, merge a786d6b785253a3413ed5d338a443ba917fb5a70; release 34021148552 succeeded"]
 branch:
   required: true
-  name: null
+  name: feat/E14-T5-real-stack-browser
   task_id: E14-T5
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-06T08:08:28.800204+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/362
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-06T09:11:28.349416+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/362
+  evidence: ["Full make verify: 1232 backend / 176 frontend / 186 scripts; fresh-stack matrix 36 passed, 4 explicit WebGL skips", "All current-head required CI succeeded on 69749d38b06d5aebf757bf5e48a43602e9e6bd3e; PR #362 merged as 8ff50a9a41b9fe4b1160e2afd1983d2ae9119c6d"]
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -76,13 +76,13 @@ including real map initialization and restricted-account journeys.
 
 ## Acceptance criteria and checks
 
-- [ ] Critical journeys fail if migrations, generated contracts, API routing, cookies/CSRF, persistence, or frontend wiring are broken.
-- [ ] Chromium/Firefox/WebKit desktop and approved mobile projects pass; any reduced CI matrix has documented risk and a scheduled/full matrix.
-- [ ] A real WebGL Chromium journey proves map initialization and pin/list selection; fallback remains usable without WebGL.
-- [ ] Keyboard-only flows and axe checks cover every critical interactive surface with zero unreviewed serious/critical violations.
-- [ ] Fixtures and artifacts contain only synthetic/redacted values; contact/session/secret leakage scans pass.
-- [ ] Failures upload bounded trace/screenshot evidence and do not expose secrets.
-- [ ] Full-stack build/migration/seed, browser matrix, axe, keyboard, contract, and artifact-safety checks pass.
+- [x] Critical journeys fail if migrations, generated contracts, API routing, cookies/CSRF, persistence, or frontend wiring are broken.
+- [x] Chromium/Firefox/WebKit desktop and approved mobile projects pass; any reduced CI matrix has documented risk and a scheduled/full matrix.
+- [x] A real WebGL Chromium journey proves map initialization and pin/list selection; fallback remains usable without WebGL.
+- [x] Keyboard-only flows and axe checks cover every critical interactive surface with zero unreviewed serious/critical violations.
+- [x] Fixtures and artifacts contain only synthetic/redacted values; contact/session/secret leakage scans pass.
+- [x] Failures upload bounded trace/screenshot evidence and do not expose secrets.
+- [x] Full-stack build/migration/seed, browser matrix, axe, keyboard, contract, and artifact-safety checks pass.
 
 ## Dependencies and gates
 
@@ -97,4 +97,16 @@ but cannot convert a reproducible first-attempt defect into success.
 
 - [x] E14 spike revision 1 is owner-approved under AD-041.
 - [x] The task was moved to `tasks/` with complete promotion metadata.
-- [ ] E14 implementation plan revision 1 is owner-approved and E14-T3/T4 are done.
+- [x] E14 implementation plan revision 1 is owner-approved and E14-T3/T4 are done.
+
+## Start evidence
+
+Moved through ready before implementation under scoped owner approval for T1–T5.
+Started on the exact open T4 ancestor above; no completion/merge until T4 is done.
+Full-stack fixtures use an isolated test-only database and internal network.
+
+## Local verification
+
+See [T5 verification](../T5_VERIFICATION.md) for the fresh-stack matrix, canonical
+checks, discovered defects and privacy boundaries. Local acceptance is verified;
+current-head CI and merge remain required before task completion.

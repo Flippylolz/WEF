@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Self
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -735,7 +736,13 @@ async def test_run_status_disposes_engine(
             telegram_runtime_health_path=runtime_path,
         ),
     )
+    monkeypatch.setattr(
+        "wef_backend.features.ingestion.infrastructure.ingestion_progress_store."
+        "SQLAlchemyIngestionProgressStore.status",
+        AsyncMock(return_value={"sampling_fresh": False}),
+    )
     payload = await telegram_worker_status_command.run_status()
+    assert payload["ingestion_progress"] == {"sampling_fresh": False}
     assert disposed == ["yes"]
     assert payload["freshness"] == WorkerFreshness.CREDENTIALS_PENDING.value
     runtime_health = payload["runtime_health"]

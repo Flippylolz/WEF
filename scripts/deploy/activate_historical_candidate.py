@@ -472,7 +472,7 @@ def _probe_public_https(base_url: str, root: Path) -> str | None:
 
 def smoke_public_https(
     root: Path,
-    base_url: str = "https://2fa54e2405.duckdns.org",
+    base_url: str = "https://flipstarnuc.duckdns.org",
     *,
     attempts: int = 12,
     delay_seconds: float = 5.0,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from time import perf_counter
 from typing import TYPE_CHECKING
@@ -25,6 +25,7 @@ from wef_backend.features.catalog.application import (
     SeedM1Catalog,
 )
 from wef_backend.features.catalog.application.m1_fixture import m1_fixture
+from wef_backend.features.catalog.application.quick_filters import apply_quick_filter
 from wef_backend.features.catalog.domain import (
     FilterablePropertyType,
     LocationReviewStatus,
@@ -51,6 +52,54 @@ pytestmark = pytest.mark.skipif(
 )
 
 WARSAW = BoundingBox.parse("20.7,52.0,21.4,52.4")
+
+
+async def test_rolling_window_agrees_across_map_counts_and_listing_pages() -> None:
+    """Include the exact cutoff and exclude older publications even when edited now."""
+    assert TEST_DATABASE_URL is not None
+    settings = Settings(
+        env="test", database_url=TEST_DATABASE_URL, alembic_config=Path("alembic.ini")
+    )
+    await asyncio.to_thread(alembic_command.upgrade, alembic_config(settings), "head")
+    database = create_database_resources(TEST_DATABASE_URL)
+    seed = SeedM1Catalog(SQLAlchemyCatalogSeedAdapter(database.session_factory), environment="test")
+    await seed(*m1_fixture())
+    now = datetime(2026, 10, 19, 10, 30, tzinfo=UTC)
+    filters = apply_quick_filter(MapFilters(bbox=WARSAW), preset_id="last_day", now=now)
+    cutoff = now - timedelta(hours=24)
+    expected = {
+        UUID("20000000-0000-4000-8000-000000000001"),
+        UUID("20000000-0000-4000-8000-000000000002"),
+    }
+    try:
+        async with database.session_factory() as session:
+            await session.execute(
+                update(OfferRow).values(
+                    published_at=cutoff - timedelta(microseconds=1),
+                    latest_source_at=now,
+                )
+            )
+            await session.execute(
+                update(OfferRow)
+                .where(OfferRow.id.in_(expected))
+                .values(
+                    published_at=cutoff,
+                )
+            )
+            await session.commit()
+        mapped = await QueryMapLocations(SQLAlchemyMapQueryAdapter(database.session_factory))(
+            filters
+        )
+        browse = BrowseViewportListings(SQLAlchemyCatalogBrowseAdapter(database.session_factory))
+        first = await browse(filters=filters, cursor=None, limit=1)
+        second = await browse(filters=filters, cursor=first.next_cursor, limit=1)
+        assert sum(record.matching_offer_count for record in mapped.records) == 2
+        assert first.matching_count == second.matching_count == 2
+        assert {first.items[0].id, second.items[0].id} == expected
+        assert second.next_cursor is None
+    finally:
+        await seed(*m1_fixture())
+        await database.engine.dispose()
 
 
 async def test_grouped_map_query_semantics_and_performance() -> None:  # noqa: PLR0915
@@ -126,7 +175,10 @@ async def test_grouped_map_query_semantics_and_performance() -> None:  # noqa: P
             "wola",
         }
         assert [item.district for item in combined_groups.records] == ["srodmiescie"]
-        assert {item.district for item in dated.records} == {"praga-polnoc"}
+        assert len(dated.records) == 1
+        assert dated.records[0].precision == "district"
+        assert dated.records[0].location_accuracy is not None
+        assert dated.records[0].location_accuracy.label == "Approximate area"
         assert {item.id for item in apartments.records} == {
             UUID("10000000-0000-4000-8000-000000000001"),
             UUID("10000000-0000-4000-8000-000000000003"),

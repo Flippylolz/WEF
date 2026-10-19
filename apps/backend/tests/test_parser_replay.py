@@ -8,9 +8,12 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from tests.test_inventory_extraction import SOURCE as INVENTORY_SOURCE
 from tests.test_listing_extraction import _message
-from wef_backend.features.ingestion.application.extraction import extract_listing
+from wef_backend.features.ingestion.application.extraction import PARSER_VERSION, extract_listing
+from wef_backend.features.ingestion.application.parse_quality import POLICY_VERSION
 from wef_backend.features.ingestion.application.parser_replay import (
+    ACCEPTED_RELEASE,
     extraction_fields,
     plan_replay,
     scalar,
@@ -81,3 +84,23 @@ async def test_worker_pause_progress_and_failure_isolation(
         Settings(parser_replay_enabled=enabled), AsyncMock(), stop, lambda: True
     )
     assert replay.tick.await_count == int(enabled)
+
+
+def test_accepted_release_matches_the_current_benchmark_parser() -> None:
+    assert ACCEPTED_RELEASE == (PARSER_VERSION, POLICY_VERSION)
+
+
+def test_starting_price_replay_clears_the_old_fixed_upper_bound() -> None:
+    result = extract_listing(_message(INVENTORY_SOURCE))
+    assert result.listing
+    document = json.loads(build_extraction_json(result.listing))
+    previous = json.loads(build_extraction_json(result.listing))
+    previous["apartment_price"]["value"]["max_minor"] = 74000000
+    current = {
+        name: field.value
+        for name, field in extraction_fields(previous, len(INVENTORY_SOURCE)).items()
+    }
+    plan = plan_replay(result, INVENTORY_SOURCE, previous, current, frozenset())
+    assert document["apartment_price"]["value"]["max_minor"] is None
+    assert plan.fields["apartment_price_max"].value is None
+    assert not plan.protected

@@ -1,0 +1,20 @@
+    server {
+        listen 3200 ssl;
+        listen [::]:3200 ssl;
+        http2 on;
+        server_name {{WEF_HOSTNAME}};
+        ssl_certificate /etc/nginx-edge/letsencrypt/live/{{WEF_HOSTNAME}}/fullchain.pem;
+        ssl_certificate_key /etc/nginx-edge/letsencrypt/live/{{WEF_HOSTNAME}}/privkey.pem;
+        client_max_body_size 12m;
+
+        location / {
+            set $fillable_upstream "{{FILLABLE_UPSTREAM}}";
+            proxy_pass http://$fillable_upstream;
+            proxy_http_version 1.1;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Forwarded-Port 3200;
+        }
+    }

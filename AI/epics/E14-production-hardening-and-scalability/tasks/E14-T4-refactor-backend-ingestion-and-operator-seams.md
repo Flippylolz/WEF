@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E14-T4
 epic: E14
 title: "Refactor backend ingestion and operator seams"
-status: draft
+status: done
 revision: 1
 priority: P1
 size: L
@@ -24,28 +24,28 @@ spike_gate:
   verified_by: "Codex agent (AD-041)"
   verified_at: "2026-08-29T21:17:35Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 1
+  verified_by: Codex
+  verified_at: "2026-09-06T06:51:36.365914+00:00"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: Codex
+  verified_at: "2026-09-06T07:49:46.660733+00:00"
+  evidence: ["E14-T2 done via PR #359, merge 7367402ff76abe78c414c023d2f0c66254cedc2f; release 34019827017 succeeded"]
 branch:
   required: true
-  name: null
+  name: feat/E14-T4-backend-seams
   task_id: E14-T4
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-06T07:49:46.660733+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/361
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-06T08:40:32.182542+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/361
+  evidence: ["Full make verify passed: 1232 backend, 172 frontend, 184 script tests", "PR #361 all required checks passed; merge a786d6b785253a3413ed5d338a443ba917fb5a70; release 34021148552 succeeded", "See ../T4_VERIFICATION.md"]
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -75,12 +75,12 @@ replay identity, provenance, public projections, and CLI behavior remain compati
 
 ## Acceptance criteria and checks
 
-- [ ] Characterization tests show identical accepted/rejected extraction, persisted values, revision/provenance, live new/edit/delete convergence, checkpoints, and operator output/exit codes.
-- [ ] Transaction and lock ownership is documented and protected by rollback, cancellation, duplicate/replay, and concurrent-attempt tests.
-- [ ] Domain/application layers remain framework independent and all 17+ architecture contracts plus the violation probe pass.
-- [ ] Error paths remain bounded and redact source text, contacts, credentials, sessions, paths, and provider secrets.
-- [ ] Complexity/suppression counts improve in the selected hotspots without moving responsibilities into generic utility modules.
-- [ ] Ruff, strict mypy, architecture, unit, PostGIS integration, migration, replay/idempotency, cancellation, CLI, and coverage checks pass.
+- [x] Characterization tests show identical accepted/rejected extraction, persisted values, revision/provenance, live new/edit/delete convergence, checkpoints, and operator output/exit codes.
+- [x] Transaction and lock ownership is documented and protected by rollback, cancellation, duplicate/replay, and concurrent-attempt tests.
+- [x] Domain/application layers remain framework independent and all 17+ architecture contracts plus the violation probe pass.
+- [x] Error paths remain bounded and redact source text, contacts, credentials, sessions, paths, and provider secrets.
+- [x] Complexity/suppression counts improve in the selected hotspots without moving responsibilities into generic utility modules.
+- [x] Ruff, strict mypy, architecture, unit, PostGIS integration, migration, replay/idempotency, cancellation, CLI, and coverage checks pass.
 
 ## Dependencies and gates
 
@@ -95,4 +95,11 @@ atomicity, retry, or checkpoint rule requires spike/plan revalidation.
 
 - [x] E14 spike revision 1 is owner-approved under AD-041.
 - [x] The task was moved to `tasks/` with complete promotion metadata.
-- [ ] E14 implementation plan revision 1 is owner-approved and E14-T2 is done.
+- [x] E14 implementation plan revision 1 is owner-approved and E14-T2 is done.
+
+## Start evidence
+
+Moved through ready before implementation under owner-approved T1–T5 scope.
+Started from current main 7367402ff76abe78c414c023d2f0c66254cedc2f.
+T2 full canonical verification provides the characterization baseline: 1218
+backend tests, including parser, persistence, live convergence and CLI failures.

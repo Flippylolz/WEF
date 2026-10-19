@@ -2,7 +2,7 @@
 schema: ai-workflow/epic@1
 id: E26
 title: "Automatic location validation and repair"
-status: selected
+status: done
 milestones: [M5]
 owner: owner
 spike: SPIKE.md
@@ -21,13 +21,15 @@ Audit M1 identifies both owner-reported cases and an additional Jugosłowiańska
 
 See the [5 September system audit](../../audits/2026-09-05-system-audit.md) for tests, production observations, source references, uncertainty, and the cross-epic sequence.
 
-## Proposed tasks
+## Promoted tasks
 
-- [E26-T1: Validate address agreement and source-supported precision](proposed-tasks/E26-T1-validate-address-agreement-and-precision.md) — P1/L; dependencies: none.
-- [E26-T2: Revalidate and repair existing points automatically](proposed-tasks/E26-T2-revalidate-and-repair-existing-points.md) — P1/L; dependencies: E24-T1, E26-T1.
-- [E26-T3: Show honest map precision and prove real pin behavior](proposed-tasks/E26-T3-show-honest-map-precision.md) — P1/M; dependencies: E26-T1, E14-T5.
+- [E26-T1: Validate address agreement and source-supported precision](tasks/E26-T1-validate-address-agreement-and-precision.md) — P1/L; dependencies: none.
+- [E26-T2: Revalidate and repair existing points automatically](tasks/E26-T2-revalidate-and-repair-existing-points.md) — P1/L; dependencies: E24-T1, E26-T1.
+- [E26-T3: Show honest map precision and prove real pin behavior](tasks/E26-T3-show-honest-map-precision.md) — P1/M; dependencies: E26-T1, E14-T5.
 
 Each file defines one independently reviewable change, tests, acceptance evidence, rollout, rollback, and exceptional manual handling. Dependencies are task IDs and remain enforceable at promotion.
+
+- [E26-T4: Municipal-first resolution](tasks/E26-T4-resolve-municipal-first.md) — P1/M; dependencies: E26-T1–T3; deployed and canary-verified under approved revision 2; catalog-wide backfill explicitly authorized, enabled and verified.
 
 ## Automation requirement
 
@@ -35,14 +37,18 @@ The owner requested as little manual work as possible, with manual work only in 
 
 ## Approval state
 
-- Epic selected for documentation/research.
-- [Spike](SPIKE.md) revision 1 is researched and awaiting owner approval.
-- All 3 candidates remain `proposed`, `actionable: false`.
-- [Implementation plan](IMPLEMENTATION_PLAN.md) is an empty draft shell until spike approval and task promotion.
-- The audit request authorizes research and planning documents; it is not recorded as approval of future production changes.
+- Spike revision 1 advanced to approved from the owner's direction to start; interpretation and exact instruction are in [OWNER_DECISION.md](OWNER_DECISION.md).
+- All three tasks are promoted at revision 2; implementation gates are approved.
+- [Implementation plan revision 1](IMPLEMENTATION_PLAN.md) is approved by the owner; implementation proceeds task by task.
+- E24-T1, the five owner-approved E14 prerequisites and all three E26 tasks are done. The rollback-compatible release preceded T2; live canary verification preceded automatic expansion.
+- The original wrong pins were quarantined. On 6 September, owner-authorized municipal street-level corrections were applied and verified for Ostrzycka and both Jugosłowiańska cases. These operator selections are protected; exact buildings remain unknown. See the follow-up [municipal policy](MUNICIPAL_FIRST.md).
+- The final documentation release exposed a separate browser synchronization defect; [map rendering readiness](MAP_RENDER_READINESS.md) records the follow-up correction without changing location policy.
+- The remaining catalog pass is running automatically under the existing daily budget. Epic completion records deployed behavior and verified rollout, not an already-drained queue.
 
 ## Scope and completion
 
 Retain the backend-authoritative modular architecture, current dependency constraints, contact protections, and existing review/deployment safeguards. All task acceptance criteria and the [definition of done](../../workflow/DEFINITION_OF_DONE.md) must pass before completion.
 
 E14 retains shared test infrastructure, general refactoring, capacity, and platform observability. E8 retains passive-event acceptance; E7-T5/E14-T9 retain backup and restore scope. No duplicate authoritative definitions are introduced.
+
+The municipal follow-up is deployed with six live probes and nine canaries verified. [T4 verification](T4_VERIFICATION.md) records the verified catalog-wide backfill and continuing budget-paced processing.

@@ -7,13 +7,13 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from wef_backend.features.ingestion.application.persistence import build_extraction_json
+from wef_backend.features.ingestion.application.persistence_projection import build_extraction_json
 
 if TYPE_CHECKING:
     from wef_backend.features.ingestion.domain.extraction import ExtractionResult
 
 # Acceptance changes with a reviewed benchmark-backed parser release, not runtime input.
-ACCEPTED_RELEASE = ("e2-v14", "source-evidence-v2")
+ACCEPTED_RELEASE = ("e2-v18", "source-evidence-v3")
 SCHEMA_VERSION = "parser-replay-v1"
 
 
@@ -129,7 +129,8 @@ def extraction_fields(document: dict[str, object], source_length: int) -> dict[s
             if name in FIELD_COLUMNS:
                 mapped[name] = value
         for name, proposed in mapped.items():
-            if proposed is not None:
+            # A starting-price correction must clear an obsolete upper bound too.
+            if proposed is not None or name.endswith("_price_max"):
                 result[name] = ReplayField(proposed, start, end, group)
     return result
 

@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import text
 
 from wef_backend.features.admin.application.automatic_recovery import RecoveryWork
+from wef_backend.features.admin.infrastructure.provider_budget_store import next_day
 from wef_backend.features.ingestion.application.extraction import PARSER_VERSION
 from wef_backend.features.ingestion.application.parse_quality import POLICY_VERSION
 
@@ -33,6 +34,7 @@ class SQLAlchemyRecoveryQueue:
 
     async def enqueue(self, owner: UUID, now: datetime) -> int:
         """Skip completed identities so later records cannot starve."""
+        await self.reconcile_unsubmitted(owner, now)
         total, started = 0, time.monotonic()
         for _ in range(10):
             async with self._sessions.begin() as session:
@@ -91,6 +93,36 @@ class SQLAlchemyRecoveryQueue:
                 break
             await asyncio.sleep(0)
         return total
+
+    async def reconcile_unsubmitted(self, owner: UUID, now: datetime) -> int:
+        """Restore at most ten incorrectly terminal, provably unsubmitted cohorts."""
+        async with self._sessions.begin() as session:
+            result = await session.execute(
+                text("""
+                WITH candidates AS (
+                    SELECT w.id FROM ai_recovery_work w
+                    JOIN offer_ai_enrichment_batches b ON b.id=w.id
+                    WHERE w.owner_id=:owner AND b.owner_user_id=:owner
+                      AND w.state='terminal' AND w.reason='unsupported_or_failed_proposal'
+                      AND w.proposal_id IS NULL
+                      AND ((b.state IN ('queued','running') AND b.failure_category IS NULL)
+                        OR (b.state='paused' AND b.failure_category='daily_limit'))
+                      AND EXISTS (SELECT 1 FROM offer_ai_enrichment_items i WHERE i.batch_id=w.id)
+                      AND NOT EXISTS (SELECT 1 FROM offer_ai_enrichment_items i
+                        WHERE i.batch_id=w.id AND (i.state NOT IN ('queued','processing')
+                          OR i.provider_called_at IS NOT NULL OR i.outcome IS NOT NULL))
+                      AND NOT EXISTS (SELECT 1 FROM ai_provider_attempts p
+                        WHERE p.operation_id=w.id)
+                      AND NOT EXISTS (SELECT 1 FROM offer_ai_field_events e WHERE e.batch_id=w.id)
+                    ORDER BY w.updated_at,w.id LIMIT 10 FOR UPDATE OF w SKIP LOCKED
+                )
+                UPDATE ai_recovery_work w SET state='queued',reason='unsubmitted_reconciled',
+                    next_eligible_at=:now,claim_id=NULL,lease_until=NULL,updated_at=:now
+                FROM candidates c WHERE w.id=c.id RETURNING w.id
+                """),
+                {"owner": owner, "now": now},
+            )
+            return len(result.all())
 
     async def claim(self, owner: UUID, now: datetime) -> RecoveryWork | None:
         """Lease one current item; application services reconcile saved proposal/item state."""
@@ -290,7 +322,22 @@ class SQLAlchemyRecoveryQueue:
                 .mappings()
                 .one_or_none()
             )
-            if row is None or row["next_eligible_at"] <= now:
+            daily_paused = await session.scalar(
+                text("""
+                SELECT id FROM offer_ai_enrichment_batches
+                WHERE id=:id AND state='paused' AND failure_category='daily_limit'
+                """),
+                {"id": work.id},
+            )
+            if row is None and daily_paused is None:
+                return False
+            eligible = row["next_eligible_at"] if row is not None else now
+            if daily_paused is not None or (
+                row is not None and row["budget_day"] == now.date() and row["used"] >= 20  # noqa: PLR2004
+            ):
+                # Recover accounts written before quota refusal persisted its window.
+                eligible = max(eligible, next_day(now))
+            if eligible <= now:
                 return False
             await session.execute(
                 text("""
@@ -302,7 +349,7 @@ class SQLAlchemyRecoveryQueue:
                     "id": work.id,
                     "claim": work.claim_id,
                     "now": now,
-                    "next": row["next_eligible_at"],
+                    "next": eligible,
                 },
             )
             return True

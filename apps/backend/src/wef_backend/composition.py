@@ -67,6 +67,7 @@ from wef_backend.features.catalog.application import (
     QueryFacets,
     QueryMapLocations,
 )
+from wef_backend.features.catalog.application.unmapped_listings import BrowseUnmappedListings
 from wef_backend.features.catalog.infrastructure import (
     SQLAlchemyCatalogBrowseAdapter,
     SQLAlchemyMapQueryAdapter,
@@ -121,7 +122,7 @@ from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
 from wef_backend.middleware.public_rate_limit import RateLimiter
-from wef_backend.migration import EXPECTED_DATABASE_REVISION
+from wef_backend.migration import EXPECTED_DATABASE_REVISION, READ_COMPATIBLE_DATABASE_REVISIONS
 from wef_backend.settings import Settings, load_settings
 
 ReadyCheck = Callable[[], Awaitable[bool]]
@@ -139,6 +140,7 @@ class AppServices:
     query_facets: QueryFacets
     browse_location_offers: BrowseLocationOffers
     browse_viewport_listings: BrowseViewportListings
+    browse_unmapped_listings: BrowseUnmappedListings
     get_offer_detail: GetOfferDetail
     is_ready: ReadyCheck
     close: ResourceCloser
@@ -289,7 +291,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
         except SQLAlchemyError as error:
             logger.warning("database_not_ready", error=str(error))
             return False
-        if revision != EXPECTED_DATABASE_REVISION:
+        if revision not in READ_COMPATIBLE_DATABASE_REVISIONS:
             logger.warning(
                 "database_revision_mismatch",
                 expected=EXPECTED_DATABASE_REVISION,
@@ -304,6 +306,7 @@ def build_services(settings: Settings | None = None) -> AppServices:
         query_facets=QueryFacets(browse_adapter),
         browse_location_offers=BrowseLocationOffers(browse_adapter),
         browse_viewport_listings=BrowseViewportListings(browse_adapter),
+        browse_unmapped_listings=BrowseUnmappedListings(browse_adapter),
         get_offer_detail=GetOfferDetail(offer_detail_adapter),
         is_ready=database_is_ready,
         close=database.engine.dispose,

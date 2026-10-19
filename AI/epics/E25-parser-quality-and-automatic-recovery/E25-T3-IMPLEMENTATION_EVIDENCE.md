@@ -248,3 +248,100 @@ Activation-record validation: `make lint` and isolated-image `make test` passed
 (1,071 backend tests, 169 frontend tests, 90.25% backend coverage).
 `git diff --check` passed. This change is documentation only; production runtime
 acceptance is still pending the new release and cannot be inferred from these tests.
+
+## Garage-price correction PR
+
+The owner requested a fixes PR after inspecting the first rejected observations.
+The parking amount was literally supported by a garage label with a bullet and
+em dash. The source did not establish secondary market, and the false inclusion
+proposal did not satisfy the existing true-only inclusion rule. Transport success
+therefore did not imply an acceptable complete proposal.
+
+Follow-up branch `bugfix/E25-garage-price-recovery` advances the deterministic parser
+to `e2-v15`. It recognizes the reviewed Russian singular garage label with an
+optional bullet and a colon/dash separator followed by an explicit scalar amount
+and supported currency. The new garage form requires a complete price line;
+availability, rental prose, monthly amounts, negative values, alternatives and
+mixed sums do not become garage purchase prices. Conflicting explicit quotes
+remain warnings. Deterministic extraction retains exact value provenance and
+removes these successfully parsed gaps from recovery eligibility, avoiding a
+provider request for this supported form.
+
+The independent recovery validator now recognizes the corresponding parking
+label/bullet/separator grammar for both amount and currency evidence. It retains
+unique-fragment, contact, full scalar value, positive amount, currency, conflict
+and protected-field checks. The garage amount cannot establish apartment price,
+market type or parking inclusion. The unsupported secondary-market inference and
+false inclusion proposal remain rejected; no threshold or field allowlist is
+relaxed to make the canary pass.
+
+Regression fixtures are invented and do not copy production listing text. This PR
+changes no schema, provider quota, application flag, API or dependency. Parser
+versioning makes old recovery identities stale. Historical canonical application
+still belongs to T4, whose accepted parser release must be refreshed after this
+correction is reviewed and whose T3 acceptance dependency remains incomplete.
+Existing observed proposals are not retrospectively applied by this fix. The
+requested deliverable is a PR; production merge and deployment are separate.
+
+Validation: the focused garage/classifier/calibration suites passed 202 tests.
+`make lint`, `make format-check`, `make typecheck`, `make contract-check` and
+`git diff --check` passed. Isolated-image `make test` passed 1,121 backend and
+169 frontend tests, with 90.19% backend coverage. Version-sensitive rollback and
+report privacy tests were corrected without changing their intended guarantees.
+Equal numeric amounts in conflicting currency quotes are now independently rejected.
+
+## Quota deferral correction
+
+Six recovery cohorts were marked terminal even though no provider submission
+occurred. Daily quota refusal returned a reset time without persisting it on the
+shared account; the recovery queue therefore saw an expired provider window and
+misclassified the unfinished batch as an unsupported proposal.
+
+The correction persists quota refusal eligibility at the next UTC day without
+creating an attempt or increasing usage. The queue also recognizes previously
+exhausted accounts and batches paused for their local daily limit. Daily-limit
+pauses resume when budget is available; manual and other pauses remain paused.
+
+A bounded reconciliation pass restores at most ten incorrectly terminal cohorts
+per enqueue cycle, only for the matching owner and only where all batch items
+remain queued/processing with no outcome, submission timestamp, provider attempt
+(including uncertain attempts), proposal or field event. Reconciliation preserves
+all budget and attempt history. Normal claim checks supersede obsolete parser,
+policy and source identities instead of replaying stale work.
+
+No migration, dependency, API, quota increase or production flag change is needed.
+The normal release activates this reconciliation; operators must not manually
+reset terminal states or delete attempts. Auto-apply and T4 acceptance remain
+unchanged. Synthetic PostgreSQL tests exercise restart, UTC rollover, owner
+isolation, repeated reconciliation, submission/uncertainty exclusions, manual
+pauses and stale parser identities without making provider calls.
+
+Validation: `make lint`, `make format-check`, `make typecheck`,
+`make contract-check` and `git diff --check` passed. Isolated-image `make test`
+passed 1,127 backend tests (90.19% coverage) and 169 frontend tests.
+
+## Evidenced recovery field scope correction
+
+At 2026-09-06 05:27 UTC, aggregate production evidence showed 24 transport
+successes, four in the new UTC allocation window, zero validated observations,
+zero duplicate recovery identities and auto-apply off. New rejected proposals
+included area and parking fields; transport success does not establish acceptance.
+
+Code inspection confirmed automatic recovery used the classified gap only for
+preflight, then requested every missing offer field from the enrichment service.
+The correction carries the gap's canonical field allowlist through preparation,
+provider instructions and response selection, including reused durable batches.
+Protected or no-longer-missing fields are excluded immediately before submission;
+an empty scope makes no provider request. A price gap authorizes numeric price
+fields, not a parking/storage inclusion inference. Owner-driven enrichment keeps
+its existing default scope. Source-semantic validation remains unchanged.
+
+This correction makes future eligible requests narrower. It does not replay
+terminal or uncertain attempts, relabel failed proposals as accepted, or change
+quota, release flags, schema or dependencies. Ten fully validated unique revisions
+and the representative window remain required; T4 #337 stays draft.
+
+Validation: lint, formatting, typecheck, API contract checks and diff whitespace
+checks passed. Isolated-image `make test` passed 1,132 backend tests (90.20%
+coverage) and 169 frontend tests; the final strengthened focused assertions passed
+35 tests. No production provider requests were made for verification.

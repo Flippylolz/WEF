@@ -12,6 +12,10 @@ from telethon import TelegramClient, events, functions, types, utils
 from telethon.errors import FloodWaitError, SessionPasswordNeededError
 from telethon.sessions import StringSession
 
+from wef_backend.features.ingestion.application.media_recovery import (
+    MediaSourceUnprovenError,
+    MediaUnsupportedError,
+)
 from wef_backend.features.ingestion.application.telegram_events import (
     LiveEventQueue,
     LiveTelegramEventKind,
@@ -21,7 +25,7 @@ from wef_backend.features.ingestion.application.telegram_live import (
     TelegramChannelEntity,
 )
 from wef_backend.features.ingestion.application.telegram_progress import SourceObservation
-from wef_backend.features.ingestion.domain.model import MediaDescriptor, MediaKind
+from wef_backend.features.ingestion.domain.model import MediaDescriptor, MediaKind, RawMessage
 from wef_backend.features.ingestion.domain.telegram_secrets import (
     TelegramLoginCodeError,
     TelegramSecretError,
@@ -29,6 +33,7 @@ from wef_backend.features.ingestion.domain.telegram_secrets import (
 from wef_backend.features.ingestion.infrastructure.media_staging import (
     MediaStaging,
     MediaStagingDeferredError,
+    StagedMedia,
 )
 from wef_backend.features.ingestion.infrastructure.telethon_live_media import (
     LiveMediaDownloadLimits,
@@ -64,6 +69,7 @@ class TelethonLiveClient:
         sleep: Callable[[float], Awaitable[None]] | None = None,
         media_temp_root: Path | None = None,
         media_limits: LiveMediaDownloadLimits | None = None,
+        independent_media: bool = False,
     ) -> None:
         """Build a client from worker secrets without echoing session material."""
         # flood_sleep_threshold=0: we own flood waits explicitly.
@@ -73,6 +79,7 @@ class TelethonLiveClient:
             secrets.api_hash,
             flood_sleep_threshold=0,
         )
+        self._independent_media = independent_media
         self._sleep = sleep
         self._media_temp_root = media_temp_root
         self._media_limits = media_limits
@@ -189,23 +196,10 @@ class TelethonLiveClient:
                 observations.append(SourceObservation(external_id, "deleted"))
             elif isinstance(message, types.Message):
                 live = _to_live_message(message)
-                media = []
-                if message.photo is not None:
-                    media.append(
-                        MediaDescriptor(
-                            MediaKind.PHOTO, f"telegram/{external_id}/photo-{message.photo.id}"
-                        )
-                    )
-                elif message.document is not None:
-                    media.append(
-                        MediaDescriptor(
-                            MediaKind.FILE,
-                            f"telegram/{external_id}/file-{message.document.id}",
-                            mime_type=message.document.mime_type,
-                        )
-                    )
                 observations.append(
-                    SourceObservation(external_id, "present", replace(live, media=tuple(media)))
+                    SourceObservation(
+                        external_id, "present", replace(live, media=_media_metadata(message))
+                    )
                 )
             else:
                 observations.append(SourceObservation(external_id, "unknown"))
@@ -255,6 +249,8 @@ class TelethonLiveClient:
     async def enrich_message(self, message: object) -> LiveTelegramMessage:
         """Convert one Telethon message and optionally download bounded media."""
         live = _to_live_message(message)
+        if self._independent_media:
+            return replace(live, media=_media_metadata(message))
         if self._media_temp_root is None or self._media_limits is None:
             return live
         if getattr(message, "media", None) is None:
@@ -273,6 +269,61 @@ class TelethonLiveClient:
                 lease.release()
                 return live
             return replace(live, media=media, media_lease=lease)
+        except BaseException:
+            lease.release()
+            raise
+
+    async def acquire_media(
+        self, raw: RawMessage, ordinal: int
+    ) -> tuple[MediaDescriptor, StagedMedia]:
+        """Fetch only a source-equivalent intended asset, owning staging until consumption."""
+        if self._staging is None or self._media_limits is None or ordinal != 0:
+            raise MediaSourceUnprovenError
+        try:
+            message = await self._client.get_messages(
+                types.PeerChannel(int(raw.source.channel_id)), ids=raw.external_message_id
+            )
+        except FloodWaitError as error:
+            raise TelegramSourceDeferredError(error.seconds) from error
+        if (
+            not isinstance(message, types.Message)
+            or not isinstance(message.peer_id, types.PeerChannel)
+            or message.peer_id.channel_id != int(raw.source.channel_id)
+        ):
+            raise MediaSourceUnprovenError
+        live = _to_live_message(message)
+        metadata = _media_metadata(message)
+        if (
+            not metadata
+            or not raw.media
+            or live.text != raw.text
+            or live.published_at != raw.published_at
+            or live.edited_at != raw.edited_at
+            or live.reply_to_message_id != raw.reply_to_message_id
+            or live.media_group_id != raw.media_group_id
+            or metadata[0].path != raw.media[ordinal].path
+        ):
+            raise MediaSourceUnprovenError
+        descriptor = metadata[0]
+        if (
+            descriptor.mime_type is not None
+            and not descriptor.mime_type.startswith(("image/", "video/"))
+        ) or (
+            descriptor.size_bytes is not None
+            and descriptor.size_bytes > self._media_limits.max_bytes
+        ):
+            raise MediaUnsupportedError
+        lease = self._staging.acquire(raw.external_message_id, self._media_limits.max_bytes)
+        try:
+            descriptors = await download_live_message_media(
+                self._client,
+                message,
+                limits=self._media_limits,
+                lease=lease,
+            )
+            if not descriptors:
+                raise MediaSourceUnprovenError  # noqa: TRY301 — lease cleanup covers every exit
+            return descriptors[0], lease
         except BaseException:
             lease.release()
             raise
@@ -332,4 +383,30 @@ def _to_live_message(message: object) -> LiveTelegramMessage:
         published_at=published.astimezone(UTC),
         edited_at=None if edited_at is None else edited_at.astimezone(UTC),
         media_group_id=media_group_id,
+        reply_to_message_id=getattr(payload, "reply_to_msg_id", None),
     )
+
+
+def _media_metadata(message: object) -> tuple[MediaDescriptor, ...]:
+    """Retain immutable provider media identity before acquisition can fail."""
+    payload = cast("Any", message)
+    photo = getattr(payload, "photo", None)
+    document = getattr(payload, "document", None)
+    if photo is not None:
+        return (
+            MediaDescriptor(
+                MediaKind.PHOTO, f"telegram/{payload.id}/photo-{photo.id}", mime_type="image/jpeg"
+            ),
+        )
+    if document is not None:
+        mime = str(getattr(document, "mime_type", "") or "")
+        kind = MediaKind.VIDEO if mime.startswith("video/") else MediaKind.FILE
+        return (
+            MediaDescriptor(
+                kind,
+                f"telegram/{payload.id}/file-{document.id}",
+                mime_type=mime,
+                size_bytes=getattr(document, "size", None),
+            ),
+        )
+    return ()

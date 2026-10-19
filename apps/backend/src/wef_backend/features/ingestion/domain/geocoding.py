@@ -10,10 +10,18 @@ from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
 
-NORMALIZER_VERSION = "warsaw-address-v2"
-SCOPE_VERSION = "warsaw-scope-v1"
-REQUEST_VERSION = "forward-geocode-v2"
-REVIEW_POLICY_VERSION = "warsaw-review-v1"
+from wef_backend.features.ingestion.domain.address_evidence import (
+    ADDRESS_EVIDENCE_VERSION,
+    AddressEvidence,
+    fold_address,
+)
+from wef_backend.features.ingestion.domain.nearby_locality import nearby_locality
+
+NORMALIZER_VERSION = "warsaw-address-v11"
+SCOPE_VERSION = "warsaw-scope-v2"
+REQUEST_VERSION = "forward-geocode-v5"
+STREET_REQUEST_VERSION = f"{REQUEST_VERSION}-street"
+REVIEW_POLICY_VERSION = "warsaw-review-v4"
 
 _WHITESPACE = re.compile(r"\s+")
 _PUNCTUATION = re.compile(r"\s*[,;|]+\s*")
@@ -22,7 +30,7 @@ _STREET_PREFIX = re.compile(
     re.IGNORECASE,
 )
 _STREET_TOKEN = re.compile(
-    r"(?<!\w)(?:ulica|aleja|osiedle|plac|улица|ul|al|os|pl|вул|ул)(?!\w)\.?",
+    r"(?<!\w)(?:ulica|aleja|aleje|osiedle|plac|улица|ul|al|os|pl|вул|ул)(?!\w)\.?",
     re.IGNORECASE,
 )
 _INLINE_STREET_PREFIX = re.compile(
@@ -37,7 +45,7 @@ _LEADING_DECORATION = re.compile(r"^[\s•·\-\u2013—*]+")
 _ADDRESS_SEGMENT_SPLIT = re.compile(r"[,|]")
 _CITY_NAMES = re.compile(r"\b(?:warszawa|варшава|варшаві|warsaw)\b", re.IGNORECASE)
 # lon/lat order: west, south, east, north — shared with provider request filters.
-WARSAW_BOUNDS = (20.28, 51.94, 21.37, 52.37)
+WARSAW_BOUNDS = (20.28, 51.94, 21.37, 52.6)
 _WARSAW_BOUNDS = WARSAW_BOUNDS
 WARSAW_BIAS_LON = Decimal("21.0122")
 WARSAW_BIAS_LAT = Decimal("52.2297")
@@ -80,14 +88,27 @@ _DISTRICT_ALIASES = {
     "bialolecka": "Białołęka",
     "praga południe": "Praga-Południe",
     "praga poludnie": "Praga-Południe",
+    "praga północ": "Praga-Północ",
     "praga pólnoc": "Praga-Północ",
     "praga polnoc": "Praga-Północ",
 }
+_NEIGHBORHOODS = {
+    "goclaw": ("Gocław", "Praga-Południe"),
+    "sielce": ("Sielce", "Mokotów"),
+    "rakow": ("Raków", "Włochy"),
+    "stare bielany": ("Stare Bielany", "Bielany"),
+    "huta": ("Huta", "Bielany"),
+}
+
+# Exact source spellings of a development, never a separate municipality.
+_WARSAW_DEVELOPMENTS = frozenset({"ostoja wilanow", "ostoya wilanow"})
 
 
 class GeocodeProvider(StrEnum):
     """Supported provider identities included in durable cache keys."""
 
+    MUNICIPAL = "warsaw_municipal"
+    ADDRESS_AI = "address_ai"
     FIXTURE = "fixture"
     GEOAPIFY = "geoapify"
     LOCATIONIQ = "locationiq"
@@ -127,11 +148,18 @@ class GeocodeErrorCode(StrEnum):
 class SelectionReason(StrEnum):
     """Stable reasons for automatic or manual selection transitions."""
 
+    AUTO_LOCALITY_IN_SCOPE = "auto_locality_in_scope"
+    AUTO_DISTRICT_IN_SCOPE = "auto_district_in_scope"
     AUTO_PRECISE_IN_SCOPE = "auto_precise_in_scope"
     LOW_CONFIDENCE = "low_confidence"
     LOW_PRECISION = "low_precision"
+    ADDRESS_MISMATCH = "address_mismatch"
+    UNSUPPORTED_PRECISION = "unsupported_precision"
+    AMBIGUOUS_CANDIDATES = "ambiguous_candidates"
+    MISSING_ADDRESS_EVIDENCE = "missing_address_evidence"
     OUT_OF_SCOPE = "out_of_scope"
     PROVIDER_ERROR = "provider_error"
+    NO_MATCH = "no_match"
     MANUAL_ACCEPT = "manual_accept"
     MANUAL_REJECT = "manual_reject"
     MANUAL_UNRESOLVE = "manual_unresolve"
@@ -147,6 +175,9 @@ class NormalizedGeocodeQuery:
     district: str | None
     city: str = "Warszawa"
     country_code: str = "PL"
+    address: AddressEvidence | None = None
+    street_only: bool = False
+    locality_only: bool = False
 
     def __post_init__(self) -> None:
         """Reject empty or invented queries."""
@@ -198,6 +229,7 @@ class GeocodeResult:
     attribution_text: str
     error_code: GeocodeErrorCode | None = None
     diagnostic: tuple[tuple[str, str], ...] = ()
+    address: AddressEvidence | None = None
 
     def __post_init__(self) -> None:
         """Keep coordinate, confidence, and diagnostic surfaces bounded."""
@@ -284,7 +316,11 @@ def _extract_other_city(segment: str) -> str | None:
     cleaned = _WHITESPACE.sub(" ", cleaned).strip(" ,")
     if not cleaned or _STREET_TOKEN.search(cleaned):
         return None
-    if warsaw_district_in(cleaned) is not None:
+    if (
+        warsaw_district_in(cleaned) is not None
+        or fold_address(cleaned) in _NEIGHBORHOODS
+        or fold_address(cleaned) in _WARSAW_DEVELOPMENTS
+    ):
         return None
     if _CITY_NAMES.search(cleaned):
         return "Warszawa"
@@ -320,6 +356,10 @@ def _parse_display_name_segments(
             candidate = _format_street_segment(segment)
             if candidate:
                 street = candidate
+            continue
+        neighborhood = _NEIGHBORHOODS.get(fold_address(_AREA_WORD_PREFIX.sub("", segment)))
+        if neighborhood:
+            resolved_district = resolved_district or neighborhood[1]
             continue
         segment_district = warsaw_district_in(segment)
         if segment_district is not None:
@@ -364,6 +404,8 @@ def normalize_location_display_name(source: str | None, *, district: str | None 
     """Return a Polish-forward display name without changing location identity keys."""
     if not source or not source.strip():
         return "Unknown location"
+    if locality := nearby_locality(source):
+        return locality.display
     original = source.strip()
 
     value = unicodedata.normalize("NFKC", original)
@@ -382,6 +424,15 @@ def normalize_location_display_name(source: str | None, *, district: str | None 
 
 def normalize_geocode_query(source: str, district: str | None = None) -> NormalizedGeocodeQuery:
     """Normalize supported Warsaw forms without replacing the display value."""
+    if locality := nearby_locality(source):
+        return NormalizedGeocodeQuery(
+            original=source,
+            normalized=f"{locality.display}, PL".casefold(),
+            district=None,
+            city=locality.city,
+            locality_only=True,
+            address=source_address_evidence(source),
+        )
     original = source
     value = unicodedata.normalize("NFKC", source).strip()
     value = _LEADING_DECORATION.sub("", value)
@@ -393,9 +444,17 @@ def normalize_geocode_query(source: str, district: str | None = None) -> Normali
     value = _PUNCTUATION.sub(", ", value)
     value = _WHITESPACE.sub(" ", value).strip(" ,")
     normalized_district = canonical_warsaw_district(district) or warsaw_district_in(original)
+    neighborhoods = {
+        _NEIGHBORHOODS[fold_address(_AREA_WORD_PREFIX.sub("", segment))][1]
+        for segment in _ADDRESS_SEGMENT_SPLIT.split(original)
+        if fold_address(_AREA_WORD_PREFIX.sub("", segment)) in _NEIGHBORHOODS
+    }
+    if normalized_district is None and len(neighborhoods) == 1:
+        normalized_district = next(iter(neighborhoods))
     folded = value.casefold()
-    if "warszawa" not in folded:
-        value = f"{value}, Warszawa"
+    address = source_address_evidence(original, normalized_district)
+    if (address.city or "Warszawa").casefold() not in folded:
+        value = f"{value}, {address.city or 'Warszawa'}"
     if normalized_district is not None and normalized_district.casefold() not in value.casefold():
         value = f"{value}, {normalized_district}"
     value = f"{value}, PL"
@@ -403,6 +462,8 @@ def normalize_geocode_query(source: str, district: str | None = None) -> Normali
         original=original,
         normalized=value.casefold(),
         district=normalized_district,
+        address=address,
+        city=address.city or "Warszawa",
     )
 
 
@@ -455,6 +516,8 @@ def looks_like_warsaw_address(value: str) -> bool:
 
 def within_warsaw(longitude: Decimal, latitude: Decimal) -> bool:
     """Validate coordinate order and the versioned Warsaw bounding box."""
+    if not longitude.is_finite() or not latitude.is_finite():
+        return False
     west, south, east, north = (Decimal(str(item)) for item in _WARSAW_BOUNDS)
     return west <= longitude <= east and south <= latitude <= north
 
@@ -462,13 +525,31 @@ def within_warsaw(longitude: Decimal, latitude: Decimal) -> bool:
 def review_geocode_result(
     result: GeocodeResult,
     *,
+    query: NormalizedGeocodeQuery | None = None,
     minimum_confidence: Decimal = Decimal("0.80"),
 ) -> ReviewDecision:
     """Fail closed unless a precise, confident result is within Warsaw."""
-    if result.error_code is not None or result.longitude is None or result.latitude is None:
+    ambiguous = dict(result.diagnostic).get("candidate_ambiguity") == "true"
+    if (
+        ambiguous
+        or result.error_code is not None
+        or result.longitude is None
+        or result.latitude is None
+    ):
+        reason = (
+            SelectionReason.AMBIGUOUS_CANDIDATES
+            if ambiguous
+            else (
+                SelectionReason.NO_MATCH
+                if result.error_code is GeocodeErrorCode.NO_RESULT
+                else SelectionReason.PROVIDER_ERROR
+            )
+        )
         return ReviewDecision(
-            status=GeocodeReviewStatus.UNGEOCODED,
-            reason=SelectionReason.PROVIDER_ERROR,
+            status=GeocodeReviewStatus.NEEDS_REVIEW
+            if ambiguous
+            else GeocodeReviewStatus.UNGEOCODED,
+            reason=reason,
             select_result=False,
             out_of_scope=False,
         )
@@ -480,7 +561,45 @@ def review_geocode_result(
             select_result=False,
             out_of_scope=True,
         )
-    if result.precision not in {GeocodePrecision.BUILDING, GeocodePrecision.STREET}:
+    agreement = address_agreement_reason(query, result)
+    if agreement is not None:
+        return ReviewDecision(
+            status=GeocodeReviewStatus.NEEDS_REVIEW,
+            reason=agreement,
+            select_result=False,
+            out_of_scope=False,
+        )
+    locality_match = (
+        query is not None
+        and query.locality_only
+        and result.precision is GeocodePrecision.CITY
+        and result.address is not None
+        and result.address.result_type in {"city", "town", "village", "municipality"}
+    )
+    district_match = (
+        query is not None
+        and query.address is not None
+        and not query.address.street
+        and not query.address.house_number
+        and canonical_warsaw_district(query.address.district) is not None
+        and fold_address(query.address.city) in {"warszawa", "warsaw"}
+        and fold_address(query.address.country_code) == "pl"
+        and {
+            name
+            for part in _ADDRESS_SEGMENT_SPLIT.split(query.original)
+            if (name := canonical_warsaw_district(_AREA_WORD_PREFIX.sub("", part.strip())))
+            is not None
+        }
+        <= {query.address.district}
+        and result.provider is GeocodeProvider.MUNICIPAL
+        and result.precision is GeocodePrecision.DISTRICT
+        and result.address is not None
+        and result.address.result_type == "district"
+    )
+    if not (locality_match or district_match) and result.precision not in {
+        GeocodePrecision.BUILDING,
+        GeocodePrecision.STREET,
+    }:
         return ReviewDecision(
             status=GeocodeReviewStatus.NEEDS_REVIEW,
             reason=SelectionReason.LOW_PRECISION,
@@ -496,7 +615,136 @@ def review_geocode_result(
         )
     return ReviewDecision(
         status=GeocodeReviewStatus.ACCEPTED,
-        reason=SelectionReason.AUTO_PRECISE_IN_SCOPE,
+        reason=SelectionReason.AUTO_LOCALITY_IN_SCOPE
+        if locality_match
+        else SelectionReason.AUTO_DISTRICT_IN_SCOPE
+        if district_match
+        else SelectionReason.AUTO_PRECISE_IN_SCOPE,
         select_result=True,
         out_of_scope=False,
     )
+
+
+_HOUSE_NUMBER = re.compile(r"^(.*?)\s+(\d+[a-zA-Z]?(?:[-/]\d+[a-zA-Z]?)?)$")
+
+
+def source_address_evidence(source: str, district: str | None = None) -> AddressEvidence:
+    """Decompose exact source tokens; unknown prose cannot claim street precision."""
+    if locality := nearby_locality(source):
+        return AddressEvidence(
+            city=locality.city, municipality=locality.municipality, country_code="PL"
+        )
+    street = None
+    house = None
+    city = "Warszawa"
+    neighborhood = None
+    segments = [segment.strip() for segment in _ADDRESS_SEGMENT_SPLIT.split(source)]
+    for segment in segments:
+        known = _NEIGHBORHOODS.get(fold_address(_AREA_WORD_PREFIX.sub("", segment)))
+        if known:
+            neighborhood = known[0]
+            continue
+        if warsaw_district_in(segment) or _CITY_NAMES.search(segment):
+            # A combined street/city segment is deliberately left unresolved.
+            continue
+        if _STREET_TOKEN.search(segment) or _HOUSE_NUMBER.fullmatch(segment):
+            candidate = _format_street_segment(segment)
+            numbered = _HOUSE_NUMBER.fullmatch(candidate)
+            candidate_street = numbered[1] if numbered else candidate
+            candidate_house = numbered[2] if numbered else None
+            if street is not None and (
+                fold_address(street) != fold_address(candidate_street)
+                or fold_address(house) != fold_address(candidate_house)
+            ):
+                return AddressEvidence(city=city, country_code="PL", district=district)
+            street, house = candidate_street, candidate_house
+        elif not _is_noise_segment(segment):
+            other_city = _extract_other_city(segment)
+            if other_city and fold_address(other_city) != "warszawa":
+                city = other_city
+    return AddressEvidence(
+        street=street,
+        house_number=house,
+        neighborhood=neighborhood,
+        district=district,
+        city=city,
+        country_code="PL",
+    )
+
+
+def address_agreement_reason(
+    query: NormalizedGeocodeQuery | None,
+    result: GeocodeResult,
+) -> SelectionReason | None:
+    """Require positive address evidence before allowing score-based selection."""
+    if dict(result.diagnostic).get("candidate_ambiguity") == "true":
+        return SelectionReason.AMBIGUOUS_CANDIDATES
+    source = query.address if query is not None else None
+    provider = result.address
+    if source is None or provider is None or provider.version != ADDRESS_EVIDENCE_VERSION:
+        return SelectionReason.MISSING_ADDRESS_EVIDENCE
+    if (
+        not provider.city
+        or not provider.country_code
+        or (source.district and not provider.district)
+    ):
+        return SelectionReason.MISSING_ADDRESS_EVIDENCE
+    if source.municipality and not provider.municipality:
+        return SelectionReason.MISSING_ADDRESS_EVIDENCE
+    if _locality_conflicts(source, provider):
+        return SelectionReason.ADDRESS_MISMATCH
+    return _street_agreement_reason(source, provider, result.precision)
+
+
+def _street_agreement_reason(
+    source: AddressEvidence,
+    provider: AddressEvidence,
+    precision: GeocodePrecision,
+) -> SelectionReason | None:
+    """Limit claimed precision to positively matching source address components."""
+    if source.street:
+        if not provider.street:
+            return SelectionReason.MISSING_ADDRESS_EVIDENCE
+        if fold_address(source.street) != fold_address(provider.street):
+            return SelectionReason.ADDRESS_MISMATCH
+    elif precision in {GeocodePrecision.STREET, GeocodePrecision.BUILDING}:
+        return SelectionReason.UNSUPPORTED_PRECISION
+    if (
+        source.house_number
+        and provider.house_number
+        and fold_address(source.house_number) != fold_address(provider.house_number)
+    ):
+        return SelectionReason.ADDRESS_MISMATCH
+    if precision is GeocodePrecision.BUILDING and (
+        not source.house_number
+        or not provider.house_number
+        or provider.result_type not in {"building", "house"}
+    ):
+        return SelectionReason.UNSUPPORTED_PRECISION
+    return None
+
+
+def _locality_conflicts(source: AddressEvidence, provider: AddressEvidence) -> bool:
+    """Compare city aliases and supplied district/neighborhood constraints."""
+
+    def city(value: str | None) -> str:
+        folded = fold_address(value)
+        return "warszawa" if folded in {"warsaw", "warszawa", "варшава"} else folded
+
+    known = _NEIGHBORHOODS.get(fold_address(source.neighborhood))
+    if known and source.district != known[1]:
+        return True
+    if city(source.city) != city(provider.city):
+        return True
+    if fold_address(source.country_code) != fold_address(provider.country_code):
+        return True
+    if source.municipality and fold_address(source.municipality) != fold_address(
+        re.sub(r"^gmina\s+", "", provider.municipality or "", flags=re.IGNORECASE)
+    ):
+        return True
+    for field in ("district", "neighborhood"):
+        expected = getattr(source, field)
+        actual = getattr(provider, field)
+        if expected and actual and fold_address(expected) != fold_address(actual):
+            return True
+    return False

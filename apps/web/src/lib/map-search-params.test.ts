@@ -127,7 +127,7 @@ describe("map search parameters", () => {
   });
 
   it("uses six-decimal viewport identity without changing the default", () => {
-    expect(normalizeBbox("20.700000,52,21.400000,52.400000")).toBe(
+    expect(normalizeBbox("20.700000,52,21.400000,52.600000")).toBe(
       DEFAULT_BBOX,
     );
     expect(formatBbox([20.81234549, 52.12345651, 21.2, 52.3])).toBe(

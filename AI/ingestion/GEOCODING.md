@@ -6,7 +6,7 @@
 - Live ingestion later: a small number of new/changed posts per day.
 - Every successful response is persisted in `GeocodeResult`; the application never geocodes again on page views.
 - Queries are restricted/bias-validated to Warsaw/Poland and rejected/reviewed when out of bounds or low precision.
-- Live Geoapify forward requests (`REQUEST_VERSION=forward-geocode-v2`) send
+- Live Geoapify forward requests (`REQUEST_VERSION=forward-geocode-v4`) send
   `filter=rect:<Warsaw bounds>|countrycode:pl` and `bias=proximity:<city center>`
   so same-named streets outside Warsaw are not preferred; results are still
   validated with `within_warsaw` before acceptance.
@@ -130,7 +130,7 @@ review decisions through the same lineage contract as the automated pipeline:
 
 - Every decision appends one `location_geocode_selections` row with
   `actor_type="operator"`, `actor_id=<owner account id>`,
-  `review_policy_version=warsaw-review-v1`, and a monotonic
+  the current `review_policy_version`, and a monotonic
   `selection_version`, then updates the `locations` row in one transaction.
 - **Manual point placement** accepts a location with coordinates the owner
   placed on a map after checking the retained offer text: `reason_code=manual_accept`
@@ -140,7 +140,7 @@ review decisions through the same lineage contract as the automated pipeline:
   the write, preserving `ck_locations_accepted_public_point`.
 - **Candidate acceptance** promotes the latest selection's geocode result when it
   carries an in-scope, error-free point; the copied precision/confidence and
-  result id mirror the batch-accept CLI.
+  result id retain explicit owner authority; the automated batch command cannot bypass address validation.
 - **Rejection** (`manual_reject`) and **unresolve** (`manual_unresolve`, only
   from `accepted`/`rejected` back to `needs_review`) keep any existing point on
   the row; public map eligibility remains governed by `review_status`.
@@ -156,3 +156,120 @@ review decisions through the same lineage contract as the automated pipeline:
 ## Recommendation
 
 Use Geoapify for the historical import under ADR-021 and for **recurring live ingestion** under D-002/E8-T4 (revalidated 2026-08-21). Keep Geoapify-only aggregate quality evidence and explicit manual review from E3-T5. Public Nominatim remains ineligible for recurring jobs; at most it may be a potential small one-time seed fallback if its policy permits the specific use and every condition is met. Defer self-hosting until usage or provider terms justify a separate benchmark/host. Operator command: `wef-revalidate-recurring-geocoder [--live-check]`.
+
+## E26 address validation (warsaw-review-v2)
+
+Automatic selection compares versioned source/provider street, house number and
+locality evidence before the 0.80 confidence floor. Missing structured evidence
+cannot prove agreement. Geoapify amenities no longer map to building precision;
+street-only sources require a street result, and an area centroid cannot satisfy
+a street request. Gocław is a Warsaw neighborhood with Praga-Południe context.
+
+Each response contributes at most five candidates. Multiple address-compatible
+positions remain ambiguous even when one has higher confidence. The resolver may
+try one additional source-supported form; street-only fallback sends `type=street`
+and has its own `forward-geocode-v4-street` cache identity. Both forms use the
+existing durable provider budget. Base normalization/request versions are
+`warsaw-address-v3` and `forward-geocode-v4`. Geoapify's documented
+[forward geocoding fields and request parameters](https://apidocs.geoapify.com/docs/geocoding/)
+were checked on 2026-09-06; no provider or paid capacity changed.
+
+The existing JSONB response envelope gains a bounded `address_evidence` allowlist
+and sanitized candidate summaries. Old rows without that evidence remain readable
+but unvalidated; no schema migration or historical evidence rewrite is needed.
+Selections retain provider result IDs, policy version, automatic actor and reason.
+Quality `no_result` is cached for its version and settles as `no_match`; low
+precision/confidence, mismatch and ambiguity also settle after bounded forms.
+Transient/quota outcomes retain defer behavior and never trigger a quality fallback.
+Current out-of-scope terminal results do not churn the pending queue; stale
+request/normalizer versions can still retry through the existing negative path.
+
+E26-T1 supersedes recurring AD-034 blanket acceptance. The worker no longer calls
+pending-pin acceptance; the explicit command rechecks at most 25 pending candidates
+with the same policy and records `automatic_policy`, never counterfeit owner review.
+Under a location lock, automatic writes preserve genuine owner/AI and unknown actor
+lineage. Only the exact historical `operator` / `ad-034-accept-pending-pins` actor is
+recognized as the prior automatic override. Historical entries are retained.
+
+This changes future decisions. E26-T2 owns version-aware revalidation of accepted
+locations; E26-T3 owns honest map/list discovery. Existing Ostrzycka and
+Jugosłowiańska points are not verified repaired by the policy tests. Broad existing
+location application waits for the plan's observation, discovery and canary gates.
+
+## E26 durable revalidation (T2 rollout pending)
+
+Migration `20260906_0026` adds an empty control row namespace, keyset work queue
+and immutable observation/application/rollback receipts. It changes no existing
+coordinate. `GEOCODE_REVALIDATION_ENABLED` defaults true; new policy generations
+start in **observe**, never apply. Every worker cycle scans at most 100 locations
+and resolves at most 25 work items. A source fingerprint and target
+normalizer/request/review version make completed work idempotent. Protected
+selection actors become exceptions without a provider request.
+
+Foreground and revalidation share one durable account budget, capped at the
+configured cycle allowance or 25 requests, whichever is lower. With foreground
+work, repair uses at most half that allowance. Both query forms consume this
+same budget. Current cache evidence is reused. Quota pauses the target until the
+UTC daily reset; transient failures use bounded backoff and stop after five
+consecutive failures. Work leases last 120 seconds and renew during active I/O.
+Source/selection revisions, actor protection and the lease fence are checked
+under lock before selection and receipt commit together.
+
+Apply requires deployed honest discovery, completed observations and 1–25 named
+canaries. The queue does not infer real-world correctness from canary completion:
+`verify-canary` records the operator's geometry/map/list verification before
+allowing automatic expansion. No production application or case verification
+has occurred in this implementation. T3 and its E14-T5 dependency remain open.
+
+Rollback pauses scheduling, fences in-flight work and examines up to 25 applied
+receipts per invocation. It restores only unchanged automatic selections whose
+predecessor still passes current source agreement. Missing/invalid predecessors
+are retained without restoration; source/owner/selection edits are skipped.
+Rollback receipts make repeated batches resumable. Schema and history remain in
+place; do not downgrade or restore blanket acceptance during application rollback.
+
+
+### Provider district translations (E26 canary correction)
+
+The adapter recognizes the reviewed provider district/suburb values `South Praga`
+and `North Praga` as Praga-Południe and Praga-Północ. A translated district does
+not become a conflicting neighborhood. Unknown translations and explicit district
+conflicts remain unresolved; all street/number, city/country, confidence and
+precision guards remain in force. Request generation v4 invalidates the older
+cached interpretation. See [canary evidence](../epics/E26-automatic-location-validation/PROVIDER_DISTRICT_NORMALIZATION.md).
+
+
+## Municipal-first resolution (E26-T4)
+
+Forward request version `forward-geocode-v5` resolves uniquely matched Warsaw municipal street geometry or numbered address points first, then the existing budgeted hosted geocoder. Street geometry produces approximate street precision. Optional, already-authorized AI recovery may quote only source-supported street text and trigger one verified lookup retry; AI supplies no coordinates. Owner selections remain protected. Municipal results retain city attribution and response hashes, use bounded public WFS requests, and refresh on use through weekly cache keys. Outages do not become durable unresolved verdicts when both lookup stages fail. Existing deployment configuration and provider budgets remain unchanged.
+
+The new request version starts a fresh observation generation. Verify production canaries and protected selections before enabling its guarded application/backfill; rolling back to v4 uses its separate control generation. No schema migration is required. See [the policy and verification plan](../epics/E26-automatic-location-validation/MUNICIPAL_FIRST.md).
+
+## E28 current-offer street resolution
+
+`warsaw-address-v4` treats the reviewed Sielce neighborhood as Warsaw/Mokotów,
+just as Gocław maps to Praga-Południe. Explicit incompatible districts or cities
+remain mismatches. `municipal-v2` supports disconnected geometry components of
+one exact municipal street identity: after clipping to the verified district,
+it uses the midpoint of the longest nonzero line component with a stable geometry
+tie-break. This is a representative **street** position, never a building claim.
+Different hosted candidate coordinates remain ambiguous; this rule does not
+combine unrelated provider records. Cache/validation versioning makes old
+terminal decisions eligible for current-policy revalidation; protected selections
+and observation/canary rollout remain authoritative.
+
+## E28 nearby locality precision
+
+A complete source pin naming a locality and `gmina` preserves both names and no
+longer injects Warsaw. The existing Geoapify request uses `type=city`, requiring
+positive city, municipality and PL country agreement, unique candidate position,
+high confidence and bounded Warsaw-environs coordinates (north 52.6). Street or
+house evidence cannot degrade to a locality point. The public projection permits
+accepted city points with the existing **Approximate area** label; district and
+unresolved points remain outside spatial results. Default map bounds include this
+northern area. Normalizer/scope/review versions invalidate old cached decisions.
+
+The provider's [geocoding documentation](https://apidocs.geoapify.com/docs/geocoding/)
+documents town/village requests through `type=city`. A bounded read-only production
+probe returned one matching Dosin/gmina Serock result; production canary selection
+remains part of E28 backfill acceptance. No provider quota or dependency changed.

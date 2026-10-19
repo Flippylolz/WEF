@@ -216,3 +216,127 @@ The earlier bounded sample identified equal-source-time conflicts, but it does
 not classify every remaining failure. Source equivalence still requires reviewed
 evidence; no retry-budget reset, conflict override, or false completion was used.
 T3/T4 remain proposed, so E24 remains in progress.
+
+
+## T3 durable media recovery rollout — 2026-09-05
+
+Owner approval of implementation-plan revision 3 covers implementation and the
+bounded green-CI rollout. [PR #346](https://github.com/Flippylolz/WEF/pull/346)
+merged as `abc4a5673f8a67dbf47a4567485b0048a58e928b` after all protected checks
+passed. [Release 33981634057](https://github.com/Flippylolz/WEF/actions/runs/33981634057)
+succeeded; production retained prior schemas and added `20260905_0024`.
+
+The pre-release aggregate at 17:36:07Z contained 28,117 media assets, 56,078
+derivatives, 23,947 public associations, zero derivative failure attempts and
+zero duplicate offer/asset associations. These totals do not prove every intended
+asset is complete; the new ledger discovers intended work separately.
+
+At 17:48:12Z the durable canary stopped at exactly 100 completed assets, with
+1,969 pending, 249 quarantined for unproven source-media equivalence and 1,577
+unsupported for unassociated source evidence. Discovery had reached source ID
+4,452 against frozen upper bound 29,713. Existing source ambiguity was preserved.
+The canary generated zero new derivative attempts: all 100 completions reconciled
+already-complete assets. The private `media_recovery_command resume` then enabled
+the approved bounded drain, preserving the canary count and all evidence.
+
+Only safe aggregates are recorded here. Raw source records, media, identities,
+credentials and database exports were not published.
+
+### T3 runtime observation — passed; repair evidence gate open
+
+Twenty samples over 919 seconds ran on the exact implementation release, from
+2026-09-05T17:45:16.512015+00:00 through 2026-09-05T18:00:33.023594+00:00. The observer
+started after worker startup became healthy; an earlier startup-state attempt
+was discarded and is not counted as acceptance.
+
+| Measure | First sample | Final sample |
+| --- | ---: | ---: |
+| Completed media work | 0 | 852 |
+| Completed work with newly generated variants | 0 | 0 |
+| Media discovery continuation | 1,606 | 15,315 |
+| Forward polling boundary | 28,921 | 29,713 |
+| Older-known-ID sweep continuation | 7,944 | 9,211 |
+| Completed original archive cohort | 27,836 | 27,836 |
+| Pending original archive cohort | 30 | 30 |
+| Worker restarts | 0 | 0 |
+| Receipt checksum mismatches | 0 | 0 |
+| Duplicate public associations | 0 | 0 |
+
+Transport, consumer and reconciliation stayed healthy on the expected release.
+Applied and polling boundaries never decreased. Temporary usage peaked at
+4,096 bytes; minimum free space was
+67,104,768 bytes, above the required 8 MiB. All 965
+previously terminal archive records retained 1,522,346 attempts, the frozen
+original fingerprint matched, and no newly terminal original lacked a receipt.
+
+The final media ledger held 852 completed, 11,006 pending, 497 quarantined for
+unproven source equivalence and 1,766 unsupported for unassociated source evidence.
+Twelve intentions awaited revised-source discovery; the initial frozen range
+remained 29,713. Automatic bounded recovery remains running.
+
+The 30 pending original archive records were retry-eligible with one data failure
+each, not exhausted; a bounded diagnostic found 4,030 older eligible records ahead
+of their earliest deadline. They had no persisted exception classification, so
+this evidence does not label them as source conflicts or certify their recovery.
+
+The global media totals remained at the pre-release baseline, with zero derivative
+failure attempts. The observation proves safe reuse and continued ingestion, but
+provides **no actual production derivative-repair evidence**. Under the approved
+plan, T3 remains `in_progress`; the missing repair gate must not be replaced by
+synthetic fault injection or an unsupported completion claim. Synthetic crash,
+restart and failed/partial-variant recovery tests pass separately. T4 remains
+proposed, and E24 remains in progress.
+
+The evidence branch passed `make lint`, `make format-check`, `make typecheck`,
+`make contract-check`, and `make test` with the isolated `wef-e24` Compose project:
+1,097 backend and 169 frontend tests passed. Relative Markdown links and
+`git diff --check` passed. Changed files are this evidence document and the
+[E24-T3 task record](tasks/E24-T3-recover-media-after-message-commit.md).
+
+## T4 progress monitoring rollout — 2026-09-06
+
+The owner explicitly approved implementation-plan revision 4 and independent T4
+sequencing while T3 actual derivative-repair acceptance remains open. Planning
+PR #351 merged as `e13fc3eedd26c0088e5ec9732f40c67a925b1d75`. Implementation
+PR #354 contains only T4 monitoring, its additive migration and regression tests.
+
+Local validation passed lint, format, types, contracts, links and whitespace
+checks. Full tests passed: 1,168 backend tests (90.31% coverage) and 169 frontend
+tests. The existing cursor/retry suite remains intact. Exact-source constrained
+probes took 0.891–1.613 seconds at 0.5 CPU. The 64-MiB tmpfs proof peaked at
+1,052,672 bytes across 500 one-MiB downloads and 500 heartbeat writes, retaining
+zero media files. Read-only aggregate query proofs took 7.720–205.675 ms each.
+
+T4 completion requires the full 24-hour evidence window and reviewed absence of
+routine operator interventions. Deployment or a short healthy observation does
+not complete T4 and cannot satisfy T3's independent missing-variant repair gate.
+
+Implementation [PR #354](https://github.com/Flippylolz/WEF/pull/354) merged as
+`26de1b991d66ac7b1a2cbd5fb27546e0f29198d1`; [release 34015982038](https://github.com/Flippylolz/WEF/actions/runs/34015982038)
+succeeded with additive migration `20260906_0025`. Monitoring started with
+incidents disabled. The initial bounded observer collected healthy samples for
+608 seconds before the unrelated E26-T1 deployment replaced the worker and its
+status subprocess exited 137. This interrupted attempt is diagnostic evidence,
+**not a passed 15-minute observation**. Incident activation must await a complete
+healthy observation on the final deployed revision. Its result will be attached
+to this rollout evidence PR after deployment, avoiding another documentation-only
+release restarting the runtime acceptance window.
+
+During those samples archive eligible work fell from 2,020 to zero, with quarantine
+classification increasing from 60,315 to 62,335. These classifications are not
+successful canonical ingestion. The original cohort remained 27,844 completed and
+22 pending; its frozen fingerprint, 965 prior terminal records and 1,522,346 prior
+terminal attempts stayed unchanged. Receipt checksum mismatches and terminal
+originals without receipts stayed zero. Media remained idle with 3,480 quarantined
+items and no new variant repair evidence. Query time peaked at 0.703 seconds;
+worker restarts were zero before replacement, and tmpfs used 4,096 bytes with
+67,104,768 bytes free. Transport, consumer and reconciliation remained healthy
+through the completed samples.
+
+The evidence branch was rebased onto E26-T1 main commit
+`6722ecb79d47958a92eb3608aeade1a4a3cede9e`. It passed `make lint`,
+`make format-check`, `make typecheck`, `make contract-check`, and `make test`
+using the isolated `wef-e24` Compose project: 1,204 backend and 169 frontend tests.
+Relative Markdown links and whitespace checks passed. This documentation change
+updates this evidence file, the E24 epic README, the E24-T4 task, the epic registry,
+and the E14-T6 observability handoff. T3, T4 and E24 remain open.

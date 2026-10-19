@@ -1,0 +1,486 @@
+"""Bounded Warsaw WFS lookup with PostGIS verification of municipal geometry."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+import xml.etree.ElementTree as ET
+from dataclasses import dataclass
+from decimal import Decimal
+from typing import TYPE_CHECKING, Protocol
+from xml.sax.saxutils import escape
+
+import httpx
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+
+from wef_backend.features.ingestion.application.location_resolution import MunicipalUnavailableError
+from wef_backend.features.ingestion.domain.address_evidence import AddressEvidence, fold_address
+from wef_backend.features.ingestion.domain.geocoding import (
+    GeocodeErrorCode,
+    GeocodePrecision,
+    GeocodeProvider,
+    GeocodeResult,
+    NormalizedGeocodeQuery,
+    canonical_warsaw_district,
+    within_warsaw,
+)
+from wef_backend.features.ingestion.infrastructure.geocoder_adapters import ProviderPolicy
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+WFS = "https://wfs.um.warszawa.pl/serwis"
+ADDRESS_WFS = "https://wms2.um.warszawa.pl/geoserver/wfs/wfs"
+ATTRIBUTION = "Urząd m.st. Warszawy — miejskie dane adresowe i nazewnicze"
+_NS = "http://fdo.osgeo.org/schemas/feature/ns92528565"
+_GML = "http://www.opengis.net/gml"
+_LIMIT = 6
+_MAX_BYTES = 1_000_000
+_MIN_LINE_VALUES = 4
+_MAX_LINE_VALUES = 20_000
+_POINT_VALUES = 2
+
+
+class MunicipalTransport(Protocol):
+    """Replaceable, bounded public-data transport."""
+
+    async def get(self, url: str, params: dict[str, str]) -> bytes:
+        """Read a bounded body without redirects or credentials."""
+        ...
+
+
+class MunicipalHTTP:
+    """One request per second, no retries, and at most one MB per response."""
+
+    def __init__(self) -> None:
+        """Set the public-service rate and per-cycle ceiling."""
+        self.policy = ProviderPolicy(Decimal(1), 100, 0, 10, "WEF municipal lookup/1.0")
+
+    async def get(self, url: str, params: dict[str, str]) -> bytes:
+        """Stream only allowlisted endpoints under the response ceiling."""
+        if url not in {WFS, ADDRESS_WFS} or not await self.policy.enter():
+            message = "municipal request limit"
+            raise ValueError(message)
+        async with (
+            httpx.AsyncClient(timeout=10, follow_redirects=False) as client,
+            client.stream(
+                "GET", url, params=params, headers={"User-Agent": "WEF municipal lookup/1.0"}
+            ) as response,
+        ):
+            response.raise_for_status()
+            body = bytearray()
+            async for part in response.aiter_bytes():
+                body.extend(part)
+                if len(body) > _MAX_BYTES:
+                    message = "municipal response limit"
+                    raise ValueError(message)
+            return bytes(body)
+
+
+def _params(layer: str, field: str, value: str) -> dict[str, str]:
+    condition = (
+        "<PropertyIsEqualTo>"
+        f"<PropertyName>{field}</PropertyName><Literal>{escape(value)}</Literal>"
+        "</PropertyIsEqualTo>"
+    )
+    return {
+        "SERVICE": "WFS",
+        "VERSION": "1.1.0",
+        "REQUEST": "GetFeature",
+        "TYPENAME": f"ns92528565:{layer}",
+        "MAXFEATURES": str(_LIMIT),
+        "SRSNAME": "EPSG:2178",
+        "FILTER": f'<Filter xmlns="http://www.opengis.net/ogc">{condition}</Filter>',
+    }
+
+
+def _records(body: bytes, layer: str) -> list[ET.Element]:
+    if len(body) > _MAX_BYTES or b"<!DOCTYPE" in body or b"<!ENTITY" in body or b"\x00" in body:
+        message = "unsafe municipal XML"
+        raise ValueError(message)
+    root = ET.fromstring(body)  # noqa: S314 - capped UTF-8/ASCII body; DTD/entities/null encodings rejected
+    if not root.tag.endswith("FeatureCollection"):
+        message = "municipal service exception"
+        raise ValueError(message)
+    rows = root.findall(f".//{{{_NS}}}{layer}")
+    if len(rows) >= _LIMIT:
+        message = "truncated municipal response"
+        raise ValueError(message)
+    return rows
+
+
+def _street_params(term: str) -> dict[str, str]:
+    """Match either official short or full name, without fuzzy surname matching."""
+    params = _params("ULICE", "NAZWA_SKROC", term)
+    conditions = "".join(
+        "<PropertyIsEqualTo>"
+        f"<PropertyName>{field}</PropertyName><Literal>{escape(value)}</Literal>"
+        "</PropertyIsEqualTo>"
+        for field, value in (
+            ("NAZWA_SKROC", term),
+            ("NAZWA_PODST", term),
+            ("NAZWA_PODST", "ulica " + term),
+        )
+    )
+    params["FILTER"] = f'<Filter xmlns="http://www.opengis.net/ogc"><Or>{conditions}</Or></Filter>'
+    return params
+
+
+def _field(row: ET.Element, name: str) -> str:
+    return (row.findtext(f"{{{_NS}}}{name}") or "").strip()
+
+
+def _line(row: ET.Element) -> str:
+    lines = []
+    for values in row.findall(f".//{{{_GML}}}posList"):
+        numbers = [float(value) for value in (values.text or "").split()]
+        if (
+            not _MIN_LINE_VALUES <= len(numbers) <= _MAX_LINE_VALUES
+            or len(numbers) % 2
+            or not all(math.isfinite(v) for v in numbers)
+        ):
+            message = "invalid municipal line"
+            raise ValueError(message)
+        lines.append(
+            "("
+            + ",".join(f"{numbers[i]} {numbers[i + 1]}" for i in range(0, len(numbers), 2))
+            + ")"
+        )
+    if not lines:
+        message = "missing municipal line"
+        raise ValueError(message)
+    return "MULTILINESTRING(" + ",".join(lines) + ")"
+
+
+def _polygon(row: ET.Element) -> ET.Element:
+    """Accept a single polygon or the city's single GML Surface patch."""
+    polygons = row.findall(f".//{{{_GML}}}Polygon")
+    patches = row.findall(f".//{{{_GML}}}PolygonPatch")
+    if len(polygons) + len(patches) != 1:
+        message = "missing or ambiguous municipal district"
+        raise ValueError(message)
+    if polygons:
+        return polygons[0]
+    surface = row.find(f".//{{{_GML}}}Surface")
+    if surface is None or surface.get("srsName") != "EPSG:2178":
+        message = "invalid municipal district CRS"
+        raise ValueError(message)
+    polygon = ET.Element(f"{{{_GML}}}Polygon")
+    polygon.extend(patches[0])
+    return polygon
+
+
+def _empty(
+    error: GeocodeErrorCode = GeocodeErrorCode.NO_RESULT, *, ambiguous: bool = False
+) -> GeocodeResult:
+    return GeocodeResult(
+        provider=GeocodeProvider.MUNICIPAL,
+        provider_result_id=None,
+        longitude=None,
+        latitude=None,
+        display_name=None,
+        precision=GeocodePrecision.UNKNOWN,
+        confidence=Decimal(0),
+        within_scope=None,
+        attribution_text=ATTRIBUTION,
+        error_code=error,
+        diagnostic=(("candidate_ambiguity", "true" if ambiguous else "false"),),
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class MunicipalGeocoder:
+    """Match municipal street identity before deriving any coordinate."""
+
+    sessions: async_sessionmaker[AsyncSession]
+    transport: MunicipalTransport
+    provider: GeocodeProvider = GeocodeProvider.MUNICIPAL
+
+    async def geocode(self, query: NormalizedGeocodeQuery) -> GeocodeResult:
+        """Read source-supported municipal evidence without accepting coarse results."""
+        address = query.address
+        if (
+            not address
+            or fold_address(address.city) not in {"warszawa", "warsaw"}
+            or fold_address(address.country_code) != "pl"
+        ):
+            return _empty()
+        try:
+            if not address.street and not address.house_number:
+                return await self._district_area(address)
+            return await self._lookup(address)
+        except (
+            httpx.HTTPError,
+            SQLAlchemyError,
+            ValueError,
+            TypeError,
+            KeyError,
+            ET.ParseError,
+        ) as error:
+            message = "municipal lookup unavailable"
+            raise MunicipalUnavailableError(message) from error
+
+    async def _district_area(self, address: AddressEvidence) -> GeocodeResult:
+        """Use one authoritative district polygon only for area-only source evidence."""
+        district = canonical_warsaw_district(address.district)
+        if district is None:
+            return _empty()
+        body = await self.transport.get(WFS, _params("GRANICE_DZIELNIC", "DZIELNICA", district))
+        rows = [
+            row
+            for row in _records(body, "GRANICE_DZIELNIC")
+            if canonical_warsaw_district(_field(row, "DZIELNICA")) == district
+        ]
+        if len(rows) != 1:
+            return _empty(ambiguous=len(rows) > 1)
+        polygon = ET.tostring(_polygon(rows[0]), encoding="unicode")
+        async with self.sessions() as session:
+            row = (
+                await session.execute(
+                    text("""
+                WITH area AS (SELECT ST_SetSRID(ST_GeomFromGML(:polygon),2178) geom),
+                valid AS (SELECT geom FROM area WHERE ST_IsValid(geom)
+                    AND NOT ST_IsEmpty(geom) AND ST_Area(geom)>0),
+                point AS (SELECT ST_Transform(ST_PointOnSurface(geom),4326) geom FROM valid)
+                SELECT ST_X(geom),ST_Y(geom) FROM point
+            """),
+                    {"polygon": polygon},
+                )
+            ).one_or_none()
+        if row is None:
+            return _empty()
+        lon, lat = Decimal(str(row[0])), Decimal(str(row[1]))
+        return GeocodeResult(
+            provider=self.provider,
+            provider_result_id=f"GRANICE_DZIELNIC:{district}",
+            longitude=lon,
+            latitude=lat,
+            display_name=f"{district}, Warszawa",
+            precision=GeocodePrecision.DISTRICT,
+            confidence=Decimal(1),
+            within_scope=within_warsaw(lon, lat),
+            attribution_text=ATTRIBUTION,
+            address=AddressEvidence(
+                district=district, city="Warszawa", country_code="PL", result_type="district"
+            ),
+            diagnostic=(("municipal_district_sha256", hashlib.sha256(body).hexdigest()),),
+        )
+
+    async def _lookup(self, address: AddressEvidence) -> GeocodeResult:
+        if address.street is None:
+            return _empty()
+        # Exact municipal identity is required; unsupported spellings use hosted fallback.
+        term = address.street.removeprefix("ul. ").removeprefix("ulica ")
+        body = await self.transport.get(WFS, _street_params(term))
+        rows = [
+            row
+            for row in _records(body, "ULICE")
+            if fold_address(address.street)
+            in {fold_address(_field(row, field)) for field in ("NAZWA_SKROC", "NAZWA_PODST")}
+        ]
+        if address.district:
+            rows = [
+                row
+                for row in rows
+                if canonical_warsaw_district(address.district)
+                in [canonical_warsaw_district(v) for v in _field(row, "DZIELNICE").split(",")]
+            ]
+        if len(rows) != 1:
+            return _empty(ambiguous=len(rows) > 1)
+        row = rows[0]
+        district = canonical_warsaw_district(address.district) or canonical_warsaw_district(
+            _field(row, "DZIELNICE")
+        )
+        names = (
+            [district]
+            if district
+            else [canonical_warsaw_district(v) for v in _field(row, "DZIELNICE").split(",")]
+        )
+        if not names or None in names or len(names) >= _LIMIT:
+            return _empty(ambiguous=True)
+        polygon = ET.Element(f"{{{_GML}}}MultiPolygon", {"srsName": "EPSG:2178"})
+        district_bodies = []
+        for name in names:
+            district_body = await self.transport.get(
+                WFS, _params("GRANICE_DZIELNIC", "DZIELNICA", str(name))
+            )
+            district_bodies.append(district_body)
+            districts = [
+                r
+                for r in _records(district_body, "GRANICE_DZIELNIC")
+                if canonical_warsaw_district(_field(r, "DZIELNICA")) == name
+            ]
+            if len(districts) != 1:
+                message = "municipal district unavailable"
+                raise ValueError(message)
+            ET.SubElement(polygon, f"{{{_GML}}}polygonMember").append(_polygon(districts[0]))
+        line = _line(row)
+        polygon_text = ET.tostring(polygon, encoding="unicode")
+        point = None
+        address_hash = ""
+        identity = "ULICE:" + _field(row, "OBJECTID")
+        if address.house_number:
+            point, identity, address_hash = await self._address_point(
+                address, _field(row, "NAZWA_SKROC"), line=line, polygon=polygon_text
+            )
+            if point is None:
+                return _empty(ambiguous=identity == "ambiguous")
+        coordinates = await self._project(line, polygon_text, point)
+        if coordinates is None:
+            return _empty()
+        lon, lat = coordinates
+        evidence = AddressEvidence(
+            street=term,
+            house_number=address.house_number,
+            district=district,
+            city="Warszawa",
+            country_code="PL",
+            result_type="house" if point else "street",
+        )
+        return GeocodeResult(
+            provider=self.provider,
+            provider_result_id=identity,
+            longitude=lon,
+            latitude=lat,
+            display_name=(
+                f"{evidence.street}"
+                f"{' ' + address.house_number if address.house_number else ''}"
+                f"{', ' + district if district else ''}, Warszawa"
+            ),
+            precision=GeocodePrecision.BUILDING if point else GeocodePrecision.STREET,
+            confidence=Decimal("0.95"),
+            within_scope=True,
+            attribution_text=ATTRIBUTION,
+            error_code=None,
+            address=evidence,
+            diagnostic=(
+                ("municipal_street_sha256", hashlib.sha256(body).hexdigest()),
+                (
+                    "municipal_district_sha256",
+                    hashlib.sha256(b"".join(district_bodies)).hexdigest(),
+                ),
+                (
+                    "coordinate_method",
+                    "address_point" if point else "longest_street_segment_midpoint",
+                ),
+                ("source_url", ADDRESS_WFS if point else WFS),
+                ("municipal_address_sha256", address_hash),
+            ),
+        )
+
+    async def _address_point(
+        self, address: AddressEvidence, street: str, *, line: str, polygon: str
+    ) -> tuple[list[float] | None, str, str]:
+        def literal(value: str) -> str:
+            return "'" + value.replace("'", "''") + "'"
+
+        full_name = (address.street or "").removeprefix("ul. ").removeprefix("ulica ")
+        names = " OR ".join(
+            f"NAZWA_ULICY = {literal(v)}"
+            for v in dict.fromkeys((street, "ulica " + street, full_name, "ulica " + full_name))
+        )
+        params = {
+            "service": "WFS",
+            "version": "2.0.0",
+            "request": "GetFeature",
+            "typeNames": "wfs:punkty_adresowe",
+            "count": str(_LIMIT),
+            "outputFormat": "application/json",
+            "srsName": "EPSG:2178",
+            "CQL_FILTER": f"({names}) AND NUMER_PORZADKOWY = {literal(address.house_number or '')}",
+        }
+        body = await self.transport.get(ADDRESS_WFS, params)
+        data = json.loads(body)
+        features = data["features"]
+        if data.get("numberMatched") != len(features) or len(features) >= _LIMIT:
+            message = "incomplete municipal address response"
+            raise ValueError(message)
+        crs = data.get("crs")
+        properties = crs.get("properties") if isinstance(crs, dict) else None
+        if features and (
+            not isinstance(properties, dict)
+            or properties.get("name") != "urn:ogc:def:crs:EPSG::2178"
+        ):
+            message = "wrong municipal CRS"
+            raise ValueError(message)
+        matches = []
+        for feature in features:
+            props = feature["properties"]
+            if (
+                fold_address(props.get("NAZWA_ULICY"))
+                not in {fold_address(address.street), fold_address(street)}
+                or fold_address(props.get("NUMER_PORZADKOWY")) != fold_address(address.house_number)
+                or props.get("NAZWA_MIEJSCOWOSCI") != "Warszawa"
+            ):
+                continue
+            geometry = feature["geometry"]
+            coords = geometry["coordinates"]
+            if (
+                geometry["type"] != "Point"
+                or len(coords) != _POINT_VALUES
+                or not all(isinstance(v, (int, float)) and math.isfinite(v) for v in coords)
+            ):
+                message = "invalid address point"
+                raise ValueError(message)
+            matches.append((coords, str(props["ID_IIP"])))
+        if len(matches) > 1:
+            # Same street names and numbers can occur in separate Warsaw districts.
+            # Filter with the already verified street and district geometry before
+            # deciding uniqueness; multiple supported points remain ambiguous.
+            matches = [
+                match
+                for match in matches
+                if await self._project(line, polygon, match[0]) is not None
+            ]
+        return (
+            (*matches[0], hashlib.sha256(body).hexdigest())
+            if len(matches) == 1
+            else (None, "ambiguous" if len(matches) > 1 else "", "")
+        )
+
+    async def _project(
+        self, line: str, polygon: str, point: list[float] | None
+    ) -> tuple[Decimal, Decimal] | None:
+        async with self.sessions() as session:
+            row = (
+                await session.execute(
+                    text("""
+                WITH areas AS (
+                    SELECT ST_SetSRID(ST_GeomFromGML(:polygon),2178) geom
+                ), geometry AS (
+                    SELECT ST_LineMerge(ST_GeomFromText(:line,2178)) line,
+                           ST_UnaryUnion(geom) district FROM areas
+                    WHERE NOT EXISTS (SELECT 1 FROM ST_Dump(geom) part
+                                      WHERE NOT ST_IsValid(part.geom))
+                ), valid AS (
+                    SELECT *, CASE WHEN ST_Covers(district,line) THEN line
+                                   ELSE ST_LineMerge(ST_Intersection(line,district)) END clipped
+                    FROM geometry WHERE ST_IsValid(district) AND ST_IsValid(line)
+                ), target AS (
+                    SELECT *, CASE WHEN :numbered THEN ST_SetSRID(ST_MakePoint(:x,:y),2178)
+                              ELSE (SELECT ST_LineInterpolatePoint(segment.geom,0.5)
+                                    FROM ST_Dump(ST_CollectionExtract(clipped,2)) segment
+                                    WHERE ST_Length(segment.geom)>0
+                                    ORDER BY ST_Length(segment.geom) DESC,
+                                             ST_AsEWKB(segment.geom)
+                                    LIMIT 1) END point
+                    FROM valid
+                )
+                SELECT ST_X(ST_Transform(point,4326)),ST_Y(ST_Transform(point,4326))
+                FROM target WHERE ST_Covers(district,point) AND ST_DWithin(line,point,150)
+            """),
+                    {
+                        "line": line,
+                        "polygon": polygon,
+                        "numbered": point is not None,
+                        "x": point[0] if point else 0,
+                        "y": point[1] if point else 0,
+                    },
+                )
+            ).one_or_none()
+        if row is None:
+            return None
+        lon, lat = Decimal(str(row[0])), Decimal(str(row[1]))
+        return (lon, lat) if within_warsaw(lon, lat) else None

@@ -28,6 +28,33 @@ const facets: FilterFacets = {
 describe("MapFilterControls", () => {
   afterEach(cleanup);
 
+  it("allows dates beyond a stale catalog's newest publication", async () => {
+    const onApply = vi.fn();
+    render(
+      <MapFilterControls
+        facets={{ ...facets, published_to: "2026-10-15T14:21:30Z" }}
+        facetsError={false}
+        facetsLoading={false}
+        state={DEFAULT_MAP_SEARCH_STATE}
+        onApply={onApply}
+        onClear={vi.fn()}
+      />,
+    );
+    const from = screen.getByLabelText("publishedFrom");
+    const to = screen.getByLabelText("publishedTo");
+    expect(from).not.toHaveAttribute("max");
+    expect(to).not.toHaveAttribute("max");
+    fireEvent.change(from, { target: { value: "2026-10-19" } });
+    fireEvent.change(to, { target: { value: "2026-10-19" } });
+    await userEvent.click(screen.getByRole("button", { name: "applyFilters" }));
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        publishedFrom: "2026-10-19T00:00:00.000Z",
+        publishedTo: "2026-10-19T23:59:59.999Z",
+      }),
+    );
+  });
+
   it("applies every M1 filter as one state change", async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();

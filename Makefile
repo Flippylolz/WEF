@@ -20,6 +20,7 @@ IMPORTER := $(COMPOSE) --profile operator run --rm historical-importer \
 
 help: ## List supported commands.
 	@printf '%s\n' \
+		'make verify             Run the complete local quality gate (installs locked dependencies)' \
 		'make install            Install frozen backend/frontend dependencies' \
 		'make format             Format backend/frontend source' \
 		'make format-check       Verify source formatting' \
@@ -28,7 +29,7 @@ help: ## List supported commands.
 		'make test               Run backend tests, then frontend tests' \
 		'make test-backend       Run backend tests' \
 		'make test-frontend      Run frontend tests' \
-		'make test-e2e           Run Playwright Chromium critical-path tests' \
+		'make test-e2e           Run real-stack cross-browser journeys' \
 		'make coverage           Refresh the combined coverage badge after both suites' \
 		'make coverage-backend   Run backend tests with the 90% coverage floor' \
 		'make coverage-frontend  Run frontend tests with the 90% coverage floor' \
@@ -73,20 +74,15 @@ typecheck: ## Run static type checks.
 	$(BACKEND) mypy
 	$(PNPM) --filter web typecheck
 
-test-backend: ## Run backend tests against disposable PostGIS.
-	$(COMPOSE) --profile test up --detach --wait db
-	$(COMPOSE) --profile test run --rm --no-deps test-db-reset
-	$(COMPOSE) --profile test run --rm --no-deps --build backend-test
+test-backend: coverage-backend ## Run PostGIS tests and independently enforce critical floors.
 
-test-frontend: ## Run frontend unit tests.
-	$(COMPOSE) --profile test run --rm --no-deps --build frontend-test
+test-frontend: coverage-frontend ## Run frontend tests with global and critical floors.
 
 test: test-backend test-frontend ## Run backend tests, then frontend tests.
 
-test-e2e: ## Run Playwright Chromium critical-path tests (map canvas disabled).
-	$(PNPM) --filter web test:e2e:install
-	NEXT_PUBLIC_WEF_DISABLE_MAP=1 $(PNPM) --filter web build
-	$(PNPM) --filter web test:e2e
+test-e2e: ## Run the real PostGIS/API/web browser matrix and privacy checks.
+	$(PNPM) --filter web exec playwright install --with-deps chromium firefox webkit
+	python3 scripts/run_full_stack_e2e.py
 
 coverage-backend: ## Run backend tests and write the coverage JSON.
 	mkdir -p "$(CURDIR)/tmp/coverage/backend"
@@ -97,12 +93,14 @@ coverage-backend: ## Run backend tests and write the coverage JSON.
 		backend-test pytest --cov=wef_backend --cov-branch \
 		--cov-fail-under=90 \
 		--cov-report=json:/coverage/coverage.json --cov-report=term-missing
+	python3 scripts/check_critical_coverage.py --backend tmp/coverage/backend/coverage.json
 
 coverage-frontend: ## Run frontend tests and write the coverage JSON.
 	mkdir -p "$(CURDIR)/tmp/coverage/frontend"
 	$(COMPOSE) --profile test run --rm --no-deps --build \
 		--volume "$(CURDIR)/tmp/coverage/frontend:/coverage" \
 		frontend-test pnpm test:coverage --coverage.reportsDirectory=/coverage/report
+	python3 scripts/check_critical_coverage.py --frontend tmp/coverage/frontend/report/coverage-summary.json
 
 coverage: coverage-backend coverage-frontend ## Refresh the combined coverage badge.
 	python3 scripts/render_coverage_badge.py \
@@ -193,3 +191,24 @@ import-run: ## Run persistence, geocoding, media, and verification until complet
 
 seed-m1: ## Converge the invented local M1 fixture after migrations.
 	$(COMPOSE) --profile operator run --rm seed
+
+.PHONY: verify quality-gates contract-compatibility
+verify: ## Complete local mapping; Runtime images additionally proves deployment topology in CI.
+	@for tool in uv pnpm docker shellcheck git; do command -v "$$tool" >/dev/null || { echo "make verify requires $$tool; see AI/epics/E14-production-hardening-and-scalability/T1_VERIFICATION.md"; exit 1; }; done
+	$(MAKE) install
+	$(MAKE) format-check lint typecheck test contract-check
+	$(MAKE) quality-gates contract-compatibility
+	env -u COMPOSE_PROJECT_NAME $(MAKE) compose-config production-proof build
+	cd apps/backend && $(UV) run python scripts/prove_architecture_violation.py
+	python3 scripts/check_markdown_links.py
+
+quality-gates: ## Fail on drift and prove deliberate removal of quality gates is rejected.
+	$(BACKEND) ruff format --check ../../scripts
+	$(BACKEND) ruff check ../../scripts
+	$(BACKEND) mypy --strict ../../scripts
+	python3 scripts/check_quality_gates.py
+	$(BACKEND) python ../../scripts/prove_critical_faults.py
+	python3 -m unittest discover -s scripts -t . -p 'test_*.py'
+
+contract-compatibility: ## Compare the generated contract to current main and prove rejection.
+	sh scripts/check_openapi_compatibility.sh

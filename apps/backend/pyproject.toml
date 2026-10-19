@@ -71,6 +71,9 @@ addopts = [
     "--strict-markers",
     "-ra",
 ]
+filterwarnings = [
+    "error",
+]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [

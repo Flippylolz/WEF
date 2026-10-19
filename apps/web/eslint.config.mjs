@@ -11,7 +11,7 @@ const eslintConfig = defineConfig([
   // See https://github.com/vercel/next.js/issues/89764
   {
     settings: {
-      react: { version: "19.2.8" },
+      react: { version: "19.3.1" },
     },
   },
   // eslint-config-next's Babel parser lacks ScopeManager#addGlobals required by
@@ -21,6 +21,10 @@ const eslintConfig = defineConfig([
     languageOptions: {
       parser: tsParser,
     },
+  },
+  {
+    files: ["src/components/explorer/use-*.ts"],
+    rules: { complexity: ["error", 12] },
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([

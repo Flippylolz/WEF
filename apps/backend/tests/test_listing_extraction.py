@@ -237,8 +237,8 @@ def test_pin_line_variants_and_inline_field_boundaries() -> None:
     assert merged.listing.district.value == "Włochy"
 
 
-def test_pin_line_rejects_prose_headers_and_out_of_scope_localities() -> None:
-    """Section headers, marketing prose, and non-Warsaw localities stay null."""
+def test_pin_line_rejects_prose_headers_and_preserves_explicit_localities() -> None:
+    """Section headers and marketing prose stay null; explicit localities retain evidence."""
     header = _candidate(
         "Покупка | Квартира\n"
         "📍 Локация:\n"
@@ -253,7 +253,7 @@ def test_pin_line_rejects_prose_headers_and_out_of_scope_localities() -> None:
         "Покупка | Квартира\n📍 Dosin, гмина Serock, Мазовецкое воеводство\nЦена: 500 000 zł",  # noqa: RUF001
     )
     assert out_of_scope.listing is not None
-    assert out_of_scope.listing.location is None
+    assert out_of_scope.listing.location is not None
 
     prose = _candidate("Покупка | Квартира\n📍 Идеальная локация — тихо и уютно\nЦена: 500 000 zł")  # noqa: RUF001
     assert prose.listing is not None

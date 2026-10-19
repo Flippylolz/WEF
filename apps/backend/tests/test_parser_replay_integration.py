@@ -149,7 +149,7 @@ FROM offers o CROSS JOIN source_messages m
             78000000,
             "PLN",
             "hidden",
-            "e2-v14",
+            "e2-v18",
         )
         assert (
             row.id,
@@ -167,7 +167,7 @@ field_name='apartment_price_min'
 """
                 )
             )
-            == "e2-v14"
+            == "e2-v18"
         )
         assert (
             await session.scalar(
@@ -275,7 +275,7 @@ SELECT phase FROM parser_replay_releases WHERE version=:version
                 """
 INSERT INTO
 parser_replay_releases(version,parser_version,policy_version,phase)
-VALUES ('future','e2-v15','source-evidence-v1','running')
+VALUES ('future','e2-v19','source-evidence-v1','running')
 """
             )
         )
@@ -316,7 +316,7 @@ UPDATE source_message_revisions SET text_original='different'
         ),
         ("DELETE FROM offer_sources", "excluded"),
         ("UPDATE offers SET parser_version='owner-ai-v1'", "excluded"),
-        ("UPDATE offers SET parser_version='e2-v15'", "excluded"),
+        ("UPDATE offers SET parser_version='e2-v19'", "excluded"),
     ],
 )
 async def test_explicit_terminal_populations_do_not_starve(
@@ -472,3 +472,31 @@ offer_field_origins WHERE origin='ai' ORDER BY field_name
 """)
             )
         ).all() == origins
+
+
+async def test_rollback_pause_fences_an_outstanding_claim(replay_db: DatabaseResources) -> None:
+    """A claim obtained before rollback cannot write after its release is paused."""
+    await seed(replay_db, count=2)
+    now = datetime.now(UTC)
+    replay = SQLAlchemyParserReplay(replay_db.session_factory)
+    await replay.tick(now, apply=False, live_ready=lambda: True)
+    assert await replay.counts() == {"observed": 2}
+    completed = await replay.claim(now, apply=True)
+    assert completed is not None
+    await replay.process(completed, now, apply=True)
+    outstanding = await replay.claim(now, apply=True)
+    assert outstanding is not None
+    completed_id = completed["id"]
+    assert isinstance(completed_id, UUID)
+    result = await rollback_parser_work(replay_db.session_factory, completed_id, now)
+    assert result["reverted"] > 0
+    await replay.process(outstanding, now, apply=True)
+    async with replay_db.session_factory() as session:
+        assert await session.scalar(text("SELECT phase FROM parser_replay_releases")) == "paused"
+        assert (
+            await session.scalar(
+                text("SELECT count(*) FROM offers WHERE price_min_minor IS NOT NULL")
+            )
+            == 0
+        )
+    assert await replay.counts() == {"updated": 1, "deferred": 1}

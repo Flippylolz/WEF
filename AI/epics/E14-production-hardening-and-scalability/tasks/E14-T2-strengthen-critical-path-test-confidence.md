@@ -3,7 +3,7 @@ schema: ai-workflow/task@1
 id: E14-T2
 epic: E14
 title: "Strengthen critical-path test confidence"
-status: draft
+status: done
 revision: 1
 priority: P1
 size: L
@@ -24,28 +24,28 @@ spike_gate:
   verified_by: "Codex agent (AD-041)"
   verified_at: "2026-08-29T21:17:35Z"
 implementation_gate:
-  status: blocked
+  status: satisfied
   file: ../IMPLEMENTATION_PLAN.md
-  approved_revision: null
-  verified_by: null
-  verified_at: null
+  approved_revision: 1
+  verified_by: Codex
+  verified_at: "2026-09-06T06:51:36.365914+00:00"
 dependency_gate:
-  status: blocked
-  verified_by: null
-  verified_at: null
-  evidence: []
+  status: satisfied
+  verified_by: Codex
+  verified_at: "2026-09-06T07:17:45.782020+00:00"
+  evidence: ["E14-T1 done via PR #358, merge 086e8414682cc502d50efbeb916f4960dd41cf13; release 34018934497 succeeded"]
 branch:
   required: true
-  name: null
+  name: feat/E14-T2-critical-test-confidence
   task_id: E14-T2
   one_task_only: true
-  created_at: null
-  pull_request: null
+  created_at: "2026-09-06T07:17:45.782020+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/359
 completion:
-  completed_by: null
-  completed_at: null
-  pull_request: null
-  evidence: []
+  completed_by: Codex
+  completed_at: "2026-09-06T07:47:22.527779+00:00"
+  pull_request: https://github.com/Flippylolz/WEF/pull/359
+  evidence: ["make verify passed: 1218 backend, 170 frontend, 184 script tests; five detected faults and three seeds", "PR #359 required checks passed; merge 7367402ff76abe78c414c023d2f0c66254cedc2f; release 34019827017 succeeded"]
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -77,13 +77,13 @@ failure-case coverage and independently enforced confidence floors.
 
 ## Acceptance criteria and checks
 
-- [ ] A reviewed risk matrix maps critical behaviors to the test layer that owns them.
-- [ ] Global 90% floors remain, and approved critical modules/packages have stricter independently enforced floors or explicit branch/behavior assertions.
-- [ ] Known low-coverage critical adapters/commands either gain failure-path coverage or receive a documented, reviewed exclusion rationale.
-- [ ] Representative deliberate mutations/faults in auth, contacts, catalog filters, ingestion replay, and release gates make the suite fail.
-- [ ] Tests are deterministic across documented repeat/seed runs and emit no unapproved warnings.
-- [ ] Fixtures remain synthetic/redacted and leakage scans pass.
-- [ ] Unit, PostGIS integration, migration, contract, architecture, coverage, repeat/seed, and negative-probe checks pass.
+- [x] A reviewed risk matrix maps critical behaviors to the test layer that owns them.
+- [x] Global 90% floors remain, and approved critical modules/packages have stricter independently enforced floors or explicit branch/behavior assertions.
+- [x] Known low-coverage critical adapters/commands either gain failure-path coverage or receive a documented, reviewed exclusion rationale.
+- [x] Representative deliberate mutations/faults in auth, contacts, catalog filters, ingestion replay, and release gates make the suite fail.
+- [x] Tests are deterministic across documented repeat/seed runs and emit no unapproved warnings.
+- [x] Fixtures remain synthetic/redacted and leakage scans pass.
+- [x] Unit, PostGIS integration, migration, contract, architecture, coverage, repeat/seed, and negative-probe checks pass.
 
 ## Dependencies and gates
 
@@ -98,4 +98,9 @@ failure modes being falsifiable, not on maximizing one percentage.
 
 - [x] E14 spike revision 1 is owner-approved under AD-041.
 - [x] The task was moved to `tasks/` with complete promotion metadata.
-- [ ] E14 implementation plan revision 1 is owner-approved and E14-T1 is done.
+- [x] E14 implementation plan revision 1 is owner-approved and E14-T1 is done.
+
+## Start evidence
+
+Moved through ready under scoped owner approval, with the exact open T1 ancestor
+PR #358 recorded above. No completion/merge until T1 is done.

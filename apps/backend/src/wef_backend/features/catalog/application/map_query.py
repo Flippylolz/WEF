@@ -16,6 +16,11 @@ if TYPE_CHECKING:
 
     from wef_backend.features.catalog.domain import ContentType, FilterablePropertyType, MarketType
 
+from wef_backend.features.catalog.application.location_accuracy import (
+    LocationAccuracy,
+    project_location_accuracy,
+)
+
 _BBOX_COORDINATE_COUNT = 4
 _MIN_QUERY_LONGITUDE = 20.5
 _MAX_QUERY_LONGITUDE = 21.6
@@ -214,6 +219,8 @@ class MapLocationDTO:
     area_min_sqm: Decimal | None
     area_max_sqm: Decimal | None
 
+    location_accuracy: LocationAccuracy | None = None
+
 
 class MapQueryPort(Protocol):
     """Narrow persisted grouped-map query contract."""
@@ -251,6 +258,12 @@ class QueryMapLocations:
                 district=record.district,
                 precision=record.precision,
                 confidence_indicator=self._confidence_indicator(record.confidence),
+                location_accuracy=project_location_accuracy(
+                    precision=record.precision,
+                    review_status="accepted",
+                    confidence=record.confidence,
+                    has_point=True,
+                ),
                 matching_offer_count=record.matching_offer_count,
                 total_offer_count=record.total_offer_count,
                 latest_published_at=record.latest_published_at,

@@ -166,7 +166,7 @@ smoke_public_https_origin() {
   if ! shared_edge_network_present; then
     return 0
   fi
-  base_url=${WEF_PUBLIC_HTTPS_BASE_URL:-https://2fa54e2405.duckdns.org}
+  base_url=${WEF_PUBLIC_HTTPS_BASE_URL:-https://flipstarnuc.duckdns.org}
   base_url=${base_url%/}
   tmp_dir=$(mktemp -d)
   printf 'Smoke: public HTTPS origin %s...\n' "$base_url"

@@ -114,7 +114,7 @@ describe("ListingCard", () => {
     expect(screen.queryByText(/PLN/)).not.toBeInTheDocument();
     expect(screen.queryByText(/m²/)).not.toBeInTheDocument();
     expect(screen.queryByText(/listingRooms/)).not.toBeInTheDocument();
-    expect(screen.getByText("lowConfidence")).toBeVisible();
+    expect(screen.getByText("locationConfidenceLimited")).toBeVisible();
     expect(screen.getByText("partialData")).toBeVisible();
   });
 

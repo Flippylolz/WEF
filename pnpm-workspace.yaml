@@ -6,3 +6,7 @@ allowBuilds:
   "@swc/core": true
   sharp: false
   unrs-resolver: false
+
+minimumReleaseAgeExclude:
+  - maplibre-gl@6.15.0
+  - '@hookform/resolvers@6.0.0'

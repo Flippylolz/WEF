@@ -13,6 +13,8 @@ from wef_backend.features.ingestion.application.media_grouping import GROUPING_V
 from wef_backend.features.ingestion.application.persistence import PersistableMessage
 from wef_backend.features.ingestion.domain import GroupingInput
 from wef_backend.features.ingestion.domain.geocoding import (
+    REQUEST_VERSION,
+    STREET_REQUEST_VERSION,
     GeocodeCacheKey,
     GeocodeErrorCode,
     GeocodeProvider,
@@ -242,7 +244,11 @@ class DurableBudgetedGeocoder:
         """Reserve, globally pace, call once, and record a sanitized outcome."""
         if self._used >= self.max_provider_requests:
             raise ProviderBatchLimitError
-        key = GeocodeCacheKey(self.provider, query.normalized)
+        key = GeocodeCacheKey(
+            self.provider,
+            query.normalized,
+            request_version=STREET_REQUEST_VERSION if query.street_only else REQUEST_VERSION,
+        )
         now = self.clock()
         reservation = await self.budget.reserve_provider_attempt(
             run_id=self.run_id,

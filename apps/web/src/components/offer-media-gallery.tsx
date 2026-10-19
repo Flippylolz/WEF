@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { OfferDetail } from "@/lib/catalog-api";
 import { mediaAltText, pickMediaDisplayUrl } from "@/lib/offer-presentation";
@@ -14,6 +14,10 @@ type OfferMediaGalleryProps = {
 export function OfferMediaGallery({ detail, media }: OfferMediaGalleryProps) {
   const t = useTranslations("map");
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const lightboxOpen = activeIndex !== null;
 
   const closeLightbox = useCallback(() => setActiveIndex(null), []);
   const showPrevious = useCallback(() => {
@@ -28,15 +32,10 @@ export function OfferMediaGallery({ detail, media }: OfferMediaGalleryProps) {
   }, [media.length]);
 
   useEffect(() => {
-    if (activeIndex === null) return;
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") closeLightbox();
-      if (event.key === "ArrowLeft") showPrevious();
-      if (event.key === "ArrowRight") showNext();
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeIndex, closeLightbox, showNext, showPrevious]);
+    if (!lightboxOpen) return;
+    closeButtonRef.current?.focus();
+    return () => triggerRef.current?.focus();
+  }, [lightboxOpen]);
 
   if (media.length === 0) {
     return <p className="offer-detail-empty">{t("detailNoMedia")}</p>;
@@ -58,7 +57,10 @@ export function OfferMediaGallery({ detail, media }: OfferMediaGalleryProps) {
                   className="offer-media-thumb"
                   type="button"
                   aria-label={t("detailOpenMedia", { index: index + 1 })}
-                  onClick={() => setActiveIndex(index)}
+                  onClick={(event) => {
+                    triggerRef.current = event.currentTarget;
+                    setActiveIndex(index);
+                  }}
                 >
                   {item.media_type === "image" ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -96,6 +98,28 @@ export function OfferMediaGallery({ detail, media }: OfferMediaGalleryProps) {
           role="dialog"
           aria-modal="true"
           aria-label={t("detailMediaLightbox")}
+          onKeyDown={(event) => {
+            event.stopPropagation();
+            if (event.key === "Escape") closeLightbox();
+            if (event.key === "ArrowLeft") showPrevious();
+            if (event.key === "ArrowRight") showNext();
+            if (event.key === "Tab") {
+              const controls = Array.from(
+                event.currentTarget.querySelectorAll<HTMLElement>(
+                  "button:not(:disabled), video[controls]",
+                ),
+              );
+              const first = controls[0];
+              const last = controls.at(-1);
+              if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last?.focus();
+              } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first?.focus();
+              }
+            }
+          }}
         >
           <div className="offer-media-lightbox-toolbar">
             <button
@@ -118,7 +142,7 @@ export function OfferMediaGallery({ detail, media }: OfferMediaGalleryProps) {
             >
               {t("detailMediaNext")}
             </button>
-            <button type="button" onClick={closeLightbox}>
+            <button ref={closeButtonRef} type="button" onClick={closeLightbox}>
               {t("detailClose")}
             </button>
           </div>

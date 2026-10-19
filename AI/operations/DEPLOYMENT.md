@@ -1,5 +1,8 @@
 # Deployment
 
+See [shared application ports](SHARED_EDGE_APPLICATION_PORTS.md) for Fillable HTTPS
+on 3200; Forecast remains on 3000 and WEF rollback remains on 3100.
+
 ## Delivery model
 
 The MVP runs as a Docker Compose project on one Linux server. GitHub-hosted runners build application images; the production host pulls immutable images and never builds source code.
@@ -46,7 +49,7 @@ The import stages are resumable and no workflow may copy the full export into an
 Production services:
 
 - `caddy`: configurable `WEF_PUBLIC_PORT`, currently `3100/TCP`, retained as an application-owned rollback/diagnostic listener that cannot support production Secure-cookie flows.
-- `nginx` plus `certbot`: the live standard 80/443 ingress with automatically renewed TLS for WEF on `2fa54e2405.duckdns.org`. AI Forecast stays on public host port `3000`. [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md), [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md), and [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) delivered and proved this dedicated `wef-shared-edge` Compose project. Ordinary `wef-production` releases reconnect their upstreams but neither deploy nor remove the shared edge.
+- `nginx` plus `certbot`: the live standard 80/443 ingress with automatically renewed TLS for WEF on `flipstarnuc.duckdns.org`. AI Forecast stays on public host port `3000`. [E7-T8](../epics/E7-production-delivery/tasks/E7-T8-build-shared-nginx-tls-ingress.md), [E7-T9](../epics/E7-production-delivery/tasks/E7-T9-implement-reversible-shared-edge-cutover.md), and [E7-T10](../epics/E7-production-delivery/tasks/E7-T10-roll-out-and-verify-shared-tls.md) delivered and proved this dedicated `wef-shared-edge` Compose project. Ordinary `wef-production` releases reconnect their upstreams but neither deploy nor remove the shared edge.
 - `web`: internal port only.
 - `api`: internal port only.
 - `db`: an application-owned PostgreSQL/PostGIS container on the internal network only, with a persistent host-backed volume.
@@ -129,7 +132,7 @@ Both public and rollback routes:
 
 PostgreSQL, web, API, media, and worker upstream ports remain on internal Compose networks. WEF must not take ownership of host ports 3000, 8080, or UDP 51820, and deployment must not restart or alter non-WEF projects. Published 80/443 and the retained `:3100` listener are rechecked by the respective preflight/inventory boundaries.
 
-Shared Nginx is the only public WEF web server on 80/443. Ordinary WEF application deploys do not own, recreate, or remove the `wef-shared-edge` project. When the external `wef-edge` network is present, each deploy/rollback merges `compose.production-shared-edge.yaml` (keeping Caddy on `:3100`), runs `scripts/deploy/reconnect-wef-upstreams.sh` (attach `wef-api`/`wef-web`/`wef-media` + Nginx HUP), and must pass public HTTPS smoke on `WEF_PUBLIC_HTTPS_BASE_URL` (default `https://2fa54e2405.duckdns.org`) before activation. TLS templates use Docker DNS (`resolver 127.0.0.11`) with variable `proxy_pass` so upstream IPs re-resolve after container recreate; reconnect still attaches network aliases. AI Forecast remains unchanged by ordinary WEF releases.
+Shared Nginx is the only public WEF web server on 80/443. Ordinary WEF application deploys do not own, recreate, or remove the `wef-shared-edge` project. When the external `wef-edge` network is present, each deploy/rollback merges `compose.production-shared-edge.yaml` (keeping Caddy on `:3100`), runs `scripts/deploy/reconnect-wef-upstreams.sh` (attach `wef-api`/`wef-web`/`wef-media` + Nginx HUP), and must pass public HTTPS smoke on `WEF_PUBLIC_HTTPS_BASE_URL` (default `https://flipstarnuc.duckdns.org`) before activation. TLS templates use Docker DNS (`resolver 127.0.0.11`) with variable `proxy_pass` so upstream IPs re-resolve after container recreate; reconnect still attaches network aliases. AI Forecast remains unchanged by ordinary WEF releases.
 
 ## Server sizing baseline
 
@@ -696,3 +699,58 @@ The worker's file-only liveness CLI must remain independent of database/ORM
 imports. Full operator status loads those dependencies only when requested; the
 healthcheck timeout and freshness criteria are unchanged. A fresh-process test
 blocks ORM imports while verifying both healthy and stale heartbeat exit codes.
+
+### E24-T3 media recovery rollout and controls
+
+Migration `20260905_0024` adds media intentions, work and channel controls. It
+changes no source payload, archive receipt or existing public asset. The Telegram
+worker uses independent media acquisition under the existing byte/pixel/time
+limits, shared 56 MiB staging budget and 8 MiB free headroom. Its frequent liveness
+probe remains file-only; the full private worker status includes `media_recovery`
+counts, discovery boundaries, oldest eligibility and canary state.
+
+Use `python -m wef_backend.media_recovery_command status` inside the worker for
+aggregate-only media diagnostics. `pause` persists a media-only stop; `resume`
+returns to canary until 100 successful intended assets, then enables bounded drain.
+No per-record command is needed. Claims stop at `canary_ready` until rollout
+acceptance resumes them. Unsupported or unproven source media does not count as
+successful recovery. Never reset retry counters or change source evidence to make
+a canary pass.
+
+Before activation record derivative/receipt counts and temporary-space headroom.
+After the 100-asset canary, verify recovered variants and no duplicate public
+associations, then observe at least 15 minutes of continuing text/polling work,
+healthy worker, zero restarts and bounded staging. Insufficient eligible repair
+work leaves that acceptance gate open. Publish only safe aggregates and release
+identifiers. On systemic failure pause media and retain additive schema, original
+objects and successful derivatives; do not downgrade or delete public assets.
+
+## E24-T4 progress monitor rollout
+
+Migration `20260906_0025` adds monitoring checkpoints, 48-hour samples, incident
+history, activation controls and transaction-local observation counters. The
+worker starts in observation-only mode, sampling every 60 seconds with a five-second
+statement timeout and ten-second whole-sample bound. No resource or dependency
+increase is required. Keep the existing file-only process liveness probe.
+
+Private operator commands in the worker container:
+
+```sh
+python -m wef_backend.ingestion_progress_command status
+python -m wef_backend.ingestion_progress_command enable
+python -m wef_backend.ingestion_progress_command disable
+```
+
+`enable` requires a contiguous healthy 15-minute observation; `disable` stops
+incident activation while retaining diagnostics and all ingestion state. After
+enabling, private status assesses a fresh 24-hour window. Unhealthy or missing
+samples, release changes and repeated terminal observations restart its comparison;
+a growing eligible backlog prevents a pass. The status result proves the sampled
+runtime criteria, not an independent audit of operator activity. T4 completion
+also requires reviewed evidence of zero routine operator interventions and ordinary
+load. Do not mark it done merely because it deployed.
+
+Roll back by disabling incident activation and retaining the additive tables,
+source evidence and queue state. Do not downgrade production schema, delete media,
+reset retry budgets or manually backfill to manufacture acceptance. T3's actual
+production derivative-repair gate remains independent and open until proven.

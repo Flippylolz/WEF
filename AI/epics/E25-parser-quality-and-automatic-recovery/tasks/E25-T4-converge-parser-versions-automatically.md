@@ -148,3 +148,13 @@ Resume when T3's real-provider canary and 24-hour acceptance pass, record its
 completion, then restore a satisfied dependency gate and finish the reviewed
 25-record deterministic canary/application rollout. No additional per-record
 owner action is required by the replay implementation.
+
+
+## Owner-directed implementation delivery, 2026-10-19
+
+The owner explicitly directed repair and merge of #337 after reviewing its closure
+findings. [AD-054](../../../workflow/AUTONOMOUS_DECISIONS.md#ad-054-repair-and-merge-disabled-e25-t4-implementation)
+authorizes delivery with both replay flags off, after the rollback-compatible
+reader and green current-head CI. This supersedes the earlier merge-only hold for
+this disabled delivery; the dependency gate remains blocked for activation and
+completion. No T3 acceptance or production convergence is claimed by the merge.

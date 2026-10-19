@@ -73,7 +73,7 @@ Prerequisites for any Groq-backed command: `WEF_AI_CURATION_ENABLED=true`,
 **Container:** `api` or `telegram-worker` (database access only; no provider calls).
 
 **Purpose (E25-T1):** Evaluate current retained source revisions, including linked
-offers, under the running parser and `source-evidence-v2` classification policy.
+offers, under the running parser and `source-evidence-v3` classification policy.
 The command writes classification and issue-lifecycle metadata only. It does not
 change canonical offers, call providers, or activate historical parser recovery.
 
@@ -291,7 +291,7 @@ $COMPOSE exec -T api wef-batch-ingestion-ai-parse --link-existing-offers --limit
 # 2. Generate + apply up to daily budget (one Groq Batch job per run)
 $COMPOSE exec -T api wef-batch-ingestion-ai-parse --link-existing-offers --limit 20
 
-# 3. Geocode + map-ready promotion on worker (do not run parallel manual geocode)
+# 3. Recheck cached candidates (no blanket pin acceptance or provider calls)
 $COMPOSE exec -T telegram-worker wef-accept-pending-geocode-pins
 # Worker also runs promote_map_ready_offers each recurring_geocode cycle.
 ```
@@ -319,8 +319,10 @@ Use only for deliberate catalog-wide promotion passes, not live E21 recovery.
 
 **Container:** **`telegram-worker`** (Geoapify environment; not on `api` by design).
 
-**Purpose:** Accept in-scope pending geocode results onto locations (`manual_accept`
-lineage). **Output:** `locations_accepted`, `map_eligible_locations`,
+**Purpose:** Recheck up to 25 pending candidates against current source/address
+agreement and precision rules (`automatic_policy` lineage). Coarse, low-confidence,
+mismatching or legacy evidence is not blanket-accepted. This does not re-geocode
+existing accepted points; E26-T2 owns that durable repair queue. **Output:** `locations_accepted`, `map_eligible_locations`,
 `remaining_needs_review_without_point`, `remaining_ungeocoded`.
 
 The worker's `recurring_geocode` loop also calls map-ready promotion
@@ -430,7 +432,20 @@ Quota and rate-limit deferrals resume automatically; three local systemic failur
 produce one terminal reason. An uncertain submission consumes quota and is never
 resent automatically. Pausing submissions retains work and proposals; pausing apply
 retains observations and prevents scheduled canonical writes. Existing owner cohorts
-use the same allocation and single-item transport.
+use the same allocation and single-item transport. Automatic recovery requests
+only canonical fields mapped from its classified gap and still missing and
+unprotected at preparation time. Price gaps do not authorize inclusion-flag
+inference. An empty scope consumes no request. Existing terminal/uncertain work
+is not retried when this request-scope correction is deployed.
+
+Daily allocation refusal persists the next UTC reset without recording a provider
+attempt. Batches paused specifically for `daily_limit` resume when budget becomes
+available; manual pauses remain in place. Each enqueue cycle also reconciles at
+most ten incorrectly terminal unsubmitted cohorts. This repair requires unfinished
+items and no submission marker, attempt, proposal or field event, and preserves
+usage history. Obsolete identities are superseded by the normal claim checks.
+Do not manually reset the six affected cohorts; the release performs this bounded
+repair without resetting quota or replaying uncertain submissions.
 
 Inspect aggregate state in the restricted database session (no source text needed):
 
@@ -456,9 +471,87 @@ Do not erase reservations to regain quota or reset uncertain work for automatic 
 Existing field-origin guarded rollback remains authoritative for enrichment fills.
 T4 historical parser convergence has separate dependency and rollout gates.
 
+## E26 location revalidation
+
+Use the authenticated operator shell in the deployed backend environment:
+
+```sh
+python -m wef_backend.location_validation_command status
+python -m wef_backend.location_validation_command observe
+python -m wef_backend.location_validation_command off
+```
+
+`status` reports private aggregate states, reasons, precision transitions and
+current affected location/offer/favorite counts, plus operator interventions.
+These overlapping populations are not additive and current favorite counts are
+not a historical preservation proof. Receipts and persistence tests establish
+which selection fields changed; source contacts and addresses are not printed.
+
+Do not enable production apply until T3 discovery is deployed and the bounded
+observation report is reviewed. Prioritize observation of 1–25 named canaries with
+`python -m wef_backend.location_validation_command observe --canary-id UUID`
+(repeat the flag for each case). This enqueues snapshots through the same
+protection/receipt rules, does not move the 100-row scan checkpoint, and prioritizes
+those claims within the unchanged 25-item cycle/shared provider budget. Missing,
+duplicate or more than 25 IDs are rejected. It never applies selections. Plain
+`observe` clears observation priority and retains ordinary automatic scanning.
+Then supply the observed canaries, including the three tracked cases and
+protected/current-valid/coarse strata:
+
+```sh
+python -m wef_backend.location_validation_command apply --discovery-ready --canary-id UUID
+```
+
+Repeat `--canary-id` for each location. After persisted canary outcomes, identity
+preservation, budget, public map/list behavior and dated authoritative Ostrzycka
+geometry are verified, run `python -m wef_backend.location_validation_command
+verify-canary`. This enables automatic expansion within the existing request
+budget. Neither command substitutes for that evidence.
+
+`python -m wef_backend.location_validation_command rollback` pauses and fences
+work, then examines at most 25 unapplied rollback receipts. Repeat to drain the
+bounded rollback population. Only unchanged automatic predecessors passing the
+current policy are restored; invalid points and subsequent edits are never
+bulk-restored. Leave additive schema in place through application rollback.
+
+## Current offer backfill (E28)
+
+After E28-T1–T4 releases, inspect a frozen current-source range with:
+
+```sh
+python -m wef_backend.offer_backfill_command --channel CHANNEL_ID --after-id 0 --through-id HEAD_ID --limit 100
+```
+
+The default is read-only. The receipt counts create/update/non-candidate
+and stale outcomes without descriptions or contacts. An `update_candidate` means
+the current parser recognizes a linked source, not that canonical values differ
+or that applying the page will change them. Compare field values and extraction
+provenance separately; evaluation-version convergence is not canonical-field
+convergence. The guarded automatic historical convergence path remains owned by
+[E25-T4](../epics/E25-parser-quality-and-automatic-recovery/tasks/E25-T4-converge-parser-versions-automatically.md)
+and its dependency/rollout gates. Add `--apply` for the same
+reviewed page, then resume with `next_after_id`; retain JSON receipts outside Git.
+A page is complete when `exhausted` is true. Never advance past a failed page:
+replay from the previous acknowledged cursor is idempotent. Live checkpoints do
+not move. Deleted/revised sources are fenced; existing known locations and visibility remain preserved. Field-origin
+protections and encrypted contact persistence use existing application paths.
+This operator also considers unlinked current source revisions, unlike legacy
+`wef-replay-parser`. Run ordinary location revalidation and media recovery after
+parser backfill; never force visibility or overwrite protected map selections.
+
+Ingestion status now reports `offer_delivery` and `recent_offer_delivery` counts
+for seven days of text-bearing photo posts/linked offers. It separates missing
+canonical offers, map eligibility and galleries. Current derivative work and both
+thumbnail variants must complete. Media-only posts, deleted sources and explicitly
+hidden offers are excluded. Explicit media/location retry deadlines count as
+waiting; otherwise an undelivered offer older than five minutes is actionable even
+while newer offers succeed. This is aggregate operational evidence; production
+map/gallery HTTP acceptance and a continuous 24-hour observation remain required.
+
 ## Historical parser replay (E25-T4)
 
-Deploy migration 0024 before the worker. Release-owned `WEF_PARSER_REPLAY_ENABLED`
+Deploy the [rollback-compatible 0027 reader](../epics/E25-parser-quality-and-automatic-recovery/REPLAY_ROLLBACK_COMPATIBILITY.md)
+before migration `20261019_0028` and the replay worker. Release-owned `WEF_PARSER_REPLAY_ENABLED`
 and `WEF_PARSER_REPLAY_AUTO_APPLY` default to false and work independently of Groq
 configuration. Enable scheduling for read-only observation; the separate application
 flag permits guarded application only after automatic canary promotion. Accepted

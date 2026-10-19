@@ -214,3 +214,21 @@ After E24-T1/T2 merged, the stack was refreshed against main `5fd175f`. Planning
 PR #338 replaces closed #327. The current sequence is archive 0020, progress
 0021, evaluations 0022, durable AI 0023 and parser replay 0024. This supersedes
 the earlier migration allocation above and preserves revision 2 approval.
+
+
+## Owner-directed disabled implementation delivery, 2026-10-19
+
+[AD-054](../../workflow/AUTONOMOUS_DECISIONS.md#ad-054-repair-and-merge-disabled-e25-t4-implementation)
+records the owner's follow-up direction to repair and merge #337 after its defects
+and T3 hold were reported. This is a narrow code-delivery exception to the earlier
+T3-before-T4 merge timing, with no removal of task dependencies or acceptance.
+T3 remains incomplete; T4 remains deferred for activation/completion. Replay
+scheduling and application remain off in the release-owned configuration.
+
+First deploy the explicit [0028-compatible 0027 reader](REPLAY_ROLLBACK_COMPATIBILITY.md),
+then deliver additive migration `20261019_0028` and the replay implementation.
+Current acceptance identity is `e2-v18/source-evidence-v3`, backed by the current
+extraction/template/inventory suites. The release lock must fence already-claimed
+work when rollback pauses a release. Starting-price replay clears an obsolete
+fixed upper bound while preserving field ownership and coupled price/currency rules.
+The approved privacy, budget, protection, canary and live acceptance criteria stay.

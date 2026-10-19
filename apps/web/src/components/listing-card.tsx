@@ -3,15 +3,18 @@
 import { useTranslations } from "next-intl";
 import { formatArea, formatPrice, formatRooms } from "@/lib/offer-presentation";
 
-import type { ViewportListing } from "@/lib/catalog-api";
+import { LocationAccuracy } from "@/components/location-accuracy";
+import type { ViewportListing, UnmappedListing } from "@/lib/catalog-api";
 
-type ListingCardProps = {
-  listing: ViewportListing;
+type CatalogListing = ViewportListing | UnmappedListing;
+type ListingCardProps<T extends CatalogListing> = {
+  listing: T;
+  onMount?: (offerId: string, node: HTMLButtonElement | null) => void;
   selected: boolean;
   highlighted: boolean;
   starred: boolean;
   showStar: boolean;
-  onSelect: (listing: ViewportListing, trigger: HTMLButtonElement) => void;
+  onSelect: (listing: T, trigger: HTMLButtonElement) => void;
   onHighlight: (locationId: string | null) => void;
   onToggleStar: (locationId: string) => void;
 };
@@ -20,8 +23,9 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",
 });
 
-export function ListingCard({
+export function ListingCard<T extends CatalogListing>({
   listing,
+  onMount,
   selected,
   highlighted,
   starred,
@@ -29,7 +33,7 @@ export function ListingCard({
   onSelect,
   onHighlight,
   onToggleStar,
-}: ListingCardProps) {
+}: ListingCardProps<T>) {
   const t = useTranslations("map");
   const location = listing.location;
   const price = formatPrice(
@@ -44,7 +48,6 @@ export function ListingCard({
     listing.rooms_min ?? null,
     listing.rooms_max ?? null,
   );
-  const lowConfidence = location.confidence === "low";
 
   return (
     <li>
@@ -52,6 +55,7 @@ export function ListingCard({
         <button
           className={`listing-card${highlighted ? " listing-card-highlighted" : ""}`}
           type="button"
+          ref={(node) => onMount?.(listing.id, node)}
           aria-pressed={selected}
           onClick={(event) => onSelect(listing, event.currentTarget)}
           onFocus={() => onHighlight(location.id)}
@@ -86,9 +90,10 @@ export function ListingCard({
             <span>{t(`contentType.${listing.content_type}`)}</span>
             <span>{t(`propertyType.${listing.property_type}`)}</span>
           </span>
-          {lowConfidence ? (
-            <span className="confidence-note">{t("lowConfidence")}</span>
-          ) : null}
+          <LocationAccuracy
+            accuracy={location.location_accuracy}
+            confidence={location.confidence}
+          />
           {listing.data_confidence === "partial" ? (
             <span className="listing-card-partial">{t("partialData")}</span>
           ) : null}

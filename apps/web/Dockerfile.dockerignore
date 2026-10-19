@@ -9,6 +9,10 @@ apps/*
 !apps/web
 apps/web/*
 !apps/web/package.json
+!apps/web/frontend-budgets.json
+!apps/web/scripts
+apps/web/scripts/*
+!apps/web/scripts/check-frontend-boundaries.mjs
 !apps/web/next-env.d.ts
 !apps/web/next.config.ts
 !apps/web/postcss.config.mjs

@@ -1,12 +1,13 @@
 import type { OfferDetail } from "@/lib/catalog-api";
 
 export function formatPrice(min: number | null, max: number | null) {
-  if (min === null || max === null) return null;
+  if (min === null) return null;
   const formatter = new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "PLN",
     maximumFractionDigits: 0,
   });
+  if (max === null) return `≥ ${formatter.format(min / 100)}`;
   return min === max
     ? formatter.format(min / 100)
     : `${formatter.format(min / 100)}–${formatter.format(max / 100)}`;

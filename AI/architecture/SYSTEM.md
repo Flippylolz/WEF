@@ -217,6 +217,11 @@ The API, historical importer, and Telegram listener share feature/domain/applica
 - Validates query ranges, bounding boxes, and pagination.
 - Routes invoke one application query/interactor and present its output; routes do not contain domain logic or persistence.
 - Returns compact location summaries for maps and separate detail payloads.
+- E26-T3 map eligibility requires an accepted building/street point. The backend
+  projects location accuracy independently of offer completeness. Coarse and
+  unresolved visible offers use `/api/v1/listings/uncertain`, with non-spatial
+  filters, separate mapped/discovery counts and no geometry. Detail and favorites
+  preserve access across quarantine. See the [E26-T3 behavior and verification](../epics/E26-automatic-location-validation/T3_VERIFICATION.md).
 - Generates OpenAPI used to verify or generate frontend types.
 - Exposes liveness and readiness endpoints.
 - Does not parse raw Telegram exports or download media inside web requests.

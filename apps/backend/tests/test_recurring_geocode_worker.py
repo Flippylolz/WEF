@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
@@ -20,6 +21,9 @@ from wef_backend.recurring_geocode_worker import (
     maintain_recurring_geocode,
 )
 from wef_backend.settings import Settings
+
+if TYPE_CHECKING:
+    from wef_backend.features.ingestion.application.location_revalidation import LimitedGeocoder
 
 
 @dataclass
@@ -67,7 +71,7 @@ async def test_process_once_defers_until_next_utc_day_on_budget_error(
         lambda _factory: fake_repo,
     )
     monkeypatch.setattr(
-        "wef_backend.recurring_geocode_worker.ResolveGeocode",
+        "wef_backend.recurring_geocode_worker.build_location_resolver",
         lambda *_args, **_kwargs: _ResolverRaisesBudget(),
     )
 
@@ -76,7 +80,7 @@ async def test_process_once_defers_until_next_utc_day_on_budget_error(
 
     monkeypatch.setattr(RecurringGeocodeWorker, "_refresh_live_catalog", _noop_refresh)
     worker = RecurringGeocodeWorker(
-        settings=Settings(geoapify_api_key=_secret("test-key")),
+        settings=Settings(geoapify_api_key=_secret("test-key"), geocode_revalidation_enabled=False),
         session_factory=object(),  # type: ignore[arg-type]
         channel=default_live_channel_identity(),
     )
@@ -85,7 +89,8 @@ async def test_process_once_defers_until_next_utc_day_on_budget_error(
     assert result.defer_action is RecurringDeferAction.DEFER_UNTIL_NEXT_UTC_DAY
 
     second = await worker.process_once()
-    assert second.skipped
+    assert not second.skipped
+    assert second.defer_action is RecurringDeferAction.DEFER_UNTIL_NEXT_UTC_DAY
     assert second.processed == 0
 
 
@@ -106,7 +111,7 @@ async def test_process_once_refreshes_catalog_when_queue_empty(
 
     monkeypatch.setattr(RecurringGeocodeWorker, "_refresh_live_catalog", _refresh)
     worker = RecurringGeocodeWorker(
-        settings=Settings(geoapify_api_key=_secret("test-key")),
+        settings=Settings(geoapify_api_key=_secret("test-key"), geocode_revalidation_enabled=False),
         session_factory=object(),  # type: ignore[arg-type]
         channel=default_live_channel_identity(),
     )
@@ -128,7 +133,7 @@ async def test_process_once_refreshes_catalog_after_geocoding(
         lambda _factory: fake_repo,
     )
     monkeypatch.setattr(
-        "wef_backend.recurring_geocode_worker.ResolveGeocode",
+        "wef_backend.recurring_geocode_worker.build_location_resolver",
         lambda *_args, **_kwargs: _SuccessfulResolver(),
     )
 
@@ -140,7 +145,7 @@ async def test_process_once_refreshes_catalog_after_geocoding(
 
     monkeypatch.setattr(RecurringGeocodeWorker, "_refresh_live_catalog", _refresh)
     worker = RecurringGeocodeWorker(
-        settings=Settings(geoapify_api_key=_secret("test-key")),
+        settings=Settings(geoapify_api_key=_secret("test-key"), geocode_revalidation_enabled=False),
         session_factory=object(),  # type: ignore[arg-type]
         channel=default_live_channel_identity(),
     )
@@ -182,3 +187,77 @@ async def test_maintain_recurring_geocode_runs_until_stop() -> None:
 
 def _secret(value: str) -> SecretStr:
     return SecretStr(value)
+
+
+@pytest.mark.asyncio
+async def test_catalog_refresh_only_promotes_already_validated_locations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Refreshing discovery cannot bypass the address policy with AD-034 acceptance."""
+
+    class PromotionOnly:
+        async def promote_map_ready_offers(self) -> int:
+            return 3
+
+    monkeypatch.setattr(
+        "wef_backend.recurring_geocode_worker.SQLAlchemyPromotePublicCatalogAdapter",
+        lambda _factory: PromotionOnly(),
+    )
+    worker = RecurringGeocodeWorker(
+        settings=Settings(),
+        session_factory=object(),  # type: ignore[arg-type]
+        channel=default_live_channel_identity(),
+    )
+    assert await worker._refresh_live_catalog() == (0, 3)  # noqa: SLF001
+
+
+@pytest.mark.parametrize(
+    ("foreground", "cap", "share"), [(True, 10, 5), (False, 10, 10), (True, 1, 0)]
+)
+async def test_revalidation_reserves_foreground_share_of_one_budget(
+    monkeypatch: pytest.MonkeyPatch, *, foreground: bool, cap: int, share: int
+) -> None:
+    item = LocationWorkItem(uuid4(), "ul. Testowa 1", "Mokotów")
+    repository = _FakeRepository(uuid4(), (item,) if foreground else ())
+    monkeypatch.setattr(
+        "wef_backend.recurring_geocode_worker.SQLAlchemyCompleteImportRepository",
+        lambda _factory: repository,
+    )
+    budget = object()
+    seen: list[object] = []
+
+    async def make_budget(*_args: object) -> object:
+        return budget
+
+    async def run_revalidation(_self: object, shared: object, allowance: int) -> None:
+        assert shared is budget
+        assert allowance == share
+        seen.append(shared)
+
+    async def resolve(**_kwargs: object) -> None:
+        return None
+
+    def make_resolver(_store: object, limited: LimitedGeocoder, _settings: Settings) -> object:
+        assert limited.geocoder is budget
+        assert limited.limit == min(cap, 25) - share
+        return resolve
+
+    async def refresh(_self: object) -> tuple[int, int]:
+        return 0, 0
+
+    monkeypatch.setattr(RecurringGeocodeWorker, "_budgeted_geocoder", make_budget)
+    monkeypatch.setattr(RecurringGeocodeWorker, "_run_revalidation", run_revalidation)
+    monkeypatch.setattr(RecurringGeocodeWorker, "_refresh_live_catalog", refresh)
+    monkeypatch.setattr(
+        "wef_backend.recurring_geocode_worker.build_location_resolver", make_resolver
+    )
+    worker = RecurringGeocodeWorker(
+        settings=Settings(
+            geoapify_api_key=_secret("synthetic"), telegram_recurring_geocode_batch_size=cap
+        ),
+        session_factory=object(),  # type: ignore[arg-type]
+        channel=default_live_channel_identity(),
+    )
+    result = await worker.process_once()
+    assert result.processed == int(foreground)
+    assert len(seen) == 1

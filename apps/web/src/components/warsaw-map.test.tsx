@@ -1,14 +1,20 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { forwardRef, useImperativeHandle, type ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WarsawMap } from "@/components/warsaw-map";
 import type { LocationMap } from "@/lib/catalog-api";
 
-const setWorkerUrl = vi.hoisted(() => vi.fn());
+const workerConfiguration = vi.hoisted(() => ({
+  url: undefined as string | undefined,
+}));
 
-vi.mock("maplibre-gl", () => ({ setWorkerUrl }));
+vi.mock("maplibre-gl", () => ({
+  setWorkerUrl: (url: string) => {
+    workerConfiguration.url = url;
+  },
+}));
 
 const easeTo = vi.fn();
 const jumpTo = vi.fn();
@@ -41,6 +47,9 @@ vi.mock("react-map-gl/maplibre", () => ({
       children,
       onClick,
       onLoad,
+      onIdle,
+      onData,
+      onMoveStart,
       onMoveEnd,
       onError,
       trackResize,
@@ -48,6 +57,9 @@ vi.mock("react-map-gl/maplibre", () => ({
       children: ReactNode;
       onClick: (event: object) => void;
       onLoad: () => void;
+      onIdle: () => void;
+      onData: () => void;
+      onMoveStart: () => void;
       onMoveEnd: (event: object) => void;
       onError: () => void;
       trackResize?: boolean;
@@ -84,6 +96,15 @@ vi.mock("react-map-gl/maplibre", () => ({
     }));
     return (
       <div data-testid="map-component" data-track-resize={trackResize}>
+        <button type="button" onClick={onIdle}>
+          simulated-map-idle
+        </button>
+        <button type="button" onClick={onData}>
+          simulated-map-data
+        </button>
+        <button type="button" onClick={onMoveStart}>
+          simulated-map-move-start
+        </button>
         <button type="button" onClick={onLoad}>
           simulated-map-load
         </button>
@@ -217,8 +238,14 @@ const mapData: LocationMap = {
 };
 
 describe("WarsawMap", () => {
+  beforeEach(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+      getExtension: () => ({ loseContext: vi.fn() }),
+    } as unknown as WebGL2RenderingContext);
+  });
   afterEach(() => {
     cleanup();
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     vi.useRealTimers();
     vi.stubGlobal("ResizeObserver", ResizeObserverMock);
@@ -227,7 +254,7 @@ describe("WarsawMap", () => {
   it("selects an unclustered backend feature and shows attribution", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    expect(setWorkerUrl).toHaveBeenCalledWith(
+    expect(workerConfiguration.url).toBe(
       "/vendor/maplibre/maplibre-gl-worker.mjs",
     );
     clickedFeature = {
@@ -265,7 +292,9 @@ describe("WarsawMap", () => {
       "10000000-0000-4000-8000-000000000001",
     );
     expect(
-      screen.getByText("© OpenFreeMap · © OpenStreetMap contributors"),
+      screen.getByText(
+        "© OpenFreeMap · © OpenStreetMap contributors · Dane lokalizacji: Urząd m.st. Warszawy",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByTestId("source-warsaw-districts")).toHaveAttribute(
       "data-source-url",
@@ -287,6 +316,41 @@ describe("WarsawMap", () => {
       "data-text-font",
       '["Noto Sans Regular"]',
     );
+  });
+
+  it("stays busy until rendering settles and becomes busy for new data or movement", async () => {
+    const user = userEvent.setup();
+    render(
+      <WarsawMap
+        bbox="20.7,52.0,21.4,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading interactive map"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+      />,
+    );
+    const map = screen.getByLabelText("Interactive map of Warsaw");
+    expect(map).toHaveAttribute("aria-busy", "true");
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+    expect(map).toHaveAttribute("aria-busy", "true");
+    await user.click(
+      screen.getByRole("button", { name: "simulated-map-idle" }),
+    );
+    expect(map).toHaveAttribute("aria-busy", "false");
+    for (const event of ["data", "move-start"]) {
+      await user.click(
+        screen.getByRole("button", { name: `simulated-map-${event}` }),
+      );
+      expect(map).toHaveAttribute("aria-busy", "true");
+      await user.click(
+        screen.getByRole("button", { name: "simulated-map-idle" }),
+      );
+      expect(map).toHaveAttribute("aria-busy", "false");
+    }
   });
 
   it("resizes asynchronously without MapLibre's synchronous resize redraw", async () => {
@@ -656,11 +720,10 @@ describe("WarsawMap", () => {
   });
   it("recenters only when the focus target leaves the comfortable core", async () => {
     const user = userEvent.setup();
-    const data = mapData;
     const { rerender } = render(
       <WarsawMap
         bbox="20.8,52.1,21.2,52.4"
-        data={data}
+        data={mapData}
         selectedId={null}
         loadingLabel="Loading interactive map"
         onSelect={() => undefined}
@@ -677,7 +740,7 @@ describe("WarsawMap", () => {
     rerender(
       <WarsawMap
         bbox="20.8,52.1,21.2,52.4"
-        data={data}
+        data={mapData}
         selectedId={null}
         loadingLabel="Loading interactive map"
         onSelect={() => undefined}
@@ -690,5 +753,50 @@ describe("WarsawMap", () => {
     expect(easeTo).toHaveBeenCalledWith(
       expect.objectContaining({ center: [20.81, 52.39] }),
     );
+  });
+  it.each(["unavailable", "throws"])(
+    "preserves fallback when WebGL2 is %s",
+    (mode) => {
+      vi.mocked(HTMLCanvasElement.prototype.getContext).mockImplementation(
+        () => {
+          if (mode === "throws") throw new Error("Synthetic GPU failure");
+          return null;
+        },
+      );
+      const onFailure = vi.fn();
+      render(
+        <WarsawMap
+          bbox="20.8,52.1,21.2,52.4"
+          data={mapData}
+          selectedId={null}
+          onSelect={vi.fn()}
+          onViewportChange={vi.fn()}
+          onFailure={onFailure}
+          loadingLabel="Loading"
+        />,
+      );
+      expect(onFailure).toHaveBeenCalledOnce();
+    },
+  );
+  it("renders without the optional context-loss extension", () => {
+    vi.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValue({
+      getExtension: () => null,
+    } as unknown as WebGL2RenderingContext);
+    const onFailure = vi.fn();
+    render(
+      <WarsawMap
+        bbox="20.8,52.1,21.2,52.4"
+        data={mapData}
+        selectedId={null}
+        onSelect={vi.fn()}
+        onViewportChange={vi.fn()}
+        onFailure={onFailure}
+        loadingLabel="Loading"
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "simulated-map-click" }),
+    ).toBeVisible();
+    expect(onFailure).not.toHaveBeenCalled();
   });
 });

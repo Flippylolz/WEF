@@ -16,8 +16,10 @@ from wef_backend.features.catalog.application import (
     ViewportListingPage,
 )
 from wef_backend.features.catalog.application.data_origin import DataOrigin
+from wef_backend.features.catalog.application.location_accuracy import LocationAccuracy
 from wef_backend.features.catalog.application.offer_detail import OfferDetailDTO
 from wef_backend.features.catalog.application.quick_filters import QuickFilterPreset
+from wef_backend.features.catalog.application.unmapped_listings import UnmappedListingPage
 from wef_backend.features.catalog.domain import (
     ContentType,
     FilterablePropertyType,
@@ -45,6 +47,7 @@ class LocationMapProperties(BaseModel):
     district: str | None
     coordinate_precision: str
     confidence: ConfidenceIndicator
+    location_accuracy: LocationAccuracy | None = None
     matching_offer_count: int = Field(ge=1)
     total_offer_count: int = Field(ge=1)
     latest_published_at: datetime
@@ -162,6 +165,8 @@ class LocationOfferPageResponse(BaseModel):
     total_count: int = Field(ge=0)
     next_cursor: str | None
 
+    location: "LocationSummaryResponse | None" = None
+
 
 class ListingLocationResponse(BaseModel):
     """Public parent location context for one viewport listing card."""
@@ -174,10 +179,11 @@ class ListingLocationResponse(BaseModel):
     district: str | None
     coordinate_precision: str
     confidence: ConfidenceIndicator
+    location_accuracy: LocationAccuracy | None = None
     geometry: PointGeometry
 
 
-class ViewportListingItemResponse(BaseModel):
+class ListingItemFieldsResponse(BaseModel):
     """Dated filter-matching viewport listing summary."""
 
     model_config = ConfigDict(extra="forbid")
@@ -204,8 +210,13 @@ class ViewportListingItemResponse(BaseModel):
     rooms_max: int | None = Field(default=None, ge=0)
     floor_label: str | None
     delivery_label: str | None
-    location: ListingLocationResponse
     data_origin: DataOrigin
+
+
+class ViewportListingItemResponse(ListingItemFieldsResponse):
+    """Mapped listing retains required point geometry for existing clients."""
+
+    location: ListingLocationResponse
 
 
 class ViewportListingPageResponse(BaseModel):
@@ -229,6 +240,24 @@ class LocationSummaryResponse(BaseModel):
     district: str | None
     coordinate_precision: str
     confidence: ConfidenceIndicator
+    location_accuracy: LocationAccuracy | None = None
+
+
+class UnmappedListingItemResponse(ListingItemFieldsResponse):
+    """Visible dated offer with no fabricated public point geometry."""
+
+    location: LocationSummaryResponse
+
+
+class UnmappedListingPageResponse(BaseModel):
+    """Uncertain offers use non-spatial filters, independently of mapped totals."""
+
+    model_config = ConfigDict(extra="forbid")
+    items: tuple[UnmappedListingItemResponse, ...]
+    matching_count: int = Field(ge=0)
+    mapped_matching_count: int = Field(ge=0)
+    next_cursor: str | None
+    filter_scope: Literal["non_spatial"] = "non_spatial"
 
 
 class DevelopmentSummaryResponse(BaseModel):
@@ -334,6 +363,7 @@ def present_location_map(
                 district=record.district,
                 coordinate_precision=record.precision,
                 confidence=record.confidence_indicator,
+                location_accuracy=record.location_accuracy,
                 matching_offer_count=record.matching_offer_count,
                 total_offer_count=record.total_offer_count,
                 latest_published_at=record.latest_published_at,
@@ -379,6 +409,17 @@ def present_location_offer_page(
 ) -> LocationOfferPageResponse:
     """Present backend-decorated offers and explicit counts."""
     return LocationOfferPageResponse(
+        location=LocationSummaryResponse(
+            id=page.location.id,
+            display_name=page.location.display_name,
+            display_address=page.location.display_address,
+            district=page.location.district,
+            coordinate_precision=page.location.precision,
+            confidence=page.location.confidence_indicator,
+            location_accuracy=page.location.location_accuracy,
+        )
+        if page.location is not None
+        else None,
         items=tuple(
             OfferSummaryResponse(
                 id=item.id,
@@ -421,28 +462,7 @@ def present_viewport_listing_page(
     return ViewportListingPageResponse(
         items=tuple(
             ViewportListingItemResponse(
-                id=item.id,
-                content_type=item.content_type,
-                market_type=item.market_type,
-                property_type=item.property_type,
-                display_name=item.display_name,
-                data_confidence=item.data_confidence,
-                published_at=item.published_at,
-                currency=item.currency,
-                price_min_minor=item.price_min_minor,
-                price_max_minor=item.price_max_minor,
-                parking_price_min_minor=item.parking_price_min_minor,
-                parking_price_max_minor=item.parking_price_max_minor,
-                parking_included_in_price=item.parking_included_in_price,
-                storage_price_min_minor=item.storage_price_min_minor,
-                storage_price_max_minor=item.storage_price_max_minor,
-                storage_included_in_price=item.storage_included_in_price,
-                area_min_sqm=item.area_min_sqm,
-                area_max_sqm=item.area_max_sqm,
-                rooms_min=item.rooms_min,
-                rooms_max=item.rooms_max,
-                floor_label=item.floor_label,
-                delivery_label=item.delivery_label,
+                **ListingItemFieldsResponse.model_validate(item, from_attributes=True).model_dump(),
                 location=ListingLocationResponse(
                     id=item.location.id,
                     display_name=item.location.display_name,
@@ -450,15 +470,50 @@ def present_viewport_listing_page(
                     district=item.location.district,
                     coordinate_precision=item.location.precision,
                     confidence=item.location.confidence_indicator,
+                    location_accuracy=item.location.location_accuracy,
                     geometry=PointGeometry(
-                        coordinates=(item.location.longitude, item.location.latitude),
+                        coordinates=(
+                            _required_coordinate(item.location.longitude),
+                            _required_coordinate(item.location.latitude),
+                        ),
                     ),
                 ),
-                data_origin=item.data_origin,
             )
             for item in page.items
         ),
         matching_count=page.matching_count,
+        next_cursor=page.next_cursor,
+    )
+
+
+def _required_coordinate(value: float | None) -> float:
+    """Never manufacture a coordinate to satisfy the mapped response contract."""
+    if value is None:
+        msg = "Mapped listing is missing a coordinate"
+        raise ValueError(msg)
+    return value
+
+
+def present_unmapped_listing_page(page: UnmappedListingPage) -> UnmappedListingPageResponse:
+    """Expose discovery without serializing even a coarse centroid."""
+    return UnmappedListingPageResponse(
+        items=tuple(
+            UnmappedListingItemResponse(
+                **ListingItemFieldsResponse.model_validate(item, from_attributes=True).model_dump(),
+                location=LocationSummaryResponse(
+                    id=item.location.id,
+                    display_name=item.location.display_name,
+                    display_address=item.location.display_address,
+                    district=item.location.district,
+                    coordinate_precision=item.location.precision,
+                    confidence=item.location.confidence_indicator,
+                    location_accuracy=item.location.location_accuracy,
+                ),
+            )
+            for item in page.items
+        ),
+        matching_count=page.matching_count,
+        mapped_matching_count=page.mapped_matching_count,
         next_cursor=page.next_cursor,
     )
 
@@ -509,6 +564,7 @@ def present_offer_detail(detail: OfferDetailDTO) -> OfferDetailResponse:
             district=detail.location.district,
             coordinate_precision=detail.location.coordinate_precision,
             confidence=detail.location.confidence,
+            location_accuracy=detail.location.location_accuracy,
         ),
         development=(
             DevelopmentSummaryResponse(

@@ -162,3 +162,37 @@ The task is deferred with a blocked current dependency gate while T3 awaits
 provider prerequisites, stable worker readiness and representative acceptance.
 The original valid pre-implementation stack remains recorded in `a84ea07` and
 Git history. This is a rollout hold, not a claim of task or epic completion.
+
+
+## Corrected current-main delivery, 2026-10-19
+
+The owner requested remediation and merge after the review closure. AD-054 records
+its disabled-delivery boundary. T3 acceptance and T4 activation/completion remain
+outstanding; no live historical/provider work is enabled.
+
+The refresh preserves main's persistence-projection and release-proof module
+extractions, all newer media/location behavior, and allocates `20261019_0028` after
+0027 instead of reusing deployed media migration 0024. Its preceding reader is
+prepared separately; see [rollback compatibility](REPLAY_ROLLBACK_COMPATIBILITY.md).
+Parser acceptance moves to benchmark-backed `e2-v18/source-evidence-v3`.
+
+A real PostGIS regression reproduced a claimed second job writing after a first
+job's rollback paused their release. Apply now locks/rechecks the current release
+phase before source/work/offer locks, using the same lock order as rollback.
+The regression requires the outstanding job to defer without canonical writes.
+A starting-price regression also ensures a former fixed maximum becomes null
+when the accepted source evidence is only a lower bound.
+
+Current validation results and the complete changed-file inventory are recorded
+in the updated PR description. Earlier fixture counts above remain historical.
+
+
+Local current-main verification passed 1,491 backend tests and 191 frontend tests
+with the existing global/critical coverage gates (frontend 96.17% lines / 90.06%
+branches). Locked dependencies were installed with Python 3.13.2, Node 22.22.2 and
+pnpm 11.21.0. Format, lint/import boundaries, strict types, generated contracts,
+Markdown links, release workflow proof and `make quality-gates` also passed.
+Dedicated Compose projects and image tags isolated this suite from other worktrees.
+The new pause regression passes against real PostGIS. The preceding 0027-compatible
+reader was also checked against the actual migrated 0028 schema, independently of
+its revision-tag readiness fixture.

@@ -26,7 +26,7 @@ from wef_backend.features.ingestion.application.parser_replay import (
     plan_replay,
     scalar,
 )
-from wef_backend.features.ingestion.application.persistence import extraction_fingerprint
+from wef_backend.features.ingestion.application.persistence_projection import extraction_fingerprint
 from wef_backend.features.ingestion.domain.model import SourceIdentity, SourcePlatform
 from wef_backend.features.ingestion.infrastructure.archive_decoder import decode_archived_payload
 from wef_backend.features.ingestion.infrastructure.models import (
@@ -234,7 +234,7 @@ attempts=attempts+1 WHERE id=:id
             return
         await self.apply(work, now, extraction, raw.text, enabled=apply)
 
-    async def apply(
+    async def apply(  # noqa: PLR0911 - independently fenced terminal outcomes
         self,
         work: dict[str, object],
         now: datetime,
@@ -245,6 +245,14 @@ attempts=attempts+1 WHERE id=:id
     ) -> None:
         """Lock source, offer and origins; commit fields, lineage and progress together."""
         async with self._sessions.begin() as session:
+            # Serialize pause/rollback and writes in the same release-first lock order.
+            phase = await session.scalar(
+                text("SELECT phase FROM parser_replay_releases WHERE version=:release FOR UPDATE"),
+                {"release": RELEASE},
+            )
+            if phase not in {"canary", "running"}:
+                await self._finish(session, work, "deferred", "release_paused", now)
+                return
             current = await session.get(SourceMessageRow, work["message_id"], with_for_update=True)
             if (
                 current is None
@@ -306,7 +314,7 @@ state='claimed' FOR UPDATE
             )
             previous = link.extraction_json if isinstance(link.extraction_json, dict) else {}
             plan = plan_replay(extraction, source, previous, values, protected)
-            if work["phase"] == "canary" or not enabled:
+            if phase == "canary" or not enabled:
                 await self._finish(session, work, "observed", "validated_canary", now)
                 await session.execute(
                     text("UPDATE parser_replay_work SET canary_passed=true WHERE id=:id"),

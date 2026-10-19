@@ -149,6 +149,7 @@ class AutomaticRecovery:
                 batch_id=batch.id,
                 request_id=work.id,
                 auto_apply=apply and await self._queue.canary_passed(),
+                allowed_fields=repairable_offer_fields(work.missing_fields),
             )
             if await self._queue.defer_provider(work, now):
                 return
@@ -196,8 +197,8 @@ def repairable_offer_fields(fields: tuple[str, ...]) -> frozenset[str]:
     """Map evidenced parser gaps onto the canonical missing-only field allowlist."""
     mapping = {
         "apartment_price": {"apartment_price_min", "apartment_price_max", "currency"},
-        "parking_price": {"parking_price_min", "parking_price_max", "parking_included_in_price"},
-        "storage_price": {"storage_price_min", "storage_price_max", "storage_included_in_price"},
+        "parking_price": {"parking_price_min", "parking_price_max"},
+        "storage_price": {"storage_price_min", "storage_price_max"},
         "area_sqm": {"area_min_sqm", "area_max_sqm"},
         "rooms": {"rooms_min", "rooms_max"},
         "market_type": {"market_type"},

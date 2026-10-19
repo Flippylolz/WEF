@@ -997,13 +997,14 @@ class ProcessOfferEnrichmentItem:
         batch_id: UUID,
         request_id: UUID,
         auto_apply: bool = True,
+        allowed_fields: frozenset[str] | None = None,
     ) -> ItemOutcome | None:
         """Process up to one Groq Batch chunk, or pause when the daily budget is exhausted."""
         batch = await self._store.get_batch(batch_id)
         if batch is None or batch.owner_user_id != owner_id:
             message = "batch not found"
             raise AdminDeniedError(message)
-        if batch.state is BatchState.PAUSED:
+        if batch.state is BatchState.PAUSED and batch.failure_category != "daily_limit":
             return None
         if batch.state in {BatchState.COMPLETED, BatchState.REVERTED, BatchState.FAILED}:
             return None
@@ -1044,8 +1045,13 @@ class ProcessOfferEnrichmentItem:
                 finished_at=now,
             )
             return None
-        if batch.state is BatchState.QUEUED or batch.started_at is None:
-            await self._store.set_batch_state(batch_id, state=BatchState.RUNNING, started_at=now)
+        if batch.state in {BatchState.QUEUED, BatchState.PAUSED} or batch.started_at is None:
+            await self._store.set_batch_state(
+                batch_id,
+                state=BatchState.RUNNING,
+                started_at=batch.started_at or now,
+                failure_category=None,
+            )
         prepared: list[_PreparedEnrichmentItem] = []
         last_outcome: ItemOutcome | None = None
         for item in queued:
@@ -1054,6 +1060,7 @@ class ProcessOfferEnrichmentItem:
                 item=item,
                 now=now,
                 prepared=prepared,
+                allowed_fields=allowed_fields,
             )
         if not prepared:
             return last_outcome
@@ -1138,6 +1145,7 @@ class ProcessOfferEnrichmentItem:
         item: OfferAiEnrichmentItem,
         now: datetime,
         prepared: list[_PreparedEnrichmentItem],
+        allowed_fields: frozenset[str] | None = None,
     ) -> ItemOutcome:
         """Validate one item and append it to the provider batch when eligible."""
         del batch
@@ -1156,6 +1164,9 @@ class ProcessOfferEnrichmentItem:
             )
             return ItemOutcome.STALE
         missing = missing_fields(snapshot)
+        if allowed_fields is not None:
+            protected = await self._store.protected_field_names(item.offer_id)
+            missing = tuple(name for name in missing if name in allowed_fields - protected)
         revisions = await self._store.list_offer_source_revisions(
             item.offer_id,
             limit=self._runtime.max_sources,

@@ -28,6 +28,9 @@ from wef_backend.features.ingestion.infrastructure.archive_retry_store import (
     prepare_retry_versions,
     record_retry,
 )
+from wef_backend.features.ingestion.infrastructure.ingestion_observation_counters import (
+    record_observation,
+)
 from wef_backend.features.ingestion.infrastructure.models import (
     OfferSourceRow,
     SourceChannelRow,
@@ -61,6 +64,7 @@ class SQLAlchemyRawEventArchive:
     ) -> UUID:
         """Land one verbatim event idempotently and return its stable row id."""
         async with self._session_factory() as session, session.begin():
+            await record_observation(session, channel_external_id, "fetched_archivable")
             statement = (
                 insert(TelegramRawEventRow)
                 .values(
@@ -190,6 +194,14 @@ class SQLAlchemyRawEventArchive:
                 ),
             )
             changed = bool(getattr(result, "rowcount", 0))
+            if not changed:
+                channel = await session.scalar(
+                    select(TelegramRawEventRow.channel_external_id).where(
+                        TelegramRawEventRow.id == event_id
+                    )
+                )
+                if channel is not None:
+                    await record_observation(session, channel, "terminal_replays")
             if changed:
                 await session.execute(
                     update(TelegramArchiveExceptionRow)

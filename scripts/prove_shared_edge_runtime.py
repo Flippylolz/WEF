@@ -499,6 +499,66 @@ def pull_proof_images() -> None:
     raise ProofError(f"could not pull the pinned proof images: {message}")
 
 
+def assert_application_port_runtime(edge_root: Path, root_cert: Path) -> None:
+    """Prove HTTP routing, verified TLS, headers, and absent Fillable behavior."""
+    config = dataclasses.replace(
+        fixture_configuration(),
+        forecast_http_upstream="fixture-forecast:8080",
+        fillable_upstream="fixture-wef-web:8080",
+    )
+    write_release(config, edge_root / "releases" / "r-apps")
+    activate_release(
+        edge_root,
+        "r-apps",
+        "tls",
+        upstream_network=UPSTREAM_NETWORK,
+        reload_callback=graceful_reload,
+    )
+    time.sleep(1)
+    probe = """
+import http.client, json, socket, ssl, sys
+context = ssl.create_default_context(cadata=sys.argv[1])
+for port, scheme in ((3100, 'http'), (3200, 'https')):
+    connection = http.client.HTTPConnection('nginx', port, timeout=10)
+    if scheme == 'https':
+        connection.sock = context.wrap_socket(
+            socket.create_connection(('nginx', port), timeout=10), server_hostname='wef.test')
+    connection.request('GET', '/probe?port=' + str(port), headers={'Host': 'wef.test:' + str(port)})
+    response = connection.getresponse()
+    assert response.status == 200, response.status
+    payload = json.loads(response.read())
+    assert payload['headers']['host'] == 'wef.test:' + str(port)
+    assert payload['headers']['x-forwarded-proto'] == scheme
+    assert payload['headers']['x-forwarded-port'] == str(port)
+    assert payload['fixture'] == ('forecast' if port == 3100 else 'wef-web'), payload
+    connection.close()
+connection = http.client.HTTPConnection('nginx', 3200, timeout=10)
+connection.request('GET', '/')
+assert connection.getresponse().status == 400, 'TLS listener accepted plain HTTP'
+"""
+    compose(
+        [
+            "exec",
+            "-T",
+            "fixture-forecast",
+            "python",
+            "-c",
+            probe,
+            root_cert.read_text(encoding="utf-8"),
+        ]
+    )
+    absent = dataclasses.replace(config, fillable_upstream="not-deployed:8080")
+    write_release(absent, edge_root / "releases" / "r-apps-absent")
+    validate_release_config(edge_root, "r-apps-absent", "tls", upstream_network=UPSTREAM_NETWORK)
+    try:
+        activate_release(edge_root, "r-apps-absent", "tls", upstream_network=UPSTREAM_NETWORK)
+    except SharedEdgeReleaseError:
+        pass
+    else:
+        raise ProofError("normal activation must reject an absent application upstream")
+    assert_state(edge_root, "r-apps", "tls")
+
+
 def main() -> int:
     """Run the complete local shared-edge lifecycle proof."""
     global CURRENT_EDGE_ROOT  # noqa: PLW0603
@@ -738,6 +798,7 @@ def main() -> int:
         assert_tls_behaviour(root_cert, body_limit="1m")
         active_tls.write_text(original_tls, encoding="utf-8")
 
+        assert_application_port_runtime(edge_root, root_cert)
         print("shared-edge runtime proof: all assertions passed")
         return 0
     finally:

@@ -3,7 +3,7 @@ schema: ai-workflow/implementation-plan@1
 epic: E24
 title: "Automatic ingestion recovery"
 status: approved
-revision: 3
+revision: 4
 owner: owner
 spike_revision: 2
 task_sequence:
@@ -13,13 +13,15 @@ task_sequence:
     revision: 3
   - id: E24-T3
     revision: 2
+  - id: E24-T4
+    revision: 2
 approval:
   required_role: owner
   status: approved
   decided_by: Flippylolz
-  decided_at: "2026-09-05T16:28:48.314160Z"
-  approved_revision: 3
-  evidence: "Codex task 01a0710e-adaa-76f2-8bcd-07784c03e9b2: owner continue directly approving revision 3 for T3 implementation and green-CI rollout"
+  decided_at: "2026-09-06T05:30:10.288298+00:00"
+  approved_revision: 4
+  evidence: "Codex task 01a0710e-adaa-76f2-8bcd-07784c03e9b2: owner message 'I approve' directly approving the T4 revision 4 proposal and sequencing change on 2026-09-06"
 invalidation:
   invalidated_by: null
   invalidated_at: null
@@ -562,3 +564,18 @@ ledger, originals and successful derivatives. Do not downgrade schema, reset
 archive/cursors, delete assets or override source ambiguity. Record safe aggregate
 evidence and any exceptional intervention. T3 completion does not close T4 or
 certify the remaining archive conflicts as repaired.
+
+## Revision 4: progress monitoring
+
+The owner explicitly approved the [T4 contract](T4_MONITORING_PROPOSAL.md), including
+allowing T4 implementation against deployed T3 contracts while T3 production
+repair acceptance remains open. The linked contract is incorporated into this
+approved revision. T4 revision 2 depends on completed T1/T2; T3 ledger/status
+compatibility is a verified interface prerequisite, not a task-completion gate.
+T3 and E24 cannot be marked done by this sequencing decision. Historical plan
+revisions and their approvals remain preserved in Git and production evidence.
+
+Promote T4, land this planning change separately, then implement on
+`feat/E24-T4-progress-monitoring`. T4 remains in progress until the full 24-hour
+acceptance window passes. The rollout includes observation-only classification,
+a healthy 15-minute window, then incident activation under the approved bounds.

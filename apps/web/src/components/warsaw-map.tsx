@@ -106,8 +106,8 @@ const locationLayer: LayerProps = {
   paint: {
     "circle-color": [
       "case",
-      ["==", ["get", "confidence"], "low"],
-      "#d29922",
+      ["!=", ["get", "effective_precision"], "building"],
+      "#0d1117",
       "#3fb950",
     ],
     "circle-radius": [
@@ -119,7 +119,12 @@ const locationLayer: LayerProps = {
       5,
       15,
     ],
-    "circle-stroke-color": "#0d1117",
+    "circle-stroke-color": [
+      "case",
+      ["==", ["get", "effective_precision"], "building"],
+      "#0d1117",
+      "#e3b341",
+    ],
     "circle-stroke-width": 2,
   },
 };
@@ -137,7 +142,27 @@ type WarsawMapProps = {
   reduceMotion?: boolean;
 };
 
-export function WarsawMap({
+function supportsWebGL2() {
+  try {
+    const context = document.createElement("canvas").getContext("webgl2");
+    if (!context) return false;
+    context.getExtension("WEBGL_lose_context")?.loseContext();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function WarsawMap(props: WarsawMapProps) {
+  const [supported] = useState(supportsWebGL2);
+  const { onFailure } = props;
+  useEffect(() => {
+    if (!supported) onFailure();
+  }, [supported, onFailure]);
+  return supported ? <WebGLWarsawMap {...props} /> : null;
+}
+
+function WebGLWarsawMap({
   bbox,
   data,
   selectedId,
@@ -157,12 +182,18 @@ export function WarsawMap({
         // MapLibre's vector-tile wrapper coerces a GeoJSON feature id through
         // parseInt, so UUID ids can be truncated or dropped. Properties retain
         // the full string through clustering and rendered-feature queries.
-        properties: { ...feature.properties, location_id: feature.id },
+        properties: {
+          ...feature.properties,
+          location_id: feature.id,
+          effective_precision:
+            feature.properties.location_accuracy?.precision ?? "unresolved",
+        },
       })),
     }),
     [data],
   );
   const [mapReady, setMapReady] = useState(false);
+  const [mapIdle, setMapIdle] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapRef>(null);
   const mapLoaded = useRef(false);
@@ -335,6 +366,7 @@ export function WarsawMap({
       ref={containerRef}
       className="map-canvas"
       aria-label="Interactive map of Warsaw"
+      aria-busy={!mapReady || !mapIdle}
     >
       {!mapReady ? (
         <div className="map-loading" role="status">
@@ -362,6 +394,9 @@ export function WarsawMap({
         interactiveLayerIds={["location-clusters", "locations-unclustered"]}
         onClick={(event) => void handleClick(event)}
         onMoveEnd={handleMoveEnd}
+        onMoveStart={() => setMapIdle(false)}
+        onData={() => setMapIdle(false)}
+        onIdle={() => setMapIdle(true)}
         onLoad={() => {
           mapLoaded.current = true;
           setMapReady(true);
@@ -376,7 +411,7 @@ export function WarsawMap({
         <NavigationControl position="top-right" showCompass={false} />
         <AttributionControl
           position="bottom-right"
-          customAttribution="© OpenFreeMap · © OpenStreetMap contributors"
+          customAttribution="© OpenFreeMap · © OpenStreetMap contributors · Dane lokalizacji: Urząd m.st. Warszawy"
         />
         <Source id="warsaw-districts" type="geojson" data={DISTRICT_BOUNDARIES}>
           <Layer {...districtFillLayer} />

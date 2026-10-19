@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from io import StringIO
@@ -19,12 +19,16 @@ from wef_backend.features.ingestion.application.complete_import import (
     PreparedImport,
     ProviderBatchLimitError,
     ProviderDailyBudgetError,
+    ProviderPauseError,
     ProviderReservation,
     build_incremental_plan,
     messages_to_process,
     prepare_import,
 )
 from wef_backend.features.ingestion.domain.geocoding import (
+    REQUEST_VERSION,
+    STREET_REQUEST_VERSION,
+    GeocodeCacheKey,
     GeocodeErrorCode,
     GeocodePrecision,
     GeocodeProvider,
@@ -142,9 +146,11 @@ class FakeBudget:
 
     reservations: list[ProviderReservation | None]
     completions: list[tuple[str, str | None]] = field(default_factory=list)
+    queries: list[str] = field(default_factory=list)
 
-    async def reserve_provider_attempt(self, **_: object) -> ProviderReservation | None:
+    async def reserve_provider_attempt(self, **kwargs: object) -> ProviderReservation | None:
         """Return the next scripted durable slot."""
+        self.queries.append(str(kwargs["query_hash"]))
         return self.reservations.pop(0)
 
     async def complete_provider_attempt(
@@ -189,7 +195,10 @@ def _result(error: GeocodeErrorCode | None = None) -> GeocodeResult:
     )
 
 
-async def test_budgeted_geocoder_reserves_before_call_and_enforces_local_cap() -> None:
+@pytest.mark.parametrize("street_only", [False, True])
+async def test_budgeted_geocoder_reserves_before_call_and_enforces_local_cap(
+    *, street_only: bool
+) -> None:
     """Every call consumes one durable slot and the local cap causes a pause."""
     budget = FakeBudget([ProviderReservation(uuid4(), NOW)])
     hosted = FakeGeocoder(_result())
@@ -203,12 +212,19 @@ async def test_budgeted_geocoder_reserves_before_call_and_enforces_local_cap() -
         max_provider_requests=1,
         clock=lambda: NOW,
     )
-    query = normalize_geocode_query("ul. Testowa 1, Warszawa")
+    query = replace(normalize_geocode_query("ul. Testowa 1, Warszawa"), street_only=street_only)
 
     assert await geocoder.geocode(query) == hosted.result
     with pytest.raises(ProviderBatchLimitError):
         await geocoder.geocode(query)
 
+    assert budget.queries == [
+        GeocodeCacheKey(
+            GeocodeProvider.GEOAPIFY,
+            query.normalized,
+            request_version=STREET_REQUEST_VERSION if street_only else REQUEST_VERSION,
+        ).query_hash
+    ]
     assert hosted.calls == 1
     assert budget.completions == [("succeeded", None)]
 
@@ -232,3 +248,60 @@ async def test_budgeted_geocoder_pauses_without_network_when_daily_budget_is_ful
         await geocoder.geocode(normalize_geocode_query("Warszawa"))
 
     assert hosted.calls == 0
+
+
+@pytest.mark.parametrize(
+    ("code", "outcome", "exception"),
+    [
+        (GeocodeErrorCode.NO_RESULT, "no_result", None),
+        (GeocodeErrorCode.QUOTA, "quota", ProviderDailyBudgetError),
+        (GeocodeErrorCode.TIMEOUT, "transient", ProviderPauseError),
+    ],
+)
+async def test_provider_outcomes_are_recorded_without_losing_quota_semantics(
+    code: GeocodeErrorCode, outcome: str, exception: type[Exception] | None
+) -> None:
+    budget = FakeBudget([ProviderReservation(uuid4(), NOW)])
+    geocoder = DurableBudgetedGeocoder(
+        FakeGeocoder(_result(code)),
+        budget,
+        uuid4(),
+        "synthetic",
+        10,
+        timedelta(0),
+        1,
+        clock=lambda: NOW,
+    )
+    if exception:
+        with pytest.raises(exception):
+            await geocoder.geocode(normalize_geocode_query("Warszawa"))
+    else:
+        result = await geocoder.geocode(normalize_geocode_query("Warszawa"))
+        assert result.error_code is GeocodeErrorCode.NO_RESULT
+    assert budget.completions == [(outcome, code.value)]
+
+
+async def test_provider_exception_records_redacted_failure_and_charges_request() -> None:
+    class FailingGeocoder:
+        provider = GeocodeProvider.GEOAPIFY
+
+        async def geocode(self, _query: object) -> GeocodeResult:
+            message = "synthetic private payload"
+            raise RuntimeError(message)
+
+    budget = FakeBudget([ProviderReservation(uuid4(), NOW)])
+    geocoder = DurableBudgetedGeocoder(
+        FailingGeocoder(),
+        budget,
+        uuid4(),
+        "synthetic",
+        10,
+        timedelta(0),
+        1,
+        clock=lambda: NOW,
+    )
+    with pytest.raises(RuntimeError, match="synthetic private"):
+        await geocoder.geocode(normalize_geocode_query("Warszawa"))
+    assert budget.completions == [("failed", "provider_exception")]
+    with pytest.raises(ProviderBatchLimitError):
+        await geocoder.geocode(normalize_geocode_query("Warszawa"))

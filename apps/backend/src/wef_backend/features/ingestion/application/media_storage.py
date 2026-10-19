@@ -36,6 +36,9 @@ class MediaWorkItem:
     association_rule: MediaAssociationRule | None = None
     association_confidence: float | None = None
     expected_checksum_sha256: str | None = None
+    recovery_work_id: UUID | None = None
+    recovery_token: UUID | None = None
+    association_revision_id: UUID | None = None
 
     def __post_init__(self) -> None:
         """Retain non-negative E2 ordinals and complete association shapes."""

@@ -8,7 +8,7 @@ export type FilterablePropertyType =
 export type MapLocationQuery =
   operations["queryMapLocations"]["parameters"]["query"];
 
-export const DEFAULT_BBOX = "20.7,52.0,21.4,52.4";
+export const DEFAULT_BBOX = "20.7,52.0,21.4,52.6";
 export const DEFAULT_CONTENT_TYPES: ContentType[] = ["development", "unit"];
 const WARSAW_LONGITUDE_RANGE = [20.5, 21.6] as const;
 const WARSAW_LATITUDE_RANGE = [51.8, 52.6] as const;

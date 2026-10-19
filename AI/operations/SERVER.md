@@ -2,6 +2,13 @@
 
 This document records read-only inspection of the supplied production host on 2026-08-12. Re-run the inventory immediately before deployment because ports, containers, and capacity can change.
 
+## Current hostname (2026-09-28)
+
+The primary hostname is `flipstarnuc.duckdns.org` (SSH `nuc@flipstarnuc.duckdns.org`).
+The original `2fa54e2405.duckdns.org` remains a supported DNS and TLS alias.
+The dated inventory below records the original inspection; its IP address is not
+a current DNS configuration value. See [Nginx and TLS](NGINX_TLS.md) for migration details.
+
 ## Access
 
 - SSH: `nuc@2fa54e2405.duckdns.org`

@@ -39,6 +39,12 @@ invalidation:
 
 # Implementation Plan: Production hardening and scalability delivery
 
+## Scoped owner decision
+
+On 2026-09-06 the owner approved **T1–T5 only** under this revision; see
+[OWNER_DECISION.md](OWNER_DECISION.md). The remaining scope is still awaiting
+approval. Task-level implementation gates record this bounded decision.
+
 ## Approved spike baseline
 
 [E14 spike revision 1](SPIKE.md) is owner-approved under AD-041 and remains current.
@@ -49,7 +55,8 @@ backup/recovery while ADR-015 and E7-T5 remain deferred.
 
 ## Scope and outcome
 
-This plan authorizes eight independently reviewable tasks. It makes the quality gate
+The full plan describes eight independently reviewable tasks; the scoped owner
+decision currently authorizes T1–T5 only. It makes the quality gate
 fail closed, strengthens risk-weighted tests, decomposes the largest frontend/backend
 orchestration seams without behavior changes, adds real cross-browser full-stack
 journeys, produces digest-bound supply-chain evidence, adds privacy-bounded SLO

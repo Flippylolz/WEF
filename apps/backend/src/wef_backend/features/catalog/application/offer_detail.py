@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from decimal import Decimal
     from uuid import UUID
 
+    from wef_backend.features.catalog.application.location_accuracy import LocationAccuracy
     from wef_backend.features.catalog.domain import ContentType, MarketType, PropertyType
 
 _HIGH_CONFIDENCE_SCORE = 0.90
@@ -62,6 +63,8 @@ class LocationSummaryDTO:
     district: str | None
     coordinate_precision: str
     confidence: ConfidenceIndicator
+
+    location_accuracy: LocationAccuracy | None = None
 
 
 @dataclass(frozen=True, slots=True)

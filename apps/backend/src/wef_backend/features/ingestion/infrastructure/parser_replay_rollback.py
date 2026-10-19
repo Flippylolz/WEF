@@ -12,7 +12,7 @@ from wef_backend.features.admin.application.offer_enrichment import value_finger
 from wef_backend.features.admin.infrastructure.ai_enrichment_models import OfferFieldOriginRow
 from wef_backend.features.catalog.infrastructure.models import OfferRow
 from wef_backend.features.ingestion.application.parser_replay import FIELD_COLUMNS, scalar
-from wef_backend.features.ingestion.application.persistence import extraction_fingerprint
+from wef_backend.features.ingestion.application.persistence_projection import extraction_fingerprint
 from wef_backend.features.ingestion.infrastructure.models import OfferSourceRow, SourceMessageRow
 
 if TYPE_CHECKING:

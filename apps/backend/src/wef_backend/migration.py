@@ -5,10 +5,13 @@ from alembic.config import Config
 
 from wef_backend.settings import Settings, load_settings
 
-EXPECTED_DATABASE_REVISION = "20260905_0024"
+EXPECTED_DATABASE_REVISION = "20261019_0028"
+# E25-T4 requires replay tables; deploy the 0028-compatible previous reader first.
+READ_COMPATIBLE_DATABASE_REVISIONS = frozenset({EXPECTED_DATABASE_REVISION})
 
 __all__ = [
     "EXPECTED_DATABASE_REVISION",
+    "READ_COMPATIBLE_DATABASE_REVISIONS",
     "alembic_command",
     "alembic_config",
     "migrate",

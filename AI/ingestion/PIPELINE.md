@@ -8,6 +8,22 @@
 - Share canonical persistence, revisions, visibility, and checkpoint behavior between historical and live Telegram ingestion.
 - Make heuristic decisions visible through confidence, reason codes, and reports.
 
+## Current deployed baseline
+
+As of 2026-09-15, production runs parser `e2-v18`, source-evidence policy
+`source-evidence-v3`, and location normalization `warsaw-address-v11`. Earlier
+version-specific sections below record the evolution of the pipeline. E28
+completed its fixed-cohort public map/gallery verification and continuous
+24-hour delivery acceptance; see [E28 production acceptance](../epics/E28-live-offer-map-delivery/PRODUCTION_ACCEPTANCE.md).
+This does not close the distinct D-003 passive new/edit/delete gate or establish
+whole-history field accuracy.
+
+Parse evaluations describe current source/parser/policy identities. Existing
+canonical field values and extraction provenance can retain older parser
+versions even after evaluation and operator replay. E25-T4 owns guarded
+historical field convergence; its separate approval, dependency and rollout
+gates still apply.
+
 ## Pipeline boundary
 
 Each source adapter emits a common `RawMessage`:
@@ -128,6 +144,17 @@ Location/address sources (in priority order):
    The same accepted segment set populates the district field at medium confidence
    (`extract.location_pin` / `extract.district_pin` rules); divergent pin lines emit
    `conflicting_values` instead of choosing.
+
+Current channel template support (`e2-v16`, E28-T1) also counts Cyrillic `м²`/`м2`
+area evidence, recognizes the Russian house-sale header, and reads standalone
+`Квартира:` / `Цена дома:` total prices. `Паркоместо:` and storage labels containing
+a size keep their own monetary values; the storage size and per-square-metre price
+never become the property total. Pipe-delimited room summaries retain their own
+source spans and must agree with labeled/tagged totals. A generic house-sale
+heading does not contradict an explicit semi-detached description; an explicit
+detached-house description still does. Independent `source-evidence-v3` classification
+recognizes these price labels even if candidate detection fails. Nearby-locality
+resolution and previously unassociated galleries remain separate E28 tasks.
 
 ### 6. Normalization
 
@@ -634,6 +661,99 @@ convergence remains gated on the E24-T1/T2/T3 ancestor/completion contract. See 
 [operator guide](../operations/OPERATOR_COMMANDS.md#e25-automatic-parser-exception-recovery)
 for activation, pause, aggregate reporting and rollback.
 
+## Independent Telegram media recovery (E24-T3)
+
+Canonical transactions write a media-discovery intention together with each
+source revision, including unchanged replay when the intention is absent. Text
+commit and original archive completion no longer wait for worker media acquisition.
+The worker captures stable provider media metadata first, then a separate bounded
+runner discovers intended assets and recovers derivatives. One-shot import
+storage remains compatible; its canonical intentions allow subsequent repair.
+
+Discovery reads at most 100 source messages per cycle with a durable channel
+watermark and compact chronological grouping continuation. Text-only and service
+boundaries participate. Explicit reply/album owners come from retained primary
+source associations. New revisions reuse recorded pre-message grouping context;
+queue order never supplies adjacency evidence. Unsupported/unassociated media
+retains an explained disposition. Missing historical paths or ambiguous remote
+source identity cannot justify a new public association.
+
+The media ledger identifies a source revision, ordinal, descriptor, grouping
+version and transform version. Claims use a renewable 120-second lease and a
+unique token; publication validates ownership, current source revision and
+association revision inside the asset transaction. Successful original evidence
+is distinct from missing/failed derivatives. Exact restricted originals can be
+reused after temporary files disappear; completed variants are not transformed
+again. Source descriptor identity is retained when reading a new leased path.
+
+One item runs at a time, at most ten claims per cycle, followed by a five-second
+idle interval. Transport/contention/storage deferrals retain their own counter
+and provider minimum delay; five data failures quarantine one identity. Relevant
+policy versions permit one re-evaluation; unrelated releases do not reset the
+budget. A systemic media failure pauses only media work. The archive, canonical
+source, polling progress and successful public assets are preserved.
+
+## Durable ingestion progress (E24-T4)
+
+The worker samples archive, traversal, media discovery and media execution every
+60 seconds. Eligible, delayed, leased, terminal and quarantined populations are
+separate from observations, attempts, unique canonical revisions and public-media
+counts. Archive receipt overrides and policy re-evaluation follow the same rules
+as the worker queue. `fetched_archivable` counts accepted observations since
+instrumentation, including duplicates; historical fetched counts are unavailable.
+
+Three stagnant samples and five minutes with eligible work produce a progress
+stall. Provider deadlines include two sampling intervals of grace; idle sources,
+active leases and delayed-only work do not imply failure. Comparison state survives
+restarts. Progress health is independent of public readiness and the ORM-free
+file-only liveness probe. Failed sampling becomes stale in private status and
+never stops canonical landing.
+
+Monitoring persists bounded 48-hour minute aggregates and one incident per stage
+and reason episode. Two healthy samples close an incident automatically. Existing
+retry, lease and supervision behavior remains authoritative; monitoring cannot
+rewind cursors, reset retry budgets or override source evidence. Structured
+`ingestion_progress_incident` transitions integrate with existing E14 logging;
+unchanged episodes do not emit repeated alerts or send external messages.
+
+## E26 geocoding acceptance
+
+`warsaw-address-v3` / `warsaw-review-v2` require structured source/provider
+address agreement before confidence. At most five candidates and two cached
+source-supported query forms are considered; street-only fallback uses
+`forward-geocode-v4-street` and `type=street` through the same durable budget.
+Quality exhaustion settles without recurring requests; quotas/transients defer.
+The recurring worker no longer blanket-accepts pending coarse pins under AD-034.
+Genuine owner/AI decisions remain protected inside the selection transaction.
+See [geocoding policy](GEOCODING.md#e26-address-validation-warsaw-review-v2).
+Accepted legacy rows are unchanged by this task; E26-T2 owns repair, and T3 owns
+honest precision/discovery before broad existing-location application.
+
+E26-T2 adds a versioned existing-location scan to recurring geocoding, initially
+in observation mode. It shares the foreground account budget and leaves source
+identity, offers, favorites and protected corrections untouched. Explicit apply
+and verified-canary controls gate canonical changes; see [GEOCODING.md](GEOCODING.md).
+
+
+## Municipal-first resolution (E26-T4)
+
+Forward request version `forward-geocode-v5` resolves uniquely matched Warsaw municipal street geometry or numbered address points first, then the existing budgeted hosted geocoder. Street geometry produces approximate street precision. Optional, already-authorized AI recovery may quote only source-supported street text and trigger one verified lookup retry; AI supplies no coordinates. Owner selections remain protected. Municipal results retain city attribution and response hashes, use bounded public WFS requests, and refresh on use through weekly cache keys. Outages do not become durable unresolved verdicts when both lookup stages fail. Existing deployment configuration and provider budgets remain unchanged.
+
+The new request version starts a fresh observation generation. Verify production canaries and protected selections before enabling its guarded application/backfill; rolling back to v4 uses its separate control generation. No schema migration is required. See [the policy and verification plan](../epics/E26-automatic-location-validation/MUNICIPAL_FIRST.md).
+
+### Recovered offer gallery discovery (E28)
+
+A canonical primary source link carries an additive media-discovery receipt. A new
+current owner behind the chronological cursor rewinds only to that owner's source
+ID, then uses normal bounded chronological pages and retained album boundaries.
+This covers parser and AI-created owners without rescanning unchanged terminal
+work forever. A current canonical owner can anchor an album even if deterministic
+extraction still cannot classify its caption. Reopening is restricted to
+`unsupported/unassociated_source_evidence` with a newly evidenced owner;
+completed, leased, quarantined, edited/deleted source fences remain authoritative.
+The new 0027 writer requires its migration; deploy the E28-T3 compatible reader
+first to provide an application rollback target. No media is deleted by migration.
+
 ## Accepted parser history convergence (E25-T4)
 
 The optional worker compares current retained source revisions with the accepted
@@ -649,7 +769,9 @@ non-candidates, deleted sources and missing current offer links receive countabl
 outcomes. T4 does not fabricate archive events, reset E24 receipts or create offers;
 unlinked eligible listing recovery remains T3's responsibility.
 
-Application locks the current source, offer and field origins after parsing. A
+Application locks the release phase before the current source, offer and field
+origins after parsing. Pause/rollback takes the same release-first lock, so claims
+obtained before a pause cannot subsequently write. A
 field requires source offsets and either agreement with its retained parser value
 or an empty canonical value. AI origins, conflicting origins and changed canonical
 values remain protected; coupled price/currency groups stay together. Only allowed
@@ -658,7 +780,7 @@ visibility and encrypted contacts survive. Source extraction, parser origin,
 duplicate-suggestion fingerprint, evaluation lifecycle and durable progress commit
 with each guarded write. Partial repairs retain old evidence for protected groups.
 
-Migration 0024 extends origin metadata for parser-owned content/property fields;
+Migration 0028 extends origin metadata for parser-owned content/property fields;
 it grants no additional AI field authority. Runtime rollback retains metadata.
 Explicit per-job reversal checks current value/origin/source, restores only still
 owned groups, pauses that release and records reverted/conflicting fields. Repeated

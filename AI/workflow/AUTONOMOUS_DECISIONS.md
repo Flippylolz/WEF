@@ -278,6 +278,8 @@ This append-only log records choices made while the owner delegated overnight MV
 
 ## AD-034: Accept in-scope pending geocode pins for public map coverage
 
+**Recurring automatic use superseded by owner-approved E26 implementation plan revision 1 / E26-T1.** Retain this historical decision and its selection lineage. New automated work must pass source/provider address agreement; it cannot claim manual acceptance. Genuine owner review remains protected.
+
 - Time: 2026-08-21.
 - Prompt avoided: leave ~306 in-scope geocoded locations unpinned (`needs_review` without `point`) after the owner asked for historical records to be visible; or start Telethon while B-003 remains open.
 - Selected approach: under AD-009 `continue` after AD-033, accept in-scope `low_precision`/`low_confidence` geocode results onto locations with `manual_accept` lineage; ship `wef-accept-pending-geocode-pins`; leave out-of-scope and `no_result` ungeocoded rows unpinned.
@@ -460,3 +462,21 @@ This append-only log records choices made while the owner delegated overnight MV
 - Selected approach: refresh each PR against its merged parent, verify current-head CI and review requirements, squash-merge in dependency order, and run the documented staged production acceptance and guarded history replay.
 - Scope boundary: the approved E25 implementation and rollout, including its source, canary, quota, privacy and protection gates. This does not authorize paid allocation, unverified provider activation, bypassing CI or incomplete dependency acceptance, or destructive resets.
 - Reversal: pause scheduling/application on failed acceptance; retain source, reservation, proposal and field-lineage records for guarded recovery.
+
+
+## AD-054: Repair and merge disabled E25-T4 implementation
+
+- Time: 2026-10-19.
+- Owner decision: `can you please do this work correctly and merge the RP`, in
+  this PR #337 review chat, directly following the report that the PR had been
+  closed for its pause race, migration/version conflicts and incomplete T3 gate.
+- Selected approach: reopen #337, fix those defects against current main, prepare
+  and deploy its additive-schema rollback reader first, and squash-merge the
+  disabled replay implementation after every current-head required check passes.
+- Scope boundary: this task-specific direction supersedes the earlier T3-before-T4
+  merge timing only for disabled code delivery. T3 acceptance is still required
+  before T4 activation/completion. Both replay flags remain false; T3/T4 are not
+  declared done, and no provider calls, paid spend or historical canonical writes
+  are authorized by this merge. Existing source, owner, AI and CI protections stay.
+- Reversal: pause scheduling/application, retain the additive migration/ledgers,
+  and use the deployed rollback-compatible preceding image if needed.

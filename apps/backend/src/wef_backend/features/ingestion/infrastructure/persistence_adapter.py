@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import delete, func, select, text, update
+from sqlalchemy.dialects.postgresql import insert
 
 from wef_backend.features.catalog.domain import OfferVisibility
 from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
@@ -24,7 +25,7 @@ from wef_backend.features.contacts.application.reveal import (
 )
 from wef_backend.features.contacts.domain.model import ContactKind as StoredContactKind
 from wef_backend.features.contacts.infrastructure.models import ContactPointRow
-from wef_backend.features.ingestion.application.extraction import PARSER_VERSION
+from wef_backend.features.ingestion.application.extraction import PARSER_VERSION, extract_listing
 from wef_backend.features.ingestion.application.parse_issue_serialization import (
     build_parse_issue_insert,
 )
@@ -53,6 +54,7 @@ from wef_backend.features.ingestion.application.persistence import (
     normalized_location_key,
     redacted_error_summary,
 )
+from wef_backend.features.ingestion.domain.geocoding import source_address_evidence
 from wef_backend.features.ingestion.domain.model import RawMessage, SourceIdentity, SourcePlatform
 from wef_backend.features.ingestion.infrastructure.archive_evidence import (
     ensure_tombstone,
@@ -64,6 +66,7 @@ from wef_backend.features.ingestion.infrastructure.archive_evidence import (
 from wef_backend.features.ingestion.infrastructure.models import (
     DevelopmentRow,
     IngestRunRow,
+    MediaRecoveryIntentionRow,
     OfferSourceRow,
     SourceChannelRow,
     SourceMessageRevisionRow,
@@ -608,6 +611,8 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                     )
                     or 0
                 )
+            if existing is not None and disposition == "already_canonical":
+                await self._enqueue_media(session, existing.current_revision_id)
             return _MessageResult(
                 outcome=MessageOutcome.UNCHANGED,
                 offer_created=False,
@@ -709,6 +714,8 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             anchor_revision_id = revision_id
             message_id_for_offer = existing.id
 
+        await session.flush()
+        await self._enqueue_media(session, anchor_revision_id)
         listing = persistable.extraction.listing if persistable.extraction else None
         offer_created = False
         offer_id = None
@@ -750,6 +757,15 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             source_changed=source_changed,
             parser_version=parser_version,
             parser_values=parser_values,
+        )
+
+    @staticmethod
+    async def _enqueue_media(session: AsyncSession, revision_id: UUID) -> None:
+        """Commit discovery intention atomically with canonical source state."""
+        await session.execute(
+            insert(MediaRecoveryIntentionRow)
+            .values(source_revision_id=revision_id)
+            .on_conflict_do_nothing()
         )
 
     async def _persist_parse_issue_if_needed(  # noqa: PLR0913
@@ -815,6 +831,7 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             LocationRow(
                 id=location_id,
                 display_name=location_text,
+                city=source_address_evidence(parsed).city if parsed else "Warszawa",
                 display_address=location_text,
                 normalized_address=" ".join(location_text.casefold().split()),
                 normalized_address_hash=key,
@@ -890,7 +907,11 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
             "latest_source_at": raw.edited_at or raw.published_at,
             "currency": apartment.currency if apartment else None,
             "price_min_minor": (money_to_minor(apartment.amount.lower) if apartment else None),
-            "price_max_minor": (money_to_minor(apartment.amount.upper) if apartment else None),
+            "price_max_minor": (
+                money_to_minor(apartment.amount.upper)
+                if apartment and not apartment.is_lower_bound
+                else None
+            ),
             "parking_price_min_minor": (
                 None
                 if parking_included or parking is None
@@ -1101,6 +1122,88 @@ class SQLAlchemyIngestionPersistence(IngestionPersistencePort):
                 ),
             )
             await session.commit()
+
+    async def replay_current_revision(
+        self, revision_id: UUID, *, run_id: UUID | None = None
+    ) -> str:
+        """Inspect or replay one current retained revision without moving live cursors."""
+        result = None
+        async with self._session_factory() as session, session.begin():
+            revision = await session.get(SourceMessageRevisionRow, revision_id)
+            if revision is None:
+                return "stale"
+            source = await session.get(
+                SourceMessageRow, revision.source_message_id, with_for_update=run_id is not None
+            )
+            if source is None or source.current_revision_id != revision_id or source.deleted_at:
+                return "stale"
+            channel = await session.get(SourceChannelRow, source.source_channel_id)
+            if channel is None:
+                return "stale"
+            raw = _raw_message_from_stored_revision(
+                revision=revision, message=source, channel=channel
+            )
+            extraction = extract_listing(raw)
+            if extraction.listing is None:
+                return "non_candidate"
+            existing = (
+                await session.execute(
+                    select(
+                        OfferRow.id,
+                        OfferRow.location_id,
+                        OfferRow.visibility,
+                        LocationRow.display_name,
+                        LocationRow.point.is_not(None).label("has_point"),
+                    )
+                    .join(OfferSourceRow, OfferSourceRow.offer_id == OfferRow.id)
+                    .join(LocationRow, LocationRow.id == OfferRow.location_id)
+                    .where(
+                        OfferSourceRow.source_message_id == source.id,
+                        OfferSourceRow.relationship == "primary",
+                    )
+                    .limit(1)
+                )
+            ).first()
+            selection_actor = (
+                await session.scalar(
+                    text(
+                        "SELECT actor_type FROM location_geocode_selections WHERE location_id=:id "
+                        "ORDER BY selection_version DESC LIMIT 1"
+                    ),
+                    {"id": existing.location_id},
+                )
+                if existing
+                else None
+            )
+            preserve_location = bool(
+                existing
+                and (
+                    existing.display_name != "Unknown location"
+                    or existing.has_point
+                    or selection_actor not in {None, "automatic_policy"}
+                )
+            )
+            outcome = "update_candidate" if existing else "create_candidate"
+            if run_id is not None:
+                result = await self._persist_message(
+                    session,
+                    channel_id=channel.id,
+                    run_id=run_id,
+                    persistable=PersistableMessage(raw, extraction),
+                    enforce_source_order=True,
+                )
+                if existing:
+                    # Replay does not undo manual hiding or relocate an established
+                    # address. Only an unresolved sentinel can gain newly parsed identity.
+                    preserved: dict[str, object] = {"visibility": existing.visibility}
+                    if preserve_location:
+                        preserved["location_id"] = existing.location_id
+                    await session.execute(
+                        update(OfferRow).where(OfferRow.id == existing.id).values(**preserved)
+                    )
+        if result is not None:
+            await self._notify_origin_sync(result)
+        return outcome
 
     async def persist_owner_ai_listing(
         self,
