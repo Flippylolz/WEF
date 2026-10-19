@@ -16,3 +16,11 @@ No public API, database schema, environment, or deployment migration is needed.
 Rollback is a squash-commit revert restoring the previous manifests and locks.
 The usual format, lint, type, test, contract, image, browser, and audit gates
 remain enforced.
+
+## Vitest
+
+The coupled `vitest` and `@vitest/coverage-v8` packages advance together to 5.0.5,
+verified against npm on 2026-10-19. The full local suites still pass (1,464 backend
+and 187 frontend tests); frontend coverage remains 94.75% lines and 90.07%
+branches. The dependency lockfile is regenerated after integrating the shared
+security prerequisite. No application behavior or coverage policy changes.
