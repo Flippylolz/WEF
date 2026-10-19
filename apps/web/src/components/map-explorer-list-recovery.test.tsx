@@ -70,6 +70,66 @@ describe("map-explorer list-recovery", () => {
     expect(screen.getByRole("button", { name: "resetMap" })).toBeVisible();
   });
 
+  it("clears previous cards and counts when Last 24 hours returns no listings", async () => {
+    const user = userEvent.setup();
+    vi.mocked(catalogApi.fetchViewportListings).mockImplementation(
+      async (query = { bbox: catalogApi.DEFAULT_BBOX }) => ({
+        state: "ready",
+        data: query.quick_filter
+          ? { items: [], matching_count: 0, next_cursor: null }
+          : listingPage,
+      }),
+    );
+    renderExplorer();
+    await screen.findByRole("button", { name: /Synthetic Central Residence/ });
+
+    await user.click(
+      screen.getByRole("button", { name: "quickFilter.last_day" }),
+    );
+
+    await screen.findByText("listingsEmpty");
+    expect(
+      screen.queryByRole("button", { name: /Synthetic Central Residence/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("listingCount:0")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "clearFilters" }));
+    expect(
+      await screen.findByRole("button", {
+        name: /Synthetic Central Residence/,
+      }),
+    ).toBeVisible();
+  });
+
+  it("does not resurrect cards after an empty success followed by a refresh failure", async () => {
+    const user = userEvent.setup();
+    let filteredRequests = 0;
+    vi.mocked(catalogApi.fetchViewportListings).mockImplementation(
+      async (query = { bbox: catalogApi.DEFAULT_BBOX }) => {
+        if (!query.quick_filter) return { state: "ready", data: listingPage };
+        filteredRequests += 1;
+        return filteredRequests === 1
+          ? {
+              state: "ready",
+              data: { items: [], matching_count: 0, next_cursor: null },
+            }
+          : { state: "error" };
+      },
+    );
+    renderExplorer();
+    await screen.findByRole("button", { name: /Synthetic Central Residence/ });
+    await user.click(
+      screen.getByRole("button", { name: "quickFilter.last_day" }),
+    );
+    await screen.findByText("listingsEmpty");
+    await user.click(screen.getByRole("button", { name: "move-map" }));
+    await screen.findByText("listingsError");
+    expect(
+      screen.queryByRole("button", { name: /Synthetic Central Residence/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("listingCount:0")).toBeVisible();
+  });
+
   it("retries the map after a load failure without losing the list", async () => {
     const user = userEvent.setup();
     renderExplorer();
