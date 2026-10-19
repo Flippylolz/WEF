@@ -60,8 +60,6 @@ class LiveMediaPipeline:
         dispositions = self.grouper.ingest(
             GroupingInput(message=raw, candidate=extraction.decision),
         )
-        if not dispositions:
-            return 0
         anchor_map = await self.anchors.source_anchors(channel)
         replayed = await self.anchors.existing_media_replays(channel)
         work: list[MediaWorkItem] = []

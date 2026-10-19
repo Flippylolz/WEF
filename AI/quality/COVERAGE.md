@@ -45,6 +45,12 @@ Its deliberate-fault tests cover each of those regressions.
 
 ## Backend and remaining repository work
 
+The [backend completion pass](BACKEND_COMPLETE_COVERAGE.md) is in progress. Its
+current locked PostGIS checkpoint passes 2,022 tests at 97.52% combined coverage;
+354 lines and 196 branch paths remain uncovered. All 83 completed implementation
+floors pass at 100%. The backend's global gate will become 100% once the remaining
+package gaps are actually closed.
+
 The initial full PostGIS run on 2026-10-19 passed 1,492 tests at 91.36% combined
 line/branch coverage. Backend code has not reached 100%; its 90% gate and existing
 critical-module floors remain active while genuine missing behavior is covered.
@@ -57,8 +63,7 @@ and enforces a 100% floor for all 223 statements and 50 branch paths in the
 operator composition. Source preparation, lease/checkpoint ownership, provider
 pauses, bounded media work and final verification remain source-free and resumable.
 No runtime behavior or coverage exclusions change in this pass.
-The combined PostGIS suite now passes 1,665 tests at 93.14% backend coverage;
-1,014 lines and 507 branch paths remain uncovered outside the completed modules.
+That combined PostGIS pass completed with 1,665 tests at 93.14% backend coverage.
 
 The [backend domain pass](BACKEND_DOMAIN_COVERAGE.md) adds 57 failure-case tests.
 All 20 domain implementations now measure 100% of their 1,739 statements and 420
