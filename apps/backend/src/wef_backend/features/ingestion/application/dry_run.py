@@ -192,7 +192,9 @@ def run_dry_run(
                 else:
                     mutable.media_unassociated += 1
                     reason = disposition.unassociated_reason
-                    if reason is not None:
+                    if (
+                        reason is not None
+                    ):  # pragma: no branch - unassociated MediaDisposition requires a reason
                         mutable.unassociated_media_reasons[reason.value] += 1
             summary = scan.summary
             source_checksum = summary.source_checksum
