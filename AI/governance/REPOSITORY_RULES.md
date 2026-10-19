@@ -162,7 +162,8 @@ independent 100% floors in Repository safety CI. Historical activation, shared-e
 preflight and release state/order/observation/cache/report/cohort helpers also require
 100% per file. Shared-edge release activation, inventory and staged cutover also
 require independent 100% floors with rollback and listener regression assertions.
-Remaining deployment helpers stay in the report, and operational Python/shell work
+Production and candidate configuration builders/validators also require independent
+100% floors. Remaining deployment helpers stay in the report, and operational Python/shell work
 remains required by the owner's
 repository-wide goal. See [transfer coverage evidence](../quality/TRANSFER_OPERATIONS_COVERAGE.md).
 

@@ -152,6 +152,13 @@ The comparable audit with the same proof drivers rises to 89.02%; 485 lines and
 188 branch paths remain uncovered. Operational Python, shell and substantive
 embedded Python remain in scope.
 
+The [production/candidate configuration pass](RELEASE_CONFIGURATION_COVERAGE.md)
+adds 12 cases and independent 100% floors for both builders and validators: all
+487 statements and 158 branch paths are covered. Assertions include private
+non-overwriting env files, malformed/missing credentials, explicit provider and
+recovery settings, source/path/image identity, loopback-only candidate verification
+and internal database targeting. Runtime implementation and exclusions are unchanged.
+
 The badge combines backend/frontend counters for display and independently requires
 100% from each report. It currently measures the application suites; the remaining
 operational scope above is still required for the repository-wide goal.
