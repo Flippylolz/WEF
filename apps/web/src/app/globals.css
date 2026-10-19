@@ -726,6 +726,14 @@ input:focus-visible {
   font-size: 0.9rem;
 }
 
+.results-status {
+  margin-block: 0.75rem;
+}
+
+.results-status > p {
+  margin: 0;
+}
+
 .location-list,
 .offer-list {
   display: grid;

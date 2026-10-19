@@ -1,6 +1,7 @@
 """Unit tests for registry-backed quick filter resolution."""
 
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -28,6 +29,21 @@ def test_last_day_resolves_to_rolling_twenty_four_hours() -> None:
     now = datetime(2026, 8, 19, 12, 0, tzinfo=UTC)
     published_from = resolve_quick_filter_published_from(preset_id="last_day", now=now)
     assert published_from == now - timedelta(days=1)
+
+
+@pytest.mark.parametrize(
+    "now",
+    [
+        datetime(2026, 10, 19, 0, 30, tzinfo=ZoneInfo("Europe/Warsaw")),
+        datetime(2026, 3, 29, 12, 30, tzinfo=ZoneInfo("Europe/Warsaw")),
+        datetime(2026, 10, 25, 12, 30, tzinfo=ZoneInfo("Europe/Warsaw")),
+    ],
+)
+def test_last_day_uses_elapsed_utc_hours_across_warsaw_midnight_and_dst(now: datetime) -> None:
+    """A calendar day can be 23/25 hours; the rolling window is always 24."""
+    cutoff = resolve_quick_filter_published_from(preset_id="last_day", now=now)
+    assert cutoff.tzinfo is UTC
+    assert now.astimezone(UTC) - cutoff == timedelta(hours=24)
 
 
 def test_apply_quick_filter_sets_published_from_and_identifier() -> None:

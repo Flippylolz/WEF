@@ -204,6 +204,25 @@ describe("map-explorer navigation", () => {
     expect(mapMountCount.value).toBe(1);
   });
 
+  it("replaces both manual date bounds when selecting a rolling preset", async () => {
+    navigation.search =
+      "published_from=2026-10-01&published_to=2026-10-15&rooms=2";
+    const user = userEvent.setup();
+    renderExplorer();
+    await screen.findByRole("button", { name: /Synthetic Central Residence/ });
+    await user.click(
+      screen.getByRole("button", { name: "quickFilter.last_day" }),
+    );
+    expect(navigation.push).toHaveBeenLastCalledWith(
+      "/?rooms=2&quick_filter=last_day",
+      { scroll: false },
+    );
+    expect(catalogApi.fetchViewportListings).toHaveBeenLastCalledWith(
+      expect.objectContaining({ rooms: [2], quick_filter: "last_day" }),
+      { signal: expect.any(AbortSignal) },
+    );
+  });
+
   it("exposes compact chips: quick preset toggles, applied chips remove, and the Filters drawer applies/closes", async () => {
     renderExplorer();
     await screen.findByRole("button", {
