@@ -210,3 +210,10 @@ its locked Python 3.13.16 / Node 22.23.3 / pnpm 12.14.0 baseline and reran insta
 format, lint, types, full tests and contracts successfully: 1,492 backend and
 191 frontend tests with all coverage gates. The updated rollback reader also
 passed readiness and the real catalog map query on the actual 0028 test schema.
+
+
+Rollback prerequisite #414 merged as `430a139`. The final branch includes that
+baseline, requires 0028 for the replay writer, and rejects both the older 0027
+schema and an unrelated 0029 successor. Full local format/lint/type/test/contract
+gates passed again after this integration (1,492 backend / 191 frontend tests).
+The compatible-reader production release must succeed before #337 merges.
