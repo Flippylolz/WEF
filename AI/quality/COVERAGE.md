@@ -123,6 +123,15 @@ coverage exclusions remain unchanged in this pass. The comparable operational
 diagnostic including the same existing proof drivers rises to 77.84%; 961 lines
 and 395 branch paths remain uncovered.
 
+The [release-evidence pass](RELEASE_EVIDENCE_COVERAGE.md) adds 20 cases for state,
+source ordering, cache observation, truthful outcomes and bounded cohort evidence.
+All six implementations cover 622 statements and 218 branch paths completely,
+with independent 100% floors alongside the prior operational files. Two equivalent
+simplifications remove exhaustive-command and already-validated timestamp guards;
+the source inventory and exclusion allowlist remain unchanged. The comparable
+operational diagnostic with the same proof drivers rises to 81.89%; 793 lines and
+314 branch paths remain uncovered.
+
 The badge combines backend/frontend counters for display and independently requires
 100% from each report. It currently measures the application suites; the remaining
 operational scope above is still required for the repository-wide goal.

@@ -62,6 +62,11 @@ also have independent 100% floors. [Transfer coverage evidence](AI/quality/TRANS
 records the completed scope; remaining deployment Python and shell stay within
 the repository-wide goal.
 
+[Release-state and evidence helpers](AI/quality/RELEASE_EVIDENCE_COVERAGE.md) also
+require 100% independently, including cache observations, release ordering,
+outcome reports and cohort collection. Missing metadata remains explicit in those
+reports and cannot count as a successful deployment.
+
 Static API documentation is generated as an artifact and is not served by the
 production API.
 
