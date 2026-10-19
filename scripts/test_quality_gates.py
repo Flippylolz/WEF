@@ -71,6 +71,8 @@ class QualityGateTests(unittest.TestCase):
             (FILES[7], "--operations tmp/coverage/operations/coverage.json", ""),
             (FILES[9], 'source = ["scripts"]', 'source = ["scripts/transfer"]'),
             (FILES[9], "branch = true", "branch = false"),
+            (FILES[9], "fail_under = 100", "fail_under = 99"),
+            (FILES[9], "fail_under = 100", ""),
             (FILES[9], 'patch = ["subprocess"]', "patch = []"),
             (FILES[9], '"scripts/prove_*.py",', '"scripts/prove_*.py", "scripts/deploy/*",'),
             (FILES[10], '"scripts/transfer/bundle.py"', '"scripts/missing-transfer.py"'),
@@ -131,6 +133,25 @@ class QualityGateTests(unittest.TestCase):
                 f'"scripts/missing-artifact-{name}.py"',
             )
             for name in ("create_checksums", "create_release_manifest", "reuse_release")
+        )
+        faults.extend(
+            (
+                FILES[10],
+                f'"{name}"',
+                f'"missing-{name}"',
+            )
+            for name in (
+                "scripts/check_markdown_links.py",
+                "scripts/deploy/check_telegram_passive_events.py",
+                "scripts/deploy/compare_server_inventory.py",
+                "scripts/deploy/evaluate_deploy_gate.py",
+                "scripts/deploy/maplibre_assets.py",
+                "scripts/deploy/operator_diagnostics.py",
+                "scripts/deploy/shared_edge_render.py",
+                "scripts/deploy/shared_edge_smoke.py",
+                "scripts/deploy/verify_rollback_rehearsal.py",
+                "scripts/render_coverage_badge.py",
+            )
         )
         for path, before, after in faults:
             with self.subTest(path=path, fault=before):

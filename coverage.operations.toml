@@ -11,5 +11,6 @@ patch = ["subprocess"]
 data_file = "tmp/coverage/operations/.coverage"
 
 [tool.coverage.report]
+fail_under = 100
 show_missing = true
 skip_covered = true

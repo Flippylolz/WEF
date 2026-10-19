@@ -7,6 +7,7 @@ import json
 import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
+from urllib.parse import urlsplit
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -99,6 +100,20 @@ def smoke_https_routes(
             _assert_fixture_body(url, body, fixture_name)
 
 
+def _is_expected_https_redirect(location: str, hostname: str) -> bool:
+    """Require the expected HTTPS host without userinfo or an invalid port."""
+    try:
+        parsed = urlsplit(location)
+        return (
+            parsed.scheme == "https"
+            and parsed.hostname == hostname.casefold()
+            and parsed.username is None
+            and (parsed.port is None or parsed.port > 0)
+        )
+    except ValueError:
+        return False
+
+
 def smoke_http_redirect(
     curl: CurlCallable,
     target: SmokeTarget,
@@ -118,7 +133,7 @@ def smoke_http_redirect(
         )
         last_status = status
         last_location = headers.get("location", "")
-        if status == 301 and last_location.startswith(f"https://{hostname}"):
+        if status == 301 and _is_expected_https_redirect(last_location, hostname):
             return
         time.sleep(delay_seconds)
     if last_status != 301:

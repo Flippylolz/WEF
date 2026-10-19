@@ -75,6 +75,14 @@ column. Recapture the baseline rather than comparing those representations.
 The [regression evidence](../quality/SHARED_EDGE_ROLLBACK_COVERAGE.md) uses synthetic
 fixtures and does not constitute a new live cutover or host recovery.
 
+Redirect smoke validation parses the URL and requires HTTPS with the exact
+case-insensitive expected hostname, no userinfo and an absent or valid positive
+port. Hostname-prefix lookalikes and `expected-host@other-host` authorities must
+fail; comparing only text prefixes is insufficient. The existing retry bound and
+valid explicit-port/path/query support remain. See the
+[operational regression evidence](../quality/OPERATIONS_COMPLETE_COVERAGE.md).
+These fixture tests do not perform a live reload or change host routing.
+
 ## Required evidence
 
 - Nginx configuration test and graceful reload.
