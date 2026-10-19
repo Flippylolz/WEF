@@ -14,7 +14,9 @@ const navigation = vi.hoisted(() => ({
   listeners: new Set<() => void>(),
   pathname: "/",
   push: vi.fn(),
+  pushRoute: vi.fn(),
   replace: vi.fn(),
+  replaceRoute: vi.fn(),
   search: "",
 }));
 
@@ -38,8 +40,8 @@ vi.mock("next/navigation", async () => {
   return {
     usePathname: () => navigation.pathname,
     useRouter: () => ({
-      push: navigation.push,
-      replace: navigation.replace,
+      push: navigation.pushRoute,
+      replace: navigation.replaceRoute,
     }),
     useSearchParams: () => {
       const search = useSyncExternalStore(
@@ -293,9 +295,25 @@ export function setupMapExplorer() {
     navigation.search = "";
     navigation.listeners.clear();
     navigation.push.mockReset();
+    navigation.pushRoute.mockReset();
     navigation.replace.mockReset();
+    navigation.replaceRoute.mockReset();
     navigation.push.mockImplementation(setNavigationHref);
     navigation.replace.mockImplementation(setNavigationHref);
+    vi.spyOn(window.history, "pushState").mockImplementation(
+      (_data, _unused, url) => {
+        if (url !== null && url !== undefined)
+          navigation.push(String(url), { scroll: false });
+      },
+    );
+    // Next's History API integration updates useSearchParams without a route
+    // transition. Model that notification separately from router.replace.
+    vi.spyOn(window.history, "replaceState").mockImplementation(
+      (_data, _unused, url) => {
+        if (url !== null && url !== undefined)
+          navigation.replace(String(url), { scroll: false });
+      },
+    );
     vi.spyOn(catalogApi, "fetchLocationMap").mockResolvedValue({
       state: "ready",
       data: mapData,

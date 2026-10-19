@@ -60,6 +60,8 @@ describe("map-explorer navigation", () => {
     expect(screen.getByRole("checkbox", { name: "Wola" })).toBeChecked();
     await user.click(screen.getByRole("button", { name: "clearFilters" }));
     expect(navigation.push).toHaveBeenCalledWith("/", { scroll: false });
+    expect(window.history.pushState).toHaveBeenCalledWith(null, "", "/");
+    expect(navigation.pushRoute).not.toHaveBeenCalled();
     await waitFor(() => {
       expect(catalogApi.fetchLocationMap).toHaveBeenLastCalledWith(
         { bbox: catalogApi.DEFAULT_BBOX },
@@ -100,6 +102,12 @@ describe("map-explorer navigation", () => {
       { scroll: false },
     );
     expect(navigation.search).toBe("bbox=20.8%2C52.1%2C21.2%2C52.3");
+    expect(window.history.replaceState).toHaveBeenCalledWith(
+      null,
+      "",
+      "/?bbox=20.8%2C52.1%2C21.2%2C52.3",
+    );
+    expect(navigation.replaceRoute).not.toHaveBeenCalled();
 
     navigation.replace.mockReset();
     fireEvent.click(screen.getByRole("button", { name: "move-map" }));
