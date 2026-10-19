@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 NGINX_IMAGE = (
-    "nginx:1.30.6-alpine@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5"
+    "nginx:1.31.7-alpine@sha256:892bb2152464f0c5d8972593a5f5afaf8054552580b699d95f8ff4af08c2d33d"
 )
 RELEASE_NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{0,62}$")
 CONFIG_NAMES = ("bootstrap", "tls", "tls-redirect")
