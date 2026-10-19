@@ -9,3 +9,4 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - maplibre-gl@6.15.0
+  - '@hookform/resolvers@6.0.0'
