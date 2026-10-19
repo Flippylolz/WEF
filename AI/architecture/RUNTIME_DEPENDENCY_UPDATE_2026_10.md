@@ -3,7 +3,7 @@
 This is unplanned owner-requested maintenance following the Dependabot repairs.
 Stable package registries and upstream image registries were checked on
 2026-10-19. The selected versions are Python 3.13.16, Node.js 22.23.3, uv 0.13.1,
-pnpm 12.14.0, Caddy 2.11.7, stable Nginx 1.30.6, and Certbot 5.8.0. Runtime images
+pnpm 12.14.0, oasdiff 1.34.0, the current Dockerfile frontend, Caddy 2.11.7, stable Nginx 1.30.6, and Certbot 5.8.0. Runtime images
 remain pinned to immutable multi-platform digests. PostGIS uses the current
 patched digest of the existing PostgreSQL 17 / PostGIS 3.5 image line.
 

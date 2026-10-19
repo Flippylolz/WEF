@@ -36,7 +36,7 @@ CERTBOT_IMAGE = (
     "certbot/certbot:v5.8.0@sha256:f70ad0adbb7e117f0fe42a63c553f28ea451edabc0148757b6efcd9735acaa20"
 )
 FIXTURE_IMAGE = (
-    "python:3.13-alpine@sha256:540c7d91f98ff6880174c40e99067bf5941eb54d818a7a5e094d188b196a934d"
+    "python:3.13-alpine@sha256:2d9aefe2fef018a7eb2c13064c89c71929800fd2e5dccdbf52ea5da5bb8d929a"
 )
 PEBBLE_IMAGE = (
     "ghcr.io/letsencrypt/pebble:latest@sha256:ddf230642b1a584f519f32e347de1b0"

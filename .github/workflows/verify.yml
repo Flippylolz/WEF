@@ -135,7 +135,7 @@ jobs:
           fi
           docker run --rm \
             -v "${PWD}:/work" \
-            tufin/oasdiff:v1.28.0@sha256:86830f988eaafcf589acb2794ee5ab78e3300ded071d6517bf085469300cbf36 \
+            tufin/oasdiff:v1.34.0@sha256:dd742562c1f3146f6e2a80bc01951cc87d15a249ac2aca05665339e30cf03620 \
             breaking --fail-on ERR /work/tmp/openapi-base.json /work/contracts/openapi/v1.json
       - name: Breaking OpenAPI negative probe
         shell: bash
@@ -144,7 +144,7 @@ jobs:
           status=0
           docker run --rm \
             -v "${PWD}:/work" \
-            tufin/oasdiff:v1.28.0@sha256:86830f988eaafcf589acb2794ee5ab78e3300ded071d6517bf085469300cbf36 \
+            tufin/oasdiff:v1.34.0@sha256:dd742562c1f3146f6e2a80bc01951cc87d15a249ac2aca05665339e30cf03620 \
             breaking --fail-on ERR /work/contracts/openapi/v1.json /work/tmp/openapi-breaking-probe.json || status=$?
           if [[ "${status}" -eq 0 ]]; then
             echo "oasdiff accepted a deliberately removed endpoint"
