@@ -45,7 +45,7 @@ Its deliberate-fault tests cover each of those regressions.
 
 ## Backend and remaining repository work
 
-The [backend completion pass](BACKEND_COMPLETE_COVERAGE.md) passes 2,259 locked
+The [backend completion pass](BACKEND_COMPLETE_COVERAGE.md) passes 2,260 locked
 PostGIS tests at exactly 100%: all 18,267 statements and 3,886 branch paths are
 covered. All 233 executable package files have independent 100% floors. The local
 pytest, Compose, shared CI and per-report badge gates require 100%. Branch tracking

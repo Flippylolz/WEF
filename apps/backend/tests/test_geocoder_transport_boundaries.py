@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import replace
 from decimal import Decimal
 
@@ -96,6 +97,32 @@ async def test_fixture_adapter_refuses_a_result_for_another_provider() -> None:
         await FixtureGeocoder(
             {query.normalized: replace(_result(), provider=GeocodeProvider.GEOAPIFY)}
         ).geocode(query)
+
+
+async def test_provider_policy_paces_early_requests_without_delaying_due_or_exhausted_work(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Pacing uses a controlled monotonic clock rather than machine execution speed."""
+    now = 10.0
+    waits: list[float] = []
+
+    async def wait(seconds: float) -> None:
+        nonlocal now
+        waits.append(seconds)
+        now += seconds
+
+    policy = ProviderPolicy(Decimal(2), 3, 0, 2.5, "WEF test")
+    with monkeypatch.context() as patch:
+        patch.setattr(asyncio.get_running_loop(), "time", lambda: now)
+        patch.setattr(asyncio, "sleep", wait)
+        assert await policy.enter()
+        now = 10.25
+        assert await policy.enter()
+        assert now == 10.5
+        now = 11.0
+        assert await policy.enter()
+        assert not await policy.enter()
+    assert waits == [0.25]
 
 
 @pytest.mark.parametrize("retries", [0, 1, 3])

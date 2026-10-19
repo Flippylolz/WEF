@@ -7,12 +7,12 @@ per-report badge gate also require 100%.
 
 ## Verified package result
 
-The locked Python 3.13.16/PostGIS run passes 2,259 tests with every one of its
+The locked Python 3.13.16/PostGIS run passes 2,260 tests with every one of its
 18,267 statements and 3,886 branch paths covered. Coverage includes all 242 package
 Python files, including unimported files; nine contain no executable counters.
 The frontend retains its independent 100% requirements for every metric and file.
 The final locked `make format-check lint typecheck test contract-check quality-gates`
-run passes, including 2,259 backend tests, 311 frontend tests and 197 operational
+run passes, including 2,260 backend tests, 311 frontend tests and 197 operational
 policy/proof tests. Both application reports measure exactly 100%.
 
 The added cases exercise real application behavior and failure boundaries:
@@ -20,7 +20,8 @@ The added cases exercise real application behavior and failure boundaries:
 - Operator composition checks explicit mutation controls, resource cleanup,
   acknowledged progress, bounded queries and redacted CLI receipts.
 - HTTPX mock transports check wire bodies, client cleanup, quota/timeouts,
-  malformed provider envelopes and stable request/result identities.
+  malformed provider envelopes and stable request/result identities. A controlled
+  monotonic clock verifies minimum request spacing independently of runner speed.
 - PostGIS transactions check stale/concurrent enrichment writes, protected field
   origins, owner-scoped history, normalized developments, encrypted contact
   backfill, lease fencing and recurring run identity.
