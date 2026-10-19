@@ -72,8 +72,7 @@ The [ingestion extraction/projection pass](INGESTION_PROJECTION_COVERAGE.md) add
 818 statements and 282 branch paths. These cases assert currency/amount coherence,
 source offsets, contact masking and preservation of protected replay values.
 No new runtime exclusions or behavior changes are needed for this pass.
-The combined PostGIS suite now passes 1,603 tests at 92.29% backend coverage;
-1,152 lines and 558 branch paths remain uncovered outside the completed modules.
+That combined PostGIS pass completed with 1,603 tests at 92.29% backend coverage.
 
 Operational scripts already have their own `make quality-gates` tests and runtime
 proofs, but those tests are not yet included in the application coverage reports.
@@ -84,6 +83,14 @@ The badge combines backend/frontend counters for display. It is not evidence tha
 the repository goal is complete: the backend remains below 100%, and the badge's
 90% per-report minimum is supplemented by the stricter frontend job and critical
 file checks.
+
+The [ingestion orchestration pass](INGESTION_ORCHESTRATION_COVERAGE.md) adds 43
+cases and independent 100% floors for seven implementations containing 620
+statements and 134 branch paths. One documented branch exception follows the
+domain invariant requiring every unassociated media result to carry a reason.
+Import/recovery/worker failure cases remain executed and asserted.
+The combined PostGIS suite now passes 1,646 tests at 92.55% backend coverage;
+1,117 lines and 535 branch paths remain uncovered outside the completed modules.
 
 ## Validation and review
 

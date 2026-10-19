@@ -27,7 +27,7 @@
     "src/wef_backend/features/ingestion/application/persistence.py": {"combined": 100},
     "src/wef_backend/features/ingestion/application/persistence_projection.py": {"combined": 100},
     "src/wef_backend/features/ingestion/application/raw_replay.py": {"combined": 98},
-    "src/wef_backend/features/ingestion/application/complete_import.py": {"combined": 95},
+    "src/wef_backend/features/ingestion/application/complete_import.py": {"combined": 100},
     "src/wef_backend/features/catalog/application/data_origin.py": {"combined": 100},
     "src/wef_backend/features/catalog/application/location_accuracy.py": {"combined": 100},
     "src/wef_backend/features/catalog/application/m1_fixture.py": {"combined": 100},
@@ -43,7 +43,13 @@
     "src/wef_backend/features/ingestion/application/extraction.py": {"combined": 100},
     "src/wef_backend/features/ingestion/application/extraction_numbers.py": {"combined": 100},
     "src/wef_backend/features/ingestion/application/extraction_inventory.py": {"combined": 100},
-    "src/wef_backend/features/ingestion/application/parser_replay.py": {"combined": 100}
+    "src/wef_backend/features/ingestion/application/parser_replay.py": {"combined": 100},
+    "src/wef_backend/features/ingestion/application/dry_run.py": {"combined": 100},
+    "src/wef_backend/features/ingestion/application/raw_archive.py": {"combined": 100},
+    "src/wef_backend/features/ingestion/application/media_recovery.py": {"combined": 100},
+    "src/wef_backend/features/ingestion/application/telegram_worker_liveness.py": {"combined": 100},
+    "src/wef_backend/features/ingestion/application/telegram_worker_status.py": {"combined": 100},
+    "src/wef_backend/features/ingestion/application/telegram_worker_supervision.py": {"combined": 100}
   },
   "frontend": {
     "src/lib/auth-api.ts": {"lines": 100, "branches": 100},
