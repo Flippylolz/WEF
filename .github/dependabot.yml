@@ -33,7 +33,7 @@ updates:
           - minor
           - patch
 
-  - package-ecosystem: pip
+  - package-ecosystem: uv
     directory: /apps/backend
     schedule:
       interval: weekly

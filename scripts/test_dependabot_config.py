@@ -20,7 +20,7 @@ class DependabotConfigTests(unittest.TestCase):
         self.assertRegex(self.raw, r"(?m)^version:\s*2\s*$")
         required = (
             ("package-ecosystem: npm", "directory: /"),
-            ("package-ecosystem: pip", "directory: /apps/backend"),
+            ("package-ecosystem: uv", "directory: /apps/backend"),
             ("package-ecosystem: docker", "directory: /apps/backend"),
             ("package-ecosystem: docker", "directory: /apps/web"),
             ("package-ecosystem: github-actions", "directory: /"),
