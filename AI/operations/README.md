@@ -9,6 +9,7 @@ This domain owns deployment behavior, production-host constraints, configuration
 - [Production server](SERVER.md) — inspected host capacity, workloads, ports, paths, permissions, persistence, transfer, and non-interference checks.
 - [Rollback rehearsal](ROLLBACK_REHEARSAL.md) — healthy activation, reviewed failure injection, restoration evidence, and enable/abort gates.
 - [Nginx and TLS](NGINX_TLS.md) — live WEF-only shared Nginx ingress, free Certbot/Let's Encrypt renewal, unchanged AI Forecast port `3000`, evidence, and rollback.
+- [Shared-edge rollback and inventory regressions](../quality/SHARED_EDGE_ROLLBACK_COVERAGE.md) — distinct rollback state, reload restoration and compatible listener captures.
 - [Blocker log](BLOCKERS.md) — unresolved overnight blockers, owner inputs, safe workarounds, and resolved constraints.
 - [19 October 2026 catalog incident](INCIDENT_2026-10-19.md) — date filters, empty results, source reconciliation and bounded recovery evidence.
 

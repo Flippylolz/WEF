@@ -71,6 +71,10 @@ The [Dependabot controller](AI/quality/DEPENDABOT_EVIDENCE_COVERAGE.md) also has
 independent 100% operational floor. Required checks must explicitly succeed, and
 bot-only commit authorization uses nonempty evidence with GitHub identities.
 
+[Shared-edge release, inventory and cutover](AI/quality/SHARED_EDGE_ROLLBACK_COVERAGE.md)
+also require 100% per file. Regression assertions cover preserved rollback targets,
+failed reload restoration and protocol-aware host listener evidence.
+
 Static API documentation is generated as an artifact and is not served by the
 production API.
 
