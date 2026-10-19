@@ -141,6 +141,17 @@ provide no identity authorization. No runtime omission or coverage pragma is add
 The comparable audit with the same proof drivers rises to 83.86%; 717 lines and 268
 branch paths remain uncovered.
 
+The [shared-edge rollback/inventory fix](SHARED_EDGE_ROLLBACK_COVERAGE.md) adds
+21 cases and independent 100% floors for release activation, inventory and staged
+cutover: all 431 statements and 116 branch paths are covered. Same-release TLS and
+redirect activation preserve the distinct rollback target; failed reloads restore
+the prior configuration. Listener capture records TCP/UDP local addresses and
+refuses malformed rows. Existing self-referential rollback state requires explicit
+validated recovery, and both inventory snapshots must use the corrected collector.
+The comparable audit with the same proof drivers rises to 89.02%; 485 lines and
+188 branch paths remain uncovered. Operational Python, shell and substantive
+embedded Python remain in scope.
+
 The badge combines backend/frontend counters for display and independently requires
 100% from each report. It currently measures the application suites; the remaining
 operational scope above is still required for the repository-wide goal.

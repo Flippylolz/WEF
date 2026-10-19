@@ -275,7 +275,14 @@ def activate_release(
             upstream_network,
         )
     previous_state = read_edge_state(edge_root)
-    previous_release = previous_state["current_release"] if previous_state else None
+    current_release = previous_state["current_release"] if previous_state else None
+    previous_release = current_release
+    previous_config = None
+    if previous_state is not None and current_release == release_name:
+        # TLS and redirect stages can update one release without replacing the
+        # last distinct release that rollback must restore.
+        previous_release = previous_state["previous_release"]
+        previous_config = read_active_config(release_dir)
     hook_source = release_dir / "deploy-hook.sh"
     if not hook_source.is_file():
         msg = f"deploy hook is missing: {hook_source}"
@@ -292,8 +299,10 @@ def activate_release(
         except Exception:
             # A failed reload leaves the running workers on the previous
             # configuration; restore the pointer so state matches reality.
-            if previous_release is not None:
-                _swap_symlink(edge_root / CURRENT_LINK, f"releases/{previous_release}")
+            if previous_config is not None:
+                set_active_config(release_dir, previous_config)
+            if current_release is not None:
+                _swap_symlink(edge_root / CURRENT_LINK, f"releases/{current_release}")
             raise
     if previous_release is not None and previous_release != release_name:
         _swap_symlink(edge_root / PREVIOUS_LINK, f"releases/{previous_release}")
@@ -307,6 +316,12 @@ def rollback_release(edge_root: Path, *, upstream_network: str = "wef-edge") -> 
     state = read_edge_state(edge_root)
     if state is None or state["previous_release"] is None:
         msg = "no previous release is available for rollback"
+        raise SharedEdgeReleaseError(msg)
+    if state["previous_release"] == state["current_release"]:
+        msg = (
+            "rollback target is the current release; "
+            "activate an earlier validated release explicitly"
+        )
         raise SharedEdgeReleaseError(msg)
     previous_release = state["previous_release"]
     release_dir = _resolve_release_dir(edge_root, previous_release)

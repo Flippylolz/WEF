@@ -14,6 +14,7 @@ from typing import Any, cast
 
 INVENTORY_SCHEMA = "wef-shared-edge-inventory@1"
 WATCHED_LISTENER_PORTS = (22, 80, 443, 3000, 3100, 51820)
+LISTENER_ADDRESS_INDEX = 4
 EDGE_PROJECT = "wef-shared-edge"
 FORECAST_CONTAINER_PREFIX = "ai-forecast-production-"
 
@@ -38,12 +39,19 @@ def _listeners() -> list[str]:
         raise SharedEdgeInventoryError(msg)
     watched: list[str] = []
     for line in _run(ss, "-H", "-lntu").splitlines():
-        local = line.split()[3]
+        fields = line.split()
+        if not fields:
+            continue
+        if len(fields) <= LISTENER_ADDRESS_INDEX:
+            msg = "listener inspection returned an invalid row"
+            raise SharedEdgeInventoryError(msg)
+        # -t and -u together add the Netid column before state and queue counts.
+        local = fields[LISTENER_ADDRESS_INDEX]
         if ":" not in local:
             continue
         port_text = local.rsplit(":", maxsplit=1)[-1]
         if port_text.isdigit() and int(port_text) in WATCHED_LISTENER_PORTS:
-            watched.append(local)
+            watched.append(f"{fields[0]} {local}")
     return sorted(set(watched))
 
 
@@ -157,14 +165,15 @@ def compare(before: dict[str, Any], after: dict[str, Any]) -> None:
     if unrelated_projects(before) != unrelated_projects(after):
         msg = "an unrelated Compose project changed"
         raise SharedEdgeInventoryError(msg)
+    # Forecast is also unrelated; report its explicit guard before the general one.
+    if forecast_containers(before) != forecast_containers(after):
+        msg = "AI Forecast container state changed"
+        raise SharedEdgeInventoryError(msg)
     if unrelated_containers(before) != unrelated_containers(after):
         msg = "an unrelated container changed"
         raise SharedEdgeInventoryError(msg)
     if before["listeners"] != after["listeners"]:
         msg = "a watched host listener changed"
-        raise SharedEdgeInventoryError(msg)
-    if forecast_containers(before) != forecast_containers(after):
-        msg = "AI Forecast container state changed"
         raise SharedEdgeInventoryError(msg)
 
 

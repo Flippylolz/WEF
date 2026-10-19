@@ -57,6 +57,24 @@ do not recreate the shared edge or retire either hostname.
 
 On failure, restore the last healthy listener/routing configuration, reload the previously validated Nginx configuration, and verify WEF and Forecast independently. Never use global Docker cleanup or delete application/database state as part of ingress rollback.
 
+Same-release TLS/redirect activation retains the last distinct rollback release.
+A failed reload restores the prior active configuration without recording success.
+If an older `edge-state.json` has the same `current_release` and `previous_release`,
+automatic rollback now refuses it. Inspect the state and retained `previous`
+symlink, identify an earlier known-good release, and use the existing
+`python3 -m scripts.deploy.shared_edge_release activate --help` interface to
+activate that verified release/configuration explicitly. Let its normal Nginx and
+upstream validation run, include `--reload` to gracefully reload the serving edge,
+then verify WEF and Forecast independently. Do not copy
+an unverified pointer into the state record or treat a self-reference as recovery.
+
+Before/after shared-edge inventory captures must use the same corrected collector
+revision. Its `ss -H -lntu` parser records protocol plus local address for watched
+TCP/UDP ports; older captures may contain no listeners because they read a queue
+column. Recapture the baseline rather than comparing those representations.
+The [regression evidence](../quality/SHARED_EDGE_ROLLBACK_COVERAGE.md) uses synthetic
+fixtures and does not constitute a new live cutover or host recovery.
+
 ## Required evidence
 
 - Nginx configuration test and graceful reload.
