@@ -81,15 +81,16 @@ export function useMapCatalog(
   const [lastGoodListingCount, setLastGoodListingCount] = useState(0);
   if (
     listingsQuery.isSuccess &&
-    listings.length > 0 &&
+    !listingsQuery.isPlaceholderData &&
     listings !== lastGoodListings
   ) {
     setLastGoodListings(listings);
     setLastGoodListingCount(listingCount);
   }
-  const effectiveListings = listings.length > 0 ? listings : lastGoodListings;
-  const effectiveListingCount =
-    listingCount > 0 ? listingCount : lastGoodListingCount;
+  const effectiveListings = listingsQuery.isError ? lastGoodListings : listings;
+  const effectiveListingCount = listingsQuery.isError
+    ? lastGoodListingCount
+    : listingCount;
   // Bounded one-page-ahead prefetch keeps Load more instant without ever
   // requesting offers per location.
   useEffect(() => {
