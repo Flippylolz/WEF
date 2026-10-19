@@ -101,10 +101,16 @@ VALUES (:release,:parser,:policy,'canary') ON CONFLICT DO NOTHING
             newer = await session.scalar(
                 text("""
                 SELECT EXISTS(SELECT 1 FROM parser_replay_releases
-                    WHERE parser_version ~ '^e2-v[0-9]+$'
-                    AND substring(parser_version from 5)::integer > :generation)
+                    WHERE (parser_version ~ '^e2-v[0-9]+$'
+                        AND substring(parser_version from 5)::integer > :generation)
+                    OR (parser_version=:parser AND policy_version ~ '^source-evidence-v[0-9]+$'
+                        AND substring(policy_version from '[0-9]+$')::integer > :policy))
             """),
-                {"generation": int(PARSER_VERSION.removeprefix("e2-v"))},
+                {
+                    "generation": int(PARSER_VERSION.removeprefix("e2-v")),
+                    "parser": PARSER_VERSION,
+                    "policy": int(POLICY_VERSION.removeprefix("source-evidence-v")),
+                },
             )
             if newer:
                 await session.execute(

@@ -759,7 +759,8 @@ first to provide an application rollback target. No media is deleted by migratio
 The optional worker compares current retained source revisions with the accepted
 parser/policy/schema release identity. `parser_replay_releases`, `parser_replay_work`
 and `parser_replay_field_events` retain canary state, fair claims and minimized
-field lineage. The first 25 replayable records are read-only observations; a smaller
+field lineage. A persisted newer parser or newer policy generation for the same
+parser pauses older replay rather than allowing downgrade writes. The first 25 replayable records are read-only observations; a smaller
 backlog uses all available replayable records. Observations are reused for guarded
 application after canary promotion. Unchanged work identities cannot be reapplied.
 

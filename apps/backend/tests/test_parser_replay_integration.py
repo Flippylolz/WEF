@@ -250,7 +250,13 @@ async def test_claim_restart_stale_finish_and_deleted_source(replay_db: Database
     assert await replay.counts() == {"excluded": 1}
 
 
-async def test_failure_backoff_terminal_and_version_downgrade(replay_db: DatabaseResources) -> None:
+@pytest.mark.parametrize(
+    ("future_parser", "future_policy"),
+    [("e2-v19", "source-evidence-v3"), ("e2-v18", "source-evidence-v4")],
+)
+async def test_failure_backoff_terminal_and_version_downgrade(
+    replay_db: DatabaseResources, future_parser: str, future_policy: str
+) -> None:
     await seed(replay_db)
     replay, now = SQLAlchemyParserReplay(replay_db.session_factory), datetime.now(UTC)
     await replay.discover(now)
@@ -275,9 +281,10 @@ SELECT phase FROM parser_replay_releases WHERE version=:version
                 """
 INSERT INTO
 parser_replay_releases(version,parser_version,policy_version,phase)
-VALUES ('future','e2-v19','source-evidence-v1','running')
+VALUES ('future',:parser,:policy,'running')
 """
-            )
+            ),
+            {"parser": future_parser, "policy": future_policy},
         )
     await replay.discover(now)
     assert await replay.claim(now + timedelta(days=1), apply=True) is None

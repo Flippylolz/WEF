@@ -187,7 +187,7 @@ Current validation results and the complete changed-file inventory are recorded
 in the updated PR description. Earlier fixture counts above remain historical.
 
 
-Local current-main verification passed 1,491 backend tests and 191 frontend tests
+Local current-main verification passed 1,492 backend tests and 191 frontend tests
 with the existing global/critical coverage gates (frontend 96.17% lines / 90.06%
 branches). Locked dependencies were installed with Python 3.13.2, Node 22.22.2 and
 pnpm 11.21.0. Format, lint/import boundaries, strict types, generated contracts,
@@ -196,3 +196,10 @@ Dedicated Compose projects and image tags isolated this suite from other worktre
 The new pause regression passes against real PostGIS. The preceding 0027-compatible
 reader was also checked against the actual migrated 0028 schema, independently of
 its revision-tag readiness fixture.
+
+
+The final safety refresh also compares policy generations for the same parser,
+so an older source-evidence policy pauses instead of replaying over a persisted
+newer policy. The failure/backoff/downgrade database regression covers both parser
+and policy downgrades. Production topology, activation/rollback, release workflow,
+shared-edge runtime, shell syntax/ShellCheck and Caddy validation proofs passed.
