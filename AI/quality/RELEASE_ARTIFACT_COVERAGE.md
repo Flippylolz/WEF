@@ -42,3 +42,21 @@ existing [E7-T3 immutable delivery workflow](../epics/E7-production-delivery/tas
 and [verified delivery cache boundaries](../operations/DEPLOYMENT.md). Remaining
 operational Python, shell and substantive embedded Python stay in scope before
 completing the repository-wide 100% goal.
+
+## Comparable operational audit
+
+The native diagnostic with the same existing release, topology and rollback proof
+drivers rises from 92.89% to 95.03%. It retains all 4,684 statements and 1,454 branch
+paths after adding the two object guards; 219 lines and 86 branch paths remain
+uncovered. Reports remain ignored, and remaining operational Python, shell and
+substantive embedded Python stay in scope. Required CI continues to use the locked
+operational test report and independent per-file floors.
+
+## Validation
+
+The full locked `make format-check lint typecheck test contract-check quality-gates
+compose-config` passes: 2,266 backend and 355 frontend tests retain 100%, and all
+329 operational tests pass with 44 independent 100% file floors. All 16 focused
+artifact/release-order cases, strict Ruff/mypy, Markdown links and Git whitespace
+checks pass. The comparable native audit completes the same four existing release,
+topology and rollback proofs. No production artifact or deployment was changed.
