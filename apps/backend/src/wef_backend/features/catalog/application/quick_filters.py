@@ -4,11 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Final
 
 from wef_backend.features.catalog.application.map_query import MapFilterError, MapFilters
-
-_QUICK_FILTER_IDS: Final[frozenset[str]] = frozenset({"last_day"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,9 +23,6 @@ def list_quick_filter_presets() -> tuple[QuickFilterPreset, ...]:
 
 def resolve_quick_filter_published_from(*, preset_id: str, now: datetime) -> datetime:
     """Resolve one quick-filter identifier to an inclusive published_from timestamp."""
-    if preset_id not in _QUICK_FILTER_IDS:
-        message = "quick_filter is unknown"
-        raise MapFilterError(message)
     if preset_id == "last_day":
         return now.astimezone(UTC) - timedelta(days=1)
     message = "quick_filter is unknown"

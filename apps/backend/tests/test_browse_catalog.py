@@ -1,5 +1,7 @@
 """Unit tests for facet/offer browsing application behavior."""
 
+import base64
+import json
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Self, cast
@@ -149,6 +151,39 @@ def test_cursor_codec_round_trips_and_rejects_tampering() -> None:
         CursorCodec.decode("not valid base64!")
     with pytest.raises(CursorError):
         CursorCodec.decode("x" * 513)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        [2, 0, "2026-08-02T00:00:00+00:00", "20000000-0000-4000-8000-000000000002"],
+        [1, 2, "2026-08-02T00:00:00+00:00", "20000000-0000-4000-8000-000000000002"],
+        [1, 0, "2026-08-02T00:00:00", "20000000-0000-4000-8000-000000000002"],
+    ],
+    ids=["unknown-version", "invalid-match-rank", "naive-publication-time"],
+)
+def test_offer_cursor_rejects_invalid_ordering_contract(payload: list[object]) -> None:
+    """Valid base64/JSON still requires a supported, timezone-aware position."""
+    encoded = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+
+    with pytest.raises(CursorError, match=r"^cursor is invalid$"):
+        CursorCodec.decode(encoded)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        [2, "2026-08-02T00:00:00+00:00", "20000000-0000-4000-8000-000000000002"],
+        [1, "2026-08-02T00:00:00", "20000000-0000-4000-8000-000000000002"],
+    ],
+    ids=["unknown-version", "naive-publication-time"],
+)
+def test_listing_cursor_rejects_invalid_ordering_contract(payload: list[object]) -> None:
+    """Viewport continuation rejects version drift and ambiguous timestamps."""
+    encoded = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+
+    with pytest.raises(CursorError, match=r"^cursor is invalid$"):
+        ListingCursorCodec.decode(encoded)
 
 
 async def test_facet_adapter_normalizes_visible_aggregate_values() -> None:
