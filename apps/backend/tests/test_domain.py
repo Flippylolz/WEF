@@ -7,8 +7,10 @@ from wef_backend.features.estates.domain import Availability, GeoPoint
 
 def test_availability_owns_localization_keys() -> None:
     """Keep display decisions in the backend domain."""
-    assert Availability.AVAILABLE.label_key == "estates.availability.available"
-    assert Availability.RESERVED.label_key == "estates.availability.reserved"
+    assert {status: status.label_key for status in Availability} == {
+        Availability.AVAILABLE: "estates.availability.available",
+        Availability.RESERVED: "estates.availability.reserved",
+    }
 
 
 @pytest.mark.parametrize(

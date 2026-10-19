@@ -9,7 +9,8 @@ floors fail closed. High aggregate coverage cannot hide a low critical module.
 
 | Behavior and owner | Independent floor | Failure evidence |
 | --- | --- | --- |
-| Identity domain / unit | 98% combined | Username/password bounds, disabled/expired/revoked account/session and indistinguishable auth refusal tests; password-policy fault sample |
+| Identity domain / unit | 100% combined | Username/password bounds, disabled/expired/revoked account/session and indistinguishable auth refusal tests; password-policy fault sample |
+| All 20 backend domain implementations / unit + existing PostGIS suites | 100% combined independently for each | [Domain validation evidence and one exhaustive-enum branch exception](BACKEND_DOMAIN_COVERAGE.md); inconsistent parser/report/media values, missing reconciliation evidence and unsupported geocoder inputs fail closed |
 | Identity application / unit + PostGIS | 92% combined | Authentication/session/password reset/bootstrap refusal; API authorization and persistence tests |
 | Contact reveal / unit + PostGIS/API | 98% combined | Hidden offers with stored contacts never decrypt; password-change/rate/key failures; malformed ciphertext; minimized audits; normalized dedupe and clearing |
 | Map query / unit + PostGIS | 95% combined | Finite/ordered/bounded bbox, filter conflicts, stable ETags and backend visibility; inverted-bbox fault sample |
