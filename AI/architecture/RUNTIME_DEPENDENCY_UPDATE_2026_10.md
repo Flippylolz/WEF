@@ -30,3 +30,10 @@ excluded. The configuration regression test covers both directories. Current
 upstream Dependabot code supports pnpm 12 and explicitly reads the environment
 and application YAML documents in its lockfile, despite the public support table
 lagging those implementations. No dependency updater is replaced.
+
+The final registry scan also found FastAPI 0.147.0, released at 09:48 UTC on
+2026-10-19 after the earlier Python refresh. Its omitted-boolean HTML form
+change does not affect this API, which has no FastAPI Form parameters and uses
+JSON request bodies. The lock selects that stable release with the current uv
+lock metadata; generated OpenAPI compatibility and the full suites are rechecked.
+Upstream release: <https://github.com/fastapi/fastapi/releases/tag/0.147.0>.
