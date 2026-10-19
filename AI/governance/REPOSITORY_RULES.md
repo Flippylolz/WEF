@@ -196,6 +196,7 @@ Add `.github/dependabot.yml` for every committed dependency ecosystem:
 - npm in `apps/web`.
 - Python/uv metadata and `uv.lock` in `apps/backend`.
 - Docker images in their actual Dockerfile directories.
+- Docker Compose images in `infra` and `infra/e2e`.
 - GitHub Actions in `/`.
 
 Policy:
