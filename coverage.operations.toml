@@ -1,0 +1,15 @@
+# Handwritten operational behavior; test runners are measured as tests, not targets.
+[tool.coverage.run]
+branch = true
+source = ["scripts"]
+omit = [
+    "scripts/test_*.py",
+    "scripts/prove_*.py",
+    "scripts/run_full_stack_e2e.py",
+]
+patch = ["subprocess"]
+data_file = "tmp/coverage/operations/.coverage"
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

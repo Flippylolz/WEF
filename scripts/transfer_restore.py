@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from scripts.transfer.postgres_restore import (
     PsqlTarget,
@@ -100,10 +100,8 @@ def _build_parser() -> argparse.ArgumentParser:
 def _parse_keys(_table: str, raw: str) -> tuple[object, ...]:
     trimmed = raw.strip()
     if trimmed.startswith("["):
-        parsed = json.loads(trimmed)
-        if not isinstance(parsed, list):
-            msg = "batch keys JSON must be an array"
-            raise TypeError(msg)
+        # A valid JSON value starting with '[' is an array; malformed input raises.
+        parsed = cast("list[object]", json.loads(trimmed))
         return tuple(parsed)
     if "," in trimmed:
         return tuple(part.strip() for part in trimmed.split(",") if part.strip())
@@ -292,17 +290,16 @@ def main(argv: list[str] | None = None) -> int:
     if arguments.command == "staging-teardown-sql":
         sys.stdout.write(build_staging_teardown_sql(staging_schema=arguments.staging_schema))
         return 0
-    if arguments.command == "batch-sql":
-        keys = _parse_keys(arguments.table, arguments.keys)
-        sys.stdout.write(
-            build_batch_insert_sql(
-                table=arguments.table,
-                keys=keys,
-                staging_schema=arguments.staging_schema,
-            ),
-        )
-        return 0
-    return 1
+    # Every other parser-admitted command returned above, leaving batch-sql.
+    keys = _parse_keys(arguments.table, arguments.keys)
+    sys.stdout.write(
+        build_batch_insert_sql(
+            table=arguments.table,
+            keys=keys,
+            staging_schema=arguments.staging_schema,
+        ),
+    )
+    return 0
 
 
 if __name__ == "__main__":

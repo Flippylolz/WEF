@@ -270,5 +270,32 @@
     "scripts/prepare-standalone-e2e.mjs": {"lines": 100, "branches": 100},
     "src/lib/auth-api.ts": {"lines": 100, "branches": 100},
     "src/lib/map-search-params.ts": {"lines": 100, "branches": 100}
+  },
+  "operations": {
+    "scripts/check_critical_coverage.py": {"combined": 100},
+    "scripts/check_quality_gates.py": {"combined": 100},
+    "scripts/transfer/batch_order.py": {"combined": 100},
+    "scripts/transfer/bundle.py": {"combined": 100},
+    "scripts/transfer/checkpoints.py": {"combined": 100},
+    "scripts/transfer/checksums.py": {"combined": 100},
+    "scripts/transfer/conflicts.py": {"combined": 100},
+    "scripts/transfer/constants.py": {"combined": 100},
+    "scripts/transfer/dry_run.py": {"combined": 100},
+    "scripts/transfer/manifest.py": {"combined": 100},
+    "scripts/transfer/paths.py": {"combined": 100},
+    "scripts/transfer/postgres_restore.py": {"combined": 100},
+    "scripts/transfer/reconcile.py": {"combined": 100},
+    "scripts/transfer/remote_paths.py": {"combined": 100},
+    "scripts/transfer/restore.py": {"combined": 100},
+    "scripts/transfer/rsync_transfer.py": {"combined": 100},
+    "scripts/transfer/server_dry_run.py": {"combined": 100},
+    "scripts/transfer/source_layout.py": {"combined": 100},
+    "scripts/transfer/table_keys.py": {"combined": 100},
+    "scripts/transfer/terminal_state.py": {"combined": 100},
+    "scripts/transfer/transfer_plan.py": {"combined": 100},
+    "scripts/transfer_bundle.py": {"combined": 100},
+    "scripts/transfer_candidate.py": {"combined": 100},
+    "scripts/transfer_remote.py": {"combined": 100},
+    "scripts/transfer_restore.py": {"combined": 100}
   }
 }

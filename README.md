@@ -54,6 +54,13 @@ figure is not a merge gate. `make coverage-backend` and `make coverage-frontend`
 refresh each report; `make coverage` then writes the badge. GitHub Actions
 publishes the badge on `main` only after both suite floors are met.
 
+`make coverage-operations` measures operational Python, including subprocess
+entrypoints. `make quality-gates` runs it and requires 100% independently in every
+transfer implementation and both coverage-policy checkers. The report retains
+remaining deployment helpers in its denominator. [Transfer coverage evidence](AI/quality/TRANSFER_OPERATIONS_COVERAGE.md)
+records the completed scope; remaining deployment Python and shell stay within
+the repository-wide goal.
+
 Static API documentation is generated as an artifact and is not served by the
 production API.
 

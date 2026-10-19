@@ -14,12 +14,13 @@ floors fail closed. High aggregate coverage cannot hide a low critical module.
 | All 20 backend domain implementations / unit + existing PostGIS suites | 100% combined independently for each | [Domain validation evidence and one exhaustive-enum branch exception](BACKEND_DOMAIN_COVERAGE.md); inconsistent parser/report/media values, missing reconciliation evidence and unsupported geocoder inputs fail closed |
 | Catalog, contacts, estates and identity applications / unit + PostGIS/API | 100% combined independently for all 16 implementations | [Public application coverage](PUBLIC_APPLICATION_COVERAGE.md), including account lifecycle refusals, cursor/filter bounds, pagination/visibility, contact privacy, favorites and view history |
 | Ingestion extraction, numeric/inventory parsing, replay planning, persistence and storage projections / unit + PostGIS | 100% combined independently for six implementations | [Extraction and projection evidence](INGESTION_PROJECTION_COVERAGE.md), including ambiguous quotes, bounded room counts, exact source spans, contact overlaps and protected/coupled replay values |
-| Raw replay application / unit + PostGIS | 98% combined | Invalid/non-derivable archives, five-round bound, failed run/redaction, cancellation unlock and no false success; real version/sentinel replay |
+| Raw replay application / unit + PostGIS | 100% combined | Invalid/non-derivable archives, five-round bound, failed run/redaction, cancellation unlock and no false success; real version/sentinel replay |
 | Import/dry-run orchestration, raw archive draining, media recovery and worker health/status/supervision / unit + PostGIS | 100% combined independently for seven implementations | [Orchestration coverage evidence](INGESTION_ORCHESTRATION_COVERAGE.md), including malformed-source progress, durable provider reservations, fenced recovery receipts, lease renewal, bounded claims and fail-closed worker diagnostics |
 | Web auth transport / unit | 100% lines and branches | Refused/expired sessions, cancellation, empty/malformed responses and request failure mapping; no browser-owned authorization rule |
 | Web map search state / unit | 100% lines and branches | URL/filter/selection round trips, numeric overflow and invalid timestamp normalization |
 | Release gate / operational proof | Explicit branch assertions | Unassociated main pushes rejected, only configured valid events allowed; deliberate unconditional-acceptance fault |
 | Historical import command / unit + existing PostGIS suites | 100% combined | [Operator stage evidence](IMPORT_COMMAND_COVERAGE.md): immutable source claims, acknowledged progress, no-work/replay skips, stable quota/transient pauses, bounded media batches and verification before success |
+| All 23 transfer Python files and both coverage-policy checkers / operational tests | 100% combined independently per file | [Transfer evidence](TRANSFER_OPERATIONS_COVERAGE.md): corrupted bundles, capacity/collision refusals, SQL guards, interruption and checkpoint resume, subprocess entrypoints and deliberate policy drift |
 
 Combined coverage counts executed lines and branch paths, without rounding before
 comparison. Frontend floors check lines and branches separately. Baseline measurement
@@ -41,14 +42,12 @@ not an exhaustive mutation score or proof that all test ordering is irrelevant.
 
 ## Remaining behavior outside completed per-file floors
 
-SQL adapters and CLI composition remain part of the owner's repository-wide 100%
-coverage target. Tests must assert outcomes at database, transport and setup
-boundaries. Existing real PostGIS suites own persistence transactions, migrations, conflicts,
-source-version protection, favorites/visibility and contact audit/privacy. Operator
-CLI tests own malformed options, missing prerequisites, redacted output, dry-run and
-exit behavior. These remain under the global floor while their remaining gaps are
-closed. API client DTO optional-field combinations also remain measured and subject
-to request/error/contract tests. Completed coverage floors cannot be weakened to
+Application SQL adapters, CLI composition and frontend optional-field combinations
+now have complete independent floors. Their database, transport, setup, failure
+and privacy assertions remain required alongside coverage. Operational deployment
+Python and shell still require additional cases before the owner's repository-wide
+100% goal is complete. Transfer files retain their completed floors while those
+remaining gaps are closed. Completed coverage floors cannot be weakened to
 accommodate a refactor.
 
 Full-stack/WebGL/mobile/accessibility ownership belongs to E14-T5. Current unit and
