@@ -159,9 +159,10 @@ def _configuration_checks(files: dict[str, str]) -> list[str]:
 
 
 def _operational_coverage_checks(files: dict[str, str]) -> list[str]:
-    """Keep untested operations visible and prevent completed transfer floors drifting."""
+    """Preserve the complete operational inventory and independent 100% floors."""
     errors: list[str] = []
-    run = tomllib.loads(files[FILES[9]])["tool"]["coverage"]["run"]
+    coverage = tomllib.loads(files[FILES[9]])["tool"]["coverage"]
+    run = coverage["run"]
     if run.get("source") != ["scripts"] or run.get("branch") is not True:
         errors.append("operational Python coverage must measure all scripts and branches")
     if run.get("omit") != [
@@ -172,6 +173,8 @@ def _operational_coverage_checks(files: dict[str, str]) -> list[str]:
         errors.append("operational exclusions must contain only test/proof drivers")
     if run.get("patch") != ["subprocess"]:
         errors.append("operational coverage must include real subprocess entry points")
+    if coverage.get("report", {}).get("fail_under") != COVERAGE_FLOOR:
+        errors.append("operational Python global coverage floor must be 100")
     policy = json.loads(files[FILES[10]]).get("operations", {})
     expected = {
         str(path.relative_to(ROOT))
@@ -180,6 +183,16 @@ def _operational_coverage_checks(files: dict[str, str]) -> list[str]:
     } | {
         "scripts/check_critical_coverage.py",
         "scripts/check_quality_gates.py",
+        "scripts/check_markdown_links.py",
+        "scripts/deploy/check_telegram_passive_events.py",
+        "scripts/deploy/compare_server_inventory.py",
+        "scripts/deploy/evaluate_deploy_gate.py",
+        "scripts/deploy/maplibre_assets.py",
+        "scripts/deploy/operator_diagnostics.py",
+        "scripts/deploy/shared_edge_render.py",
+        "scripts/deploy/shared_edge_smoke.py",
+        "scripts/deploy/verify_rollback_rehearsal.py",
+        "scripts/render_coverage_badge.py",
         "scripts/dependabot_merge_controller.py",
         "scripts/deploy/activate_historical_candidate.py",
         "scripts/deploy/create_checksums.py",

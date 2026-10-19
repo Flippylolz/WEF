@@ -155,18 +155,14 @@ Coverage publishing follows a successful main-push release.
 
 The suites run in separate jobs and Makefile targets. Backend branch-aware coverage requires pytest `--cov-fail-under=100` across the complete package and handwritten migrations, with independent 100% floors for every executable file. Frontend Vitest coverage requires 100% of lines, branches, functions and statements per file, including unimported runtime source. The frontend inventory also measures its build entry points and the backend-owned owner map asset. Generated contracts, test infrastructure and the narrowly documented unreachable React ref guards/initial no-op are excluded; runtime modules cannot be excluded to meet the target. `check_quality_gates.py` rejects weakened frontend metrics, removal of per-file enforcement, a narrowed source list or an expanded exclusion allowlist. The Coverage badge job requires a 100% minimum for each report and never uses a combined threshold; frontend verification and critical-file checks independently enforce 100%. See [coverage scope and progress](../quality/COVERAGE.md) for remaining operational and build scope toward repository-wide 100%.
 
-Operational Python is additionally measured across `scripts`, omitting only test,
-proof and browser-runner drivers. `make quality-gates` invokes its coverage target;
-all transfer implementations/entrypoints and both coverage-policy checkers require
-independent 100% floors in Repository safety CI. Historical activation, shared-edge
-preflight and release state/order/observation/cache/report/cohort helpers also require
-100% per file. Shared-edge release activation, inventory and staged cutover also
-require independent 100% floors with rollback and listener regression assertions.
-Production and candidate configuration builders/validators also require independent
-100% floors. Release checksums, manifest creation and verified artifact reuse also
-require independent 100% floors. Remaining deployment helpers stay in the report.
-Operational Python and shell coverage remain required by the owner's repository-wide
-goal. See [transfer coverage evidence](../quality/TRANSFER_OPERATIONS_COVERAGE.md).
+Operational Python measures all handwritten behavior across `scripts`, omitting
+only unit-test, proof and browser-runner drivers. `make quality-gates` invokes its
+coverage target; global line/branch coverage and all 54 executable files independently
+require 100% in Repository safety CI, including real subprocess entrypoints.
+Policy faults reject lower/missing floors, a narrowed source/branch inventory or
+expanded omissions. See [complete operational Python evidence](../quality/OPERATIONS_COMPLETE_COVERAGE.md).
+Runtime shell and substantive embedded Python remain required by the owner's
+repository-wide goal before it can be declared complete.
 
 Deployment does not run for:
 

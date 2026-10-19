@@ -54,13 +54,16 @@ figure is not a merge gate. `make coverage-backend` and `make coverage-frontend`
 refresh each report; `make coverage` then writes the badge. GitHub Actions
 publishes the badge on `main` only after both suite floors are met.
 
-`make coverage-operations` measures operational Python, including subprocess
-entrypoints. `make quality-gates` runs it and requires 100% independently in every
-transfer implementation and both coverage-policy checkers. The report retains
-remaining deployment helpers in its denominator. [Activation and preflight](AI/quality/ACTIVATION_PREFLIGHT_COVERAGE.md)
-also have independent 100% floors. [Transfer coverage evidence](AI/quality/TRANSFER_OPERATIONS_COVERAGE.md)
-records the completed scope; remaining deployment Python and shell stay within
-the repository-wide goal.
+`make coverage-operations` measures all handwritten operational Python, including
+subprocess entrypoints. `make quality-gates` requires 100% globally and independently
+in all 54 executable files: 4,694 statements and 1,456 branch paths. See the
+[complete operational evidence](AI/quality/OPERATIONS_COMPLETE_COVERAGE.md).
+Test/proof drivers are excluded. Runtime shell and substantive embedded Python
+remain within the repository-wide goal.
+
+Earlier [activation/preflight](AI/quality/ACTIVATION_PREFLIGHT_COVERAGE.md) and
+[transfer coverage evidence](AI/quality/TRANSFER_OPERATIONS_COVERAGE.md) record those
+completed file groups and their failure assertions.
 
 [Release-state and evidence helpers](AI/quality/RELEASE_EVIDENCE_COVERAGE.md) also
 require 100% independently, including cache observations, release ordering,

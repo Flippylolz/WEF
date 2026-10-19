@@ -27,6 +27,7 @@ floors fail closed. High aggregate coverage cannot hide a low critical module.
 | Shared-edge release, inventory and staged cutover / synthetic filesystem/process tests | 100% combined independently per file | [Rollback and listener cases](SHARED_EDGE_ROLLBACK_COVERAGE.md): distinct rollback target, reload restoration, legacy self-rollback refusal, correct TCP/UDP addresses, Forecast/unrelated drift and failed cutover restoration |
 | Production and candidate configuration builders/validators / synthetic env/file/CLI tests | 100% combined independently per file | [Configuration boundaries](RELEASE_CONFIGURATION_COVERAGE.md): private non-overwriting files, required credentials, parser/identity/path/image validation, provider settings and loopback/database containment |
 | Release checksums, manifest and verified artifact reuse / synthetic file/API/CLI tests | 100% combined independently per file | [Artifact integrity and fallback](RELEASE_ARTIFACT_COVERAGE.md): malformed JSON shapes, source/digest/definition identity, corrupt/duplicate/foreign/missing files, unusable downloads and safe full-verification fallback |
+| All 54 executable operational Python files / operational unit and fixture tests | 100% combined globally and independently per file | [Complete operational evidence](OPERATIONS_COMPLETE_COVERAGE.md): diagnostics, inventory/rollback, render/smoke, correct redirect authorities, assets, repository links, badge errors and global/per-file policy faults |
 
 Combined coverage counts executed lines and branch paths, without rounding before
 comparison. Frontend floors check lines and branches separately. Baseline measurement
@@ -50,10 +51,10 @@ not an exhaustive mutation score or proof that all test ordering is irrelevant.
 
 Application SQL adapters, CLI composition and frontend optional-field combinations
 now have complete independent floors. Their database, transport, setup, failure
-and privacy assertions remain required alongside coverage. Operational deployment
-Python and shell still require additional cases before the owner's repository-wide
-100% goal is complete. Transfer files retain their completed floors while those
-remaining gaps are closed. Completed coverage floors cannot be weakened to
+and privacy assertions remain required alongside coverage. Measured operational
+Python also has complete global and per-file floors. Runtime shell and substantive
+embedded Python still require inventory and cases before the owner's repository-wide
+100% goal is complete. All completed floors remain enforced while those gaps close. Completed coverage floors cannot be weakened to
 accommodate a refactor.
 
 Full-stack/WebGL/mobile/accessibility ownership belongs to E14-T5. Current unit and

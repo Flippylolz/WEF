@@ -5,6 +5,15 @@ other files without application behavior. This is unplanned quality maintenance
 under that direct request. Application behavior, API contracts, schema, providers
 and production deployment configuration remain within their existing boundaries.
 
+## Current enforced scope
+
+Backend, frontend and [measured operational Python](OPERATIONS_COMPLETE_COVERAGE.md)
+now each require exactly 100% independently across their documented inventories.
+Operational Python covers all 4,694 statements and 1,456 branch paths in 54 executable
+files, with global and per-file gates. Runtime shell and substantive embedded Python
+remain required before completing the repository-wide goal. The milestones below
+retain the measurements from each completed pass.
+
 ## Frontend gate
 
 Vitest measures every `src/**/*.{ts,tsx}` file, including files never imported by
@@ -169,6 +178,13 @@ Checksum, source/fingerprint, immutable image and trusted-job requirements remai
 unchanged; no runtime exclusion or dependency is added.
 The comparable audit with the same proof drivers rises to 95.03%; 219 lines and
 86 branch paths remain uncovered.
+
+The [measured operational Python completion](OPERATIONS_COMPLETE_COVERAGE.md) adds
+26 cases and closes all remaining file gaps: 355 operational tests cover all 4,694
+statements and 1,456 branch paths. Global and all 54 per-file floors now require 100%.
+It also fixes the reproduced redirect hostname-prefix/userinfo false positives by
+parsing the HTTPS authority. Test/proof exclusions remain unchanged. Runtime shell
+and substantive embedded Python remain in scope before completing the overall goal.
 
 The badge combines backend/frontend counters for display and independently requires
 100% from each report. It currently measures the application suites; the remaining
