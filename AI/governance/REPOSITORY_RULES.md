@@ -158,7 +158,8 @@ The suites run in separate jobs and Makefile targets. Backend branch-aware cover
 Operational Python is additionally measured across `scripts`, omitting only test,
 proof and browser-runner drivers. `make quality-gates` invokes its coverage target;
 all transfer implementations/entrypoints and both coverage-policy checkers require
-independent 100% floors in Repository safety CI. Remaining deployment helpers stay
+independent 100% floors in Repository safety CI. Historical activation and shared-edge
+preflight also require 100% per file. Remaining deployment helpers stay
 in the report and operational Python/shell work remains required by the owner's
 repository-wide goal. See [transfer coverage evidence](../quality/TRANSFER_OPERATIONS_COVERAGE.md).
 

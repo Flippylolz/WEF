@@ -57,7 +57,8 @@ publishes the badge on `main` only after both suite floors are met.
 `make coverage-operations` measures operational Python, including subprocess
 entrypoints. `make quality-gates` runs it and requires 100% independently in every
 transfer implementation and both coverage-policy checkers. The report retains
-remaining deployment helpers in its denominator. [Transfer coverage evidence](AI/quality/TRANSFER_OPERATIONS_COVERAGE.md)
+remaining deployment helpers in its denominator. [Activation and preflight](AI/quality/ACTIVATION_PREFLIGHT_COVERAGE.md)
+also have independent 100% floors. [Transfer coverage evidence](AI/quality/TRANSFER_OPERATIONS_COVERAGE.md)
 records the completed scope; remaining deployment Python and shell stay within
 the repository-wide goal.
 

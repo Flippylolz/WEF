@@ -114,6 +114,15 @@ operational diagnostic rises to 72.54%; 1,198 lines and 482 branch paths remain
 uncovered. The operations aggregate and remaining shell work still prevent
 declaring the repository-wide goal complete.
 
+The [activation/preflight pass](ACTIVATION_PREFLIGHT_COVERAGE.md) adds 25 cases for
+host locks, environment/media pointer changes, failure restoration, identity sync,
+HTTPS semantic probes and shared-edge admission. Both implementations cover all
+428 statements and 132 branch paths; their independent 100% floors are enforced
+alongside the completed transfer/quality-policy floors. Activation/preflight runtime source and
+coverage exclusions remain unchanged in this pass. The comparable operational
+diagnostic including the same existing proof drivers rises to 77.84%; 961 lines
+and 395 branch paths remain uncovered.
+
 The badge combines backend/frontend counters for display and independently requires
 100% from each report. It currently measures the application suites; the remaining
 operational scope above is still required for the repository-wide goal.

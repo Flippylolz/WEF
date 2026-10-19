@@ -76,6 +76,16 @@ class QualityGateTests(unittest.TestCase):
             (FILES[10], '"scripts/transfer/bundle.py"', '"scripts/missing-transfer.py"'),
             (
                 FILES[10],
+                '"scripts/deploy/activate_historical_candidate.py"',
+                '"scripts/missing-activation.py"',
+            ),
+            (
+                FILES[10],
+                '"scripts/deploy/shared_edge_preflight.py"',
+                '"scripts/missing-preflight.py"',
+            ),
+            (
+                FILES[10],
                 '"scripts/transfer/bundle.py": {"combined": 100}',
                 '"scripts/transfer/bundle.py": {"combined": 99}',
             ),
