@@ -289,6 +289,8 @@ async def test_readiness_allows_only_explicit_additive_rollback_revision() -> No
         for revision, ready in (
             ("20260906_0026", False),
             ("20260908_0027", True),
+            ("20261019_0028", True),
+            ("20261019_0029", False),
             ("20260906_0027", False),
             ("unknown", False),
         ):

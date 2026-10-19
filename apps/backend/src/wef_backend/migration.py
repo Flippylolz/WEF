@@ -8,7 +8,9 @@ from wef_backend.settings import Settings, load_settings
 EXPECTED_DATABASE_REVISION = "20260908_0027"
 # E28-T3 prepares the previous reader for this additive receipt column.
 # This writer requires 0027 before accessing the new receipt.
-READ_COMPATIBLE_DATABASE_REVISIONS = frozenset({EXPECTED_DATABASE_REVISION})
+# E25-T4 adds only replay ledgers and expands an origin check constraint.
+# Keep this writer usable as the rollback image after that additive migration.
+READ_COMPATIBLE_DATABASE_REVISIONS = frozenset({EXPECTED_DATABASE_REVISION, "20261019_0028"})
 
 __all__ = [
     "EXPECTED_DATABASE_REVISION",
