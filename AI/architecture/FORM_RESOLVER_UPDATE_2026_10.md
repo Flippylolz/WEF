@@ -1,7 +1,7 @@
 # October 2026 form resolver major update
 
 The owner requested current stable dependency versions. This unplanned update
-moves the existing `@hookform/resolvers` package from 5.2.2 to 6.0.0 separately
+moves the existing `@hookform/resolvers` package from 5.9.2 to 6.0.0 separately
 from routine patch/minor updates. It depends on frontend refresh PR #407, which
 provides the current React Hook Form and Zod releases; it must merge afterward.
 
