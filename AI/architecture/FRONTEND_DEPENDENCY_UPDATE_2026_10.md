@@ -9,9 +9,9 @@ transitive dependencies. The existing ESLint React-version workaround matches
 React 19.3.1. Vitest remains a separate coupled update; the resolver major upgrade
 is reviewed separately from routine updates.
 
-The full local suites pass: 1,464 backend tests and 187 frontend tests. Frontend
-coverage remains 94.75% lines / 90.07% branches. A Node 22.23.3 production build
-measures 570,513 gzip bytes across all 16 JavaScript chunks, below the unchanged
+The full local suites pass: 1,468 backend tests and 191 frontend tests. Frontend
+coverage remains 96.16% lines / 90.04% branches. A Node 22.23.3 production build
+measures 570,497 gzip bytes across all 16 JavaScript chunks, below the unchanged
 599,617-byte budget.
 The explicitly requested MapLibre 6.15.0 stable release was published less than
 24 hours before this audit. Its exact-version pnpm age exception is recorded in
@@ -50,3 +50,5 @@ Unix socket passed the old readiness check before TCP was available to migration
 Local, production, and CI database health checks now use loopback TCP, matching
 the existing browser-test stack. The runtime proof explicitly checks TCP after
 both initial creation and persistence recreation before starting client services.
+
+Final validation also includes the concurrent catalog hotfix #409.
