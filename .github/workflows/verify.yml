@@ -227,6 +227,12 @@ jobs:
           uv sync --project apps/backend --frozen
       - name: Canonical quality mapping and negative probes
         run: make quality-gates
+      - name: Upload operational Python coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: operations-coverage-${{ inputs.source_sha }}
+          path: tmp/coverage/operations/coverage.json
+          if-no-files-found: error
       - name: Relative Markdown links
         run: python3 scripts/check_markdown_links.py
       - name: Local Compose model

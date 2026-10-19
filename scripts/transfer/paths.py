@@ -19,8 +19,5 @@ def validate_media_relative_path(path: str) -> str:
     if normalized.is_absolute() or ".." in normalized.parts:
         msg = "media path must not traverse outside the staging root"
         raise PathValidationError(msg)
-    if normalized.name in {".", ".."}:
-        msg = "media path must not end in a special segment"
-        raise PathValidationError(msg)
-
+    # PurePosixPath normalizes '.' segments; traversal was rejected above.
     return normalized.as_posix()

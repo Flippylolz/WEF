@@ -28,6 +28,8 @@ FILES = (
     "apps/web/vitest.config.mts",
     "Makefile",
     "AI/governance/REPOSITORY_RULES.md",
+    "coverage.operations.toml",
+    ".github/critical-coverage.json",
 )
 
 
@@ -125,7 +127,7 @@ def _frontend_source_checks(frontend: str) -> list[str]:
 
 def _configuration_checks(files: dict[str, str]) -> list[str]:
     """Validate coverage and the no-suppression warning policy."""
-    errors = _backend_coverage_checks(files)
+    errors = _backend_coverage_checks(files) + _operational_coverage_checks(files)
     backend = tomllib.loads(files[FILES[4]])["tool"]
     filters = backend["pytest"]["ini_options"].get("filterwarnings", [])
     if filters != ["error"]:
@@ -156,13 +158,49 @@ def _configuration_checks(files: dict[str, str]) -> list[str]:
     return errors
 
 
+def _operational_coverage_checks(files: dict[str, str]) -> list[str]:
+    """Keep untested operations visible and prevent completed transfer floors drifting."""
+    errors: list[str] = []
+    run = tomllib.loads(files[FILES[9]])["tool"]["coverage"]["run"]
+    if run.get("source") != ["scripts"] or run.get("branch") is not True:
+        errors.append("operational Python coverage must measure all scripts and branches")
+    if run.get("omit") != [
+        "scripts/test_*.py",
+        "scripts/prove_*.py",
+        "scripts/run_full_stack_e2e.py",
+    ]:
+        errors.append("operational exclusions must contain only test/proof drivers")
+    if run.get("patch") != ["subprocess"]:
+        errors.append("operational coverage must include real subprocess entry points")
+    policy = json.loads(files[FILES[10]]).get("operations", {})
+    expected = {
+        str(path.relative_to(ROOT))
+        for path in (ROOT / "scripts/transfer").glob("*.py")
+        if path.name != "__init__.py"
+    } | {
+        "scripts/check_critical_coverage.py",
+        "scripts/check_quality_gates.py",
+        "scripts/transfer_bundle.py",
+        "scripts/transfer_candidate.py",
+        "scripts/transfer_remote.py",
+        "scripts/transfer_restore.py",
+    }
+    if not expected <= policy.keys() or any(
+        floors != {"combined": 100} for floors in policy.values()
+    ):
+        errors.append("every executable transfer Python file must retain a 100% floor")
+    return errors
+
+
 def _local_checks(files: dict[str, str]) -> list[str]:
     """Validate the complete local mapping."""
     errors: list[str] = []
     makefile = files[FILES[7]]
     required = (
         "format-check lint typecheck test contract-check",
-        "python3 -m unittest discover -s scripts -t .",
+        "-m unittest discover -s scripts -t .",
+        "$(MAKE) coverage-operations",
+        "--operations tmp/coverage/operations/coverage.json",
         "quality-gates",
         "prove_architecture_violation.py",
         "check_markdown_links.py",

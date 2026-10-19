@@ -102,6 +102,18 @@ behavior stay in scope. Measuring the existing release, topology and rollback
 proofs raises that diagnostic to 65.10%; 1,505 lines and 630 branch paths remain
 uncovered in the scoped operational Python report. Shell coverage remains open.
 
+The [transfer operations pass](TRANSFER_OPERATIONS_COVERAGE.md) measures every
+operational Python file through `coverage.operations.toml` and adds 31 transfer
+cases. All 23 transfer implementations/entrypoints now cover their 1,231 statements
+and 328 branch paths completely; these files and both coverage-policy checkers
+have independent 100% floors in required Repository safety CI. `make quality-gates`
+invokes `make coverage-operations`, and CI publishes its JSON report. Its source
+inventory retains deployment helpers; test/proof drivers alone are omitted.
+With the same existing release/topology/rollback proof drivers included, the
+operational diagnostic rises to 72.54%; 1,198 lines and 482 branch paths remain
+uncovered. The operations aggregate and remaining shell work still prevent
+declaring the repository-wide goal complete.
+
 The badge combines backend/frontend counters for display and independently requires
 100% from each report. It currently measures the application suites; the remaining
 operational scope above is still required for the repository-wide goal.

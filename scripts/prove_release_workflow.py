@@ -119,7 +119,12 @@ def assert_shared_verification(source: str) -> None:
     ):
         assert command in shared, command
     makefile = (REPOSITORY_ROOT / "Makefile").read_text()
-    assert "python3 -m unittest discover -s scripts -t . -p 'test_*.py'" in makefile
+    assert "$(MAKE) coverage-operations" in makefile
+    assert (
+        "coverage run --rcfile=coverage.operations.toml -m unittest discover -s scripts -t ."
+        in makefile
+    )
+    assert "--operations tmp/coverage/operations/coverage.json" in makefile
     for name in ("test_release_report.py", "test_release_order.py"):
         assert (REPOSITORY_ROOT / "scripts" / name).is_file()
     assert "make production-runtime-proof" in source

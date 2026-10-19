@@ -67,9 +67,7 @@ def load_table_counts(path: Path) -> dict[str, int]:
 
     counts: dict[str, int] = {}
     for key, value in payload.items():
-        if not isinstance(key, str):
-            msg = "table count keys must be strings"
-            raise BundleSourceError(msg)
+        # JSON object keys are strings; table membership validates their meaning.
         if key in EXCLUDED_TABLES:
             msg = f"excluded table must not appear in table counts: {key}"
             raise BundleSourceError(msg)

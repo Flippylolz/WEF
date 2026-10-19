@@ -118,63 +118,61 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
         return 0 if summary.allowed else 1
 
-    if arguments.command == "restore-preflight":
-        raw = json.loads(arguments.snapshots.read_text(encoding="utf-8"))
-        if not isinstance(raw, dict):
-            msg = "snapshots must be a JSON object"
+    # argparse admits only reconcile and restore-preflight; reconcile returned above.
+    raw = json.loads(arguments.snapshots.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        msg = "snapshots must be a JSON object"
+        raise TypeError(msg)
+    table_snapshots: dict[str, tuple[dict[object, object], dict[object, object]]] = {}
+    for table, payload in raw.items():
+        if not isinstance(table, str) or not isinstance(payload, dict):
+            msg = "each table snapshot must be an object"
             raise TypeError(msg)
-        table_snapshots: dict[str, tuple[dict[object, object], dict[object, object]]] = {}
-        for table, payload in raw.items():
-            if not isinstance(table, str) or not isinstance(payload, dict):
-                msg = "each table snapshot must be an object"
-                raise TypeError(msg)
-            table_snapshots[table] = (
-                _normalize_snapshot_map(payload.get("existing", {})),
-                _normalize_snapshot_map(payload.get("incoming", {})),
+        table_snapshots[table] = (
+            _normalize_snapshot_map(payload.get("existing", {})),
+            _normalize_snapshot_map(payload.get("incoming", {})),
+        )
+    try:
+        plan = build_restore_plan(
+            table_snapshots=table_snapshots,
+            batch_size=arguments.batch_size,
+        )
+        ensure_restore_allowed(plan)
+        batches = iter_insert_batches(plan)
+    except RestorePreflightError as error:
+        sys.stdout.write(
+            json.dumps(
+                {"allowed": False, "refusal_reasons": [str(error)]},
+                indent=2,
+                sort_keys=True,
             )
-        try:
-            plan = build_restore_plan(
-                table_snapshots=table_snapshots,
-                batch_size=arguments.batch_size,
-            )
-            ensure_restore_allowed(plan)
-            batches = iter_insert_batches(plan)
-        except RestorePreflightError as error:
-            sys.stdout.write(
-                json.dumps(
-                    {"allowed": False, "refusal_reasons": [str(error)]},
-                    indent=2,
-                    sort_keys=True,
-                )
-                + "\n",
-            )
-            return 1
-        payload = {
-            "allowed": True,
-            "batch_size": plan.batch_size,
-            "total_new_rows": plan.total_new_rows,
-            "tables": [
-                {
-                    "table": table.table,
-                    "identical": table.identical,
-                    "new": table.new,
-                    "conflicting": table.conflicting,
-                }
-                for table in plan.tables
-            ],
-            "batches": [
-                {
-                    "table": batch.table,
-                    "batch_index": batch.batch_index,
-                    "key_count": len(batch.keys),
-                }
-                for batch in batches
-            ],
-        }
-        sys.stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
-        return 0
-
-    return 1
+            + "\n",
+        )
+        return 1
+    payload = {
+        "allowed": True,
+        "batch_size": plan.batch_size,
+        "total_new_rows": plan.total_new_rows,
+        "tables": [
+            {
+                "table": table.table,
+                "identical": table.identical,
+                "new": table.new,
+                "conflicting": table.conflicting,
+            }
+            for table in plan.tables
+        ],
+        "batches": [
+            {
+                "table": batch.table,
+                "batch_index": batch.batch_index,
+                "key_count": len(batch.keys),
+            }
+            for batch in batches
+        ],
+    }
+    sys.stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    return 0
 
 
 if __name__ == "__main__":

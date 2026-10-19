@@ -3,8 +3,13 @@
 # ruff: noqa: D101, D102, PT009
 from __future__ import annotations
 
+import subprocess
+import sys
 import unittest
+from io import StringIO
+from unittest import mock
 
+from scripts import check_quality_gates as quality
 from scripts.check_quality_gates import FILES, ROOT, validate
 
 
@@ -47,6 +52,11 @@ class QualityGateTests(unittest.TestCase):
             (FILES[5], "--max-warnings 0", ""),
             (FILES[1], "contract:check", "contract:generate"),
             (FILES[1], "breaking --fail-on ERR", "breaking"),
+            (
+                FILES[1],
+                "run: make quality-gates",
+                "continue-on-error: true\n        run: make quality-gates",
+            ),
             (FILES[1], "prove_architecture_violation.py", "removed.py"),
             (FILES[1], "lint-imports --config", "echo removed"),
             (FILES[1], "--cov-fail-under=100", "--cov-fail-under=80"),
@@ -57,6 +67,18 @@ class QualityGateTests(unittest.TestCase):
             (FILES[7], "--cov-fail-under=100", "--cov-fail-under=99"),
             (FILES[7], "--fail-under 100", "--fail-under 99"),
             (FILES[7], "verify:", "removed:"),
+            (FILES[7], "$(MAKE) coverage-operations", ""),
+            (FILES[7], "--operations tmp/coverage/operations/coverage.json", ""),
+            (FILES[9], 'source = ["scripts"]', 'source = ["scripts/transfer"]'),
+            (FILES[9], "branch = true", "branch = false"),
+            (FILES[9], 'patch = ["subprocess"]', "patch = []"),
+            (FILES[9], '"scripts/prove_*.py",', '"scripts/prove_*.py", "scripts/deploy/*",'),
+            (FILES[10], '"scripts/transfer/bundle.py"', '"scripts/missing-transfer.py"'),
+            (
+                FILES[10],
+                '"scripts/transfer/bundle.py": {"combined": 100}',
+                '"scripts/transfer/bundle.py": {"combined": 99}',
+            ),
         ]
         for path, before, after in faults:
             with self.subTest(path=path, fault=before):
@@ -64,3 +86,20 @@ class QualityGateTests(unittest.TestCase):
                 self.assertIn(before, files[path])
                 files[path] = files[path].replace(before, after)
                 self.assertTrue(validate(files))
+
+    def test_command_prints_every_policy_error_and_returns_failure(self) -> None:
+        with (
+            mock.patch.object(quality, "validate", return_value=["synthetic policy failure"]),
+            mock.patch("sys.stderr", new_callable=StringIO) as error,
+        ):
+            self.assertEqual(quality.main(), 1)
+        self.assertEqual(error.getvalue(), "synthetic policy failure\n")
+        result = subprocess.run(
+            [sys.executable, "-m", "scripts.check_quality_gates"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")

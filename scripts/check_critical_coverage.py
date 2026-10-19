@@ -85,19 +85,21 @@ def check(
 
 
 def main() -> int:
-    """Allow parallel backend/frontend jobs while requiring the selected side's policy."""
+    """Allow independent suites while requiring the selected side's complete policy."""
     parser = argparse.ArgumentParser(description=__doc__)
     side = parser.add_mutually_exclusive_group(required=True)
     side.add_argument("--backend", type=Path)
     side.add_argument("--frontend", type=Path)
+    side.add_argument("--operations", type=Path)
     args = parser.parse_args()
-    backend = args.backend is not None
-    report_path = args.backend if backend else args.frontend
+    backend = args.frontend is None
+    report_path = args.backend or args.frontend or args.operations
+    policy_name = "backend" if args.backend else "frontend" if args.frontend else "operations"
     try:
         policy = _object(json.loads((ROOT / ".github/critical-coverage.json").read_text()))
         errors = check(
             _object(json.loads(report_path.read_text())),
-            _object(policy["backend" if backend else "frontend"]),
+            _object(policy[policy_name]),
             backend=backend,
         )
     except (KeyError, TypeError, ValueError) as error:
