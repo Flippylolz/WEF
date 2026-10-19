@@ -19,7 +19,7 @@ current-head CI remains the merge gate.
 No API, database, configuration, or deployment migration is needed. Rollback is
 reverting this PR's squash commit to restore the preceding resolver and lock.
 
-Local verification passed with 1,464 backend and 187 frontend tests, both coverage
+Local verification passed with 1,468 backend and 191 frontend tests, both coverage
 floors intact, and clean production dependency audit. The Node 22.23.3 production
-build is 570,513 gzip bytes across 16 JavaScript chunks, below the unchanged
+build is 570,497 gzip bytes across 16 JavaScript chunks, below the unchanged
 599,617-byte limit. Format, lint, type, and generated-contract checks pass.
