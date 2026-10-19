@@ -21,6 +21,7 @@ floors fail closed. High aggregate coverage cannot hide a low critical module.
 | Release gate / operational proof | Explicit branch assertions | Unassociated main pushes rejected, only configured valid events allowed; deliberate unconditional-acceptance fault |
 | Historical import command / unit + existing PostGIS suites | 100% combined | [Operator stage evidence](IMPORT_COMMAND_COVERAGE.md): immutable source claims, acknowledged progress, no-work/replay skips, stable quota/transient pauses, bounded media batches and verification before success |
 | All 23 transfer Python files and both coverage-policy checkers / operational tests | 100% combined independently per file | [Transfer evidence](TRANSFER_OPERATIONS_COVERAGE.md): corrupted bundles, capacity/collision refusals, SQL guards, interruption and checkpoint resume, subprocess entrypoints and deliberate policy drift |
+| Historical activation and shared-edge preflight / operational tests | 100% combined independently per file | [Activation/preflight evidence](ACTIVATION_PREFLIGHT_COVERAGE.md): occupied host locks, identity mismatch, pointer restoration, semantic HTTPS failures, certificate permissions, listener/network and upstream refusals |
 
 Combined coverage counts executed lines and branch paths, without rounding before
 comparison. Frontend floors check lines and branches separately. Baseline measurement

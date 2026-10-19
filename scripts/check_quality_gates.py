@@ -180,6 +180,8 @@ def _operational_coverage_checks(files: dict[str, str]) -> list[str]:
     } | {
         "scripts/check_critical_coverage.py",
         "scripts/check_quality_gates.py",
+        "scripts/deploy/activate_historical_candidate.py",
+        "scripts/deploy/shared_edge_preflight.py",
         "scripts/transfer_bundle.py",
         "scripts/transfer_candidate.py",
         "scripts/transfer_remote.py",
@@ -188,7 +190,7 @@ def _operational_coverage_checks(files: dict[str, str]) -> list[str]:
     if not expected <= policy.keys() or any(
         floors != {"combined": 100} for floors in policy.values()
     ):
-        errors.append("every executable transfer Python file must retain a 100% floor")
+        errors.append("every completed operational Python file must retain a 100% floor")
     return errors
 
 
