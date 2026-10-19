@@ -185,6 +185,8 @@ def evaluate_candidate(
     if "indirect" in pr.dependency_types or "direct" not in pr.dependency_types:
         return Decision("reject", "update is not a direct dependency update")
 
+    if not pr.commits:
+        return Decision("reject", "commit authorship evidence is missing")
     for commit in pr.commits:
         author = str(commit.get("author_login") or "")
         committer = str(commit.get("committer_login") or "")
@@ -204,7 +206,7 @@ def evaluate_candidate(
         if check is None:
             return Decision("defer", f"required check {required!r} is missing on head")
         state = str(check.get("state") or "").upper()
-        if state not in SUCCESS_CHECK_STATES:
+        if state != "SUCCESS":
             return Decision("defer", f"required check {required!r} is {state or 'unknown'}")
 
     for check in pr.checks:
@@ -251,8 +253,6 @@ def _status_state(check: Mapping[str, object]) -> str:
         return conclusion
     if state:
         return state
-    if status == "COMPLETED":
-        return "SUCCESS"
     return status or "PENDING"
 
 
@@ -311,15 +311,8 @@ def fetch_pull_request(
             continue
         author_obj = _as_mapping(item.get("author"))
         committer_obj = _as_mapping(item.get("committer"))
-        commit_obj = _as_mapping(item.get("commit"))
-        commit_author = _as_mapping(commit_obj.get("author"))
-        commit_committer = _as_mapping(commit_obj.get("committer"))
         author_login = str(author_obj.get("login") or "")
         committer_login = str(committer_obj.get("login") or "")
-        if not author_login and str(commit_author.get("name") or "") == "dependabot[bot]":
-            author_login = DEPENDABOT_LOGIN
-        if not committer_login and str(commit_committer.get("name") or "") in ALLOWED_COMMITTERS:
-            committer_login = str(commit_committer.get("name"))
         commits.append(
             {
                 "sha": item.get("sha"),

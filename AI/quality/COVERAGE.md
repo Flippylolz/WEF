@@ -132,6 +132,15 @@ the source inventory and exclusion allowlist remain unchanged. The comparable
 operational diagnostic with the same proof drivers rises to 81.89%; 793 lines and
 314 branch paths remain uncovered.
 
+The [Dependabot evidence fix](DEPENDABOT_EVIDENCE_COVERAGE.md) adds 10 cases and an
+independent 100% floor for all 290 statements and 128 branch paths in the controller.
+It enforces the existing successful-check and bot-only policies: required checks
+need explicit success, completed checks without results stay unverified, and
+commit evidence must be nonempty with GitHub account identities. Git display names
+provide no identity authorization. No runtime omission or coverage pragma is added.
+The comparable audit with the same proof drivers rises to 83.86%; 717 lines and 268
+branch paths remain uncovered.
+
 The badge combines backend/frontend counters for display and independently requires
 100% from each report. It currently measures the application suites; the remaining
 operational scope above is still required for the repository-wide goal.

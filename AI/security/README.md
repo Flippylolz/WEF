@@ -5,6 +5,7 @@ This domain owns identity, sessions, authorization, contact protection, reveal a
 ## Canonical documents
 
 - [Authentication, administration, and contact reveal](AUTH_ADMIN_CONTACTS.md) — username registration, login/session behavior, password changes, owner resets, masking, reveal authorization, administration, and auditing.
+- [Verified delivery automation evidence](../quality/DEPENDABOT_EVIDENCE_COVERAGE.md) — existing required-check and bot-identity enforcement for the scheduled Dependabot controller, traced to E1-T7 and ADR-023.
 
 ## Confirmed security model
 

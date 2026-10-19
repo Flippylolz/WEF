@@ -236,9 +236,15 @@ A pull request is eligible only when all conditions are true:
 3. It has the exact `automerge` label.
 4. The current `automerge` label was applied by an allowlisted owner, initially `Flippylolz`; an automatically or collaborator-applied label is insufficient.
 5. Dependabot metadata classifies it as a direct patch/minor update. Major updates never auto-merge.
-6. Every commit's GitHub author is `dependabot[bot]`; committers may only be `dependabot[bot]` or a documented GitHub bot such as `web-flow`. Any human-authored commit makes the PR permanently ineligible until replaced by a clean Dependabot branch.
+6. Commit evidence is nonempty and every commit's GitHub author is `dependabot[bot]`;
+   committers may only be `dependabot[bot]` or a documented GitHub bot such as `web-flow`.
+   Missing GitHub identities cannot be inferred from Git commit display names.
+   Any human-authored commit makes the PR permanently ineligible until replaced by
+   a clean Dependabot branch.
 7. The head includes the current `main`; stale/diverged branches are deferred for Dependabot to rebase and must rerun CI.
-8. Every explicitly configured required check name exists on the current head and completed successfully.
+8. Every explicitly configured required check name exists on the current head and
+   has an explicit `SUCCESS` result. `SKIPPED` and `NEUTRAL` do not satisfy a required
+   check; a completed check without a result remains unverified.
 9. No check on the current head is pending, failing, cancelled, timed out, stale, or action-required.
 10. GitHub reports the PR mergeable without conflicts.
 

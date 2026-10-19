@@ -274,6 +274,7 @@
   "operations": {
     "scripts/check_critical_coverage.py": {"combined": 100},
     "scripts/check_quality_gates.py": {"combined": 100},
+    "scripts/dependabot_merge_controller.py": {"combined": 100},
     "scripts/deploy/activate_historical_candidate.py": {"combined": 100},
     "scripts/deploy/release_cache.py": {"combined": 100},
     "scripts/deploy/release_cohort.py": {"combined": 100},

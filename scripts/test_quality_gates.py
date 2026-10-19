@@ -76,6 +76,11 @@ class QualityGateTests(unittest.TestCase):
             (FILES[10], '"scripts/transfer/bundle.py"', '"scripts/missing-transfer.py"'),
             (
                 FILES[10],
+                '"scripts/dependabot_merge_controller.py"',
+                '"scripts/missing-dependabot-controller.py"',
+            ),
+            (
+                FILES[10],
                 '"scripts/deploy/activate_historical_candidate.py"',
                 '"scripts/missing-activation.py"',
             ),
