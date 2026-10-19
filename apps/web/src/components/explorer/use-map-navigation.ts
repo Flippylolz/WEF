@@ -114,6 +114,7 @@ export function useMapNavigation() {
           ...searchState,
           quickFilter: presetId,
           publishedFrom: presetId ? null : searchState.publishedFrom,
+          publishedTo: presetId ? null : searchState.publishedTo,
         },
         "push",
       );
