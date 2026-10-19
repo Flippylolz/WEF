@@ -24,8 +24,8 @@
     "src/wef_backend/features/contacts/application/reveal.py": {"combined": 100},
     "src/wef_backend/features/catalog/application/map_query.py": {"combined": 100},
     "src/wef_backend/features/catalog/application/browse_catalog.py": {"combined": 100},
-    "src/wef_backend/features/ingestion/application/persistence.py": {"combined": 97},
-    "src/wef_backend/features/ingestion/application/persistence_projection.py": {"combined": 97},
+    "src/wef_backend/features/ingestion/application/persistence.py": {"combined": 100},
+    "src/wef_backend/features/ingestion/application/persistence_projection.py": {"combined": 100},
     "src/wef_backend/features/ingestion/application/raw_replay.py": {"combined": 98},
     "src/wef_backend/features/ingestion/application/complete_import.py": {"combined": 95},
     "src/wef_backend/features/catalog/application/data_origin.py": {"combined": 100},
@@ -39,7 +39,11 @@
     "src/wef_backend/features/catalog/application/unmapped_listings.py": {"combined": 100},
     "src/wef_backend/features/estates/application/list_estates.py": {"combined": 100},
     "src/wef_backend/features/identity/application/favorites.py": {"combined": 100},
-    "src/wef_backend/features/identity/application/view_history.py": {"combined": 100}
+    "src/wef_backend/features/identity/application/view_history.py": {"combined": 100},
+    "src/wef_backend/features/ingestion/application/extraction.py": {"combined": 100},
+    "src/wef_backend/features/ingestion/application/extraction_numbers.py": {"combined": 100},
+    "src/wef_backend/features/ingestion/application/extraction_inventory.py": {"combined": 100},
+    "src/wef_backend/features/ingestion/application/parser_replay.py": {"combined": 100}
   },
   "frontend": {
     "src/lib/auth-api.ts": {"lines": 100, "branches": 100},
