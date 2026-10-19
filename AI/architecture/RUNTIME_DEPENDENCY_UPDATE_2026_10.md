@@ -23,3 +23,10 @@ Validation includes locked install, format/lint/type/test/contract gates, runtim
 image builds, Compose checks, and the deployment/shared-edge runtime proofs.
 No application or database migration is introduced. Roll back by reverting this
 PR's squash commit to restore the previous tools and image digests.
+
+Dependabot also tracks the committed Compose image manifests in `infra` and
+`infra/e2e`, with weekly bounded patch/minor groups and local build-image names
+excluded. The configuration regression test covers both directories. Current
+upstream Dependabot code supports pnpm 12 and explicitly reads the environment
+and application YAML documents in its lockfile, despite the public support table
+lagging those implementations. No dependency updater is replaced.
