@@ -83,6 +83,9 @@ def trusted_run(run: dict[str, Any], jobs: list[dict[str, Any]], sha: str, repo:
 def validate_bundle(root: Path, sha: str, expected_fingerprint: str) -> dict[str, Any]:
     """Verify source, immutable image identities, definition identity, and every artifact file."""
     manifest = json.loads((root / "release-manifest.json").read_text())
+    if not isinstance(manifest, dict):
+        msg = "release manifest must be a JSON object"
+        raise TypeError(msg)
     if (
         not SHA.fullmatch(sha)
         or manifest.get("source_sha") != sha
@@ -93,6 +96,9 @@ def validate_bundle(root: Path, sha: str, expected_fingerprint: str) -> dict[str
         msg = "release source or verification fingerprint mismatch"
         raise ValueError(msg)
     images = manifest.get("images", {})
+    if not isinstance(images, dict):
+        msg = "release image evidence must be a JSON object"
+        raise TypeError(msg)
     if not all(
         isinstance(images.get(k), str) and DIGEST.fullmatch(images[k]) for k in ("backend", "web")
     ):
