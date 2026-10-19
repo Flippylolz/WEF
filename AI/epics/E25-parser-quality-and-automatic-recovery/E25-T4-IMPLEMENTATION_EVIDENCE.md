@@ -203,3 +203,10 @@ so an older source-evidence policy pauses instead of replaying over a persisted
 newer policy. The failure/backoff/downgrade database regression covers both parser
 and policy downgrades. Production topology, activation/rollback, release workflow,
 shared-edge runtime, shell syntax/ShellCheck and Caddy validation proofs passed.
+
+
+Main runtime update #412 landed during final review. The integration preserved
+its locked Python 3.13.16 / Node 22.23.3 / pnpm 12.14.0 baseline and reran install,
+format, lint, types, full tests and contracts successfully: 1,492 backend and
+191 frontend tests with all coverage gates. The updated rollback reader also
+passed readiness and the real catalog map query on the actual 0028 test schema.
