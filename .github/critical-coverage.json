@@ -49,7 +49,8 @@
     "src/wef_backend/features/ingestion/application/media_recovery.py": {"combined": 100},
     "src/wef_backend/features/ingestion/application/telegram_worker_liveness.py": {"combined": 100},
     "src/wef_backend/features/ingestion/application/telegram_worker_status.py": {"combined": 100},
-    "src/wef_backend/features/ingestion/application/telegram_worker_supervision.py": {"combined": 100}
+    "src/wef_backend/features/ingestion/application/telegram_worker_supervision.py": {"combined": 100},
+    "src/wef_backend/import_command.py": {"combined": 100}
   },
   "frontend": {
     "src/lib/auth-api.ts": {"lines": 100, "branches": 100},
