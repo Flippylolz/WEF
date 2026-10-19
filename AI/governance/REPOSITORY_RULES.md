@@ -163,8 +163,10 @@ preflight and release state/order/observation/cache/report/cohort helpers also r
 100% per file. Shared-edge release activation, inventory and staged cutover also
 require independent 100% floors with rollback and listener regression assertions.
 Production and candidate configuration builders/validators also require independent
-100% floors. Remaining deployment helpers stay in the report. Operational Python
-and shell coverage remain required by the owner's repository-wide goal. See [transfer coverage evidence](../quality/TRANSFER_OPERATIONS_COVERAGE.md).
+100% floors. Release checksums, manifest creation and verified artifact reuse also
+require independent 100% floors. Remaining deployment helpers stay in the report.
+Operational Python and shell coverage remain required by the owner's repository-wide
+goal. See [transfer coverage evidence](../quality/TRANSFER_OPERATIONS_COVERAGE.md).
 
 Deployment does not run for:
 

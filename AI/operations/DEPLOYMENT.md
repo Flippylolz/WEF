@@ -554,7 +554,11 @@ successful release. Queue order is never treated as source order.
 An ordinary manual repeat can reuse a successful same-repository main-push run
 only after checking its exact SHA, complete job results, unexpired artifact,
 verification fingerprint, immutable digests and complete checksum inventory.
-Missing/expired/invalid evidence falls back to full verification. Rehearsal flags
+Missing/expired/invalid evidence falls back to full verification. Manifest and
+image evidence must be JSON objects; arrays/null are rejected through the same
+validation-error fallback. Explicit artifact validation still refuses them.
+[Artifact regression evidence](../quality/RELEASE_ARTIFACT_COVERAGE.md) covers both
+paths using synthetic downloads. Rehearsal flags
 force fresh verification and cannot silently become no-ops. Both fallback and
 reused artifacts are validated again before deployment. The fingerprint binds
 verification workflow/action definitions and lockfiles to the caller's workflow

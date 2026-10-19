@@ -124,6 +124,14 @@ class QualityGateTests(unittest.TestCase):
                 "validate_release",
             )
         )
+        faults.extend(
+            (
+                FILES[10],
+                f'"scripts/deploy/{name}.py"',
+                f'"scripts/missing-artifact-{name}.py"',
+            )
+            for name in ("create_checksums", "create_release_manifest", "reuse_release")
+        )
         for path, before, after in faults:
             with self.subTest(path=path, fault=before):
                 files = {p: (ROOT / p).read_text() for p in FILES}

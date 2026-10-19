@@ -161,6 +161,15 @@ and internal database targeting. Runtime implementation and exclusions are uncha
 The comparable audit with the same proof drivers rises to 92.89%; 317 lines and
 119 branch paths remain uncovered.
 
+The [release-artifact fallback fix](RELEASE_ARTIFACT_COVERAGE.md) adds eight cases
+and independent 100% floors for checksums, manifest creation and verified reuse:
+all 179 statements and 58 branch paths are covered. Explicit JSON object checks
+route malformed manifest/image shapes into the existing full-verification fallback.
+Checksum, source/fingerprint, immutable image and trusted-job requirements remain
+unchanged; no runtime exclusion or dependency is added.
+The comparable audit with the same proof drivers rises to 95.03%; 219 lines and
+86 branch paths remain uncovered.
+
 The badge combines backend/frontend counters for display and independently requires
 100% from each report. It currently measures the application suites; the remaining
 operational scope above is still required for the repository-wide goal.

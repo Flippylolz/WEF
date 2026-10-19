@@ -79,6 +79,10 @@ failed reload restoration and protocol-aware host listener evidence.
 also require 100% per file, covering private env-file writes, unsafe configuration
 refusal and candidate identity/loopback boundaries.
 
+[Release checksums, manifests and verified artifact reuse](AI/quality/RELEASE_ARTIFACT_COVERAGE.md)
+also require 100% per file. Malformed artifact JSON falls back to full verification
+without weakening source, digest, workflow or checksum requirements.
+
 Static API documentation is generated as an artifact and is not served by the
 production API.
 
