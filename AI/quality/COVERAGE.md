@@ -52,6 +52,14 @@ SQL adapters, operator commands and external-provider error paths stay in scope.
 Protocol/type-only declarations and ordinary coverage-tool exclusions remain
 non-executable exclusions rather than tests of type declarations.
 
+The [historical import command pass](IMPORT_COMMAND_COVERAGE.md) adds 19 cases
+and enforces a 100% floor for all 223 statements and 50 branch paths in the
+operator composition. Source preparation, lease/checkpoint ownership, provider
+pauses, bounded media work and final verification remain source-free and resumable.
+No runtime behavior or coverage exclusions change in this pass.
+The combined PostGIS suite now passes 1,665 tests at 93.14% backend coverage;
+1,014 lines and 507 branch paths remain uncovered outside the completed modules.
+
 The [backend domain pass](BACKEND_DOMAIN_COVERAGE.md) adds 57 failure-case tests.
 All 20 domain implementations now measure 100% of their 1,739 statements and 420
 branch paths, with independent 100% floors. That pass completed with 1,549 tests at
@@ -89,8 +97,7 @@ cases and independent 100% floors for seven implementations containing 620
 statements and 134 branch paths. One documented branch exception follows the
 domain invariant requiring every unassociated media result to carry a reason.
 Import/recovery/worker failure cases remain executed and asserted.
-The combined PostGIS suite now passes 1,646 tests at 92.55% backend coverage;
-1,117 lines and 535 branch paths remain uncovered outside the completed modules.
+That combined PostGIS pass completed with 1,646 tests at 92.55% backend coverage.
 
 ## Validation and review
 

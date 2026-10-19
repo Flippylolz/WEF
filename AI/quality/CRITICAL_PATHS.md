@@ -18,6 +18,7 @@ floors fail closed. High aggregate coverage cannot hide a low critical module.
 | Web auth transport / unit | 100% lines and branches | Refused/expired sessions, cancellation, empty/malformed responses and request failure mapping; no browser-owned authorization rule |
 | Web map search state / unit | 100% lines and branches | URL/filter/selection round trips, numeric overflow and invalid timestamp normalization |
 | Release gate / operational proof | Explicit branch assertions | Unassociated main pushes rejected, only configured valid events allowed; deliberate unconditional-acceptance fault |
+| Historical import command / unit + existing PostGIS suites | 100% combined | [Operator stage evidence](IMPORT_COMMAND_COVERAGE.md): immutable source claims, acknowledged progress, no-work/replay skips, stable quota/transient pauses, bounded media batches and verification before success |
 
 Combined coverage counts executed lines and branch paths, without rounding before
 comparison. Frontend floors check lines and branches separately. Baseline measurement
