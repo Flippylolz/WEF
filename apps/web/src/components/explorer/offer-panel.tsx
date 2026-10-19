@@ -81,79 +81,75 @@ export function OfferPanel({
         confidence={location?.confidence}
       />
       <ul className="offer-list">
-        {offers.data.items.map((offer) => (
-          <li
-            key={offer.id}
-            className={`offer-card${offer.matches_filters ? "" : " offer-card-nonmatching"}`}
-          >
-            <div className="offer-card-heading">
-              <strong>{offer.display_name}</strong>
-              <time dateTime={offer.published_at}>
-                {new Intl.DateTimeFormat("en-GB", {
-                  dateStyle: "medium",
-                }).format(new Date(offer.published_at))}
-              </time>
-            </div>
-            {!offer.matches_filters ? (
-              <p className="nonmatching-note">{t("nonMatchingOffer")}</p>
-            ) : null}
-            <dl className="offer-prices">
-              <PriceRow
-                label={t("apartmentPrice")}
-                value={formatPrice(
-                  offer.price_min_minor ?? null,
-                  offer.price_max_minor ?? null,
-                )}
-              />
-              <PriceRow
-                label={t("parkingPrice")}
-                value={formatAdditionalPrice(
-                  offer.parking_price_min_minor ?? null,
-                  offer.parking_price_max_minor ?? null,
-                  offer.parking_included_in_price ?? false,
-                  t("includedInApartmentPrice"),
-                )}
-              />
-              <PriceRow
-                label={t("storagePrice")}
-                value={formatAdditionalPrice(
-                  offer.storage_price_min_minor ?? null,
-                  offer.storage_price_max_minor ?? null,
-                  offer.storage_included_in_price ?? false,
-                  t("includedInApartmentPrice"),
-                )}
-              />
-            </dl>
-            {formatArea(
-              offer.area_min_sqm ?? null,
-              offer.area_max_sqm ?? null,
-            ) ? (
-              <p className="offer-area">
-                {formatArea(
-                  offer.area_min_sqm ?? null,
-                  offer.area_max_sqm ?? null,
-                )}
-              </p>
-            ) : null}
-            {offer.data_confidence === "partial" ? (
-              <small>{t("partialData")}</small>
-            ) : null}
-            <button
-              className="offer-detail-trigger"
-              ref={(node) => onOfferTrigger(offer.id, node)}
-              type="button"
-              onClick={(event) =>
-                onSelectOffer(
-                  offer.id,
-                  offer.matches_filters,
-                  event.currentTarget,
-                )
-              }
+        {offers.data.items.map((offer) => {
+          const area = formatArea(
+            offer.area_min_sqm ?? null,
+            offer.area_max_sqm ?? null,
+          );
+          return (
+            <li
+              key={offer.id}
+              className={`offer-card${offer.matches_filters ? "" : " offer-card-nonmatching"}`}
             >
-              {t("viewOfferDetails", { name: offer.display_name })}
-            </button>
-          </li>
-        ))}
+              <div className="offer-card-heading">
+                <strong>{offer.display_name}</strong>
+                <time dateTime={offer.published_at}>
+                  {new Intl.DateTimeFormat("en-GB", {
+                    dateStyle: "medium",
+                  }).format(new Date(offer.published_at))}
+                </time>
+              </div>
+              {!offer.matches_filters ? (
+                <p className="nonmatching-note">{t("nonMatchingOffer")}</p>
+              ) : null}
+              <dl className="offer-prices">
+                <PriceRow
+                  label={t("apartmentPrice")}
+                  value={formatPrice(
+                    offer.price_min_minor ?? null,
+                    offer.price_max_minor ?? null,
+                  )}
+                />
+                <PriceRow
+                  label={t("parkingPrice")}
+                  value={formatAdditionalPrice(
+                    offer.parking_price_min_minor ?? null,
+                    offer.parking_price_max_minor ?? null,
+                    offer.parking_included_in_price ?? false,
+                    t("includedInApartmentPrice"),
+                  )}
+                />
+                <PriceRow
+                  label={t("storagePrice")}
+                  value={formatAdditionalPrice(
+                    offer.storage_price_min_minor ?? null,
+                    offer.storage_price_max_minor ?? null,
+                    offer.storage_included_in_price ?? false,
+                    t("includedInApartmentPrice"),
+                  )}
+                />
+              </dl>
+              {area ? <p className="offer-area">{area}</p> : null}
+              {offer.data_confidence === "partial" ? (
+                <small>{t("partialData")}</small>
+              ) : null}
+              <button
+                className="offer-detail-trigger"
+                ref={(node) => onOfferTrigger(offer.id, node)}
+                type="button"
+                onClick={(event) =>
+                  onSelectOffer(
+                    offer.id,
+                    offer.matches_filters,
+                    event.currentTarget,
+                  )
+                }
+              >
+                {t("viewOfferDetails", { name: offer.display_name })}
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

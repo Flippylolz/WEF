@@ -105,7 +105,7 @@ export function useMapNavigation() {
       } else if (group === "publication") {
         next.publishedFrom = null;
         next.publishedTo = null;
-      } else if (group === "quickFilter") {
+      } else {
         next.quickFilter = null;
       }
       navigate(next, "push");

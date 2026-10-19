@@ -12,9 +12,27 @@ import {
   fetchLocationMap,
   fetchViewportListings,
   type ViewportListing,
+  type MapLocationQuery,
 } from "@/lib/catalog-api";
 import { toMapLocationQuery } from "@/lib/map-search-params";
 const LISTING_PAGE_SIZE = 20;
+
+function nextListingCursor(page: { next_cursor: string | null }) {
+  return page.next_cursor ?? undefined;
+}
+
+async function loadListingPage(
+  query: MapLocationQuery,
+  cursor: string | undefined,
+  signal: AbortSignal,
+) {
+  const result = await fetchViewportListings(
+    { ...query, ...(cursor ? { cursor } : {}), limit: LISTING_PAGE_SIZE },
+    { signal },
+  );
+  if (result.state === "error") throw new Error("listings");
+  return result.data;
+}
 
 export function useMapCatalog(
   canonicalSearch: string,
@@ -48,20 +66,10 @@ export function useMapCatalog(
   });
   const listingsQuery = useInfiniteQuery({
     queryKey: ["viewport-listings", canonicalSearch],
-    queryFn: async ({ pageParam, signal }) => {
-      const result = await fetchViewportListings(
-        {
-          ...mapQueryParams,
-          ...(pageParam ? { cursor: pageParam } : {}),
-          limit: LISTING_PAGE_SIZE,
-        },
-        { signal },
-      );
-      if (result.state === "error") throw new Error("listings");
-      return result.data;
-    },
+    queryFn: ({ pageParam, signal }) =>
+      loadListingPage(mapQueryParams, pageParam, signal),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+    getNextPageParam: nextListingCursor,
     placeholderData: keepPreviousData,
   });
   const listings = useMemo(
@@ -99,21 +107,10 @@ export function useMapCatalog(
     if (nextCursor === undefined || nextCursor === null) return;
     void queryClient.prefetchInfiniteQuery({
       queryKey: ["viewport-listings", canonicalSearch],
-      queryFn: async ({ pageParam, signal }) => {
-        const result = await fetchViewportListings(
-          {
-            ...mapQueryParams,
-            ...(pageParam ? { cursor: pageParam } : {}),
-            limit: LISTING_PAGE_SIZE,
-          },
-          { signal },
-        );
-        if (result.state === "error") throw new Error("listings");
-        return result.data;
-      },
+      queryFn: ({ pageParam, signal }) =>
+        loadListingPage(mapQueryParams, pageParam, signal),
       initialPageParam: undefined as string | undefined,
-      getNextPageParam: (lastPage: { next_cursor: string | null }) =>
-        lastPage.next_cursor ?? undefined,
+      getNextPageParam: nextListingCursor,
       pages: 1,
     });
   }, [

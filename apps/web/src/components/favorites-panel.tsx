@@ -29,6 +29,7 @@ export function FavoritesPanel({
 
   useEffect(() => {
     const dialog = dialogRef.current;
+    /* v8 ignore if -- React assigns this unconditional dialog ref before effects. */
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();

@@ -11,11 +11,20 @@ export default defineConfig({
     include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["./src/test/setup.ts"],
     coverage: {
-      exclude: [...coverageConfigDefaults.exclude, "src/**/*.test-support.tsx"],
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        ...coverageConfigDefaults.exclude,
+        "src/generated/**",
+        "src/test/**",
+        "src/**/*.test-support.tsx",
+      ],
       reporter: ["json-summary", "text"],
       thresholds: {
-        lines: 90,
-        branches: 90,
+        perFile: true,
+        lines: 100,
+        branches: 100,
+        functions: 100,
+        statements: 100,
       },
     },
   },

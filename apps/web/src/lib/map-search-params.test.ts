@@ -12,6 +12,17 @@ import {
 } from "@/lib/map-search-params";
 
 describe("map search parameters", () => {
+  it("rejects numeric overflow and timestamps with invalid timezone offsets", () => {
+    const params = new URLSearchParams({
+      price_min: "999999999999999999999",
+      area_min: "9".repeat(400),
+      published_from: "2026-08-01T10:00:00+99:00",
+    });
+    const state = parseMapSearchParams(params);
+    expect(state.priceMinMinor).toBeNull();
+    expect(state.areaMin).toBeNull();
+    expect(state.publishedFrom).toBeNull();
+  });
   it("omits the default Warsaw viewport and both content types", () => {
     expect(serializeMapSearchState(DEFAULT_MAP_SEARCH_STATE)).toBe("");
     expect(toMapLocationQuery(DEFAULT_MAP_SEARCH_STATE)).toEqual({

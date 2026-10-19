@@ -53,15 +53,13 @@ export function UserToolbar({
   const open = modalOpen || (forcedChange && !dismissedForcedPrompt);
   const mode: AccountModalMode = forcedChange
     ? "password"
-    : modalMode === "register" && !account
-      ? "register"
-      : account
-        ? modalMode === "password"
-          ? "password"
-          : "account"
-        : modalMode === "register"
-          ? "register"
-          : "login";
+    : account
+      ? modalMode === "password"
+        ? "password"
+        : "account"
+      : modalMode === "register"
+        ? "register"
+        : "login";
 
   useEffect(() => {
     onRegisterAuthOpener?.((intent) => {

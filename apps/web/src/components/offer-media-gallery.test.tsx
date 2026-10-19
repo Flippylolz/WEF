@@ -1,4 +1,11 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -47,6 +54,27 @@ describe("OfferMediaGallery", () => {
     render(<OfferMediaGallery detail={detail} media={[]} />);
     expect(screen.getByText("detailNoMedia")).toBeInTheDocument();
   });
+
+  it.each(["ArrowLeft", "ArrowRight"])(
+    "ignores a queued %s after the lightbox closes",
+    async (key) => {
+      render(
+        <OfferMediaGallery
+          detail={detail}
+          media={[media({ media_asset_id: "image-1" })]}
+        />,
+      );
+      await userEvent.click(
+        screen.getByRole("button", { name: 'detailOpenMedia:{"index":1}' }),
+      );
+      const lightbox = screen.getByRole("dialog");
+      act(() => {
+        fireEvent.keyDown(lightbox, { key: "Escape" });
+        fireEvent.keyDown(lightbox, { key });
+      });
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    },
+  );
 
   it("opens an image lightbox and closes it from the toolbar", async () => {
     const user = userEvent.setup();

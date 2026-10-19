@@ -212,6 +212,80 @@ describe("MapFilterControls", () => {
     ).toBeChecked();
   });
 
+  it("keeps the final content type selected", async () => {
+    const onApply = vi.fn();
+    render(
+      <MapFilterControls
+        facets={facets}
+        facetsError={false}
+        facetsLoading={false}
+        state={{ ...DEFAULT_MAP_SEARCH_STATE, contentTypes: ["unit"] }}
+        onApply={onApply}
+        onClear={vi.fn()}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "contentType.unit" }),
+    );
+    expect(
+      screen.getByRole("checkbox", { name: "contentType.unit" }),
+    ).toBeChecked();
+    await userEvent.click(screen.getByRole("button", { name: "applyFilters" }));
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({ contentTypes: ["unit"] }),
+    );
+  });
+
+  it("normalizes overflowing prices and dates that are not valid date inputs", async () => {
+    const onApply = vi.fn();
+    render(
+      <MapFilterControls
+        facets={facets}
+        facetsError={false}
+        facetsLoading={false}
+        state={{ ...DEFAULT_MAP_SEARCH_STATE, publishedFrom: "invalid" }}
+        onApply={onApply}
+        onClear={vi.fn()}
+      />,
+    );
+    const input = screen.getByRole("spinbutton", { name: "minimumPrice" });
+    Object.defineProperty(input, "value", {
+      configurable: true,
+      writable: true,
+      value: "1e309",
+    });
+    fireEvent.change(input);
+    await userEvent.click(screen.getByRole("button", { name: "applyFilters" }));
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({ priceMinMinor: null }),
+    );
+    expect(screen.getByLabelText("publishedFrom")).toHaveValue("");
+  });
+
+  it("clears a previously selected area bound", async () => {
+    const onApply = vi.fn();
+    render(
+      <MapFilterControls
+        facets={facets}
+        facetsError={false}
+        facetsLoading={false}
+        state={{ ...DEFAULT_MAP_SEARCH_STATE, areaMin: "30", areaMax: "60" }}
+        onApply={onApply}
+        onClear={vi.fn()}
+      />,
+    );
+    await userEvent.clear(
+      screen.getByRole("spinbutton", { name: "minimumArea" }),
+    );
+    await userEvent.clear(
+      screen.getByRole("spinbutton", { name: "maximumArea" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "applyFilters" }));
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({ areaMin: null, areaMax: null }),
+    );
+  });
+
   it("clears blank numeric and date fields instead of inventing values", async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();

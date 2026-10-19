@@ -7,6 +7,7 @@ import { fetchFacets } from "@/lib/catalog-api";
 import { revealOfferContacts } from "@/lib/contacts-api";
 import { fetchFavorites } from "@/lib/favorites-api";
 import { startWebVitalsCollection } from "@/lib/web-vitals";
+import { fetchViewedOffers } from "@/lib/view-history-api";
 
 describe("API clients without a window", () => {
   afterEach(() => {
@@ -24,6 +25,7 @@ describe("API clients without a window", () => {
     await fetchFacets({ fetcher });
     await fetchCurrentAccount({ fetcher });
     await fetchFavorites({ fetcher });
+    await fetchViewedOffers({ fetcher });
     await revealOfferContacts("20000000-0000-4000-8000-000000000001", {
       fetcher,
     });
@@ -42,6 +44,7 @@ describe("API clients without a window", () => {
     await fetchFacets({ fetcher });
     await fetchCurrentAccount({ fetcher });
     await fetchFavorites({ fetcher });
+    await fetchViewedOffers({ fetcher });
     await revealOfferContacts("20000000-0000-4000-8000-000000000001", {
       fetcher,
     });
@@ -49,5 +52,18 @@ describe("API clients without a window", () => {
 
   it("does not start web-vitals collection without a window", () => {
     expect(() => startWebVitalsCollection()).not.toThrow();
+  });
+
+  it("uses the local API when no server URL is configured", async () => {
+    delete process.env.WEF_API_URL;
+    const fetcher = vi.fn(async (request: Request) => {
+      expect(request.url).toMatch(/^http:\/\/127\.0\.0\.1:8000\//);
+      return new Response(null, { status: 503 });
+    });
+    await fetchFacets({ fetcher });
+    await fetchCurrentAccount({ fetcher });
+    await fetchFavorites({ fetcher });
+    await fetchViewedOffers({ fetcher });
+    await revealOfferContacts("offer", { fetcher });
   });
 });

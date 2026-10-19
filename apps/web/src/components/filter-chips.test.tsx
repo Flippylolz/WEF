@@ -171,4 +171,87 @@ describe("AppliedFilterChips", () => {
     });
     expect(screen.getByText("Wola, Mokotow")).toBeInTheDocument();
   });
+
+  it("counts every applied group", () => {
+    expect(
+      countAppliedGroups({
+        ...DEFAULT_MAP_SEARCH_STATE,
+        priceMaxMinor: 200,
+        areaMax: "60",
+        rooms: [2],
+        districts: ["wola"],
+        marketTypes: ["primary"],
+        contentTypes: ["unit"],
+        propertyTypes: ["house"],
+        publishedTo: "2026-08-02T00:00:00Z",
+        quickFilter: "last_day",
+      }),
+    ).toBe(9);
+  });
+
+  it("renders upper bounds and a publication cutoff", () => {
+    renderChips({
+      state: {
+        ...DEFAULT_MAP_SEARCH_STATE,
+        priceMaxMinor: 80_000_000,
+        areaMax: "60",
+        publishedTo: "2026-08-02T00:00:00Z",
+      },
+    });
+    expect(screen.getByText("≤ PLN 800,000")).toBeVisible();
+    expect(screen.getByText("≤ 60 m²")).toBeVisible();
+    expect(screen.getByText("chip.publicationTo[to=2 Aug 2026]")).toBeVisible();
+  });
+
+  it("renders bounded area and publication ranges", () => {
+    renderChips({
+      state: {
+        ...DEFAULT_MAP_SEARCH_STATE,
+        areaMin: "30",
+        areaMax: "60",
+        publishedFrom: "2026-08-01T00:00:00Z",
+        publishedTo: "2026-08-02T00:00:00Z",
+      },
+    });
+    expect(screen.getByText("30 – 60 m²")).toBeVisible();
+    expect(
+      screen.getByText("chip.publicationRange[from=1 Aug 2026|to=2 Aug 2026]"),
+    ).toBeVisible();
+  });
+
+  it("hides unavailable presets and ignores a stale preset id", () => {
+    renderChips({
+      quickFilters: [],
+      lastVisitAt: undefined,
+      state: { ...DEFAULT_MAP_SEARCH_STATE, quickFilter: "removed" },
+    });
+    expect(
+      screen.queryByLabelText("quickFiltersLabel"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^chipRemove/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows presets while the browser visit baseline is still unavailable", () => {
+    renderChips({ lastVisitAt: undefined });
+    expect(
+      screen.getByRole("button", { name: "quickFilter.last_day" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "quickFilter.since_last_visit" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("removes the applied preset chip", async () => {
+    const props = renderChips({
+      state: { ...DEFAULT_MAP_SEARCH_STATE, quickFilter: "last_day" },
+    });
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "chipRemove[label=quickFilter.last_day]",
+      }),
+    );
+    expect(props.onToggleQuickFilter).toHaveBeenCalledWith(null);
+  });
 });

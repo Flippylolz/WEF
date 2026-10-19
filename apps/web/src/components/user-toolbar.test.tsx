@@ -138,6 +138,29 @@ describe("UserToolbar", () => {
     expect(
       screen.queryByRole("button", { name: "openList" }),
     ).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "close" }));
+    await userEvent.click(screen.getByRole("button", { name: "warsaw" }));
+    expect(screen.getByText("forcedPasswordTitle")).toBeVisible();
+  });
+
+  it("opens password change for a signed-in account through the registered opener", async () => {
+    vi.spyOn(authApi, "fetchCurrentAccount").mockResolvedValue({
+      state: "ready",
+      data: account,
+    });
+    vi.spyOn(favoritesApi, "fetchFavorites").mockResolvedValue({
+      state: "ready",
+      data: { items: [] },
+    });
+    let openAuth!: AuthOpener;
+    renderToolbar({
+      onRegisterAuthOpener: (open) => {
+        openAuth = open;
+      },
+    });
+    await screen.findByRole("button", { name: "warsaw" });
+    openAuth({ mode: "password" });
+    expect(await screen.findByText("changePasswordTitle")).toBeVisible();
   });
 
   it("keeps the password modal open when login requires a password change", async () => {

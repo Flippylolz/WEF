@@ -113,7 +113,7 @@ jobs:
           pnpm --filter web format:check
           pnpm --filter web lint
           pnpm --filter web typecheck
-      - name: Tests with 90% coverage
+      - name: Tests with 100% frontend coverage
         run: |
           pnpm --filter web test:coverage
           python3 scripts/check_critical_coverage.py --frontend apps/web/coverage/coverage-summary.json

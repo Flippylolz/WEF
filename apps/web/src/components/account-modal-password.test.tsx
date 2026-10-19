@@ -176,4 +176,22 @@ describe("account-modal password", () => {
     );
     expect(await screen.findByText("changePasswordFailed")).toBeInTheDocument();
   });
+
+  it("stays on password change when logout fails", async () => {
+    logoutAccount.mockResolvedValue({ state: "error" });
+    const onLoggedOut = vi.fn();
+    render(
+      <AccountModal
+        open
+        account={account}
+        initialMode="password"
+        onClose={vi.fn()}
+        onAuthenticated={vi.fn()}
+        onLoggedOut={onLoggedOut}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "logoutAction" }));
+    expect(onLoggedOut).not.toHaveBeenCalled();
+    expect(screen.getByText("changePasswordTitle")).toBeVisible();
+  });
 });

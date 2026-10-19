@@ -11,7 +11,7 @@
     "src/wef_backend/features/ingestion/application/complete_import.py": {"combined": 95}
   },
   "frontend": {
-    "src/lib/auth-api.ts": {"lines": 98, "branches": 91},
-    "src/lib/map-search-params.ts": {"lines": 98, "branches": 94}
+    "src/lib/auth-api.ts": {"lines": 100, "branches": 100},
+    "src/lib/map-search-params.ts": {"lines": 100, "branches": 100}
   }
 }
