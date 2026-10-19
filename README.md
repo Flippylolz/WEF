@@ -30,7 +30,7 @@ The backend is authoritative for business behavior. The frontend primarily rende
 
 ## Development
 
-Prerequisites are Python 3.13.2, Node.js 22.22.2, uv, Corepack/pnpm, and Docker. Versions are recorded in `.tool-versions` and lockfiles.
+Prerequisites are Python 3.13.16, Node.js 22.23.3, uv, Corepack/pnpm, and Docker. Versions are recorded in `.tool-versions` and lockfiles.
 
 ```shell
 make install
