@@ -462,3 +462,21 @@ This append-only log records choices made while the owner delegated overnight MV
 - Selected approach: refresh each PR against its merged parent, verify current-head CI and review requirements, squash-merge in dependency order, and run the documented staged production acceptance and guarded history replay.
 - Scope boundary: the approved E25 implementation and rollout, including its source, canary, quota, privacy and protection gates. This does not authorize paid allocation, unverified provider activation, bypassing CI or incomplete dependency acceptance, or destructive resets.
 - Reversal: pause scheduling/application on failed acceptance; retain source, reservation, proposal and field-lineage records for guarded recovery.
+
+
+## AD-054: Repair and merge disabled E25-T4 implementation
+
+- Time: 2026-10-19.
+- Owner decision: `can you please do this work correctly and merge the RP`, in
+  this PR #337 review chat, directly following the report that the PR had been
+  closed for its pause race, migration/version conflicts and incomplete T3 gate.
+- Selected approach: reopen #337, fix those defects against current main, prepare
+  and deploy its additive-schema rollback reader first, and squash-merge the
+  disabled replay implementation after every current-head required check passes.
+- Scope boundary: this task-specific direction supersedes the earlier T3-before-T4
+  merge timing only for disabled code delivery. T3 acceptance is still required
+  before T4 activation/completion. Both replay flags remain false; T3/T4 are not
+  declared done, and no provider calls, paid spend or historical canonical writes
+  are authorized by this merge. Existing source, owner, AI and CI protections stay.
+- Reversal: pause scheduling/application, retain the additive migration/ledgers,
+  and use the deployed rollback-compatible preceding image if needed.

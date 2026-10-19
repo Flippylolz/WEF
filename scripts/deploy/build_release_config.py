@@ -150,6 +150,16 @@ def _groq_batch_settings_from_environment() -> dict[str, str]:
     }
 
 
+def _parser_replay_settings(values: dict[str, str]) -> None:
+    """Configure deterministic replay independently of any provider account."""
+    for name in ("WEF_PARSER_REPLAY_ENABLED", "WEF_PARSER_REPLAY_AUTO_APPLY"):
+        flag = os.environ.get(name, "").strip().lower() or "false"
+        if flag not in {"true", "false"}:
+            message = "parser replay flags must be boolean"
+            raise ValueError(message)
+        values[name] = flag
+
+
 def _optional_groq_curation(values: dict[str, str]) -> None:
     """Attach optional Groq AI curation settings when a key is present.
 
@@ -257,6 +267,7 @@ def build_values(
         "WEF_WEB_IMAGE": context.web_image,
     }
     _optional_bootstrap_owner(values)
+    _parser_replay_settings(values)
     _optional_groq_curation(values)
     if telegram_session is not None:
         values["WEF_TELEGRAM_SESSION"] = telegram_session

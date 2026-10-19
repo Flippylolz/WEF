@@ -43,11 +43,11 @@ Approval gates are restored to revision 2; dependency and task branch gates rema
 - Planning PR #338 merged as `9d095f1`; AD-053 records explicit merge and staged rollout authorization.
 - T1 PR #328 is done on `ea47448`: healthy release and bounded classification acceptance.
 - T2 PR #330 is done on `d9f5e30`: healthy e2-v14 release, zero benchmark field failures, and a read-only production comparison.
-- T3 PR #335 is prepared against main; submission/application remain disabled pending activation prerequisites and live acceptance.
-- T4 PR #337 has validated implementation, including 1,080 backend and 169 frontend tests; its T3 completion gate remains enforceable.
+- T3 PR #335 merged as `81cd983`; later observation activation is recorded in its implementation evidence, while live acceptance remains incomplete.
+- T4 PR #337 is repaired for disabled implementation delivery under AD-054; activation/completion remain deferred until T3 acceptance. Its original readiness evidence remains recorded.
 
-No E25 automatic historical canonical application or scheduled provider activation
-has occurred. Read-only extraction differences are not safe-repair counts.
+This delivery keeps both historical replay flags off. Read-only extraction
+differences are not safe-repair counts; no T3/T4 completion is claimed.
 
 ## Scope and completion
 

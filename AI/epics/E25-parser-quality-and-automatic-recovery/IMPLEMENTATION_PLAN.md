@@ -39,7 +39,7 @@ with spike revision 2; task dependency and branch gates remain separate.
 The [provider amendment](PROVIDER_PRIVACY_REVISION.md) records current official
 evidence, rejected alternatives, exact transport/state changes and validation.
 T1 and T2 remain behaviorally unchanged and retain their published test evidence.
-No implementation code has been written for T3.
+T3 implementation and its remaining live acceptance gates are recorded in the task evidence.
 
 ## Historical approved baseline
 
@@ -199,3 +199,36 @@ A new provider/model, paid allocation, broader automatic field/visibility author
 The owner explicitly approved both spike revision 2 and implementation plan
 revision 2 on 2026-09-05. The provider amendment is now the binding transport
 baseline. Merge and production activation are not authorized by this approval.
+
+## T4 dependency integration record
+
+On 2026-09-05, existing E24-T1 PR 331 became an ancestor of the E25 review stack;
+T2 and T3 were arranged serially without merging any PR into main. T4 readiness
+commit `a84ea07` records exact dependency heads before implementation. E24's
+original payload/receipt contract remains authoritative. Reallocation of the
+independent migrations gives archive recovery 0020, evaluations 0021, durable AI
+0022 and historical parser replay 0023. This resolves allocation/ancestry details;
+it changes no task dependency, acceptance, activation or protection authority.
+
+After E24-T1/T2 merged, the stack was refreshed against main `5fd175f`. Planning
+PR #338 replaces closed #327. The current sequence is archive 0020, progress
+0021, evaluations 0022, durable AI 0023 and parser replay 0024. This supersedes
+the earlier migration allocation above and preserves revision 2 approval.
+
+
+## Owner-directed disabled implementation delivery, 2026-10-19
+
+[AD-054](../../workflow/AUTONOMOUS_DECISIONS.md#ad-054-repair-and-merge-disabled-e25-t4-implementation)
+records the owner's follow-up direction to repair and merge #337 after its defects
+and T3 hold were reported. This is a narrow code-delivery exception to the earlier
+T3-before-T4 merge timing, with no removal of task dependencies or acceptance.
+T3 remains incomplete; T4 remains deferred for activation/completion. Replay
+scheduling and application remain off in the release-owned configuration.
+
+First deploy the explicit [0028-compatible 0027 reader](REPLAY_ROLLBACK_COMPATIBILITY.md),
+then deliver additive migration `20261019_0028` and the replay implementation.
+Current acceptance identity is `e2-v18/source-evidence-v3`, backed by the current
+extraction/template/inventory suites. The release lock must fence already-claimed
+work when rollback pauses a release. Starting-price replay clears an obsolete
+fixed upper bound while preserving field ownership and coupled price/currency rules.
+The approved privacy, budget, protection, canary and live acceptance criteria stay.

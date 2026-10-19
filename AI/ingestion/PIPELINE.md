@@ -753,3 +753,36 @@ extraction still cannot classify its caption. Reopening is restricted to
 completed, leased, quarantined, edited/deleted source fences remain authoritative.
 The new 0027 writer requires its migration; deploy the E28-T3 compatible reader
 first to provide an application rollback target. No media is deleted by migration.
+
+## Accepted parser history convergence (E25-T4)
+
+The optional worker compares current retained source revisions with the accepted
+parser/policy/schema release identity. `parser_replay_releases`, `parser_replay_work`
+and `parser_replay_field_events` retain canary state, fair claims and minimized
+field lineage. A persisted newer parser or newer policy generation for the same
+parser pauses older replay rather than allowing downgrade writes. The first 25 replayable records are read-only observations; a smaller
+backlog uses all available replayable records. Observations are reused for guarded
+application after canary promotion. Unchanged work identities cannot be reapplied.
+
+Original JSON is decoded with the E24 decoder and checked against retained source
+ID, text and checksum. Unsupported legacy/operator evidence, absent originals,
+non-candidates, deleted sources and missing current offer links receive countable
+outcomes. T4 does not fabricate archive events, reset E24 receipts or create offers;
+unlinked eligible listing recovery remains T3's responsibility.
+
+Application locks the release phase before the current source, offer and field
+origins after parsing. Pause/rollback takes the same release-first lock, so claims
+obtained before a pause cannot subsequently write. A
+field requires source offsets and either agreement with its retained parser value
+or an empty canonical value. AI origins, conflicting origins and changed canonical
+values remain protected; coupled price/currency groups stay together. Only allowed
+scalar columns change. IDs, favorites, location/media/source relationships,
+visibility and encrypted contacts survive. Source extraction, parser origin,
+duplicate-suggestion fingerprint, evaluation lifecycle and durable progress commit
+with each guarded write. Partial repairs retain old evidence for protected groups.
+
+Migration 0028 extends origin metadata for parser-owned content/property fields;
+it grants no additional AI field authority. Runtime rollback retains metadata.
+Explicit per-job reversal checks current value/origin/source, restores only still
+owned groups, pauses that release and records reverted/conflicting fields. Repeated
+reversal is idempotent. No whole-table restoration or source checkpoint rewind occurs.
