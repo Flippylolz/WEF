@@ -31,7 +31,7 @@ help: ## List supported commands.
 		'make test-frontend      Run frontend tests' \
 		'make test-e2e           Run real-stack cross-browser journeys' \
 		'make coverage           Refresh the combined coverage badge after both suites' \
-		'make coverage-backend   Run backend tests with the 90% coverage floor' \
+		'make coverage-backend   Run backend tests with the 100% coverage floor' \
 		'make coverage-frontend  Run frontend tests with 100% coverage per file' \
 		'make contract-generate  Export OpenAPI and generated TypeScript' \
 		'make contract-check     Verify OpenAPI, generated types, and static docs' \
@@ -91,7 +91,7 @@ coverage-backend: ## Run backend tests and write the coverage JSON.
 	$(COMPOSE) --profile test run --rm --no-deps --build \
 		--volume "$(CURDIR)/tmp/coverage/backend:/coverage" \
 		backend-test pytest --cov=wef_backend --cov-branch \
-		--cov-fail-under=90 \
+		--cov-fail-under=100 \
 		--cov-report=json:/coverage/coverage.json --cov-report=term-missing
 	python3 scripts/check_critical_coverage.py --backend tmp/coverage/backend/coverage.json
 
@@ -107,7 +107,7 @@ coverage: coverage-backend coverage-frontend ## Refresh the combined coverage ba
 		--backend tmp/coverage/backend/coverage.json \
 		--frontend tmp/coverage/frontend/report/coverage-summary.json \
 		--output tmp/coverage-badge/coverage.svg \
-		--fail-under 90
+		--fail-under 100
 
 contract-generate: ## Generate committed API contracts.
 	$(BACKEND) wef-export-openapi

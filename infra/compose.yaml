@@ -69,7 +69,7 @@ services:
         "pytest",
         "--cov=wef_backend",
         "--cov-branch",
-        "--cov-fail-under=90",
+        "--cov-fail-under=100",
         "--cov-report=term-missing",
       ]
     environment:

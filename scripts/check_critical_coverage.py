@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
-MINIMUM = 90
+MINIMUM = 100
 MAXIMUM = 100
 
 
@@ -69,8 +69,8 @@ def check(
             raise ValueError(message)
         for metric, raw_floor in floors.items():
             floor = _count(raw_floor)
-            if not MINIMUM < floor <= MAXIMUM:
-                message = "critical floors must exceed the global 90% floor"
+            if not MINIMUM <= floor <= MAXIMUM:
+                message = "critical floors must require 100%"
                 raise ValueError(message)
             measured = _measure(row, metric=metric, backend=backend)
             if measured < floor:

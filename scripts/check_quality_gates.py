@@ -8,7 +8,7 @@ import sys
 import tomllib
 from pathlib import Path
 
-COVERAGE_FLOOR = 90
+COVERAGE_FLOOR = 100
 FRONTEND_COVERAGE_FLOOR = 100
 ROOT = Path(__file__).resolve().parents[1]
 CHECKS = {
@@ -62,7 +62,10 @@ def _workflow_checks(files: dict[str, str]) -> list[str]:
         "run mypy",
         "lint-imports --config",
         "prove_architecture_violation.py",
-        "--cov-fail-under=90",
+        "--cov-fail-under=100",
+        "--cov=wef_backend",
+        "--cov-branch",
+        "--fail-under 100",
         "wef-export-openapi",
         "pnpm --filter web test:coverage",
         "contract:check",
@@ -87,15 +90,25 @@ def _workflow_checks(files: dict[str, str]) -> list[str]:
     return errors
 
 
+def _backend_coverage_checks(files: dict[str, str]) -> list[str]:
+    """Keep the backend denominator and threshold authoritative."""
+    errors: list[str] = []
+    coverage = tomllib.loads(files[FILES[4]])["tool"]["coverage"]
+    if coverage["report"].get("fail_under", 0) < COVERAGE_FLOOR:
+        errors.append("backend coverage floor is missing or below 100")
+    coverage_run = coverage["run"]
+    if coverage_run.get("source") != ["wef_backend"] or coverage_run.get("branch") is not True:
+        errors.append("backend coverage must include the complete package and every branch")
+    return errors
+
+
 def _configuration_checks(files: dict[str, str]) -> list[str]:
     """Validate coverage and the no-suppression warning policy."""
-    errors: list[str] = []
+    errors = _backend_coverage_checks(files)
     backend = tomllib.loads(files[FILES[4]])["tool"]
     filters = backend["pytest"]["ini_options"].get("filterwarnings", [])
     if filters != ["error"]:
         errors.append("unexpected backend warnings must fail without blanket exceptions")
-    if backend["coverage"]["report"].get("fail_under", 0) < COVERAGE_FLOOR:
-        errors.append("backend coverage floor is missing or below 90")
     if "error" not in backend["pytest"]["ini_options"].get("filterwarnings", []):
         errors.append("unexpected backend warnings are not fatal")
     frontend = files[FILES[6]]
@@ -136,6 +149,8 @@ def _local_checks(files: dict[str, str]) -> list[str]:
         "contract-compatibility",
         "production-proof",
         "build",
+        "--cov-fail-under=100",
+        "--fail-under 100",
     )
     errors.extend(
         f"local verification omits {command}" for command in required if command not in makefile

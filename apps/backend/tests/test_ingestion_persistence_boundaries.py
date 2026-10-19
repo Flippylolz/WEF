@@ -67,7 +67,9 @@ def _factory(session: MagicMock) -> MagicMock:
     context = MagicMock(
         __aenter__=AsyncMock(return_value=session), __aexit__=AsyncMock(return_value=None)
     )
-    return MagicMock(return_value=context)
+    factory = MagicMock(return_value=context)
+    factory.begin.return_value = context
+    return factory
 
 
 def test_source_json_rejects_nonserializable_values() -> None:

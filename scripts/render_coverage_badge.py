@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-GREEN_THRESHOLD = 90
+GREEN_THRESHOLD = 100
 YELLOW_THRESHOLD = 80
 COVERAGE_FLOOR = float(GREEN_THRESHOLD)
 

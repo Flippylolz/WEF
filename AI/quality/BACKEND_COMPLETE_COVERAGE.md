@@ -1,21 +1,19 @@
 # Backend completion pass
 
-Status: in progress under the owner's 2026-10-19 repository-wide coverage request.
-The remaining backend package gaps are being closed together so the final change
-can enable its 100% gate. The existing global 90% floor remains until the full
-locked run actually reaches 100%; completed independent module floors remain at
-100% throughout.
+Status: backend package complete under the owner's 2026-10-19 repository-wide
+coverage request. All 233 executable backend files now have independent 100%
+combined line/branch requirements. Local pytest, Compose, shared CI and the
+per-report badge gate also require 100%.
 
-## Verified checkpoint
+## Verified package result
 
-The locked Python 3.13.16/PostGIS run passes 2,022 tests at 97.52% combined
-line/branch coverage. Another 354 lines and 196 branch paths remain uncovered.
-All 83 completed implementation floors require 100% independently. The complete
-format, lint, type, test, contract and quality-gate validation passed at the earlier
-1,968-test checkpoint, including 311 frontend tests and 196 operational policy/proof
-tests. Later archive/admin cases pass the full backend suite; the final change must
-rerun every required check. Further projection/backfill cases pass focused checks
-after this checkpoint.
+The locked Python 3.13.16/PostGIS run passes 2,259 tests with every one of its
+18,267 statements and 3,886 branch paths covered. Coverage includes all 242 package
+Python files, including unimported files; nine contain no executable counters.
+The frontend retains its independent 100% requirements for every metric and file.
+The final locked `make format-check lint typecheck test contract-check quality-gates`
+run passes, including 2,259 backend tests, 311 frontend tests and 197 operational
+policy/proof tests. Both application reports measure exactly 100%.
 
 The added cases exercise real application behavior and failure boundaries:
 
@@ -39,7 +37,8 @@ The added cases exercise real application behavior and failure boundaries:
 
 All source, contacts, keys and provider responses in these cases are synthetic.
 No provider account or production source is used. Reports remain ignored local
-artifacts. This pass adds no coverage exclusions.
+artifacts. This pass adds no coverage pragmas or runtime-file exclusions. Type-only imports
+remain outside executable behavior.
 
 ## Equivalent control-flow simplifications
 
@@ -56,26 +55,28 @@ The production changes remove redundant paths while retaining reachable validati
   failure tests retain the boundary instead of bypassing immutable event creation.
 - The public media query admits only WebP and JPEG variants. The mapper handles
   those two cases after skipping null outer-join results.
+- Freezing a dictionary always returns an immutable mapping. The parse-issue
+  backfill retains that typed contract without an impossible non-mapping branch;
+  its regression checks nested freezing and preservation of the original input.
 - Hosted geocoding counts remaining retries explicitly. Tests assert exactly one
   initial call plus the configured retries and immediate quota refusal. The
   unreachable post-loop fallback is removed.
 
-## Completion requirements
+## Enforcement and remaining repository scope
 
-The backend must include all package files in coverage, preserve branch tracking
-and existing critical floors, and test reachable failure paths. Documentation,
-generated declarations, test infrastructure and type-only/protocol declarations
-are outside executable behavior. Any structural exception requires a local reason
-and evidence of its invariant; runtime modules cannot be removed from the report
-to reach the target.
+The package keeps branch tracking and its complete source inventory. The quality
+mapping rejects weakened thresholds, disabled branch tracking or a narrowed source
+list. Every executable file is named in `.github/critical-coverage.json` at 100%;
+missing reports, invalid counters and rounded percentages cannot pass.
 
-After the remaining package gaps are closed, raise its applicable global and
-per-file gates to 100%, update policy-drift proofs and run
-`make format-check lint typecheck test contract-check quality-gates` with the locked
-toolchain. Preserve the frontend's existing per-file 100% requirements.
+Run `make format-check lint typecheck test contract-check quality-gates` with the
+locked toolchain before pushing. The deliberate-fault tests cover a 99% backend
+or badge floor and removal of the complete package/branch settings.
 
-This package milestone alone does not complete repository-wide coverage.
-Operational Python/shell, backend admin JavaScript, handwritten migrations and
-runtime behavior outside the application source reports still require an explicit
-inventory and appropriate coverage. Every applicable final global, per-file and
-badge threshold must require 100% before the overall goal is complete.
+This package milestone does not complete repository-wide coverage. Operational
+Python/shell, backend admin JavaScript, handwritten migrations and build entry
+points still require measured coverage. The operational audit passes its existing
+196 tests; a separate diagnostic reports 56.96% for Python operations after excluding
+only test/proof drivers. It is not a completion result. Operational guards,
+transfers and deployment behavior stay in scope. All applicable final global,
+per-file and badge thresholds must require 100% before the overall goal is complete.
