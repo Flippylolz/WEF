@@ -316,7 +316,7 @@ class SQLAlchemyCompleteImportRepository:
                 .returning(CompleteImportRunRow.id),
             )
             if inserted is not None:
-                return inserted
+                return cast("UUID", inserted)
             existing = await session.scalar(
                 select(CompleteImportRunRow.id).where(
                     CompleteImportRunRow.source_channel_id == source_channel_id,
@@ -437,7 +437,10 @@ class SQLAlchemyCompleteImportRepository:
                 )
                 .where(SourceMessageRow.source_channel_id == channel_id),
             )
-            return {tuple(row) for row in rows}
+            return {
+                (message_id, ordinal, revision_id, descriptor, version)
+                for message_id, ordinal, revision_id, descriptor, version in rows
+            }
 
     async def verify(self, channel: SourceIdentity, run_id: UUID) -> ImportVerification:
         """Return aggregate restricted-safe reconciliation for the selected source channel."""
