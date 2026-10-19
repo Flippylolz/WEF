@@ -24,3 +24,12 @@ There is no API, schema, environment, or database migration. Upstream rendering,
 form, map, and build compatibility are covered by the existing suites and browser
 gates. Rollback is a squash-commit revert restoring manifests, lockfile, and the
 matching lint setting.
+
+## Unpublished development-only advisory fix
+
+The complete development audit reports GHSA-vfj7-8cjw-p6xm in braces 3.0.3.
+npm still publishes 3.0.3 as the latest release; 3.0.4 does not exist in the
+registry, and the [upstream advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+lists no patched version. The issue is confined to development tooling in this
+lockfile; the production audit is clean. No audit-ignore rule or fictional
+package version is committed. A future published fix remains a dependency update.
