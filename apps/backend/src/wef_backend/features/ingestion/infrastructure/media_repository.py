@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import func, select
@@ -268,7 +268,7 @@ class SQLAlchemyMediaRepository(MediaPersistencePort):
             .returning(StoredMediaObjectRow.id),
         )
         if inserted is not None:
-            return inserted
+            return cast("UUID", inserted)
         existing = await session.scalar(
             select(StoredMediaObjectRow.id).where(
                 StoredMediaObjectRow.storage_backend == "local_filesystem",

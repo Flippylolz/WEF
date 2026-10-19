@@ -194,7 +194,7 @@ The deploy job additionally:
 Add `.github/dependabot.yml` for every committed dependency ecosystem:
 
 - npm in `apps/web`.
-- Python/pip-compatible metadata in `apps/backend`.
+- Python/uv metadata and `uv.lock` in `apps/backend`.
 - Docker images in their actual Dockerfile directories.
 - GitHub Actions in `/`.
 
