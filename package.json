@@ -1,7 +1,7 @@
 {
   "name": "wef",
   "private": true,
-  "packageManager": "pnpm@11.21.0",
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
     "web:build": "pnpm --filter web build",
     "web:contract": "pnpm --filter web contract:check",

@@ -27,7 +27,7 @@ edge_root_abs=$(cd "$edge_root" && pwd)
 export WEF_SHARED_EDGE_ROOT="$edge_root_abs"
 marker="$edge_root_abs/state/reload-requested"
 upstream_network="${WEF_EDGE_UPSTREAM_NETWORK:-wef-edge}"
-nginx_image=nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+nginx_image=nginx:1.30.6-alpine@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5
 
 # A stale marker from an interrupted run must never trigger a reload.
 rm -f "$marker"

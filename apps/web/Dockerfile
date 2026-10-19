@@ -1,6 +1,6 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
-ARG NODE_IMAGE=node:22.22.2-alpine@sha256:8ea2348b068a9544dae7317b4f3aafcdc032df1647bb7d768a05a5cad1a7683f
+ARG NODE_IMAGE=node:22.23.3-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
 
 FROM ${NODE_IMAGE} AS base
 
@@ -9,7 +9,7 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     PATH=/pnpm:$PATH
 
 RUN corepack enable \
-    && corepack prepare pnpm@11.21.0 --activate
+    && corepack prepare pnpm@12.14.0 --activate
 
 FROM base AS dependencies
 
