@@ -319,6 +319,7 @@ class ReleaseArtifactBoundaryTests(unittest.TestCase):
             root.mkdir()
             bundle(root)
             output = Path(temporary) / "github-output"
+            output.write_text("existing_output=retained\n", encoding="utf-8")
             env = {
                 "GITHUB_REPOSITORY": REPOSITORY,
                 "GITHUB_OUTPUT": str(output),
@@ -332,6 +333,7 @@ class ReleaseArtifactBoundaryTests(unittest.TestCase):
                 self.assertEqual(reuse.main(), 0)
                 find.assert_not_called()
             self.assertIn("reuse_run_id=\n", output.read_text())
+            self.assertTrue(output.read_text().startswith("existing_output=retained\n"))
             for error in (
                 None,
                 OSError("synthetic"),
