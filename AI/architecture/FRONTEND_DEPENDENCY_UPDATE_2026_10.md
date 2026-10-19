@@ -33,3 +33,20 @@ registry, and the [upstream advisory](https://github.com/advisories/GHSA-vfj7-8c
 lists no patched version. The issue is confined to development tooling in this
 lockfile; the production audit is clean. No audit-ignore rule or fictional
 package version is committed. A future published fix remains a dependency update.
+
+## MapLibre worker deployment compatibility
+
+MapLibre 6.15 bundles its worker independently instead of importing the shared
+module. The deployment smoke validator accepts either the existing shared-module
+import or a bundled worker with the standard worker message APIs. It retains
+JavaScript MIME and HTML-fallback rejection checks, and requires shared-module
+exports only when the worker imports that module. The new self-contained worker
+ships an empty, unused shared-module stub.
+Regression tests cover both valid layouts and malformed/MIME/fallback failures;
+the real production runtime proof still exercises the served assets.
+
+Cold-start runtime validation also reproduced a PostGIS init race: its temporary
+Unix socket passed the old readiness check before TCP was available to migrations.
+Local, production, and CI database health checks now use loopback TCP, matching
+the existing browser-test stack. The runtime proof explicitly checks TCP after
+both initial creation and persistence recreation before starting client services.

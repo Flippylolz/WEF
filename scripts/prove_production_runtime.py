@@ -60,6 +60,15 @@ def start_application(
         raise
 
 
+def start_database(compose: list[str], *, environment: dict[str, str]) -> None:
+    """Require the final TCP listener rather than Postgres's temporary init socket."""
+    run([*compose, "up", "--detach", "--wait", "db"], environment=environment)
+    run(
+        [*compose, "exec", "-T", "db", "pg_isready", "-h", "127.0.0.1", "-U", "wef", "-d", "wef"],
+        environment=environment,
+    )
+
+
 def main() -> int:
     """Start, seed, recreate, and re-smoke the isolated production model."""
     docker = shutil.which("docker")
@@ -137,7 +146,7 @@ def main() -> int:
                 [*compose, "--profile", "operator", "run", "--rm", "db-permissions"],
                 environment=environment,
             )
-            run([*compose, "up", "--detach", "--wait", "db"], environment=environment)
+            start_database(compose, environment=environment)
             run(
                 [*compose, "--profile", "operator", "run", "--rm", "migrate"],
                 environment=environment,
@@ -163,7 +172,7 @@ def main() -> int:
                 [*compose, "--profile", "operator", "run", "--rm", "db-permissions"],
                 environment=environment,
             )
-            run([*compose, "up", "--detach", "--wait", "db"], environment=environment)
+            start_database(compose, environment=environment)
             run(
                 [*compose, "--profile", "operator", "run", "--rm", "migrate"],
                 environment=environment,
