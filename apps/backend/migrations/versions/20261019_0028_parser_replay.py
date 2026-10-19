@@ -72,8 +72,7 @@ source_end integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
 UNIQUE(work_id,field_name), CHECK(source_start>=0 AND source_end>source_start) )
 """,
     ]:
-        if statement.strip():
-            op.execute(statement)
+        op.execute(statement)
 
 
 def downgrade() -> None:

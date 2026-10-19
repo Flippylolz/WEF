@@ -64,6 +64,7 @@ def _workflow_checks(files: dict[str, str]) -> list[str]:
         "prove_architecture_violation.py",
         "--cov-fail-under=100",
         "--cov=wef_backend",
+        "--cov=migrations",
         "--cov-branch",
         "--fail-under 100",
         "wef-export-openapi",
@@ -97,8 +98,28 @@ def _backend_coverage_checks(files: dict[str, str]) -> list[str]:
     if coverage["report"].get("fail_under", 0) < COVERAGE_FLOOR:
         errors.append("backend coverage floor is missing or below 100")
     coverage_run = coverage["run"]
-    if coverage_run.get("source") != ["wef_backend"] or coverage_run.get("branch") is not True:
-        errors.append("backend coverage must include the complete package and every branch")
+    if (
+        coverage_run.get("source") != ["wef_backend", "migrations"]
+        or coverage_run.get("branch") is not True
+    ):
+        errors.append("backend coverage must include the complete package, migrations and branches")
+    return errors
+
+
+def _frontend_source_checks(frontend: str) -> list[str]:
+    """Keep application, browser-asset and build-entry behavior in the denominator."""
+    expected = {
+        "src/**/*.{ts,tsx}",
+        "next.config.ts",
+        "scripts/*.mjs",
+        "../backend/src/wef_backend/features/admin/interface/statics/place_picker.js",
+    }
+    included = re.search(r"coverage:\s*\{\s*include:\s*\[([^\]]*)\]", frontend)
+    errors = []
+    if not included or set(re.findall(r'"([^"]+)"', included[1])) != expected:
+        errors.append("frontend coverage must include all application, browser and build source")
+    if not re.search(r"allowExternal:\s*true", frontend):
+        errors.append("frontend coverage must measure the backend-owned browser asset")
     return errors
 
 
@@ -118,8 +139,7 @@ def _configuration_checks(files: dict[str, str]) -> list[str]:
             errors.append(f"frontend {metric} coverage floor must be 100")
     if not re.search(r"perFile:\s*true", frontend):
         errors.append("frontend coverage must enforce every file independently")
-    if 'include: ["src/**/*.{ts,tsx}"]' not in frontend:
-        errors.append("frontend coverage must include all runtime TypeScript source")
+    errors.extend(_frontend_source_checks(frontend))
     exclusions = re.search(r"exclude:\s*\[([^\]]*)\]", frontend)
     allowed = {"src/generated/**", "src/test/**", "src/**/*.test-support.tsx"}
     if (
@@ -150,6 +170,7 @@ def _local_checks(files: dict[str, str]) -> list[str]:
         "production-proof",
         "build",
         "--cov-fail-under=100",
+        "--cov=migrations",
         "--fail-under 100",
     )
     errors.extend(

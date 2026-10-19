@@ -90,7 +90,7 @@ coverage-backend: ## Run backend tests and write the coverage JSON.
 	$(COMPOSE) --profile test run --rm --no-deps test-db-reset
 	$(COMPOSE) --profile test run --rm --no-deps --build \
 		--volume "$(CURDIR)/tmp/coverage/backend:/coverage" \
-		backend-test pytest --cov=wef_backend --cov-branch \
+		backend-test pytest --cov=wef_backend --cov=migrations --cov-branch \
 		--cov-fail-under=100 \
 		--cov-report=json:/coverage/coverage.json --cov-report=term-missing
 	python3 scripts/check_critical_coverage.py --backend tmp/coverage/backend/coverage.json

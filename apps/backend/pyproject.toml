@@ -82,7 +82,7 @@ markers = [
 
 [tool.coverage.run]
 branch = true
-source = ["wef_backend"]
+source = ["wef_backend", "migrations"]
 
 [tool.coverage.report]
 fail_under = 100
