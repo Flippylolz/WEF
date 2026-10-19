@@ -103,6 +103,14 @@ class QualityGateTests(unittest.TestCase):
             )
             for name in ("cache", "cohort", "observation", "order", "report", "state")
         )
+        faults.extend(
+            (
+                FILES[10],
+                f'"scripts/deploy/shared_edge_{name}.py"',
+                f'"scripts/missing-shared-edge-{name}.py"',
+            )
+            for name in ("cutover", "inventory", "release")
+        )
         for path, before, after in faults:
             with self.subTest(path=path, fault=before):
                 files = {p: (ROOT / p).read_text() for p in FILES}
