@@ -90,6 +90,14 @@ class QualityGateTests(unittest.TestCase):
                 '"scripts/transfer/bundle.py": {"combined": 99}',
             ),
         ]
+        faults.extend(
+            (
+                FILES[10],
+                f'"scripts/deploy/release_{name}.py"',
+                f'"scripts/missing-release-{name}.py"',
+            )
+            for name in ("cache", "cohort", "observation", "order", "report", "state")
+        )
         for path, before, after in faults:
             with self.subTest(path=path, fault=before):
                 files = {p: (ROOT / p).read_text() for p in FILES}

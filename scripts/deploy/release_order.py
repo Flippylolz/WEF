@@ -136,7 +136,8 @@ def main() -> int:
         guard(args.path, args.value or "")
     elif args.command == "pending":
         mark_pending(args.path, args.value or "")
-    elif args.command == "observation":
+    else:
+        # argparse admits only observation in this final command branch.
         sha = args.path.name
         if not SHA.fullmatch(sha) or args.value not in {"already_current", "superseded"}:
             parser.error("invalid no-op observation")

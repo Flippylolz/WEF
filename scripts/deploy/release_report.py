@@ -11,7 +11,7 @@ import subprocess
 import time
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from scripts.deploy.release_cache import cache_metrics
 from scripts.deploy.release_observation import clean_observation
@@ -65,9 +65,8 @@ def interval_gap(start: object, end: object, children: list[dict[str, Any]]) -> 
     span = duration(start, end)
     if span["seconds"] is None:
         return span
-    first, last = timestamp(start), timestamp(end)
-    if first is None or last is None:
-        return span
+    # A valid duration already proves that both deterministic timestamps exist.
+    first, last = cast("str", timestamp(start)), cast("str", timestamp(end))
     intervals: list[tuple[str, str]] = []
     for child in children:
         if child.get("conclusion") == "skipped":
