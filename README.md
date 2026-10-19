@@ -67,6 +67,10 @@ require 100% independently, including cache observations, release ordering,
 outcome reports and cohort collection. Missing metadata remains explicit in those
 reports and cannot count as a successful deployment.
 
+The [Dependabot controller](AI/quality/DEPENDABOT_EVIDENCE_COVERAGE.md) also has an
+independent 100% operational floor. Required checks must explicitly succeed, and
+bot-only commit authorization uses nonempty evidence with GitHub identities.
+
 Static API documentation is generated as an artifact and is not served by the
 production API.
 

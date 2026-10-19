@@ -180,6 +180,7 @@ def _operational_coverage_checks(files: dict[str, str]) -> list[str]:
     } | {
         "scripts/check_critical_coverage.py",
         "scripts/check_quality_gates.py",
+        "scripts/dependabot_merge_controller.py",
         "scripts/deploy/activate_historical_candidate.py",
         "scripts/deploy/release_cache.py",
         "scripts/deploy/release_cohort.py",
