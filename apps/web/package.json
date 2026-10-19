@@ -23,7 +23,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-query": "^5.104.4",
-    "maplibre-gl": "^6.14.0",
+    "maplibre-gl": "^6.15.0",
     "next": "16.4.2",
     "next-intl": "^4.14.9",
     "openapi-fetch": "^0.17.0",
