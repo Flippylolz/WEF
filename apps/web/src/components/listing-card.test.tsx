@@ -91,6 +91,11 @@ describe("ListingCard", () => {
     expect(screen.getByText("aiAssistedData")).toBeVisible();
   });
 
+  it("uses the singular room label for a studio", () => {
+    renderCard({ rooms_min: 1, rooms_max: 1 });
+    expect(screen.getByText("listingRoom:1")).toBeVisible();
+  });
+
   it("omits missing values instead of inventing them", () => {
     renderCard({
       price_min_minor: null,

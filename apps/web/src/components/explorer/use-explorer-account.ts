@@ -94,9 +94,8 @@ export function useExplorerAccount() {
     const result = starred
       ? await removeFavorite(locationId)
       : await addFavorite(locationId);
-    if (result.state === "ready") {
-      await queryClient.invalidateQueries({ queryKey: ["favorites"] });
-    }
+    if (result.state === "error") return;
+    await queryClient.invalidateQueries({ queryKey: ["favorites"] });
   }
   return {
     accountQuery,

@@ -44,7 +44,10 @@ make build
 containerized: they start local Compose PostGIS, recreate a reserved `wef_test`
 database alongside the persistent development database, and need no host
 database URL. Frontend unit tests run in the web development container with
-no network. Each suite fails when its own branch-aware coverage is below 90%.
+no network. Backend branch-aware coverage must reach 90%. Frontend coverage must
+reach 100% of lines, branches, functions and statements in every runtime source
+file, including files never imported by tests. [Coverage scope and exclusions](AI/quality/COVERAGE.md)
+describe the denominator and the remaining backend work toward repository-wide 100%.
 The coverage badge still shows the combined percentage, but that combined
 figure is not a merge gate. `make coverage-backend` and `make coverage-frontend`
 refresh each report; `make coverage` then writes the badge. GitHub Actions

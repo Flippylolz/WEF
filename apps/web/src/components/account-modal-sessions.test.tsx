@@ -135,6 +135,7 @@ describe("account-modal sessions", () => {
   it("deletes the account after explicit confirmation", async () => {
     const user = userEvent.setup();
     const onLoggedOut = vi.fn();
+    const onNotice = vi.fn();
     deleteOwnAccount.mockResolvedValue({ state: "ready", data: null });
 
     const view = render(
@@ -145,6 +146,7 @@ describe("account-modal sessions", () => {
         onClose={() => undefined}
         onAuthenticated={() => undefined}
         onLoggedOut={onLoggedOut}
+        onNotice={onNotice}
       />,
     );
     const dialog = view.container.querySelector("dialog")!;
@@ -159,15 +161,18 @@ describe("account-modal sessions", () => {
       expect(deleteOwnAccount).toHaveBeenCalledTimes(1);
       expect(disableOwnAccount).not.toHaveBeenCalled();
       expect(onLoggedOut).toHaveBeenCalled();
+      expect(onNotice).toHaveBeenCalledWith("deletedNotice");
     });
   });
 
   it("reports failures and stays in the confirm step", async () => {
     const user = userEvent.setup();
-    deleteOwnAccount.mockResolvedValue({
-      state: "error",
-      message: "problem detail",
-    });
+    deleteOwnAccount
+      .mockResolvedValueOnce({
+        state: "error",
+        message: "problem detail",
+      })
+      .mockResolvedValue({ state: "error" });
 
     const view = render(
       <AccountModal
@@ -195,6 +200,10 @@ describe("account-modal sessions", () => {
     expect(
       within(dialog).getByRole("button", { name: "deleteConfirmAction" }),
     ).toBeInTheDocument();
+    await user.click(
+      within(dialog).getByRole("button", { name: "deleteConfirmAction" }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent("dangerFailed");
     await user.click(
       within(dialog).getByRole("button", { name: "cancelAction" }),
     );

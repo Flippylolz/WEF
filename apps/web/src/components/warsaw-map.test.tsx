@@ -1,4 +1,11 @@
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { forwardRef, useImperativeHandle, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -20,6 +27,7 @@ const easeTo = vi.fn();
 const jumpTo = vi.fn();
 const fitBounds = vi.fn();
 const resize = vi.fn();
+let attachMapRef = true;
 let resizeObserverCallback: ResizeObserverCallback | null = null;
 
 class ResizeObserverMock {
@@ -35,7 +43,7 @@ class ResizeObserverMock {
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
 
 const getClusterExpansionZoom = vi.fn(async () => 13);
-let clickedFeature: object = {
+let clickedFeature: object | undefined = {
   id: "10000000-0000-4000-8000-000000000001",
   properties: {},
   geometry: { type: "Point", coordinates: [21.0122, 52.2297] },
@@ -66,34 +74,38 @@ vi.mock("react-map-gl/maplibre", () => ({
     },
     ref,
   ) {
-    useImperativeHandle(ref, () => ({
-      getBounds: () => ({
-        getWest: () => 20.8,
-        getSouth: () => 52.1,
-        getEast: () => 21.2,
-        getNorth: () => 52.4,
-      }),
-      easeTo: (options: object) => {
-        easeTo(options);
-      },
-      resize,
-      fitBounds: (
-        bounds: [[number, number], [number, number]],
-        options: object,
-      ) => {
-        fitBounds(bounds, options);
-        onMoveEnd({
-          target: {
+    useImperativeHandle(ref, () =>
+      attachMapRef
+        ? {
             getBounds: () => ({
-              getWest: () => bounds[0][0],
-              getSouth: () => bounds[0][1],
-              getEast: () => bounds[1][0],
-              getNorth: () => bounds[1][1],
+              getWest: () => 20.8,
+              getSouth: () => 52.1,
+              getEast: () => 21.2,
+              getNorth: () => 52.4,
             }),
-          },
-        });
-      },
-    }));
+            easeTo: (options: object) => {
+              easeTo(options);
+            },
+            resize,
+            fitBounds: (
+              bounds: [[number, number], [number, number]],
+              options: object,
+            ) => {
+              fitBounds(bounds, options);
+              onMoveEnd({
+                target: {
+                  getBounds: () => ({
+                    getWest: () => bounds[0][0],
+                    getSouth: () => bounds[0][1],
+                    getEast: () => bounds[1][0],
+                    getNorth: () => bounds[1][1],
+                  }),
+                },
+              });
+            },
+          }
+        : null,
+    );
     return (
       <div data-testid="map-component" data-track-resize={trackResize}>
         <button type="button" onClick={onIdle}>
@@ -239,6 +251,7 @@ const mapData: LocationMap = {
 
 describe("WarsawMap", () => {
   beforeEach(() => {
+    attachMapRef = true;
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
       getExtension: () => ({ loseContext: vi.fn() }),
     } as unknown as WebGL2RenderingContext);
@@ -527,6 +540,27 @@ describe("WarsawMap", () => {
     expect(onFailure).toHaveBeenCalledOnce();
   });
 
+  it("ignores clicks on empty map background", async () => {
+    clickedFeature = undefined;
+    const onSelect = vi.fn();
+    render(
+      <WarsawMap
+        bbox="20.8,52.1,21.2,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading"
+        onSelect={onSelect}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "simulated-map-click" }),
+    );
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(jumpTo).not.toHaveBeenCalled();
+  });
+
   it("reports a normalized viewport after movement", async () => {
     const user = userEvent.setup();
     const onViewportChange = vi.fn();
@@ -798,5 +832,69 @@ describe("WarsawMap", () => {
       screen.getByRole("button", { name: "simulated-map-click" }),
     ).toBeVisible();
     expect(onFailure).not.toHaveBeenCalled();
+  });
+
+  it("ignores unavailable map refs during focus and resize setup", async () => {
+    attachMapRef = false;
+    render(
+      <WarsawMap
+        bbox="20.8,52.1,21.2,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+        focusTarget={{ longitude: 20.81, latitude: 52.39, nonce: 1 }}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+    expect(easeTo).not.toHaveBeenCalled();
+    expect(resize).not.toHaveBeenCalled();
+  });
+
+  it("does not time out after loading and ignores an invalid URL viewport", () => {
+    vi.useFakeTimers();
+    const onFailure = vi.fn();
+    render(
+      <WarsawMap
+        bbox="invalid"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading"
+        onSelect={vi.fn()}
+        onFailure={onFailure}
+        onViewportChange={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "simulated-map-load" }));
+    act(() => vi.advanceTimersByTime(15_000));
+    expect(onFailure).not.toHaveBeenCalled();
+    expect(fitBounds).not.toHaveBeenCalled();
+  });
+
+  it("recenters immediately when reduced motion is preferred", async () => {
+    render(
+      <WarsawMap
+        bbox="20.8,52.1,21.2,52.4"
+        data={mapData}
+        selectedId={null}
+        loadingLabel="Loading"
+        onSelect={vi.fn()}
+        onFailure={vi.fn()}
+        onViewportChange={vi.fn()}
+        reduceMotion
+        focusTarget={{ longitude: 20.81, latitude: 52.39, nonce: 1 }}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "simulated-map-load" }),
+    );
+    expect(easeTo).toHaveBeenCalledWith({
+      center: [20.81, 52.39],
+      duration: 0,
+    });
   });
 });

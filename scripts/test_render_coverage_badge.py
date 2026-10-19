@@ -140,8 +140,8 @@ class CoverageBadgeTests(unittest.TestCase):
         compose = Path("infra/compose.yaml").read_text(encoding="utf-8")
         vitest = Path("apps/web/vitest.config.mts").read_text(encoding="utf-8")
         self.assertIn("--cov-fail-under=90", compose)
-        self.assertIn("lines: 90", vitest)
-        self.assertIn("branches: 90", vitest)
+        self.assertIn("lines: 100", vitest)
+        self.assertIn("branches: 100", vitest)
 
     def _write_reports(
         self,

@@ -98,13 +98,17 @@ export function MapExplorer() {
   const [liveAnnouncement, setLiveAnnouncement] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersDialogRef = useRef<HTMLDialogElement | null>(null);
-  const openAuthRef = useRef<AuthOpener>(() => undefined);
+  const openAuthRef = useRef<AuthOpener>(
+    /* v8 ignore next -- Initial no-op has no behavior; UserToolbar registers the opener in its effect. */
+    () => undefined,
+  );
   const registerAuthOpener = useCallback((open: AuthOpener) => {
     openAuthRef.current = open;
   }, []);
 
   useEffect(() => {
     const dialog = filtersDialogRef.current;
+    /* v8 ignore if -- React assigns this unconditional dialog ref before effects. */
     if (dialog === null) return;
     if (filtersOpen && !dialog.open) {
       if (typeof dialog.showModal === "function") dialog.showModal();
@@ -380,9 +384,7 @@ export function MapExplorer() {
               <OfferPanel
                 feature={selectedFeature}
                 offers={offers}
-                onRetry={
-                  selectedId ? () => void offersQuery.refetch() : undefined
-                }
+                onRetry={() => void offersQuery.refetch()}
                 onSelectOffer={selectOffer}
                 onOfferTrigger={registerOfferTrigger}
               />

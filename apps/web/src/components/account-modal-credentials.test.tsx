@@ -6,7 +6,13 @@ import {
 } from "./account-modal.test-support";
 
 import { axe } from "vitest-axe";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 
 import userEvent from "@testing-library/user-event";
 
@@ -202,5 +208,92 @@ describe("account-modal credentials", () => {
     );
     await user.click(screen.getByRole("button", { name: "registerAction" }));
     expect(await screen.findByText("passwordMismatch")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["register", "server detail"],
+    ["register", undefined],
+    ["login", "server detail"],
+    ["login", undefined],
+  ])(
+    "shows %s failure after a valid registration submission (%s)",
+    async (stage, message) => {
+      registerAccount.mockResolvedValue(
+        stage === "register"
+          ? { state: "error", message }
+          : { state: "ready", data: account },
+      );
+      loginAccount.mockResolvedValue({ state: "error", message });
+      const onAuthenticated = vi.fn();
+      render(
+        <AccountModal
+          open
+          account={null}
+          initialMode="register"
+          onClose={vi.fn()}
+          onAuthenticated={onAuthenticated}
+          onLoggedOut={vi.fn()}
+        />,
+      );
+      fireEvent.change(document.getElementById("register-username")!, {
+        target: { value: "warsaw" },
+      });
+      fireEvent.change(document.getElementById("register-password")!, {
+        target: { value: "longenough123" },
+      });
+      fireEvent.change(document.getElementById("register-confirm-password")!, {
+        target: { value: "longenough123" },
+      });
+      await userEvent.click(
+        screen.getByRole("button", { name: "registerAction" }),
+      );
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        message ??
+          (stage === "register"
+            ? "registerFailed"
+            : "loginAfterRegisterFailed"),
+      );
+      expect(onAuthenticated).not.toHaveBeenCalled();
+    },
+  );
+
+  it("shows the fallback for login failures without a problem detail", async () => {
+    loginAccount.mockResolvedValue({ state: "error" });
+    render(
+      <AccountModal
+        open
+        account={null}
+        initialMode="login"
+        onClose={vi.fn()}
+        onAuthenticated={vi.fn()}
+        onLoggedOut={vi.fn()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("usernameLabel"), {
+      target: { value: "warsaw" },
+    });
+    fireEvent.change(screen.getByLabelText("passwordLabel"), {
+      target: { value: "longenough123" },
+    });
+    await userEvent.click(screen.getByRole("button", { name: "loginAction" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("loginFailed");
+  });
+
+  it("allows cancelling the account dialog without submitting a form", () => {
+    const onClose = vi.fn();
+    render(
+      <AccountModal
+        open
+        account={null}
+        initialMode="login"
+        onClose={onClose}
+        onAuthenticated={vi.fn()}
+        onLoggedOut={vi.fn()}
+      />,
+    );
+    const event = new Event("cancel", { bubbles: true, cancelable: true });
+    fireEvent(screen.getByRole("dialog"), event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });

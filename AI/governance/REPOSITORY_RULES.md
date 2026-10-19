@@ -153,7 +153,7 @@ PR CI and the main release invoke the same exact-SHA verification workflow.
 The release performs main-push verification; a second main-push CI run is omitted.
 Coverage publishing follows a successful main-push release.
 
-CI fails when backend coverage or frontend coverage is below 90%. The suites run in separate jobs and Makefile targets. The Backend job uses pytest `--cov-fail-under=90`. The Frontend job uses Vitest `coverage.thresholds` of 90% for lines and branches. The Coverage badge job applies the same per-suite floor and does not use a combined threshold.
+The suites run in separate jobs and Makefile targets. Backend branch-aware coverage currently requires pytest `--cov-fail-under=90`. Frontend Vitest coverage requires 100% of lines, branches, functions and statements per file, including unimported runtime source. Generated contracts, test infrastructure and the narrowly documented unreachable React ref guards/initial no-op are excluded; runtime modules cannot be excluded to meet the target. `check_quality_gates.py` rejects weakened frontend metrics, removal of per-file enforcement, a narrowed source list or an expanded exclusion allowlist. The Coverage badge job retains a 90% minimum for each report and never uses a combined threshold; frontend verification and critical-file checks independently enforce 100%. See [coverage scope and progress](../quality/COVERAGE.md) for remaining backend work toward repository-wide 100%.
 
 Deployment does not run for:
 

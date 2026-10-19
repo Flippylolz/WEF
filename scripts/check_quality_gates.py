@@ -9,6 +9,7 @@ import tomllib
 from pathlib import Path
 
 COVERAGE_FLOOR = 90
+FRONTEND_COVERAGE_FLOOR = 100
 ROOT = Path(__file__).resolve().parents[1]
 CHECKS = {
     "Backend",
@@ -97,10 +98,25 @@ def _configuration_checks(files: dict[str, str]) -> list[str]:
         errors.append("backend coverage floor is missing or below 90")
     if "error" not in backend["pytest"]["ini_options"].get("filterwarnings", []):
         errors.append("unexpected backend warnings are not fatal")
-    for metric in ("lines", "branches"):
-        match = re.search(rf"{metric}:\s*(\d+)", files[FILES[6]])
-        if not match or int(match[1]) < COVERAGE_FLOOR:
-            errors.append(f"frontend {metric} coverage floor is missing or below 90")
+    frontend = files[FILES[6]]
+    for metric in ("lines", "branches", "functions", "statements"):
+        match = re.search(rf"{metric}:\s*(\d+)", frontend)
+        if not match or int(match[1]) != FRONTEND_COVERAGE_FLOOR:
+            errors.append(f"frontend {metric} coverage floor must be 100")
+    if not re.search(r"perFile:\s*true", frontend):
+        errors.append("frontend coverage must enforce every file independently")
+    if 'include: ["src/**/*.{ts,tsx}"]' not in frontend:
+        errors.append("frontend coverage must include all runtime TypeScript source")
+    exclusions = re.search(r"exclude:\s*\[([^\]]*)\]", frontend)
+    allowed = {"src/generated/**", "src/test/**", "src/**/*.test-support.tsx"}
+    if (
+        not exclusions
+        or "...coverageConfigDefaults.exclude" not in exclusions[1]
+        or set(re.findall(r'"([^"]+)"', exclusions[1])) != allowed
+    ):
+        errors.append(
+            "frontend coverage exclusions must match the documented non-runtime allowlist"
+        )
     scripts = json.loads(files[FILES[5]])["scripts"]
     if "--max-warnings 0" not in scripts["lint"]:
         errors.append("frontend lint warnings are not fatal")

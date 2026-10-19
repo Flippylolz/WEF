@@ -25,6 +25,43 @@ import * as viewHistoryApi from "@/lib/view-history-api";
 describe("map-explorer navigation", () => {
   setupMapExplorer();
 
+  it("closes the filter drawer when its backdrop is clicked", async () => {
+    renderExplorer();
+    await openFiltersDrawer(userEvent.setup());
+    const dialog = screen.getByRole("dialog", { name: "filtersTitle" });
+    fireEvent.click(dialog);
+    await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
+  });
+
+  it("keeps the explorer usable when the browser lacks the native dialog opener", async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(
+      HTMLDialogElement.prototype,
+      "showModal",
+    )!;
+    Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
+      configurable: true,
+      value: undefined,
+    });
+    try {
+      renderExplorer();
+      await screen.findByRole("button", {
+        name: /Synthetic Central Residence/,
+      });
+      await userEvent.click(
+        screen.getByRole("button", { name: /^filtersButton/ }),
+      );
+      expect(document.querySelector(".filter-drawer")).not.toHaveAttribute(
+        "open",
+      );
+    } finally {
+      Object.defineProperty(
+        HTMLDialogElement.prototype,
+        "showModal",
+        descriptor,
+      );
+    }
+  });
+
   it("restores a combined URL filter query and clears to Warsaw defaults", async () => {
     navigation.search =
       "price_min=80000000&price_max=125000000&area_min=35&area_max=71.5" +

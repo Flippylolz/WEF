@@ -32,6 +32,9 @@ describe("WarsawMap with the map disabled", () => {
   });
 
   it("reports failure immediately and renders nothing", async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+      getExtension: () => null,
+    } as unknown as WebGL2RenderingContext);
     vi.stubEnv("NEXT_PUBLIC_WEF_DISABLE_MAP", "1");
     vi.resetModules();
     const { WarsawMap } = await import("@/components/warsaw-map");
@@ -50,5 +53,6 @@ describe("WarsawMap with the map disabled", () => {
 
     expect(onFailure).toHaveBeenCalledOnce();
     expect(container).toBeEmptyDOMElement();
+    vi.restoreAllMocks();
   });
 });

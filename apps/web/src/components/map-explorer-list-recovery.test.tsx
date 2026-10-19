@@ -6,7 +6,7 @@ import {
   setupMapExplorer,
 } from "./map-explorer.test-support";
 
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 
 import userEvent from "@testing-library/user-event";
 
@@ -16,6 +16,55 @@ import * as catalogApi from "@/lib/catalog-api";
 
 describe("map-explorer list-recovery", () => {
   setupMapExplorer();
+
+  it("shows pending pagination while preserving the loaded cards", async () => {
+    let resolvePage!: (
+      result: catalogApi.ApiResult<catalogApi.ViewportListingPage>,
+    ) => void;
+    const pending = new Promise<
+      catalogApi.ApiResult<catalogApi.ViewportListingPage>
+    >((resolve) => {
+      resolvePage = resolve;
+    });
+    vi.mocked(catalogApi.fetchViewportListings).mockImplementation(
+      async (query) =>
+        query?.cursor
+          ? pending
+          : { state: "ready", data: { ...listingPage, next_cursor: "next" } },
+    );
+    renderExplorer();
+    await screen.findByRole("button", { name: /Synthetic Central Residence/ });
+    await userEvent.click(screen.getByRole("button", { name: "loadMore" }));
+    expect(screen.getByRole("button", { name: "loadingMore" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /Synthetic Central Residence/ }),
+    ).toBeVisible();
+    await act(async () => {
+      resolvePage({
+        state: "ready",
+        data: { items: [], matching_count: 1, next_cursor: null },
+      });
+    });
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "loadingMore" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  it("keeps the catalog usable when facets and quick presets fail", async () => {
+    vi.mocked(catalogApi.fetchFacets).mockResolvedValue({ state: "error" });
+    vi.mocked(catalogApi.fetchQuickFilters).mockResolvedValue({
+      state: "error",
+    });
+    renderExplorer();
+    await screen.findByRole("button", { name: /Synthetic Central Residence/ });
+    await openFiltersDrawer(userEvent.setup());
+    expect(await screen.findByText("facetsError")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "quickFilter.last_day" }),
+    ).not.toBeInTheDocument();
+  });
 
   it("falls back to the semantic list when the map fails", async () => {
     const user = userEvent.setup();

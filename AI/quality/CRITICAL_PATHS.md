@@ -1,6 +1,8 @@
 # Critical-path confidence (E14-T2)
 
-The global backend branch-aware and frontend line/branch floors remain 90%.
+The backend branch-aware floor remains 90%. Frontend lines, branches, functions
+and statements now require 100% in every runtime file, with the source inventory
+and exclusions described in [COVERAGE.md](COVERAGE.md).
 `.github/critical-coverage.json` additionally enforces these independently measured
 files. Missing/ambiguous reports, missing files, zero/invalid counters or weakened
 floors fail closed. High aggregate coverage cannot hide a low critical module.
@@ -15,8 +17,8 @@ floors fail closed. High aggregate coverage cannot hide a low critical module.
 | Persistence application and extracted projection / unit + PostGIS | 97% combined independently for each | Atomic batches, immutable source identity, revisions, duplicate/reordered replay, transaction failure and cancellation |
 | Raw replay application / unit + PostGIS | 98% combined | Invalid/non-derivable archives, five-round bound, failed run/redaction, cancellation unlock and no false success; real version/sentinel replay |
 | Complete import / unit + PostGIS | 95% combined | Unchanged checksums skipped; daily/cycle budget boundaries, no-result/quota/transient outcomes and redacted charged exceptions |
-| Web auth transport / unit | 98% lines, 91% branches | Refused/expired sessions and request failure mapping; no browser-owned authorization rule |
-| Web map search state / unit | 98% lines, 94% branches | URL/filter/selection round trips and invalid input normalization |
+| Web auth transport / unit | 100% lines and branches | Refused/expired sessions, cancellation, empty/malformed responses and request failure mapping; no browser-owned authorization rule |
+| Web map search state / unit | 100% lines and branches | URL/filter/selection round trips, numeric overflow and invalid timestamp normalization |
 | Release gate / operational proof | Explicit branch assertions | Unassociated main pushes rejected, only configured valid events allowed; deliberate unconditional-acceptance fault |
 
 Combined coverage counts executed lines and branch paths, without rounding before

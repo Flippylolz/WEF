@@ -4,7 +4,7 @@ import {
   setupMapExplorer,
 } from "./map-explorer.test-support";
 
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 
 import userEvent from "@testing-library/user-event";
 
@@ -63,6 +63,22 @@ describe("map-explorer selection", () => {
     );
   });
 
+  it("rejects forced requests without selected location or offer IDs", async () => {
+    const { queryClient } = renderExplorer();
+    await screen.findByRole("button", { name: /Synthetic Central Residence/ });
+    const offers = queryClient
+      .getQueryCache()
+      .find({ queryKey: ["location-offers", null, ""] });
+    const detail = queryClient
+      .getQueryCache()
+      .find({ queryKey: ["offer-detail", null] });
+    await act(async () => {
+      await expect(offers!.fetch()).rejects.toThrow("missing location");
+      await expect(detail!.fetch()).rejects.toThrow("missing offer");
+    });
+    expect(catalogApi.fetchLocationOffers).not.toHaveBeenCalled();
+  });
+
   it("hides the sidebar and reopens it with data when a pin is selected", async () => {
     const user = userEvent.setup();
     renderExplorer();
@@ -94,6 +110,8 @@ describe("map-explorer selection", () => {
     expect(
       await screen.findByText("development · primary"),
     ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "hidePanel" }));
+    expect(sidebar).toHaveAttribute("inert");
   });
 
   it("loads offer detail after explicit offer selection", async () => {

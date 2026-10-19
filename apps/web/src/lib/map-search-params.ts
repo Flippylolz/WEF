@@ -269,7 +269,8 @@ function uniqueSorted<T extends number | string>(values: T[]) {
       return left - right;
     const l = String(left);
     const r = String(right);
-    return l < r ? -1 : l > r ? 1 : 0;
+    // Callers provide homogeneous values; the Set already removed equal keys.
+    return l < r ? -1 : 1;
   });
 }
 

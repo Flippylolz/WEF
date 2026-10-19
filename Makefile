@@ -32,7 +32,7 @@ help: ## List supported commands.
 		'make test-e2e           Run real-stack cross-browser journeys' \
 		'make coverage           Refresh the combined coverage badge after both suites' \
 		'make coverage-backend   Run backend tests with the 90% coverage floor' \
-		'make coverage-frontend  Run frontend tests with the 90% coverage floor' \
+		'make coverage-frontend  Run frontend tests with 100% coverage per file' \
 		'make contract-generate  Export OpenAPI and generated TypeScript' \
 		'make contract-check     Verify OpenAPI, generated types, and static docs' \
 		'make build              Build production runtime images' \

@@ -3,7 +3,7 @@ import {
   renderExplorer,
   setupMapExplorer,
 } from "./map-explorer.test-support";
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import * as catalogApi from "@/lib/catalog-api";
@@ -36,6 +36,36 @@ const page: catalogApi.UnmappedListingPage = {
 
 describe("uncertain location discovery", () => {
   setupMapExplorer();
+
+  it("disables pagination while the next uncertain page is pending", async () => {
+    let resolvePage!: (
+      result: catalogApi.ApiResult<catalogApi.UnmappedListingPage>,
+    ) => void;
+    const pending = new Promise<
+      catalogApi.ApiResult<catalogApi.UnmappedListingPage>
+    >((resolve) => {
+      resolvePage = resolve;
+    });
+    vi.mocked(catalogApi.fetchUnmappedListings).mockImplementation(
+      async (query) =>
+        query.cursor ? pending : { state: "ready", data: page },
+    );
+    renderExplorer();
+    await userEvent.click(await screen.findByText("uncertainTitle (2)"));
+    await userEvent.click(screen.getByRole("button", { name: "loadMore" }));
+    expect(screen.getByRole("button", { name: "loadingMore" })).toBeDisabled();
+    await act(async () => {
+      resolvePage({
+        state: "ready",
+        data: { ...page, items: [], next_cursor: null },
+      });
+    });
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "loadingMore" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
   it("paginates independently and opens detail without selecting a map location", async () => {
     const user = userEvent.setup();
     vi.mocked(catalogApi.fetchUnmappedListings).mockImplementation(

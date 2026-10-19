@@ -66,6 +66,7 @@ vi.mock("next/dynamic", () => ({
       OfferDetailDrawer?: unknown;
       default?: unknown;
     }>,
+    options?: { loading?: ComponentType },
   ) => {
     function FakeMap({
       onFailure,
@@ -77,11 +78,15 @@ vi.mock("next/dynamic", () => ({
       onViewportChange: (bbox: string) => void;
     }) {
       useEffect(() => {
+        void loader();
         mapMountCount.value += 1;
       }, []);
 
+      const Loading = options?.loading;
+
       return (
         <div data-testid="map">
+          {Loading ? <Loading /> : null}
           <button type="button" onClick={onFailure}>
             fail-map
           </button>
@@ -140,11 +145,12 @@ export function renderExplorer() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <MapExplorer />
     </QueryClientProvider>,
   );
+  return { ...view, queryClient };
 }
 
 export async function openFiltersDrawer(
