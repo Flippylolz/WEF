@@ -41,3 +41,21 @@ request, protecting the existing [E7-T3 deployment configuration](../epics/E7-pr
 and [E7-T11 historical candidate workflow](../epics/E7-production-delivery/tasks/E7-T11-activate-the-verified-historical-candidate.md) boundaries.
 Remaining operational Python, shell and substantive embedded Python remain required
 before completing the overall 100% goal.
+
+## Comparable operational audit
+
+The native diagnostic with the same existing release, topology and rollback proof
+drivers rises from 89.02% to 92.89%. Its denominator retains 4,678 statements and
+1,450 branch paths; 317 lines and 119 branch paths remain uncovered. Reports stay
+ignored, and remaining operational Python, shell and substantive embedded Python
+stay in scope. The required locked operational test report and per-file floors
+remain the CI gate.
+
+## Validation
+
+The full locked `make format-check lint typecheck test contract-check quality-gates
+compose-config` passes: 2,266 backend and 355 frontend tests retain 100%, and all
+321 operational tests pass with 41 independent 100% file floors. All 17 focused
+configuration cases, strict Ruff/mypy, Markdown links and Git whitespace checks
+also pass. The comparable native audit completes the same four existing release,
+topology and rollback proofs. No production configuration was written or deployed.

@@ -158,6 +158,8 @@ adds 12 cases and independent 100% floors for both builders and validators: all
 non-overwriting env files, malformed/missing credentials, explicit provider and
 recovery settings, source/path/image identity, loopback-only candidate verification
 and internal database targeting. Runtime implementation and exclusions are unchanged.
+The comparable audit with the same proof drivers rises to 92.89%; 317 lines and
+119 branch paths remain uncovered.
 
 The badge combines backend/frontend counters for display and independently requires
 100% from each report. It currently measures the application suites; the remaining
