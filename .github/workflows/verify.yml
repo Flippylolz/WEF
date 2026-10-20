@@ -89,7 +89,7 @@ jobs:
         id: metadata
         run: |
           revision=$(uv --directory apps/backend run python -c \
-            'from wef_backend.migration import EXPECTED_DATABASE_REVISION; print(EXPECTED_DATABASE_REVISION)')
+            'from wef_backend.migration import expected_database_revision; print(expected_database_revision())')
           echo "migration_revision=$revision" >> "$GITHUB_OUTPUT"
 
   frontend:

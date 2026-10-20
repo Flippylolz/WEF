@@ -122,7 +122,7 @@ from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
 from wef_backend.middleware.public_rate_limit import RateLimiter
-from wef_backend.migration import EXPECTED_DATABASE_REVISION, READ_COMPATIBLE_DATABASE_REVISIONS
+from wef_backend.migration import expected_database_revision
 from wef_backend.settings import Settings, load_settings
 
 ReadyCheck = Callable[[], Awaitable[bool]]
@@ -173,6 +173,7 @@ def build_contact_cipher(settings: Settings) -> AesGcmContactCipher:
 def build_services(settings: Settings | None = None) -> AppServices:
     """Wire concrete adapters to inward-owned application contracts."""
     runtime_settings = settings or load_settings()
+    expected_revision = expected_database_revision(runtime_settings)
     database = create_database_resources(runtime_settings.database_url)
     map_adapter = SQLAlchemyMapQueryAdapter(database.session_factory)
     browse_adapter = SQLAlchemyCatalogBrowseAdapter(database.session_factory)
@@ -291,10 +292,10 @@ def build_services(settings: Settings | None = None) -> AppServices:
         except SQLAlchemyError as error:
             logger.warning("database_not_ready", error=str(error))
             return False
-        if revision not in READ_COMPATIBLE_DATABASE_REVISIONS:
+        if revision != expected_revision:
             logger.warning(
                 "database_revision_mismatch",
-                expected=EXPECTED_DATABASE_REVISION,
+                expected=expected_revision,
                 actual=revision,
             )
             return False

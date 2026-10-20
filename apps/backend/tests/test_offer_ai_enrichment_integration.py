@@ -36,7 +36,7 @@ from wef_backend.features.catalog.infrastructure.models import LocationRow, Offe
 from wef_backend.features.identity.domain.model import UserRole
 from wef_backend.features.identity.infrastructure.models import UserRow
 from wef_backend.features.ingestion.application.persistence import normalized_location_key
-from wef_backend.migration import EXPECTED_DATABASE_REVISION, alembic_config
+from wef_backend.migration import alembic_config, expected_database_revision
 from wef_backend.settings import Settings
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
@@ -266,7 +266,7 @@ async def test_batch_apply_resume_revert_and_source_edit() -> None:  # noqa: PLR
         assert offer is not None
         assert offer.floor_label == "4"
         assert offer.market_type == "unknown"
-        assert revision == EXPECTED_DATABASE_REVISION
+        assert revision == expected_database_revision()
         sent = provider.calls[0][1]["content"]
         assert "+48111222333" not in sent
 

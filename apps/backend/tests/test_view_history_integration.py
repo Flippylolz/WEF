@@ -20,7 +20,7 @@ from wef_backend.features.identity.infrastructure import (
     SQLAlchemyIdentityStore,
     SQLAlchemyViewHistoryStore,
 )
-from wef_backend.migration import EXPECTED_DATABASE_REVISION, alembic_config
+from wef_backend.migration import alembic_config, expected_database_revision
 from wef_backend.settings import Settings
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
@@ -110,7 +110,7 @@ async def test_visit_and_offer_view_history_persist_idempotently() -> None:
         assert history == (viewed_twice,)
         async with database.session_factory() as session:
             revision = await session.scalar(text("SELECT version_num FROM alembic_version"))
-        assert revision == EXPECTED_DATABASE_REVISION
+        assert revision == expected_database_revision()
     finally:
         async with database.engine.begin() as connection:
             if user_id is not None:
