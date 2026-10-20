@@ -265,6 +265,90 @@ def test_district_fallback_cannot_hide_conflicting_pin_addresses() -> None:
 
 
 @pytest.mark.parametrize(
+    ("block", "address", "district", "rule"),
+    [
+        ("Локалізація: Ochota", "Ochota", "Ochota", "extract.location"),
+        ("Адреса: ul. Testowa, Wola", "ul. Testowa, Wola", "Wola", "extract.location"),
+        ("📍\nul. Testowa | Wola", "ul. Testowa | Wola", "Wola", "extract.location_pin"),
+        ("📍\r\n\tul. Testowa | Wola", "ul. Testowa | Wola", "Wola", "extract.location_pin"),
+        ("📍\nOchota, Warszawa", "Ochota, Warszawa", "Ochota", "extract.location_pin"),
+        (
+            "3-комнатная квартира | ul. Testowa | Mokotów",
+            "ul. Testowa | Mokotów",
+            "Mokotów",
+            "extract.location_summary",
+        ),
+        (
+            "Apartment | aleja Testowa | Wola",
+            "aleja Testowa | Wola",
+            "Wola",
+            "extract.location_summary",
+        ),
+    ],
+)
+def test_older_location_formats_preserve_address_evidence(
+    block: str,
+    address: str,
+    district: str,
+    rule: str,
+) -> None:
+    source = f"For sale: Apartment\n{block}\nPrice: 800000 PLN\nArea: 45 m²"
+    listing = extract_listing(_message(source)).listing
+    assert listing is not None
+    assert listing.location is not None
+    assert listing.location.value == address
+    assert listing.location.provenance.rule_id == rule
+    assert listing.location.provenance.spans[0].extract(source) == address
+    display = normalize_location_display_name(address)
+    query = normalize_geocode_query(display)
+    assert query.address is not None
+    assert query.address.district == district
+
+
+@pytest.mark.parametrize(
+    "block",
+    [
+        "📍\nPrice: 800000 PLN",
+        "📍\n\nnear ul. Testowa",
+        "Apartment | Photos coming soon",
+        "📍   ",
+        "📍\n🛋 Rooms: 2",
+        "Apartment | ,| ",
+    ],
+)
+def test_older_location_templates_do_not_consume_other_sections_or_marketing(block: str) -> None:
+    listing = extract_listing(_message(f"For sale: Apartment\n{block}")).listing
+    assert listing is not None
+    assert listing.location is None
+
+
+def test_conflicting_summary_addresses_and_districts_remain_unknown() -> None:
+    source = (
+        "For sale: Apartment\nApartment | ul. Testowa | Wola\n"
+        "Apartment | ul. Inna | Mokotów\nPrice: 800000 PLN"
+    )
+    result = extract_listing(_message(source))
+    assert result.listing is not None
+    assert result.listing.location is None
+    assert result.listing.district is None
+    assert {warning.field_name for warning in result.warnings} >= {"location", "district"}
+
+
+def test_descriptive_pin_section_does_not_conflict_with_the_property_address() -> None:
+    source = (
+        "For sale: Apartment\n📍 ul. Testowa | Wola\n"
+        "📍 Локация: shops on ul. Inna, Warsaw\nPrice: 800000 PLN"
+    )
+    result = extract_listing(_message(source))
+    assert result.listing is not None
+    assert result.listing.location is not None
+    assert result.listing.location.value == "ul. Testowa | Wola"
+    assert result.listing.district is not None
+    assert result.listing.district.value == "Wola"
+    assert not result.warnings
+
+
+@pytest.mark.parametrize(
     "block",
     [
         "District: Wola, Mokotów",

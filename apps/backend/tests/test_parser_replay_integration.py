@@ -256,7 +256,7 @@ async def test_claim_restart_stale_finish_and_deleted_source(replay_db: Database
 
 @pytest.mark.parametrize(
     ("future_parser", "future_policy"),
-    [("e2-v20", "source-evidence-v3"), (PARSER_VERSION, "source-evidence-v4")],
+    [("e2-v21", "source-evidence-v3"), (PARSER_VERSION, "source-evidence-v4")],
 )
 async def test_failure_backoff_terminal_and_version_downgrade(
     replay_db: DatabaseResources, future_parser: str, future_policy: str
@@ -327,7 +327,7 @@ UPDATE source_message_revisions SET text_original='different'
         ),
         ("DELETE FROM offer_sources", "excluded"),
         ("UPDATE offers SET parser_version='owner-ai-v1'", "excluded"),
-        ("UPDATE offers SET parser_version='e2-v20'", "excluded"),
+        ("UPDATE offers SET parser_version='e2-v21'", "excluded"),
     ],
 )
 async def test_explicit_terminal_populations_do_not_starve(
