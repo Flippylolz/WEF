@@ -24,18 +24,8 @@ curl_safe --fail --silent --show-error \
   --dump-header "$tmp_dir/root.headers" \
   --output "$tmp_dir/root.html" \
   "$base_url/"
-python3 - "$tmp_dir/root.html" "$tmp_dir/root.headers" "$release_sha" <<'PY'
-import sys
-from pathlib import Path
-
-html = Path(sys.argv[1]).read_text(encoding="utf-8")
-headers = Path(sys.argv[2]).read_text(encoding="utf-8").lower()
-release_sha = sys.argv[3]
-assert "Apartments and houses for sale in Warsaw" in html
-assert "reviewed historical inventory is live" in html
-assert f"version: <code>{release_sha[:7]}</code>" in html
-assert f"x-wef-release: {release_sha}".lower() in headers
-PY
+python3 "$SCRIPT_DIR/smoke_contracts.py" root \
+  "$tmp_dir/root.html" "$tmp_dir/root.headers" "$release_sha"
 
 printf 'Smoke: API liveness...\n'
 curl_safe --fail --silent --show-error \
@@ -45,66 +35,24 @@ printf 'Smoke: API readiness...\n'
 curl_safe --fail --silent --show-error \
   --output "$tmp_dir/ready.json" \
   "$base_url/api/v1/health/ready"
-python3 - "$tmp_dir/live.json" "$tmp_dir/ready.json" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-live = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-ready = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
-assert live == {"status": "live"}
-assert ready == {"status": "ready"}
-PY
+python3 "$SCRIPT_DIR/smoke_contracts.py" health \
+  "$tmp_dir/live.json" "$tmp_dir/ready.json"
 
 printf 'Smoke: grouped map projection...\n'
 curl_safe --fail --silent --show-error \
   --output "$tmp_dir/map.json" \
   "$base_url/api/v1/map/locations?bbox=20.8%2C52.1%2C21.3%2C52.4"
 
-python3 - "$tmp_dir/map.json" "$tmp_dir/location_id" <<'PY'
-import json
-import re
-import sys
-from pathlib import Path
-
-uuid_pattern = re.compile(
-    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-)
-payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-assert payload["type"] == "FeatureCollection"
-assert payload["meta"]["feature_count"] >= 1
-assert len(payload["features"]) == payload["meta"]["feature_count"]
-ranked = sorted(
-    payload["features"],
-    key=lambda feature: int(
-        (feature.get("properties") or {}).get("matching_offer_count") or 0
-    ),
-    reverse=True,
-)
-location_id = str(ranked[0].get("id") or "")
-assert uuid_pattern.fullmatch(location_id), location_id
-Path(sys.argv[2]).write_text(location_id, encoding="utf-8")
-PY
+python3 "$SCRIPT_DIR/smoke_contracts.py" map \
+  "$tmp_dir/map.json" "$tmp_dir/location_id"
 location_id=$(cat "$tmp_dir/location_id")
 
 printf 'Smoke: Warsaw district boundaries...\n'
 curl_safe --fail --silent --show-error \
   --output "$tmp_dir/districts.json" \
   "$base_url/data/warsaw-districts.geojson"
-python3 - "$tmp_dir/districts.json" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-districts = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-assert districts["type"] == "FeatureCollection"
-assert len(districts["features"]) == 18
-assert all(
-    feature["geometry"]["type"] in {"Polygon", "MultiPolygon"}
-    and feature["properties"]["name"]
-    for feature in districts["features"]
-)
-PY
+python3 "$SCRIPT_DIR/smoke_contracts.py" districts \
+  "$tmp_dir/districts.json"
 
 printf 'Smoke: MapLibre module worker...\n'
 curl_safe --fail --silent --show-error \
@@ -128,41 +76,16 @@ curl_safe --fail --silent --show-error \
   --output "$tmp_dir/offers.json" \
   "$base_url/api/v1/locations/${location_id}/offers?bbox=20.8%2C52.1%2C21.3%2C52.4&include_non_matching=true&limit=20"
 
-python3 - "$tmp_dir/facets.json" "$tmp_dir/offers.json" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-facets = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-offers_path = Path(sys.argv[2])
-offers = json.loads(offers_path.read_text(encoding="utf-8"))
-item = offers["items"][0]
-assert facets["districts"]
-assert facets["rooms"]
-assert offers["total_count"] >= 1
-assert offers["total_count"] >= offers["matching_count"]
-assert offers["items"]
-assert "id" in item
-assert "parking_price_min_minor" in item
-assert "storage_price_min_minor" in item
-assert "source_text" not in offers_path.read_text(encoding="utf-8")
-PY
+python3 "$SCRIPT_DIR/smoke_contracts.py" offers \
+  "$tmp_dir/facets.json" "$tmp_dir/offers.json"
 
 if [ -n "$map_style_url" ]; then
   printf 'Smoke: public map style dependency...\n'
   curl_safe --fail --silent --show-error \
     --output "$tmp_dir/map-style.json" \
     "$map_style_url"
-  python3 - "$tmp_dir/map-style.json" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-style = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-assert style["version"] == 8
-assert style["sources"]
-assert style["layers"]
-PY
+  python3 "$SCRIPT_DIR/smoke_contracts.py" style \
+    "$tmp_dir/map-style.json"
 fi
 
 printf 'WEF production smoke passed for release %.12s.\n' "$release_sha"

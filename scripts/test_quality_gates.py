@@ -88,6 +88,16 @@ class QualityGateTests(unittest.TestCase):
             ),
             (
                 FILES[10],
+                '"scripts/deploy/server_inventory.py"',
+                '"scripts/missing-server_inventory.py"',
+            ),
+            (
+                FILES[10],
+                '"scripts/deploy/smoke_contracts.py"',
+                '"scripts/missing-smoke_contracts.py"',
+            ),
+            (
+                FILES[10],
                 '"scripts/deploy/shared_edge_preflight.py"',
                 '"scripts/missing-preflight.py"',
             ),

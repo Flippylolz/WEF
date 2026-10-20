@@ -177,17 +177,9 @@ smoke_public_https_origin() {
       "$base_url/api/v1/health/live" &&
       curl --connect-timeout 5 --max-time 20 --fail --silent --show-error \
         --output "$tmp_dir/root.html" \
-        "$base_url/"; then
-      python3 - "$tmp_dir/live.json" "$tmp_dir/root.html" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-live = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-html = Path(sys.argv[2]).read_text(encoding="utf-8")
-assert live == {"status": "live"}
-assert "Apartments and houses for sale in Warsaw" in html
-PY
+        "$base_url/" &&
+      python3 "$SCRIPT_DIR/smoke_contracts.py" public-https \
+        "$tmp_dir/live.json" "$tmp_dir/root.html"; then
       rm -rf "$tmp_dir"
       printf 'Public HTTPS smoke passed for %s.\n' "$base_url"
       return 0

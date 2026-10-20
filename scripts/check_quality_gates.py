@@ -195,6 +195,8 @@ def _operational_coverage_checks(files: dict[str, str]) -> list[str]:
         "scripts/render_coverage_badge.py",
         "scripts/dependabot_merge_controller.py",
         "scripts/deploy/activate_historical_candidate.py",
+        "scripts/deploy/server_inventory.py",
+        "scripts/deploy/smoke_contracts.py",
         "scripts/deploy/create_checksums.py",
         "scripts/deploy/create_release_manifest.py",
         "scripts/deploy/reuse_release.py",
