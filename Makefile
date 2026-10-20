@@ -8,7 +8,7 @@ BACKEND := $(UV) --directory apps/backend run
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install format format-check lint typecheck test test-backend test-frontend test-e2e coverage coverage-backend coverage-frontend coverage-operations contract-generate contract-check build build-development compose-config production-proof production-runtime-proof shared-edge-proof up down ps logs importer-dry-run import-dry-run import-persist import-geocode import-media import-verify import-run seed-m1
+.PHONY: help install format format-check lint typecheck test test-backend test-frontend test-e2e coverage coverage-backend coverage-frontend coverage-operations coverage-shell contract-generate contract-check build build-development compose-config production-proof production-runtime-proof shared-edge-proof up down ps logs importer-dry-run import-dry-run import-persist import-geocode import-media import-verify import-run seed-m1
 
 IMPORT_BATCH_SIZE ?= 200
 IMPORT_GEOCODE_BATCH_SIZE ?= 25
@@ -34,6 +34,7 @@ help: ## List supported commands.
 		'make coverage-backend   Run backend tests with the 100% coverage floor' \
 		'make coverage-frontend  Run frontend tests with 100% coverage per file' \
 		'make coverage-operations  Require 100% operational Python globally and per file' \
+		'make coverage-shell     Require 100% runtime shell lines per file' \
 		'make contract-generate  Export OpenAPI and generated TypeScript' \
 		'make contract-check     Verify OpenAPI, generated types, and static docs' \
 		'make build              Build production runtime images' \
@@ -210,6 +211,7 @@ quality-gates: ## Fail on drift and prove deliberate removal of quality gates is
 	python3 scripts/check_quality_gates.py
 	$(BACKEND) python ../../scripts/prove_critical_faults.py
 	$(MAKE) coverage-operations
+	$(MAKE) coverage-shell
 
 coverage-operations: ## Require 100% operational Python globally and per file.
 	mkdir -p tmp/coverage/operations
@@ -218,6 +220,10 @@ coverage-operations: ## Require 100% operational Python globally and per file.
 	$(UV) run --project apps/backend --frozen python -m coverage combine --rcfile=coverage.operations.toml
 	$(UV) run --project apps/backend --frozen python -m coverage json --rcfile=coverage.operations.toml -o tmp/coverage/operations/coverage.json
 	python3 scripts/check_critical_coverage.py --operations tmp/coverage/operations/coverage.json
+
+coverage-shell: ## Require 100% of runtime shell lines with isolated synthetic tools.
+	python3 -m scripts.prove_runtime_shell
+	python3 scripts/check_critical_coverage.py --shell tmp/coverage/shell/coverage.json
 
 contract-compatibility: ## Compare the generated contract to current main and prove rejection.
 	sh scripts/check_openapi_compatibility.sh
