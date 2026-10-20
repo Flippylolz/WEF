@@ -189,5 +189,6 @@ smoke_public_https_origin() {
     sleep 2
   done
   rm -rf "$tmp_dir"
-  fail "public HTTPS origin remained unhealthy after shared-edge reconnect"
+  printf 'deployment error: public HTTPS origin remained unhealthy after shared-edge reconnect\n' >&2
+  return 1
 }

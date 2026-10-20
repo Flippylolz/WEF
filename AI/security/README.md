@@ -7,6 +7,7 @@ This domain owns identity, sessions, authorization, contact protection, reveal a
 - [Authentication, administration, and contact reveal](AUTH_ADMIN_CONTACTS.md) — username registration, login/session behavior, password changes, owner resets, masking, reveal authorization, administration, and auditing.
 - [Verified delivery automation evidence](../quality/DEPENDABOT_EVIDENCE_COVERAGE.md) — existing required-check and bot-identity enforcement for the scheduled Dependabot controller, traced to E1-T7 and ADR-023.
 - [Operational validation evidence](../quality/OPERATIONS_COMPLETE_COVERAGE.md) — parsed HTTPS redirect authority checks reject hostname-prefix/userinfo lookalikes; complete operational Python coverage protects existing deployment and non-interference guards.
+- [Deployment semantic health evidence](../quality/EMBEDDED_DEPLOYMENT_COVERAGE.md) — wrong public liveness/product bodies cannot fall through to success inside the deployment conditional; collector exports remain source-free.
 
 ## Confirmed security model
 

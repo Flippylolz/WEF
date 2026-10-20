@@ -9,10 +9,11 @@ and production deployment configuration remain within their existing boundaries.
 
 Backend, frontend and [measured operational Python](OPERATIONS_COMPLETE_COVERAGE.md)
 now each require exactly 100% independently across their documented inventories.
-Operational Python covers all 4,694 statements and 1,456 branch paths in 54 executable
-files, with global and per-file gates. Runtime shell and substantive embedded Python
-remain required before completing the repository-wide goal. The milestones below
-retain the measurements from each completed pass.
+After [extracting embedded deployment contracts](EMBEDDED_DEPLOYMENT_COVERAGE.md),
+operational Python covers all 4,844 statements and 1,492 branch paths in 56 executable
+files, with global and per-file gates. Runtime shell remains required before
+completing the repository-wide goal. The milestones below retain the measurements
+from each completed pass.
 
 ## Frontend gate
 
@@ -185,6 +186,14 @@ statements and 1,456 branch paths. Global and all 54 per-file floors now require
 It also fixes the reproduced redirect hostname-prefix/userinfo false positives by
 parsing the HTTPS authority. Test/proof exclusions remain unchanged. Runtime shell
 and substantive embedded Python remain in scope before completing the overall goal.
+
+The [embedded deployment pass](EMBEDDED_DEPLOYMENT_COVERAGE.md) adds 13 cases and
+moves the host collector and seven smoke contracts into measured helpers. Their
+150 statements and 36 branch paths are fully covered without exclusions. It also
+fixes semantic health failures being ignored inside a conditional shell function
+and returns exhausted probes to the caller so automatic rollback can restore the
+previous release. All 368 operational tests retain 100% globally and across the
+expanded 56-file inventory. Remaining runtime shell coverage stays in scope.
 
 The badge combines backend/frontend counters for display and independently requires
 100% from each report. It currently measures the application suites; the remaining

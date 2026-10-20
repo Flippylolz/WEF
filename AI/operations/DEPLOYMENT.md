@@ -248,6 +248,16 @@ Do not copy the workflow's transient `GITHUB_TOKEN` into long-lived server confi
 - A migration failure stops before application restart and leaves the existing release running where possible.
 - Schema downgrade is not the default rollback mechanism.
 
+The public HTTPS health function requires both curl requests and semantic liveness/
+product-root validation to succeed within its shell condition. A Python validation
+failure must not fall through to success when the caller uses `if`/`&&`. The existing
+retry budget and temporary-file cleanup apply to malformed responses as well as
+transport failures. [Deployment payload evidence](../quality/EMBEDDED_DEPLOYMENT_COVERAGE.md)
+uses synthetic responses and verifies the caller's refusal without contacting a host.
+Exhaustion returns failure instead of exiting the deployment process; a full
+synthetic deployment verifies that the caller restores the previous release and
+records the failed candidate.
+
 Large data reprocessing is an explicit importer operation after deploy, not hidden inside an Alembic migration.
 
 ## Health verification
