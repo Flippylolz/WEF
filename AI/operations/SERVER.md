@@ -2,17 +2,19 @@
 
 This document records read-only inspection of the supplied production host on 2026-08-12. Re-run the inventory immediately before deployment because ports, containers, and capacity can change.
 
-## Current hostname (2026-09-28)
+## Current hostname (2026-10-20)
 
 The primary hostname is `flipstarnuc.duckdns.org` (SSH `nuc@flipstarnuc.duckdns.org`).
-The original `2fa54e2405.duckdns.org` remains a supported DNS and TLS alias.
+The original `2fa54e2405.duckdns.org` has been deleted by the owner and retired
+from DDNS, public TLS names, proxy aliases and GitHub deployment SSH settings.
 The dated inventory below records the original inspection; its IP address is not
 a current DNS configuration value. See [Nginx and TLS](NGINX_TLS.md) for migration details.
 
 ## Access
 
-- SSH: `nuc@2fa54e2405.duckdns.org`
-- Public DNS observed: `2fa54e2405.duckdns.org` → `79.184.113.242`
+- Current SSH: `nuc@flipstarnuc.duckdns.org`
+- Historical public DNS observed on 2026-08-12:
+  `2fa54e2405.duckdns.org` → `79.184.113.242` (alias retired 2026-10-20).
 - SSH port: 22/TCP
 - SSH key authentication works non-interactively.
 - User `nuc` can run Docker/Compose directly.
@@ -110,7 +112,7 @@ Observed listeners:
 
 Ports 80/TCP and 443/TCP were not listening during inspection. Caddy, Nginx, and Apache system services were inactive.
 
-The current AI Forecast application is reachable at `http://2fa54e2405.duckdns.org:3000/`. WEF uses configurable `WEF_PUBLIC_PORT`, initially confirmed as `3100/TCP`, subject to router/firewall forwarding.
+The current AI Forecast application is reachable at `http://flipstarnuc.duckdns.org:3000/`. WEF uses configurable `WEF_PUBLIC_PORT`, initially confirmed as `3100/TCP`, subject to router/firewall forwarding.
 
 External checks on 2026-08-12 found:
 
@@ -188,7 +190,7 @@ The preferred transfer sends the single compressed archive rather than approxima
 ```text
 rsync -a --partial --append-verify --info=progress2 \
   est-test.tar.gz \
-  nuc@2fa54e2405.duckdns.org:/home/nuc/wef/imports/incoming/
+  nuc@flipstarnuc.duckdns.org:/home/nuc/wef/imports/incoming/
 ```
 
 4. Calculate SHA-256 on the server and compare exactly.
