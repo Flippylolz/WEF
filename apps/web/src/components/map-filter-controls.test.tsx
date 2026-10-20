@@ -28,32 +28,69 @@ const facets: FilterFacets = {
 describe("MapFilterControls", () => {
   afterEach(cleanup);
 
-  it("allows dates beyond a stale catalog's newest publication", async () => {
+  it("bounds both calendars by available offers and follows a newer latest offer", async () => {
     const onApply = vi.fn();
-    render(
+    const props = {
+      facetsError: false,
+      facetsLoading: false,
+      state: DEFAULT_MAP_SEARCH_STATE,
+      onApply,
+      onClear: vi.fn(),
+    };
+    const { rerender } = render(
       <MapFilterControls
+        {...props}
         facets={{ ...facets, published_to: "2026-10-15T14:21:30Z" }}
-        facetsError={false}
-        facetsLoading={false}
-        state={DEFAULT_MAP_SEARCH_STATE}
-        onApply={onApply}
-        onClear={vi.fn()}
       />,
     );
     const from = screen.getByLabelText("publishedFrom");
     const to = screen.getByLabelText("publishedTo");
-    expect(from).not.toHaveAttribute("max");
-    expect(to).not.toHaveAttribute("max");
-    fireEvent.change(from, { target: { value: "2026-10-19" } });
-    fireEvent.change(to, { target: { value: "2026-10-19" } });
+    for (const input of [from, to]) {
+      expect(input).toHaveAttribute("min", "2026-01-01");
+      expect(input).toHaveAttribute("max", "2026-10-15");
+      fireEvent.change(input, { target: { value: "2026-10-20" } });
+      expect(input).toBeInvalid();
+    }
+    await userEvent.click(screen.getByRole("button", { name: "applyFilters" }));
+    expect(onApply).not.toHaveBeenCalled();
+    rerender(
+      <MapFilterControls
+        {...props}
+        facets={{ ...facets, published_to: "2026-10-20T09:22:21Z" }}
+      />,
+    );
+    for (const input of [from, to]) {
+      expect(input).toHaveAttribute("max", "2026-10-20");
+      expect(input).toBeValid();
+    }
     await userEvent.click(screen.getByRole("button", { name: "applyFilters" }));
     expect(onApply).toHaveBeenCalledWith(
       expect.objectContaining({
-        publishedFrom: "2026-10-19T00:00:00.000Z",
-        publishedTo: "2026-10-19T23:59:59.999Z",
+        publishedFrom: "2026-10-20T00:00:00.000Z",
+        publishedTo: "2026-10-20T23:59:59.999Z",
       }),
     );
   });
+
+  it.each([null, { ...facets, published_from: null, published_to: null }])(
+    "omits unavailable catalog date bounds",
+    (availableFacets) => {
+      render(
+        <MapFilterControls
+          facets={availableFacets}
+          facetsError={false}
+          facetsLoading={false}
+          state={DEFAULT_MAP_SEARCH_STATE}
+          onApply={vi.fn()}
+          onClear={vi.fn()}
+        />,
+      );
+      for (const label of ["publishedFrom", "publishedTo"]) {
+        expect(screen.getByLabelText(label)).not.toHaveAttribute("min");
+        expect(screen.getByLabelText(label)).not.toHaveAttribute("max");
+      }
+    },
+  );
 
   it("applies every M1 filter as one state change", async () => {
     const user = userEvent.setup();
