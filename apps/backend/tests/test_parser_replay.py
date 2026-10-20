@@ -128,8 +128,9 @@ async def test_worker_pause_progress_and_failure_isolation(
     assert replay.tick.await_count == int(enabled)
 
 
-def test_accepted_release_matches_the_current_benchmark_parser() -> None:
-    assert ACCEPTED_RELEASE == (PARSER_VERSION, POLICY_VERSION)
+def test_incident_parser_does_not_implicitly_approve_automatic_historical_replay() -> None:
+    assert ACCEPTED_RELEASE == ("e2-v18", POLICY_VERSION)
+    assert ACCEPTED_RELEASE != (PARSER_VERSION, POLICY_VERSION)
 
 
 def test_starting_price_replay_clears_the_old_fixed_upper_bound() -> None:

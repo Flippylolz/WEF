@@ -20,7 +20,8 @@ from tests.test_parser_replay_integration import replay_db as _replay_db
 from tests.test_parser_replay_integration import seed
 from wef_backend.features.admin.application.offer_enrichment import value_fingerprint
 from wef_backend.features.admin.infrastructure.ai_enrichment_models import OfferFieldOriginRow
-from wef_backend.features.ingestion.application.extraction import extract_listing
+from wef_backend.features.ingestion.application.extraction import PARSER_VERSION, extract_listing
+from wef_backend.features.ingestion.application.parse_quality import POLICY_VERSION
 from wef_backend.features.ingestion.domain.geocoding import GeocodeProvider
 from wef_backend.features.ingestion.infrastructure import parse_issue_backfill as backfill
 from wef_backend.features.ingestion.infrastructure import parser_replay as replay
@@ -92,6 +93,7 @@ async def test_replay_ticks_yield_retry_and_bound_transactions(
     mode: str,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setattr(replay, "ACCEPTED_RELEASE", (PARSER_VERSION, POLICY_VERSION))
     store = replay.SQLAlchemyParserReplay(MagicMock())
     discover = AsyncMock(return_value=(10 if mode == "bounded" else 0, uuid4()))
     work = {"id": uuid4()}
@@ -128,6 +130,16 @@ async def test_replay_ticks_yield_retry_and_bound_transactions(
         assert process.await_count == (100 if mode == "bounded" else 1)
         assert discover.await_count == (10 if mode == "bounded" else 1)
         assert fail.await_count == int(mode == "failed_work")
+
+
+async def test_unaccepted_incident_parser_cannot_start_automatic_history_replay(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = replay.SQLAlchemyParserReplay(MagicMock())
+    discover = AsyncMock()
+    monkeypatch.setattr(store, "discover", discover)
+    await store.tick(NOW, apply=True, live_ready=lambda: True)
+    discover.assert_not_awaited()
 
 
 @pytest.mark.parametrize("link", [None, "missing_offer"])
