@@ -93,6 +93,26 @@ updates:
           - minor
           - patch
 
+  - package-ecosystem: docker
+    directory: /infra/shell-coverage
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - docker
+    groups:
+      docker-shell-coverage-patch-minor:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

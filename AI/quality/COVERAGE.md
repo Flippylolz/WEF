@@ -7,13 +7,21 @@ and production deployment configuration remain within their existing boundaries.
 
 ## Current enforced scope
 
-Backend, frontend and [measured operational Python](OPERATIONS_COMPLETE_COVERAGE.md)
-now each require exactly 100% independently across their documented inventories.
-After [extracting embedded deployment contracts](EMBEDDED_DEPLOYMENT_COVERAGE.md),
-operational Python covers all 4,844 statements and 1,492 branch paths in 56 executable
-files, with global and per-file gates. Runtime shell remains required before
-completing the repository-wide goal. The milestones below retain the measurements
-from each completed pass.
+The enforced coverage goal is 100% for every included runtime inventory,
+independently per file. Documentation and the non-runtime exclusions below remain
+outside the denominator.
+
+| Inventory | Measured behavior | Required coverage |
+| --- | --- | --- |
+| Backend package and handwritten migrations | 18,839 statements and 3,930 branch paths; 262 executable files | 100% globally and per file |
+| Frontend, build entrypoints and backend-owned owner map asset | 1,508 lines, 1,662 statements, 427 functions and 1,418 branches; 48 source files | 100% for all four metrics per file |
+| Operational Python, including extracted deployment contracts | 4,901 statements and 1,520 branch paths; 56 executable files | 100% globally and per file |
+| Runtime shell, including the Certbot deploy hook | 390 executable lines; 11 files | 100% lines per file |
+
+[Runtime shell evidence](RUNTIME_SHELL_COVERAGE.md) closes the remaining measured
+inventory and records the source policy, failure cases and isolated collector.
+`make quality-gates` enforces both operational suites. The milestones below retain
+the measurements from each completed pass.
 
 ## Frontend gate
 
@@ -195,9 +203,26 @@ and returns exhausted probes to the caller so automatic rollback can restore the
 previous release. All 368 operational tests retain 100% globally and across the
 expanded 56-file inventory. Remaining runtime shell coverage stays in scope.
 
+The [runtime shell pass](RUNTIME_SHELL_COVERAGE.md) adds 17 behavioral cases and
+eight Python report-gate tests. Failed application or worker startup now reaches
+automatic rollback even inside the deployment conditional. All eleven shell files
+require 100% lines, and all 376 operational Python tests retain 100% across the
+expanded checker logic. No runtime exclusion is added.
+
 The badge combines backend/frontend counters for display and independently requires
-100% from each report. It currently measures the application suites; the remaining
-operational scope above is still required for the repository-wide goal.
+100% from each report. Operational Python and runtime shell independently require
+100% in Repository safety; all four inventories must pass before merge.
+
+Documentation, generated contracts/declarations, static assets, declarative
+configuration, test fixtures and test/proof/browser drivers are excluded from
+runtime measurement. This includes the synthetic Nginx fixture HTTP server,
+architecture-violation driver, ESLint/PostCSS/test-runner configuration and OpenAPI
+negative-probe shell driver. They retain their relevant formatting, link, build,
+contract and integration checks. Workflow dependency wiring and primitive output
+formatting are build/orchestration glue; substantive identity, authorization,
+integrity and deployment logic remains in measured helpers. Existing narrow inline
+exceptions retain their documented type/lifecycle/domain-invariant reasons; no
+exception is added in the final shell pass.
 
 The [ingestion orchestration pass](INGESTION_ORCHESTRATION_COVERAGE.md) adds 43
 cases and independent 100% floors for seven implementations containing 620

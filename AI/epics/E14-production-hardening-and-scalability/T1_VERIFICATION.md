@@ -38,3 +38,15 @@ Negative configuration fixtures remove/rename required checks, mismatch Dependab
 bypass shared verification, lower/omit coverage floors, disable warnings, remove
 contract/architecture checks, remove the aggregate command, and introduce warning suppression. Each must fail the checker. The checker detects configuration
 drift; it is not a security proof against arbitrary hostile workflow programs.
+
+The owner's 2026-10-19 coverage instruction extends this mapping: backend,
+frontend, operational Python and runtime shell independently require 100% across
+their included inventories. `make quality-gates` runs both `coverage-operations`
+and `coverage-shell`; Repository safety publishes both reports. The shell proof
+uses a pinned test-only image, a source allowlist, no network/Docker socket and
+unprivileged disposable filesystems. Its native POSIX rollback proof remains a
+separate composition check. [Coverage scope](../../quality/COVERAGE.md) records
+documentation, generated/declarative assets and test/proof-driver exclusions;
+[shell evidence](../../quality/RUNTIME_SHELL_COVERAGE.md) records source/floor
+faults and startup-failure rollback regressions. No production secret or host
+service is required by this additional target.

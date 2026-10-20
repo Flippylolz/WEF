@@ -48,7 +48,7 @@ no network. Backend branch-aware coverage must reach 100% globally and in every 
 application and migration file. Frontend coverage must
 reach 100% of lines, branches, functions and statements in every runtime source
 file, including files never imported by tests. [Coverage scope and exclusions](AI/quality/COVERAGE.md)
-describe the denominator and the remaining operational work toward repository-wide 100%.
+describe the denominator and the enforced repository-wide 100% goal.
 The coverage badge still shows the combined percentage, but that combined
 figure is not a merge gate. `make coverage-backend` and `make coverage-frontend`
 refresh each report; `make coverage` then writes the badge. GitHub Actions
@@ -56,11 +56,15 @@ publishes the badge on `main` only after both suite floors are met.
 
 `make coverage-operations` measures all handwritten operational Python, including
 subprocess entrypoints. `make quality-gates` requires 100% globally and independently
-in all 56 executable files: 4,844 statements and 1,492 branch paths. See the
+in all 56 executable files: 4,901 statements and 1,520 branch paths. See the
 [complete operational evidence](AI/quality/OPERATIONS_COMPLETE_COVERAGE.md) and
 [extracted deployment contracts](AI/quality/EMBEDDED_DEPLOYMENT_COVERAGE.md).
-Test/proof drivers are excluded. Runtime shell remains within the repository-wide
-goal.
+`make coverage-shell` also requires 100% of 390 executable lines in all eleven
+runtime shell files, including the Certbot hook. Its 17 behavioral cases use a
+pinned, isolated test container and synthetic service tools. See
+[runtime shell evidence](AI/quality/RUNTIME_SHELL_COVERAGE.md). Documentation,
+generated/declarative assets and test/proof drivers are excluded; all included
+inventories independently require 100%.
 
 Earlier [activation/preflight](AI/quality/ACTIVATION_PREFLIGHT_COVERAGE.md) and
 [transfer coverage evidence](AI/quality/TRANSFER_OPERATIONS_COVERAGE.md) record those

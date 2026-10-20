@@ -30,6 +30,7 @@ FILES = (
     "AI/governance/REPOSITORY_RULES.md",
     "coverage.operations.toml",
     ".github/critical-coverage.json",
+    "scripts/prove_runtime_shell.py",
 )
 
 
@@ -127,7 +128,11 @@ def _frontend_source_checks(frontend: str) -> list[str]:
 
 def _configuration_checks(files: dict[str, str]) -> list[str]:
     """Validate coverage and the no-suppression warning policy."""
-    errors = _backend_coverage_checks(files) + _operational_coverage_checks(files)
+    errors = (
+        _backend_coverage_checks(files)
+        + _operational_coverage_checks(files)
+        + _shell_coverage_checks(files)
+    )
     backend = tomllib.loads(files[FILES[4]])["tool"]
     filters = backend["pytest"]["ini_options"].get("filterwarnings", [])
     if filters != ["error"]:
@@ -229,12 +234,17 @@ def _operational_coverage_checks(files: dict[str, str]) -> list[str]:
 def _local_checks(files: dict[str, str]) -> list[str]:
     """Validate the complete local mapping."""
     errors: list[str] = []
-    makefile = files[FILES[7]]
+    makefile = "\n".join(
+        line for line in files[FILES[7]].splitlines() if not line.lstrip().startswith("#")
+    )
     required = (
         "format-check lint typecheck test contract-check",
         "-m unittest discover -s scripts -t .",
         "$(MAKE) coverage-operations",
+        "$(MAKE) coverage-shell",
         "--operations tmp/coverage/operations/coverage.json",
+        "--shell tmp/coverage/shell/coverage.json",
+        "python3 -m scripts.prove_runtime_shell",
         "quality-gates",
         "prove_architecture_violation.py",
         "check_markdown_links.py",
@@ -250,6 +260,37 @@ def _local_checks(files: dict[str, str]) -> list[str]:
     )
     if not re.search(r"^verify:.*\n(?:\t.*\n)+", makefile, re.MULTILINE):
         errors.append("canonical make verify entry point is missing")
+    return errors
+
+
+def _shell_coverage_checks(files: dict[str, str]) -> list[str]:
+    """Retain every runtime shell source and its independent 100% line floor."""
+    expected = {
+        str(path.relative_to(ROOT))
+        for directory in (ROOT / "scripts", ROOT / "infra")
+        for path in directory.rglob("*.sh")
+    } - {"scripts/check_openapi_compatibility.sh"}
+    policy = json.loads(files[FILES[10]]).get("shell", {})
+    errors: list[str] = []
+    if set(policy) != expected or any(floors != {"lines": 100} for floors in policy.values()):
+        errors.append("every runtime shell source must retain a 100% line floor")
+    driver = files[FILES[11]]
+    errors.extend(
+        f"shell coverage driver omits reviewed inventory rule: {required}"
+        for required in (
+            "--bash-parse-files-in-dir=",
+            "--include-pattern=",
+            'EXCLUDED_SHELL = {"scripts/check_openapi_compatibility.sh"}',
+        )
+        if required not in driver
+    )
+    if any(
+        flag in driver
+        for flag in ("--exclude-line", "--exclude-region", "--exclude-pattern", "--exclude-path")
+    ):
+        errors.append("runtime shell measurement must not add coverage exclusions")
+    if "path: tmp/coverage/shell/coverage.json" not in files[FILES[1]]:
+        errors.append("repository verification must publish runtime shell coverage")
     return errors
 
 

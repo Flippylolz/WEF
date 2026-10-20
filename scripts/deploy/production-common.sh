@@ -34,7 +34,8 @@ require_media_tree_directory() {
     root_resolved=$(readlink -f "$WEF_ROOT") || fail "unable to resolve WEF root: $WEF_ROOT"
     target=$(readlink -f "$directory") || fail "unable to resolve media symlink: $directory"
     case "$target" in
-      "$root_resolved"/candidates/*/media/"$expected_leaf") ;;
+      "$root_resolved"/candidates/*/media/"$expected_leaf")
+        ;;
       *)
         fail "media symlink must resolve under candidates/*/media/$expected_leaf: $directory"
         ;;
@@ -93,11 +94,13 @@ initialize_release_context() {
   fi
 
   case "$WEF_RELEASE_DIR" in
-    "$WEF_ROOT"/releases/*) ;;
+    "$WEF_ROOT"/releases/*)
+      ;;
     *) fail "release directory must stay under the WEF release root" ;;
   esac
   case "$WEF_CONFIG_FILE" in
-    "$WEF_ROOT"/secrets/releases/*/production.env) ;;
+    "$WEF_ROOT"/secrets/releases/*/production.env)
+      ;;
     *) fail "configuration must stay under the WEF secret release root" ;;
   esac
 
@@ -154,11 +157,11 @@ reconnect_shared_edge_upstreams() {
 
 bring_up_application_services() {
   if shared_edge_attachment_enabled; then
-    production_compose up --detach --wait api web edge media-edge
+    production_compose up --detach --wait api web edge media-edge || return "$?"
   else
-    production_compose up --detach --wait api web edge
+    production_compose up --detach --wait api web edge || return "$?"
   fi
-  production_compose up --detach telegram-worker
+  production_compose up --detach telegram-worker || return "$?"
   reconnect_shared_edge_upstreams
 }
 

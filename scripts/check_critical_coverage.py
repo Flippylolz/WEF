@@ -119,7 +119,11 @@ def check_shell(report: Mapping[str, object], policy: Mapping[str, object]) -> l
         if set(floors) != {"lines"} or _count(floors["lines"]) != MAXIMUM:
             message = "shell policy must require exactly 100% lines"
             raise ValueError(message)
-        matches = [(covered, total) for path, covered, total in rows if path == suffix or path.endswith("/" + suffix)]
+        matches = [
+            (covered, total)
+            for path, covered, total in rows
+            if path == suffix or path.endswith("/" + suffix)
+        ]
         if len(matches) != 1:
             errors.append(f"{suffix}: expected exactly one measured shell file")
         elif matches[0][0] != matches[0][1]:
@@ -148,12 +152,22 @@ def main() -> int:
     args = parser.parse_args()
     backend = args.frontend is None
     report_path = args.backend or args.frontend or args.operations or args.shell
-    policy_name = "backend" if args.backend else "frontend" if args.frontend else "operations" if args.operations else "shell"
+    policy_name = (
+        "backend"
+        if args.backend
+        else "frontend"
+        if args.frontend
+        else "operations"
+        if args.operations
+        else "shell"
+    )
     try:
         policy = _object(json.loads((ROOT / ".github/critical-coverage.json").read_text()))
         report = _object(json.loads(report_path.read_text()))
         floors = _object(policy[policy_name])
-        errors = check_shell(report, floors) if args.shell else check(report, floors, backend=backend)
+        errors = (
+            check_shell(report, floors) if args.shell else check(report, floors, backend=backend)
+        )
     except (KeyError, TypeError, ValueError) as error:
         sys.stderr.write(f"Invalid critical coverage evidence: {error}\n")
         return 1

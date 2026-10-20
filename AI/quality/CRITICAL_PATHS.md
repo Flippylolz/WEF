@@ -29,6 +29,7 @@ floors fail closed. High aggregate coverage cannot hide a low critical module.
 | Release checksums, manifest and verified artifact reuse / synthetic file/API/CLI tests | 100% combined independently per file | [Artifact integrity and fallback](RELEASE_ARTIFACT_COVERAGE.md): malformed JSON shapes, source/digest/definition identity, corrupt/duplicate/foreign/missing files, unusable downloads and safe full-verification fallback |
 | All 56 executable operational Python files / operational unit and fixture tests | 100% combined globally and independently per file | [Complete operational evidence](OPERATIONS_COMPLETE_COVERAGE.md): diagnostics, inventory/rollback, render/smoke, correct redirect authorities, assets, repository links, badge errors and global/per-file policy faults |
 | Extracted host collector and deployment payload contracts / fixture and shell integration tests | 100% combined independently per file | [Embedded deployment evidence](EMBEDDED_DEPLOYMENT_COVERAGE.md): redacted host sampling, public payload contracts and semantic health failure inside a deployment conditional |
+| All eleven runtime shell files / isolated synthetic service and filesystem tests | 100% lines independently per file | [Runtime shell evidence](RUNTIME_SHELL_COVERAGE.md): failed application/worker start cannot activate a candidate; rollback, locks, resource/path refusals, renewal ordering and certificate permission/marker contracts |
 
 Combined coverage counts executed lines and branch paths, without rounding before
 comparison. Frontend floors check lines and branches separately. Baseline measurement
@@ -48,15 +49,16 @@ its focused test with an assertion/test-failure exit, not an import/collection f
 Target drift is an error. No silent retries are added. This is a bounded sample,
 not an exhaustive mutation score or proof that all test ordering is irrelevant.
 
-## Remaining behavior outside completed per-file floors
+## Coverage scope and complementary acceptance evidence
 
 Application SQL adapters, CLI composition and frontend optional-field combinations
 now have complete independent floors. Their database, transport, setup, failure
 and privacy assertions remain required alongside coverage. Measured operational
 Python, including the extracted deployment collector/payload checks, also has
-complete global and per-file floors. Runtime shell still requires inventory and
-cases before the owner's repository-wide 100% goal is complete. All completed floors remain enforced while those gaps close. Completed coverage floors cannot be weakened to
-accommodate a refactor.
+complete global and per-file floors. Runtime shell now has 100% line floors for
+every entrypoint and the sourced common helper. The repository-wide goal is 100%
+across all included inventories; [COVERAGE.md](COVERAGE.md) documents non-runtime
+exclusions. Completed floors cannot be weakened to accommodate a refactor.
 
 Full-stack/WebGL/mobile/accessibility ownership belongs to E14-T5. Current unit and
 map-disabled browser tests do not satisfy it. No production load, data, provider

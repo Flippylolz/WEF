@@ -68,6 +68,32 @@ class QualityGateTests(unittest.TestCase):
             (FILES[7], "--fail-under 100", "--fail-under 99"),
             (FILES[7], "verify:", "removed:"),
             (FILES[7], "$(MAKE) coverage-operations", ""),
+            (FILES[7], "$(MAKE) coverage-shell", ""),
+            (FILES[7], "$(MAKE) coverage-shell", "# $(MAKE) coverage-shell"),
+            (FILES[7], "--shell tmp/coverage/shell/coverage.json", ""),
+            (FILES[7], "python3 -m scripts.prove_runtime_shell", ""),
+            (FILES[1], "path: tmp/coverage/shell/coverage.json", "path: removed.json"),
+            (FILES[11], "--bash-parse-files-in-dir=", "removed-parse-dir="),
+            (FILES[11], "--include-pattern=", "removed-include="),
+            (
+                FILES[11],
+                'EXCLUDED_SHELL = {"scripts/check_openapi_compatibility.sh"}',
+                (
+                    'EXCLUDED_SHELL = {"scripts/check_openapi_compatibility.sh", '
+                    '"scripts/deploy/deploy.sh"}'
+                ),
+            ),
+            (FILES[11], "--include-pattern=", "--exclude-line=ignored --include-pattern="),
+            (
+                FILES[10],
+                '"scripts/deploy/deploy.sh": {"lines": 100}',
+                '"scripts/deploy/deploy.sh": {"lines": 99}',
+            ),
+            (
+                FILES[10],
+                '"infra/nginx/deploy-hook.sh": {"lines": 100}',
+                '"missing-hook.sh": {"lines": 100}',
+            ),
             (FILES[7], "--operations tmp/coverage/operations/coverage.json", ""),
             (FILES[9], 'source = ["scripts"]', 'source = ["scripts/transfer"]'),
             (FILES[9], "branch = true", "branch = false"),
