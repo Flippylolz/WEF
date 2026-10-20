@@ -249,6 +249,8 @@ export function MapFilterControls({
             <span>{t("publishedFrom")}</span>
             <input
               type="date"
+              min={dateInputValue(facets?.published_from ?? null) || undefined}
+              max={dateInputValue(facets?.published_to ?? null) || undefined}
               value={dateInputValue(draft.publishedFrom)}
               onChange={(event) =>
                 setDraft((current) => ({
@@ -263,6 +265,8 @@ export function MapFilterControls({
             <span>{t("publishedTo")}</span>
             <input
               type="date"
+              min={dateInputValue(facets?.published_from ?? null) || undefined}
+              max={dateInputValue(facets?.published_to ?? null) || undefined}
               value={dateInputValue(draft.publishedTo)}
               onChange={(event) =>
                 setDraft((current) => ({

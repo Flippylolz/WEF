@@ -88,7 +88,7 @@ for (const width of [320, 390, 1280]) {
     await expect(page).toHaveURL(/quick_filter=last_day/);
   });
 
-  test(`accepts dates after the latest catalog date at ${width}px`, async ({
+  test(`bounds dates by the latest catalog offer at ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 800 });
@@ -97,8 +97,17 @@ for (const width of [320, 390, 1280]) {
     await page.getByRole("button", { name: "Filters", exact: true }).click();
     const from = page.getByLabel("Published from", { exact: true });
     const to = page.getByLabel("Published to", { exact: true });
-    await from.fill("2026-10-19");
-    await to.fill("2026-10-19");
+    for (const input of [from, to]) {
+      await expect(input).toHaveAttribute("min", "2026-08-01");
+      await expect(input).toHaveAttribute("max", "2026-08-01");
+      await input.fill("2026-08-02");
+      expect(
+        await input.evaluate(
+          (field: HTMLInputElement) => field.validity.rangeOverflow,
+        ),
+      ).toBe(true);
+      await input.fill("2026-08-01");
+    }
     expect(
       await from.evaluate((input: HTMLInputElement) => input.validity.valid),
     ).toBe(true);
@@ -106,7 +115,7 @@ for (const width of [320, 390, 1280]) {
       await to.evaluate((input: HTMLInputElement) => input.validity.valid),
     ).toBe(true);
     await page.getByRole("button", { name: "Apply", exact: true }).click();
-    await expect(page).toHaveURL(/published_from=2026-10-19/);
-    await expect(page).toHaveURL(/published_to=2026-10-19/);
+    await expect(page).toHaveURL(/published_from=2026-08-01/);
+    await expect(page).toHaveURL(/published_to=2026-08-01/);
   });
 }
