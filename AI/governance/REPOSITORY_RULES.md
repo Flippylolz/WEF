@@ -161,10 +161,17 @@ coverage target; global line/branch coverage and all 56 executable files indepen
 require 100% in Repository safety CI, including real subprocess entrypoints.
 Policy faults reject lower/missing floors, a narrowed source/branch inventory or
 expanded omissions. See [complete operational Python evidence](../quality/OPERATIONS_COMPLETE_COVERAGE.md).
-Runtime shell remains required by the owner's repository-wide goal before it can
-be declared complete. The host collector and deployment payload semantics are
-measured Python helpers; [embedded deployment evidence](../quality/EMBEDDED_DEPLOYMENT_COVERAGE.md)
-records their scope and the build/test infrastructure boundary.
+Runtime shell independently requires 100% lines in every one of its eleven files,
+including the sourced deployment helper and Certbot hook. `make quality-gates`
+runs the isolated behavioral/coverage target, and Repository safety publishes its
+report. Missing/ambiguous/unexecuted scripts, invalid counters, weakened floors
+and source/exclusion drift fail validation. The owner's enforced repository-wide
+goal is 100% across every included inventory. Documentation, generated/declarative
+assets and test/proof drivers remain excluded as recorded in the
+[runtime shell evidence](../quality/RUNTIME_SHELL_COVERAGE.md) and canonical scope.
+The host collector and deployment payload semantics are measured Python helpers;
+[embedded deployment evidence](../quality/EMBEDDED_DEPLOYMENT_COVERAGE.md) records
+their contracts and the build/test infrastructure boundary.
 
 Deployment does not run for:
 

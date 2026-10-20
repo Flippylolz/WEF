@@ -84,6 +84,63 @@ def check(
     return errors
 
 
+def _shell_count(value: object) -> int:
+    """Kcov emits file counters as decimal strings and aggregate counters as integers."""
+    if isinstance(value, str):
+        if not value.isascii() or not value.isdecimal():
+            message = "shell coverage counters must be unsigned decimal integers"
+            raise ValueError(message)
+        value = int(value)
+    return _count(value)
+
+
+def check_shell(report: Mapping[str, object], policy: Mapping[str, object]) -> list[str]:
+    """Require every runtime shell file at 100% without inventing branch counters."""
+    raw_files = report["files"]
+    if not isinstance(raw_files, list):
+        message = "shell coverage files must be a list"
+        raise TypeError(message)
+    rows: list[tuple[str, int, int]] = []
+    for raw in raw_files:
+        row = _object(raw)
+        path = row["file"]
+        if not isinstance(path, str) or not path:
+            message = "shell coverage file paths must be nonempty strings"
+            raise ValueError(message)
+        covered, total = _shell_count(row["covered_lines"]), _shell_count(row["total_lines"])
+        _percentage(covered, total)
+        rows.append((path, covered, total))
+    if not policy:
+        message = "shell coverage policy cannot be empty"
+        raise ValueError(message)
+    errors: list[str] = []
+    for suffix, raw_floors in policy.items():
+        floors = _object(raw_floors)
+        if set(floors) != {"lines"} or _count(floors["lines"]) != MAXIMUM:
+            message = "shell policy must require exactly 100% lines"
+            raise ValueError(message)
+        matches = [
+            (covered, total)
+            for path, covered, total in rows
+            if path == suffix or path.endswith("/" + suffix)
+        ]
+        if len(matches) != 1:
+            errors.append(f"{suffix}: expected exactly one measured shell file")
+        elif matches[0][0] != matches[0][1]:
+            errors.append(f"{suffix}: lines {_percentage(*matches[0]):.2f}% < 100%")
+    errors.extend(
+        f"{path}: unexpected measured shell file"
+        for path, _, _ in rows
+        if not any(path == suffix or path.endswith("/" + suffix) for suffix in policy)
+    )
+    if _count(report["covered_lines"]) != sum(row[1] for row in rows) or _count(
+        report["total_lines"]
+    ) != sum(row[2] for row in rows):
+        message = "shell aggregate counters disagree with measured files"
+        raise ValueError(message)
+    return errors
+
+
 def main() -> int:
     """Allow independent suites while requiring the selected side's complete policy."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -91,16 +148,25 @@ def main() -> int:
     side.add_argument("--backend", type=Path)
     side.add_argument("--frontend", type=Path)
     side.add_argument("--operations", type=Path)
+    side.add_argument("--shell", type=Path)
     args = parser.parse_args()
     backend = args.frontend is None
-    report_path = args.backend or args.frontend or args.operations
-    policy_name = "backend" if args.backend else "frontend" if args.frontend else "operations"
+    report_path = args.backend or args.frontend or args.operations or args.shell
+    policy_name = (
+        "backend"
+        if args.backend
+        else "frontend"
+        if args.frontend
+        else "operations"
+        if args.operations
+        else "shell"
+    )
     try:
         policy = _object(json.loads((ROOT / ".github/critical-coverage.json").read_text()))
-        errors = check(
-            _object(json.loads(report_path.read_text())),
-            _object(policy[policy_name]),
-            backend=backend,
+        report = _object(json.loads(report_path.read_text()))
+        floors = _object(policy[policy_name])
+        errors = (
+            check_shell(report, floors) if args.shell else check(report, floors, backend=backend)
         )
     except (KeyError, TypeError, ValueError) as error:
         sys.stderr.write(f"Invalid critical coverage evidence: {error}\n")

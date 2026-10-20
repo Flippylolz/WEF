@@ -30,12 +30,7 @@ observe_release started
 
 prepare_runtime_directories
 
-"$SCRIPT_DIR/preflight.sh" \
-  "$WEF_ROOT" \
-  "$WEF_RELEASE_DIR" \
-  "$WEF_CONFIG_FILE" \
-  "$WEF_RELEASE_SHA" \
-  "$WEF_PUBLIC_PORT"
+"$SCRIPT_DIR/preflight.sh" "$WEF_ROOT" "$WEF_RELEASE_DIR" "$WEF_CONFIG_FILE" "$WEF_RELEASE_SHA" "$WEF_PUBLIC_PORT"
 
 if [ "${WEF_DEPLOY_SKIP_PULL:-0}" != "1" ]; then
   production_compose pull db api web edge
@@ -72,10 +67,7 @@ fi
 
 candidate_healthy=0
 if bring_up_application_services &&
-  "$SCRIPT_DIR/smoke.sh" \
-    "http://127.0.0.1:$WEF_PUBLIC_PORT" \
-    "$WEF_RELEASE_SHA" \
-    "https://tiles.openfreemap.org/styles/dark" &&
+  "$SCRIPT_DIR/smoke.sh" "http://127.0.0.1:$WEF_PUBLIC_PORT" "$WEF_RELEASE_SHA" "https://tiles.openfreemap.org/styles/dark" &&
   smoke_public_https_origin; then
   candidate_healthy=1
   observe_release healthy
@@ -109,9 +101,7 @@ fi
 printf 'Candidate release failed health verification.\n' >&2
 recorded_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 if [ "$had_previous" -eq 1 ]; then
-  restored_sha=$(
-    python3 "$SCRIPT_DIR/release_state.py" get "$previous_state" release_sha
-  )
+  restored_sha=$(python3 "$SCRIPT_DIR/release_state.py" get "$previous_state" release_sha)
   observe_release rollback_started
   if "$SCRIPT_DIR/rollback.sh" "$WEF_ROOT" "$previous_state"; then
     rm -f "$WEF_ROOT/state/activation-pending.json"

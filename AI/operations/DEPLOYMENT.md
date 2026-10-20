@@ -258,6 +258,14 @@ Exhaustion returns failure instead of exiting the deployment process; a full
 synthetic deployment verifies that the caller restores the previous release and
 records the failed candidate.
 
+Application service and Telegram worker startup commands explicitly return their
+failing status before reconnect or smoke can report success. Deployment invokes
+startup within an `if`/`&&` condition, where implicit shell `errexit` is disabled;
+healthy HTTP responses cannot override a failed start. The
+[runtime shell regression cases](../quality/RUNTIME_SHELL_COVERAGE.md) verify both
+startup failures restoring the previous healthy release, plus shared-edge caller
+refusal, using synthetic tools only.
+
 Large data reprocessing is an explicit importer operation after deploy, not hidden inside an Alembic migration.
 
 ## Health verification

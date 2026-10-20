@@ -8,6 +8,7 @@ This domain owns identity, sessions, authorization, contact protection, reveal a
 - [Verified delivery automation evidence](../quality/DEPENDABOT_EVIDENCE_COVERAGE.md) — existing required-check and bot-identity enforcement for the scheduled Dependabot controller, traced to E1-T7 and ADR-023.
 - [Operational validation evidence](../quality/OPERATIONS_COMPLETE_COVERAGE.md) — parsed HTTPS redirect authority checks reject hostname-prefix/userinfo lookalikes; complete operational Python coverage protects existing deployment and non-interference guards.
 - [Deployment semantic health evidence](../quality/EMBEDDED_DEPLOYMENT_COVERAGE.md) — wrong public liveness/product bodies cannot fall through to success inside the deployment conditional; collector exports remain source-free.
+- [Runtime shell evidence](../quality/RUNTIME_SHELL_COVERAGE.md) — failed application/worker starts refuse activation and reach rollback; certificate permissions, scoped renew/reconnect commands and complete source coverage use isolated synthetic fixtures.
 
 ## Confirmed security model
 

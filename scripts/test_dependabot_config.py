@@ -23,6 +23,7 @@ class DependabotConfigTests(unittest.TestCase):
             ("package-ecosystem: uv", "directory: /apps/backend"),
             ("package-ecosystem: docker", "directory: /apps/backend"),
             ("package-ecosystem: docker", "directory: /apps/web"),
+            ("package-ecosystem: docker", "directory: /infra/shell-coverage"),
             ("package-ecosystem: github-actions", "directory: /"),
             ("package-ecosystem: docker-compose", "directory: /infra"),
             ("package-ecosystem: docker-compose", "directory: /infra/e2e"),
@@ -32,8 +33,8 @@ class DependabotConfigTests(unittest.TestCase):
             self.assertRegex(self.raw, pattern, msg=f"missing {ecosystem} @ {directory}")
 
     def test_weekly_schedule_and_bounded_open_prs(self) -> None:
-        self.assertEqual(self.raw.count("interval: weekly"), 7)
-        self.assertEqual(self.raw.count("open-pull-requests-limit: 5"), 7)
+        self.assertEqual(self.raw.count("interval: weekly"), 8)
+        self.assertEqual(self.raw.count("open-pull-requests-limit: 5"), 8)
 
     def test_patch_minor_groups_exclude_major(self) -> None:
         self.assertGreaterEqual(self.raw.count("applies-to: version-updates"), 5)

@@ -328,5 +328,18 @@
     "scripts/transfer_candidate.py": {"combined": 100},
     "scripts/transfer_remote.py": {"combined": 100},
     "scripts/transfer_restore.py": {"combined": 100}
+  },
+  "shell": {
+    "infra/nginx/deploy-hook.sh": {"lines": 100},
+    "scripts/deploy/deploy.sh": {"lines": 100},
+    "scripts/deploy/preflight.sh": {"lines": 100},
+    "scripts/deploy/production-common.sh": {"lines": 100},
+    "scripts/deploy/provision_server.sh": {"lines": 100},
+    "scripts/deploy/reconnect-wef-upstreams.sh": {"lines": 100},
+    "scripts/deploy/rollback.sh": {"lines": 100},
+    "scripts/deploy/server_inventory.sh": {"lines": 100},
+    "scripts/deploy/shared_edge_renew.sh": {"lines": 100},
+    "scripts/deploy/smoke.sh": {"lines": 100},
+    "scripts/deploy/verify_current.sh": {"lines": 100}
   }
 }
