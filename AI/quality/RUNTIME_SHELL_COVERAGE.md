@@ -78,7 +78,10 @@ health-gated delivery behavior, without changing service topology or configurati
 
 Run `make coverage-shell`, or the complete `make quality-gates` mapping. The proof
 builds the test-only `infra/shell-coverage/Dockerfile` from its small context, using
-immutable Python 3.13.16 and Kcov image digests. The Kcov digest reports
+immutable Python 3.14.8 and Kcov image digests. The copied interpreter, shared
+library, standard library and build-time version assertion match that Python
+release; this tooling upgrade does not change the application Python runtime.
+The Kcov digest reports
 `v44-pre-test3-2-gf65e`; it is pinned explicitly. Dependabot covers this tooling
 directory. No production dependency is added.
 
