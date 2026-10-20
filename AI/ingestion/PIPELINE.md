@@ -24,6 +24,13 @@ versions even after evaluation and operator replay. E25-T4 owns guarded
 historical field convergence; its separate approval, dependency and rollout
 gates still apply.
 
+Parser `e2-v19` adds bounded multiline location blocks, explicit street labels,
+abbreviated Cyrillic street prefixes and canonical district/neighborhood lists.
+District-only evidence retains district precision. The [20 October incident
+record](../operations/INCIDENT_2026-10-20.md) documents the unknown-location defect
+and bounded operator recovery. This parser repair does not change the separately
+accepted automatic historical replay baseline or activate that worker.
+
 ## Pipeline boundary
 
 Each source adapter emits a common `RawMessage`:

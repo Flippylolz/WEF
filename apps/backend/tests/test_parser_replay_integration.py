@@ -26,12 +26,14 @@ from wef_backend.features.admin.infrastructure.ai_enrichment_store import (
 )
 from wef_backend.features.admin.infrastructure.store import SQLAlchemyAdminAuditStore
 from wef_backend.features.catalog.infrastructure.models import OfferRow
-from wef_backend.features.ingestion.application.extraction import extract_listing
+from wef_backend.features.ingestion.application.extraction import PARSER_VERSION, extract_listing
+from wef_backend.features.ingestion.application.parse_quality import POLICY_VERSION
 from wef_backend.features.ingestion.application.persistence import (
     PersistableMessage,
     PersistHistoricalIngestion,
     RunMetadata,
 )
+from wef_backend.features.ingestion.infrastructure import parser_replay as replay_module
 from wef_backend.features.ingestion.infrastructure.archive_decoder import decode_archived_payload
 from wef_backend.features.ingestion.infrastructure.parser_replay import (
     RELEASE,
@@ -55,7 +57,9 @@ SOURCE = (
 
 
 @pytest.fixture
-async def replay_db() -> AsyncIterator[DatabaseResources]:
+async def replay_db(monkeypatch: pytest.MonkeyPatch) -> AsyncIterator[DatabaseResources]:
+    # Exercise accepted-release behavior without approving this parser in production.
+    monkeypatch.setattr(replay_module, "ACCEPTED_RELEASE", (PARSER_VERSION, POLICY_VERSION))
     await _prepare()
     assert TEST_DATABASE_URL
     db = create_database_resources(TEST_DATABASE_URL)
@@ -149,7 +153,7 @@ FROM offers o CROSS JOIN source_messages m
             78000000,
             "PLN",
             "hidden",
-            "e2-v18",
+            PARSER_VERSION,
         )
         assert (
             row.id,
@@ -167,7 +171,7 @@ field_name='apartment_price_min'
 """
                 )
             )
-            == "e2-v18"
+            == PARSER_VERSION
         )
         assert (
             await session.scalar(
@@ -252,7 +256,7 @@ async def test_claim_restart_stale_finish_and_deleted_source(replay_db: Database
 
 @pytest.mark.parametrize(
     ("future_parser", "future_policy"),
-    [("e2-v19", "source-evidence-v3"), ("e2-v18", "source-evidence-v4")],
+    [("e2-v20", "source-evidence-v3"), (PARSER_VERSION, "source-evidence-v4")],
 )
 async def test_failure_backoff_terminal_and_version_downgrade(
     replay_db: DatabaseResources, future_parser: str, future_policy: str
@@ -323,7 +327,7 @@ UPDATE source_message_revisions SET text_original='different'
         ),
         ("DELETE FROM offer_sources", "excluded"),
         ("UPDATE offers SET parser_version='owner-ai-v1'", "excluded"),
-        ("UPDATE offers SET parser_version='e2-v19'", "excluded"),
+        ("UPDATE offers SET parser_version='e2-v20'", "excluded"),
     ],
 )
 async def test_explicit_terminal_populations_do_not_starve(

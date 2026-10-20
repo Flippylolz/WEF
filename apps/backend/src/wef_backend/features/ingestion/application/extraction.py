@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 
 from wef_backend.features.ingestion.domain.nearby_locality import nearby_locality
 
-PARSER_VERSION = "e2-v18"
+PARSER_VERSION = "e2-v19"
 CANDIDATE_THRESHOLD = 5
 
 # A number may end only at whitespace/punctuation or directly before a tracked
@@ -216,7 +216,14 @@ _HOUSE_PATTERN = re.compile(
 )
 _HOUSE_SALE_PATTERN = re.compile(r"\bдом\s+на\s+продаж\w*\b", _FLAGS)  # noqa: RUF001
 _LOCATION_PATTERN = re.compile(
-    rf"(?:lokalizacja|location|adres|локализаци[яи]|адрес){_VALUE_SUFFIX}",
+    r"(?:(?:lokalizacja|location|adres|локализаци[яи]|адрес)"
+    r"[ \t]*(?:[:|][ \t]*|[\u2013\u2014-][ \t]+)"
+    r"|(?:^|\n)[ \t]*(?:\U0001F4CD\ufe0f?[ \t]*)?"
+    r"(?:lokalizacja|location|adres|локализаци[яи]|адрес)[ \t]*:[ \t]*\r?\n"
+    r"[ \t]*(?=(?:ul(?:ica)?\.?|al(?:eja|eje)?\.?|ул(?:ица)?\.?|вул(?:иця)?\.?|street)"
+    r"[ \t]+)"
+    r"|(?:^|\n)[ \t]*(?=(?:улица|ulica|street)[ \t]*:[ \t]*\S))"
+    r"(?P<value>\S[^\r\n]*)",
     _FLAGS,
 )
 _LOCATION_PIN_LINE_PATTERN = re.compile(
@@ -630,16 +637,19 @@ def _location_field(
     parser_version: str,
     warnings: list[ExtractionWarning],
 ) -> ExtractedValue[str] | None:
-    """Prefer labeled location lines over the pin-line template."""
+    """Read labeled addresses and bounded multiline blocks before pin lines."""
     if _LOCATION_PATTERN.search(text) is not None:
         return _string_field(text, _LOCATION_PATTERN, "location", parser_version, warnings)
-    return _pin_line_field(
+    pin = _pin_line_field(
         text,
         "location",
         parser_version,
         warnings,
         lambda value: value if looks_like_warsaw_address(value) or nearby_locality(value) else None,
     )
+    if pin is not None or any(warning.field_name == "location" for warning in warnings):
+        return pin
+    return _district_labeled_field(text, parser_version, warnings)
 
 
 def _district_field(
@@ -667,9 +677,10 @@ def _district_labeled_field(
     """Store only reviewed canonical district names from labeled lines."""
     parsed: list[tuple[str, SourceSpan]] = []
     for match in _DISTRICT_PATTERN.finditer(text):
-        canonical = canonical_warsaw_district(_trimmed_value(text, match))
-        if canonical is not None:
-            parsed.append((canonical, _trimmed_span(text, match)))
+        for segment in re.split(r"[,|]", _trimmed_value(text, match)):
+            canonical = canonical_warsaw_district(segment)
+            if canonical is not None:
+                parsed.append((canonical, _trimmed_span(text, match)))
     if not parsed:
         return None
     if len({value for value, _ in parsed}) > 1:

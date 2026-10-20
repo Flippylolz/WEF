@@ -10,7 +10,7 @@ from tests.test_listing_extraction import _message
 from tests.test_persistence_integration import TEST_DATABASE_URL, _prepare, _purge, _settings
 from wef_backend import offer_backfill_command
 from wef_backend.database import create_database_resources
-from wef_backend.features.catalog.infrastructure.models import OfferRow
+from wef_backend.features.catalog.infrastructure.models import LocationRow, OfferRow
 from wef_backend.features.ingestion.application.extraction import extract_listing
 from wef_backend.features.ingestion.application.persistence import (
     PersistableMessage,
@@ -26,6 +26,72 @@ pytestmark = [
     pytest.mark.integration,
     pytest.mark.skipif(TEST_DATABASE_URL is None, reason="PostGIS required"),
 ]
+
+
+async def test_multiline_address_recovery_relocates_only_unresolved_sentinel_and_is_idempotent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    await _prepare()
+    settings = _settings()
+    monkeypatch.setattr(offer_backfill_command, "load_settings", lambda: settings)
+    monkeypatch.setattr(offer_backfill_command, "build_contact_cipher", lambda _: None)
+    database = create_database_resources(settings.database_url)
+    try:
+        raw = _message(
+            "For sale: Apartment\n📍 Локализация:\n\u0420\u0430\u0439\u043e\u043d: Wola, Mirów\n"
+            "\u0423\u043b\u0438\u0446\u0430: Przykładowa\nPrice: 800000 PLN\nArea: 45 m²"
+        )
+        extraction = extract_listing(raw)
+        assert extraction.listing is not None
+        old = replace(extraction, listing=replace(extraction.listing, location=None, district=None))
+        await PersistHistoricalIngestion(SQLAlchemyIngestionPersistence(database.session_factory))(
+            channel=raw.source,
+            messages=[PersistableMessage(raw, old)],
+            metadata=RunMetadata(parser_version="old"),
+        )
+        async with database.session_factory() as session:
+            offer = (await session.scalars(select(OfferRow))).one()
+            offer_id, sentinel_id = offer.id, offer.location_id
+            source = (await session.scalars(select(SourceMessageRow))).one()
+            source_identity = (source.raw_checksum, source.current_revision_id)
+        dry = await offer_backfill_command.run(
+            channel=raw.source.channel_id,
+            after_id=0,
+            through_id=raw.external_message_id,
+            limit=1,
+            apply=False,
+        )
+        assert dry["counts"] == {"update_candidate": 1}
+        for _ in range(2):
+            applied = await offer_backfill_command.run(
+                channel=raw.source.channel_id,
+                after_id=0,
+                through_id=raw.external_message_id,
+                limit=1,
+                apply=True,
+            )
+            assert applied["counts"] == {"update_candidate": 1}
+            async with database.session_factory() as session:
+                offer = (await session.scalars(select(OfferRow))).one()
+                assert offer.id == offer_id
+                assert offer.location_id != sentinel_id
+                assert offer.visibility == "needs_review"
+                location = await session.get(LocationRow, offer.location_id)
+                assert location is not None
+                assert location.display_address == "ul. Przykładowa, Wola, Warszawa"
+                assert location.district == "Wola"
+                assert location.review_status == "ungeocoded"
+                assert location.point is None
+                source = (await session.scalars(select(SourceMessageRow))).one()
+                assert (source.raw_checksum, source.current_revision_id) == source_identity
+                assert await session.scalar(select(func.count()).select_from(LocationRow)) == 2
+                assert (
+                    await session.scalar(text("SELECT count(*) FROM telegram_channel_progress"))
+                    == 0
+                )
+    finally:
+        await database.engine.dispose()
+        await _purge()
 
 
 async def test_dry_run_apply_and_resume_preserve_identity_visibility_and_live_cursor(
