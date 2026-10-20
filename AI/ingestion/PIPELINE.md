@@ -31,6 +31,12 @@ record](../operations/INCIDENT_2026-10-20.md) documents the unknown-location def
 and bounded operator recovery. This parser repair does not change the separately
 accepted automatic historical replay baseline or activate that worker.
 
+The owner-requested broader audit led to parser `e2-v20`: Ukrainian location
+labels, standalone pin blocks and structured unit-title addresses are supported;
+descriptive amenity pins no longer conflict with an evidenced property address.
+Genuine address conflicts and source/owner protections remain. See the
+[older-offer repair record](../operations/OLDER_OFFER_REPAIR_2026-10-20.md).
+
 ## Pipeline boundary
 
 Each source adapter emits a common `RawMessage`:

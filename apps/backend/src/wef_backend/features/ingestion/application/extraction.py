@@ -53,13 +53,14 @@ if TYPE_CHECKING:
 
 from wef_backend.features.ingestion.domain.nearby_locality import nearby_locality
 
-PARSER_VERSION = "e2-v19"
+PARSER_VERSION = "e2-v20"
 CANDIDATE_THRESHOLD = 5
 
 # A number may end only at whitespace/punctuation or directly before a tracked
 # currency word (an 850k example: "850 000" + PLN-word suffix), so grouped
 # amounts keep their magnitude.
 _VALUE_SUFFIX = r"[ \t]*(?:[:|][ \t]*|[\u2013\u2014-][ \t]+)(?P<value>\S[^\r\n]*)"
+_LOCATION_LABEL = r"(?:lokalizacja|location|adres|локал[иі]зац[иі][яиії]|адреса?)"
 _ROOM_HYPHEN_PATTERN = re.compile(
     r"\b(?P<rooms>\d+)\s*-\s*(?:комнат(?:ная|ные)|кімнат(?:на|ні))\b",
     _FLAGS,
@@ -124,7 +125,7 @@ _CANDIDATE_RULES = (
         CandidateReason.LOCATION_MARKER,
         2,
         None,
-        re.compile(r"\b(?:lokalizacja|location|adres|локализаци[яи]|адрес)\b", _FLAGS),
+        re.compile(rf"\b{_LOCATION_LABEL}\b", _FLAGS),
     ),
     _CandidateRule(
         CandidateReason.PRICE_MARKER,
@@ -216,21 +217,29 @@ _HOUSE_PATTERN = re.compile(
 )
 _HOUSE_SALE_PATTERN = re.compile(r"\bдом\s+на\s+продаж\w*\b", _FLAGS)  # noqa: RUF001
 _LOCATION_PATTERN = re.compile(
-    r"(?:(?:lokalizacja|location|adres|локализаци[яи]|адрес)"
+    rf"(?:{_LOCATION_LABEL}"
     r"[ \t]*(?:[:|][ \t]*|[\u2013\u2014-][ \t]+)"
     r"|(?:^|\n)[ \t]*(?:\U0001F4CD\ufe0f?[ \t]*)?"
-    r"(?:lokalizacja|location|adres|локализаци[яи]|адрес)[ \t]*:[ \t]*\r?\n"
+    rf"{_LOCATION_LABEL}[ \t]*:[ \t]*\r?\n"
     r"[ \t]*(?=(?:ul(?:ica)?\.?|al(?:eja|eje)?\.?|ул(?:ица)?\.?|вул(?:иця)?\.?|street)"
     r"[ \t]+)"
     r"|(?:^|\n)[ \t]*(?=(?:улица|ulica|street)[ \t]*:[ \t]*\S))"
     r"(?P<value>\S[^\r\n]*)",
     _FLAGS,
 )
-_LOCATION_PIN_LINE_PATTERN = re.compile(
-    r"(?m)^[ \t]*\U0001F4CD\ufe0f?[ \t]*(?P<value>[^\r\n]+)",
+_LOCATION_TEMPLATE_LINE_PATTERN = re.compile(
+    r"(?m)^[ \t]*(?:(?P<pin>\U0001F4CD)\ufe0f?[ \t]*(?:\r?\n[ \t]*)?"
+    r"|[^\r\n|]*\b(?:квартир[аы]|апартамент[ыа]?|дом|будинок|"
+    r"mieszkanie|apartament|dom|apartment|flat|house)\b[^\r\n|]*\|[ \t]*)"
+    r"(?P<value>[^\r\n]+)",
     _FLAGS,
 )
 _PIN_FIELD_EMOJI_FLOOR = 0x1F000
+_TEMPLATE_ADDRESS_START = re.compile(
+    r"^(?:(?:ul(?:ica)?|al(?:eja|eje)?|ул(?:ица)?|вул(?:иця)?)\.?\s+"
+    r"|(?:Warszawa|Warsaw|Варшава)\b)",
+    _FLAGS,
+)
 _DISTRICT_PATTERN = re.compile(
     rf"(?:dzielnica|district|район){_VALUE_SUFFIX}",
     _FLAGS,
@@ -640,7 +649,7 @@ def _location_field(
     """Read labeled addresses and bounded multiline blocks before pin lines."""
     if _LOCATION_PATTERN.search(text) is not None:
         return _string_field(text, _LOCATION_PATTERN, "location", parser_version, warnings)
-    pin = _pin_line_field(
+    pin = _template_line_field(
         text,
         "location",
         parser_version,
@@ -660,7 +669,7 @@ def _district_field(
     """Prefer labeled district lines over an exact pin-line district segment."""
     if _DISTRICT_PATTERN.search(text) is not None:
         return _district_labeled_field(text, parser_version, warnings)
-    return _pin_line_field(
+    return _template_line_field(
         text,
         "district",
         parser_version,
@@ -704,36 +713,47 @@ def _district_labeled_field(
     )
 
 
-def _pin_line_field[T](
+def _template_line_field[T](
     text: str,
     field_name: str,
     parser_version: str,
     warnings: list[ExtractionWarning],
     read_value: Callable[[str], T | None],
 ) -> ExtractedValue[T] | None:
-    """Read one field from pin-prefixed template lines the labels cannot cover."""
-    parsed: list[tuple[T, SourceSpan]] = []
-    for match in _LOCATION_PIN_LINE_PATTERN.finditer(text):
+    """Read bounded pin or listing-summary lines without scanning descriptive prose."""
+    parsed: list[tuple[T, SourceSpan, str]] = []
+    for match in _LOCATION_TEMPLATE_LINE_PATTERN.finditer(text):
+        raw_value = match["value"].strip()
+        if not raw_value.strip(",|").strip() or ord(raw_value[0]) >= _PIN_FIELD_EMOJI_FLOOR:
+            continue
+        if match["pin"] and not (
+            _TEMPLATE_ADDRESS_START.match(raw_value)
+            or warsaw_district_in(raw_value.split("|")[0].split(",")[0])
+            or nearby_locality(raw_value)
+        ):
+            continue
         value, span = _pin_line_value(text, match)
         mapped = read_value(value) if value else None
         if mapped is not None:
-            parsed.append((mapped, span))
+            parsed.append((mapped, span, "pin" if match["pin"] else "summary"))
+    if pins := [item for item in parsed if item[2] == "pin"]:
+        parsed = pins
     if not parsed:
         return None
-    if len({item for item, _ in parsed}) > 1:
+    if len({item for item, _, _ in parsed}) > 1:
         warnings.append(
             ExtractionWarning(
                 code=ExtractionWarningCode.CONFLICTING_VALUES,
                 field_name=field_name,
-                spans=tuple(span for _, span in parsed),
+                spans=tuple(span for _, span, _ in parsed),
             ),
         )
         return None
-    selected, selected_span = parsed[0]
+    selected, selected_span, rule = parsed[0]
     return ExtractedValue(
         value=selected,
         provenance=_provenance(
-            f"extract.{field_name}_pin",
+            f"extract.{field_name}_{rule}",
             parser_version,
             Confidence.MEDIUM,
             selected_span,

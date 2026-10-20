@@ -28,8 +28,18 @@ pytestmark = [
 ]
 
 
+@pytest.mark.parametrize(
+    "address_block",
+    [
+        "📍 Локализация:\nDistrict: Wola, Mirów\nStreet: Przykładowa",
+        "📍\nul. Przykładowa | Wola",
+        "Локалізація: ul. Przykładowa\nDistrict: Wola",
+        "Apartment | ul. Przykładowa | Wola",
+    ],
+)
 async def test_multiline_address_recovery_relocates_only_unresolved_sentinel_and_is_idempotent(
     monkeypatch: pytest.MonkeyPatch,
+    address_block: str,
 ) -> None:
     await _prepare()
     settings = _settings()
@@ -37,10 +47,7 @@ async def test_multiline_address_recovery_relocates_only_unresolved_sentinel_and
     monkeypatch.setattr(offer_backfill_command, "build_contact_cipher", lambda _: None)
     database = create_database_resources(settings.database_url)
     try:
-        raw = _message(
-            "For sale: Apartment\n📍 Локализация:\n\u0420\u0430\u0439\u043e\u043d: Wola, Mirów\n"
-            "\u0423\u043b\u0438\u0446\u0430: Przykładowa\nPrice: 800000 PLN\nArea: 45 m²"
-        )
+        raw = _message(f"For sale: Apartment\n{address_block}\nPrice: 800000 PLN\nArea: 45 m²")
         extraction = extract_listing(raw)
         assert extraction.listing is not None
         old = replace(extraction, listing=replace(extraction.listing, location=None, district=None))
