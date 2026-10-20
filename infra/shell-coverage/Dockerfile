@@ -1,5 +1,5 @@
 # Test-only tooling. No repository source enters this build context or image.
-FROM python:3.13.16-slim-bookworm@sha256:a1165e272e578941b84abc79e4ab38a0305cd12803a5c4247979ac7655f4d641 AS python
+FROM python:3.14.8-slim-bookworm@sha256:48b13b003dda20b16f9442b8475aa05fe21bf6579a8c881db92ffb4d8fd20f83 AS python
 # This immutable digest reports v44-pre-test3-2-gf65e; no floating binary is used.
 FROM kcov/kcov:latest@sha256:481289ae32e55e5b733019515acd10948a4f76dfed381765577db909664fc603
 COPY --from=python /usr/local/bin/python3.13 /usr/local/bin/python3.13
