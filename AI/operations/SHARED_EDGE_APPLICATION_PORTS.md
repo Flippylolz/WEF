@@ -26,14 +26,18 @@ optional renderer capabilities; the final deployed release enables only Fillable
 
 ## Deployment and verification
 
-The active edge release is `r-20260908-fillable-tls` under
-`/home/nuc/wef-shared-edge/root/releases/`. Render with
+The original application-port release was `r-20260908-fillable-tls` under
+`/home/nuc/wef-shared-edge/root/releases/`. The active release is now
+`r-20261020-retire-domain`, which preserves these listeners and removes the
+owner-deleted hostname alias; see [retirement evidence](DOMAIN_RETIREMENT_2026-10-20.md).
+Render with
 `--fillable-upstream fillable-gateway:8080` and the existing WEF upstream inputs.
 Do not pass `--forecast-http-upstream` or apply `compose.shared-edge-http.yaml`
 for this setup. Do not publish host port 3200 from the shared-edge Compose project:
-Fillable owns its TCP relay. Preserve Certbot state and existing WEF aliases.
+Fillable owns its TCP relay. Preserve Certbot state and the current primary WEF hostname.
 
-The release passed `nginx -t` before and after a graceful HUP reload. WEF HTTPS,
+At the original 2026-09-08 rollout, the release passed `nginx -t` before and after
+a graceful HUP reload. WEF HTTPS,
 WEF rollback HTTP 3100, and Forecast HTTP 3000 returned 200. A certificate-verified
 HTTPS request to Nginx's internal port 3200 reached the new listener and returned
 502 because Fillable is not deployed. The owner explicitly confirmed that the
@@ -42,12 +46,12 @@ listener without claiming application readiness. Normal release activation still
 requires all upstreams; this scoped rollout validated the existing WEF/Forecast
 upstreams and separately recorded the absent Fillable application.
 
-Fillable's public relay and application must be deployed before its public URL
-works. Its staged `/home/nuc/fillable/runtime.env` currently uses an HTTP public
-origin; the Fillable deployment must set
-`FILLABLE_PUBLIC_ORIGIN=https://flipstarnuc.duckdns.org:3200`.
+At that original rollout, Fillable's public relay and application were still
+pending and the staged environment used an HTTP public origin. The deployed
+application now uses `FILLABLE_PUBLIC_ORIGIN=https://flipstarnuc.duckdns.org:3200`;
+the public HTTPS endpoint returned 200 during the 2026-10-20 domain retirement.
 
-Rollback restores the `previous` edge release (`r-20260830-osm-tiles`), validates
-Nginx, and sends HUP. Before-state configuration and activation evidence are kept
+The original rollout's rollback restored `r-20260830-osm-tiles`, validated
+Nginx, and sent HUP. Before-state configuration and activation evidence are kept
 under `/home/nuc/wef-shared-edge/changes/fillable-tls-3200/`. WEF and Forecast
 listener assignments do not change during this rollback.

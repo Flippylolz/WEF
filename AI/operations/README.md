@@ -14,6 +14,7 @@ This domain owns deployment behavior, production-host constraints, configuration
 - [19 October 2026 catalog incident](INCIDENT_2026-10-19.md) — date filters, empty results, source reconciliation and bounded recovery evidence.
 - [20 October 2026 missing recent offers](INCIDENT_2026-10-20.md) — multiline source addresses, unknown-location sentinel diagnosis and bounded recovery.
 - [20 October 2026 older-offer address repair](OLDER_OFFER_REPAIR_2026-10-20.md) — broader source audit, Ukrainian and structured address formats, and descriptive-pin conflicts.
+- [20 October 2026 deleted hostname retirement](DOMAIN_RETIREMENT_2026-10-20.md) — DDNS, TLS, proxy and deployment SSH cleanup after the owner deleted the old alias.
 
 ## Non-negotiable constraints
 

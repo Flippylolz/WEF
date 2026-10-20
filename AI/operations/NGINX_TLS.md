@@ -9,11 +9,10 @@ This is the approved target architecture from [ADR-020](../decisions/adr/ADR-020
 
 ## Hostname migration (2026-09-28)
 
-The owner selected `flipstarnuc.duckdns.org` as the primary name. The old
-`2fa54e2405.duckdns.org` remains active: DuckDNS updates both names, shared Nginx
-accepts both, and the existing certificate lineage now covers both hostnames.
-Keep the existing lineage directory name and renewal configuration; do not rename
-certificate paths or remove the alias as part of an application release.
+The owner selected `flipstarnuc.duckdns.org` as the primary name. During migration,
+DuckDNS updated both names, shared Nginx accepted both, and the certificate covered
+both hostnames. The owner subsequently deleted `2fa54e2405.duckdns.org`; the
+2026-10-20 retirement below supersedes that temporary alias support.
 
 The server uses DuckDNS DNS-01 renewal hooks because external port 80 could not
 complete HTTP-01 validation. Token material and hook state stay private on the
@@ -22,9 +21,32 @@ migration. Public HTTP port-80 forwarding was not proven; use HTTPS.
 
 WEF deploy/rollback smoke defaults and historical activation now use the primary
 name. `WEF_PUBLIC_HTTPS_BASE_URL` remains an explicit override for ordinary release
-smokes. Existing GitHub SSH host/known-host settings may still use the retained
-alias; verify and migrate those together before retiring it. Ordinary WEF releases
-do not recreate the shared edge or retire either hostname.
+smokes. Ordinary WEF releases do not recreate the shared edge or change hostnames.
+
+## Deleted alias retirement (2026-10-20)
+
+The owner requested server cleanup after deleting `2fa54e2405.duckdns.org`.
+`flipstarnuc.duckdns.org` is now the only DDNS update target, public TLS certificate
+name, Nginx server name, and allowed DNS-01 challenge domain. The temporary Fillable
+Origin rewrite from the retired hostname has been removed; the proxy forwards
+the actual Origin header.
+
+The active edge release is `r-20261020-retire-domain`. It preserves existing WEF,
+Fillable, temporary-page and security configuration while removing alias support.
+Only the DDNS container was recreated; Nginx was gracefully reloaded. GitHub's
+repository variable `DEPLOY_HOST` and production secret `DEPLOY_KNOWN_HOSTS` now
+use the primary hostname with the verified existing SSH host key.
+
+The Certbot lineage retains the internal directory name
+`2fa54e2405.duckdns.org` so certificate paths and retained rollback releases keep
+working. This directory name is not a requested DNS name: the replacement
+certificate covers only `flipstarnuc.duckdns.org`, and renewal uses its saved
+single-domain configuration. Do not rename or delete the lineage because its
+directory name matches the retired alias. Historical releases and private
+before-state copies remain available for recovery.
+
+See [retirement evidence](DOMAIN_RETIREMENT_2026-10-20.md) for validation and
+rollback details.
 
 ## Live topology
 
