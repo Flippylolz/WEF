@@ -2,18 +2,14 @@
 
 from alembic import command as alembic_command
 from alembic.config import Config
+from alembic.script import ScriptDirectory
 
 from wef_backend.settings import Settings, load_settings
 
-EXPECTED_DATABASE_REVISION = "20261019_0028"
-# E25-T4 requires replay tables; deploy the 0028-compatible previous reader first.
-READ_COMPATIBLE_DATABASE_REVISIONS = frozenset({EXPECTED_DATABASE_REVISION})
-
 __all__ = [
-    "EXPECTED_DATABASE_REVISION",
-    "READ_COMPATIBLE_DATABASE_REVISIONS",
     "alembic_command",
     "alembic_config",
+    "expected_database_revision",
     "migrate",
 ]
 
@@ -23,6 +19,17 @@ def alembic_config(settings: Settings) -> Config:
     config = Config(str(settings.alembic_config))
     config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
     return config
+
+
+def expected_database_revision(settings: Settings | None = None) -> str:
+    """Read the single head from the release's configured migration history."""
+    runtime_settings = settings or load_settings()
+    scripts = ScriptDirectory.from_config(Config(str(runtime_settings.alembic_config)))
+    head = scripts.get_current_head()
+    if head is None:
+        message = "Alembic migration history has no head"
+        raise RuntimeError(message)
+    return head
 
 
 def migrate() -> None:

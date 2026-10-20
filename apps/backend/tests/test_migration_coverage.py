@@ -21,7 +21,7 @@ from wef_backend.features.ingestion.infrastructure.models import (
     TelegramChannelProgressRow,
     TelegramRawEventRow,
 )
-from wef_backend.migration import EXPECTED_DATABASE_REVISION, alembic_config
+from wef_backend.migration import alembic_config, expected_database_revision
 from wef_backend.settings import Settings
 
 if TYPE_CHECKING:
@@ -98,7 +98,7 @@ async def test_migration_schema_survives_empty_database_round_trip() -> None:
             assert (await session.execute(indexes)).all() == before_indexes
             assert (
                 await session.scalar(text("SELECT version_num FROM alembic_version"))
-                == EXPECTED_DATABASE_REVISION
+                == expected_database_revision()
             )
     finally:
         await db.engine.dispose()
@@ -153,7 +153,7 @@ async def test_migration_refuses_to_discard_durable_recovery_evidence(stage: str
         async with db.session_factory() as session:
             assert (
                 await session.scalar(text("SELECT version_num FROM alembic_version"))
-                == EXPECTED_DATABASE_REVISION
+                == expected_database_revision()
             )
             if stage == "archive":
                 assert (
@@ -218,7 +218,7 @@ def test_offline_migration_sql_requires_no_database_or_logging_file() -> None:
     sql = output.getvalue()
     assert "CREATE TABLE offers" in sql
     assert "CREATE TABLE parser_replay_work" in sql
-    assert EXPECTED_DATABASE_REVISION in sql
+    assert expected_database_revision() in sql
 
 
 def test_offline_migration_honors_explicit_logging_config(

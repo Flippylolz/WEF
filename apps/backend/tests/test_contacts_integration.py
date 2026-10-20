@@ -29,7 +29,7 @@ from wef_backend.features.contacts.infrastructure import (
 )
 from wef_backend.features.identity.infrastructure import MemoryRateLimiter
 from wef_backend.features.identity.infrastructure.models import UserRow
-from wef_backend.migration import EXPECTED_DATABASE_REVISION, alembic_config
+from wef_backend.migration import alembic_config, expected_database_revision
 from wef_backend.settings import Settings
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
@@ -71,7 +71,7 @@ async def test_contact_store_round_trip_and_audit() -> None:
             revision = await session.scalar(
                 text("SELECT version_num FROM alembic_version"),
             )
-            assert revision == EXPECTED_DATABASE_REVISION
+            assert revision == expected_database_revision()
             session.add(
                 LocationRow(
                     id=location_id,

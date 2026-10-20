@@ -241,6 +241,10 @@ Do not copy the workflow's transient `GITHUB_TOKEN` into long-lived server confi
 ## Database migrations
 
 - Alembic has one linear production head unless a reviewed branch merge is required.
+- Readiness and release manifests derive the expected revision from the configured,
+  bundled Alembic history. Adding a migration requires no separate revision constant
+  update. Missing or multiple heads fail validation; readiness still rejects a
+  database whose revision differs from the bundled head.
 - CI upgrades an empty database and a representative previous schema to the new head.
 - Deploy migrations are non-interactive and time-bounded.
 - Destructive changes use expand/migrate/contract across releases.

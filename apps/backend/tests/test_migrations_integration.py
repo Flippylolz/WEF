@@ -13,7 +13,7 @@ from wef_backend.database import create_database_resources
 from wef_backend.features.catalog.application import SeedM1Catalog
 from wef_backend.features.catalog.application.m1_fixture import m1_fixture
 from wef_backend.features.catalog.infrastructure import SQLAlchemyCatalogSeedAdapter
-from wef_backend.migration import EXPECTED_DATABASE_REVISION, alembic_config
+from wef_backend.migration import alembic_config, expected_database_revision
 from wef_backend.settings import Settings
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
@@ -157,7 +157,7 @@ async def test_clean_upgrade_and_seed_replay_converge() -> None:  # noqa: PLR091
                 text("SELECT to_regclass('public.e0_proof_estates') IS NOT NULL"),
             )
 
-        assert revision == EXPECTED_DATABASE_REVISION
+        assert revision == expected_database_revision()
         assert location_count == 4
         assert offer_count == 5
         assert tuple(float(value) for value in point) == pytest.approx((21.0122, 52.2297))
@@ -239,7 +239,7 @@ async def test_place_ai_review_runs_schema_exists_at_head() -> None:
             revision = await session.scalar(text("SELECT version_num FROM alembic_version"))
         assert table is not None
         assert pending_index == 1
-        assert revision == EXPECTED_DATABASE_REVISION
+        assert revision == expected_database_revision()
     finally:
         await database.engine.dispose()
 
@@ -271,13 +271,13 @@ async def test_offer_ai_enrichment_schema_exists_at_head() -> None:
         assert items is not None
         assert events is not None
         assert origins is not None
-        assert revision == EXPECTED_DATABASE_REVISION
+        assert revision == expected_database_revision()
     finally:
         await database.engine.dispose()
 
 
-async def test_readiness_allows_only_explicit_additive_rollback_revision() -> None:
-    """The previous reader accepts the known additive revision, not arbitrary drift."""
+async def test_readiness_requires_bundled_migration_head() -> None:
+    """Accept the bundled migration head and reject older or unknown schemas."""
     assert TEST_DATABASE_URL is not None
     settings = Settings(
         env="test", database_url=TEST_DATABASE_URL, alembic_config=Path("alembic.ini")
@@ -289,8 +289,8 @@ async def test_readiness_allows_only_explicit_additive_rollback_revision() -> No
         for revision, ready in (
             ("20260906_0026", False),
             ("20260908_0027", False),
-            ("20261019_0028", True),
-            ("20261019_0029", False),
+            (expected_database_revision(settings), True),
+            ("future_revision", False),
             ("20260906_0027", False),
             ("unknown", False),
         ):
@@ -303,7 +303,7 @@ async def test_readiness_allows_only_explicit_additive_rollback_revision() -> No
         async with database.session_factory() as session, session.begin():
             await session.execute(
                 text("UPDATE alembic_version SET version_num=:revision"),
-                {"revision": EXPECTED_DATABASE_REVISION},
+                {"revision": expected_database_revision()},
             )
         await services.close()
         await database.engine.dispose()

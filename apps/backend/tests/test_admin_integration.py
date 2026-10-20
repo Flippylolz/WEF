@@ -21,7 +21,7 @@ from wef_backend.features.admin.infrastructure.store import (
 from wef_backend.features.identity.domain.model import UserRole
 from wef_backend.features.identity.infrastructure.models import UserRow
 from wef_backend.features.identity.infrastructure.store import SQLAlchemyIdentityStore
-from wef_backend.migration import EXPECTED_DATABASE_REVISION, alembic_config
+from wef_backend.migration import alembic_config, expected_database_revision
 from wef_backend.settings import Settings
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
@@ -54,7 +54,7 @@ async def test_admin_audit_store_and_account_listing() -> None:
         await asyncio.to_thread(command.upgrade, alembic_config(settings), "head")
         async with database.session_factory.begin() as session:
             revision = await session.scalar(text("SELECT version_num FROM alembic_version"))
-            assert revision == EXPECTED_DATABASE_REVISION
+            assert revision == expected_database_revision()
             await session.execute(text("DELETE FROM admin_audit_events"))
             await session.execute(text("DELETE FROM auth_sessions"))
             await session.execute(text("DELETE FROM users"))

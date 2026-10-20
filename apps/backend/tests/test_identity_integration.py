@@ -27,7 +27,7 @@ from wef_backend.features.identity.infrastructure import (
     SQLAlchemyIdentityStore,
     SystemClock,
 )
-from wef_backend.migration import EXPECTED_DATABASE_REVISION, alembic_config
+from wef_backend.migration import alembic_config, expected_database_revision
 from wef_backend.settings import Settings
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
@@ -82,7 +82,7 @@ async def test_identity_migration_creates_schema_and_flows() -> None:
                     ),
                 )
             }
-        assert revision == EXPECTED_DATABASE_REVISION
+        assert revision == expected_database_revision()
         assert {"username_normalized", "hashed_password", "role", "deleted_at"} <= columns
 
         account = await register(

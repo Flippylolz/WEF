@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from alembic.util import CommandError
 from pydantic import SecretStr
 
 from wef_backend import cli, geocoder_check, migration, seed_command
@@ -185,6 +186,65 @@ def test_alembic_config_uses_runtime_database_url() -> None:
     )
 
     assert config.get_main_option("sqlalchemy.url") == ("postgresql+asyncpg://wef:p%25@db/wef")
+
+
+@pytest.fixture
+def migration_settings(tmp_path: Path) -> Settings:
+    """Keep a real Alembic history independent of the process working directory."""
+    (tmp_path / "versions").mkdir()
+    config = tmp_path / "alembic.ini"
+    config.write_text("[alembic]\nscript_location = %(here)s\n", encoding="utf-8")
+    return Settings(alembic_config=config, database_url="postgresql+asyncpg://unused.invalid/wef")
+
+
+def _write_migration(settings: Settings, revision: str, parent: str | None) -> None:
+    path = settings.alembic_config.parent / "versions" / f"{revision}.py"
+    path.write_text(
+        f"revision = {revision!r}\ndown_revision = {parent!r}\n",
+        encoding="utf-8",
+    )
+
+
+def test_expected_database_revision_follows_added_migrations(
+    migration_settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A new migration advances the expected revision without another version edit."""
+    monkeypatch.chdir(tmp_path.parent)
+    _write_migration(migration_settings, "fixture_base", None)
+    assert migration.expected_database_revision(migration_settings) == "fixture_base"
+
+    _write_migration(migration_settings, "fixture_next", "fixture_base")
+    assert migration.expected_database_revision(migration_settings) == "fixture_next"
+
+
+def test_expected_database_revision_uses_runtime_configuration(
+    migration_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Release metadata reads the same configured history without opening a database."""
+    _write_migration(migration_settings, "fixture_head", None)
+    monkeypatch.setattr(migration, "load_settings", lambda: migration_settings)
+    assert migration.expected_database_revision() == "fixture_head"
+
+
+def test_expected_database_revision_rejects_empty_history(migration_settings: Settings) -> None:
+    """Do not declare a release ready when its migration history is absent."""
+    with pytest.raises(RuntimeError, match="migration history has no head"):
+        migration.expected_database_revision(migration_settings)
+
+
+def test_expected_database_revision_rejects_multiple_heads(migration_settings: Settings) -> None:
+    """An unmerged migration fork cannot become expected release metadata."""
+    _write_migration(migration_settings, "fixture_base", None)
+    _write_migration(migration_settings, "fixture_left", "fixture_base")
+    _write_migration(migration_settings, "fixture_right", "fixture_base")
+    with pytest.raises(CommandError, match="multiple heads"):
+        migration.expected_database_revision(migration_settings)
+
+
+def test_expected_database_revision_rejects_missing_configuration(tmp_path: Path) -> None:
+    """A missing bundled configuration must fail instead of skipping schema checks."""
+    with pytest.raises(CommandError, match="script_location"):
+        migration.expected_database_revision(Settings(alembic_config=tmp_path / "missing.ini"))
 
 
 def test_migrate_upgrades_to_head(monkeypatch: pytest.MonkeyPatch) -> None:

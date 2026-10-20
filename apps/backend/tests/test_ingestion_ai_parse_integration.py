@@ -55,7 +55,7 @@ from wef_backend.features.ingestion.infrastructure.parse_issue_store import (
 from wef_backend.features.ingestion.infrastructure.persistence_adapter import (
     SQLAlchemyIngestionPersistence,
 )
-from wef_backend.migration import EXPECTED_DATABASE_REVISION, alembic_config
+from wef_backend.migration import alembic_config, expected_database_revision
 from wef_backend.settings import Settings
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
@@ -243,7 +243,7 @@ async def test_ingestion_ai_parse_generate_and_apply_creates_offer() -> None:
     assert await store.get_pending_run(revision_id) is None
     async with database.session_factory() as session:
         revision = await session.scalar(text("SELECT version_num FROM alembic_version"))
-        assert revision == EXPECTED_DATABASE_REVISION
+        assert revision == expected_database_revision()
         offer_count = await session.scalar(select(OfferRow.id))
         source_count = await session.scalar(
             select(OfferSourceRow.id).where(OfferSourceRow.source_message_id == message_id),

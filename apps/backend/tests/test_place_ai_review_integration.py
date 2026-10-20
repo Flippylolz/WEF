@@ -32,7 +32,7 @@ from wef_backend.features.identity.infrastructure.models import UserRow
 from wef_backend.features.ingestion.application.persistence import normalized_location_key
 from wef_backend.features.ingestion.domain.geocoding import SelectionReason
 from wef_backend.features.ingestion.infrastructure.models import LocationGeocodeSelectionRow
-from wef_backend.migration import EXPECTED_DATABASE_REVISION, alembic_config
+from wef_backend.migration import alembic_config, expected_database_revision
 from wef_backend.settings import Settings
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
@@ -321,7 +321,7 @@ async def test_generate_apply_lineage_and_collision() -> None:
     ]
     assert selections[0].actor_type == "operator"
     assert selections[0].actor_id == str(owner_id)
-    assert revision == EXPECTED_DATABASE_REVISION
+    assert revision == expected_database_revision()
     assert pending == 0
 
     colliding = _location("ul. Inna 3, Warszawa")
