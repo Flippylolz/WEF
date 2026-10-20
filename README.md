@@ -56,10 +56,11 @@ publishes the badge on `main` only after both suite floors are met.
 
 `make coverage-operations` measures all handwritten operational Python, including
 subprocess entrypoints. `make quality-gates` requires 100% globally and independently
-in all 54 executable files: 4,694 statements and 1,456 branch paths. See the
-[complete operational evidence](AI/quality/OPERATIONS_COMPLETE_COVERAGE.md).
-Test/proof drivers are excluded. Runtime shell and substantive embedded Python
-remain within the repository-wide goal.
+in all 56 executable files: 4,844 statements and 1,492 branch paths. See the
+[complete operational evidence](AI/quality/OPERATIONS_COMPLETE_COVERAGE.md) and
+[extracted deployment contracts](AI/quality/EMBEDDED_DEPLOYMENT_COVERAGE.md).
+Test/proof drivers are excluded. Runtime shell remains within the repository-wide
+goal.
 
 Earlier [activation/preflight](AI/quality/ACTIVATION_PREFLIGHT_COVERAGE.md) and
 [transfer coverage evidence](AI/quality/TRANSFER_OPERATIONS_COVERAGE.md) record those

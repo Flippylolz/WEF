@@ -286,6 +286,8 @@
     "scripts/render_coverage_badge.py": {"combined": 100},
     "scripts/dependabot_merge_controller.py": {"combined": 100},
     "scripts/deploy/activate_historical_candidate.py": {"combined": 100},
+    "scripts/deploy/server_inventory.py": {"combined": 100},
+    "scripts/deploy/smoke_contracts.py": {"combined": 100},
     "scripts/deploy/create_checksums.py": {"combined": 100},
     "scripts/deploy/create_release_manifest.py": {"combined": 100},
     "scripts/deploy/reuse_release.py": {"combined": 100},

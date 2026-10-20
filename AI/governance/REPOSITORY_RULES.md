@@ -157,12 +157,14 @@ The suites run in separate jobs and Makefile targets. Backend branch-aware cover
 
 Operational Python measures all handwritten behavior across `scripts`, omitting
 only unit-test, proof and browser-runner drivers. `make quality-gates` invokes its
-coverage target; global line/branch coverage and all 54 executable files independently
+coverage target; global line/branch coverage and all 56 executable files independently
 require 100% in Repository safety CI, including real subprocess entrypoints.
 Policy faults reject lower/missing floors, a narrowed source/branch inventory or
 expanded omissions. See [complete operational Python evidence](../quality/OPERATIONS_COMPLETE_COVERAGE.md).
-Runtime shell and substantive embedded Python remain required by the owner's
-repository-wide goal before it can be declared complete.
+Runtime shell remains required by the owner's repository-wide goal before it can
+be declared complete. The host collector and deployment payload semantics are
+measured Python helpers; [embedded deployment evidence](../quality/EMBEDDED_DEPLOYMENT_COVERAGE.md)
+records their scope and the build/test infrastructure boundary.
 
 Deployment does not run for:
 
