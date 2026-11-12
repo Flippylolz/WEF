@@ -108,38 +108,40 @@ class RecurringGeocodeWorker:
         )
         processed = 0
         defer_action: RecurringDeferAction | None = None
-        if batch or self.settings.geocode_revalidation_enabled:
-            budgeted = await self._budgeted_geocoder(repository, channel_id, cycle_cap)
-            resolver = build_location_resolver(
-                self.session_factory,
-                LimitedGeocoder(budgeted, cycle_cap - repair_share),
-                self.settings,
-            )
-            for item in batch:
-                try:
-                    await resolver(
-                        source_query=item.address,
-                        district=item.district,
-                        location_id=item.location_id,
-                    )
-                    processed += 1
-                except ProviderBatchLimitError:
-                    continue  # Municipal cache/geometry may still resolve later items.
-                except (ProviderDailyBudgetError, ProviderPauseError) as error:
-                    defer_action = classify_recurring_budget_error(error)
-                    self._apply_defer(defer_action, now=datetime.now(UTC))
-                    # The durable hosted/AI budget still defers its own requests;
-                    # it must not stop unrelated municipal matches.
-            if self.settings.geocode_revalidation_enabled:
-                await self._run_revalidation(budgeted, repair_share)
+        try:
+            if batch or self.settings.geocode_revalidation_enabled:
+                budgeted = await self._budgeted_geocoder(repository, channel_id, cycle_cap)
+                resolver = build_location_resolver(
+                    self.session_factory,
+                    LimitedGeocoder(budgeted, cycle_cap - repair_share),
+                    self.settings,
+                )
+                for item in batch:
+                    try:
+                        await resolver(
+                            source_query=item.address,
+                            district=item.district,
+                            location_id=item.location_id,
+                        )
+                        processed += 1
+                    except ProviderBatchLimitError:
+                        continue  # Municipal cache/geometry may still resolve later items.
+                    except (ProviderDailyBudgetError, ProviderPauseError) as error:
+                        defer_action = classify_recurring_budget_error(error)
+                        self._apply_defer(defer_action, now=datetime.now(UTC))
+                        # The durable hosted/AI budget still defers its own requests;
+                        # it must not stop unrelated municipal matches.
+                if self.settings.geocode_revalidation_enabled:
+                    await self._run_revalidation(budgeted, repair_share)
+        finally:
+            # A provider outage must not withhold offers whose pins are already accepted.
+            locations_accepted, offers_promoted = await self._refresh_live_catalog()
         if processed:
             logger.info(
                 "recurring_geocode_cycle",
                 processed=processed,
                 pending=max(len(pending) - processed, 0),
             )
-
-        locations_accepted, offers_promoted = await self._refresh_live_catalog()
 
         return RecurringGeocodeCycleResult(
             processed=processed,

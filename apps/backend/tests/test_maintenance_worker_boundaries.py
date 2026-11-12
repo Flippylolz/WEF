@@ -17,6 +17,7 @@ from tests.test_recurring_geocode_worker import _FakeRepository
 from wef_backend import automatic_recovery_worker as automatic
 from wef_backend import recurring_geocode_worker as recurring
 from wef_backend.features.ingestion.application.complete_import import ProviderBatchLimitError
+from wef_backend.features.ingestion.application.location_resolution import MunicipalUnavailableError
 from wef_backend.features.ingestion.application.recurring_geocode import RecurringDeferAction
 from wef_backend.features.ingestion.domain.telegram_channel import default_live_channel_identity
 from wef_backend.features.ingestion.infrastructure.complete_import_repository import (
@@ -61,6 +62,38 @@ async def test_recurring_batch_limit_still_attempts_later_municipal_matches(
     assert result.defer_action is None
     assert resolve.await_count == 2
     assert resolve.await_args_list[1].kwargs["location_id"] == items[1].location_id
+
+
+@pytest.mark.parametrize("stage", ["geocoding", "revalidation"])
+async def test_recurring_provider_outage_still_publishes_previously_accepted_offers(
+    stage: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    items = tuple(LocationWorkItem(uuid4(), f"Testowa {number}", "Mokotów") for number in (1, 2))
+    monkeypatch.setattr(
+        recurring, "SQLAlchemyCompleteImportRepository", lambda _: _FakeRepository(uuid4(), items)
+    )
+    error = MunicipalUnavailableError("synthetic provider outage")
+    resolve = AsyncMock(side_effect=[None, error] if stage == "geocoding" else [None, None])
+    revalidate = AsyncMock(side_effect=error if stage == "revalidation" else None)
+    promote = AsyncMock(return_value=3)
+    monkeypatch.setattr(recurring, "build_location_resolver", lambda *_: resolve)
+    monkeypatch.setattr(recurring.RecurringGeocodeWorker, "_run_revalidation", revalidate)
+    monkeypatch.setattr(
+        recurring,
+        "SQLAlchemyPromotePublicCatalogAdapter",
+        lambda _: SimpleNamespace(promote_map_ready_offers=promote),
+    )
+    worker = _worker()
+    worker.settings = worker.settings.model_copy(update={"geocode_revalidation_enabled": True})
+
+    with pytest.raises(MunicipalUnavailableError) as raised:
+        await worker.process_once()
+
+    assert raised.value is error
+    assert resolve.await_count == 2
+    assert revalidate.await_count == int(stage == "revalidation")
+    promote.assert_awaited_once_with()
 
 
 @pytest.mark.parametrize("count", [0, 2])
