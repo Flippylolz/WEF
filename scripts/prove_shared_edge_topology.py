@@ -201,7 +201,8 @@ def assert_edge_compose_policy(model: dict[str, Any]) -> None:
     assert published_ports == {"18080", "18443"}, (
         "only the edge HTTP and HTTPS listeners may publish host ports"
     )
-    assert "restart" in nginx and "restart" in certbot
+    assert nginx["restart"] == "always", "nginx must resume when Docker starts after a reboot"
+    assert certbot["restart"] == "no", "certbot must remain an explicit renewal job"
     for service in (nginx, certbot):
         logs = service["logging"]
         assert logs["driver"] == "json-file", "bounded json-file log driver"

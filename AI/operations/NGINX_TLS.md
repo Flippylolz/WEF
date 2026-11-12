@@ -56,6 +56,26 @@ rollback details.
 - Next.js, FastAPI, PostgreSQL, and workers are not public after the verified WEF cutover; Forecast continues on its existing `:3000` listener until a later owner-approved Forecast TLS task.
 - The shared edge has its own project/path, configuration lifecycle, persistent certificate state, bounded logs, health checks, and rollback boundary; ordinary WEF releases do not own it.
 
+## Startup after reboot
+
+Docker is enabled at host boot. Shared Nginx uses `restart: always` in the
+edge-owned Compose file and the running container. This also resumes a previously
+stopped container when Docker starts; `unless-stopped` can retain the stopped
+state. Certbot remains an explicit, scheduled renewal job with `restart: "no"`.
+
+For an existing edge, validate its deployed Compose file and apply the policy
+without recreating it with `docker update --restart always
+wef-shared-edge-nginx-1`. Persist the same policy in the deployed edge Compose
+file so subsequent edge recreation retains it. Verify `systemctl is-enabled
+docker`, the container's restart policy and health, and public HTTPS/readiness.
+Do not restart Docker or reboot the shared host merely to test this setting.
+
+Intentional maintenance must account for `always`: a manual stop lasts until
+Docker restarts. For a longer shutdown, deliberately change the edge's restart
+policy and restore `always` before returning it to service. Recovery may restore
+the previous policy with `docker update --restart unless-stopped` and the saved
+Compose file.
+
 ## Free certificate lifecycle
 
 - Use Certbot with Let's Encrypt; no paid certificate or paid DNS dependency is required.
