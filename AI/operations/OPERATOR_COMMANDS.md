@@ -326,7 +326,11 @@ existing accepted points; E26-T2 owns that durable repair queue. **Output:** `lo
 `remaining_needs_review_without_point`, `remaining_ungeocoded`.
 
 The worker's `recurring_geocode` loop also calls map-ready promotion
-(`promote_map_ready_offers`) after geocoding; manual runs are for operator catch-up.
+(`promote_map_ready_offers`) after each attempted geocoding/revalidation batch,
+including when a provider fails. Already accepted, in-scope pins can therefore
+publish while unresolved locations retain their existing gates. Provider failures
+still propagate to the loop's redacted error logging and retry cadence; manual
+runs are for operator catch-up.
 
 **After a backend release that changes geocoding behavior**, recreate the worker so
 it runs the new image (ordinary `compose up -d` may leave the old container running):
