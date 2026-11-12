@@ -34,7 +34,7 @@ services:
     tmpfs:
       - /var/cache/nginx:rw,noexec,nosuid,size=64m,mode=1777
       - /var/run:rw,noexec,nosuid,size=1m,mode=1777
-    restart: unless-stopped
+    restart: always
     stop_grace_period: 15s
     cpus: "0.25"
     mem_limit: 256m
