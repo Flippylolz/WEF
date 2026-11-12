@@ -12,6 +12,11 @@ This domain owns identity, sessions, authorization, contact protection, reveal a
 
 ## Confirmed security model
 
+The backend lockfile uses pyasn1 0.6.5, the existing RSA/Telegram transitive
+dependency's security patch. Its [upstream release](https://github.com/pyasn1/pyasn1/releases/tag/v0.6.5)
+fixes four quadratic CPU-consumption advisories affecting 0.6.4. Retain the
+dependency audit gate; do not suppress these findings to unblock unrelated work.
+
 - Browsing is anonymous and read-only.
 - Restricted actions use pseudonymous username/password accounts; no email verification or self-service email recovery is required.
 - The fixed `owner` role alone administers users, session revocation, forced password resets, and reveal audits through the server-rendered owner console.
